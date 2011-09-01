@@ -24,16 +24,17 @@ int main(int argc, char *argv[]) {
 	// set the data scanner to use these PMT Calibrators
 	G2P.setGenerators(&PGenE,&PGenW);
 	
-	unsigned int nToSim = 1000000;	// how many triggering events to simulate
+    double electron_mass = 510.9989; // needed for the physics pf Feirz interference
+	unsigned int nToSim = 100000;	// how many triggering events to simulate
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
+    TH1F *histogram = new TH1F("energy_spectrum", "", 256, 0, 900);
+
 	// start a scan over the data. Argument "true" means start at random offset in file instead of at beginning
 	// if you really want this to be random, you will need to seed rand() with something other than default
 	// note that it can take many seconds to load the first point of a scan (loading file segment into memory), but will go much faster afterwards.
 	G2P.startScan(true);
 	
-    double electron_mass = 510.9989;
 
-    TH1F *histogram = new TH1F("energy_spectrum", "", 32, 0, 900);
 
 	while(true) {
 		// load next point. If end of data is reached, this will loop back and start at the beginning again.
