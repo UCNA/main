@@ -24,10 +24,11 @@ int main(int argc, char *argv[]) {
 	// set the data scanner to use these PMT Calibrators
 	G2P.setGenerators(&PGenE,&PGenW);
 	
-    double electron_mass = 510.9989; // needed for the physics pf Feirz interference
-	unsigned int nToSim = 100000;	// how many triggering events to simulate
+    double electron_mass = 510.9989; // needed for the physics pf Fierz interference
+	unsigned int nToSim = 10000000;	// how many triggering events to simulate
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
-    TH1F *histogram = new TH1F("energy_spectrum", "", 256, 0, 900);
+    TH1F *fierz_histogram = new TH1F("fierz_histogram", "", 128, 0, 900);
+    TH1F *sm_histogram = new TH1F("standard_model_histogram", "", 128, 0, 900);
 
 	// start a scan over the data. Argument "true" means start at random offset in file instead of at beginning
 	// if you really want this to be random, you will need to seed rand() with something other than default
@@ -59,7 +60,10 @@ int main(int argc, char *argv[]) {
 
             double energy = G2P.ePrim + electron_mass;
             double fierz_weight = electron_mass / energy;
-            histogram->Fill(G2P.getEtrue(s), fierz_weight);
+            if (nSimmed % 2)
+                fierz_histogram->Fill(G2P.getEtrue(s), fierz_weight);
+            else
+                sm_histogram->Fill(G2P.getEtrue(s), 1);
 
 			nSimmed++;
 		}
@@ -68,9 +72,14 @@ int main(int argc, char *argv[]) {
 		if(nSimmed>=nToSim)
 			break;
 	}
+    fierz_histogram->Scale(1/fierz_histogram->Integral());
+    sm_histogram->Scale(1/sm_histogram->Integral());
+    fierz_histogram->SetLineColor(2);
+    sm_histogram->SetLineColor(3);
 	
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
-    histogram->Draw("");
+    fierz_histogram->Draw("");
+    sm_histogram->Draw("Same");
     TString gif_filename = "/data/kevinh/mc/fierz_test.gif";
     canvas->SaveAs(gif_filename);
 	
