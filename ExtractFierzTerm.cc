@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 	// set the data scanner to use these PMT Calibrators
 	G2P.setGenerators(&PGenE,&PGenW);
 	
-	unsigned int nToSim = 50;	// how many triggering events to simulate
+	unsigned int nToSim = 1000000;	// how many triggering events to simulate
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	// start a scan over the data. Argument "true" means start at random offset in file instead of at beginning
 	// if you really want this to be random, you will need to seed rand() with something other than default
@@ -56,8 +56,9 @@ int main(int argc, char *argv[]) {
 			// print out event primary info, only available in simulation
 			printf("\tprimary KE=%g, cos(theta)=%g\n",G2P.ePrim,G2P.costheta);
 
-            double energy = G2P.getEtrue(s) + electron_mass;
-            double fierz_multiplier = electron_mass / energy;
+            double energy = G2P.ePrim + electron_mass;
+            double fierz_weight = electron_mass / energy;
+            histogram->Fill(G2P.getEtrue(s), fierz_weight);
 
 			nSimmed++;
 		}
@@ -68,6 +69,7 @@ int main(int argc, char *argv[]) {
 	}
 	
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
+    histogram->Draw("");
     TString gif_filename = "/data/kevinh/mc/fierz_test.gif";
     canvas->SaveAs(gif_filename);
 	
