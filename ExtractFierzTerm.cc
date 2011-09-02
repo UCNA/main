@@ -25,10 +25,13 @@ int main(int argc, char *argv[]) {
 	G2P.setGenerators(&PGenE,&PGenW);
 	
     double electron_mass = 510.9989; // needed for the physics pf Fierz interference
-	unsigned int nToSim = 1E7;	// how many triggering events to simulate
+    double minBin = 0;
+    double maxBin = 1000;
+	unsigned int nToSim = 1E6;	// how many triggering events to simulate
+    unsigned int nBins = 40;
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
-    TH1F *fierz_histogram = new TH1F("fierz_histogram", "", 128, 0, 900);
-    TH1F *sm_histogram = new TH1F("standard_model_histogram", "", 128, 0, 900);
+    TH1F *fierz_histogram = new TH1F("fierz_histogram", "", nBins, minBin, maxBin);
+    TH1F *sm_histogram = new TH1F("standard_model_histogram", "", nBins, minBin, maxBin);
 
 	// start a scan over the data. Argument "true" means start at random offset in file instead of at beginning
 	// if you really want this to be random, you will need to seed rand() with something other than default
@@ -96,9 +99,10 @@ int main(int argc, char *argv[]) {
     TH1F *ucna_data_histogram = (TH1F*)ucna_data_tfile->Get("Combined_Events_E010");
     ucna_data_histogram->Scale(1/(ucna_data_histogram->GetBinWidth(2)*ucna_data_histogram->Integral()));
     ucna_data_histogram->Draw("Same");
+    //printf("Number of bins in data %d\n", ucna_data_histogram->GetNbinsX());
 
-    TString gif_filename = "/data/kevinh/mc/fierz_test.gif";
-    canvas->SaveAs(gif_filename);
+    TString pdf_filename = "/data/kevinh/mc/fierz_test.pdf";
+    canvas->SaveAs(pdf_filename);
 
 	return 0;
 }
