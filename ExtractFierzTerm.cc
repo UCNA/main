@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 	G2P.setGenerators(&PGenE,&PGenW);
 	
     double electron_mass = 510.9989; // needed for the physics pf Fierz interference
-	unsigned int nToSim = 10000000;	// how many triggering events to simulate
+	unsigned int nToSim = 1E7;	// how many triggering events to simulate
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
     TH1F *fierz_histogram = new TH1F("fierz_histogram", "", 128, 0, 900);
     TH1F *sm_histogram = new TH1F("standard_model_histogram", "", 128, 0, 900);
@@ -72,16 +72,33 @@ int main(int argc, char *argv[]) {
 		if(nSimmed>=nToSim)
 			break;
 	}
-    fierz_histogram->Scale(1/fierz_histogram->Integral());
-    sm_histogram->Scale(1/sm_histogram->Integral());
-    fierz_histogram->SetLineColor(2);
-    sm_histogram->SetLineColor(3);
+    fierz_histogram->Scale(1/(fierz_histogram->GetBinWidth(2)*fierz_histogram->Integral()));
+    sm_histogram->Scale(1/(sm_histogram->GetBinWidth(2)*sm_histogram->Integral()));
+    fierz_histogram->SetLineColor(3);
+    sm_histogram->SetLineColor(4);
 	
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
     fierz_histogram->Draw("");
     sm_histogram->Draw("Same");
+    /*
+        If you want a fast way to get the combined data spectrums for comparison, I already have it extracted as a ROOT histogram for my own data/MC comparisons.
+        You can read the ROOT TFile at:
+        /home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root
+        and get the TH1F histograms named:
+        Combined_Events_<S><afp>1<type>
+        where <S>='E' or 'W' is the side, <afp>='0' or '1' for AFP Off/On, and <type>='0','1','2' for type 0, I, or II/III backscatter events.
+        (the '1' in the name after <afp> indicates foreground runs; set to '0' if you want to see the background data).
+    */
+
+    TFile *ucna_data_tfile = new TFile(
+        "/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
+
+    TH1F *ucna_data_histogram = (TH1F*)ucna_data_tfile->Get("Combined_Events_E010");
+    ucna_data_histogram->Scale(1/(ucna_data_histogram->GetBinWidth(2)*ucna_data_histogram->Integral()));
+    ucna_data_histogram->Draw("Same");
+
     TString gif_filename = "/data/kevinh/mc/fierz_test.gif";
     canvas->SaveAs(gif_filename);
-	
+
 	return 0;
 }
