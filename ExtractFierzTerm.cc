@@ -3,6 +3,46 @@
 #include "CalDBSQL.hh"
 #include <TH1F.h>
 
+static double electron_mass = 510.9989; // needed for the physics pf Fierz interference
+
+class FierzHistogram {
+  public: 
+    double minBin;
+    double maxBin;
+    unsigned int nBins;
+    TH1F *fierz_histogram;
+    TH1F *sm_histogram;
+
+    FierzHistogram( double _minBin, double _maxBin, unsigned int _nBins) {
+        minBin = _minBin;
+        maxBin = _maxBin;
+        nBins = _nBins;
+        fierz_histogram = new TH1F("fierz_histogram", "", nBins, minBin, maxBin);
+        sm_histogram = new TH1F("standard_model_histogram", "", nBins, minBin, maxBin);
+    }
+
+    //double operator() (double *x, double*p) {
+    double evaluate(double *x, double*p) {
+        double rv = 0;
+        rv += p[0] * sm_histogram->GetBinContent(sm_histogram->FindBin(x[0]));        
+        rv += p[1] * fierz_histogram->GetBinContent(fierz_histogram->FindBin(x[0]));
+        return rv;
+    }
+
+    void normalizeHistogram(TH1F* hist) {
+        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
+    }
+};
+
+FierzHistogram betaSpectrum(0,1000,40);
+
+double evaluate(double *x, double*p) {
+    double rv = 0;
+    rv += p[0] * betaSpectrum.sm_histogram->GetBinContent(betaSpectrum.sm_histogram->FindBin(x[0]));        
+    rv += p[1] * betaSpectrum.fierz_histogram->GetBinContent(betaSpectrum.fierz_histogram->FindBin(x[0]));
+    return rv;
+}
+
 int main(int argc, char *argv[]) {
 	
 	// Geant4 MC data scanner object
@@ -23,22 +63,24 @@ int main(int argc, char *argv[]) {
 	PGenW.addCalibrator(&PCal);
 	// set the data scanner to use these PMT Calibrators
 	G2P.setGenerators(&PGenE,&PGenW);
+
+	unsigned int nToSim = 1E4;	// how many triggering events to simulate
+	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	
-    double electron_mass = 510.9989; // needed for the physics pf Fierz interference
+    /*
     double minBin = 0;
     double maxBin = 1000;
-	unsigned int nToSim = 1E6;	// how many triggering events to simulate
     unsigned int nBins = 40;
-	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
     TH1F *fierz_histogram = new TH1F("fierz_histogram", "", nBins, minBin, maxBin);
     TH1F *sm_histogram = new TH1F("standard_model_histogram", "", nBins, minBin, maxBin);
+    */
+    //FierzHistogram betaSpectrum(0,1000,40);
+
 
 	// start a scan over the data. Argument "true" means start at random offset in file instead of at beginning
 	// if you really want this to be random, you will need to seed rand() with something other than default
 	// note that it can take many seconds to load the first point of a scan (loading file segment into memory), but will go much faster afterwards.
 	G2P.startScan(true);
-	
-
 
 	while(true) {
 		// load next point. If end of data is reached, this will loop back and start at the beginning again.
@@ -64,9 +106,9 @@ int main(int argc, char *argv[]) {
             double energy = G2P.ePrim + electron_mass;
             double fierz_weight = electron_mass / energy;
             if (nSimmed % 2)
-                fierz_histogram->Fill(G2P.getEtrue(s), fierz_weight);
+                betaSpectrum.fierz_histogram->Fill(G2P.getEtrue(s), fierz_weight);
             else
-                sm_histogram->Fill(G2P.getEtrue(s), 1);
+                betaSpectrum.sm_histogram->Fill(G2P.getEtrue(s), 1);
 
 			nSimmed++;
 		}
@@ -75,14 +117,15 @@ int main(int argc, char *argv[]) {
 		if(nSimmed>=nToSim)
 			break;
 	}
-    fierz_histogram->Scale(1/(fierz_histogram->GetBinWidth(2)*fierz_histogram->Integral()));
-    sm_histogram->Scale(1/(sm_histogram->GetBinWidth(2)*sm_histogram->Integral()));
-    fierz_histogram->SetLineColor(3);
-    sm_histogram->SetLineColor(4);
+    betaSpectrum.normalizeHistogram(betaSpectrum.fierz_histogram);
+    betaSpectrum.normalizeHistogram(betaSpectrum.sm_histogram);
+    betaSpectrum.fierz_histogram->SetLineColor(3);
+    betaSpectrum.sm_histogram->SetLineColor(4);
 	
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
-    fierz_histogram->Draw("");
-    sm_histogram->Draw("Same");
+    betaSpectrum.fierz_histogram->Draw("");
+    betaSpectrum.sm_histogram->Draw("Same");
+
     /*
         If you want a fast way to get the combined data spectrums for comparison, I already have it extracted as a ROOT histogram for my own data/MC comparisons.
         You can read the ROOT TFile at:
@@ -100,6 +143,11 @@ int main(int argc, char *argv[]) {
     ucna_data_histogram->Scale(1/(ucna_data_histogram->GetBinWidth(2)*ucna_data_histogram->Integral()));
     ucna_data_histogram->Draw("Same");
     //printf("Number of bins in data %d\n", ucna_data_histogram->GetNbinsX());
+
+    TF1 *fit = new TF1("fierz_fit", evaluate, 0, 1000, 2);
+    fit->SetParameter(0,1);
+    fit->SetParameter(1,1);
+    ucna_data_histogram->Fit("fierz_fit");
 
     TString pdf_filename = "/data/kevinh/mc/fierz_test.pdf";
     canvas->SaveAs(pdf_filename);
