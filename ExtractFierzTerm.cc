@@ -21,13 +21,14 @@ class FierzHistogram {
         sm_histogram = new TH1F("standard_model_histogram", "", nBins, minBin, maxBin);
     }
 
-    //double operator() (double *x, double*p) {
+/*
     double evaluate(double *x, double*p) {
         double rv = 0;
         rv += p[0] * sm_histogram->GetBinContent(sm_histogram->FindBin(x[0]));        
         rv += p[1] * fierz_histogram->GetBinContent(fierz_histogram->FindBin(x[0]));
         return rv;
     }
+*/
 
     void normalizeHistogram(TH1F* hist) {
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
@@ -38,8 +39,8 @@ FierzHistogram betaSpectrum(0,1000,40);
 
 double evaluate(double *x, double*p) {
     double rv = 0;
-    rv += p[0] * betaSpectrum.sm_histogram->GetBinContent(betaSpectrum.sm_histogram->FindBin(x[0]));        
-    rv += p[1] * betaSpectrum.fierz_histogram->GetBinContent(betaSpectrum.fierz_histogram->FindBin(x[0]));
+    rv += (1 - 0.65 * p[0]) * betaSpectrum.sm_histogram->GetBinContent(betaSpectrum.sm_histogram->FindBin(x[0]-p[1]));        
+    rv += p[0] * 0.65 * betaSpectrum.fierz_histogram->GetBinContent(betaSpectrum.fierz_histogram->FindBin(x[0]-p[1]));
     return rv;
 }
 
@@ -64,7 +65,7 @@ int main(int argc, char *argv[]) {
 	// set the data scanner to use these PMT Calibrators
 	G2P.setGenerators(&PGenE,&PGenW);
 
-	unsigned int nToSim = 1E4;	// how many triggering events to simulate
+	unsigned int nToSim = 1E6;	// how many triggering events to simulate
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	
     /*
@@ -148,6 +149,8 @@ int main(int argc, char *argv[]) {
     fit->SetParameter(0,1);
     fit->SetParameter(1,1);
     ucna_data_histogram->Fit("fierz_fit");
+    fit->SetLineColor(6);
+    fit->Draw("Same");
 
     TString pdf_filename = "/data/kevinh/mc/fierz_test.pdf";
     canvas->SaveAs(pdf_filename);
