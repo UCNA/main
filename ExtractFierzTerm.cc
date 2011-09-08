@@ -12,6 +12,8 @@ class FierzHistogram {
     unsigned int nBins;
     TH1F *fierz_histogram;
     TH1F *sm_histogram;
+    //TH1F *ucna_data_histogram;
+    //TH1F *backgrund_histogram;
 
     FierzHistogram( double _minBin, double _maxBin, unsigned int _nBins) {
         minBin = _minBin;
@@ -35,13 +37,31 @@ class FierzHistogram {
     }
 };
 
-FierzHistogram betaSpectrum(0,1000,40);
+FierzHistogram betaSpectrum(0,1000,400);
 
 double evaluate(double *x, double*p) {
     double rv = 0;
-    rv += (1 - 0.65 * p[0]) * betaSpectrum.sm_histogram->GetBinContent(betaSpectrum.sm_histogram->FindBin(x[0]-p[1]));        
-    rv += p[0] * 0.65 * betaSpectrum.fierz_histogram->GetBinContent(betaSpectrum.fierz_histogram->FindBin(x[0]-p[1]));
+    //unsigned n = betaSpectrum.sm_histogram->FindBin(p[3]*x[0]*x[0] + p[2]*x[0] - p[1]);        
+    unsigned n = betaSpectrum.sm_histogram->FindBin(p[2]*x[0] - p[1]);        
+    //unsigned n = betaSpectrum.sm_histogram->FindBin(x[0]);        
+    double b = p[0];
+    double norm = 1 + 0.65 * b;
+    rv += betaSpectrum.sm_histogram->GetBinContent(n) / norm;
+    rv += b * 0.65 * betaSpectrum.fierz_histogram->GetBinContent(n) / norm;
     return rv;
+}
+
+unsigned deg = 4;
+double mc_model(double *x, double*p) {
+    double _exp = 0;
+    double _x = x[0] / electron_mass;
+    for (int i = deg; i >= 0; i--)
+        _exp = p[i] + _x * _exp;
+    return TMath::Exp(_exp);
+}
+
+void normalize(TH1F* hist) {
+    hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
 }
 
 int main(int argc, char *argv[]) {
@@ -65,7 +85,7 @@ int main(int argc, char *argv[]) {
 	// set the data scanner to use these PMT Calibrators
 	G2P.setGenerators(&PGenE,&PGenW);
 
-	unsigned int nToSim = 1E6;	// how many triggering events to simulate
+	unsigned int nToSim = 1E5;	// how many triggering events to simulate
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	
     /*
@@ -127,6 +147,20 @@ int main(int argc, char *argv[]) {
     betaSpectrum.fierz_histogram->Draw("");
     betaSpectrum.sm_histogram->Draw("Same");
 
+    // fit a smooth model to the mc
+    TF1 *mc_fit = new TF1("fierz_mc_fit", mc_model, 0, 1000, deg+1);
+    mc_fit->SetParameter(0,-0.5);
+    mc_fit->SetParameter(1,1.0);
+    mc_fit->SetParameter(2,1.0);
+    mc_fit->SetParameter(3,1.0);
+    mc_fit->SetParameter(4,1.0);
+    //mc_fit->SetParameter(5,1.0);
+    //mc_fit->SetParameter(6,1.0);
+    betaSpectrum.sm_histogram->Fit("fierz_mc_fit");
+
+    TString pdf_filename = "/data/kevinh/mc/fierz_models_to_fit.pdf";
+    canvas->SaveAs(pdf_filename);
+
     /*
         If you want a fast way to get the combined data spectrums for comparison, I already have it extracted as a ROOT histogram for my own data/MC comparisons.
         You can read the ROOT TFile at:
@@ -141,19 +175,28 @@ int main(int argc, char *argv[]) {
         "/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
 
     TH1F *ucna_data_histogram = (TH1F*)ucna_data_tfile->Get("Combined_Events_E010");
-    ucna_data_histogram->Scale(1/(ucna_data_histogram->GetBinWidth(2)*ucna_data_histogram->Integral()));
-    ucna_data_histogram->Draw("Same");
     //printf("Number of bins in data %d\n", ucna_data_histogram->GetNbinsX());
 
-    TF1 *fit = new TF1("fierz_fit", evaluate, 0, 1000, 2);
-    fit->SetParameter(0,1);
-    fit->SetParameter(1,1);
-    ucna_data_histogram->Fit("fierz_fit");
-    fit->SetLineColor(6);
-    fit->Draw("Same");
+/* Already background subtracted...
+    TH1F *background_histogram = (TH1F*)ucna_data_tfile->Get("Combined_Events_E000");
+    ucna_data_histogram->Add(background_histogram,-1);
+*/
+    // normalize after background subtraction
+    //background_histogram->Draw("");
+    normalize(ucna_data_histogram);
+    ucna_data_histogram->Draw("Same");
 
-    TString pdf_filename = "/data/kevinh/mc/fierz_test.pdf";
-    canvas->SaveAs(pdf_filename);
+    TF1 *fit = new TF1("fierz_fit", evaluate, 0, 1000, 3);
+    fit->SetParameter(0,0.0);
+    fit->SetParameter(1,0.0);
+    fit->SetParameter(2,1.0);
+    ucna_data_histogram->Fit("fierz_fit");
+    double chisq = fit->GetChisquare();
+    double N = fit->GetNDF();
+    printf("Chi^2 / ( N - 1) = %f / %f = %f\n",chisq, N-1, chisq/(N-1));
+
+    TString fit_pdf_filename = "/data/kevinh/mc/fierz_fit_data.pdf";
+    canvas->SaveAs(fit_pdf_filename);
 
 	return 0;
 }
