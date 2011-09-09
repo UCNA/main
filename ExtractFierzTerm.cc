@@ -64,6 +64,13 @@ void normalize(TH1F* hist) {
     hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
 }
 
+void compute_super_ratio(TH1F* S, TH1F* r[2][2] ) {
+    // S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
+    S->Multiply( r[0][0], r[1][1] );
+    S->Divide( r[0][1] );
+    S->Divide( r[1][0] );
+}
+
 int main(int argc, char *argv[]) {
 	
 	// Geant4 MC data scanner object
@@ -116,7 +123,7 @@ int main(int argc, char *argv[]) {
 			// get event classification type. TYPE_IV_EVENT means the event didn't trigger this side.
 			EventType tp = G2P.getEventType(s);
 			// skip non-triggering events, or those outside 50mm position cut (you could add your own custom cuts here, if you cared)
-			if(tp>=TYPE_IV_EVENT || !G2P.passesPositionCut(s))
+			if( tp >= TYPE_IV_EVENT || !G2P.passesPositionCut(s))
 				continue;
 			
 			// print out event info, (simulated) reconstructed true energy and position, comparable to values in data
@@ -174,29 +181,40 @@ int main(int argc, char *argv[]) {
     TFile *ucna_data_tfile = new TFile(
         "/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
 
-    TH1F *ucna_data_histogram = (TH1F*)ucna_data_tfile->Get("Combined_Events_E010");
+    TH1F *ucna_data_histogram[2][2] = {
+        {
+            (TH1F*)ucna_data_tfile->Get("Combined_Events_E010"),
+            (TH1F*)ucna_data_tfile->Get("Combined_Events_E110")
+        }, {
+            (TH1F*)ucna_data_tfile->Get("Combined_Events_W010"),
+            (TH1F*)ucna_data_tfile->Get("Combined_Events_W110")
+        }
+    };
     //printf("Number of bins in data %d\n", ucna_data_histogram->GetNbinsX());
 
-/* Already background subtracted...
-    TH1F *background_histogram = (TH1F*)ucna_data_tfile->Get("Combined_Events_E000");
-    ucna_data_histogram->Add(background_histogram,-1);
-*/
-    // normalize after background subtraction
-    //background_histogram->Draw("");
-    normalize(ucna_data_histogram);
-    ucna_data_histogram->Draw("Same");
+    /* Already background subtracted...
+        TH1F *background_histogram = (TH1F*)ucna_data_tfile->Get("Combined_Events_E000");
+        ucna_data_histogram->Add(background_histogram,-1);
+        // normalize after background subtraction
+        background_histogram->Draw("");
+    */
+    normalize(ucna_data_histogram[0][0]);
+    ucna_data_histogram[0][0]->Draw("Same");
 
     TF1 *fit = new TF1("fierz_fit", evaluate, 0, 1000, 3);
     fit->SetParameter(0,0.0);
     fit->SetParameter(1,0.0);
     fit->SetParameter(2,1.0);
-    ucna_data_histogram->Fit("fierz_fit");
+    ucna_data_histogram[0][0]->Fit("fierz_fit");
     double chisq = fit->GetChisquare();
     double N = fit->GetNDF();
     printf("Chi^2 / ( N - 1) = %f / %f = %f\n",chisq, N-1, chisq/(N-1));
 
     TString fit_pdf_filename = "/data/kevinh/mc/fierz_fit_data.pdf";
     canvas->SaveAs(fit_pdf_filename);
+
+    TH1F *super_ratio_histogram = new TH1F(*(ucna_data_histogram[0][0]));
+    compute_super_ratio(super_ratio_histogram, ucna_data_histogram);
 
 	return 0;
 }
