@@ -39,7 +39,11 @@ class FierzHistogram {
 
 FierzHistogram betaSpectrum(0,1000,400);
 
-double evaluate(double *x, double*p) {
+/**
+ * x[0] : kenetic energy
+ * p[0] : b, fierz term
+ */
+double theoretical_fierz_spectrum(double *x, double*p) {
     double rv = 0;
     //unsigned n = betaSpectrum.sm_histogram->FindBin(p[3]*x[0]*x[0] + p[2]*x[0] - p[1]);        
     unsigned n = betaSpectrum.sm_histogram->FindBin(p[2]*x[0] - p[1]);        
@@ -64,11 +68,19 @@ void normalize(TH1F* hist) {
     hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
 }
 
-void compute_super_ratio(TH1F* S, TH1F* r[2][2] ) {
-    // S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
-    S->Multiply( r[0][0], r[1][1] );
-    S->Divide( r[0][1] );
-    S->Divide( r[1][0] );
+// S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
+TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
+    TH1F *super_ratio_histogram = new TH1F(*(rate_histogram[0][0]));
+    int bins = super_ratio_histogram->GetNbinsX();
+    for (int bin = 0; bin < bins; bin++) {
+        double r[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+        double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
+        super_ratio_histogram->SetBinContent(bin, super_ratio);
+    }
+    return super_ratio_histogram;
 }
 
 int main(int argc, char *argv[]) {
@@ -113,30 +125,32 @@ int main(int argc, char *argv[]) {
 	while(true) {
 		// load next point. If end of data is reached, this will loop back and start at the beginning again.
 		G2P.nextPoint();
+
 		// perform energy calibrations/simulations to fill class variables with correct values for this simulated event
 		G2P.recalibrateEnergy();
 		
-		// do whatever analysis you want on this event.
-        
 		// check the event characteristics on each side
 		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
 			// get event classification type. TYPE_IV_EVENT means the event didn't trigger this side.
-			EventType tp = G2P.getEventType(s);
+			EventType tp = G2P.fType;
+
 			// skip non-triggering events, or those outside 50mm position cut (you could add your own custom cuts here, if you cared)
-			if( tp >= TYPE_IV_EVENT || !G2P.passesPositionCut(s))
+			if(tp>=TYPE_IV_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
 				continue;
 			
 			// print out event info, (simulated) reconstructed true energy and position, comparable to values in data
-			printf("Event on side %c: type=%i, Etrue=%g @ position (%g,%g)\n",sideNames(s),tp,G2P.getEtrue(s),G2P.mwpcs[s].pos[0],G2P.mwpcs[s].pos[1]);
+			printf("Event on side %c: type=%i, Etrue=%g @ position (%g,%g)\n",
+				   sideNames(s), tp, G2P.getEtrue(), G2P.wires[s][X_DIRECTION].center, G2P.wires[s][Y_DIRECTION].center);
+
 			// print out event primary info, only available in simulation
 			printf("\tprimary KE=%g, cos(theta)=%g\n",G2P.ePrim,G2P.costheta);
 
             double energy = G2P.ePrim + electron_mass;
             double fierz_weight = electron_mass / energy;
             if (nSimmed % 2)
-                betaSpectrum.fierz_histogram->Fill(G2P.getEtrue(s), fierz_weight);
+                betaSpectrum.fierz_histogram->Fill(G2P.getEtrue(), fierz_weight);
             else
-                betaSpectrum.sm_histogram->Fill(G2P.getEtrue(s), 1);
+                betaSpectrum.sm_histogram->Fill(G2P.getEtrue(), 1);
 
 			nSimmed++;
 		}
@@ -201,7 +215,7 @@ int main(int argc, char *argv[]) {
     normalize(ucna_data_histogram[0][0]);
     ucna_data_histogram[0][0]->Draw("Same");
 
-    TF1 *fit = new TF1("fierz_fit", evaluate, 0, 1000, 3);
+    TF1 *fit = new TF1("fierz_fit", theoretical_fierz_spectrum, 0, 1000, 3);
     fit->SetParameter(0,0.0);
     fit->SetParameter(1,0.0);
     fit->SetParameter(2,1.0);
@@ -213,8 +227,7 @@ int main(int argc, char *argv[]) {
     TString fit_pdf_filename = "/data/kevinh/mc/fierz_fit_data.pdf";
     canvas->SaveAs(fit_pdf_filename);
 
-    TH1F *super_ratio_histogram = new TH1F(*(ucna_data_histogram[0][0]));
-    compute_super_ratio(super_ratio_histogram, ucna_data_histogram);
+    TH1F *super_ratio_histogram = compute_super_ratio(ucna_data_histogram);
 
 	return 0;
 }

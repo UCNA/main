@@ -40,12 +40,12 @@ Detectors = RunManager.o Subsystem.o CoTracker.o Trigger.o BetaScint.o LEDTracke
 	WirechamberReconstruction.o Wirechamber.o MWPC.o Detector.o EventParser.o
 
 Calibration = AnalysisDB.o RunsDB.o PositionResponse.o SimNonlinearity.o SimCalibrations.o \
-	EnergyCalibrator.o CalDBSQL.o GainStabilizer.o EvisConverter.o
+	EnergyCalibrator.o CalDBSQL.o GainStabilizer.o EvisConverter.o ManualInfo.o
 	
-Analysis = PostAnalyzer.o PostOfficialAnalyzer.o PreSelector.o SpectrumHistos.o KurieFitter.o \
-	PeakTracker.o EndpointStudy.o Triad.o ReSource.o EfficCurve.o G4toPMT.o
+Analysis = TChainScanner.o ProcessedDataScanner.o PostAnalyzer.o PostOfficialAnalyzer.o G4toPMT.o DataSource.o \
+	SpectrumHistos.o KurieFitter.o PeakTracker.o EndpointStudy.o Triad.o ReSource.o EfficCurve.o BetaSpectrum.o
 
-Studies = PositionStudies.o AsymmetryErrors.o PlotMakers.o SRAsym.o CorrelationStudies.o AsymHists.o
+Studies = PlotMakers.o SRAsym.o AsymHists.o
 
 objects = $(Utils) $(Detectors) $(Calibration) $(Analysis) $(Studies)
 
