@@ -128,6 +128,26 @@ TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
     return asymmetry_histogram;
 }
 
+TH1F* compute_rate_function(TH1F* rate_histogram[2][2], double (*rate_function)(double r[2][2])) 
+{
+    TH1F *out_histogram = new TH1F(*(rate_histogram[0][0]));
+    int bins = out_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+2; bin++) {
+        double r[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+        double value = rate_function(r);
+        out_histogram->SetBinContent(bin, value);
+        out_histogram->SetBinError(bin, 0.0);
+    }
+    return out_histogram;
+}
+
+double bonehead_sum(double r[2][2]) {
+    return r[0][0] + r[0][1] + r[1][0] + r[1][1];
+}
+
 int main(int argc, char *argv[]) {
 	
 	// Geant4 MC data scanner object
@@ -135,6 +155,7 @@ int main(int argc, char *argv[]) {
 	// use data from these MC files (most recent unpolarized beta decay, includes Fermi function spectrum correction)
 	// note wildcard * in filename; MC output is split up over many files, but G2P will TChain them together
 	G2P.addFile("/home/mmendenhall/geant4/output/Baseline_20110826_neutronBetaUnpol_geomC/analyzed_*.root");
+	//G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined");
 	
 	// PMT Calibrator loads run-specific energy calibrations info for selected run (14111)
 	// and uses default Calibrations DB connection to most up-to-date though possibly unstable "mpm_debug"
@@ -149,7 +170,7 @@ int main(int argc, char *argv[]) {
 	// set the data scanner to use these PMT Calibrators
 	G2P.setGenerators(&PGenE,&PGenW);
 
-	unsigned int nToSim = 1E4;	// how many triggering events to simulate
+	unsigned int nToSim = 1E3;	// how many triggering events to simulate
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	
     /*
@@ -225,8 +246,8 @@ int main(int argc, char *argv[]) {
 
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
     mc.fierz_super_sum_histogram->SetLineColor(3);
-    mc.sm_super_sum_histogram->SetLineColor(4);
     mc.fierz_super_sum_histogram->Draw("");
+    mc.sm_super_sum_histogram->SetLineColor(1);
     mc.sm_super_sum_histogram->Draw("Same");
 
     // fit a smooth model to the mc
@@ -257,6 +278,7 @@ int main(int argc, char *argv[]) {
 
     TFile *ucna_data_tfile = new TFile(
         "/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
+	    //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined.root");
 
     TH1F *ucna_data_histogram[2][2] = {
         {
@@ -304,16 +326,26 @@ int main(int argc, char *argv[]) {
     TString asymmetry_pdf_filename = "/data/kevinh/mc/asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
 
-    // Compute the super sum
+    // Compute the super sums
     TH1F *super_sum_histogram = compute_super_sum(ucna_data_histogram);
     normalize(super_sum_histogram);
-    mc.sm_super_sum_histogram->Draw();
-    super_sum_histogram->Draw("same");
+    super_sum_histogram->Draw();
 
-    TLegend * legend = new TLegend(0.6,0.8,0.7,0.65);
+    // Compute the bonehead sum
+    TH1F *bonehead_sum_histogram = compute_rate_function(ucna_data_histogram, &bonehead_sum);
+    normalize(bonehead_sum_histogram);
+    bonehead_sum_histogram->SetLineColor(4);
+    bonehead_sum_histogram->Draw("same");
+    
+    // Draw Monte Carlo
+    mc.sm_super_sum_histogram->SetLineColor(1);
+    mc.sm_super_sum_histogram->Draw("same *E1");
+
+    // lets make a pretty legend
+    TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
     legend->AddEntry(super_sum_histogram, "Super sum", "l");
     legend->AddEntry(mc.sm_super_sum_histogram, "Monte Carlo", "l");
-    //legend->AddEntry(mc.sm_super_sum_histogram, "Bonehead sum", "l");
+    legend->AddEntry(bonehead_sum_histogram, "Bonehead sum", "l");
     legend->SetTextSize(0.04);
     legend->SetBorderSize(0);
     legend->Draw();
