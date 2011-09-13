@@ -109,6 +109,25 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2] ) {
     return super_sum_histogram;
 }
 
+TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
+    TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
+    int bins = asymmetry_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+2; bin++) {
+        double r[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+        double sqrt_super_ratio = TMath::Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
+        if ( TMath::IsNaN(sqrt_super_ratio) ) 
+            sqrt_super_ratio = 0;
+        double asymmetry = (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
+        asymmetry_histogram->SetBinContent(bin, asymmetry);
+        printf("Setting bin content for super sum bin %d, to %f\n", bin, asymmetry);
+        asymmetry_histogram->SetBinError(bin, 0.0);
+    }
+    return asymmetry_histogram;
+}
+
 int main(int argc, char *argv[]) {
 	
 	// Geant4 MC data scanner object
@@ -273,11 +292,19 @@ int main(int argc, char *argv[]) {
     TString fit_pdf_filename = "/data/kevinh/mc/fierz_fit_data.pdf";
     canvas->SaveAs(fit_pdf_filename);
 
+    // compute and plot the super ratio
     TH1F *super_ratio_histogram = compute_super_ratio(ucna_data_histogram);
     super_ratio_histogram->Draw();
     TString super_ratio_pdf_filename = "/data/kevinh/mc/super_ratio_data.pdf";
     canvas->SaveAs(super_ratio_pdf_filename);
 
+    // compute and plot the super ratio asymmetry 
+    TH1F *asymmetry_histogram = compute_asymmetry(ucna_data_histogram);
+    asymmetry_histogram->Draw();
+    TString asymmetry_pdf_filename = "/data/kevinh/mc/asymmetry_data.pdf";
+    canvas->SaveAs(asymmetry_pdf_filename);
+
+    // Compute the super sum
     TH1F *super_sum_histogram = compute_super_sum(ucna_data_histogram);
     normalize(super_sum_histogram);
     mc.sm_super_sum_histogram->Draw();
@@ -293,7 +320,6 @@ int main(int argc, char *argv[]) {
 
     TString super_sum_pdf_filename = "/data/kevinh/mc/super_sum_data.pdf";
     canvas->SaveAs(super_sum_pdf_filename);
-
 
 	return 0;
 }
