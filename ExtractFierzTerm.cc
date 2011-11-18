@@ -4,7 +4,8 @@
 #include <TH1F.h>
 #include <TLegend.h>
 
-static double electron_mass = 510.9989; // needed for the physics pf Fierz interference
+static double electron_mass = 510.9989; // needed for the physics of Fierz interference
+static unsigned nToSim = 4E4;	// how many triggering events to simulate
 
 class FierzHistogram {
   public: 
@@ -43,6 +44,7 @@ class FierzHistogram {
     }
 };
 
+// ug. needs to be static
 FierzHistogram mc(0,1000,40);
 
 /**
@@ -102,9 +104,10 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2] ) {
         double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
         if ( TMath::IsNaN(super_sum) ) 
             super_sum = 0;
-        super_sum_histogram->SetBinContent(bin, super_sum);
+
         printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
-        super_sum_histogram->SetBinError(bin, 0.0);
+        super_sum_histogram->SetBinContent(bin, super_sum);
+        super_sum_histogram->SetBinError(bin, super_sum);
     }
     return super_sum_histogram;
 }
@@ -128,7 +131,8 @@ TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
     return asymmetry_histogram;
 }
 
-TH1F* compute_rate_function(TH1F* rate_histogram[2][2], double (*rate_function)(double r[2][2])) 
+TH1F* compute_rate_function(TH1F* rate_histogram[2][2], 
+                            double (*rate_function)(double r[2][2]))
 {
     TH1F *out_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = out_histogram->GetNbinsX();
@@ -137,15 +141,79 @@ TH1F* compute_rate_function(TH1F* rate_histogram[2][2], double (*rate_function)(
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+
         double value = rate_function(r);
         out_histogram->SetBinContent(bin, value);
-        out_histogram->SetBinError(bin, 0.0);
     }
     return out_histogram;
 }
 
+TH1F* compute_rate_function(TH1F* rate_histogram[2][2], 
+                            double (*rate_function)(double r[2][2]),
+                            double (*error_function)(double r[2][2])) 
+{
+    TH1F *out_histogram = new TH1F(*(rate_histogram[0][0]));
+    int bins = out_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+2; bin++) {
+        double r[2][2];
+        double e[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++) {
+                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+                e[side][spin] = rate_histogram[side][spin]->GetBinError(bin);
+            }
+        double value = 0;
+        double error = 0; 
+
+        if (rate_function)
+            value = rate_function(r);
+        if (error_function)
+            error = error_function(e);
+
+        out_histogram->SetBinContent(bin, value);
+        out_histogram->SetBinError(bin, error);
+    }
+    return out_histogram;
+}
+
+/*
+TH1F* compute_rate_error_function(TH1F* rate_histogram[2][2], 
+                                  double (*rate_error_function)(double r[2][2])) 
+{
+    TH1F *out_histogram = new TH1F(*(rate_histogram[0][0]));
+    int bins = out_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+2; bin++) {
+        double sr[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                sr[side][spin] = rate_histogram[side][spin]->GetBinError(bin);
+    }
+    return out_histogram;
+}
+*/
+
 double bonehead_sum(double r[2][2]) {
     return r[0][0] + r[0][1] + r[1][0] + r[1][1];
+}
+
+double bonehead_asymmetry(double r[2][2]) {
+    return (r[0][0] - r[0][1])/(r[1][0] + r[1][1]);
+}
+
+double super_ratio_asymmetry(double r[2][2]) {
+    double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
+    double sqrt_super_ratio = TMath::Sqrt(super_ratio);
+    if ( TMath::IsNaN(sqrt_super_ratio) ) 
+        sqrt_super_ratio = 0;
+    return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
+}
+
+double super_sum_error(double r[2][2]) {
+    double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
+    double sqrt_super_ratio = TMath::Sqrt(super_ratio);
+    if ( TMath::IsNaN(sqrt_super_ratio) ) 
+        sqrt_super_ratio = 0;
+    return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
 }
 
 int main(int argc, char *argv[]) {
@@ -154,23 +222,29 @@ int main(int argc, char *argv[]) {
 	G4toPMT G2P;
 	// use data from these MC files (most recent unpolarized beta decay, includes Fermi function spectrum correction)
 	// note wildcard * in filename; MC output is split up over many files, but G2P will TChain them together
-	G2P.addFile("/home/mmendenhall/geant4/output/Baseline_20110826_neutronBetaUnpol_geomC/analyzed_*.root");
+	G2P.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_1.root");
+	//G2P.addFile("/home/mmendenhall/geant4/output/Baseline_20110826_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined");
+    //G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
 	
 	// PMT Calibrator loads run-specific energy calibrations info for selected run (14111)
 	// and uses default Calibrations DB connection to most up-to-date though possibly unstable "mpm_debug"
-	RunNum rn = 14111;
-	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
+	RunNum run_number = 14111;
+	PMTCalibrator PCal(run_number, CalDBSQL::getCDB());
 	
 	// Energy simulators for both sides using same PMT Calibrator
+	/*
 	PMTGenerator PGenE;
-	PGenE.addCalibrator(&PCal);
+	PGenE.setCalibrator(&PCal);
 	PMTGenerator PGenW;
-	PGenW.addCalibrator(&PCal);
+	PGenW.setCalibrator(&PCal);
+	*/
+	//PMTGenerator PGen;
+	//PGen.setCalibrator(&PCal);
 	// set the data scanner to use these PMT Calibrators
-	G2P.setGenerators(&PGenE,&PGenW);
+	//G2P.setGenerators(&PGenE,&PGenW);
+	G2P.setCalibrator(PCal);
 
-	unsigned int nToSim = 1E3;	// how many triggering events to simulate
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	
     /*
@@ -205,7 +279,8 @@ int main(int argc, char *argv[]) {
 			
 			// print out event info, (simulated) reconstructed true energy and position, comparable to values in data
 			printf("Event on side %c: type=%i, Etrue=%g @ position (%g,%g), %d\n",
-				   sideNames(s), tp, G2P.getEtrue(), G2P.wires[s][X_DIRECTION].center, G2P.wires[s][Y_DIRECTION].center, (unsigned)G2P.afp);
+				   sideNames(s), tp, G2P.getEtrue(), G2P.wires[s][X_DIRECTION].center, 
+				   G2P.wires[s][Y_DIRECTION].center, (unsigned)G2P.getAFP());
 
 			// print out event primary info, only available in simulation
 			printf("\tprimary KE=%g, cos(theta)=%g\n",G2P.ePrim,G2P.costheta);
@@ -277,8 +352,16 @@ int main(int argc, char *argv[]) {
     */
 
     TFile *ucna_data_tfile = new TFile(
-        "/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
+        //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
 	    //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined.root");
+        //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
+		"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/OctetAsym_10keV_Bins.root");
+	if (ucna_data_tfile->IsZombie())
+	{
+		//printf("File "+beta_filename+"not found.\n");
+		std::cout << "File not found." << std::endl;
+		exit(1);
+	}
 
     TH1F *ucna_data_histogram[2][2] = {
         {
@@ -298,7 +381,14 @@ int main(int argc, char *argv[]) {
         background_histogram->Draw("");
     */
     //normalize(ucna_data_histogram[0][0]);
-    ucna_data_histogram[0][0]->Draw("Same");
+    if (ucna_data_histogram[0][0] == NULL)
+	{
+		puts("histogram is null. Aborting...");
+		exit(1);
+	}
+
+	
+	ucna_data_histogram[0][0]->Draw("Same");
 
     /*
     TF1 *fit = new TF1("fierz_fit", theoretical_fierz_spectrum, 0, 1000, 3);
@@ -329,17 +419,19 @@ int main(int argc, char *argv[]) {
     // Compute the super sums
     TH1F *super_sum_histogram = compute_super_sum(ucna_data_histogram);
     normalize(super_sum_histogram);
-    super_sum_histogram->Draw();
+    super_sum_histogram->SetLineColor(2);
+    super_sum_histogram->Draw("");
 
     // Compute the bonehead sum
     TH1F *bonehead_sum_histogram = compute_rate_function(ucna_data_histogram, &bonehead_sum);
     normalize(bonehead_sum_histogram);
-    bonehead_sum_histogram->SetLineColor(4);
+    bonehead_sum_histogram->SetLineColor(45);
     bonehead_sum_histogram->Draw("same");
     
     // Draw Monte Carlo
     mc.sm_super_sum_histogram->SetLineColor(1);
-    mc.sm_super_sum_histogram->Draw("same *E1");
+    mc.sm_super_sum_histogram->SetMarkerStyle(4);
+    mc.sm_super_sum_histogram->Draw("same p0");
 
     // lets make a pretty legend
     TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
@@ -350,8 +442,17 @@ int main(int argc, char *argv[]) {
     legend->SetBorderSize(0);
     legend->Draw();
 
+    // save the data and Mote Carlo plots
     TString super_sum_pdf_filename = "/data/kevinh/mc/super_sum_data.pdf";
     canvas->SaveAs(super_sum_pdf_filename);
+
+    // compute little b factor
+    TH1F *fierz_ratio_histogram = new TH1F(*super_sum_histogram);
+    fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
+    fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
+    fierz_ratio_histogram->Draw();
+    TString fierz_ratio_pdf_filename = "/data/kevinh/mc/fierz_ratio.pdf";
+    canvas->SaveAs(fierz_ratio_pdf_filename);
 
 	return 0;
 }

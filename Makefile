@@ -33,19 +33,19 @@ endif
 
 VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:Detectors/:MathUtils/:Calibration/:Analysis/:Studies/
 
-Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o CGraph.o GraphUtils.o MultiGaus.o TagCounter.o \
-	Enums.o Types.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RData.o AutoThreader.o
+Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
+	Enums.o Types.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RData.o
 
 Detectors = RunManager.o Subsystem.o CoTracker.o Trigger.o BetaScint.o LEDTracker.o MuonVeto.o \
-	WirechamberReconstruction.o Wirechamber.o MWPC.o Detector.o EventParser.o
+	WirechamberReconstruction.o Wirechamber.o MWPC.o EventParser.o
 
-Calibration = AnalysisDB.o RunsDB.o PositionResponse.o SimNonlinearity.o SimCalibrations.o \
-	EnergyCalibrator.o CalDBSQL.o GainStabilizer.o EvisConverter.o ManualInfo.o
+Calibration = PositionResponse.o SimNonlinearity.o PMTGenerator.o \
+	EnergyCalibrator.o WirechamberCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o ManualInfo.o
 	
-Analysis = TChainScanner.o ProcessedDataScanner.o PostAnalyzer.o PostOfficialAnalyzer.o G4toPMT.o DataSource.o \
-	SpectrumHistos.o KurieFitter.o PeakTracker.o EndpointStudy.o Triad.o ReSource.o EfficCurve.o BetaSpectrum.o
+Analysis = TChainScanner.o ProcessedDataScanner.o PostAnalyzer.o PostOfficialAnalyzer.o G4toPMT.o TH1toPMT.o DataSource.o \
+	SpectrumHistos.o KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o BetaSpectrum.o
 
-Studies = PlotMakers.o SRAsym.o AsymHists.o
+Studies = PlotMakers.o SRAsym.o PositionStudies.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o
 
 objects = $(Utils) $(Detectors) $(Calibration) $(Analysis) $(Studies)
 
@@ -54,21 +54,24 @@ all:
 
 UCNAnalyzer: Analyzer.cpp $(objects)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) Analyzer.cpp $(objects) -o UCNAnalyzer
-	
-PostSimulator: PostSimulator.cpp $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) PostSimulator.cpp $(objects) -o PostSimulator
 
 CalibratorExample: CalibratorExample.cpp $(objects)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) CalibratorExample.cpp $(objects) -o CalibratorExample
 
 DataScannerExample: DataScannerExample.cc $(objects)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) DataScannerExample.cc $(objects) -o DataScannerExample
+
+OctetAnalyzerExample: OctetAnalyzerExample.cc $(objects)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/OctetAnalyzerExample.cc $(objects) -o OctetAnalyzerExample
 	
 ExtractFierzTerm: ExtractFierzTerm.cc $(objects)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) ExtractFierzTerm.cc $(objects) -o ExtractFierzTerm
 	
 QCalc: FPNCalc.cc $(Utils)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) IOUtils/FPNCalc.cc $(objects) -o QCalc
+	
+FierzOctetAnalyzer: FierzOctetAnalyzer.cc $(objects)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/FierzOctetAnalyzer.cc $(objects) -o FierzOctetAnalyzer
 	
 #
 # documentation via Doxygen
@@ -86,8 +89,9 @@ latex/ : documentationConfig
 #
 .PHONY: clean
 clean:
-	-rm UCNAnalyzer $(objects)
-	-rm -r *.dSYM
-	-rm -r latex/
-	-rm -r html/
+	-rm -f UCNAnalyzer OctetAnalyzerExample DataScannerExample CalibratorExample ExtractFierzTerm Analyzer
+	-rm -f *.o
+	-rm -rf *.dSYM
+	-rm -rf latex/
+	-rm -rf html/
 	
