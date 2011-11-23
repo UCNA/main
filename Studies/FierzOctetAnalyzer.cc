@@ -27,9 +27,11 @@ void FierzOctetAnalyzer::makePlots() {
 	// draw the asymmetry to "Wirechamber_Energy_Asymmetry.pdf" in this analyzer's base directory
 	hAnodeSR->Draw();
 	printCanvas("Wirechamber_Energy_Asymmetry");
+
 	// also draw the Super Sum
 	hAnodeSS->Draw();
 	printCanvas("Wirechamber_Energy_SuperSum");
+
 	// and draw the raw spectra (with both sides / AFP states in same plot), in their own subfolder "MWPC_Energy"
 	drawQuadSides(qAnodeSpectrum[EAST],qAnodeSpectrum[WEST],true,"MWPC_Energy");
 }
@@ -37,10 +39,12 @@ void FierzOctetAnalyzer::makePlots() {
 void FierzOctetAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
 	// re-cast to correct type
 	FierzOctetAnalyzer& dat = (FierzOctetAnalyzer&)OAdata;
+
 	// scale Super-Sum by simulation factor draw comparison with data (red=data, blue=MC)
 	hAnodeSS->Scale(simfactor);
 	drawHistoPair(dat.hAnodeSS,hAnodeSS);
 	printCanvas("DataComparison/Wirechamber_Energy_SuperSum");
+
 	// same for Super-Ratio, except normalization is not needed
 	drawHistoPair(dat.hAnodeSR,hAnodeSR);
 	printCanvas("DataComparison/Wirechamber_Energy_Asymmetry");
@@ -58,19 +62,21 @@ int main(int argc, char *argv[]) {
 	
 	gStyle->SetOptStat("e");	
 		
-	// environment variable "UCNA_ANALYSIS_PLOTS_DIR" needs to be set to an ouput directory where you keep analysis results
+	// environment variable "UCNA_ANALYSIS_OUTPUT_DIR" needs to be set to an ouput directory where you keep analysis results
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR"));
+
 	// after running once, we can use the results for errorbar estimation in low-count background bins on later scans
-	FierzOctetAnalyzer::processedLocation = OM.basePath+"/Anode_Asymmetry_Example/Anode_Asymmetry_Example";
+	FierzOctetAnalyzer::processedLocation = OM.basePath+"/Fierz_Processed_Analysis/test_output";
 
 	if(string(argv[1])=="scan") {
 		
 		// results will be placed in "Anode_Asymmetry_Example/" subfolder of base directory
-		FierzOctetAnalyzer OAE(&OM,"Anode_Asymmetry_Example");
+		FierzOctetAnalyzer OAE(&OM,"Fierz_Processed_Analysis");
 		
 		// get list of octets to process, from file located at "UCNA_OCTET_LIST"
 		// (I use ucn:/home/mmendenhall/mpmAnalyzer/SummaryData/OctetList/OctetList.txt)
 		vector<Octet> octs = Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST")));
+
 		// for this example, limit to first three octets
 		while(octs.size() > 3)
 			octs.pop_back();
@@ -86,6 +92,7 @@ int main(int argc, char *argv[]) {
 		// and set up a simulation data source from neutron beta decay simulation
 		G4toPMT simData;
 		simData.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+
 		// point the simulation cloner to the real data; clone equal amounts of counts where not already simulated within the past hour
 		simuClone(OM.basePath+"/Anode_Asymmetry_Example", OAE_Sim, simData, 1.0, 3600);
 		
