@@ -14,15 +14,15 @@ void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
 		//hAnodeSpectrum[PDS.fSide]->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
-		hPMTSpectrum[PDS.fSide]->Fill(PDS.scints[PDS.fSide].energy.x,weight);
+		hPMTSpectrum[PDS.fSide]->Fill(PDS.scints[PDS.fSide].energy.x, weight);
 }
 
 void FierzOctetAnalyzer::calculateResults() {
 	// form (blinded) super-ratio and super-sum of anode spectra
-	hAnodeSR = (TH1F*)calculateSR("Full_Energy_Asymmetry",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
+	hAnodeSR = (TH1F*)calculateSR("Full_Energy_Asymmetry", qAnodeSpectrum[EAST], qAnodeSpectrum[WEST]);
 	hAnodeSR->SetMinimum(-0.20);
 	hAnodeSR->SetMaximum(0.0);
-	hAnodeSS = (TH1F*)calculateSuperSum("Full_Energy_SuperSum",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
+	hAnodeSS = (TH1F*)calculateSuperSum("Full_Energy_SuperSum", qAnodeSpectrum[EAST], qAnodeSpectrum[WEST]);
 }
 
 void FierzOctetAnalyzer::makePlots() {

@@ -5,7 +5,8 @@
 #include "RunAccumulator.hh"
 #include "PathUtils.hh"
 
-using namespace std;
+using std::cout;
+using std::endl;
 
 /// minimalist example subclass of OctetAnalyzer: generates super-ratio and super-sum of wirechamber energy spectra
 class FierzOctetAnalyzer: public OctetAnalyzer {
