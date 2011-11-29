@@ -5,32 +5,34 @@
 FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, const string& inflname): OctetAnalyzer(pnt,nm,inflname) {
 	// set up histograms of interest
 	for(Side s = EAST; s <= WEST; s = nextSide(s))
-		qAnodeSpectrum[s] = registerCoreHist("hAnode", "Wirechamber Energy", 100, 0, 20, s, &hAnodeSpectrum[s]);
+		//qAnodeSpectrum[s] = registerCoreHist("hAnode", "Full Energy", 100, 0, 20, s, &hAnodeSpectrum[s]);
+		qPMTSpectrum[s] = registerCoreHist("hPMT", "PMT Energy", 100, 0, 20, s, &hPMTSpectrum[s]);
 }
 
 void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	// fill wirechamber spectrum for Type 0 beta events on each side
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
-		hAnodeSpectrum[PDS.fSide]->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
+		//hAnodeSpectrum[PDS.fSide]->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
+		hPMTSpectrum[PDS.fSide]->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
 }
 
 void FierzOctetAnalyzer::calculateResults() {
 	// form (blinded) super-ratio and super-sum of anode spectra
-	hAnodeSR = (TH1F*)calculateSR("Wirechamber_Energy_Asymmetry",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
+	hAnodeSR = (TH1F*)calculateSR("Full_Energy_Asymmetry",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
 	hAnodeSR->SetMinimum(-0.20);
 	hAnodeSR->SetMaximum(0.0);
-	hAnodeSS = (TH1F*)calculateSuperSum("Wirechamber_Energy_SuperSum",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
+	hAnodeSS = (TH1F*)calculateSuperSum("Full_Energy_SuperSum",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
 }
 
 void FierzOctetAnalyzer::makePlots() {
-	// draw the asymmetry to "Wirechamber_Energy_Asymmetry.pdf" in this analyzer's base directory
+	// draw the asymmetry to "Full_Energy_Asymmetry.pdf" in this analyzer's base directory
 	hAnodeSR->Draw();
-	printCanvas("Wirechamber_Energy_Asymmetry");
+	printCanvas("Full_Energy_Asymmetry");
 
 	// also draw the Super Sum
 	hAnodeSS->Draw();
-	printCanvas("Wirechamber_Energy_SuperSum");
+	printCanvas("Full_Energy_SuperSum");
 
 	// and draw the raw spectra (with both sides / AFP states in same plot), in their own subfolder "MWPC_Energy"
 	drawQuadSides(qAnodeSpectrum[EAST],qAnodeSpectrum[WEST],true,"MWPC_Energy");
@@ -43,11 +45,11 @@ void FierzOctetAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor
 	// scale Super-Sum by simulation factor draw comparison with data (red=data, blue=MC)
 	hAnodeSS->Scale(simfactor);
 	drawHistoPair(dat.hAnodeSS,hAnodeSS);
-	printCanvas("DataComparison/Wirechamber_Energy_SuperSum");
+	printCanvas("DataComparison/Full_Energy_SuperSum");
 
 	// same for Super-Ratio, except normalization is not needed
 	drawHistoPair(dat.hAnodeSR,hAnodeSR);
-	printCanvas("DataComparison/Wirechamber_Energy_Asymmetry");
+	printCanvas("DataComparison/Full_Energy_Asymmetry");
 }
 
 string FierzOctetAnalyzer::processedLocation = "";	// set this later depending on situtation
