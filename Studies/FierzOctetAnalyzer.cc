@@ -14,7 +14,7 @@ void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
 		//hAnodeSpectrum[PDS.fSide]->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
-		hPMTSpectrum[PDS.fSide]->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
+		hPMTSpectrum[PDS.fSide]->Fill(PDS.scints[PDS.fSide].energy.x,weight);
 }
 
 void FierzOctetAnalyzer::calculateResults() {
