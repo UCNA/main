@@ -35,10 +35,12 @@ public:
 	/// MC/Data comparison routine
 	virtual void compareMCtoData(RunAccumulator& OAdata, float simfactor);
 	
+	/*
 	quadHists qAnodeSpectrum[2];	//< set of histograms for extracting anode spectrum on each side
 	TH1F* hAnodeSpectrum[2];		//< convenient pointer for currently active histogram
 	TH1F* hAnodeSR;					//< super-ratio asymmetry of anode data
 	TH1F* hAnodeSS;					//< super-sum of anode data
+*/
 
 	quadHists qFullEnergySpectrum[2];		//< set of histograms for extracting anode spectrum on each side
 	TH1F* hFullEnergySpectrum[2];			//< convenient pointer for currently active histogram
