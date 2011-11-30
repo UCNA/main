@@ -6,7 +6,7 @@ FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, con
 	// set up histograms of interest
 	for(Side s = EAST; s <= WEST; s = nextSide(s))
 		//qAnodeSpectrum[s] = registerCoreHist("hAnode", "Full Energy", 100, 0, 20, s, &hAnodeSpectrum[s]);
-		qPMTSpectrum[s] = registerCoreHist("hPMT", "PMT Energy", 100, 0, 20, s, &hPMTSpectrum[s]);
+		qFullEnergySpectrum[s] = registerCoreHist("hFullEnergy", "PMT Energy", 100, 0, 20, s, &hFullEnergySpectrum[s]);
 }
 
 void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
@@ -14,15 +14,15 @@ void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
 		//hAnodeSpectrum[PDS.fSide]->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
-		hPMTSpectrum[PDS.fSide]->Fill(PDS.scints[PDS.fSide].energy.x, weight);
+		hFullEnergySpectrum[PDS.fSide]->Fill(PDS.scints[PDS.fSide].energy.x, weight);
 }
 
 void FierzOctetAnalyzer::calculateResults() {
 	// form (blinded) super-ratio and super-sum of anode spectra
-	hAnodeSR = (TH1F*)calculateSR("Full_Energy_Asymmetry", qAnodeSpectrum[EAST], qAnodeSpectrum[WEST]);
-	hAnodeSR->SetMinimum(-0.20);
-	hAnodeSR->SetMaximum(0.0);
-	hAnodeSS = (TH1F*)calculateSuperSum("Full_Energy_SuperSum", qAnodeSpectrum[EAST], qAnodeSpectrum[WEST]);
+	hFullEnergySR = (TH1F*)calculateSR("Full_Energy_Asymmetry", qFullEnergySpectrum[EAST], qFullEnergySpectrum[WEST]);
+	hFullEnergySR->SetMinimum(-0.20);
+	hFullEnergySR->SetMaximum(0.0);
+	hFullEnergySS = (TH1F*)calculateSuperSum("Full_Energy_SuperSum", qFullEnergySpectrum[EAST], qAnodeSpectrum[WEST]);
 }
 
 void FierzOctetAnalyzer::makePlots() {

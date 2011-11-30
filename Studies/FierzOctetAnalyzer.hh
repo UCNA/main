@@ -5,8 +5,7 @@
 #include "RunAccumulator.hh"
 #include "PathUtils.hh"
 
-using std::cout;
-using std::endl;
+using namespace std;
 
 /// minimalist example subclass of OctetAnalyzer: generates super-ratio and super-sum of wirechamber energy spectra
 class FierzOctetAnalyzer: public OctetAnalyzer {
@@ -40,6 +39,11 @@ public:
 	TH1F* hAnodeSpectrum[2];		//< convenient pointer for currently active histogram
 	TH1F* hAnodeSR;					//< super-ratio asymmetry of anode data
 	TH1F* hAnodeSS;					//< super-sum of anode data
+
+	quadHists qFullEnergySpectrum[2];		//< set of histograms for extracting anode spectrum on each side
+	TH1F* hFullEnergySpectrum[2];			//< convenient pointer for currently active histogram
+	TH1F* hFullEnergySR;					//< super-ratio asymmetry of anode data
+	TH1F* hFullEnergySS;					//< super-sum of anode data
 };
 
 #endif
