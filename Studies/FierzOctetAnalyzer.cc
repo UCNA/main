@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR"));
 
 	// after running once, we can use the results for errorbar estimation in low-count background bins on later scans
-	FierzOctetAnalyzer::processedLocation = OM.basePath+"/Fierz_Processed_Analysis/test_output";
+	FierzOctetAnalyzer::processedLocation = OM.basePath+"/Fierz_Processed_Analysis/Fierz_Processed_Analysis";
 
 	if(string(argv[1])=="scan") {
 		
