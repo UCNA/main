@@ -3,9 +3,11 @@
 #include "CalDBSQL.hh"
 #include <TH1F.h>
 #include <TLegend.h>
+//#include <TFitResult.h> // v5.27
+#include <TF1.h>
 
 static double electron_mass = 510.9989; // needed for the physics of Fierz interference
-static unsigned nToSim = 4E4;	// how many triggering events to simulate
+static unsigned nToSim = 1E6;	// how many triggering events to simulate
 
 class FierzHistogram {
   public: 
@@ -45,7 +47,7 @@ class FierzHistogram {
 };
 
 // ug. needs to be static
-FierzHistogram mc(0,1000,40);
+FierzHistogram mc(0,1000,100);
 
 /**
  * x[0] : kenetic energy
@@ -107,7 +109,7 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2] ) {
 
         printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
         super_sum_histogram->SetBinContent(bin, super_sum);
-        super_sum_histogram->SetBinError(bin, super_sum);
+        super_sum_histogram->SetBinError(bin, TMath::Sqrt(super_sum));
     }
     return super_sum_histogram;
 }
@@ -213,7 +215,7 @@ double super_sum_error(double r[2][2]) {
     double sqrt_super_ratio = TMath::Sqrt(super_ratio);
     if ( TMath::IsNaN(sqrt_super_ratio) ) 
         sqrt_super_ratio = 0;
-    return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
+    //return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
 }
 
 int main(int argc, char *argv[]) {
@@ -278,12 +280,14 @@ int main(int argc, char *argv[]) {
 				continue;
 			
 			// print out event info, (simulated) reconstructed true energy and position, comparable to values in data
+			#ifdef DEBUG
 			printf("Event on side %c: type=%i, Etrue=%g @ position (%g,%g), %d\n",
 				   sideNames(s), tp, G2P.getEtrue(), G2P.wires[s][X_DIRECTION].center, 
 				   G2P.wires[s][Y_DIRECTION].center, (unsigned)G2P.getAFP());
 
 			// print out event primary info, only available in simulation
 			printf("\tprimary KE=%g, cos(theta)=%g\n",G2P.ePrim,G2P.costheta);
+			#endif 
 
             /*
             double energy = G2P.ePrim + electron_mass;
@@ -319,7 +323,10 @@ int main(int argc, char *argv[]) {
             normalize(mc.sm_histogram[side][spin]);
         }
 
+
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
+
+	mc.fierz_super_sum_histogram->SetStats(0);
     mc.fierz_super_sum_histogram->SetLineColor(3);
     mc.fierz_super_sum_histogram->Draw("");
     mc.sm_super_sum_histogram->SetLineColor(1);
@@ -365,11 +372,15 @@ int main(int argc, char *argv[]) {
 
     TH1F *ucna_data_histogram[2][2] = {
         {
-            (TH1F*)ucna_data_tfile->Get("Combined_Events_E010"),
-            (TH1F*)ucna_data_tfile->Get("Combined_Events_E110")
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E010"),
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E110")
+            (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_E_Off"),
+            (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_E_On")
         }, {
-            (TH1F*)ucna_data_tfile->Get("Combined_Events_W010"),
-            (TH1F*)ucna_data_tfile->Get("Combined_Events_W110")
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W010"),
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W110")
+            (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_W_Off"),
+            (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_W_On")
         }
     };
     //printf("Number of bins in data %d\n", ucna_data_histogram->GetNbinsX());
@@ -388,8 +399,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	
-	ucna_data_histogram[0][0]->Draw("Same");
-
     /*
     TF1 *fit = new TF1("fierz_fit", theoretical_fierz_spectrum, 0, 1000, 3);
     fit->SetParameter(0,0.0);
@@ -422,12 +431,12 @@ int main(int argc, char *argv[]) {
     super_sum_histogram->SetLineColor(2);
     super_sum_histogram->Draw("");
 
-    // Compute the bonehead sum
-    TH1F *bonehead_sum_histogram = compute_rate_function(ucna_data_histogram, &bonehead_sum);
+    // Compute the bonehead sum 
+	/* TH1F *bonehead_sum_histogram = compute_rate_function(ucna_data_histogram, &bonehead_sum);
     normalize(bonehead_sum_histogram);
     bonehead_sum_histogram->SetLineColor(45);
-    bonehead_sum_histogram->Draw("same");
-    
+    bonehead_sum_histogram->Draw("same"); */
+
     // Draw Monte Carlo
     mc.sm_super_sum_histogram->SetLineColor(1);
     mc.sm_super_sum_histogram->SetMarkerStyle(4);
@@ -437,7 +446,7 @@ int main(int argc, char *argv[]) {
     TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
     legend->AddEntry(super_sum_histogram, "Super sum", "l");
     legend->AddEntry(mc.sm_super_sum_histogram, "Monte Carlo", "l");
-    legend->AddEntry(bonehead_sum_histogram, "Bonehead sum", "l");
+    //legend->AddEntry(bonehead_sum_histogram, "Bonehead sum", "l");
     legend->SetTextSize(0.04);
     legend->SetBorderSize(0);
     legend->Draw();
@@ -449,7 +458,21 @@ int main(int argc, char *argv[]) {
     // compute little b factor
     TH1F *fierz_ratio_histogram = new TH1F(*super_sum_histogram);
     fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
-    fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
+    fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
+    fierz_ratio_histogram->SetTitle("Ratio to Monte Carlo");
+	//fierz_ratio_histogram->Fit("pol2", "r", "", 100, 800);
+	//TFitResult* fit = ((TFitResultPtr)fierz_ratio_histogram->Fit("1++511/(511+x)", "Sr", "", 100, 800)).Get(); // works in v5.27 ?
+	fierz_ratio_histogram->Fit("1++(511/(511+x)-0.65)", "Sr", "", 100, 700);
+    //TF1 *mc_fit = new TF1("fierz_mc_fit", mc_model, 0, 1000, deg+1);
+    //mc_fit->SetParameter(0,-0.5);
+
+/*
+    double chisq = fit->GetChisquare();
+    double N = fit->GetNDF();
+    printf("Chi^2 / ( N - 1) = %f / %f = %f\n",chisq, N-1, chisq/(N-1));
+*/
+
+	fierz_ratio_histogram->SetStats(0);
     fierz_ratio_histogram->Draw();
     TString fierz_ratio_pdf_filename = "/data/kevinh/mc/fierz_ratio.pdf";
     canvas->SaveAs(fierz_ratio_pdf_filename);
