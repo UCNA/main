@@ -6,8 +6,8 @@
 //#include <TFitResult.h> // v5.27
 #include <TF1.h>
 
-static double electron_mass = 510.9989; // needed for the physics of Fierz interference
-static unsigned nToSim = 1E6;	// how many triggering events to simulate
+static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
+static unsigned nToSim = 1E6;				// how many triggering events to simulate
 
 class FierzHistogram {
   public: 
@@ -462,7 +462,7 @@ int main(int argc, char *argv[]) {
     fierz_ratio_histogram->SetTitle("Ratio to Monte Carlo");
 	//fierz_ratio_histogram->Fit("pol2", "r", "", 100, 800);
 	//TFitResult* fit = ((TFitResultPtr)fierz_ratio_histogram->Fit("1++511/(511+x)", "Sr", "", 100, 800)).Get(); // works in v5.27 ?
-	fierz_ratio_histogram->Fit("1++(511/(511+x)-0.65)", "Sr", "", 100, 700);
+	fierz_ratio_histogram->Fit("1++(511/(511+x)-0.654026)", "Sr", "", 80, 650);
     //TF1 *mc_fit = new TF1("fierz_mc_fit", mc_model, 0, 1000, deg+1);
     //mc_fit->SetParameter(0,-0.5);
 
