@@ -459,18 +459,18 @@ int main(int argc, char *argv[]) {
     TH1F *fierz_ratio_histogram = new TH1F(*super_sum_histogram);
     fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
-    fierz_ratio_histogram->SetTitle("Ratio to Monte Carlo");
+    fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
 	//fierz_ratio_histogram->Fit("pol2", "r", "", 100, 800);
 	//TFitResult* fit = ((TFitResultPtr)fierz_ratio_histogram->Fit("1++511/(511+x)", "Sr", "", 100, 800)).Get(); // works in v5.27 ?
-	fierz_ratio_histogram->Fit("1++(511/(511+x)-0.654026)", "Sr", "", 80, 650);
-    //TF1 *mc_fit = new TF1("fierz_mc_fit", mc_model, 0, 1000, deg+1);
-    //mc_fit->SetParameter(0,-0.5);
+	//fierz_ratio_histogram->Fit("1++(511/(511+x)-0.654026)", "Sr", "", 80, 650);
 
-/*
-    double chisq = fit->GetChisquare();
-    double N = fit->GetNDF();
-    printf("Chi^2 / ( N - 1) = %f / %f = %f\n",chisq, N-1, chisq/(N-1));
-*/
+    TF1 *fierz_fit = new TF1("fierz_fit", "1+[0]*(511/(511+x)-0.654026)", 90, 650);
+    fierz_fit->SetParameter(0,0);
+	fierz_ratio_histogram->Fit(fierz_fit, "Sr", "", 80, 650);
+
+    double chisq = fierz_fit->GetChisquare();
+    double N = fierz_fit->GetNDF();
+    printf("Chi^2 / ( N - 1) = %f / %f = %f\n", chisq, N-1, chisq/(N-1));
 
 	fierz_ratio_histogram->SetStats(0);
     fierz_ratio_histogram->Draw();
