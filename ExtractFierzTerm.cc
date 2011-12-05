@@ -7,7 +7,9 @@
 #include <TF1.h>
 
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
-static unsigned nToSim = 1E6;				// how many triggering events to simulate
+static double expected_fierz = 0.654026;
+static unsigned nToSim = 5E5;				// how many triggering events to simulate
+static double loading_prob = 0.20; 			// ucn loading probability 
 
 class FierzHistogram {
   public: 
@@ -59,9 +61,9 @@ double theoretical_fierz_spectrum(double *x, double*p) {
     unsigned n = mc.sm_super_sum_histogram->FindBin(p[2]*x[0] - p[1]);        
     //unsigned n = mc.sm_histogram->FindBin(x[0]);        
     double b = p[0];
-    double norm = 1 + 0.65 * b;
+    double norm = 1 + expected_fierz * b;
     rv += mc.sm_super_sum_histogram->GetBinContent(n) / norm;
-    rv += b * 0.65 * mc.fierz_super_sum_histogram->GetBinContent(n) / norm;
+    rv += b * expected_fierz * mc.fierz_super_sum_histogram->GetBinContent(n) / norm;
     return rv;
 }
 
@@ -210,6 +212,7 @@ double super_ratio_asymmetry(double r[2][2]) {
     return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
 }
 
+/*
 double super_sum_error(double r[2][2]) {
     double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
     double sqrt_super_ratio = TMath::Sqrt(super_ratio);
@@ -217,6 +220,7 @@ double super_sum_error(double r[2][2]) {
         sqrt_super_ratio = 0;
     //return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
 }
+*/
 
 int main(int argc, char *argv[]) {
 	
@@ -261,7 +265,7 @@ int main(int argc, char *argv[]) {
 	// start a scan over the data. Argument "true" means start at random offset in file instead of at beginning
 	// if you really want this to be random, you will need to seed rand() with something other than default
 	// note that it can take many seconds to load the first point of a scan (loading file segment into memory), but will go much faster afterwards.
-	G2P.startScan(true);
+	G2P.startScan(false);
 
 	while(true) {
 		// load next point. If end of data is reached, this will loop back and start at the beginning again.
@@ -276,7 +280,7 @@ int main(int argc, char *argv[]) {
 			EventType tp = G2P.fType;
 
 			// skip non-triggering events, or those outside 50mm position cut (you could add your own custom cuts here, if you cared)
-			if(tp>=TYPE_IV_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
+			if(tp>=TYPE_I_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
 				continue;
 			
 			// print out event info, (simulated) reconstructed true energy and position, comparable to values in data
@@ -298,7 +302,7 @@ int main(int argc, char *argv[]) {
                 */
             
             //if (G2P.afp == AFP_ON)
-            if (nSimmed % 100 > 40) // redo with real loading eff.
+            if (nSimmed % 100 > loading_prob) // redo with real loading eff.
                 mc.sm_histogram[s][0]->Fill(G2P.getEtrue(), 1);
             else
                 mc.sm_histogram[s][1]->Fill(G2P.getEtrue(), 1);
@@ -392,11 +396,13 @@ int main(int argc, char *argv[]) {
         background_histogram->Draw("");
     */
     //normalize(ucna_data_histogram[0][0]);
-    if (ucna_data_histogram[0][0] == NULL)
-	{
-		puts("histogram is null. Aborting...");
-		exit(1);
-	}
+	for (int i = 0; i < 2; i++)
+		for (int j = 0; j < 2; j++)
+			if (ucna_data_histogram[i][j] == NULL)
+			{
+				puts("histogram is null. Aborting...");
+				exit(1);
+			}
 
 	
     /*
@@ -444,10 +450,10 @@ int main(int argc, char *argv[]) {
 
     // lets make a pretty legend
     TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
-    legend->AddEntry(super_sum_histogram, "Super sum", "l");
-    legend->AddEntry(mc.sm_super_sum_histogram, "Monte Carlo", "l");
+    legend->AddEntry(super_sum_histogram, "Type 0 supersum", "l");
+    legend->AddEntry(mc.sm_super_sum_histogram, "Monte Carlo supersum", "p");
     //legend->AddEntry(bonehead_sum_histogram, "Bonehead sum", "l");
-    legend->SetTextSize(0.04);
+    legend->SetTextSize(0.03);
     legend->SetBorderSize(0);
     legend->Draw();
 
@@ -464,16 +470,35 @@ int main(int argc, char *argv[]) {
 	//TFitResult* fit = ((TFitResultPtr)fierz_ratio_histogram->Fit("1++511/(511+x)", "Sr", "", 100, 800)).Get(); // works in v5.27 ?
 	//fierz_ratio_histogram->Fit("1++(511/(511+x)-0.654026)", "Sr", "", 80, 650);
 
-    TF1 *fierz_fit = new TF1("fierz_fit", "1+[0]*(511/(511+x)-0.654026)", 90, 650);
+	char fit_str[1024];
+    sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", electron_mass, electron_mass, expected_fierz);
+
+    TF1 *fierz_fit = new TF1("fierz_fit", fit_str, 120, 650);
     fierz_fit->SetParameter(0,0);
-	fierz_ratio_histogram->Fit(fierz_fit, "Sr", "", 80, 650);
+	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
 
     double chisq = fierz_fit->GetChisquare();
     double N = fierz_fit->GetNDF();
+	char b_str[1024];
+	sprintf(b_str, "b = %1.3f #pm %1.3f", fierz_fit->GetParameter(0), fierz_fit->GetParError(0));
+
+	char chisq_str[1024];
     printf("Chi^2 / ( N - 1) = %f / %f = %f\n", chisq, N-1, chisq/(N-1));
+	sprintf(chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(N-1));
 
 	fierz_ratio_histogram->SetStats(0);
     fierz_ratio_histogram->Draw();
+
+    TLegend* ratio_legend = new TLegend(0.3,0.85,0.6,0.65);
+    ratio_legend->AddEntry(fierz_ratio_histogram, "Data ratio to Monte Carlo (Type 0)", "l");
+    ratio_legend->AddEntry(fierz_fit, "Fierz term fit", "l");
+    ratio_legend->AddEntry((TObject*)0, "1+b(#frac{m_{e}}{E} - #LT #frac{m_{e}}{E} #GT)", "");
+    ratio_legend->AddEntry((TObject*)0, b_str, "");
+    ratio_legend->AddEntry((TObject*)0, chisq_str, "");
+    ratio_legend->SetTextSize(0.03);
+    ratio_legend->SetBorderSize(0);
+    ratio_legend->Draw();
+
     TString fierz_ratio_pdf_filename = "/data/kevinh/mc/fierz_ratio.pdf";
     canvas->SaveAs(fierz_ratio_pdf_filename);
 
