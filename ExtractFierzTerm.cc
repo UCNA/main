@@ -466,9 +466,6 @@ int main(int argc, char *argv[]) {
     fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
-	//fierz_ratio_histogram->Fit("pol2", "r", "", 100, 800);
-	//TFitResult* fit = ((TFitResultPtr)fierz_ratio_histogram->Fit("1++511/(511+x)", "Sr", "", 100, 800)).Get(); // works in v5.27 ?
-	//fierz_ratio_histogram->Fit("1++(511/(511+x)-0.654026)", "Sr", "", 80, 650);
 
 	char fit_str[1024];
     sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", electron_mass, electron_mass, expected_fierz);
