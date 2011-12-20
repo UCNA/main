@@ -39,13 +39,13 @@ unsigned int totalBins(const TH1* h) {
 
 
 BlindTime::BlindTime(const Stringmap& m) {
-	for(Side s = EAST; s != BADSIDE; s = nextSide(s))
+	for(Side s = EAST; s != BADSIDE; ++s)
 		t[s]=m.getDefault(sideWords(s),0.);
 }
 
 Stringmap BlindTime::toStringmap() const {
 	Stringmap m;
-	for(Side s = EAST; s != BADSIDE; s = nextSide(s))
+	for(Side s = EAST; s != BADSIDE; ++s)
 		m.insert(sideWords(s),t[s]);
 	return m;
 }
@@ -64,7 +64,7 @@ BlindTime operator-(const BlindTime& a, const BlindTime& b) {
 
 BlindTime operator*(double x, const BlindTime& a) {
 	BlindTime b = a;
-	for(Side s = EAST; s != BADSIDE; s = nextSide(s))
+	for(Side s = EAST; s != BADSIDE; ++s)
 		b.t[s] *= x;
 	return b;
 }

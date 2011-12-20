@@ -35,15 +35,15 @@ class SpectrumPeak {
 public:	
 	
 	/// constructor for given peak type
-	SpectrumPeak(PeakType t = UNKNOWN_PEAK, unsigned int sid = 0, float x = 0, float y = 0):
-	center(0), width(0), xpos(x), ypos(y), type(t), sID(sid), simulated(false) {};
+	SpectrumPeak(PeakType t = UNKNOWN_PEAK, unsigned int sid = 0, Side s0 = NONE):
+	center(0), width(0), energyCenter(0), energyWidth(0), nPE(0), eta(0), gms(0), h(0), integral(0),
+	type(t), sID(sid), s(s0), t(nBetaTubes+1), simulated(false) {};
+	
 	/// print to stdout
 	void print() const;
 		
 	/// convert to Stringmap
 	Stringmap toStringmap() const;
-	/// read from Stringmap
-	static SpectrumPeak fromStringmap(const Stringmap& M);
 	/// load from a Gaussian fit (or multi-gaussian peak n)
 	void fromGaussian(const TF1* f, unsigned int n = 0);
 	
@@ -58,12 +58,14 @@ public:
 	float_err energyCenter;	//< energy-calibrated center position
 	float_err energyWidth;	//< energy-calibrated peak width
 	float nPE;				//< actual nPE at energyCenter
-	float xpos;				//< wirechamber position x center
-	float ypos;				//< wirechamber position y center
+	float eta;				//< light transport to peak position
+	float gms;				//< GMS correction to ADC
 	float_err h;			//< height of peak
 	float integral;			//< 1-sigma integral of peak
 	PeakType type;			//< type of peak
 	unsigned int sID;		//< ID number of corresponding source
+	Side s;					//< peak side
+	unsigned int t;			//< tube observing peak
 	bool simulated;			//< whether this peak is from simulated data
 	
 };

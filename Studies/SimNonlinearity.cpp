@@ -5,7 +5,7 @@
 TRandom3 snl_rnd_source; //< random number generator
 
 SimNonlinearizer::SimNonlinearizer(): newrunGainerr(0), afpCorrGain(1.0), range(1500) {
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			gainfactor[s][t]=1.0;
 	setReserr(1.0);
@@ -53,7 +53,7 @@ void SimNonlinearizer::makeRanderr(bool correlate) {
 }
 
 bool SimNonlinearizer::checkLimits() const {
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			for(float x = 0; x <= 1500; x += 1500/50.0)
 				if( fabs(delinearize(s, t, x)-x) > fabs(errlim->Eval(x)) )
@@ -73,7 +73,7 @@ float SimNonlinearizer::maxError(Side s, unsigned int t, float emin, float emax)
 
 float SimNonlinearizer::maxError(float emin, float emax) const {
 	float de = 0;
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			float d = maxError(s,t,emin,emax);
 			if(fabs(d)>fabs(de))
@@ -85,7 +85,7 @@ float SimNonlinearizer::maxError(float emin, float emax) const {
 
 
 void SimNonlinearizer::startNewRun(AFPState afp) {
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			if(afpCorrGain != 1.0) {
 				if(afpCorrGain > 0) {
@@ -113,7 +113,7 @@ void SimNonlinearizer::startNewRun(AFPState afp) {
 
 Stringmap SimNonlinearizer::toStringmap() const {
 	Stringmap m;
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			std::string st = ctos(sideNames(s))+itos(t);
 			m.insert(std::string("gainfactor_")+st,gainfactor[s][t]);
@@ -138,7 +138,7 @@ void SimNonlinearizer::fixCalPoint(Side s, unsigned int t, float l0, float l1) {
 }
 
 void SimNonlinearizer::setOffset(float dl, Side s0) {
-	for(Side s=EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s=EAST; s<=WEST; ++s) {
 		if(!(s0==BOTH || s==s0)) continue;
 		for(unsigned int t=0; t<nBetaTubes; t++){
 			abscoeffs[s][t].clear();
@@ -148,7 +148,7 @@ void SimNonlinearizer::setOffset(float dl, Side s0) {
 }
 
 void SimNonlinearizer::randomOffsets(float sigma, float mu, bool gaussStats) {
-	for(Side s=EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s=EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++){
 			abscoeffs[s][t].clear();
 			if(gaussStats)
@@ -160,7 +160,7 @@ void SimNonlinearizer::randomOffsets(float sigma, float mu, bool gaussStats) {
 }
 
 void SimNonlinearizer::randomGainflucts(float sigma, float mu, bool gaussStats) {
-	for(Side s=EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s=EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++){
 			relcoeffs[s][t].clear();
 			if(gaussStats)
@@ -172,7 +172,7 @@ void SimNonlinearizer::randomGainflucts(float sigma, float mu, bool gaussStats) 
 }
 
 void SimNonlinearizer::randomRelcurve(float sigmaRel, unsigned int nTerms, bool gaussStats) {
-	for(Side s=EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s=EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++){
 			relcoeffs[s][t].clear();
 			for(unsigned int n=0; n<nTerms; n++) {
@@ -186,7 +186,7 @@ void SimNonlinearizer::randomRelcurve(float sigmaRel, unsigned int nTerms, bool 
 }
 
 void SimNonlinearizer::randomAbscurve(float sigma, unsigned int nTerms, bool gaussStats) {
-	for(Side s=EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s=EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++){
 			abscoeffs[s][t].clear();
 			for(unsigned int n=0; n<nTerms; n++) {
@@ -201,7 +201,7 @@ void SimNonlinearizer::randomAbscurve(float sigma, unsigned int nTerms, bool gau
 
 
 void SimNonlinearizer::setRelerr(float relerr, Side s0) {
-	for(Side s=EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s=EAST; s<=WEST; ++s) {
 		if(!(s0==BOTH || s==s0)) continue;
 		for(unsigned int t=0; t<nBetaTubes; t++){
 			relcoeffs[s][t].clear();
@@ -211,7 +211,7 @@ void SimNonlinearizer::setRelerr(float relerr, Side s0) {
 }	
 
 void SimNonlinearizer::setReserr(float reserr, Side s0) {
-	for(Side s=EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s=EAST; s<=WEST; ++s) {
 		if(!(s0==BOTH || s==s0)) continue;
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			resErr[s][t] = reserr;
@@ -219,7 +219,7 @@ void SimNonlinearizer::setReserr(float reserr, Side s0) {
 }	
 
 void SimNonlinearizer::unifyErrors() {
-	for(Side s=EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s=EAST; s<=WEST; ++s) {
 		for(unsigned int t=1; t<nBetaTubes; t++) {
 			relcoeffs[s][t] = relcoeffs[s][0];
 			abscoeffs[s][t] = abscoeffs[s][0];
@@ -248,7 +248,7 @@ void SimNonlinearizer::correlateErrors(bool correlate) {
 }
 
 void SimNonlinearizer::addGainNoise(float sigmaRel) {
-	for(Side s=EAST; s<=WEST; s=nextSide(s))
+	for(Side s=EAST; s<=WEST; ++s)
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			gainfactor[s][t] *= snl_rnd_source.Gaus(1.0,sigmaRel);
 }

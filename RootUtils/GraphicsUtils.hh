@@ -2,7 +2,7 @@
 #define GRAPHICSUTILS_HH 1
 
 #include <math.h>
-#include <TCanvas.h>
+#include <TVirtualPad.h>
 #include "Types.hh"
 #include "Source.hh"
 #include "SectorCutter.hh"
@@ -27,7 +27,7 @@ void drawFiducialCuts(Int_t color = 6);
 /// draw red ellipse around, e.g., a source's position
 void drawEllipseCut(Source E, Float_t nSigma, std::string label = "");
 /// draw vertical line marker
-void drawVLine(Float_t x, TCanvas* C, Int_t color = 4);
+void drawVLine(Float_t x, TVirtualPad* C, Int_t color = 4);
 /// draw shaded rectangle marker
 void drawExcludedRegion(Float_t x0, Float_t x1, TCanvas* C, Int_t color = 4, Int_t fill = 1001);
 /// draw sectors to current canvas

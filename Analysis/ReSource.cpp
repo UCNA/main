@@ -5,11 +5,12 @@
 #include "GraphicsUtils.hh"
 #include "G4toPMT.hh"
 #include "PathUtils.hh"
-#include "Subsystem.hh"
 #include "SourceDBSQL.hh"
+#include "CalDBSQL.hh"
 #include <TSpectrum.h>
 #include <TSpectrum2.h>
 #include <utility>
+
 
 ReSourcer::ReSourcer(OutputManager* O, const Source& s, PMTCalibrator* P):
 OM(O), mySource(s), PCal(P), dbgplots(false), simMode(false),
@@ -37,7 +38,9 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 		}
 		hTubesRaw[t] = NULL;
 		if(t<nBetaTubes && !simMode) {
-			hTubesRaw[t] = OM->registeredTH1F(s.name()+"_"+itos(t)+"_ADC","Source raw ADC spectrum",nBins,2*eMin,2*eMax);
+			hTubesRaw[t] = OM->registeredTH1F(s.name()+"_"+itos(t)+"_ADC","Source raw ADC spectrum",nBins,
+											  PCal?-PCal->invertCorrections(mySource.mySide, t, -eMin, mySource.x, mySource.y, 0.0):2*eMin,
+											  PCal?PCal->invertCorrections(mySource.mySide, t, eMax, mySource.x, mySource.y, 0.0):2*eMax);
 			hTubesRaw[t]->Sumw2();
 		}
 	}	
@@ -47,21 +50,27 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 	}
 }
 
-unsigned int ReSourcer::fill(const ScintEvent& evt, EventType tp, float x, float y) {
-	if(tp > TYPE_II_EVENT) return 0;
+unsigned int ReSourcer::fill(const ProcessedDataScanner& P) {
+	EventType tp = P.fType;
+	if(tp > TYPE_II_EVENT || P.fSide != mySource.mySide || P.fPID != PID_BETA) return 0;
+	float x = P.wires[P.fSide][X_DIRECTION].center;
+	float y = P.wires[P.fSide][Y_DIRECTION].center;
 	if(!mySource.inSourceRegion(x,y,4.0)) return 0;
 	if(tp==TYPE_0_EVENT) {
 		hitPos[X_DIRECTION]->Fill(x-mySource.x);
 		hitPos[Y_DIRECTION]->Fill(y-mySource.y);
 	}
 	for(unsigned int t=0; t<nBetaTubes; t++) {
-		if(evt.adc[t]>3750 || evt.tuben[t].x < 1.0)
+		if(P.scints[P.fSide].adc[t]>3750 || P.scints[P.fSide].tuben[t].x < 1.0)
 			continue;
-		hTubes[t][tp]->Fill(evt.tuben[t].x);
-		if(!simMode && tp==TYPE_0_EVENT)
-			hTubesRaw[t]->Fill(evt.adc[t]);
+		hTubes[t][tp]->Fill(P.scints[P.fSide].tuben[t].x);
+		if(PCal && !simMode && tp==TYPE_0_EVENT)
+			hTubesRaw[t]->Fill(P.scints[P.fSide].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock.t[BOTH]));
 	}
-	hTubes[nBetaTubes][tp]->Fill(evt.energy.x);	
+	if(tp==TYPE_0_EVENT)
+		hTubes[nBetaTubes][tp]->Fill(P.scints[P.fSide].energy.x);
+	else
+		hTubes[nBetaTubes][tp]->Fill(P.getEnergy());
 	return 1;
 }
 
@@ -102,8 +111,15 @@ void ReSourcer::findSourcePeaks(float runtime) {
 			fitPlotName = OM->plotPath+"/"+mySource.name()+"/Fit_Spectrum_"+(t==nBetaTubes?"Combined":itos(t))+".pdf";
 		printf("Fitting %s for %i peaks in tube %i (sigma = %f)\n", mySource.name().c_str(), (int)expectedPeaks.size(), t, searchsigma);
 		tubePeaks[t] = fancyMultiFit(hTubes[t][TYPE_0_EVENT], searchsigma, expectedPeaks, false, fitPlotName, nSigma, pkMin);
-		for(std::vector<SpectrumPeak>::iterator it = tubePeaks[t].begin(); it != tubePeaks[t].end(); it++)
+		for(std::vector<SpectrumPeak>::iterator it = tubePeaks[t].begin(); it != tubePeaks[t].end(); it++) {
 			it->simulated = simMode;
+			it->t = t;
+			if(PCal) {
+				it->eta = PCal->eta(mySource.mySide,t,mySource.x,mySource.y);
+				it->nPE = PCal->nPE(mySource.mySide,t,it->energyCenter.x,mySource.x,mySource.y,0);
+			}
+		}
+		
 		if(tubePeaks[t].size()<expectedPeaks.size()) {
 			Stringmap m;
 			m.insert("peak",expectedPeaks.back().name());
@@ -119,6 +135,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 				printf("-------- %c%i --------\n",sideNames(mySource.mySide),t);
 				tubePeaks[t][i].toStringmap().display();
 				OM->qOut.insert(std::string("Main_")+tubePeaks[t][i].name()+"_peak_"+itos(t),tubePeaks[t][i].toStringmap());
+				SourceDBSQL::getSourceDBSQL()->addPeak(tubePeaks[t][i]);
 			}
 		}
 		
@@ -131,22 +148,22 @@ void ReSourcer::findSourcePeaks(float runtime) {
 			hTubesRaw[t]->Draw();
 		for(unsigned int i=0; i<tubePeaks[t].size(); i++) {
 			if(PCal && !simMode) {
-				float_err fx = tubePeaks[t][i].energyCenter;
+				float_err fx = tubePeaks[t][i].energyCenter;	// center in energy --- ??????
 				tubePeaks[t][i].center = PCal->invertCorrections(mySource.mySide, t, fx, mySource.x, mySource.y, 0.0);
 				fx.err = tubePeaks[t][i].energyWidth.x;
 				tubePeaks[t][i].width.x = PCal->invertCorrections(mySource.mySide, t, fx, mySource.x, mySource.y, 0.0).err;
-				drawVLine(tubePeaks[t][i].center.x, OM->defaultCanvas,2);
-				drawVLine(PCal->invertCorrections(mySource.mySide, t, fx.x-fx.err, mySource.x, mySource.y, 0.0), OM->defaultCanvas, 3);
-				drawVLine(PCal->invertCorrections(mySource.mySide, t, fx.x+fx.err, mySource.x, mySource.y, 0.0), OM->defaultCanvas, 3);
-				drawVLine(tubePeaks[t][i].center.x-tubePeaks[t][i].width.x, OM->defaultCanvas,4);
-				drawVLine(tubePeaks[t][i].center.x+tubePeaks[t][i].width.x, OM->defaultCanvas,4);				
+				tubePeaks[t][i].gms = PCal->gmsFactor(mySource.mySide, t, 0);
+				drawVLine(tubePeaks[t][i].center.x*tubePeaks[t][i].gms, OM->defaultCanvas,2);
+				drawVLine(PCal->invertCorrections(mySource.mySide, t, fx.x-fx.err, mySource.x, mySource.y, 0.0)*tubePeaks[t][i].gms, OM->defaultCanvas, 3);
+				drawVLine(PCal->invertCorrections(mySource.mySide, t, fx.x+fx.err, mySource.x, mySource.y, 0.0)*tubePeaks[t][i].gms, OM->defaultCanvas, 3);
+				drawVLine((tubePeaks[t][i].center.x-tubePeaks[t][i].width.x)*tubePeaks[t][i].gms, OM->defaultCanvas,4);
+				drawVLine((tubePeaks[t][i].center.x+tubePeaks[t][i].width.x)*tubePeaks[t][i].gms, OM->defaultCanvas,4);				
 			}
-			if(PCal)
-				tubePeaks[t][i].nPE = PCal->nPE(mySource.mySide, t, tubePeaks[t][i].energyCenter.x, mySource.x, mySource.y, 0);
 			std::string qoutname = std::string("Main_")+tubePeaks[t][i].name()+"_peak_"+itos(t);
 			printf("-------- %c%i %s --------\n",sideNames(mySource.mySide),t,qoutname.c_str());
 			tubePeaks[t][i].toStringmap().display();
 			OM->qOut.insert(qoutname,tubePeaks[t][i].toStringmap());
+			SourceDBSQL::getSourceDBSQL()->addPeak(tubePeaks[t][i]);
 		}
 		if(dbgplots && !simMode)
 			OM->printCanvas(mySource.name()+"/Raw_ADC_"+itos(t)+(simMode?"_Sim":""));
@@ -178,12 +195,10 @@ void ReSourcer::findSourcePeaks(float runtime) {
 
 
 
-void reSource(RunNum rn, InputDataSource src, bool withCals) {
-	
-	assert(src==INPUT_UNOFFICIAL || src==INPUT_OFFICIAL);
-	
+void reSource(RunNum rn) {
+		
 	// load data
-	ProcessedDataScanner* P = getDataSource(src,withCals);
+	ProcessedDataScanner* P = getDataSource(INPUT_OFFICIAL,true);
 	P->addRun(rn);
 	
 	if(!P->getnFiles()) {
@@ -198,11 +213,12 @@ void reSource(RunNum rn, InputDataSource src, bool withCals) {
 	}	
 	
 	// set up output paths
-	std::string outPath = "../PostPlots/Sources/";
-	if(src==INPUT_OFFICIAL)
-		outPath = "../PostPlots/LivermoreSources/";
+	std::string outPath = "../PostPlots/LivermoreSources/";
 	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
-	RunManager TM(rn,RUNMODE_FULLPLOTS,outPath);
+	RunInfo RI = CalDBSQL::getCDB()->getRunInfo(rn);
+	OutputManager TM("Run_"+itos(RI.runNum), outPath);
+	TM.dataPath = outPath+"/RunData/";
+	TM.plotPath = TM.basePath = outPath+"/Plots/"+replace(RI.groupName,' ','_')+"/"+itos(rn)+"_"+RI.roleName+"/";
 	
 	// get sources list; set up ReSourcer for each
 	std::map<unsigned int,ReSourcer> sources;
@@ -216,7 +232,7 @@ void reSource(RunNum rn, InputDataSource src, bool withCals) {
 	}
 	
 	// save GMS data to output file
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		Stringmap m;
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			m.insert("gms0_"+itos(t),PCal.getGMS0(s,t));
@@ -229,7 +245,7 @@ void reSource(RunNum rn, InputDataSource src, bool withCals) {
 	
 	// all positions histogram
 	TH2F* hitPos[2];
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		hitPos[s] = TM.registeredTH2F(sideSubst("HitPos_%c",s),sideSubst("%s Hit Positions",s),400,-65,65,400,-65,65);
 	
 	// collect source data points
@@ -238,15 +254,10 @@ void reSource(RunNum rn, InputDataSource src, bool withCals) {
 	while(P->nextPoint()) {
 		Side s = P->fSide;
 		if(P->fType <= TYPE_II_EVENT && P->fPID == PID_BETA && (s==EAST || s==WEST)) {
-			if(withCals)
-				P->recalibrateEnergy();
-			float x = P->wires[s][X_DIRECTION].center;
-			float y = P->wires[s][Y_DIRECTION].center;
-			hitPos[s]->Fill(x,y);
-			for(std::map<unsigned int, ReSourcer>::iterator it = sources.begin(); it != sources.end(); it++) {
-				if(s == it->second.mySource.mySide)
-					nSPts += it->second.fill(P->scints[s],P->fType,x,y);
-			}
+			P->recalibrateEnergy();
+			hitPos[s]->Fill(P->wires[P->fSide][X_DIRECTION].center,P->wires[P->fSide][Y_DIRECTION].center);
+			for(std::map<unsigned int, ReSourcer>::iterator it = sources.begin(); it != sources.end(); it++)
+				nSPts += it->second.fill(*P);
 		}
 	}
 	
@@ -254,7 +265,7 @@ void reSource(RunNum rn, InputDataSource src, bool withCals) {
 	
 	// plot hit positions
 	TM.defaultCanvas->SetLogy(false);
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		hitPos[s]->Draw("Col");
 		for(std::vector<Source>::const_iterator it = expectedSources.begin(); it != expectedSources.end(); it++)
 			if(it->mySide==s)
@@ -274,6 +285,10 @@ void reSource(RunNum rn, InputDataSource src, bool withCals) {
 			continue;
 		}
 		
+		// delete previous source fit data from DB
+		SourceDBSQL::getSourceDBSQL()->clearPeaks(it->second.mySource.sID);
+		
+		// fit source peaks
 		it->second.dbgplots = PCal.isRefRun() || it->second.mySource.t=="Bi207" || it->second.mySource.t=="Cd109";
 		it->second.simMode = false;
 		it->second.findSourcePeaks(P->totalTime.t[BOTH]);
@@ -281,7 +296,7 @@ void reSource(RunNum rn, InputDataSource src, bool withCals) {
 		// fit simulated source data with same parameters
 		Source simSource = it->second.mySource;
 		simSource.x = simSource.y = 0;		
-		if(!(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" || simSource.t=="Cd109")) {
+		if(!(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" || simSource.t=="Cd109" || simSource.t=="In114")) {
 			printf("Unknown source '%s'!\n",simSource.t.c_str());
 			continue;
 		}
@@ -291,7 +306,7 @@ void reSource(RunNum rn, InputDataSource src, bool withCals) {
 						
 		G4toPMT g2p;
 		g2p.setCalibrator(PCal);
-		for(Side s = EAST; s <= WEST; s = nextSide(s))
+		for(Side s = EAST; s <= WEST; ++s)
 			g2p.PGen[s].setPosition(it->second.mySource.x, it->second.mySource.y);
 		std::string datfile = "/home/mmendenhall/geant4/output/";
 		datfile += "LivPhys_";
@@ -301,10 +316,7 @@ void reSource(RunNum rn, InputDataSource src, bool withCals) {
 		g2p.startScan(100000);
 		while(nSimmed<100000) {
 			g2p.nextPoint();
-			if(g2p.fSide == simSource.mySide && g2p.fType <= TYPE_II_EVENT)
-				nSimmed+=RS.fill(g2p.scints[simSource.mySide],g2p.fType,
-								 g2p.wires[simSource.mySide][X_DIRECTION].center,
-								 g2p.wires[simSource.mySide][Y_DIRECTION].center);
+			nSimmed+=RS.fill(g2p);
 		}
 		RS.findSourcePeaks(1000.0);
 		
@@ -365,7 +377,7 @@ void uploadRunSources() {
 				SourceDBSQL::getSourceDBSQL()->clearSources(rn);
 				int nsrc = 0;
 				printf("Run %i: Loading %i,%i sources\n",rn,(int)sources[EAST].size(),(int)sources[WEST].size());
-				for (Side s = EAST; s <= WEST; s = nextSide(s)) {
+				for (Side s = EAST; s <= WEST; ++s) {
 					for(std::vector<std::string>::iterator it = sources[s].begin(); it != sources[s].end(); it++) {
 						Source src(*it,s);
 						src.myRun = rn;
@@ -387,7 +399,7 @@ void uploadRunSources() {
 				else if(words[1]=="W")
 					notSide[EAST] = true;
 			}
-			for(Side s = EAST; s<=WEST; s = nextSide(s)) {
+			for(Side s = EAST; s<=WEST; ++s) {
 				if(notSide[s])
 					continue;
 				sources[s].clear();

@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 		// do whatever analysis you want on this event.
 		
 		// check the event characteristics on each side
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		for(Side s = EAST; s <= WEST; ++s) {
 			// get event classification type. TYPE_IV_EVENT means the event didn't trigger this side.
 			EventType tp = G2P.fType;
 			// skip non-triggering events, or those outside 50mm position cut (you could add your own custom cuts here, if you cared)

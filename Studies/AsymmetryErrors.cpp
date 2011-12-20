@@ -6,7 +6,7 @@ void AsymData::write(QFile& qf, std::string pfx) const {
 	qf.insert(pfx+"_SR_Asym",AsymSR->toStringmap());
 	qf.insert(pfx+"_Bonehead_Asym",AsymBoner->toStringmap());
 	Stringmap m;
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			for(int afp = 0; afp < 2; afp++) {
 				m.insert(std::string("ep_")+ctos(sideNames(s))+itos(t)+"_"+itos(afp),kurieEp[s][afp][t].x);
@@ -59,7 +59,7 @@ AsymErrorExplorer::AsymErrorExplorer(RunGeometry g, RunNum rn): CDB("mpm_debug")
 
 void AsymErrorExplorer::simulateSpinstates(OutputManager* OMz, std::string pfx, SimNonlinearizer* SNL, unsigned int nToSim, AsymData& ad) {
 	
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<=nBetaTubes; t++)
 			ad.hSpinavg[s][t] = OMz->registeredTH1F(pfx+"_SpinAvg_"+ctos(sideNames(s))+itos(t),"Spin-Averaged Spectra",nBinsE,0,eMax);
 	
@@ -70,7 +70,7 @@ void AsymErrorExplorer::simulateSpinstates(OutputManager* OMz, std::string pfx, 
 	for(unsigned int afp = 0; afp < 2; afp++) {
 		if(SNL)
 			SNL->startNewRun(afpStates[afp]);
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		for(Side s = EAST; s <= WEST; ++s) {
 			PGen.setSide(s);
 			for(unsigned int t=0; t<=nBetaTubes; t++) {
 				ad.hSimulated[s][afp][t] = OMz->registeredTH1F(pfx+"_"+ctos(sideNames(s))+itos(afp)+itos(t),"Asymmetry Spectra",nBinsE,0,eMax);
@@ -87,7 +87,7 @@ void AsymErrorExplorer::simulateSpinstates(OutputManager* OMz, std::string pfx, 
 			}
 		}
 	}
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<=nBetaTubes; t++)
 			ad.kurieEpAvg[s][t] = kurieIterator(ad.hSpinavg[s][t],neutronBetaEp);
 	
@@ -112,7 +112,7 @@ void AsymErrorExplorer::simulateSpinstates(OutputManager* OMz, std::string pfx, 
 }
 
 void AsymErrorExplorer::gainmatchSNL(SimNonlinearizer& SNL, const AsymData& obs) {
-	for(Side s = EAST; s<=WEST; s=nextSide(s))
+	for(Side s = EAST; s<=WEST; ++s)
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			SNL.gainfactor[s][t] *= (refSpectra.kurieEp[s][0][t].x+refSpectra.kurieEp[s][1][t].x)/(obs.kurieEp[s][0][t].x+obs.kurieEp[s][1][t].x);
 }

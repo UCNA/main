@@ -43,7 +43,7 @@ void PostOfficialAnalyzer::setReadpoints() {
 	Tch->SetBranchAddress("TimeW",&runClock.t[WEST]);
 	runClock.t[BOTH]=runClock.t[NONE]=0.0;
 	
-	for(Side s=EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s=EAST; s<=WEST; ++s) {
 		
 		// wirechamber planes
 		for(int p=X_DIRECTION; p<=Y_DIRECTION; p++) {

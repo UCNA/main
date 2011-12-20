@@ -15,7 +15,7 @@ unsigned int PostAnalyzer::addRun(RunNum r) {
 	
 	assert(false);
 	//RunFile rf(r,true);
-	//for(Side s=EAST; s<NONE; s=nextSide(s)) {
+	//for(Side s=EAST; s<NONE; ++s) {
 	//	if(!rf.getRuntime(s))
 	//		printf("\n* Warning: zero length run for %i.%i\n",r,(int)s);
 	//	totalTime.t[s] += rf.getRuntime(s);
@@ -28,7 +28,7 @@ unsigned int PostAnalyzer::addRun(RunNum r) {
 void PostAnalyzer::setReadpoints() {
 	char pl[] = {'X','Y'};
 	char tmp[512];
-	for(Side s=EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s=EAST; s<=WEST; ++s) {
 		
 		for(int p=0; p<2; p++) {
 			sprintf(tmp,"Wires_%c%c",sideNames(s),pl[p]);

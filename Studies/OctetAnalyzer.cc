@@ -6,11 +6,11 @@
 #include "CalDBSQL.hh"
 #include "Types.hh"
 
-void quadHists::setFillPoint(AFPState afp, unsigned int fg) {
+void quadHists::setFillPoint(AFPState afp, GVState gv) {
 	if(!fillPoint) return;
-	assert(fg==0||fg==1);
+	assert(gv==GV_CLOSED || gv==GV_OPEN);
 	assert(afp==AFP_OFF||afp==AFP_ON);
-	*fillPoint = fgbg[afp].h[fg];
+	*fillPoint = fgbg[afp].h[gv];
 }
 
 bool quadHists::isEquivalent(const quadHists& qh) const {
@@ -75,9 +75,9 @@ quadHists OctetAnalyzer::cloneQuadHist(const quadHists& qh, const std::string& n
 OctetAnalyzer::OctetAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
 RunAccumulator(pnt,nm,inflName), depth(-1) { }
 
-void OctetAnalyzer::setFillPoints(AFPState afp, unsigned int fg) {
+void OctetAnalyzer::setFillPoints(AFPState afp, GVState gv) {
 	for(std::map<std::string,quadHists>::iterator it = coreHists.begin(); it != coreHists.end(); it++)
-		it->second.setFillPoint(afp,fg);
+		it->second.setFillPoint(afp,gv);
 }
 
 quadHists& OctetAnalyzer::getCoreHist(const std::string& qname) {
@@ -94,17 +94,17 @@ const quadHists& OctetAnalyzer::getCoreHist(const std::string& qname) const {
 
 void OctetAnalyzer::loadProcessedData(AFPState afp, ProcessedDataScanner& FG, ProcessedDataScanner& BG) {
 	assert(afp == AFP_OFF || afp == AFP_ON);
-	for(unsigned int fg = 0; fg <= 1; fg++) {
-		ProcessedDataScanner& PDS = fg?FG:BG;
-		setFillPoints(afp,fg);
-		RunAccumulator::loadProcessedData(afp,fg,PDS);
+	for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
+		ProcessedDataScanner& PDS = gv?FG:BG;
+		setFillPoints(afp,gv);
+		RunAccumulator::loadProcessedData(afp,gv,PDS);
 	}
 }
 
 void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
 	for(int afp=AFP_OFF; afp<=AFP_ON; afp++) {
 		if(afp != simData.getAFP() && simData.getAFP() != AFP_OTHER) continue;
-		setFillPoints(AFPState(afp),1);
+		setFillPoints(AFPState(afp),GV_OPEN);
 		RunAccumulator::loadSimData(simData,nToSim);
 	}
 }

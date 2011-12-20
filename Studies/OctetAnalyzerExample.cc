@@ -4,7 +4,7 @@
 
 OctetAnalyzerExample::OctetAnalyzerExample(OutputManager* pnt, const std::string& nm, const std::string& inflname): OctetAnalyzer(pnt,nm,inflname) {
 	// set up histograms of interest
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		qAnodeSpectrum[s] = registerCoreHist("hAnode", "Wirechamber Energy", 100, 0, 20, s, &hAnodeSpectrum[s]);
 }
 

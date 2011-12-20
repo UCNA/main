@@ -26,7 +26,7 @@ public:
 	/// scale by a constant
 	void operator*=(double c);
 	/// set fill point to point to appropriate histograms
-	void setFillPoint(AFPState afp, unsigned int fg);
+	void setFillPoint(AFPState afp, GVState gv);
 	/// check if another quadHists is equivalent (same size histograms)
 	bool isEquivalent(const quadHists& qh) const;
 	/// set draw range minimum for all histograms
@@ -79,7 +79,7 @@ public:
 protected:
 	
 	/// set all quadHists fill points
-	void setFillPoints(AFPState afp, unsigned int fg);
+	void setFillPoints(AFPState afp, GVState gv);
 	
 private:
 	

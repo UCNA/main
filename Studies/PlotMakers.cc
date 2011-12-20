@@ -77,7 +77,7 @@ void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& fout
 
 void etaPlot(OutputManager& OM, PositioningCorrector* P, bool normalize, float axisRange) {
 	
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		for(int t=0; t<=nBetaTubes; t++) {
 			if(!P->eval(s, t, 0, 0))
 				continue;
@@ -105,7 +105,7 @@ void etaPlot(OutputManager& OM, PositioningCorrector* P, bool normalize, float a
 
 void etaGradPlot(OutputManager& OM, PositioningCorrector* P) {
 	
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		for(int t=0; t<nBetaTubes; t++) {
 			TH2F interpogrid("Interpogrid",(sideSubst("%c ",s)+itos(t+1)+" Interpolated").c_str(),200,-60,60,200,-60,60);
 			interpogrid.SetAxisRange(0,10,"Z");
@@ -160,7 +160,7 @@ void dumpPosmap(std::string basepath, unsigned int pnum) {
 	makePath(basepath);
 	QFile fout(basepath+"/Posmap_"+itos(pnum)+".txt",false);
 	
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		for(int t=0; t<=nBetaTubes; t++) {
 			
 			if(t==nBetaTubes && !PCal)
@@ -195,7 +195,7 @@ void dumpPosmap(std::string basepath, unsigned int pnum) {
 
 void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool dumbsum) {
 	
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		
 		TH2F interpogrid[nBetaTubes+1];
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
@@ -287,7 +287,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	std::vector<TH1*> hEnergy[2][TYPE_III_EVENT][2];	// energy [side][type][vis/true] for each input bin
 	TProfile* inputEnergy[2][TYPE_III_EVENT][2];		// input bins [side][type][vis/true]
 	TProfile* inputTotal = (TProfile*)OM.addObject(new TProfile("inputTotal","Input Visible Energy Total",nsegs,0,emax));
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_II_EVENT; t++) {
 			inputEnergy[s][t][false] = (TProfile*)OM.addObject(new TProfile((std::string("inputEvis_%c",s)+itos(t)).c_str(),"Input Visible Energy",nsegs,0,emax));
 			inputEnergy[s][t][true] = (TProfile*)OM.addObject(new TProfile((std::string("inputEtrue_%c",s)+itos(t)).c_str(),"Input True Energy",nsegs,0,emax));
@@ -324,7 +324,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	
 	// collect histogram data
 	for(unsigned int i=0; i<nsegs; i++) {
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		for(Side s = EAST; s <= WEST; ++s) {
 			for(unsigned int t = TYPE_0_EVENT; t <= TYPE_II_EVENT; t++) {
 				Stringmap m;
 				
@@ -356,7 +356,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	OM.defaultCanvas->SetLogy(false);
 	OM.defaultCanvas->cd();
 	gStyle->SetOptStat("");
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_II_EVENT; t++) {
 			for(unsigned int n=0; n<=1; n++) {
 				for(unsigned int i=0; i<nsegs; i++) {
@@ -394,7 +394,7 @@ void ProcessLineSims(const std::string& baseDir, unsigned int nLines, float eMin
 	 // set up PMT generators to use
 	 PMTCalibrator PCal(15916,CalDBSQL::getCDB());
 	 PMTGenerator* PGens[] = {new PMTGenerator(EAST), new PMTGenerator(WEST)};
-	 for(Side s = EAST; s <= WEST; s = nextSide(s))
+	 for(Side s = EAST; s <= WEST; ++s)
 	 PGens[s]->setCalibrator(&PCal);
 	 
 	 unsigned int i=0;
@@ -412,7 +412,7 @@ void ProcessLineSims(const std::string& baseDir, unsigned int nLines, float eMin
 	 AH.calcAsym(true);
 	 AH.makePlots();
 	 
-	 for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	 for(Side s = EAST; s <= WEST; ++s) {
 	 for(unsigned int tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; tp++) {
 	 for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
 	 
@@ -466,7 +466,7 @@ void XeEndpointStudy() {
 	
 	// set up histograms
 	TH1F* hXe[2][nBetaTubes+1];
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			hXe[s][t] = OM.registeredTH1F(sideSubst("XeSpectrum_%c",s)+itos(t),"Xe Spectrum",150,0,1500);
 			hXe[s][t]->Sumw2();
@@ -477,7 +477,7 @@ void XeEndpointStudy() {
 	// scan data and fill histograms
 	XeRuns.startScan();
 	while (XeRuns.nextPoint()) {
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		for(Side s = EAST; s <= WEST; ++s) {
 			if(!(XeRuns.fSide==s && XeRuns.fPID==PID_BETA && XeRuns.fType==TYPE_0_EVENT) || XeRuns.radius(s) > 30.0)
 				continue;
 			hXe[s][nBetaTubes]->Fill(XeRuns.scints[s].energy.x);
@@ -487,7 +487,7 @@ void XeEndpointStudy() {
 	}
 	
 	// fits
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			TGraphErrors* tgData = NULL;
 			float_err ep = kurieIterator(hXe[s][t],850.0,&tgData,915.,350,700);
@@ -507,7 +507,7 @@ void XeEndpointStudy() {
 	}
 	
 	// draw histograms
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		hXe[s][nBetaTubes]->Draw();
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			hXe[s][t]->Draw("Same");

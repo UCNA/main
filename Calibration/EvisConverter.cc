@@ -2,7 +2,7 @@
 
 EvisConverter::EvisConverter(RunNum rn, CalDB* CDB) {
 	bool hasConverters = true;
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; tp++) {
 			conversions[s][tp] = CDB->getEvisConversion(rn,s,EventType(tp));
 			hasConverters = hasConverters && conversions[s][tp];

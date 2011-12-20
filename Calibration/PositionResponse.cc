@@ -40,7 +40,7 @@ void PositioningCorrector::initPIs(std::vector<PosmapInfo>& indat) {
 		assert(!tubes[it->s][it->t]);
 		tubes[it->s][it->t] = new PositioningInterpolator(*it);
 	}
-	for(Side s = EAST; s <= WEST; s=nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<tubes[s].size(); t++)
 			neta[s].push_back(eval(s,t,0.0,0.0,false));	
 }
@@ -56,7 +56,7 @@ PositioningCorrector::PositioningCorrector(QFile& qin) {
 	SectorCutter S(nRings,radius);
 	std::vector<PosmapInfo> pinf;
 	pinf.resize(2*nBetaTubes);
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			PosmapInfo pmi;
 			pmi.s = s;
@@ -87,7 +87,7 @@ PositioningCorrector::PositioningCorrector(QFile& qin) {
 }
 
 PositioningCorrector::~PositioningCorrector() {
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int i=0; i<tubes[s].size(); i++)
 			if(tubes[s][i]) delete tubes[s][i];
 }

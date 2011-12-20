@@ -56,7 +56,7 @@ void ucnaDataAnalyzer11b::loadCut(CutVariable& c, const std::string& cutName) {
 }
 
 void ucnaDataAnalyzer11b::loadCuts() {
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		loadCut(fMWPC_anode[s], sideSubst("Cut_MWPC_%c_Anode",s));
 		loadCut(fCathMax[s],sideSubst("Cut_MWPC_%c_CathMax",s));
 		loadCut(fCathSum[s],sideSubst("Cut_MWPC_%c_CathSum",s));
@@ -96,7 +96,7 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 	fAbsTimeEnd = fAbsTime;
 	
 	// convert microseconds to seconds
-	for(Side s = EAST; s<=BOTH; s=nextSide(s))
+	for(Side s = EAST; s<=BOTH; ++s)
 		fTimeScaler.t[s] *= 1.0e-6;	
 	fBeamclock.val *= 1.0e-6;	
 	fDelt0 *= 1.0e-6;
@@ -105,7 +105,7 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 	if(fTimeScaler.t[BOTH] < totalTime.t[BOTH]-deltaT.t[BOTH]-1000.0) {
 		printf("\tFixing timing scaler overflow... ");
 		deltaT.t[BOTH] += 4294967296.0*1e-6;
-		for(Side s = EAST; s<=WEST; s=nextSide(s))
+		for(Side s = EAST; s<=WEST; ++s)
 			deltaT.t[s] = totalTime.t[s];
 	}
 	// add overflow wraparound time
@@ -144,7 +144,7 @@ unsigned int ucnaDataAnalyzer11b::nFiring(Side s) const {
 bool ucnaDataAnalyzer11b::isPulserTrigger() {
 	if(int(fSis00) & (1<<5) && !(trig2of4(EAST)||trig2of4(WEST)))
 		return true;
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		unsigned int nthresh = 0;
 		unsigned int nhigh = 0;
 		for(unsigned int t=0; t<nBetaTubes; t++) {
@@ -170,7 +170,7 @@ bool ucnaDataAnalyzer11b::passesBeamCuts() {
 }
 
 void ucnaDataAnalyzer11b::reconstructPosition() {
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
 			float cathPeds[kMWPCWires];
 			for(unsigned int c=0; c<cathNames[s][d].size(); c++)
@@ -188,7 +188,7 @@ void ucnaDataAnalyzer11b::reconstructPosition() {
 
 void ucnaDataAnalyzer11b::reconstructVisibleEnergy() {
 	
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		// get calibrated energy from the 4 tubes combined; also, wirechamber energy deposition estimate
 		if(passedMWPC(s)) {
 			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler.t[BOTH]);
@@ -203,7 +203,7 @@ void ucnaDataAnalyzer11b::reconstructVisibleEnergy() {
 void ucnaDataAnalyzer11b::checkMuonVetos() {
 	fTaggedTop[WEST] = false;
 	fTaggedTop[EAST] = fTop_tdc[EAST].inRange();
-	for(Side s = EAST; s<=WEST; s = nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		fTaggedBack[s] = fBacking_tdc[s].inRange();
 		fTaggedDrift[s] = fDrift_tac[s].inRange();
 	}
@@ -222,7 +222,7 @@ void ucnaDataAnalyzer11b::classifyEventType() {
 	// type, side
 	fType = TYPE_IV_EVENT;
 	fSide = NONE;
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		if(Is2fold(EAST) && Is2fold(WEST))
 			fType = TYPE_I_EVENT;
 		else if (Is2fold(s) && !passedCutTDC(otherSide(s)))
@@ -244,7 +244,7 @@ void ucnaDataAnalyzer11b::reconstructTrueEnergy() {
 void ucnaDataAnalyzer11b::calcTrigEffic() {
 	
 	printf("\nCalculating trigger efficiency...\n");
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			// efficiency graph
 			TGraphAsymmErrors gEffic(hTrigEffic[s][t][0]->GetNbinsX());
@@ -319,7 +319,7 @@ void ucnaDataAnalyzer11b::calcTrigEffic() {
 void ucnaDataAnalyzer11b::processEvent() {
 	checkHeaderQuality();
 	calibrateTimes();
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		PCal.pedSubtract(s, sevt[s].adc, fTimeScaler.t[BOTH]);
 	fillEarlyHistograms();
 	
@@ -342,7 +342,7 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 	printf("\nFitting Bi Pulser...\n");
 	TF1 gausFit("gasufit","gaus",1000,4000);
 	QFile pulseLocation(dataPath+"/Monitors/Run_"+itos(rn)+"/ChrisPulser.txt",false);
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			std::vector<double> times;
 			std::vector<double> centers;
@@ -350,11 +350,29 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 			std::vector<double> widths;
 			std::vector<double> dwidths;
 			for(unsigned int i=0; i<hBiPulser[s][t].size(); i++) {
-				float bcenter = hBiPulser[s][t][i]->GetBinCenter(hBiPulser[s][t][i]->GetMaximumBin());
 				Stringmap m;
 				m.insert("side",ctos(sideNames(s)));
 				m.insert("tube",t);
 				m.insert("counts",hBiPulser[s][t][i]->GetEntries());
+				
+				// initial estimate of peak location: first high isolated peak scanning from right
+				int bmax = 0;
+				float pmax = 0;
+				unsigned int nskip = 0;
+				for(unsigned int n = hBiPulser[s][t][i]->GetNbinsX(); n > 0; n--) {
+					if(hBiPulser[s][t][i]->GetBinContent(n)>pmax) {
+						bmax = n;
+						pmax = hBiPulser[s][t][i]->GetBinContent(n);
+						nskip = 0;
+					} else {
+						nskip++;
+					}
+					if(pmax>20 && nskip>20)
+						break;
+				}
+				float bcenter = hBiPulser[s][t][i]->GetBinCenter(bmax);
+				
+				// refined fit
 				if(!iterGaus(hBiPulser[s][t][i],&gausFit,3,bcenter,200,1.5)) {
 					times.push_back((i+0.5)*wallTime/hBiPulser[s][t].size());
 					m.insert("time",times.back());
@@ -369,9 +387,11 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 					dwidths.push_back(gausFit.GetParError(2));
 					m.insert("dwidth",dwidths.back());
 				}
+				
 				pulseLocation.insert("pulserpeak",m);
 			}
 			if(CDBout) {
+				// upload to DB
 				std::string mon_name = PCal.sensorNames[s][t];
 				printf("Uploading pulser data '%s'...\n",mon_name.c_str());
 				unsigned int cgid = CDBout->uploadGraph(itos(rn)+" "+mon_name+" Pulser Centers",times,centers,std::vector<double>(),dcenters);
@@ -426,7 +446,7 @@ void ucnaDataAnalyzer11b::quickAnalyzerSummary() const {
 	float scscounts = hMonADC[UCN_MON_SCS]->Integral();
 	printf("SCS Mon: %i = %.2f Hz; SCS/GV = %.4f\n",(int)scscounts,scscounts/wallTime,scscounts/gvcounts);
 	float scounts[2];
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		scounts[s] = hEtrue[s][TYPE_0_EVENT]->Integral()+hEtrue[s][TYPE_I_EVENT]->Integral()+hEtrue[s][TYPE_II_EVENT]->Integral();
 		printf("%s Beta Triggers: %i = %.2f +/- %.2f Hz\n",sideWords(s),(int)scounts[s],scounts[s]/wallTime,sqrt(scounts[s])/wallTime);
 	}

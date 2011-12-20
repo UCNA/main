@@ -33,7 +33,7 @@ public:
 	float nSigma;			//< number of sigma to fit peaks
 	
 	/// fill histograms from source data; return whether point filled
-	unsigned int fill(const ScintEvent& evt, EventType tp, float x, float y);
+	unsigned int fill(const ProcessedDataScanner& P);
 	
 	/// fit for source peaks, attach output to given subsystem, return tube spectrum histograms
 	void findSourcePeaks(float runtime = 1.0);
@@ -43,7 +43,7 @@ public:
 };
 
 /// re-generate source fits / plots
-void reSource(RunNum rn, InputDataSource src, bool withCals = false);
+void reSource(RunNum rn);
 
 /// upload sources from run log
 void uploadRunSources();

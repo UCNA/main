@@ -28,7 +28,7 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 	// PMTs and TDCs, in quadrant order (+x towards SCS, +y up, +z from East to West)
 	const int pmt_adc_nums[] = {2,3,0,1,4,5,6,7};
 	const int pmt_tdc_nums[] = {2,3,0,1,8,9,14,11};
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			SetBranchAddress(std::string("Qadc")+itos(pmt_adc_nums[t+4*s]),&sevt[s].adc[t]);
 			SetBranchAddress(std::string("Tdc0")+itos(pmt_tdc_nums[t+4*s]),&fScint_tdc[s][t].val);
@@ -39,7 +39,7 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 	
 	// Wirechambers	
 	const int anode_pdc_nums[] = {30,34};
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		for(int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
 			std::vector<unsigned int> padcNums = getPadcNumbers(rn,s,AxisDirection(d));
 			kWirePositions[s][d] = calcWirePositions(rn,s,AxisDirection(d));
@@ -54,7 +54,7 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 	const int back_tdc_nums[] = {18,20};
 	const int back_adc_nums[] = {8,10};
 	const int drift_tac_nums[] = {313,315};
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		SetBranchAddress(std::string("Tdc0")+itos(back_tdc_nums[s]),&fBacking_tdc[s].val);
 		SetBranchAddress(std::string("Pdc")+itos(drift_tac_nums[s]),&fDrift_tac[s].val);
 		SetBranchAddress(std::string("Qadc")+itos(back_adc_nums[s]),&fBacking_adc[s]);
@@ -81,7 +81,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 	TPhys->Branch("DeltaT",&fDelt0,"DeltaT/F");
 	TPhys->Branch("EvtN",&currentEvent,"EvtN/I");
 	
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		TPhys->Branch(sideSubst("Time%c",s).c_str(),&fTimeScaler.t[s],sideSubst("Time%c/F",s).c_str());
 		TPhys->Branch(sideSubst("Tof%c",s).c_str(),&fBeamclock.val,sideSubst("Tof%c/F",s).c_str());
 		

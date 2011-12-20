@@ -53,7 +53,7 @@ void ProcessedDataScanner::writeCalInfo(QFile& qout, std::string tag) {
 
 void ProcessedDataScanner::recalibrateEnergy() {
 	assert(ActiveCal);
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		ActiveCal->calibrateEnergy(s, wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, scints[s], runClock.t[BOTH]);
 		mwpcEnergy[s] = ActiveCal->calibrateAnode(mwpcs[s].anode,s,wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, runClock.t[BOTH]);
 	}

@@ -43,9 +43,9 @@ public:
 	/// convert to Stringmap
 	Stringmap toStringmap() const;
 	/// add another blinded time
-	inline void operator+= (const BlindTime& bt) { for(Side s=EAST; s!=NONE; s=nextSide(s)) t[s] += bt.t[s]; }
+	inline void operator+= (const BlindTime& bt) { for(Side s=EAST; s!=NONE; ++s) t[s] += bt.t[s]; }
 	/// subtract another blinded time
-	inline void operator-= (const BlindTime& bt) { for(Side s=EAST; s!=NONE; s=nextSide(s)) t[s] -= bt.t[s]; }
+	inline void operator-= (const BlindTime& bt) { for(Side s=EAST; s!=NONE; ++s) t[s] -= bt.t[s]; }
 	
 	Float_t t[4];	//< blinded timings for each side
 };

@@ -66,7 +66,7 @@ public:
 	virtual void write(std::string outName = "");
 	
 	/// fill data from a ProcessedDataScanner
-	virtual void loadProcessedData(AFPState afp, unsigned int fg, ProcessedDataScanner& PDS);
+	virtual void loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS);
 	/// fill data from simulations
 	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim);
 	/// simulate background fluctuations based on "reference" data
@@ -75,7 +75,7 @@ public:
 	virtual void bgSubtractAll();
 	
 	AFPState currentAFP;			//< current state of AFP during data scanning
-	bool currentFG;					//< current foreground/background status during data scanning
+	GVState currentGV;				//< current foreground/background status during data scanning
 	bool needsSubtraction;			//< whether background subtraction is pending
 	
 	TagCounter<RunNum> runCounts;	//< type-0 event counts by run, for re-simulation

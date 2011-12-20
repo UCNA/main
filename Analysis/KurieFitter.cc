@@ -1,6 +1,6 @@
 #include "KurieFitter.hh"
 
-float_err kuriePlotter(TH1F* spectrum, float endpoint, TGraphErrors** tgout, float targetEP, float fitStart, float fitEnd) {
+float_err kuriePlotter(TH1* spectrum, float endpoint, TGraphErrors** tgout, float targetEP, float fitStart, float fitEnd) {
 	
 	assert(spectrum);
 	printf("Endpoint %.3f (%i points)\n",endpoint,spectrum->GetNbinsX());
@@ -104,7 +104,7 @@ float_err kuriePlotter(TH1F* spectrum, float endpoint, TGraphErrors** tgout, flo
 	
 }
 
-float_err kurieIterator(TH1F* spectrum, float iguess, TGraphErrors** tgout, float targetEP,
+float_err kurieIterator(TH1* spectrum, float iguess, TGraphErrors** tgout, float targetEP,
 						float fitStart, float fitEnd, unsigned int nmax, float etol) {
 	
 	float_err oldGuess = 0;

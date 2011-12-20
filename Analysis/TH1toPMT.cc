@@ -3,7 +3,7 @@
 
 TH1toPMT::TH1toPMT(TH1* h): ProcessedDataScanner("",true), mySpectrum(h), stochasticEnergy(true), randomPositionRadius(-1),
 nToSim(0), nSimmed(0) {
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		PGen[s].larmorField = 0;
 	}
@@ -42,7 +42,7 @@ void TH1toPMT::startScan(unsigned int startRandom) {
 }
 
 void TH1toPMT::setCalibrator(PMTCalibrator& PCal) {
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		PGen[s].setCalibrator(&PCal);
 	ActiveCal = &PCal;
 }

@@ -26,7 +26,7 @@ void PMTGenerator::setOffsets(float xxs, float yys, float xxw, float yyw) {
 	if(!(dsy==dsy)) dsy = -100;
 	if(!(dwx==dwx)) dwx = -100;
 	if(!(dwy==dwy)) dwy = -100;
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		resTot[s] = 0;
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			pmtRes[s][t] = currentCal->nPE(s, t, 300.0, x+dsx, y+dsy, 0)/300.0;
@@ -116,7 +116,7 @@ unsigned int PMTGenerator::triggers() {
 void PMTGenerator::setPosition(float xx, float yy) {
 	x = xx;
 	y = yy;
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		resTot[s] = 0;
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			pmtRes[s][t] = currentCal->nPE(s, t, 300.0, x, y, 0)/300.0;

@@ -83,3 +83,17 @@ TSQLRow* SQLHelper::getFirst() {
 		return NULL;
 	return res->Next();
 }
+
+std::string sm2insert(const Stringmap& m) {
+	std::string svars = "(";
+	std::string svals = "VALUES (";
+	for(std::map<std::string,std::string>::const_iterator it = m.dat.begin(); it != m.dat.end(); it++) {
+		if(it != m.dat.begin()) {
+			svars += ",";
+			svals += ",";
+		}
+		svars += it->first;
+		svals += it->second;
+	}
+	return svars+") "+svals+")";
+}

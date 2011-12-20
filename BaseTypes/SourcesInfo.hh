@@ -49,7 +49,7 @@ public:
 					else if(words[1]=="W")
 						notSide[EAST] = true;
 				}
-				for(Side s = EAST; s<=WEST; s = nextSide(s)) {
+				for(Side s = EAST; s<=WEST; ++s) {
 					if(notSide[s])
 						continue;
 					sources[s].clear();

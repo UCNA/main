@@ -14,7 +14,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	else {
 		// check if pedestal pre-pass needed
 		printf("Checking for pedestals data...\n");
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		for(Side s = EAST; s <= WEST; ++s) {
 			for(unsigned int t=0; t<nBetaTubes; t++)
 				needsPeds += !PCal.checkPedestals(PCal.sensorNames[s][t]);
 			for(unsigned int p = X_DIRECTION; p <= Y_DIRECTION; p++)
@@ -34,7 +34,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	startScan();
 	while (nextPoint()) {
 		calibrateTimes();
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		for(Side s = EAST; s <= WEST; ++s) {
 			if( !trig2of4(s) && qadcSum(otherSide(s))>2000 && !isLED() )
 				for(unsigned int t=0; t<nBetaTubes; t++)
 					pmtPeds[s][t].push_back(std::make_pair(fTimeScaler.t[BOTH],sevt[s].adc[t]));
@@ -48,7 +48,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	}
 	
 	// fit pedestals, save results
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			monitorPedestal(pmtPeds[s][t],PCal.sensorNames[s][t],50);
 		for(unsigned int p = X_DIRECTION; p <= Y_DIRECTION; p++)

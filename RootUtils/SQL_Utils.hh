@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "QFile.hh"
 
 #define IGNORE_DEAD_DB false
 
@@ -59,5 +60,8 @@ protected:
 	TSQLResult* res;			//< result of most recent query
 	std::string dbName;			//< name of DB in use
 };
+
+/// convert a stringmap to "(vars,...) VALUES (vals,...)" for DB insert query
+std::string sm2insert(const Stringmap& m);
 
 #endif

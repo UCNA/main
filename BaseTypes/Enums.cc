@@ -31,27 +31,6 @@ std::string sideSubst(std::string instr, Side s) {
 	return std::string(tmp);
 }
 
-
-Side sideCombo(bool E, bool W) {
-	if(E && W)
-		return BOTH;
-	if(E)
-		return EAST;
-	if(W)
-		return WEST;
-	return NONE;
-}
-
-Side nextSide(Side s) {
-	if(s==EAST)
-		return WEST;
-	if(s==WEST)
-		return BOTH;
-	if(s==BOTH)
-		return NONE;
-	return BADSIDE;
-}
-
 Side otherSide(Side s) {
 	switch(s) {
 		case EAST:

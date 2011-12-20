@@ -7,7 +7,7 @@ float GainStabilizer::gmsFactor(Side s, unsigned int t, float time) {
 
 ChrisGainStabilizer::ChrisGainStabilizer(RunNum myRun, CalDB* cdb, LinearityCorrector* myCorrecter):
 GainStabilizer(myRun, cdb, myCorrecter) {
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			pulserPeak[s][t] = CDB->getRunMonitor(rn,LCor->sensorNames[s][t],"Chris_peak");
 			pulser0[s][t] = CDB->getRunMonitorStart(LCor->rGMS,LCor->sensorNames[s][t],"Chris_peak");
@@ -19,14 +19,14 @@ GainStabilizer(myRun, cdb, myCorrecter) {
 
 float ChrisGainStabilizer::gmsFactor(Side s, unsigned int t, float time) {
 	if(pulser0[s][t] && pulserPeak[s][t]
-	   && pulser0[s][t]>1500 && pulserPeak[s][t]->Eval(time)>1500)
+	   && pulser0[s][t]>800 && pulserPeak[s][t]->Eval(time)>800)
 		return LCor->getGMS0(s,t)*pulser0[s][t]/pulserPeak[s][t]->Eval(time);
 	else
 		return LCor->getGMS0(s,t);
 }
 
 void ChrisGainStabilizer::printSummary() {
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		
 		printf("%c t0 GMS0:",sideNames(s));
 		for(unsigned int t=0; t<nBetaTubes; t++)
@@ -62,7 +62,7 @@ void ChrisGainStabilizer::printSummary() {
  printf("******* Bogus LED Calibration Run! ********\n");
  return;
  }
- for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+ for(Side s = EAST; s<=WEST; ++s) {
  refLinearity[s] = CDB->getLinearity(myRun,s,4);
  assert(refLinearity[s]);
  refInverses[s] = invertGraph(refLinearity[s]);
@@ -78,7 +78,7 @@ void ChrisGainStabilizer::printSummary() {
  LEDCorrector::~LEDCorrector() {
  if(rn<5000)
  return;
- for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+ for(Side s = EAST; s <= WEST; ++s) {
  //if(refLED[s]) delete(refLED[s]);
  //if(co60Peaks[s][0]) delete(co60Peaks[s][0]);
  //if(co60Peaks[s][0]) delete(co60Peaks[s][1]);
@@ -114,7 +114,7 @@ void ChrisGainStabilizer::printSummary() {
  LCRef= getCachedRun(rGMS,CDB);
  assert(LCRef->setMuonGMS());
  }
- for(Side s = EAST; s <= WEST; s=nextSide(s)) {
+ for(Side s = EAST; s <= WEST; ++s) {
  for(unsigned int t=0; t<nBetaTubes; t++) {
  if(!muonPeaks[s][t])
  muonPeaks[s][t] = CDB->getMuonPeak(rn, sensorNames[s][t]);
@@ -141,7 +141,7 @@ void ChrisGainStabilizer::printSummary() {
  LCRef= getCachedRun(rGMS,CDB);
  assert(LCRef->setLEDGMS());
  }	
- for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+ for(Side s = EAST; s<=WEST; ++s) {
  for(unsigned int t=0; t<nBetaTubes; t++) {
  if(!ledPeaks[s][t])
  ledPeaks[s][t] = CDB->getLED(rn, sensorNames[s][t]);
@@ -164,7 +164,7 @@ void ChrisGainStabilizer::printSummary() {
  kurieGMS = true;
  ledGMS = false;
  muonGMS = false;
- for(Side s = EAST; s <= WEST; s=nextSide(s)) {
+ for(Side s = EAST; s <= WEST; ++s) {
  for(unsigned int t=0; t<nBetaTubes; t++) {
  float ken = CDB->getKurieEnergy(rn,s,t);
  float kadc = CDB->getKurieADC(rn,s,t);

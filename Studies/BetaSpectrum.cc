@@ -106,11 +106,12 @@ double WilkinsonComplexGammaApprox(double Z, double W, unsigned int N) {
 }
 
 double WilkinsonF0(double Z, double W, double R, unsigned int N) {
-	if(W<=0) return 0;
+	if(W<=1) return 0;
 	double gm = WilkinsonGamma(Z);
 	double GMi = 1./TMath::Gamma(2*gm+1);
 	double p = sqrt(W*W-1.);
-	return 4.*pow(2.*p*R,2.*gm-2.)*GMi*GMi*exp(M_PI*Z*alpha*W/p)*WilkinsonComplexGammaApprox(Z,W,N);
+	double F0 = 4.*pow(2.*p*R,2.*gm-2.)*GMi*GMi*exp(M_PI*Z*alpha*W/p)*WilkinsonComplexGammaApprox(Z,W,N);
+	return F0<1e3?F0:0;
 }
 
 double WilkinsonRV(double W, double W0, double M) {
@@ -198,11 +199,16 @@ double WilkinsonL0(double Z, double W, double R) {
 		aminus1Z.insert(std::make_pair(Z,sumCoeffs(aminus1,alpha*Z)));
 	}
 	
+	if(W<=1)
+		return 0;
+	
 	double gm = WilkinsonGamma(Z);
-	return (1.+13.*(alpha*Z)*(alpha*Z)/60.+W*R*alpha*Z*(41.-26.*gm)/(15.*(2.*gm-1.))
-			-alpha*Z*R*gm*(17.-2.*gm)/(30.*W*(2.*gm-1.))
-			+aminus1Z[Z]*R/W+sumCoeffs(aiZ[Z],W*R)
-			+0.41*(R-0.0164)*pow(alpha*Z,4.5) );
+	double L0 = (1.+13.*(alpha*Z)*(alpha*Z)/60.+W*R*alpha*Z*(41.-26.*gm)/(15.*(2.*gm-1.))
+				 -alpha*Z*R*gm*(17.-2.*gm)/(30.*W*(2.*gm-1.))
+				 +aminus1Z[Z]*R/W+sumCoeffs(aiZ[Z],W*R)
+				 +0.41*(R-0.0164)*pow(alpha*Z,4.5) );
+	
+	return L0>0?L0:0;
 }
 
 double WilkinsonVC(double Z, double W, double W0, double R) {
@@ -250,19 +256,20 @@ double Sirlin_g(double E,double E0,double m) {
 }
 
 double Wilkinson_g(double W,double W0) {
-	if(W>=W0 || W<=0)
+	if(W>=W0 || W<=1)
 		return 0;
 	double beta = sqrt(W*W-1)/W;
 	double athb = atanh(beta);
-	return (3.*log(m_p/m_e)-3./4.
-			+4.*(athb/beta-1.)*((W0-W)/(3.*W)-3./2.+log(2))
-			+4./beta*SpenceL(2.*beta/(1.+beta))
-			+athb/beta*(2.*(1.+beta*beta)+(W0-W)*(W0-W)/(6.*W*W)-4.*athb)
-			)*alpha/2./M_PI+pow((W0-W),2*alpha/M_PI*(athb/beta-1.))-1.;
+	double g = (3.*log(m_p/m_e)-3./4.
+				+4.*(athb/beta-1.)*((W0-W)/(3.*W)-3./2.+log(2))
+				+4./beta*SpenceL(2.*beta/(1.+beta))
+				+athb/beta*(2.*(1.+beta*beta)+(W0-W)*(W0-W)/(6.*W*W)-4.*athb)
+				)*alpha/2./M_PI+pow((W0-W),2*alpha/M_PI*(athb/beta-1.))-1.;
+	return g>0?g:0;
 }
 
 double shann_h_minus_g(double W, double W0) {
-	if(W>=W0 || W<=0)
+	if(W>=W0 || W<=1)
 		return 0;
 	double beta = sqrt(W*W-1)/W;
 	double athb = atanh(beta);

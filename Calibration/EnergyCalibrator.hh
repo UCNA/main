@@ -51,7 +51,7 @@ public:
 	/// get energy resolution factor
 	float getDeltaADC(Side s, unsigned int t) const { return deltaADC[s][t]; }
 	/// positioning intensity factor eta
-	float eta(Side s, unsigned int t, float x, float y) const { return P->eval(s,t,x,y,true); }
+	virtual float eta(Side s, unsigned int t, float x, float y) const { return P->eval(s,t,x,y,true); }
 	/// linearize tube adc (plus GMS correction), ADC -> L = eta*Evis
 	float linearityCorrector(Side s, unsigned int t, float adc, float time) const;	
 	/// linearity corrector derivative at given adc value
@@ -118,6 +118,8 @@ public:
 	float pmtSumPE(Side s, float e0, float x, float y, float time = 0) const;
 	/// effective combined 4-PMT `eta'
 	float combEta(Side s, float x, float y, float e0 = 500, float time = 0) const { return nPE(s,nBetaTubes,e0,x,y,time)/nPE(s,nBetaTubes,e0,0,0,time); }
+	/// positioning intensity factor eta
+	virtual float eta(Side s, unsigned int t, float x, float y) const { return (t<nBetaTubes)?LinearityCorrector::eta(s,t,x,y):combEta(s,x,y); }
 	/// trigger efficiency at given ADC value for side tube
 	float trigEff(Side s, unsigned int t, float adc) const;
 	/// convert a single PMT ADC readout to an energy with an error estimate

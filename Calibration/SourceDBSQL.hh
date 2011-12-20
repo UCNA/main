@@ -18,6 +18,8 @@ public:
 	void clearSources(RunNum rn);
 	/// add source to DB
 	void addSource(const Source& src);
+	/// delete peaks for source
+	void clearPeaks(unsigned int sID);
 	/// add peak to DB
 	void addPeak(const SpectrumPeak& pk);
 protected:

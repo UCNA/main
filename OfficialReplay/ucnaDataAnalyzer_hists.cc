@@ -8,7 +8,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 	nTimeBins = nTimeBins?nTimeBins:1;
 	float tpad = 10.0;
 	
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		hCathMax[s][0] = registeredTH1F(sideSubst("hCathMax_%c",s),sideSubst("%s Max Cathode",s),200,-200,4200);
 		hCathMax[s][1] = registeredTH1F(sideSubst("hCathMaxCut_%c",s),sideSubst("%s Max Cathode, MWPC Cut",s),200,-200,4200);
 		hCathMax[s][1]->SetLineColor(2);
@@ -50,6 +50,12 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 			hEtrue[s][t]->GetXaxis()->SetTitle("Erecon [keV]");
 		}
 		
+		for(unsigned int t=0; t<nBetaTubes; t++) {
+			hTuben[s][t] = registeredTH1F(sideSubst("hTuben_%c_",s)+itos(t),"Visible Energy",200,-100,1500);
+			hTuben[s][t]->SetLineColor(2+t);
+			hTuben[s][t]->GetXaxis()->SetTitle("Erecon [keV]");
+		}
+		
 		hSideRate[s][1] = registeredTH1F(sideSubst("hBetaRate_%c",s),"Beta Event Rate",nTimeBins,-tpad,wallTime+tpad);
 		hSideRate[s][1]->SetLineColor(2+2*s);
 		hSideRate[s][1]->GetXaxis()->SetTitle("Time [s]");
@@ -77,7 +83,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 			hTrigEffic[s][t][1]->SetLineColor(2);
 			for(unsigned int i=0; i<nBiDivs; i++) {
 				hBiPulser[s][t].push_back(registeredTH1F(sideSubst("hPulserSpectrum_%c",s)+itos(t)+"_"+itos(i),"Bi Pulser Spectrum",
-														 100,sevt[s].adc[t]-2300,sevt[s].adc[t]));
+														 200,100,sevt[s].adc[t]));
 				hBiPulser[s][t].back()->SetLineColor(t+1);
 			}
 		}
@@ -114,7 +120,7 @@ void ucnaDataAnalyzer11b::fillEarlyHistograms() {
 	if(isPulserTrigger()) {
 		unsigned int tbin = fTimeScaler.t[BOTH]*hBiPulser[EAST][0].size()/wallTime;
 		if(tbin<hBiPulser[EAST][0].size())
-			for(Side s = EAST; s <= WEST; s = nextSide(s))
+			for(Side s = EAST; s <= WEST; ++s)
 				for(unsigned int t=0; t<nBetaTubes; t++)
 					hBiPulser[s][t][tbin]->Fill(sevt[s].adc[t]);
 	}
@@ -131,7 +137,7 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 	if(fType == TYPE_IV_EVENT && fSide <= WEST && fPID != PID_PULSER)
 		hEtrue[fSide][fType]->Fill(fEtrue);
 	
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		
 		// wirechambers
 		hCathMax[s][0]->Fill(fCathMax[s].val);
@@ -183,6 +189,9 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 			hSideRate[s][1]->Fill(fTimeScaler.t[BOTH]);
 			if(fType <= TYPE_II_EVENT && fPassedGlobal)
 				hEtrue[s][fType]->Fill(fEtrue);
+			if(fType == TYPE_0_EVENT && fPassedGlobal)
+				for(unsigned int t=0; t<nBetaTubes; t++)
+					hTuben[s][t]->Fill(sevt[s].tuben[t].x);
 		} else if(fPID==PID_MUON) {
 			hSideRate[s][0]->Fill(fTimeScaler.t[BOTH]);
 		}
@@ -211,7 +220,7 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	defaultCanvas->SetLogy(true);
 	std::vector<TH1*> hToPlot;
 	
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		// wirechambers
 		hCathMax[s][0]->Draw();
 		hCathMax[s][1]->Draw("Same");
@@ -255,7 +264,7 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	defaultCanvas->SetLogy(false);
 	for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
 		hToPlot.clear();
-		for(Side s = EAST; s <= WEST; s = nextSide(s))
+		for(Side s = EAST; s <= WEST; ++s)
 			hToPlot.push_back(hHitsProfile[s][d]);
 		drawSimulHistos(hToPlot);
 		printCanvas(std::string("Wirechamber/HitPos_")+(d==X_DIRECTION?"x":"y"));
@@ -304,7 +313,7 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	hToPlot.clear();
 	for(unsigned int t=0; t<=TYPE_II_EVENT; t++)
 		hToPlot.push_back(hTypeRate[t]);
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		hToPlot.push_back(hSideRate[s][0]);
 		hToPlot.push_back(hSideRate[s][1]);
 	}
@@ -337,10 +346,18 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
 		if(t==TYPE_III_EVENT) continue;
 		hToPlot.clear();
-		for(Side s = EAST; s <= WEST; s = nextSide(s))
+		for(Side s = EAST; s <= WEST; ++s)
 			hToPlot.push_back(hEtrue[s][t]);
 		drawSimulHistos(hToPlot);
 		printCanvas(std::string("PMTs/Erecon_Type_")+itos(t));
+	}
+	// energy by PMT
+	for(Side s = EAST; s <= WEST; ++s) {
+		hToPlot.clear();
+		for(unsigned int t=0; t<nBetaTubes; t++)
+			hToPlot.push_back(hTuben[s][t]);
+		drawSimulHistos(hToPlot);
+		printCanvas(sideSubst("PMTs/Evis_PMTs_%c",s));
 	}
 }
 
@@ -365,7 +382,7 @@ void deleteArray(float** a, unsigned int nx) {
 
 void ucnaDataAnalyzer11b::locateSourcePositions() {
 		
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		
 		unsigned int nbins = hHitPos[s]->GetNbinsX()-2;
 		
@@ -431,7 +448,8 @@ void ucnaDataAnalyzer11b::locateSourcePositions() {
 			g1.SetLineColor(2);
 			px->Fit(&g1,"Q","",it->x-3*it->wx,it->x+3*it->wx);
 			it->x = g1.GetParameter(1);
-			it->wx = g1.GetParameter(2);
+			it->wx = fabs(g1.GetParameter(2));
+			it->nCounts = px->Integral(px->FindBin(it->x-3*it->wx),px->FindBin(it->x+3*it->wx));
 			py->Fit(&g1,"Q","",it->y-3*it->wy,it->y+3*it->wy);
 			it->y = g1.GetParameter(1);
 			it->wy = g1.GetParameter(2);

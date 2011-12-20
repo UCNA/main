@@ -233,11 +233,11 @@ void RunAccumulator::write(std::string outName) {
 	SegmentSaver::write(outName);
 }
 
-void RunAccumulator::loadProcessedData(AFPState afp, unsigned int fg, ProcessedDataScanner& PDS) {
-	printf("Loading AFP=%i, fg=%i processed data...\n",afp,fg);
+void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS) {
+	printf("Loading AFP=%i, fg=%i processed data...\n",afp,gv);
 	assert(afp <= AFP_OTHER);
-	assert(fg==0 || fg==1);
-	currentFG = fg;
+	assert(gv==GV_CLOSED || gv==GV_OPEN);
+	currentGV = gv;
 	currentAFP = afp;
 	if(!PDS.getnFiles())
 		return;
@@ -247,20 +247,20 @@ void RunAccumulator::loadProcessedData(AFPState afp, unsigned int fg, ProcessedD
 		nScanned++;
 		if(PDS.fPID==PID_BETA && PDS.fType==TYPE_0_EVENT) {
 			runCounts.add(PDS.getRun(),1.0);
-			totalCounts[afp][fg]++;
+			totalCounts[afp][gv]++;
 		}
 		fillCoreHists(PDS,1.0);
 	}
-	printf("\tFG=%i: scanned %i points\n",fg,nScanned);
-	if(!fg)
+	printf("\tFG=%i: scanned %i points\n",gv,nScanned);
+	if(gv==GV_CLOSED)
 		needsSubtraction = true;
 	runTimes += PDS.runTimes;
-	totalTime[afp][fg] += PDS.totalTime;
+	totalTime[afp][gv] += PDS.totalTime;
 }
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
 	AFPState afp = simData.getAFP();
-	currentFG = true;
+	currentGV = GV_OPEN;
 	currentAFP = afp;
 	simData.startScan(nToSim);
 	float nSimmed = 0;

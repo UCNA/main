@@ -70,45 +70,27 @@ const char* SpectrumPeak::name() const {
 void SpectrumPeak::print() const { printf("[%s] ADC %f [%f] Energy %f [%f]",name(),center.x,width.x,energyCenter.x,energyWidth.x); }
 
 Stringmap SpectrumPeak::toStringmap() const {
-	Stringmap M;
-	M.insert("object","SpectrumPeak");
-	M.insert("type",type);
-	M.insert("center",center.x);
-	M.insert("dcenter",center.err);
-	M.insert("energy",energyCenter.x);
-	M.insert("denergy",energyCenter.err);
-	M.insert("width",width.x);
-	M.insert("dwidth",width.err);
-	M.insert("energywidth",energyWidth.x);
-	M.insert("denergywidth",energyWidth.err);
-	M.insert("height",h.x);
-	M.insert("dheight",h.err);
-	M.insert("sID",sID);
-	M.insert("x",xpos);
-	M.insert("y",ypos);
-	M.insert("integral",integral);
-	M.insert("nPE",nPE);
-	M.insert("simulated",simulated?"yes":"no");
-	return M;
-}
-
-SpectrumPeak SpectrumPeak::fromStringmap(const Stringmap& M) {
-	SpectrumPeak p;
-	p.type = PeakType(int(M.getDefault("type",0)));
-	p.center.x = M.getDefault("center",0);
-	p.center.err = M.getDefault("dcenter",0);
-	p.energyCenter.x = M.getDefault("energy",0);
-	p.energyCenter.err = M.getDefault("denergy",0);
-	p.width.x = M.getDefault("width",0);
-	p.width.err = M.getDefault("dwidth",0);
-	p.energyWidth.x = M.getDefault("energywidth",0);
-	p.energyWidth.err = M.getDefault("denergywidth",0);
-	p.h.x = M.getDefault("height",0);
-	p.h.err = M.getDefault("dheight",0);
-	p.sID = (unsigned int)M.getDefault("sID",0);
-	p.xpos = M.getDefault("x",0);
-	p.ypos = M.getDefault("y",0);
-	return p;
+	Stringmap m;
+	m.insert("source_id",sID);
+	m.insert("side",s==EAST?"'East'":"'West'");
+	m.insert("tube",t);
+	m.insert("peak_num",type);
+	m.insert("peak_data",simulated?"'simulation'":"'data'");
+	m.insert("adc",center.x);
+	m.insert("dadc",center.err);
+	m.insert("erecon",energyCenter.x);
+	m.insert("derecon",energyCenter.err);
+	m.insert("adcwidth",width.x);
+	m.insert("dadcwidth",width.err);
+	m.insert("ereconwidth",energyWidth.x);
+	m.insert("dereconwidth",energyWidth.err);
+	m.insert("eta",eta);
+	m.insert("gms",gms);
+	m.insert("integral",integral);
+	m.insert("height",h.x);
+	m.insert("dheight",h.err);
+	m.insert("nPE",nPE);
+	return m;
 }
 
 void SpectrumPeak::fromGaussian(const TF1* f, unsigned int n) {

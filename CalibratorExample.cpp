@@ -6,11 +6,11 @@
 /// an example of how to use the energy calibration classes
 int main(int argc, char *argv[]) {
 	
-	// object for getting calibration data from the MySQL DB
-	CalDBSQL CDB("mpm_debug");
+	// get pointer to default calibration DB
+	CalDBSQL* CDB = CalDBSQL::getCDB();
 	// calibrator for run number 15931
 	RunNum rn = 15931;
-	PMTCalibrator PCal(rn,&CDB);
+	PMTCalibrator PCal(rn,CDB);
 	
 	// we can get lots of information about the run calibrations from the PMTCalibrator (see EnergyCalibrator.hh header):
 	printf("Run %i: PMT W2 sees %.1f PE for 500keV quenched energy at position (5,8)\n",rn,PCal.nPE(WEST, 1, 500, 5., 8.));

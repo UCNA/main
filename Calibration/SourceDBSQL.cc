@@ -32,6 +32,7 @@ std::vector<Source> SourceDBSQL::runSources(RunNum rn, Side s) {
 }
 
 void SourceDBSQL::clearSources(RunNum rn) {
+	sprintf(query,"DELETE sourcepeaks FROM sourcepeaks,sources WHERE sources.source_id = sourcepeaks.source_id and sources.run_number = %i",rn);
 	sprintf(query,"DELETE FROM sources WHERE run_number = %i",rn);
 	execute();
 }
@@ -47,6 +48,12 @@ void SourceDBSQL::addSource(const Source& src) {
 	execute();
 }
 
+void SourceDBSQL::clearPeaks(unsigned int sID) {
+	sprintf(query,"DELETE FROM sourcepeaks WHERE source_id = %i",sID);
+	execute();
+}
+
 void SourceDBSQL::addPeak(const SpectrumPeak& pk) {
-	// TODO
+	sprintf(query,"INSERT INTO sourcepeaks%s",sm2insert(pk.toStringmap()).c_str());
+	execute();
 }

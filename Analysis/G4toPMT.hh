@@ -4,6 +4,8 @@
 #include "PMTGenerator.hh"
 #include "ProcessedDataScanner.hh"
 #include <string>
+#include <TRandom3.h>
+
 
 /// generic class for converting simulation data to standard form
 class Sim2PMT: public ProcessedDataScanner {
@@ -12,9 +14,7 @@ public:
 	Sim2PMT(const std::string& treeName);
 	
 	/// set calibrator to use for simulations
-	void setCalibrator(PMTCalibrator& PCal);
-	/// generate type 0 events with simulated detector response (with optional position cuts)
-	void genType0(unsigned int nToSim = 0, double wx = 0, double wy = 0);
+	virtual void setCalibrator(PMTCalibrator& PCal);
 	
 	/// this does nothing for processed data
 	virtual void recalibrateEnergy() {}
@@ -34,7 +34,6 @@ public:
 	
 	PMTGenerator PGen[2];		//< PMT simulator for each side
 	bool reSimulate;			//< whether to re-simulate energy or use "raw" values
-	TH1F* inputEnergy[2];		//< histograms to fill with simulation input energy
 	double eQ[2];				//< Scintillator quenched energy
 	double eDep[2];				//< Scintillator deposited energy
 	double eW[2];				//< Wirechamber deposited energy
@@ -91,6 +90,42 @@ public:
 	
 protected:
 	virtual void setReadpoints();
+};
+
+
+/// mixes several simulations
+class MixSim: public Sim2PMT {
+public:
+	/// constructor
+	MixSim(double tinit=0): Sim2PMT(""), currentSim(NULL), t0(tinit), t1(tinit) {}
+	
+	/// start scan
+	virtual void startScan(unsigned int startRandom = 0);
+	/// load sub-simulation
+	virtual bool nextPoint();
+	
+	/// add sub-simulation
+	void addSim(Sim2PMT* S, double r0, double thalf);
+	/// set simulation time (determines different line strengths)
+	void setTime(double t);
+	
+	/// set desired AFP state for simulation data
+	virtual void setAFP(AFPState a);
+	/// set calibrator to use for simulations
+	virtual void setCalibrator(PMTCalibrator& PCal);
+	
+protected:
+	
+	virtual void doUnits() { }
+	
+	std::vector<Sim2PMT*> subSims;
+	std::vector<double> initStrength;
+	std::vector<double> halflife;
+	std::vector<double> cumStrength;
+	Sim2PMT* currentSim;
+	double t0;	//< initial time
+	double t1;	//< current time
+	
 };
 
 #endif

@@ -36,16 +36,16 @@ Stringmap Source::getProperties() const {
 std::vector<SpectrumPeak> Source::getPeaks() const {
 	std::vector<SpectrumPeak> v;
 	if(t=="Sn113")
-		v.push_back(SpectrumPeak(SN_PEAK,sID,x,y));
+		v.push_back(SpectrumPeak(SN_PEAK,sID,mySide));
 	if(t=="Cd109")
-		v.push_back(SpectrumPeak(CD109_PEAK,sID,x,y));
+		v.push_back(SpectrumPeak(CD109_PEAK,sID,mySide));
 	if(t=="In114")
-		v.push_back(SpectrumPeak(IN114_PEAK,sID,x,y));
+		v.push_back(SpectrumPeak(IN114_PEAK,sID,mySide));
 	if(t=="Ce139")
-		v.push_back(SpectrumPeak(CE139_PEAK,sID,x,y));
+		v.push_back(SpectrumPeak(CE139_PEAK,sID,mySide));
 	if(t=="Bi207") {
-		v.push_back(SpectrumPeak(BI_PEAK_1,sID,x,y));
-		v.push_back(SpectrumPeak(BI_PEAK_2,sID,x,y));
+		v.push_back(SpectrumPeak(BI_PEAK_1,sID,mySide));
+		v.push_back(SpectrumPeak(BI_PEAK_2,sID,mySide));
 	}
 	return v;
 }

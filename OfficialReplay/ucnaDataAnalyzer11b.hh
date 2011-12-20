@@ -234,6 +234,7 @@ protected:
 	TH1F* hTopADC[2][2];		//< top ADC [side][cut] (East only)
 	TH1F* hScintTDC[2];			//< scintillator 2-of-4 TDC by [side]
 	TH1F* hEtrue[2][5];			//< true energy, by [side][type]
+	TH1F* hTuben[2][nBetaTubes];//< individual PMT visible energy
 	TH1F* hMonADC[kNumUCNMons];	//< UCN Monitor ADCs
 	TH1F* hMonRate[kNumUCNMons];//< UCM Monitor rates
 	TH1F* hTypeRate[3];			//< rate of event type for betas

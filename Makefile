@@ -18,7 +18,7 @@ SHELL = /bin/sh
 CC = cc
 CXX = g++
 
-CXXFLAGS = -g -O3 -m32 -Wall `root-config --cflags` \
+CXXFLAGS = -O3 -m32 -Wall `root-config --cflags` \
 	-I. -IIOUtils -IRootUtils -IBaseTypes -IDetectors -IMathUtils -ICalibration -IAnalysis -IStudies
 LDFLAGS = `root-config --libs` -lSpectrum 
 
@@ -36,14 +36,13 @@ VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:Detectors/:MathUtils/:Calibration/:Ana
 Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
 	Enums.o Types.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RData.o
 
-Detectors = RunManager.o Subsystem.o CoTracker.o Trigger.o BetaScint.o LEDTracker.o MuonVeto.o \
-	WirechamberReconstruction.o Wirechamber.o MWPC.o EventParser.o
+Detectors = WirechamberReconstruction.o
 
 Calibration = PositionResponse.o SimNonlinearity.o PMTGenerator.o \
 	EnergyCalibrator.o WirechamberCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o ManualInfo.o
 	
 Analysis = TChainScanner.o ProcessedDataScanner.o PostAnalyzer.o PostOfficialAnalyzer.o G4toPMT.o TH1toPMT.o DataSource.o \
-	SpectrumHistos.o KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o BetaSpectrum.o
+	KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o BetaSpectrum.o
 
 Studies = PlotMakers.o SRAsym.o PositionStudies.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o
 

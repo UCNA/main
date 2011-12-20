@@ -1,5 +1,6 @@
 #include "TSpectrumUtils.hh"
 #include "PathUtils.hh"
+#include "GraphicsUtils.hh"
 
 bool yrevsort(std::pair<float,float> a, std::pair<float,float> b) { return (b.second < a.second); }
 
@@ -150,6 +151,11 @@ std::vector<SpectrumPeak> fancyMultiFit(TH1F* indat, float searchsigma, const st
 			makePath(drawName,true);
 			indat->Draw();
 			htout->Draw("Same");
+			for(unsigned int p=0; p<npks; p++) {
+				drawVLine(foundPeaks[p].energyCenter.x, gPad, 2);
+				drawVLine(foundPeaks[p].energyCenter.x-foundPeaks[p].energyWidth.x, gPad, 4);
+				drawVLine(foundPeaks[p].energyCenter.x+foundPeaks[p].energyWidth.x, gPad, 4);
+			}
 			gPad->Print(drawName.c_str());
 		}
 		

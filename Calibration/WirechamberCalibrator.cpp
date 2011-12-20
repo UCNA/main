@@ -3,7 +3,7 @@
 
 WirechamberCalibrator::WirechamberCalibrator(RunNum rn, CalDB* cdb): anodeP(cdb->getAnodePositioningCorrector(rn)) {
 	assert(anodeP);
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		anodeGainCorr[s]=cdb->getAnodeGain(rn,s);
 }
 

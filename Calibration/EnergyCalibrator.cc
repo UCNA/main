@@ -54,7 +54,7 @@ void PedestalCorrector::insertPedestal(const std::string& sensorName, TGraph* g)
 LinearityCorrector::LinearityCorrector(RunNum myRun, CalDB* cdb):
 scaleNoiseWithL(true), P(cdb->getPositioningCorrector(myRun)), GS(NULL), rn(myRun), LCRef(NULL), CDB(cdb) {
 	
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			sensorNames[s][t] = std::string("ADC")+ctos(sideNames(s))+itos(pmtHardwareNum(s,t))+"Beta";
 	
@@ -69,7 +69,7 @@ scaleNoiseWithL(true), P(cdb->getPositioningCorrector(myRun)), GS(NULL), rn(myRu
 	else
 		LCRef = getCachedRun(rGMS,CDB);
 	
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			linearityFunctions[s][t] = CDB->getLinearity(myRun,s,t);
@@ -100,7 +100,7 @@ scaleNoiseWithL(true), P(cdb->getPositioningCorrector(myRun)), GS(NULL), rn(myRu
 LinearityCorrector::~LinearityCorrector() {
 	if(rn<5000)
 		return;
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			//if(linearityFunctions[s][t]) delete(linearityFunctions[s][t]); //TODO why does this crash?
 			//if(ledPeaks[s][t]) delete(ledPeaks[s][t]);
@@ -163,14 +163,14 @@ PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) 
 	printf("Creating PMTCalibrator for %i.\n",myRun);
 	clipThreshold = 3500;
 	GS = new ChrisGainStabilizer(myRun,CDB,this);
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			pmtEffic[s][t] = CDB->getTrigeff(myRun,s,t);
 	printSummary();
 }
 PMTCalibrator::~PMTCalibrator() {
 	printf("Deleting PMTCalibrator for %i.\n",myRun);
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			if(pmtEffic[s][t])
 				delete(pmtEffic[s][t]);
@@ -335,7 +335,7 @@ void PMTCalibrator::printSummary() {
 	printf("-- Energy Calibrations %i (GMS to %i) -- [%s]\n",myRun,rGMS,CDB->getName().c_str());
 	if(GS)
 		GS->printSummary();
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		printf("%c Res500:",sideNames(s));
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			printf("\t%.1f",energyResolution(s,t,500.0,0,0,0));
@@ -371,7 +371,7 @@ Stringmap PMTCalibrator::calSummary() const {
 	m.insert("tstart",itos(CDB->startTime(myRun)));
 	m.insert("tend",itos(CDB->endTime(myRun)));
 	
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			std::string tname = ctos(sideNames(s))+itos(t);
 			m.insert(tname+"_gms0",getGMS0(s, t));

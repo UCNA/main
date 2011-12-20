@@ -4,13 +4,14 @@
 #include <cassert>
 #include <cmath>
 
+TRandom3 mc_rnd_source;	
+
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
 reSimulate(true), afp(AFP_OTHER) {
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		PGen[s].larmorField = 0;
 	}
-	inputEnergy[EAST]=inputEnergy[WEST]=NULL;
 	totalTime = BlindTime(1.0);
 	fPID = PID_BETA;	// only simulating beta events
 }
@@ -20,6 +21,67 @@ void Sim2PMT::calcReweight() {
 	if(afp==AFP_ON||afp==AFP_OFF)
 		physicsWeight *= 1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_OFF?1:-1));
 }
+
+void Sim2PMT::setCalibrator(PMTCalibrator& PCal) {
+	for(Side s = EAST; s <= WEST; ++s)
+		PGen[s].setCalibrator(&PCal);
+	ActiveCal = &PCal;
+}
+
+bool Sim2PMT::nextPoint() {
+	bool np = ProcessedDataScanner::nextPoint();
+	reverseCalibrate();
+	calcReweight();
+	return np;
+}
+
+void Sim2PMT::reverseCalibrate() {
+	
+	doUnits();
+	
+	bool passesMWPC[2];
+	bool passesScint[2];
+	bool is2fold[2];
+	
+	// simulate event on both sides
+	for(Side s = EAST; s <= WEST; ++s) {
+		
+		// TODO efficiency/resolution fancier wirechamber simulation
+		mwpcEnergy[s] = eW[s];
+		passesMWPC[s] = (eW[s] > 0.02);		
+		
+		// simulate detector energy response, or use un-smeared original data 
+		if(reSimulate) {
+			PGen[s].setOffsets(scintPos[s][X_DIRECTION], scintPos[s][Y_DIRECTION], wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center);
+			scints[s] = PGen[s].generate(eQ[s]);
+			passesScint[s] = PGen[s].triggered();
+		} else {
+			scints[s].energy = eQ[s];
+			passesScint[s] = (eQ[s] > 0);
+		}
+		
+		is2fold[s] = passesMWPC[s] && passesScint[s];
+	}
+	
+	if(is2fold[EAST] || is2fold[WEST]) fPID = PID_BETA;
+	else fPID = PID_SINGLE;
+	
+	fType = TYPE_IV_EVENT;
+	fSide = NONE;
+	for(Side s = EAST; s<=WEST; ++s) {
+		if(is2fold[EAST] && is2fold[WEST]) fType = TYPE_I_EVENT;
+		if(is2fold[s] && !passesScint[otherSide(s)]) fType = passesMWPC[otherSide(s)]?TYPE_II_EVENT:TYPE_0_EVENT;
+		if(passesScint[s]&&!passesScint[otherSide(s)]) fSide = s;
+	}
+	if(passesScint[EAST] && passesScint[WEST])
+		fSide = time[EAST]<time[WEST]?EAST:WEST;
+}
+
+float Sim2PMT::getEtrue() {
+	if(fSide>WEST) return 0;
+	return PGen[fSide].getCalibrator()->Etrue(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
+}
+
 
 
 void G4toPMT::setReadpoints() {
@@ -63,7 +125,7 @@ void G4toPMT::doUnits() {
 	const double wcPosConversion = 10.0*sqrt(0.6);
 	for(unsigned int i=0; i<3; i++)
 		primPos[i] *= 10.0;
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		if(matchPenelope)
 			eQ[s] = eDep[s];
 		for(unsigned int i=0; i<2; i++) {
@@ -81,7 +143,7 @@ void PenelopeToPMT::doUnits() {
 	const double wcPosConversion = 10.0;
 	for(unsigned int i=0; i<3; i++)
 		primPos[i] = fPrimPos[i]*wcPosConversion;
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		eQ[s] = fEdep[s]*0.001;	// really Edep and not Equenched
 		eW[s] = fEW[s]*0.001;
 		time[s] = fTime[s];
@@ -95,100 +157,78 @@ void PenelopeToPMT::doUnits() {
 	costheta = fCostheta;
 }
 
-void Sim2PMT::setCalibrator(PMTCalibrator& PCal) {
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
-		PGen[s].setCalibrator(&PCal);
-	ActiveCal = &PCal;
+
+//-------------------------------------------
+
+
+void MixSim::startScan(unsigned int startRandom) {
+	for(std::vector<Sim2PMT*>::iterator it = subSims.begin(); it != subSims.end(); it++)
+		(*it)->startScan(startRandom);
 }
 
-bool Sim2PMT::nextPoint() {
-	bool np = ProcessedDataScanner::nextPoint();
-	reverseCalibrate();
-	calcReweight();
-	return np;
-}
-
-void Sim2PMT::reverseCalibrate() {
+bool MixSim::nextPoint() {
+	assert(cumStrength.size());
+	std::vector<double>::iterator sline = std::lower_bound(cumStrength.begin(),cumStrength.end(),mc_rnd_source.Uniform(0,cumStrength.back()));
+	unsigned int i = sline-cumStrength.begin();
+	assert(i<subSims.size());
+	currentSim = subSims[i];
+	currentSim->nextPoint();
 	
-	doUnits();
-	
-	bool passesMWPC[2];
-	bool passesScint[2];
-	bool is2fold[2];
-	
-	// simulate event on both sides
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
-		
-		// TODO efficiency/resolution fancier wirechamber simulation
-		mwpcEnergy[s] = eW[s];
-		passesMWPC[s] = (eW[s] > 0.02);		
-			
-		// simulate detector energy response, or use un-smeared original data 
-		if(reSimulate) {
-			PGen[s].setOffsets(scintPos[s][X_DIRECTION], scintPos[s][Y_DIRECTION], wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center);
-			scints[s] = PGen[s].generate(eQ[s]);
-			passesScint[s] = PGen[s].triggered();
-		} else {
-			scints[s].energy = eQ[s];
-			passesScint[s] = (eQ[s] > 0);
-		}
-		
-		is2fold[s] = passesMWPC[s] && passesScint[s];
-	}
-	
-	if(is2fold[EAST] || is2fold[WEST]) fPID = PID_BETA;
-	else fPID = PID_SINGLE;
-
-	fType = TYPE_IV_EVENT;
-	fSide = NONE;
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
-		if(is2fold[EAST] && is2fold[WEST]) fType = TYPE_I_EVENT;
-		if(is2fold[s] && !passesScint[otherSide(s)]) fType = passesMWPC[otherSide(s)]?TYPE_II_EVENT:TYPE_0_EVENT;
-		if(passesScint[s]&&!passesScint[otherSide(s)]) fSide = s;
-	}
-	if(passesScint[EAST] && passesScint[WEST])
-		fSide = time[EAST]<time[WEST]?EAST:WEST;
-}
-
-float Sim2PMT::getEtrue() {
-	if(fSide>WEST) return 0;
-	return PGen[fSide].getCalibrator()->Etrue(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
-}
-
-void Sim2PMT::genType0(unsigned int nToSim, double wx, double wy) {
-	
-	assert(Tch->GetEntries());
-	
-	printf("Smearing simulated events (target %i)...\n",nToSim);
-	if(wx && wy)
-		printf("\twith position cut (%g,%g)\n",wx,wy);
-	unsigned int nsimmed[2] = {0,0};
-	
-	startScan(nToSim);
-	
-	while(1) {
-		// run until quota of points generated
-		if(!nextPoint())
-			if(!nToSim)
-				break;
-		if(nToSim && nsimmed[EAST] >= nToSim && nsimmed[WEST] >= nToSim)
-			break;
-		
-		recalibrateEnergy();
-	
-		// save type-0 events
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
-			bool wc_cut = eW[s] > 0.05 && eW[otherSide(s)] < 0.05;
-			if(inputEnergy[s] && wc_cut && !eQ[otherSide(s)])
-				inputEnergy[s]->Fill(eQ[s]);
-			if(wx && wy && !(wires[s][X_DIRECTION].center*wires[s][X_DIRECTION].center/wx/wx
-							 + wires[s][Y_DIRECTION].center*wires[s][Y_DIRECTION].center/wy/wy <= 1.0))
-				continue;
-			if(fType == TYPE_0_EVENT && fSide == s) {
-				nsimmed[s]++;
-			}
+	// copy over simulation info
+	for(Side s = EAST; s <= WEST; ++s) {
+		eQ[s]=currentSim->eQ[s];
+		eDep[s]=currentSim->eDep[s];
+		eW[s]=currentSim->eW[s];
+		time[s]=currentSim->time[s];
+		for(unsigned int a=0; a<3; a++) {
+			scintPos[s][a]=currentSim->scintPos[s][a];
+			mwpcPos[s][a]=currentSim->mwpcPos[s][a];
 		}
 	}
+	for(unsigned int a=0; a<4; a++)
+		primPos[a] = currentSim->primPos[a];
+	costheta = currentSim->costheta;
+	ePrim = currentSim->ePrim;
+	physicsWeight = currentSim->physicsWeight;
 	
-	printf(" Done [%i, %i / %i completed].\n",nsimmed[EAST],nsimmed[WEST],(int)Tch->GetEntries());
+	// copy over data info
+	for(Side s = EAST; s <= WEST; ++s) {
+		scints[s] = currentSim->scints[s];
+		led_pd[s] = currentSim->led_pd[s];
+		mwpcs[s] = currentSim->mwpcs[s];
+		mwpcEnergy[s] = currentSim->mwpcEnergy[s];
+		for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++)
+			wires[s][d] = currentSim->wires[s][d];
+	}
+	runClock = currentSim->runClock;
+	fPID = currentSim->fPID;
+	fType = currentSim->fType;
+	fSide = currentSim->fSide;
+	
+	return true;
 }
+
+void MixSim::addSim(Sim2PMT* S, double r0, double thalf) {
+	subSims.push_back(S);
+	initStrength.push_back(r0);
+	halflife.push_back(thalf);
+	cumStrength.push_back((cumStrength.size()?cumStrength.back():0)+exp((t0-t1)*log(2)/thalf)*r0);
+}
+
+void MixSim::setTime(double t) {
+	for(unsigned int i=0; i<halflife.size(); i++)
+		cumStrength[i] = (i?cumStrength[i-1]:0)+exp((t0-t1)*log(2)/halflife[i])*initStrength[i];
+}
+
+void MixSim::setAFP(AFPState a) {
+	for(std::vector<Sim2PMT*>::iterator it = subSims.begin(); it != subSims.end(); it++)
+		(*it)->setAFP(a);
+	Sim2PMT::setAFP(a);
+}
+
+void MixSim::setCalibrator(PMTCalibrator& PCal) {
+	for(std::vector<Sim2PMT*>::iterator it = subSims.begin(); it != subSims.end(); it++)
+		(*it)->setCalibrator(PCal);
+	Sim2PMT::setCalibrator(PCal);	
+}
+

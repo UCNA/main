@@ -143,7 +143,7 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 	printf("Loading positioning corrector %i...\n",psid);
 	std::vector<PosmapInfo> pinf;
 	TSQLRow* r;
-	for(Side s = EAST; s<=WEST; s=nextSide(s)) {
+	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			sprintf(query,"SELECT n_rings,radius FROM posmap_info WHERE posmap_set_id = %i AND side = %s AND quadrant = %i",psid,dbSideName(s),t);
 			r = getFirst();

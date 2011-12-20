@@ -18,6 +18,9 @@ enum Side {
 	BADSIDE = 4
 };
 
+/// iteration to next side
+inline Side& operator++(Side& s) { return s = Side(s+1); }
+
 /// run number type
 typedef unsigned int RunNum;
 /// get letter for side names
@@ -27,10 +30,6 @@ const char* sideWords(Side s);
 /// substitute side names into string expression
 std::string sideSubst(std::string instr, Side s);
 
-/// combined Side
-Side sideCombo(bool E, bool W);
-/// iterate to next Side
-Side nextSide(Side s);
 /// opposite side to given side
 Side otherSide(Side s);
 
@@ -99,10 +98,13 @@ enum AFPState {
 
 /// state of gate valve during a run
 enum GVState {
-	GV_CLOSED,	//< GV closed (background)
-	GV_OPEN,	//< GV open (beta decay)
-	GV_OTHER	//< GV state unspecified
+	GV_CLOSED	= 0,	//< GV closed (background)
+	GV_OPEN		= 1,	//< GV open (beta decay)
+	GV_OTHER	= 2		//< GV state unspecified
 };
+
+/// iteration to next GV state
+inline GVState& operator++(GVState& a) { return a = GVState(a+1); }
 
 /// SCS geometry for a run
 enum RunGeometry {
@@ -128,19 +130,6 @@ RunGeometry whichGeometry(RunNum rn);
 std::string geomName(RunGeometry g);
 /// get hardware PMT number for given side/quadrant
 unsigned int pmtHardwareNum(Side s, unsigned int quadrant);
-
-
-/// basic trigger data
-enum TrigFlags {
-	TRIG_E1_TDC = 1<<0,		//< E1 TDC not timed out
-	TRIG_E2_TDC = 1<<1,		//< E2 TDC not timed out
-	TRIG_E3_TDC = 1<<2,		//< E3 TDC not timed out
-	TRIG_E4_TDC = 1<<3,		//< E4 TDC not timed out
-	TRIG_W1_TDC = 1<<4,		//< W1 TDC not timed out
-	TRIG_W2_TDC = 1<<5,		//< W2 TDC not timed out
-	TRIG_W3_TDC = 1<<6,		//< W3 TDC not timed out
-	TRIG_W4_TDC = 1<<7,		//< W4 TDC not timed out	
-};
 
 /// enumeration for Jianglai asymmetry analysis choices
 enum AnalysisChoice {
@@ -180,30 +169,5 @@ enum EventType {
 };
 
 std::string typeWords(EventType tp);
-
-/// event id flag bits
-enum EventFlags {
-	
-	IS_CORRECT			= 1<<0, //<	correct or "Type IV" -- Undetectable scatters off wirechamber surface
-	IS_TYPE_I			= 1<<1, //<	Type I hits scintillators and WCs on both sides
-	IS_TYPE_II			= 1<<2, //<	Type II scatters off wirechambers, ends up in other scintillator
-	IS_TYPE_III			= 1<<3,	//< Type III scatters off scintillator, ends up in other wirechamber
-	
-	IS_BEAMCRUD			= 1<<4, //<	Beam Crud (too close to beam pulse)
-	IS_GMS				= 1<<5, //<	GMS LED event
-	IS_MUON				= 1<<6, //<	tagged muon background event
-	IS_UCN_MON			= 1<<7,	//<	UCN monitor trigger event
-	IS_PMT_PULSER		= 1<<8,	//<	Individual PMT pulser event
-	
-	HIT_WIRES			= 1<<9, //<	tracked in MWPC on this side
-	HIT_SCINT			= 1<<10,//<	seen in scintillator
-	HIT_MUON_BACK		= 1<<11,//< hit muon backing veto on this side
-	HIT_SIDE_FIRST		= 1<<12,//<	whether this side was hit first (in TDC zero-time peak or not)
-	
-	PRIMARY_DIRECTION	= 1<<13,//< whether the (simulation) particle was originally heading in this direction
-	
-	IS_NOT_BETADATA		= IS_BEAMCRUD | IS_GMS | IS_MUON | IS_UCN_MON | IS_PMT_PULSER,
-	IS_CLASSIFIED_HIT	= IS_CORRECT | IS_TYPE_I | IS_TYPE_II | IS_TYPE_III
-};
 
 #endif

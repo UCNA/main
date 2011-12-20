@@ -4,10 +4,11 @@
 
 #include "ControlMenu.hh"
 #include "PathUtils.hh"
-#include "RunManager.hh"
 #include "PositionResponse.hh"
 #include "PositionStudies.hh"
 #include "AsymmetryAnalyzer.hh"
+#include "EndpointStudy.hh"
+#include "PostOfficialAnalyzer.hh"
 #include "PlotMakers.hh"
 #include "PMTGenerator.hh"
 #include "ReSource.hh"
@@ -52,13 +53,11 @@ void mi_VerifyCalperiods(std::deque<std::string>&, std::stack<std::string>&) {
 	}
 }
 
-void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>&) {
-	//unsigned int nr = streamInteractor::popInt(stack);
-	//RunNum r1 = streamInteractor::popInt(stack);
-	//RunNum r0 = streamInteractor::popInt(stack);
-	// TODO
-	//KurieScaleFinder KSF;
-	//endpointStudy(&KSF,r0,r1,nr,true); 
+void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
+	unsigned int nr = streamInteractor::popInt(stack);
+	RunNum r1 = streamInteractor::popInt(stack);
+	RunNum r0 = streamInteractor::popInt(stack);
+	process_xenon(r0,r1,nr);
 }
 
 void mi_EndpointEnresPlot(std::deque<std::string>&, std::stack<std::string>&) {
@@ -93,24 +92,18 @@ void mi_ProcessCalFile(std::deque<std::string>&, std::stack<std::string>&) {
 }
 
 void mi_PostprocessSources(std::deque<std::string>&, std::stack<std::string>& stack) {
-	std::string useOfficial = streamInteractor::popString(stack);
-	std::string refonly = streamInteractor::popString(stack);
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
-	std::vector<RunNum> C;
-	if(refonly=="yes")
-		C = selectRuns(r0,r1,"ref");
-	else
-		C = selectRuns(r0,r1,"source");
+	std::vector<RunNum> C = selectRuns(r0,r1,"source");
 	if(!C.size()) {
 		printf("No source runs found in Analysis DB; attempting manual scan...\n");
 		for(RunNum r = r0; r<= r1; r++)
-			reSource(r,useOfficial=="yes"?INPUT_OFFICIAL:INPUT_UNOFFICIAL,true);
+			reSource(r);
 		return;
 	}
 	printf("Found %i source runs...\n",(int)C.size());
 	for(std::vector<RunNum>::iterator it=C.begin(); it!=C.end(); it++)
-		reSource(*it,useOfficial=="yes"?INPUT_OFFICIAL:INPUT_UNOFFICIAL,true);
+		reSource(*it);
 }
 
 void mi_PlotGMS(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -235,53 +228,12 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	selectRuntype.addChoice("Background Runs","bg");
 	selectRuntype.addChoice("GMS Reference Runs","ref");
 	selectRuntype.setDefault("all");
-	
-	NameSelector forceReplay("Re-analyze");
-	forceReplay.addChoice("Re-analyze only unanalyzed runs","no");
-	forceReplay.addChoice("Re-analyze all runs","yes");
-	forceReplay.addSynonym("no","0");
-	forceReplay.addSynonym("yes","1");
-	forceReplay.setDefault("no");
-	
-	NameSelector selectSides("Side");
-	selectSides.addChoice("East Side","east");
-	selectSides.addChoice("West Side","west");
-	selectSides.addChoice("Both Sides","both");
-	selectSides.addSynonym("east","0");
-	selectSides.addSynonym("west","1");
-	selectSides.addSynonym("both","2");
-	selectSides.setDefault("both");
-	
-	NameSelector useOfficial("Use Official Replay");
-	useOfficial.addChoice("Use Michael Replay","no");
-	useOfficial.addChoice("Use Official Replay","yes");
-	useOfficial.addSynonym("no","0");
-	useOfficial.addSynonym("yes","1");
-	useOfficial.setDefault("yes");
-	
-	NameSelector reCalibrate("Re-calibrate");
-	reCalibrate.addChoice("Use energy as recorded","no");
-	reCalibrate.addChoice("Recalibrate energy from current DB","yes");
-	reCalibrate.addSynonym("no","0");
-	reCalibrate.addSynonym("yes","1");
-	reCalibrate.setDefault("no");
-	
-	NameSelector refrunsOnly("Ref only");
-	refrunsOnly.addChoice("Analyze all runs","no");
-	refrunsOnly.addChoice("Analyze reference runs only","yes");
-	refrunsOnly.addSynonym("no","0");
-	refrunsOnly.addSynonym("yes","1");
-	refrunsOnly.setDefault("no");
-	
-	NameSelector selectInput("Input Source");
-	selectInput.addChoice("Use Official Replay","official");
-	selectInput.addChoice("Use Unofficial Replay","unofficial");	
-	
+		
 	// postprocessing/plots routines
-	inputRequester pm_mi1("Generate Endpoint Map",&mi_EndpointStudy);
-	pm_mi1.addArg("Start Run");
-	pm_mi1.addArg("End Run");
-	pm_mi1.addArg("n Rings","8");
+	inputRequester pm_posmap("Generate Position Map",&mi_EndpointStudy);
+	pm_posmap.addArg("Start Run");
+	pm_posmap.addArg("End Run");
+	pm_posmap.addArg("n Rings","12");
 	inputRequester pm_mi2("Energy Resolution Plots",&mi_EndpointEnresPlot);
 	pm_mi2.addArg("Run Number");
 	inputRequester pm_mi3("Process positions file",&mi_EndpointProcessFile);	
@@ -309,7 +261,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
-	PostRoutines.addChoice(&pm_mi1);
+	PostRoutines.addChoice(&pm_posmap,"pmap");
 	PostRoutines.addChoice(&pm_mi2);	
 	PostRoutines.addChoice(&pm_mi3);
 	PostRoutines.addChoice(&pm_mi4);
@@ -317,7 +269,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	PostRoutines.addChoice(&plotGMS);
 	PostRoutines.addChoice(&posmapPlot);
 	PostRoutines.addChoice(&nPEPlot);
-	PostRoutines.addChoice(&posmapDumper,"pmap");
+	PostRoutines.addChoice(&posmapDumper,"dpm");
 	PostRoutines.addChoice(&octetProcessor,"oct");
 	PostRoutines.addChoice(&specialJunk,"spec");
 	PostRoutines.addChoice(&exitMenu,"x");	
@@ -326,8 +278,6 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	inputRequester postSources("Reprocess Source Runs",&mi_PostprocessSources);
 	postSources.addArg("Start Run");
 	postSources.addArg("End Run");
-	postSources.addArg("","",&refrunsOnly);
-	postSources.addArg("","",&useOfficial);
 	
 	// main menu
 	OptionsMenu OM("Analyzer Main Menu");

@@ -15,7 +15,7 @@ TF1 AsymmetryAnalyzer::asymmetryFit = TF1("asymFit",&asymmetryFitFunc,0,neutronB
 AnalysisChoice  AsymmetryAnalyzer::anChoice = ANCHOICE_A;
 
 AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname): OctetAnalyzer(pnt,nm,inflname) {
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		qAnodeCal[s] = registerCoreHist("AnodeCal","Anode Calibration Events",50, 0, 8, s, &hAnodeCal[s]);
 		
 		for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
@@ -62,7 +62,7 @@ void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color) {
 void AsymmetryAnalyzer::endpointFits() {
 	const float fitStart = 250;
 	const float fitEnd = 750;	
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {		
+	for(Side s = EAST; s <= WEST; ++s) {		
 		for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
 			float_err ep = kurieIterator((TH1F*)qEnergySpectra[s][TYPE_0_EVENT].fgbg[afp].h[1], 800., NULL, neutronBetaEp, fitStart, fitEnd);
 			Stringmap m;
@@ -81,7 +81,7 @@ void AsymmetryAnalyzer::endpointFits() {
 }
 
 void AsymmetryAnalyzer::anodeCalFits() {
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {		
+	for(Side s = EAST; s <= WEST; ++s) {		
 		for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
 			TF1 fLandau("landauFit","landau",0,15);
 			fLandau.SetLineColor(2+2*s);
@@ -104,7 +104,7 @@ void AsymmetryAnalyzer::anodeCalFits() {
 void AsymmetryAnalyzer::calculateResults() {
 	/// build total spectra based on analysis choice
 	quadHists qTotalSpectrum[2];
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][TYPE_0_EVENT], "hTotalEvents");
 		if(!(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C || anChoice == ANCHOICE_D))
 			qTotalSpectrum[s] *= 0;	// analysis choices without Type 0 events
@@ -143,7 +143,7 @@ void AsymmetryAnalyzer::makePlots() {
 	
 	// positions
 	if(depth <= 0) {
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		for(Side s = EAST; s <= WEST; ++s) {
 			for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
 				qPositions[s][t].setDrawMinimum(0);
 				drawQuad(qPositions[s][t],"Positions","COL");
@@ -169,7 +169,7 @@ void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor)
 	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
 		std::vector<TH1*> hToPlot;
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {		
+		for(Side s = EAST; s <= WEST; ++s) {		
 			for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
 				qEnergySpectra[s][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
 				qEnergySpectra[s][t].fgbg[afp].h[true]->SetMarkerStyle(22+4*afp);

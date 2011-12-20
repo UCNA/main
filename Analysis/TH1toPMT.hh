@@ -25,7 +25,7 @@ public:
 	/// load next "speed scan" point
 	virtual bool nextPoint();	
 	/// start a "speed scan," possibly at a random entry number
-	void startScan(unsigned int startRandom = 0);
+	virtual void startScan(unsigned int startRandom = 0);
 	
 	/// set calibrator to use for simulations
 	void setCalibrator(PMTCalibrator& PCal);

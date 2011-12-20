@@ -22,7 +22,7 @@ void AnodeCalibration(ProcessedDataScanner& PDS, OutputManager& OM, unsigned int
 	TH1F* masterEnergySpectrum = OM.registeredTH1F("MasterEnergy","Type 0 Event Energy",nEnergyBins,0,eMax);
 	std::vector<TH1F*> anodeSpectra[2][nEnergyBins];	//< anode spectra for each [side][energy][position]
 	float bmax = PDS.isSimulated()?20:4000;
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
+	for(Side s = EAST; s <= WEST; ++s)
 		for(int e = 0; e < nEnergyBins; e++)
 			for(unsigned int p = 0; p < sects.nSectors(); p++)
 				anodeSpectra[s][e].push_back(OM.registeredTH1F(sideSubst("Anode_%c_",s)+itos(p)+"_"+itos(e),"Anode ADC",200,0,bmax));
@@ -47,7 +47,7 @@ void AnodeCalibration(ProcessedDataScanner& PDS, OutputManager& OM, unsigned int
 	printf("Fitting data...\n");
 	TF1 fLandau("landauFit","landau",0,bmax/2);
 	fLandau.SetLineColor(2);
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int p = 0; p < sects.nSectors(); p++) {
 			std::vector<TH1*> hToPlot;
 			for(int e = 0; e < nEnergyBins; e++) {
@@ -97,7 +97,7 @@ void CathodeCalibration(PostOfficialAnalyzer& POA, OutputManager& OM) {
 	/// nominal wire positions, corresponding histograms
 	std::vector<float> cathPos[2][2];
 	std::vector<TH2F*> cathHists[2][2];
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
 			cathPos[s][d] = calcWirePositions(16000,s,AxisDirection(d));
 			for(unsigned int i=0; i<cathPos[s][d].size(); i++)
@@ -118,7 +118,7 @@ void CathodeCalibration(PostOfficialAnalyzer& POA, OutputManager& OM) {
 	}
 
 	/// process and plot
-	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
 			for(unsigned int i=0; i<cathPos[s][d].size(); i++) {
 				cathHists[s][d][i]->FitSlicesY(); // default to gaus fit
