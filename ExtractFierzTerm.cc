@@ -8,8 +8,8 @@
 
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
 static double expected_fierz = 0.654026;
-static unsigned nToSim = 5E5;				// how many triggering events to simulate
-static double loading_prob = 0.20; 			// ucn loading probability 
+static unsigned nToSim = 5E6;				// how many triggering events to simulate
+static double loading_prob = 50; 			// ucn loading probability 
 
 class FierzHistogram {
   public: 
@@ -435,6 +435,7 @@ int main(int argc, char *argv[]) {
     TH1F *super_sum_histogram = compute_super_sum(ucna_data_histogram);
     normalize(super_sum_histogram);
     super_sum_histogram->SetLineColor(2);
+	super_sum_histogram->SetStats(0);
     super_sum_histogram->Draw("");
 
     // Compute the bonehead sum 

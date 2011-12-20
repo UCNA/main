@@ -1,0 +1,354 @@
+#include <exception>
+#include <TStyle.h>
+#include <iostream>
+
+#include "ControlMenu.hh"
+#include "PathUtils.hh"
+#include "RunManager.hh"
+#include "PositionResponse.hh"
+#include "PositionStudies.hh"
+#include "AsymmetryAnalyzer.hh"
+#include "PlotMakers.hh"
+#include "PMTGenerator.hh"
+#include "ReSource.hh"
+#include "RData.hh"
+#include "G4toPMT.hh"
+
+
+std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
+	char tmp[1024];
+	if(typeSelect=="ref") {
+		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'SourceCalib' ORDER BY run_number ASC",r0,r1);
+		std::vector<RunNum> sruns = CalDBSQL::getCDB()->findRuns(tmp);
+		std::vector<RunNum> rruns;
+		for(std::vector<RunNum>::iterator it = sruns.begin(); it != sruns.end(); it++)
+			if(CalDBSQL::getCDB()->getGMSRun(*it) == *it)
+				rruns.push_back(*it);
+		return rruns;
+	} else if(typeSelect=="all")
+		sprintf(tmp,"run_number >= %i AND run_number <= %i ORDER BY run_number ASC",r0,r1);
+	else if(typeSelect=="asym")
+		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'Asymmetry' ORDER BY run_number ASC",r0,r1);
+	else if(typeSelect=="LED")
+		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'LEDCalib' ORDER BY run_number ASC",r0,r1);
+	else if(typeSelect=="source")
+		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'SourceCalib' ORDER BY run_number ASC",r0,r1);
+	else if(typeSelect=="beta")
+		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'Asymmetry' AND gate_valve = 'Open' ORDER BY run_number ASC",r0,r1);
+	else if(typeSelect=="bg")
+		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'Asymmetry' AND gate_valve = 'Closed' ORDER BY run_number ASC",r0,r1);
+	else
+		sprintf(tmp,"0 = 1");
+	return CalDBSQL::getCDB()->findRuns(tmp);
+}
+
+void mi_VerifyCalperiods(std::deque<std::string>&, std::stack<std::string>&) {
+	std::vector<RunNum> C = CalDBSQL::getCDB()->findRuns("1 ORDER BY run_number ASC");
+	printf("Runs DB contains %i runs...\n",(int)C.size());
+	for(std::vector<RunNum>::iterator it=C.begin(); it!=C.end(); it++) {
+		RunNum gmsrun = CalDBSQL::getCDB()->getGMSRun(*it);
+		if(!gmsrun)
+			printf("*** WARNING: No calibrations found for run %i!\n",gmsrun);
+	}
+}
+
+void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>&) {
+	//unsigned int nr = streamInteractor::popInt(stack);
+	//RunNum r1 = streamInteractor::popInt(stack);
+	//RunNum r0 = streamInteractor::popInt(stack);
+	// TODO
+	//KurieScaleFinder KSF;
+	//endpointStudy(&KSF,r0,r1,nr,true); 
+}
+
+void mi_EndpointEnresPlot(std::deque<std::string>&, std::stack<std::string>&) {
+	assert(false); //TODO
+	//RunNum r0 = streamInteractor::popInt(stack);
+	//energyResolution(r0);
+}
+
+void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
+	unsigned int pmid = streamInteractor::popInt(stack);
+	if(CalDBSQL::getCDB()->isValid(13883)) {
+		OutputManager OM("Foo",std::string("../PostPlots/Eta/Posmap_")+itos(pmid));
+		etaPlot(OM,CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),pmid<1000,pmid<1000?2.5:250);
+	} else {
+		printf("Invalid CalDB!\n");
+	}
+}
+
+void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
+	RunNum rn = streamInteractor::popInt(stack);
+	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
+	OutputManager OM("Foo",std::string("../PostPlots/nPE/Posmap_")+itos(rn));
+	npePlot(OM,&PCal);
+}
+
+void mi_EndpointProcessFile(std::deque<std::string>&, std::stack<std::string>&) {
+	CalDBSQL::getCDB()->getPositioningCorrector(10200)->processFile("../_PlotMakers/SourcePositions.txt", "../_PlotMakers/SourcePositions_2.txt");
+}
+
+void mi_ProcessCalFile(std::deque<std::string>&, std::stack<std::string>&) {
+	processCalibrationsFile("../SummaryData/zCalIn.txt", "../SummaryData/zCalOut.txt");
+}
+
+void mi_PostprocessSources(std::deque<std::string>&, std::stack<std::string>& stack) {
+	std::string useOfficial = streamInteractor::popString(stack);
+	std::string refonly = streamInteractor::popString(stack);
+	RunNum r1 = streamInteractor::popInt(stack);
+	RunNum r0 = streamInteractor::popInt(stack);
+	std::vector<RunNum> C;
+	if(refonly=="yes")
+		C = selectRuns(r0,r1,"ref");
+	else
+		C = selectRuns(r0,r1,"source");
+	if(!C.size()) {
+		printf("No source runs found in Analysis DB; attempting manual scan...\n");
+		for(RunNum r = r0; r<= r1; r++)
+			reSource(r,useOfficial=="yes"?INPUT_OFFICIAL:INPUT_UNOFFICIAL,true);
+		return;
+	}
+	printf("Found %i source runs...\n",(int)C.size());
+	for(std::vector<RunNum>::iterator it=C.begin(); it!=C.end(); it++)
+		reSource(*it,useOfficial=="yes"?INPUT_OFFICIAL:INPUT_UNOFFICIAL,true);
+}
+
+void mi_PlotGMS(std::deque<std::string>&, std::stack<std::string>& stack) {
+	std::string typeSelect = streamInteractor::popString(stack);
+	RunNum r1 = streamInteractor::popInt(stack);
+	RunNum r0 = streamInteractor::popInt(stack);
+	plotGMScorrections(selectRuns(r0,r1,typeSelect));
+}
+
+void mi_dumpPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
+	int pnum = streamInteractor::popInt(stack);
+	dumpPosmap("../PostPlots/PosmapDump/",pnum);
+}
+
+void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
+	int octn = streamInteractor::popInt(stack);
+	const std::string outputDir="OctetAsym_Offic";
+	//const std::string outputDir="OctetAsym_10keV_Bins";
+	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"/"+outputDir;
+	
+	if(octn==1000) {
+		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR"));
+		AsymmetryAnalyzer AA(&OM,outputDir);
+		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600);
+	} else if(octn==-1000) {
+		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR"));
+		AsymmetryAnalyzer AA_Sim(&OM,outputDir+"_Simulated",AsymmetryAnalyzer::processedLocation);
+		G4toPMT simData;
+		simData.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+		simuClone(getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir, AA_Sim, simData, 1.0, 365*24*3600);
+	} else if(octn < 0) {
+		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),-octn-1);
+		if(!oct.getNRuns()) return;
+		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"_Simulated");
+		AsymmetryAnalyzer AA_Sim(&OM,oct.octName(),getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"/"+oct.octName()+"/"+oct.octName());		
+		G4toPMT simData;
+		simData.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+		simuClone(getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"/"+oct.octName(), AA_Sim, simData, 1.0, 24*3600);
+	} else {
+		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),octn);
+		if(!oct.getNRuns()) return;
+		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir);
+		AsymmetryAnalyzer AA(&OM,oct.octName());
+		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false));
+	}
+}
+
+void simulations_evis() {
+	OutputManager OM("Evis2ETrue","../PostPlots/Evis2ETrue/Livermore/");
+	G4toPMT g2p;
+	g2p.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+	PMTCalibrator PCal(16000,CalDBSQL::getCDB());
+	g2p.setCalibrator(PCal);
+	SimSpectrumInfo(g2p,OM);
+	OM.setWriteRoot(true);
+	OM.write();
+}
+
+void mi_Special(std::deque<std::string>&, std::stack<std::string>&) {
+	
+	uploadRunSources();
+	return;
+	
+	simulations_evis();
+	return;
+	
+	makeCorrectionsFile("../PostPlots/SpectrumCorrection.txt");
+	return;	
+	
+	if(1) {
+		RunNum rmin = 15991; //14264;
+		RunNum rmax = 16077; //14347;
+		OutputManager OM("AnodeCal",std::string("../PostPlots/AnodeCal_")+itos(rmin)+"_"+itos(rmax));
+		PostOfficialAnalyzer POA(true);
+		for(unsigned int i=rmin; i<=rmax; i++)
+			POA.addRun(i);
+		AnodeCalibration(POA,OM,12);
+		return;
+	}
+	
+	if(0) {
+		OutputManager OM("SimAnodeCal","../PostPlots/SimAnodeCal/");
+		G4toPMT g2p;
+		g2p.addFile("/home/mmendenhall/geant4/output/Baseline_20110914_uniformRandMomentum_geomC/analyzed_*.root");
+		
+		PMTCalibrator PCal(16000,CalDBSQL::getCDB());
+		g2p.setCalibrator(PCal);
+		
+		AnodeCalibration(g2p,OM,1);
+		return;
+	}
+	
+	if(0) {
+		OutputManager OM("CathodeCal","../PostPlots/CathodeCal_14269_14270/");
+		PostOfficialAnalyzer POA(true);
+		for(unsigned int i=14264; i<=14269; i++)
+			POA.addRun(i);
+		CathodeCalibration(POA,OM);
+		return;
+	}
+}
+
+void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
+	
+	gStyle->SetPalette(1);
+	gStyle->SetNumberContours(255);
+	gStyle->SetOptStat("e");	
+	TCanvas defaultCanvas;
+	defaultCanvas.SetFillColor(0);
+	defaultCanvas.SetCanvasSize(300,300);
+		
+	inputRequester exitMenu("Exit Menu",&menutils_Exit);
+	inputRequester peek("Show stack",&menutils_PrintStack);
+	
+	// selection utilities
+	NameSelector selectRuntype("Run Type");
+	selectRuntype.addChoice("All Runs","all");
+	selectRuntype.addChoice("LED Runs","LED");
+	selectRuntype.addChoice("Source Runs","source");
+	selectRuntype.addChoice("Beta & BG asymmetry runs","asym");
+	selectRuntype.addChoice("Beta Runs","beta");
+	selectRuntype.addChoice("Background Runs","bg");
+	selectRuntype.addChoice("GMS Reference Runs","ref");
+	selectRuntype.setDefault("all");
+	
+	NameSelector forceReplay("Re-analyze");
+	forceReplay.addChoice("Re-analyze only unanalyzed runs","no");
+	forceReplay.addChoice("Re-analyze all runs","yes");
+	forceReplay.addSynonym("no","0");
+	forceReplay.addSynonym("yes","1");
+	forceReplay.setDefault("no");
+	
+	NameSelector selectSides("Side");
+	selectSides.addChoice("East Side","east");
+	selectSides.addChoice("West Side","west");
+	selectSides.addChoice("Both Sides","both");
+	selectSides.addSynonym("east","0");
+	selectSides.addSynonym("west","1");
+	selectSides.addSynonym("both","2");
+	selectSides.setDefault("both");
+	
+	NameSelector useOfficial("Use Official Replay");
+	useOfficial.addChoice("Use Michael Replay","no");
+	useOfficial.addChoice("Use Official Replay","yes");
+	useOfficial.addSynonym("no","0");
+	useOfficial.addSynonym("yes","1");
+	useOfficial.setDefault("yes");
+	
+	NameSelector reCalibrate("Re-calibrate");
+	reCalibrate.addChoice("Use energy as recorded","no");
+	reCalibrate.addChoice("Recalibrate energy from current DB","yes");
+	reCalibrate.addSynonym("no","0");
+	reCalibrate.addSynonym("yes","1");
+	reCalibrate.setDefault("no");
+	
+	NameSelector refrunsOnly("Ref only");
+	refrunsOnly.addChoice("Analyze all runs","no");
+	refrunsOnly.addChoice("Analyze reference runs only","yes");
+	refrunsOnly.addSynonym("no","0");
+	refrunsOnly.addSynonym("yes","1");
+	refrunsOnly.setDefault("no");
+	
+	NameSelector selectInput("Input Source");
+	selectInput.addChoice("Use Official Replay","official");
+	selectInput.addChoice("Use Unofficial Replay","unofficial");	
+	
+	// postprocessing/plots routines
+	inputRequester pm_mi1("Generate Endpoint Map",&mi_EndpointStudy);
+	pm_mi1.addArg("Start Run");
+	pm_mi1.addArg("End Run");
+	pm_mi1.addArg("n Rings","8");
+	inputRequester pm_mi2("Energy Resolution Plots",&mi_EndpointEnresPlot);
+	pm_mi2.addArg("Run Number");
+	inputRequester pm_mi3("Process positions file",&mi_EndpointProcessFile);	
+	inputRequester pm_mi4("Process calibrations file",&mi_ProcessCalFile);
+	inputRequester pm_mi5("Verify calibration assignments",&mi_VerifyCalperiods);
+	
+	inputRequester plotGMS("Plot GMS corrections",&mi_PlotGMS);
+	plotGMS.addArg("Start Run");
+	plotGMS.addArg("End Run");
+	plotGMS.addArg("","",&selectRuntype);
+	
+	inputRequester posmapPlot("Plot Position Map",&mi_PosmapPlot);
+	posmapPlot.addArg("Posmap ID");
+	
+	inputRequester nPEPlot("Plot nPE/MeV",&mi_nPEPlot);
+	nPEPlot.addArg("Run Number");
+	
+	inputRequester posmapDumper("Dump Posmap",&mi_dumpPosmap);
+	posmapDumper.addArg("Posmap ID");
+	
+	inputRequester octetProcessor("Process Octet",&mi_processOctet);
+	octetProcessor.addArg("Octet number");
+	
+	inputRequester specialJunk("Special Junk",&mi_Special);
+	
+	// Posprocessing menu
+	OptionsMenu PostRoutines("Postprocessing Routines");
+	PostRoutines.addChoice(&pm_mi1);
+	PostRoutines.addChoice(&pm_mi2);	
+	PostRoutines.addChoice(&pm_mi3);
+	PostRoutines.addChoice(&pm_mi4);
+	PostRoutines.addChoice(&pm_mi5);
+	PostRoutines.addChoice(&plotGMS);
+	PostRoutines.addChoice(&posmapPlot);
+	PostRoutines.addChoice(&nPEPlot);
+	PostRoutines.addChoice(&posmapDumper,"pmap");
+	PostRoutines.addChoice(&octetProcessor,"oct");
+	PostRoutines.addChoice(&specialJunk,"spec");
+	PostRoutines.addChoice(&exitMenu,"x");	
+	
+	// special run processing
+	inputRequester postSources("Reprocess Source Runs",&mi_PostprocessSources);
+	postSources.addArg("Start Run");
+	postSources.addArg("End Run");
+	postSources.addArg("","",&refrunsOnly);
+	postSources.addArg("","",&useOfficial);
+	
+	// main menu
+	OptionsMenu OM("Analyzer Main Menu");
+	OM.addChoice(&PostRoutines,"pr");
+	OM.addChoice(&postSources,"sr");
+	OM.addChoice(&exitMenu,"x");
+	OM.addSynonym("x","exit");
+	OM.addSynonym("x","quit");
+	OM.addSynonym("x","bye");
+	OM.addChoice(&peek,"peek",SELECTOR_HIDDEN);
+	
+	std::stack<std::string> stack;
+	OM.doIt(args,stack);
+	
+	printf("\n\n\n>>>>> Goodbye. <<<<<\n\n\n");
+}
+
+int main(int argc, char *argv[]) {
+	std::deque<std::string> args;
+	for(int i=1; i<argc; i++)
+		args.push_back(argv[i]);
+	Analyzer(args);
+	return 0;
+}

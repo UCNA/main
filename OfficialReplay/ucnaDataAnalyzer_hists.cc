@@ -1,0 +1,454 @@
+#include "ucnaDataAnalyzer11b.hh"
+#include "GraphicsUtils.hh"
+#include "SourceDBSQL.hh"
+#include <TSpectrum2.h>
+void ucnaDataAnalyzer11b::setupHistograms() {
+	
+	unsigned int nTimeBins = wallTime/10.;
+	nTimeBins = nTimeBins?nTimeBins:1;
+	float tpad = 10.0;
+	
+	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		hCathMax[s][0] = registeredTH1F(sideSubst("hCathMax_%c",s),sideSubst("%s Max Cathode",s),200,-200,4200);
+		hCathMax[s][1] = registeredTH1F(sideSubst("hCathMaxCut_%c",s),sideSubst("%s Max Cathode, MWPC Cut",s),200,-200,4200);
+		hCathMax[s][1]->SetLineColor(2);
+		hCathMax[s][0]->GetXaxis()->SetTitle("ADC Channels");
+		hAnode[s][0] = registeredTH1F(sideSubst("hAnode_%c",s),sideSubst("%s Anode",s),200,-200,4000);
+		hAnode[s][1] = registeredTH1F(sideSubst("hAnodeCut_%c",s),sideSubst("%s Anode, MWPC Cut",s),200,-200,4000);
+		hAnode[s][1]->SetLineColor(2);
+		hAnode[s][0]->GetXaxis()->SetTitle("ADC Channels");
+		hCathSum[s][0] = registeredTH1F(sideSubst("hCathSum_%c",s),sideSubst("%s Cathode Sum",s),200,-1000,40000);
+		hCathSum[s][1] = registeredTH1F(sideSubst("hCathSumCut_%c",s),sideSubst("%s Cathode Sum, MWPC Cut",s),200,-1000,40000);
+		hCathSum[s][1]->SetLineColor(2);
+		hCathSum[s][0]->GetXaxis()->SetTitle("ADC Channels");
+		
+		hBackTDC[s] = registeredTH1F(sideSubst("hBackTDC_%c",s),"Backing Veto TDC",200,0,4000);
+		hBackTDC[s]->SetLineColor(2+2*s);
+		hBackTDC[s]->GetXaxis()->SetTitle("TDC Channels");
+		hBackADC[s][0] = registeredTH1F(sideSubst("hBackADC_%c",s),sideSubst("%s Backing Veto ADC",s),200,-200,4000);
+		hBackADC[s][1] = registeredTH1F(sideSubst("hBackADCCut_%c",s),sideSubst("%s Backing Veto ADC, TDC Cut",s),200,-200,4000);
+		hBackADC[s][1]->SetLineColor(2);
+		hDriftTAC[s] = registeredTH1F(sideSubst("hDriftTAC_%c",s),"Drift Tubes TAC",200,-200,4000);
+		hDriftTAC[s]->SetLineColor(2+2*s);
+		if(s==EAST) {
+			hTopTDC[s] = registeredTH1F(sideSubst("hTopTDC_%c",s),"Top Veto TDC",200,0,4000);
+			hTopTDC[s]->SetLineColor(2+2*s);
+			hBackTDC[s]->GetXaxis()->SetTitle("TDC Channels");
+			hTopADC[s][0] = registeredTH1F(sideSubst("hTopADC_%c",s),sideSubst("%s Top Veto ADC",s),200,-200,4000);
+			hTopADC[s][1] = registeredTH1F(sideSubst("hTopADCCut_%c",s),sideSubst("%s Top Veto ADC, with TDC Cut",s),200,-200,4000);
+			hTopADC[s][1]->SetLineColor(2);
+			hTopADC[s][0]->GetXaxis()->SetTitle("ADC Channels");
+		}
+		hScintTDC[s] = registeredTH1F(sideSubst("hScintTDC_%c",s),"2-of-4 TDC",200,0,5000);
+		hScintTDC[s]->SetLineColor(2+2*s);
+		hScintTDC[s]->GetXaxis()->SetTitle("TDC Channels");
+		
+		for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
+			if(t==TYPE_III_EVENT) continue;	// not separated out at this stage
+			hEtrue[s][t] = registeredTH1F(sideSubst("hErecon_%c_",s)+itos(t),std::string("Reconstructed Energy, Type ")+itos(t),200,0,1500);
+			hEtrue[s][t]->SetLineColor(2+2*s);
+			hEtrue[s][t]->GetXaxis()->SetTitle("Erecon [keV]");
+		}
+		
+		hSideRate[s][1] = registeredTH1F(sideSubst("hBetaRate_%c",s),"Beta Event Rate",nTimeBins,-tpad,wallTime+tpad);
+		hSideRate[s][1]->SetLineColor(2+2*s);
+		hSideRate[s][1]->GetXaxis()->SetTitle("Time [s]");
+		
+		hSideRate[s][0] = registeredTH1F(sideSubst("hMuonRate_%c",s),"Muon Event Rate",nTimeBins,-tpad,wallTime+tpad);
+		hSideRate[s][0]->SetLineColor(1+2*s);
+		hSideRate[s][0]->GetXaxis()->SetTitle("Time [s]");
+		
+		hHitPos[s] = registeredTH2F(sideSubst("HitPos_%c",s),sideSubst("%s Beta Hits Positions",s),400,-65,65,400,-65,65);
+		for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
+			hHitsProfile[s][d] = registeredTH1F(sideSubst("HitPos_%c",s)+(d==X_DIRECTION?"x":"y"),
+												std::string(d==X_DIRECTION?"x":"y")+" Hit Positions",200,-65,65);
+			hHitsProfile[s][d]->SetLineColor(2+2*s);
+		}
+		
+		// trigger efficiency, pulser spectrum
+		unsigned int nBiDivs = int(wallTime/300)?wallTime/300:1;
+		for(unsigned int t=0; t<nBetaTubes; t++)
+			sevt[s].adc[t]=3950;
+		PCal.pedSubtract(s,sevt[s].adc,0);
+		for(unsigned int t=0; t<nBetaTubes; t++) {
+			hTrigEffic[s][t][0] = registeredTH1F(sideSubst("hTrigEfficAll_%c",s)+itos(t),"Trigger Efficiency Events",125,-50,200);
+			hTrigEffic[s][t][0]->SetLineColor(4);
+			hTrigEffic[s][t][1] = registeredTH1F(sideSubst("hTrigEfficTrig_%c",s)+itos(t),"Trigger Efficiency Events",125,-50,200);
+			hTrigEffic[s][t][1]->SetLineColor(2);
+			for(unsigned int i=0; i<nBiDivs; i++) {
+				hBiPulser[s][t].push_back(registeredTH1F(sideSubst("hPulserSpectrum_%c",s)+itos(t)+"_"+itos(i),"Bi Pulser Spectrum",
+														 100,sevt[s].adc[t]-2300,sevt[s].adc[t]));
+				hBiPulser[s][t].back()->SetLineColor(t+1);
+			}
+		}
+	}
+	
+	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
+		hTypeRate[t] = registeredTH1F(std::string("hTypeRate_")+itos(t),std::string("Type ")+itos(t)+" Event Rate",nTimeBins,-tpad,wallTime+tpad);
+		hTypeRate[t]->SetLineColor(5+t);
+		hTypeRate[t]->GetXaxis()->SetTitle("Time [s]");
+	}
+	
+	for(unsigned int n=0; n<kNumUCNMons; n++) {
+		hMonADC[n] = registeredTH1F(std::string("UCN_Mon_")+itos(n+1)+"_ADC",std::string("UCN Mon ")+itos(n+1)+" ADC",200,0,4000);
+		hMonADC[n]->SetLineColor(n+1);
+		hMonADC[n]->GetXaxis()->SetTitle("ADC Channels");
+		hMonRate[n] = registeredTH1F(std::string("UCN_Mon_")+itos(n+1)+"_Rate",std::string("UCN Mon ")+itos(n+1)+" Rate",nTimeBins,-tpad,wallTime+tpad);
+		hMonRate[n]->SetLineColor(n+1);
+		hMonRate[n]->GetXaxis()->SetTitle("Time [s]");
+	}
+	
+	hEvnbFailRate = registeredTH1F("EvnbFail","Evnb Fail Rate",nTimeBins,-tpad,wallTime+tpad);
+	hEvnbFailRate->SetLineColor(kOrange+10);
+	hBkhfFailRate = registeredTH1F("BkhfFail","Bkhf Fail Rate",nTimeBins,-tpad,wallTime+tpad);
+	hBkhfFailRate->SetLineColor(2);
+}
+
+void ucnaDataAnalyzer11b::fillEarlyHistograms() {
+	for(unsigned int n=0; n<kNumUCNMons; n++) {
+		if(isUCNMon(n)) {
+			hMonADC[n]->Fill(fMonADC[n].val);
+			hMonRate[n]->Fill(fTimeScaler.t[BOTH]);
+		}
+	}
+	if(isPulserTrigger()) {
+		unsigned int tbin = fTimeScaler.t[BOTH]*hBiPulser[EAST][0].size()/wallTime;
+		if(tbin<hBiPulser[EAST][0].size())
+			for(Side s = EAST; s <= WEST; s = nextSide(s))
+				for(unsigned int t=0; t<nBetaTubes; t++)
+					hBiPulser[s][t][tbin]->Fill(sevt[s].adc[t]);
+	}
+	if(!fEvnbGood)
+		hEvnbFailRate->Fill(fTimeScaler.t[BOTH]);
+	if(!fBkhfGood)
+		hBkhfFailRate->Fill(fTimeScaler.t[BOTH]);
+}
+
+void ucnaDataAnalyzer11b::fillHistograms() {
+	
+	// already not LED, non-Scint triggers
+	
+	if(fType == TYPE_IV_EVENT && fSide <= WEST && fPID != PID_PULSER)
+		hEtrue[fSide][fType]->Fill(fEtrue);
+	
+	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		
+		// wirechambers
+		hCathMax[s][0]->Fill(fCathMax[s].val);
+		hCathSum[s][0]->Fill(fCathSum[s].val);
+		hAnode[s][0]->Fill(fMWPC_anode[s].val);
+		if(passedMWPC(s)) {
+			hCathMax[s][1]->Fill(fCathMax[s].val);
+			hCathSum[s][1]->Fill(fCathSum[s].val);
+			hAnode[s][1]->Fill(fMWPC_anode[s].val);
+			if(fPID==PID_BETA && fSide==s) {
+				hHitPos[s]->Fill(wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center);
+				for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++)
+					hHitsProfile[s][d]->Fill(wirePos[s][d].center);
+			}
+		}
+		
+		
+		// muon vetos
+		hBackTDC[s]->Fill(fBacking_tdc[s].val);
+		hBackADC[s][0]->Fill(fBacking_adc[s]);
+		if(fTaggedBack[s])
+			hBackADC[s][1]->Fill(fBacking_adc[s]);
+		hDriftTAC[s]->Fill(fDrift_tac[s].val);
+		if(s==EAST) {
+			hTopTDC[s]->Fill(fTop_tdc[s].val);
+			hTopADC[s][0]->Fill(fTop_adc[s]);
+			if(fTaggedTop[s])
+				hTopADC[s][1]->Fill(fTop_adc[s]);
+		}
+		
+		// trigger efficiency
+		for(unsigned int t=0; t<nBetaTubes; t++) {
+			int nf = nFiring(s);
+			bool tfired = pmtFired(s,t);
+			if(nf-tfired<2 || int(fSis00)!=1+s || !fPassedGlobal)
+				continue;
+			hTrigEffic[s][t][0]->Fill(sevt[s].adc[t]);
+			if(tfired)
+				hTrigEffic[s][t][1]->Fill(sevt[s].adc[t]);	
+		}
+		
+		if(fPID==PID_BETA)
+			hScintTDC[s]->Fill(fScint_tdc[s][nBetaTubes].val);
+		
+		if(fSide != s)
+			continue;
+		
+		if(fPID==PID_BETA) {
+			hSideRate[s][1]->Fill(fTimeScaler.t[BOTH]);
+			if(fType <= TYPE_II_EVENT && fPassedGlobal)
+				hEtrue[s][fType]->Fill(fEtrue);
+		} else if(fPID==PID_MUON) {
+			hSideRate[s][0]->Fill(fTimeScaler.t[BOTH]);
+		}
+	}
+	
+	if(fPID==PID_BETA && fType<TYPE_III_EVENT)
+		hTypeRate[fType]->Fill(fTimeScaler.t[BOTH]);
+}
+
+void ucnaDataAnalyzer11b::drawCutRange(const RangeCut& r, Int_t c) {
+	drawVLine(r.start, defaultCanvas, c);
+	drawVLine(r.end, defaultCanvas, c);
+}
+
+void ucnaDataAnalyzer11b::drawExclusionBlips(Int_t c) {
+	for(std::vector<Blip>::const_iterator it = cutBlips.begin(); it != cutBlips.end(); it++)
+		if(it->end.t[BOTH]-it->start.t[BOTH] > 5)
+			drawExcludedRegion(it->start.t[BOTH], it->end.t[BOTH], defaultCanvas,c,3354);
+		else
+			drawExcludedRegion(it->start.t[BOTH], it->end.t[BOTH], defaultCanvas,c,1001);
+}
+
+void ucnaDataAnalyzer11b::plotHistos() {
+	printf("\nMaking output plots...\n");
+	defaultCanvas->cd();
+	defaultCanvas->SetLogy(true);
+	std::vector<TH1*> hToPlot;
+	
+	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		// wirechambers
+		hCathMax[s][0]->Draw();
+		hCathMax[s][1]->Draw("Same");
+		drawCutRange(fCathMax[s].R);
+		printCanvas(sideSubst("Wirechamber/CathMax_%c",s));
+		
+		hAnode[s][0]->Draw();
+		hAnode[s][1]->Draw("Same");
+		drawCutRange(fMWPC_anode[s].R);
+		printCanvas(sideSubst("Wirechamber/Anode_%c",s));
+		
+		hCathSum[s][0]->Draw();
+		hCathSum[s][1]->Draw("Same");
+		drawCutRange(fCathSum[s].R);
+		printCanvas(sideSubst("Wirechamber/CathSum_%c",s));
+		
+		defaultCanvas->SetLogy(false);
+		hHitPos[s]->Draw("Col");
+		printCanvas(sideSubst("Wirechamber/HitPos_%c",s));
+		defaultCanvas->SetLogy(true);
+		
+		// muon vetos
+		hBackADC[s][0]->Draw();
+		hBackADC[s][1]->Draw("Same");
+		printCanvas(sideSubst("MuVeto/BackADC_%c",s));
+		if(s==EAST) {
+			hTopADC[s][0]->Draw();
+			hTopADC[s][1]->Draw("Same");
+			printCanvas(sideSubst("MuVeto/TopADC_%c",s));
+		}
+		
+		// trigger efficiency
+		for(unsigned int t=0; t<nBetaTubes; t++) {
+			hTrigEffic[s][t][0]->Draw();
+			hTrigEffic[s][t][1]->Draw("Same");
+			printCanvas(sideSubst("PMTs/TrigEffic_Input_%c",s)+itos(t));
+		}
+	}
+	
+	// 1-D hit positions
+	defaultCanvas->SetLogy(false);
+	for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
+		hToPlot.clear();
+		for(Side s = EAST; s <= WEST; s = nextSide(s))
+			hToPlot.push_back(hHitsProfile[s][d]);
+		drawSimulHistos(hToPlot);
+		printCanvas(std::string("Wirechamber/HitPos_")+(d==X_DIRECTION?"x":"y"));
+	}
+	defaultCanvas->SetLogy(true);
+	
+	// muon vetos
+	hBackTDC[EAST]->Draw();
+	hBackTDC[WEST]->Draw("Same");
+	drawCutRange(fBacking_tdc[EAST].R,2);
+	drawCutRange(fBacking_tdc[WEST].R,4);
+	printCanvas("MuVeto/Backing_TDC");
+	
+	hTopTDC[EAST]->Draw();
+	drawCutRange(fTop_tdc[EAST].R,2);
+	printCanvas("MuVeto/Top_TDC");
+	
+	hDriftTAC[EAST]->Draw();
+	hDriftTAC[WEST]->Draw("Same");
+	drawCutRange(fDrift_tac[EAST].R,2);
+	drawCutRange(fDrift_tac[WEST].R,4);
+	printCanvas("MuVeto/Drift_TAC");
+	
+	// PMT TDCs
+	hScintTDC[EAST]->Draw();
+	hScintTDC[WEST]->Draw("Same");
+	drawCutRange(fScint_tdc[EAST][nBetaTubes].R,2);
+	drawCutRange(fScint_tdc[WEST][nBetaTubes].R,4);
+	drawCutRange(ScintSelftrig[EAST],2);
+	drawCutRange(ScintSelftrig[WEST],4);
+	printCanvas("PMTs/TDC_2of4");
+	
+	// GV monitors
+	hToPlot.clear();
+	for(unsigned int n=0; n<kNumUCNMons; n++) {
+		hMonRate[n]->Scale(1.0/hMonRate[n]->GetBinWidth(1));
+		hToPlot.push_back(hMonRate[n]);
+		hMonADC[n]->Draw();
+		drawCutRange(fMonADC[n].R,4);
+		printCanvas(std::string("UCN_Mon/Mon_")+itos(n)+"_ADC");
+	}
+	drawSimulHistos(hToPlot);
+	printCanvas("UCN_Mon/Mon_Rates");
+	
+	// rates
+	hToPlot.clear();
+	for(unsigned int t=0; t<=TYPE_II_EVENT; t++)
+		hToPlot.push_back(hTypeRate[t]);
+	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		hToPlot.push_back(hSideRate[s][0]);
+		hToPlot.push_back(hSideRate[s][1]);
+	}
+	for(std::vector<TH1*>::iterator it = hToPlot.begin(); it  != hToPlot.end(); it++) {
+		(*it)->Scale(1.0/(*it)->GetBinWidth(1));
+		(*it)->SetMinimum(0.01);
+		(*it)->SetMaximum(100.0);
+	}
+	drawSimulHistos(hToPlot);
+	drawExclusionBlips(4);
+	printCanvas("Rates/EventRates");
+	
+	hToPlot.clear();
+	hToPlot.push_back(hEvnbFailRate);
+	hEvnbFailRate->Scale(1.0/hEvnbFailRate->GetBinWidth(1.0));
+	hToPlot.push_back(hBkhfFailRate);
+	hBkhfFailRate->Scale(1.0/hBkhfFailRate->GetBinWidth(1.0));
+	hToPlot.push_back(hMonRate[UCN_MON_GV]);
+	hToPlot.push_back(hTypeRate[TYPE_0_EVENT]);
+	for(std::vector<TH1*>::iterator it = hToPlot.begin(); it  != hToPlot.end(); it++) {
+		(*it)->SetMinimum(0.01);
+		(*it)->SetMaximum(100.0);
+	}	
+	drawSimulHistos(hToPlot);
+	drawExclusionBlips(4);
+	printCanvas("Rates/GlobalRates");
+	
+	// energy by event type
+	defaultCanvas->SetLogy(false);
+	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
+		if(t==TYPE_III_EVENT) continue;
+		hToPlot.clear();
+		for(Side s = EAST; s <= WEST; s = nextSide(s))
+			hToPlot.push_back(hEtrue[s][t]);
+		drawSimulHistos(hToPlot);
+		printCanvas(std::string("PMTs/Erecon_Type_")+itos(t));
+	}
+}
+
+
+// comparison to sort sources by x position in descending order
+bool sortSourceXPos(Source a, Source b) { return a.x < b.x; }
+
+// allocate a 2D float** array
+float** allocArray(unsigned int nx, unsigned int ny) {
+	float** a = new float*[nx];
+	for(unsigned int i=0; i<nx; i++)
+		a[i] = new float[ny];
+	return a;
+}
+
+// delete a 2D float** array
+void deleteArray(float** a, unsigned int nx) {
+	for(unsigned int i=0; i<nx; i++)
+		delete[](a[i]);
+	delete[](a);
+}
+
+void ucnaDataAnalyzer11b::locateSourcePositions() {
+		
+	for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		
+		unsigned int nbins = hHitPos[s]->GetNbinsX()-2;
+		
+		std::vector<Source> expectedSources = SourceDBSQL::getSourceDBSQL()->runSources(rn,s);
+		if(!expectedSources.size())
+			continue;
+		
+		// convert hit position histogram to float** array
+		float** zout = allocArray(nbins,nbins);
+		float** historray = allocArray(nbins,nbins);
+		for(unsigned int x=0; x<nbins; x++)
+			for(unsigned int y=0; y<nbins; y++)
+				historray[x][y] = hHitPos[s]->GetBinContent(x+1,y+1);
+		
+		// run TSpectrum 2D peak-finding algorithm
+		TSpectrum2 TS = TSpectrum2();
+		unsigned int npks = TS.SearchHighRes(
+											 historray,		// input spectrum
+											 zout,			// output deconvolved spectrum
+											 nbins,nbins,	// x-y dimensions
+											 5.0,			// sigma
+											 0.2,			// threshold in percent of highest peak
+											 true,			// remove background?
+											 1,				// deconvolution iterations
+											 false,			// regenerate input spectrum using Markov chains
+											 0				// averaging window for markov chains
+											 );
+		
+		printf("\t%i of %i sources found.\n",npks,(int)expectedSources.size());
+		
+		// extract located peaks into source positions vector
+		// drop peaks past expected number of sources
+		Float_t* xPos = TS.GetPositionX();
+		Float_t* yPos = TS.GetPositionY();
+		std::vector<Source> foundSources;
+		for(unsigned int i=0; i<npks; i++) {
+			if(i>=expectedSources.size())
+				break;
+			Source pk;
+			pk.x = binterpolate(hHitPos[s]->GetXaxis(),xPos[i]);
+			pk.wx = 2.0;
+			pk.y = binterpolate(hHitPos[s]->GetYaxis(),yPos[i]);
+			pk.wy = 2.0;
+			pk.mySide = s;
+			pk.myRun = rn;
+			foundSources.push_back(pk);
+		}
+		
+		
+		// sort sources and apply source types from expected sources
+		std::sort(foundSources.begin(),foundSources.end(),&sortSourceXPos);
+		std::sort(expectedSources.begin(),expectedSources.end(),&sortSourceXPos);
+		for(unsigned int i=0; i < foundSources.size(); i++) {
+			foundSources[i].t = expectedSources[i].t;
+			foundSources[i].sID = expectedSources[i].sID;
+		}
+		
+		// refine source locations and widths; upload to DB
+		for(std::vector<Source>::iterator it = foundSources.begin(); it!=foundSources.end(); it++) {
+			TH1D* px = hHitPos[s]->ProjectionX("_px",hHitPos[s]->GetYaxis()->FindBin(it->y-3*it->wy),hHitPos[s]->GetYaxis()->FindBin(it->y+3*it->wy));
+			TH1D* py = hHitPos[s]->ProjectionY("_py",hHitPos[s]->GetXaxis()->FindBin(it->x-3*it->wx),hHitPos[s]->GetXaxis()->FindBin(it->x+3*it->wx));
+			TF1 g1("g1","gaus"); 
+			g1.SetLineColor(2);
+			px->Fit(&g1,"Q","",it->x-3*it->wx,it->x+3*it->wx);
+			it->x = g1.GetParameter(1);
+			it->wx = g1.GetParameter(2);
+			py->Fit(&g1,"Q","",it->y-3*it->wy,it->y+3*it->wy);
+			it->y = g1.GetParameter(1);
+			it->wy = g1.GetParameter(2);
+			
+			px->Draw();
+			printCanvas(std::string("Wirechamber/Source_")+it->name()+"_x");
+			py->Draw();
+			printCanvas(std::string("Wirechamber/Source_")+it->name()+"_y");
+			delete(px);
+			delete(py);
+			
+			it->display();
+			SourceDBSQL::getSourceDBSQL()->addSource(*it);
+		}
+		
+		deleteArray(historray,nbins);
+		deleteArray(zout,nbins);
+	}
+}
+
