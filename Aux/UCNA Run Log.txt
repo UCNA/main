@@ -1,0 +1,4233 @@
+#####################
+# UCNA Run Data Log #
+#####################
+#
+#	--- file format description ---
+#
+#	Run lines start with a '*', of the form:
+#		*[Run Number] [Run Type]
+#
+#	Data run types (may be optionally followed by a slow daq run number):
+#
+#		BgOff/BgOn	background with flipper off/on
+#		BetaOff/BetaOn	beta decay with flipper off/on
+#		A1...A12,B1...B12	data octet segments
+#
+#	Calibration run types:		
+#		SourcesCal		Source calibration
+#		Xe			Acrivated Xenon calibration
+#		Misc			Miscellaneous run (see comments)
+#		
+#
+#	Lines starting with an '@' specify properties of all the following runs
+#	(until over-written by another '@' line), e.g. '@scs 0.97' specifies an
+#	SCS field of 0.97T for all runs until the next '@scs' line.
+#	@ types are:
+#		@scs %f			SCS field in tesla
+#		@cycle	<Name>		start a contiguous group of runs to be analyzed togetherl resets @cal to 0
+#		@sources <Sources>	sources in holder, Left to Right in wirechamber Y position (from Sn Bi Sr85 Sr90 Cd In)
+#	All other lines (those not starting with a '*' or an '@') are comments.
+#
+
+#########################################
+#					#
+#	A1	Background Off		#
+#	A2	Beta Off		#
+#	A3	Depol Off->On		#
+#	A4	Background On		#
+#	A5	Beta On			#
+#	A6	Depol On->Off		#
+#	A7	Beta On			#
+#	A8	Depol On->Off		#
+#	A9	Background On		#
+#	A10	Beta Off		#
+#	A11	Depol Off->On		#
+#	A12	Background Off		#
+#					#
+#	B1	Background On		#
+#	B2	Beta On			#
+#	B3	Depol On->Off		#
+#	B4	Background Off		#
+#	B5	Beta Off		#
+#	B6	Depol Off->On		#
+#	B7	Beta Off		#
+#	B8	Depol Off->On		#
+#	B9	Background Off		#
+#	B10	Beta On			#
+#	B11	Depol On->Off		#
+#	B12	Background On		#
+#					#
+#  + SourcesCal, LED scans, etc.	#
+#					#
+#########################################
+
+########
+# 2010 #
+########
+
+#######################
+@cycle Misc 2010 Tuning
+#######################
+
+# no wirechambers, no E detector
+# new W PMTs + backing veto turned on
+*13538	BgOff
+*13543	LEDCal			# LED scan
+*13544	LEDCal			# 1hr continuous run
+
+#######################
+@cycle August 20-22 Beta Decay
+#######################
+
+# Note, PMT E3 is Dead
+# and W1 is unreliable (probably preamp/FIFO issues)
+
+###### new A -> B ######
+
+*13683 A1
+*13684 A2
+*13685 A3
+*13686 A4
+*13687 A5
+*13688 A6
+*13689 A7
+*13690 A8
+*13691 A9
+*13692 A10
+*13693 A11
+*13694 A12
+
+*13695 B1
+*13696 B2
+*13697 B3
+*13698 B4
+*13699 B5
+*13703 B6
+# rebooted VME crate to reduce EvtCounter errors
+*13706 B7
+*13707 B8
+*13708 B9
+*13709 B10
+*13710 B11
+*13711 B12
+
+###### new A -> B ######
+
+*13712 A1
+*13713 A2
+*13714 A3
+*13715 A4
+*13716 A5
+*13717 A6
+*13718 A7		# stopped early due to beam off
+*13719 A7
+*13720 A8
+*13721 A9
+*13722 A10
+*13723 A11
+*13724 A12
+
+# switched to 80min beta runs
+*13725 B1
+*13726 B2		# stopped early due to beam off
+*13727 B2
+*13728 B3
+*13729 B4
+*13730 B5
+*13731 B6
+*13732 B7
+*13733 B8
+*13734 B9
+*13735 B10             # last few minutes of run bad; East MWPC tripped off
+*13736 B11
+*13738 B12
+
+# out of LHe, ramping down magnets
+
+#######################
+@cycle August 22 Source Calibrations
+#######################
+
+@sources Bi
+*13739	SourcesCal
+@sources Bi Ce
+*13740	SourcesCal
+*13741	SourcesCal
+@sources E Bi Ce Sn
+*13742	SourcesCal
+@sources Bi Ce Sn
+*13743	SourcesCal
+*13744	SourcesCal
+*13746	SourcesCal
+*13747	SourcesCal
+@sources Ce Sn
+*13748	SourcesCal
+*13749	SourcesCal
+@sources
+
+#######################
+@cycle Calibrations and Xenon
+#######################
+
+@sources Ce Sn
+#*13779	SourcesCal	# E0 going below threshold
+#*13780	SourcesCal	# E0 going below threshold
+#*13781	SourcesCal	# E0 going below threshold
+#*13782	SourcesCal	# SEVERAL below threshold
+#*13783	SourcesCal	# E0 terrible
+#*13784	SourcesCal	# E0 going below threshold
+#*13785	SourcesCal	# E0 going below threshold
+#*13786	SourcesCal	# E0 going below threshold
+#*13787	SourcesCal	# E0 going below threshold
+#*13788	SourcesCal	# E0 going below threshold
+#*13789	SourcesCal	# E0 going below threshold
+*13790	SourcesCal
+*13791	SourcesCal
+*13792	SourcesCal
+@sources
+
+*13793	BgOff		# E0 going below threshold
+*13794	Xe		# E0 going below threshold
+*13795	Xe		# E0 going below threshold
+*13796	BgOff		# E0 going below threshold
+*13800	Xe		# E0 going below threshold
+
+*13801	Xe
+*13802	Xe
+*13803	BgOff
+*13804	BgOff
+*13805	Xe
+
+
+#######################
+@cycle September 17-20 Weekend-O-Betas
+#######################
+
+*13879	Xe
+*13880	Xe
+*13881	Xe
+*13882	Xe
+
+@sources Bi
+*13883	SourcesCal	# all the way in
+@sources E Bi Ce
+*13884	SourcesCal	# 0.5" out
+@sources Bi Ce
+*13885	SourcesCal	# 1.0" out
+@sources E Bi Ce Sn
+*13886	SourcesCal	# 1.5" out
+@sources Bi Ce Sn
+*13887	SourcesCal	# 2.0" out
+*13888	SourcesCal	# 2.5" out
+*13889	SourcesCal	# 3.0" out
+*13890	SourcesCal	# 3.5" out
+@sources Ce Sn
+*13891	SourcesCal	# 4.0" out
+*13892	SourcesCal	# 4.5" out
+@sources Sn
+*13893	SourcesCal	# 5.0" out
+*13894	SourcesCal	# 5.5" out
+@sources
+
+*13895	BgOff		# long BG; inserting source plug; beam tuning
+
+# several runs discarded, negative pedestals
+
+### new A->B ###
+
+# E backing veto TDC has problems
+*13905	A1
+*13906	A2
+*13907	A3
+*13908	A4
+*13909	A5		# ended 10min early; beam down
+# fixed E backing veto TDC by replacing flaky wire
+*13918	A6
+*13919	A7
+*13920	A8
+*13921	A9
+*13922	A10
+*13923	A11
+*13924	A12
+
+*13925	B1
+*13926	B2
+*13927	B3
+*13928	B4
+*13929	B5
+*13930	B6
+*13931	B7		# funny wirechamber noise (needs investigation)
+*13932	B8
+*13933	B9
+# flipper overheated; fixed
+*13935	B10
+*13936	B11
+*13937	B12
+
+### new A->B ###
+
+*13939	A1
+*13941	A2
+*13942	A3
+*13943	A4
+# adjusted pedestals
+*13950	A5
+*13951	A6
+# beam outage
+*13959	A7
+*13960	A8
+*13961	A9
+*13962	A10
+*13963	A11
+*13964	A12		# E0 ped a bit dubious
+
+# lost beam, pedestal drifts, É
+
+
+#######################
+@cycle October 7-8 Night Betas
+#######################
+
+### new B->A ###
+
+*14077	B1		# some neutrons left in trap when run started
+*14078	B2
+*14079	B3
+*14080	B4
+*14081	B5
+*14082	B6
+*14083	B7
+*14084	B8
+*14085	B9
+*14086	B10
+*14087	B11
+*14088	B12
+
+*14089	A1
+*14090	A2
+*14091	A3
+*14092	A4
+*14093	A5
+*14094	A6
+*14095	A7
+*14096	A8 
+*14097	A9
+*14098	A10
+*14099	A11
+*14100	A12
+
+#######################
+@cycle October 8 Calibrations
+#######################
+
+# fresh new Ce, Sn sources added, match Bi rate
+
+@sources Bi
+*14104	SourcesCal	# all the way in
+@sources E Bi Ce
+*14105	SourcesCal	# 0.5" out
+@sources Bi Ce
+*14106	SourcesCal	# 1.0" out
+@sources E Bi Ce Sn
+*14107	SourcesCal	# 1.5" out
+@sources Bi Ce Sn
+*14108	SourcesCal	# 2.0" out
+*14109	SourcesCal	# 2.5" out
+*14110	SourcesCal	# 3.0" out
+*14111	SourcesCal	# 3.5" out
+@sources Ce Sn
+*14112	SourcesCal	# 4.0" out
+*14113	SourcesCal	# 4.5" out
+@sources Sn
+*14114	SourcesCal	# 5.0" out
+*14115	SourcesCal	# 5.5" out
+
+# long backscattering runs
+@sources Bi Ce Sn
+*14116	SourcesCal
+*14117	SourcesCal
+*14118	SourcesCal
+@sources
+
+*14120	Xe
+*14121	Xe
+*14122	Xe
+*14124	Xe
+
+#######################
+@cycle October 8-12 Columbus Day Weekend Betas
+#######################
+
+### A->B ###
+
+*14127	A1
+*14128	A2
+*14129	A3
+*14130	A4
+*14131	A5
+*14132	A6
+*14133	A7
+*14134	A8
+*14135	A9
+*14136	A10
+*14137	A11
+*14138	A12
+
+*14139	B1
+*14140	B2
+*14141	B3
+*14142	B4
+*14143	B5
+*14144	B6
+*14145	B7
+*14146	B8
+*14147	B9
+*14148	B10		# RSS trip during run, left running longer
+*14149	B10		# continuing previous run
+*14150	B11
+*14151	B12		# beam outage during run; longish
+
+### A->B ###
+
+*14152	A1		# left running long
+*14153	A2
+*14154	A3
+*14155	A4
+*14156	A5		# beam glitches
+*14157	A6
+*14158	A7
+*14159	A8		# beam dropped out during run 
+*14160	A9
+*14161	A10
+*14162	A11
+# 40 min beam outage
+*14164	A12
+
+*14166	B1
+*14167	B2
+*14168	B3
+*14170	B4
+*14171	B5
+*14172	B6
+# fixed flapper open/close positions, gained back some decay rate
+*14174	B7
+*14175	B8
+*14176	B9
+# fixed flapper again
+*14178	B10
+*14179	B11
+*14180	B12
+
+# changed flapper for slower close
+
+### B->A ###
+
+*14182	B1
+*14183	B2
+*14184	B3
+*14185	B4
+*14186	B5
+*14187	B6
+*14188	B7
+*14189	B8
+*14190	B9
+*14191	B10
+*14192	B11
+*14193	B12
+
+*14194	A1
+*14195	A2
+*14196	A3
+*14197	A4
+*14198	A5
+*14199	A6
+*14200	A7
+*14201	A8
+*14202	A9
+*14203	A10
+*14204	A11
+*14205	A12
+
+# flapper problems; beam off
+
+### A->B ###
+
+*14206	A1
+*14207	A2
+*14208	A3
+*14209	A4
+*14210	A5
+*14211	A6
+*14212	A7
+*14213	A7
+*14214	A8
+*14215	A9
+*14216	A10
+*14217	A11
+*14218	A12
+
+#*14219	B1
+#*14220	B2
+# beam down; flapper "recovered" with rest
+
+*14224	B1
+*14225	B2
+*14226	B3
+*14227	B4
+*14228	B5
+*14229	B6
+*14230	B7
+*14231	B8
+*14232	B9
+# flapper stuck closedÉ
+*14235	B10
+*14236	B11
+*14237	B12
+
+### B->A ###
+
+*14238	B1
+*14239	B2
+*14240	B3
+*14241	B4
+*14242	B5
+*14243	B6
+*14244	B7
+*14245	B8
+*14246	B9
+*14247	B10
+*14248	B11
+*14249	B12
+
+*14250	A1
+*14251	A2
+*14252	A3
+*14253	A4
+*14254	A5
+*14255	A6
+*14256	A7
+*14257	A8
+*14258	A9
+*14259	A10
+*14260	A11
+*14261	A12
+
+#######################
+@cycle October 13 Xenon
+#######################
+
+# fresh hot Xe, 10/12 night
+*14264	Xe
+*14265	Xe
+*14266	Xe
+*14267	Xe
+*14268	Xe
+*14269	Xe
+*14270	Xe
+*14271	Xe
+*14272	Xe
+*14273	Xe
+
+# 10/13-10/14
+*14282	Xe
+*14283	Xe
+*14284	Xe
+*14285	Xe
+*14286	Xe
+*14287	Xe
+*14288	Xe
+*14289	Xe
+*14290	Xe
+*14291	Xe
+*14292	Xe
+*14293	Xe
+*14294	Xe
+*14295	Xe
+*14296	Xe
+*14297	Xe
+*14298	Xe
+*14299	Xe
+*14300	Xe
+*14301	Xe
+*14302	Xe
+*14303	Xe
+*14304	Xe
+*14305	Xe
+*14306	Xe
+*14307	Xe
+*14308	Xe
+*14309	Xe
+*14310	Xe
+*14311	Xe
+*14312	Xe
+*14313	Xe
+*14314	Xe
+*14315	Xe
+*14316	Xe
+*14317	Xe
+*14318	Xe
+*14319	Xe
+*14320	Xe
+*14321	Xe
+*14322	Xe
+*14323	Xe
+*14324	Xe
+*14325	Xe
+*14326	Xe
+*14327	Xe
+*14328	Xe
+*14329	Xe
+*14330	Xe
+*14331	Xe
+*14332	Xe
+*14333	Xe
+*14334	Xe
+*14335	Xe
+*14336	Xe
+*14337	Xe
+*14338	Xe
+*14339	Xe
+*14340	Xe
+*14341	Xe
+*14342	Xe
+*14343	Xe
+*14344	Xe
+*14345	Xe
+*14346	Xe
+*14347	Xe
+#*14348	Xe		# something is bored
+#*14349	Xe		# Éborked
+
+
+#######################
+@cycle October 14 Beta Decay
+#######################
+
+### B->A ###
+
+# missing T0 beam clock signal!
+#*14351	B1
+#*14352	B2		# UCN production dropout due to insufficient cooling
+#*14353	B3
+#*14354	B4
+#*14355	B5
+
+# doing 30min beta, 6min bkg to fit in before morning
+*14356	B1
+*14357	B2
+*14358	B3
+*14359	B4
+*14360	B5
+*14361	B6
+*14362	B7
+*14363	B8
+*14364	B9
+*14365	B10
+*14366	B11
+*14367	B12
+
+*14368	A1
+*14369	A2
+*14370	A3
+*14371	A4
+*14373	A5
+*14374	A6
+*14375	A7
+*14376	A8
+*14377	A9
+*14378	A10
+*14379	A11
+*14380	A12
+
+#######################
+@cycle October 15-18 Weekend Beta Decay
+#######################
+
+# small changes to PMT HV
+
+@sources Bi
+*14383	SourcesCal	# all the way in
+@sources E Bi Ce
+*14384	SourcesCal	# 0.5" out
+@sources Bi Ce
+*14385	SourcesCal	# 1.0" out
+@sources E Bi Ce Sn
+*14386	SourcesCal	# 1.5" out
+@sources Bi Ce Sn
+*14387	SourcesCal	# 2.0" out
+*14388	SourcesCal	# 2.5" out
+*14389	SourcesCal	# 3.0" out
+*14390	SourcesCal	# 3.5" out
+@sources Ce Sn
+*14391	SourcesCal	# 4.0" out
+*14392	SourcesCal	# 4.5" out
+@sources Sn
+*14393	SourcesCal	# 5.0" out
+*14394	SourcesCal	# 5.5" out
+
+### B->A ###
+
+*14397	B1
+*14398	B2
+*14399	B3
+*14400	B4
+*14401	B5
+*14402	B6
+*14403	B7
+*14405	B8
+*14406	B9
+*14407	B10
+*14408	B11
+*14409	B12
+
+*14410	A1
+*14411	A2
+*14412	A3
+*14413	A4
+*14414	A5
+*14415	A6
+*14416	A7
+*14417	A8
+*14418	A9
+*14419	A10
+*14420	A11		# beam off?
+*14421	A12		# beam went off
+
+# long beam outage
+# quench
+
+# SCS off, neutrons in decay trap, gamma runs
+*14425	BgOff		# neutrons in trap, gamma run
+*14426	BgOn		# neutrons in trap, gamma run
+*14427	BgOff		# neutrons in trap, gamma run
+
+### A->B ###
+
+# changed to 66min beta, 6min bg
+
+*14432	A1
+*14433	A2
+*14434	A2
+*14435	A3
+*14436	A4
+*14437	A5
+*14438	A5
+*14439	A6
+*14440	A7
+*14441	A7		# short run, crap cathodes
+*14442	A8
+*14443	A9
+*14444	A10
+*14445	A10
+*14446	A11
+*14447	A12
+
+*14448	B1
+*14449	B2
+# problems with Raymond beam disable
+# CCR switched to 'new' pattern generator that we can't disable, so no Depol runs
+*14453	B2
+*14454  B2
+*14455	B3		# beam always on
+*14456	B4
+*14457	B5
+*14458	B5
+*14459	B6
+*14460	B7
+*14461	B7
+*14462	B8
+*14463	B9
+*14464	B10
+*14465	B10
+*14466	B11
+*14467	B12
+
+#######################
+@cycle October 21 Magnets Off
+#######################
+# SCS off, bucking coils off
+#*14501	Xe
+#*14502	Xe
+#*14503	Xe
+#*14504	Xe
+#*14506	Xe
+#*14507	Xe
+
+#######################
+@cycle October 22 Calibrations
+#######################
+*14513	Xe
+*14514	Xe
+*14515	BgOff
+@sources Bi
+*14516	SourcesCal	# all the way in
+@sources E Bi Ce
+*14517	SourcesCal	# 0.5" out
+@sources Bi Ce
+*14518	SourcesCal	# 1.0" out
+@sources E Bi Ce Sn
+*14519	SourcesCal	# 1.5" out
+@sources Bi Ce Sn
+*14520	SourcesCal	# 2.0" out
+*14521	SourcesCal	# 2.25" out?
+*14522	SourcesCal	# 2.5" out
+*14523	SourcesCal	# 3.0" out
+*14524	SourcesCal	# 3.5" out
+@sources Ce Sn
+*14525	SourcesCal	# 4.0" out
+*14526	SourcesCal	# 4.5" out
+@sources Sn
+*14527	SourcesCal	# 5.0" out
+*14528	SourcesCal	# 5.5" out
+# long centered runs
+@sources Bi Ce Sn
+*14529	SourcesCal	# 2.5" out
+*14530	SourcesCal	# 2.5" out
+@sources
+*14531	BgOff
+
+#######################
+@cycle October 22-24 Weekend Beta Decay
+#######################
+
+### new A->B ###
+
+*14535	A1
+*14536	A2
+*14537	A2
+*14538	A3
+*14539	A4
+*14540	A5
+*14541	A5
+*14542	A6
+*14543	A7
+*14544	A8
+*14545	A9
+*14546	A10
+*14547	A11
+*14548	A12
+
+*14549	B1
+*14550	B2
+*14551	B3
+*14552	B4
+*14553	B5
+*14554	B5
+*14555	B6
+*14556	B7
+*14557	B7
+*14558	B8
+*14559	B9
+*14560	B10
+*14561	B11
+*14562	B12
+
+### new A->B ###
+
+*14563	A1
+*14564	A2
+*14565	A3
+*14566	A4
+*14567	A5
+*14568	A6
+*14569	A7
+*14570	A8
+*14571	A9
+*14572	A10
+*14573	A11
+*14574	A12
+
+*14575	B1
+*14577	B2
+*14578	B3
+*14579	B4
+*14580	B5
+*14581	B5
+*14582	B6
+*14583	B7		# beam dying
+*14585	B7
+*14587	B8
+*14588	B9
+*14589	B10
+*14590	B11
+*14591	B12
+
+### new A->B ###
+
+*14592	A1
+*14593	A2
+*14594	A2
+*14595	A3
+*14596	A4
+*14597	A5
+*14598	A6
+*14599	A7
+*14600	A8
+*14601	A9
+*14602	A10
+*14603	A11
+*14604	A12
+
+*14605	B1
+*14606	B2
+*14608	B3
+*14609	B4
+*14610	B5
+*14611	B6
+*14612	B7
+*14613	B8
+*14614	B9
+*14615	B10
+*14616	B11
+*14617	B12
+
+### new A->B ###
+
+*14618	A1
+*14619	A2
+*14620	A3
+*14621	A4
+*14622	A5
+*14623	A6
+*14624	A7
+*14625	A8
+*14626	A9
+*14627	A10
+*14628	A11
+*14629	A12
+
+*14630	B1
+*14631	B2
+*14632	B3
+*14633	B4
+*14634	B5
+*14635	B6
+*14636	B7
+*14637	B8
+*14639	B9
+*14640	B10
+*14641	B11
+*14642	B12
+
+### new B->A ###
+
+*14643	B1
+*14644	B2
+*14645	B3
+*14646	B4
+*14647	B5
+*14648	B6
+*14649	B7
+*14650	B8
+*14651	B9
+*14652	B10
+*14653	B11
+*14654	B12
+
+*14655	A1
+*14657	A2
+*14658	A3
+*14659	A4
+*14660	A5
+*14661	A6
+*14662	A7
+*14663	A8
+*14664	A9
+*14665	A10
+*14666	A11
+*14667	A12
+
+
+#######################
+@cycle October 27-29 Weekend Beta Decay
+#######################
+
+### new A->B ###
+
+*14688	A1
+*14689	A2
+*14690	A3
+*14691	A4
+*14692	A5
+*14693	A6
+#*14694	A7		# beam
+#*14695	A7		# dying
+# beam outage
+*14698	A7
+*14699	A8
+*14700	A9
+*14701	A10
+*14702	A10
+*14703	A11
+*14704	A12
+
+*14705	B1
+*14707	B2
+*14708	B3
+*14709	B4
+*14710	B5
+*14711	B6
+*14712	B7
+*14713	B8
+*14714	B9
+*14715	B10
+*14716	B11
+*14717	B12
+
+### new A->B ###
+
+*14718	A1
+*14719	A2
+*14720	A2
+*14721	A3
+*14722	A4
+*14723	A5
+*14724	A6
+*14725	A7
+*14726	A8
+*14727	A9
+*14728	A10
+*14729	A11
+*14730	A12
+
+*14731	B1
+*14732	B2
+*14733	B2
+*14734	B3
+
+# source cals
+*14735	BgOff		# 1hr bg run, sources in last 5min
+@sources Bi
+*14736	SourcesCal	# all the way in
+@sources E Bi Ce
+*14737	SourcesCal	# 0.5" out
+@sources Bi Ce
+*14738	SourcesCal	# 1.0" out
+@sources E Bi Ce Sn
+*14739	SourcesCal	# 1.5" out
+@sources Bi Ce Sn
+*14740	SourcesCal	# 2.0" out
+*14741	SourcesCal	# 2.5" out
+*14742	SourcesCal	# 3.0" out
+*14743	SourcesCal	# 3.5" out
+@sources Ce Sn
+*14744	SourcesCal	# 4.0" out
+*14745	SourcesCal	# 4.5" out
+@sources Sn
+*14746	SourcesCal	# 5.0" out
+@sources
+*14747	BgOff		# long beam-off background
+
+*14748	B4
+*14749	B5		# beam died
+*14750	B5		# beam died
+*14751	B5
+*14752	B6
+*14753	B7		# beam died after ~50min
+*14754	B8
+*14755	B9
+*14756	B10
+*14757	B11
+*14758	B12
+
+### new B->A ###
+
+*14759	B1
+*14760	B2		# beam died after ~45min
+*14761	B3
+*14762	B4
+*14763	B5
+*14764	B6
+*14765	B7
+*14766	B8
+*14767	B9
+*14768	B10
+*14769	B11
+*14770	B12
+
+*14771	A1
+*14772	A2
+*14773	A3
+*14774	A4
+*14775	A5
+*14776	A6
+*14777	A7
+*14778	A8
+*14779	A9
+*14780	A10
+*14781	A11
+*14782	A12
+
+#######################
+@cycle November 7-8 Beta Decay
+#######################
+
+# running 20min beta, 5min bkg ??
+# spectrometer vacuum is >~1e-4; leaks from wirechambers?
+# decay rate sucks after vent accident
+
+### B->A ###
+
+*14888	B1
+*14889	B2
+*14890	B3
+*14891	B4
+*14892	B5
+*14893	B6
+*14894	B7
+*14895	B8
+*14896	B9
+*14897	B10
+*14898	B11
+*14899	B12
+
+*14900	A1
+*14901	A2
+*14902	A3
+*14903	A4
+*14904	A5
+*14905	A6
+*14906	A7
+*14907	A8
+*14908	A9
+*14909	A10
+*14910	A11
+*14911	A12
+
+### B->A ###
+
+*14912	B1
+*14913	B2
+*14914	B3
+*14915	B4
+*14916	B5
+*14917	B6
+*14918	B7
+*14919	B8
+*14920	B9
+*14921	B10
+*14922	B11
+*14923	B12
+
+#
+# new automatic run cycle program screwed up and appended
+# large series of runs into single files
+# switching to 60min beta, 6min bkg
+#
+
+*14955	A1
+*14956	A2
+*14957	A3
+*14959	A4
+*14960	A5
+*14961	A6
+*14962	A7
+*14963	A8
+*14964	A9
+*14965	A10
+*14966	A11
+*14967	A12
+
+### B->A ###
+
+*14968	B1
+*14969	B2
+*14970	B3
+*14971	B4
+*14972	B5
+*14973	B5
+*14974	B6
+*14975	B7
+*14976	B8
+*14977	B9
+*14978	B10
+*14979	B11
+*14980	B12
+
+*14981	A1
+*14982	A2
+*14983	A2
+*14984	A3
+*14985	A4
+*14986	A5
+*14987	A6
+*14988	A7
+*14989	A8
+*14990	A9
+*14991	A10
+*14993	A11
+*14994	A12
+
+
+
+#######################
+@cycle November 11-12 Veterans Day Beta Decay
+#######################
+
+# 40 min beta, 6min bkg runs
+# decay rate sucks after vent accident
+
+### A->B ###
+
+# beta runs are all 5 minutes! Screwup!
+*15084	A1
+*15085	A2
+*15086	A3
+*15087	A4
+*15088	A5		# Extra short run ???
+*15089	A6
+*15090	A7
+*15091	A8
+*15092	A9
+*15093	A10
+*15094	A11
+*15095	A12
+
+# flapper is sticking; rates suck even more
+
+*15102	B1		# best one? many DAQ starts due to problems with auto-run-cycle program
+*15112	B2
+*15114	B2
+*15115	B3
+*15116	B4
+*15117	B5
+*15118	B6
+*15119	B7
+*15122	B8
+*15123	B9
+*15124	B10
+*15125	B11
+*15126	B12
+
+### B->A ###
+# 30 min beta, 5min bg to fit in by morning
+
+*15127	B1
+*15128	B2
+*15129	B3
+*15130	B4
+*15131	B5
+*15132	B6
+*15133	B7
+*15134	B8
+*15135	B9
+*15136	B10
+*15137	B11
+*15138	B12
+
+*15139	A1
+*15140	A2
+*15141	A3
+*15142	A4
+*15143	A5
+*15144	A6
+*15145	A7
+*15146	A8
+*15147	A9
+*15148	A10
+*15149	A11
+*15150	A12
+
+
+#######################
+@cycle November 12-14 Weekend Beta Decay
+#######################
+
+### B->A ###
+# 40 min beta, 6 min bg
+
+*15172	B1
+*15175	B2
+*15177	B3
+*15179	B4
+*15181	B5
+*15183	B6
+*15185	B7
+*15187	B8
+*15189	B9
+*15191	B10
+*15193	B11
+*15195	B12
+
+*15200	A1
+*15201	A2
+*15202	A3
+*15203	A4
+*15204	A5
+*15205	A6
+*15206	A7
+*15207	A8
+*15208	A9
+*15209	A10
+*15210	A11
+*15211	A12
+
+### B->A ###
+*15234	B1
+*15235	B2
+*15236	B3
+*15237	B4
+*15238	B5
+*15239	B6
+*15240	B7
+*15241	B8
+*15242	B9
+*15243	B10
+*15244	B11
+*15245	B12
+
+*15246	A1
+*15247	A2
+*15248	A3
+*15249	A4
+*15250	A5
+*15251	A6
+*15252	A7
+#*15253	A8		# Fast daq didn't start on time; run is junk
+*15254	A9
+*15255	A10
+*15256	A11
+*15257	A12
+
+### B->A ###
+*15258	B1
+*15259	B2
+*15260	B3
+*15261	B4
+*15262	B5
+*15263	B6
+
+
+#####
+# out of neopentane, switching to isobutane for wirechamber
+#####
+
+
+*15264	B7
+*15265	B8
+*15266	B9
+*15267	B10
+*15268	B11
+# Mon2 (Switcher) problemsÉ fixed by Chris
+*15271	B12
+
+*15272	A1
+*15273	A2
+*15274	A3
+*15275	A4
+*15276	A5
+*15277	A6
+*15278	A7
+*15279	A8
+*15280	A9
+*15281	A10
+*15282	A11
+*15283	A12
+
+### A->B ###
+*15285	A1
+*15286	A2
+*15287	A3
+*15288	A4
+*15289	A5
+*15290	A6
+*15291	A7
+*15292	A8
+*15293	A9
+*15294	A10
+*15295	A11
+*15296	A12
+
+*15297	B1
+*15298	B2
+*15299	B3
+*15300	B4
+*15301	B5
+*15302	B6
+*15303	B7
+
+# DAQ issues, wirechamber trip, long pause
+
+### A->B ###
+*15309	A1
+*15310	A2
+# missed A3 depol
+*15311	A4
+*15312	A5
+*15313	A6
+*15314	A7
+*15315	A8
+*15316	A9
+*15317	A10
+*15318	A11
+*15319	A12
+
+*15320	B1
+*15321	B2
+*15322	B3
+*15323	B4
+*15324	B5
+*15325	B6
+*15326	B7		# stopped early; Kevin messing with LED
+*15327	B7
+*15328	B8
+*15329	B9
+*15330	B10
+*15331	B11
+*15332	B12
+
+### B->A ###
+# 60min beta, 10min bg
+
+*15333	B1
+*15334	B2
+*15335	B3
+*15336	B4
+*15337	B5
+*15338	B6
+*15339	B7
+*15340	B8
+*15341	B9
+*15342	B10
+*15343	B11
+*15344	B12
+
+*15345	A1
+*15346	A2
+*15347	A3
+*15348	A4
+*15349	A5
+*15350	A6
+*15351	A7
+*15352	A8
+*15353	A9
+*15354	A10
+*15355	A11
+*15356	A12
+
+#
+# source cals
+# spectra look strange (large tails, etc.);
+# sources probably inserted wrong
+#
+
+@sources Bi
+*15357	SourcesCal	# all the way in
+@sources E Bi Ce
+*15358	SourcesCal	# 0.5" out
+@sources Bi Ce
+*15359	SourcesCal	# 1.0" out
+@sources E Bi Ce Sn
+*15360	SourcesCal	# 1.5" out
+@sources Bi Ce Sn
+*15361	SourcesCal	# 2.0" out
+*15362	SourcesCal	# 2.5" out
+*15363	SourcesCal	# 3.0" out
+*15364	SourcesCal	# 3.5" out
+@sources Ce Sn
+*15365	SourcesCal	# 4.0" out
+*15366	SourcesCal	# 4.5" out
+@sources Sn
+*15367	SourcesCal	# 5.0" out
+@sources E
+*15369	SourcesCal	# 5.5" out
+@sources
+*15370	SourcesCal	# 6.0" out
+@sources Bi Ce Sn
+*15371	SourcesCal	# 2.5" out
+@sources
+
+
+#######################
+@cycle November 22-24 Beta Decay Days
+#######################
+
+### A->B ###
+
+*15448	A1
+*15449	A2
+*15450	A3
+*15451	A4
+*15455	A5
+*15456	A6
+*15457	A7
+*15458	A8
+*15459	A9
+*15460	A10
+*15461	A11
+*15462	A12
+
+*15466	B1
+*15467	B2
+*15468	B3
+*15469	B4
+*15470	B5
+*15471	B6
+*15472	B7
+*15473	B8
+*15474	B9
+*15475	B10
+*15476	B11
+*15477	B12
+
+### A->B ###
+
+*15488	A1
+*15489	A2
+*15490	A3
+*15491	A4
+*15492	A5
+*15493	A6
+*15494	A7
+*15495	A8
+*15496	A9
+*15497	A10
+*15498	A11
+*15499	A12
+
+*15500	B1
+*15501	B2
+*15502	B3
+*15503	B4
+*15504	B5
+*15505	B6
+*15506	B7
+*15507	B8
+*15508	B9
+*15509	B10
+*15510	B11
+*15511	B12
+
+### B->A ###
+
+*15512	B1
+*15513	B2
+*15514	B3
+*15515	B4
+*15516	B5
+*15517	B6
+*15518	B7
+*15519	B8
+*15520	B9
+*15521	B10
+*15522	B11
+*15523	B12
+
+*15524	A1
+*15525	A2
+*15526	A3
+*15527	A4
+*15529	A5
+*15532	A6
+*15534	A7
+*15535	A8
+*15536	A9
+*15537	A10
+*15538	A11
+*15539	A12
+
+### B->A ###
+
+*15540	B1
+*15541	B2
+*15542	B3
+*15543	B4
+*15544	B5
+*15545	B6
+*15546	B7
+*15547	B8
+*15548	B9
+*15549	B10
+*15550	B11
+*15551	B12
+
+*15552	A1
+*15553	A2
+*15554	A3
+*15555	A4
+*15556	A5
+*15557	A6
+*15558	A7
+*15559	A8
+*15560	A9
+*15561	A10
+*15562	A11
+*15563	A12
+
+### A->B ###
+
+*15564	A1
+*15565	A2
+*15566	A3
+*15567	A4
+*15568	A5
+*15569	A6
+*15570	A7
+*15571	A8
+*15572	A9
+*15573	A10
+*15574	A11
+*15575	A12
+
+*15577	B1
+*15578	B2
+*15579	B3
+*15580	B4
+*15581	B5
+*15582	B6
+*15583	B7
+*15584	B8
+*15585	B9
+*15586	B10
+*15587	B11
+# 45min beam out
+*15590	B12
+
+### A->B ###
+
+*15591	A1
+*15592	A2
+*15593	A3
+*15594	A4
+*15595	A5
+*15596	A6
+*15597	A7
+*15598	A8
+*15599	A9
+*15600	A10
+*15601	A11
+*15602	A12
+
+*15603	B1
+*15604	B2
+*15605	B3
+*15606	B4
+*15607	B5
+*15608	B6
+*15609	B7
+*15610	B8
+*15611	B9
+*15612	B10
+*15613	B11
+*15614	B12
+
+### A->B ###
+
+*15615	A1
+*15616	A2
+*15617	A3
+*15619	A4
+*15620	A5
+*15621	A6
+*15622	A7
+*15623	A8
+*15624	A9
+*15625	A10
+*15626	A11
+*15627	A12
+
+*15628	B1
+*15629	B2
+*15630	B3
+*15631	B4
+*15632	B5
+*15633	B6
+*15634	B7
+*15635	B8
+*15636	B9
+*15637	B10
+*15638	B11
+*15639	B12
+
+
+#######################
+@cycle November 24 Calibrations
+#######################
+
+@sources Bi
+*15645	SourcesCal	# all the way in
+@sources E Bi Ce
+*15646	SourcesCal	# 0.5" out
+@sources Bi Ce
+*15647	SourcesCal	# 1.0" out
+*15648	SourcesCal	# 1.25" out
+@sources E Bi Ce Sn
+*15649	SourcesCal	# 1.5" out
+@sources Bi Ce Sn
+*15650	SourcesCal	# 2.0" out
+*15651	SourcesCal	# 2.5" out
+*15652	SourcesCal	# 3.0" out
+*15653	SourcesCal	# 3.5" out
+@sources Ce Sn
+*15654	SourcesCal	# 4.0" out
+*15655	SourcesCal	# 4.5" out
+@sources Sn
+*15656	SourcesCal	# 5.0" out
+@sources E
+*15657	SourcesCal	# 5.5" out
+@sources
+*15658	SourcesCal	# 6.0" out
+@sources Bi Ce Sn
+*15659	SourcesCal	# 2.5" out, long run
+*15660	SourcesCal	# 2.5" out, long run
+*15661	SourcesCal	# 2.5" out, long run
+*15662	SourcesCal	# 2.5" out, long run
+*15663	SourcesCal	# 2.5" out, long run
+@sources
+
+#######################
+@cycle November 24-29 Thanksgiving Betas
+#######################
+
+# 60min beta + 9min bkg
+
+### A->B* ###
+
+*15667	A1
+*15668	A2
+*15669	A3
+*15670	A4
+*15671	A5
+*15672	A6
+*15673	A7
+*15674	A8
+*15675	A9
+*15676	A10
+*15677	A11
+*15678	A12
+
+*15679	B1
+*15680	B2
+*15681	B3
+*15682	B4
+*15683	B5
+*15684	B6
+*15685	B7
+*15686	B8
+*15687	B9
+*15688	B10
+*15689	B11
+*15690	B12
+
+### B->A* ###
+
+*15691	B1
+*15692	B2
+*15693	B3
+*15694	B4
+*15695	B5
+*15696	B6
+*15697	B7
+*15698	B8
+*15699	B9
+*15700	B10
+*15701	B11
+*15702	B12
+
+*15703	A1
+*15704	A2
+*15705	A3
+*15706	A4
+*15707	A5
+*15708	A6
+*15709	A7
+*15710	A8
+*15711	A9
+*15712	A10
+*15713	A11
+*15714	A12
+
+### A->B* ###
+
+*15715	A1
+*15716	A2
+*15717	A3
+*15718	A4
+*15719	A5
+*15720	A6
+*15721	A7
+*15722	A8
+*15723	A9
+*15724	A10
+*15725	A11
+*15726	A12
+
+*15727	B1
+*15728	B2
+*15730	B3
+*15731	B4
+*15732	B5
+*15733	B6
+*15734	B7
+*15735	B8
+*15736	B9
+*15737	B10
+*15738	B11
+*15739	B12
+
+### B->A* ###
+
+*15740	B1
+*15741	B2
+*15742	B3
+*15743	B4
+*15744	B5
+*15745	B6
+*15746	B7
+*15747	B8
+*15748	B9
+*15749	B10
+*15750	B11
+*15751	B12
+
+*15752	A1
+*15753	A2
+*15754	A3
+*15755	A4
+*15756	A5
+*15757	A6
+*15758	A7
+*15759	A8
+*15760	A9
+*15761	A10
+*15762	A11
+*15763	A12
+
+### B->A* ###
+
+*15764	B1
+*15765	B2
+*15766	B3
+*15767	B4
+*15768	B5
+*15769	B6
+*15770	B7
+*15771	B8
+*15772	B9
+*15773	B10
+*15774	B11
+*15775	B12
+
+# melt-and-refreeze
+
+*15778	A1
+*15779	A2
+*15780	A3
+*15781	A4
+*15782	A5
+*15783	A6
+*15784	A7
+*15785	A8
+*15786	A9
+*15787	A10
+*15788	A11
+*15789	A12
+
+### A->B* ###
+
+*15790	A1
+*15791	A2
+*15792	A3
+*15793	A4
+*15794	A5
+*15795	A6
+*15796	A7
+*15797	A8
+*15798	A9
+*15799	A10
+*15800	A11
+*15801	A12
+
+*15802	B1
+*15803	B2
+*15804	B3
+*15805	B4
+*15806	B5
+*15807	B6
+# disk space problem
+*15812	B7
+*15813	B8
+*15814	B9
+*15815	B10
+*15816	B11
+*15817	B12
+
+### B->A* ###
+
+*15818	B1
+*15819	B2
+*15820	B3
+*15821	B4
+*15822	B5
+*15823	B6
+*15824	B7
+*15825	B8
+*15826	B9
+*15827	B10
+*15828	B11
+*15829	B12
+
+*15830	A1
+*15831	A2
+*15832	A3
+*15833	A4
+*15834	A5
+*15835	A6
+*15836	A7
+*15837	A8
+*15838	A9
+*15839	A10
+*15840	A11
+*15841	A12
+
+### A->B* ###
+
+*15842	A1
+*15843	A2
+*15844	A3
+*15845	A4
+*15846	A5
+*15847	A6
+*15848	A7
+*15849	A8
+*15850	A9
+*15851	A10
+*15852	A11
+*15853	A12
+
+*15854	B1
+*15855	B2
+*15856	B3
+*15857	B4
+*15858	B5
+*15859	B6
+*15860	B7
+*15861	B8
+*15862	B9
+*15863	B10
+*15864	B11
+*15865	B12
+
+### A*->B* (oops) ###
+
+*15867	A1
+*15868	A2		# flapper died for ~15min
+*15869	A3
+*15870	A4
+*15871	A5
+*15872	A6
+*15873	A7
+*15874	A8
+*15875	A9
+*15876	A10
+*15877	A11
+*15878	A12
+
+*15879	B1
+*15880	B2
+*15881	B3
+*15882	B4
+*15883	B5
+*15884	B6
+*15885	B7
+*15886	B8
+*15887	B9
+*15888	B10
+*15889	B11
+*15890	B12
+
+### B->A* ###
+
+*15891	B1
+*15892	B2
+*15893	B3
+*15894	B4
+*15895	B5
+*15896	B6
+*15897	B7
+*15898	B8
+*15899	B9
+*15900	B10
+*15901	B11
+*15903	B12
+
+*15904	A1
+*15905	A2
+*15906	A3
+*15907	A4
+*15908	A5
+*15909	A6
+*15910	A7
+*15911	A8
+*15912	A9
+*15913	A10
+*15914	A11
+*15915	A12
+
+
+#######################
+@cycle November 29 Calibrations
+#######################
+
+@sources Bi
+*15916	SourcesCal	# all the way in
+*15917	SourcesCal	# 0.25" out
+@sources E Bi Ce
+*15918	SourcesCal	# 0.5" out
+@sources Bi Ce
+*15919	SourcesCal	# 0.75" out
+*15920	SourcesCal	# 1.0" out
+*15921	SourcesCal	# 1.25" out
+@sources E Bi Ce Sn
+*15922	SourcesCal	# 1.5" out
+*15923	SourcesCal	# 1.75" out
+@sources Bi Ce Sn
+*15924	SourcesCal	# 2.0" out
+*15925	SourcesCal	# 2.25" out
+*15926	SourcesCal	# 2.5" out
+*15927	SourcesCal	# 2.75" out
+*15928	SourcesCal	# 3.0" out
+*15929	SourcesCal	# 3.25" out
+@sources E Ce Sn
+*15930	SourcesCal	# 3.5" out
+@sources Ce Sn
+*15931	SourcesCal	# 3.75" out
+*15932	SourcesCal	# 4.0" out
+*15933	SourcesCal	# 4.25" out
+*15934	SourcesCal	# 4.5" out
+@sources E Sn
+*15935	SourcesCal	# 4.75" out
+@sources Sn
+*15936	SourcesCal	# 5.0" out
+*15937	SourcesCal	# 5.25" out
+*15938	SourcesCal	# 5.5" out
+@sources E
+*15939	SourcesCal	# 5.75" out
+@sources
+*15940	SourcesCal	# 6.0" out
+
+#######################
+@cycle November 29-30 Beta Decay
+#######################
+
+### B->A* ###
+
+*15943	B1
+*15944	B2
+*15945	B3
+*15946	B4
+*15947	B5
+*15948	B6
+*15949	B7
+*15950	B8
+*15951	B9
+*15952	B10
+*15953	B11
+*15954	B12
+
+*15955	A1
+*15956	A2
+*15957	A3
+*15958	A4
+*15959	A5
+*15960	A6
+*15961	A7
+*15962	A8
+*15963	A9
+*15964	A10
+*15965	A11
+*15966	A12
+
+#######################
+@cycle December 1 Xenon
+#######################
+
+*15991	Xe		# initial loading
+*15992	Xe
+*15993	Xe
+*15994	Xe
+*15995	Xe
+*15996	Xe
+*15997	Xe
+*15998	Xe
+*15999	Xe
+*16000	Xe
+*16001	Xe
+*16002	Xe
+*16003	Xe
+*16004	Xe
+*16005	Xe
+*16006	Xe
+*16007	Xe
+*16008	Xe
+*16009	Xe
+*16010	Xe
+*16011	Xe
+*16012	Xe
+*16013	Xe
+*16014	Xe
+*16015	Xe
+*16016	Xe
+*16017	Xe
+*16018	Xe
+*16019	Xe
+*16020	Xe
+*16021	Xe
+*16022	Xe
+*16023	Xe
+*16024	Xe
+*16025	Xe
+*16026	Xe
+*16027	Xe
+*16028	Xe
+*16029	Xe
+*16030	Xe
+*16031	Xe
+*16032	Xe
+*16033	Xe
+*16034	Xe
+*16035	Xe
+*16036	Xe
+*16037	Xe
+*16038	Xe
+*16039	Xe
+*16040	Xe
+*16041	Xe
+*16042	Xe
+*16043	Xe
+*16044	Xe
+*16045	Xe
+*16046	Xe
+*16047	Xe
+*16048	Xe
+*16049	Xe
+*16050	Xe
+*16051	Xe
+*16052	Xe
+*16053	Xe
+*16054	Xe
+*16055	Xe
+*16056	Xe
+*16057	Xe
+*16058	Xe
+*16059	Xe
+*16060	Xe
+*16061	Xe
+*16062	Xe
+*16063	Xe
+*16064	Xe
+*16065	Xe
+*16066	Xe
+*16067	Xe
+*16068	Xe
+*16069	Xe
+*16070	Xe
+*16071	Xe
+*16072	Xe
+*16073	Xe
+*16074	Xe
+*16075	Xe
+*16076	Xe
+*16077	Xe
+
+#######################
+@cycle December 3-5 Weekend Beta Decay
+#######################
+
+### A->B* ###
+
+*16097	A1
+*16098	A2
+*16099	A3
+*16100	A4
+*16101	A5
+*16102	A6
+*16103	A7
+*16104	A8
+*16105	A9
+*16106	A10
+*16107	A11
+*16108	A12
+
+*16109  B1
+*16110  B2
+*16111  B3
+*16112  B4
+*16113  B5
+*16114  B6
+*16115  B7
+*16116  B8
+*16117  B9
+*16118  B10
+*16119  B11
+*16120  B12
+
+### A->B* ###
+
+*16121	A1
+*16122	A2
+*16123	A3
+*16124	A4
+*16125	A5
+*16126	A6
+*16127	A7
+*16128	A8
+*16129	A9
+*16130	A10
+*16131	A11
+*16132	A12
+
+*16133	B1
+*16134	B2
+*16135	B3
+*16136	B4
+*16137	B5
+*16138	B6
+*16139	B7
+*16140	B8
+*16141	B9
+*16142	B10
+*16143	B11
+*16144	B12
+
+### B->A* ###
+
+*16145	B1
+*16146	B2
+*16147	B3
+*16148	B4
+*16149	B5
+*16150	B6
+*16151	B7
+*16152	B8
+*16153	B9
+*16154	B10
+*16155	B11
+*16156	B12
+
+*16157	A1
+*16158	A2
+*16159	A3
+*16160	A4
+*16161	A5
+*16162	A6
+*16163	A7
+*16164	A8
+*16165	A9
+*16166	A10
+*16167	A11
+*16168	A12
+
+### A->B* ###
+
+*16169	A1
+*16170	A2
+*16171	A3
+*16172	A4
+*16173	A5
+*16174	A6
+*16175	A7
+*16176	A8
+*16177	A9
+*16178	A10
+*16179	A11
+*16180	A12
+
+*16181	B1
+*16182	B2
+*16183	B3
+*16184	B4
+*16185	B5
+*16186	B6
+*16187	B7
+*16188	B8
+*16189	B9
+*16190	B10
+*16191	B11
+*16192	B12
+
+### B->A* ###
+
+*16193	B1
+*16194	B2
+*16195	B3
+*16196	B4
+*16197	B5
+*16198	B6
+*16199	B7
+*16200	B8
+*16201	B9
+*16202	B10
+*16203	B11
+*16204	B12
+
+*16205	A1
+*16206	A2
+*16207	A3
+*16208	A4
+*16209	A5
+*16210	A6
+*16211	A7
+*16212	A8
+*16213	A9
+*16214	A10
+*16215	A11
+*16216	A12
+
+#######################
+@cycle December 6 Calibrations
+#######################
+
+# long 3-source runs, including AFP ramp-down
+@sources Bi Ce Sn
+*16240	SourcesCal
+*16241	SourcesCal
+*16242	SourcesCal
+*16243	SourcesCal
+*16244	SourcesCal
+
+# source position scan, AFP ramped down
+@sources Bi
+*16245	SourcesCal	# all the way in
+@sources E Bi Ce
+*16246	SourcesCal	# 0.5" out
+@sources Bi Ce
+*16247	SourcesCal	# 1.0" out
+@sources E Bi Ce Sn
+*16248	SourcesCal	# 1.5" out
+@sources Bi Ce Sn
+*16249	SourcesCal	# 2.0" out
+*16250	SourcesCal	# 2.5" out
+*16251	SourcesCal	# 3.0" out
+@sources E Ce Sn
+*16252	SourcesCal	# 3.5" out
+@sources Ce Sn
+*16253	SourcesCal	# 4.0" out
+*16254	SourcesCal	# 4.5" out
+@sources Sn
+*16255	SourcesCal	# 5.0" out
+*16256	SourcesCal	# 5.5" out
+@sources
+*16257	SourcesCal	# 6.0" out
+
+
+
+
+
+############### 2011 ################
+
+#######################
+@cycle October 7 Xenon Depol Beta Bad Polarization
+#######################
+
+*16581	Xe
+*16582	Xe
+*16583	Xe
+
+
+###
+###  Mis-tuned AFP means all these runs are garbage
+###
+
+
+### A->B ###
+# 20min beta, 6min bkg
+
+## NOTE: missing T0 pulses! ##
+*16606	A1
+*16607	A2
+*16608	A3
+*16609	A4
+*16610	A5
+*16611	A6
+*16612	A7
+*16613	A8
+*16614	A9
+*16615	A10
+*16616	A11
+*16617	A12
+*16618	A12
+
+*16619	B1
+*16620	B2
+*16621	B3
+*16622	B4
+*16623	B5
+## added back T0 beam reset ##
+*16626	B6
+*16627	B7
+*16628	B8
+*16629	B9
+*16630	B10
+*16631	B11
+*16632	B12
+
+### B->A ###
+# 60min beta, 12min bkg
+
+*16634	B1
+*16635	B2
+*16636	B3
+*16637	B4
+*16638	B5
+*16639	B6
+*16640	B7
+*16641	B8
+*16642	B9
+*16643	B10
+*16644	B11
+*16645	B12
+
+*16646	A1
+*16647	A2
+*16648	A3
+*16649	A4
+*16650	A5
+*16651	A6
+*16652	A7
+*16653	A8
+*16654	A9
+*16655	A10
+*16656	A11
+*16657	A12
+
+### A->B ###
+
+*16658	A1
+*16659	A2
+*16660	A3
+*16661	A4
+*16662	A5
+*16663	A6
+*16664	A7
+*16665	A8
+*16666	A9
+*16667	A10
+*16668	A11
+*16669	A12
+
+*16670	B1
+*16671	B2
+*16672	B3
+*16673	B4
+*16674	B5
+*16675	B6
+
+*16676	BgOn	# turning on area fans; were off before this
+
+*16677	B7
+*16678	B8
+*16679	B9
+
+# turned down gain (voltage) on switcher monitor, which was out of range
+
+*16682	B10
+*16683	B11
+*16684	B12
+
+### B->A* ###
+# 35min beta + 5min bkg
+
+*16686	B1
+*16687	B2
+*16688	B3
+*16689	B4
+*16690	B5
+*16691	B6
+*16692	B7
+*16693	B8
+*16694	B9
+*16695	B10
+*16696	B11
+*16697	B12
+
+*16698	A1
+*16699	A2
+*16700	A3
+*16701	A4
+*16702	A5
+*16703	A6
+*16704	A7
+*16705	A8
+*16706	A9
+*16707	A10
+*16708	A11
+*16709	A12
+
+### B->A* ###
+
+*16710	B1
+*16711	B2
+*16712	B3
+*16713	B4
+*16714	B5
+*16715	B6
+*16716	B7
+*16717	B8
+*16718	B9
+*16719	B10
+*16720	B11
+*16721	B12
+
+*16722	A1
+*16723	A2
+*16724	A3
+*16725	A4
+*16726	A5
+*16727	A6
+*16728	A7
+*16729	A8
+*16730	A9
+*16731	A10
+*16732	A11
+*16733	A12
+
+### A->B ###
+
+*16734	A1
+*16735	A2
+*16736	A3
+*16737	A4
+*16738	A5
+*16739	A6
+*16740	A7
+*16741	A8
+*16742	A9
+*16743	A10
+*16744	A11
+*16745	A12
+
+# fixed dead EX wire (have to find out where that started)
+
+*16747	B1
+*16748	B2
+*16750	B3
+*16751	B4
+*16752	B5
+*16753	B6
+*16754	B7	# beam died after 16min
+
+# ... discovered AFP tune was lousy ...
+
+
+
+#######################
+@cycle October 12 Polarimetry
+#######################
+
+#######################
+@cycle October 15-18 Weekend Beta Decay
+#######################
+
+#######################
+@cycle October 19 Xenon
+#######################
+
+# missing wire; very noisy PMT W2: 16918...16963
+
+# fixed wires, but PMT W2 is dead:
+*16983	Xe
+*16984	Xe
+*16985	Xe
+*16986	Xe
+*16987	Xe
+*16988	Xe
+*16989	Xe
+*16990	Xe
+*16991	Xe
+*16992	Xe
+*16993	Xe
+*16994	Xe
+*16995	Xe
+*16996	Xe
+*16997	Xe
+*16998	Xe
+*16999	Xe
+*17000	Xe
+*17001	Xe
+*17002	Xe
+*17003	Xe
+*17004	Xe
+*17005	Xe
+*17006	Xe
+*17007	Xe
+*17008	Xe
+*17009	Xe
+*17010	Xe
+*17011	Xe
+*17012	Xe
+*17013	Xe
+*17014	Xe
+*17015	Xe
+*17016	Xe
+*17017	Xe
+*17018	Xe
+*17019	Xe
+*17020	Xe
+*17021	Xe
+*17022	Xe
+*17023	Xe
+*17024	Xe
+*17025	Xe
+*17026	Xe
+*17027	Xe
+*17028	Xe
+*17029	Xe
+*17030	Xe
+*17031	Xe
+*17032	Xe
+*17033	Xe
+*17034	Xe
+*17035	Xe
+*17036	Xe
+*17037	Xe
+*17038	Xe
+*17039	Xe
+*17040	Xe
+*17041	Xe
+*17042	Xe
+*17043	Xe
+*17044	Xe
+*17045	Xe
+*17046	Xe
+*17047	Xe
+*17048	Xe
+*17049	Xe
+*17050	Xe
+*17051	Xe
+*17052	Xe
+*17053	Xe
+*17054	Xe
+*17055	Xe
+*17056	Xe
+*17057	Xe
+*17058	Xe
+*17059	Xe
+*17060	Xe
+*17061	Xe
+*17062	Xe
+*17063	Xe
+*17064	Xe
+*17065	Xe
+*17066	Xe
+*17067	Xe
+*17068	Xe
+*17069	Xe
+*17070	Xe
+*17071	Xe
+*17072	Xe
+*17073	Xe
+*17074	Xe
+*17075	Xe
+*17076	Xe
+*17077	Xe
+*17078	Xe
+
+#######################
+@cycle October 23-24 Beta Decay
+#######################
+
+# PMT W2 still dead
+
+### A->B ###
+# 40min beta, 12min bkg
+
+*17125	A1
+*17126	A2
+*17127	A3
+*17128	A4
+*17129	A5
+*17130	A6
+*17131	A7
+# turned on area fans
+*17132	A8
+*17133	A9
+*17134	A10
+*17135	A11
+*17136	A12
+
+*17137	B1
+*17138	B2
+*17139	B3
+*17140	B4
+*17141	B5
+*17142	B6
+*17143	B7
+*17144	B8
+*17145	B9
+*17146	B10
+*17147	B11
+*17148	B12
+
+### A->B ###
+# 40min beta, 6min bkg
+
+*17149	A1
+*17150	A2
+*17151	A3
+*17152	A4
+*17153	A5
+*17154	A6
+*17155	A7
+*17157	A8
+*17158	A9
+*17159	A10
+*17160	A11
+*17161	A12
+
+*17162	B1
+*17163	B2
+*17164	B3
+*17165	B4
+*17166	B5
+*17167	B5
+*17168	B6
+*17169	B7
+*17170	B8
+*17171	B9
+*17172	B10
+*17173	B11
+*17174	B12
+
+### B->A ###
+
+*17175	B1
+*17176	B2
+*17177	B3
+*17178	B4
+*17179	B5
+*17180	B6
+*17181	B7
+*17182	B8
+*17183	B9
+*17184	B10
+*17185	B11
+*17186	B12
+
+*17187	A1
+*17188	A2
+*17189	A3
+*17190	A4
+*17191	A5
+*17192	A6
+*17193	A7
+*17194	A8
+*17195	A9
+*17196	A10
+*17197	A11
+*17198	A12
+
+### A->B ###
+# 30min beta, 6min bkg
+
+*17199	A1
+*17200	A2
+*17201	A3
+*17202	A4
+*17203	A5
+*17204	A6
+*17205	A7
+*17206	A8
+*17207	A9
+*17208	A10
+*17209	A11
+*17210	A12
+
+*17211	B1
+*17212	B2
+*17213	B3
+*17214	B4
+*17215	B5
+*17216	B6
+*17217	B7
+*17218	B8
+*17219	B9
+*17220	B10
+*17221	B11
+*17222	B12
+
+#######################
+@cycle October 24 Calibrations
+#######################
+
+# PMT W2 still dead
+
+*17223	BgOff	# long background run
+
+# rather old Xenon
+*17224	Xe
+*17225	Xe
+*17226	Xe
+*17227	Xe
+*17228	Xe
+*17229	Xe
+*17230	Xe
+
+# new 2011 Ce, Sn sources (+ old Bi)
+@sources Ce
+*17233	SourcesCal	# 0in
+@sources E Ce Sn
+*17234	SourcesCal	# 0.5in
+@sources Ce Sn
+*17235	SourcesCal	# 1.0in
+@sources E Ce Sn Bi
+*17236	SourcesCal	# 1.5in
+@sources Ce Sn Bi
+*17237	SourcesCal	# 2.0in
+*17238	SourcesCal	# 2.5in
+*17239	SourcesCal	# 3.0in
+@sources E Sn Bi
+*17240	SourcesCal	# 3.5in
+@sources Sn Bi
+*17241	SourcesCal	# 4.0in
+*17242	SourcesCal	# 4.5in
+@sources Bi
+*17243	SourcesCal	# 5.0in
+*17244	SourcesCal	# 5.5in
+@sources Ce Sn Bi
+*17245	SourcesCal	# 2.5in, flipped
+*17246	SourcesCal	# 2.75in, flipped
+*17247	SourcesCal	# 2.75in, normal
+*17248	SourcesCal	# 2.25in, normal
+*17249	SourcesCal	# 2.25in, flipped
+@sources
+
+#######################
+@cycle October 26 Beta Decay
+#######################
+
+### B->A ###
+# 25min beta, 6min bkg
+
+*17274	B1
+*17275	B2
+*17276	B3
+*17277	B4
+*17278	B5
+*17279	B6
+*17280	B7
+*17281	B8
+*17282	B9
+*17283	B10
+*17284	B11
+*17285	B12
+
+*17286	A1
+*17287	A2
+*17288	A3
+*17289	A4
+*17290	A5
+*17291	A6
+*17292	A7
+*17293	A8
+*17294	A9
+*17295	A10
+*17296	A11
+*17297	A12
+
+#######################
+@cycle November 3 Sources
+#######################
+
+# Bi pulser W1 fallen off; MWPC WX16 wire dead
+
+@sources Ce
+*17359	SourcesCal	# 0.0
+@sources E Ce Sn
+*17360	SourcesCal	# 0.5
+@sources Ce Sn
+*17361	SourcesCal	# 0.75
+*17364	SourcesCal	# 1.0
+@sources Ce Sn Bi
+*17368	SourcesCal	# 2.5
+@sources Ce Sn
+*17369	SourcesCal	# 1.0
+@sources Ce Sn Bi
+*17370	SourcesCal	# 2.0
+*17371	SourcesCal	# 3.0
+@sources Sn Bi
+*17372	SourcesCal	# 4.0
+@sources Bi
+*17373	SourcesCal	# 5.0
+@sources Sn Bi
+*17374	SourcesCal	# 4.5
+@sources W Ce Sn Bi
+*17375	SourcesCal	# 3.5
+@sources E Ce Sn Bi
+@sources W Ce Sn
+*17376	SourcesCal	# 1.5
+@sources E Ce Sn
+@sources W Ce
+*17377	SourcesCal	# 0.5
+@sources Ce
+*17378	SourcesCal	# 0.25
+@sources Ce Sn
+*17379	SourcesCal	# 0.75
+*17380	SourcesCal	# 1.25
+@sources Ce Sn Bi 
+*17381	SourcesCal	# 1.75
+*17382	SourcesCal	# 2.25
+*17383	SourcesCal	# 2.75
+*17384	SourcesCal	# 3.25
+@sources Sn Bi
+*17385	SourcesCal	# 3.75
+*17386	SourcesCal	# 4.25
+@sources Bi
+*17387	SourcesCal	# 4.75
+@sources
+
+#######################
+@cycle November 4-7 Beta Decay
+#######################
+
+### A->B ###
+
+# extra high detector trigger rate may harm A1,A2
+*17388	A1
+*17389	A2
+*17390	A3
+*17391	A4
+*17392	A5
+*17393	A6
+*17394	A7
+*17395	A8
+*17396	A9
+*17397	A10
+*17398	A11
+*17399	A12
+
+*17400	B1
+*17401	B2
+*17402	B3
+*17403	B4
+*17404	B5
+*17405	B6
+*17406	B7
+*17407	B8
+*17408	B9
+*17409	B10
+*17410	B11
+*17411	B12
+
+### B->A ###
+
+*17415	B1
+*17416	B2
+*17417	B3
+*17418	B4
+*17419	B5
+*17420	B6
+*17421	B7
+*17422	B8
+*17423	B9
+*17424	B10
+*17425	B11
+*17426	B12
+
+*17427	A1
+*17428	A2
+*17429	A3
+*17430	A4
+*17431	A5
+*17432	A6
+*17433	A7
+*17434	A8
+*17435	A9
+*17436	A10
+*17437	A11
+*17438	A12
+
+### B->A ###
+# logbook note: "plugged power for west PMT preamp into new power supply under shutter"
+ 
+*17440	B1
+*17441	B2
+*17442	B3
+*17443	B4
+*17444	B5
+*17445	B6
+# W Anode fail
+*17446	B7
+*17447	B8
+*17448	B9
+*17449	B10
+*17450	B11
+*17451	B12
+
+*17452	A1
+*17453	A2
+*17454	A3
+*17455	A4
+*17456	A5
+*17457	A6
+*17458	A7
+*17459	A8
+*17460	A9
+#17461	A10	# lost beam
+#17462	A11	# lost beam
+# fixed W anode --- NIM bin fail, replaced
+*17464	A10	# lost beam
+*17466	A10
+*17467	A11
+*174612	A12
+
+### B->A ###
+
+*17473	B1
+*17474	B2
+*17475	B3
+*17476	B4
+*17477	B5
+*17478	B6
+*17479	B7
+*17480	B8
+*17481	B9
+*17482	B10
+*17483	B11
+*17484	B12
+
+*17485	A1
+*17486	A2
+*17487	A3
+*17488	A4
+*17489	A5
+*17490	A6
+*17491	A7
+*17492	A8
+*17493	A9
+*17494	A10
+*17496	A11
+*17497	A12
+
+### ->B?? ###
+
+*17498	B1
+*17499	B2
+*17500	B3
+*17501	B4
+*17502	B5
+*17503	B6
+*17504	B7
+*17505	B8
+*17506	B9
+*17507	B10
+*17508	B11
+*17509	B12
+
+#######################
+@cycle November 7 Calibrations
+#######################
+
+@sources Ce
+*17517	SourcesCal	# 0.0
+@sources E Ce Sn
+*17518	SourcesCal	# 0.5
+@sources Ce Sn
+*17519	SourcesCal	# 1.0
+*17520	SourcesCal	# 1.5
+@sources Ce Sn Bi
+*17521	SourcesCal	# 2.0
+*17522	SourcesCal	# 2.5
+*17523	SourcesCal	# 3.0
+@sources E Sn Bi
+*17524	SourcesCal	# 3.5
+@sources Sn Bi
+*17525	SourcesCal	# 4.0
+*17526	SourcesCal	# 4.5
+@sources Bi
+*17527	SourcesCal	# 5.0
+@sources
+
+#######################
+@cycle November 8 Xenon
+#######################
+
+*17561	Xe
+*17562	Xe
+*17563	Xe
+*17564	Xe
+*17565	Xe
+*17566	Xe
+*17567	Xe
+*17568	Xe
+*17569	Xe
+*17570	Xe
+*17571	Xe
+*17572	Xe
+*17573	Xe
+*17574	Xe
+*17575	Xe
+*17576	Xe
+*17577	Xe
+*17578	Xe
+*17579	Xe
+*17580	Xe
+*17581	Xe
+*17582	Xe
+*17583	Xe
+*17584	Xe
+*17585	Xe
+*17586	Xe
+*17587	Xe
+*17588	Xe
+*17589	Xe
+*17590	Xe
+*17591	Xe
+*17592	Xe
+*17593	Xe
+*17594	Xe
+*17595	Xe
+*17596	Xe
+*17597	Xe
+*17598	Xe
+*17599	Xe
+*17600	Xe
+*17601	Xe
+*17602	Xe
+*17603	Xe
+*17604	Xe
+*17605	Xe
+*17606	Xe
+*17607	Xe
+*17608	Xe
+*17609	Xe
+*17610	Xe
+*17611	Xe
+*17612	Xe
+*17613	Xe
+*17614	Xe
+*17615	Xe
+*17616	Xe
+*17617	Xe
+*17618	Xe
+*17619	Xe
+*17620	Xe
+*17621	Xe
+*17622	Xe
+*17623	Xe
+*17624	Xe
+*17625	Xe
+*17626	Xe
+*17627	Xe
+*17628	Xe
+*17629	Xe
+*17630	Xe
+*17631	Xe
+*17632	Xe
+*17633	Xe
+*17634	Xe
+*17635	Xe
+*17636	Xe
+*17637	Xe
+*17638	Xe
+*17639	Xe
+*17640	Xe
+*17641	Xe
+*17642	Xe
+*17643	Xe
+*17644	Xe
+*17645	Xe
+*17646	Xe
+*17647	Xe
+*17648	Xe
+*17649	Xe
+*17650	Xe
+*17651	Xe
+*17652	Xe
+*17653	Xe
+*17654	Xe
+*17655	Xe
+*17656	Xe
+*17657	Xe
+*17658	Xe
+*17659	Xe
+*17660	Xe
+*17661	Xe
+*17662	Xe
+*17663	Xe
+*17664	Xe
+*17665	Xe
+*17666	Xe
+*17667	Xe
+*17668	Xe
+*17669	Xe
+*17670	Xe
+*17671	Xe
+*17672	Xe
+*17673	Xe
+*17674	Xe
+*17675	Xe
+*17676	Xe
+*17677	Xe
+*17678	Xe
+*17679	Xe
+*17680	Xe
+*17681	Xe
+*17682	Xe
+*17683	Xe
+*17684	Xe
+*17685	Xe
+*17686	Xe
+*17687	Xe
+*17688	Xe
+*17689	Xe
+*17690	Xe
+*17691	Xe
+*17692	Xe
+*17693	Xe
+*17694	Xe
+*17695	Xe
+*17696	Xe
+*17697	Xe
+*17698	Xe
+*17699	Xe
+*17700	Xe
+*17701	Xe
+*17702	Xe
+*17703	Xe
+*17704	Xe
+*17705	Xe
+*17706	Xe
+*17707	Xe
+*17708	Xe
+*17709	Xe
+*17710	Xe
+*17711	Xe
+*17712	Xe
+*17713	Xe
+*17714	Xe
+*17715	Xe
+*17716	Xe
+*17717	Xe
+*17718	Xe
+*17719	Xe
+*17720	Xe
+*17721	Xe
+*17722	Xe
+*17723	Xe
+*17724	Xe
+*17725	Xe
+*17726	Xe
+*17727	Xe
+*17728	Xe
+*17729	Xe
+*17730	Xe
+*17731	Xe
+*17732	Xe
+*17733	Xe
+*17734	Xe
+
+
+#######################
+@cycle November 11-13 Beta Decay
+#######################
+
+### A->B ###
+
+*17735	A1
+*17736	A2
+*17737	A3
+*17738	A4
+*17739	A5
+*17740	A6
+*17741	A7
+*17742	A8
+*17743	A9
+*17744	A10
+*17745	A11
+*17746	A12
+
+*17747	B1
+*17748	B2
+*17749	B3
+*17750	B4
+*17751	B5
+*17752	B6
+*17753	B7
+*17754	B8
+*17755	B9
+*17756	B10
+*17757	B11
+*17758	B12
+
+### B->A ###
+
+*17763	B1
+*17764	B2
+*17765	B3
+*17766	B4
+*17767	B5
+*17768	B6
+*17769	B7
+*17770	B8
+*17771	B9
+# found LED scanner was OFF
+*17772	B10
+*17773	B11
+*17774	B12
+
+*17775	A1
+*17776	A2
+*17777	A3
+*17778	A4
+*17779	A5
+*17780	A6
+*17781	A7
+*17782	A8
+*17783	A9
+*17784	A10
+*17785	A11
+*17786	A12
+
+### B->A ###
+
+*17787	B1
+*17788	B2
+*17789	B3
+*17790	B4
+*17791	B5
+*17792	B6
+*17793	B7
+*17794	B8
+*17795	B9
+*17796	B10
+*17797	B11
+*17798	B12
+
+*17799	A1
+*17800	A2
+*17801	A3
+*17802	A4
+*17803	A5
+*17804	A6
+*17805	A7
+*17806	A8
+*17807	A9
+*17808	A10
+*17809	A11
+*17810	A12
+
+# source cooling compressor flakey; replaced
+
+### A->B ###
+
+*17814	A1
+*17815	A2
+*17816	A3
+*17817	A4
+*17818	A5
+*17819	A6
+*17820	A7
+*17821	A8
+*17822	A9
+*17823	A10
+*17824	A11
+*17825	A12
+
+*17826	B1
+*17827	B2
+*17828	B3
+*17829	B4
+*17830	B5
+*17832	B6
+*17833	B7
+*17834	B8
+*17835	B9
+*17836	B10
+*17837	B11
+*17838	B12
+
+### B->A ###
+
+*17839	B1
+*17840	B2
+*17841	B3
+*17842	B4
+*17843	B5
+*17844	B6
+*17845	B7
+*17846	B8
+*17847	B9
+*17848	B10
+*17849	B11
+*17850	B12
+
+*17851	A1
+*17852	A2
+*17853	A3
+*17854	A4
+*17855	A5
+*17856	A6
+*17857	A7
+*17858	A8
+*17859	A9
+*17860	A10
+*17861	A11
+*17862	A12
+
+
+#######################
+@cycle November 13 Sources
+#######################
+
+# PMT W2 fixed, but now Bi pulser has fallen off on W1
+
+# sources writing facing WEST
+
+@sources Ce
+*17871	SourcesCal 	# all the way in      west
+@sources E Ce Sn
+*17872	SourcesCal	# back 0.5            west
+@sources Ce Sn
+*17873	SourcesCal 	# back 1              west
+@sources E Ce Sn Bi
+*17874	SourcesCal 	# back 1.5            west
+@sources Ce Sn Bi
+*17875	SourcesCal 	# back 2              west
+*17876	SourcesCal 	# back 2.5            west
+*17877	SourcesCal 	# back 3              west
+*17878	SourcesCal 	# back 3.5            west
+@sources Sn Bi
+*17879	SourcesCal 	# back 4              west
+*17880	SourcesCal 	# back 4.5            west
+@sources Bi
+*17881	SourcesCal 	# back 5              west
+*17882	SourcesCal 	# back 5.5            west
+@sources E
+*17883	SourcesCal 	# back 6              west
+@sources
+*17884	SourcesCal 	# back 6.5            west
+
+# sources flipped (writing EAST)
+
+@sources W Bi
+*17885	SourcesCal 	# first source in     east
+@sources Bi
+*17886	SourcesCal 	# in .5               east
+*17887	SourcesCal 	# in 1                east
+@sources Sn Bi
+*17888	SourcesCal 	# in 1.5              east
+*17889	SourcesCal 	# in 2                east
+@sources Ce Sn Bi
+*17890	SourcesCal 	# in 2.5              east
+*17892	SourcesCal 	# ! in 3.5            east
+*17893	SourcesCal 	# in 4                east
+*17894	SourcesCal 	# in 4.5              east
+@sources Ce Sn
+*17895	SourcesCal 	# in 5                east
+*17896	SourcesCal 	# in 5.5              east
+@sources W Ce
+*17897	SourcesCal 	# in 6                east
+@sources Ce
+*17898	SourcesCal 	# in 6.5              east
+
+# original orientation
+
+@sources Ce
+*17899	SourcesCal 	# .25
+@sources Ce Sn
+*17900	SourcesCal 	# .75
+*17901	SourcesCal 	# 1.25
+@sources Ce Sn Bi
+*17902	SourcesCal 	# 1.75
+*17903	SourcesCal 	# 2.25
+*17904	SourcesCal 	# 2.75
+*17905	SourcesCal 	# 3.25
+@sources Sn Bi
+*17906	SourcesCal 	# 3.75
+*17907	SourcesCal 	# 4.25
+@sources E Bi
+*17908	SourcesCal 	# 4.75
+@sources Bi
+*17909	SourcesCal 	# 5.25
+@sources E
+*17910	SourcesCal 	# 5.75
+
+# flipped orientation of sources
+
+*17911	SourcesCal 	# 5.75
+@sources Bi
+*17912	SourcesCal 	# 5.25
+*17913	SourcesCal 	# 4.75
+@sources Sn Bi
+*17914	SourcesCal 	# 4.25
+*17915	SourcesCal 	# 3.75
+@sources Ce Sn Bi
+*17916	SourcesCal 	# 3.25
+*17917	SourcesCal 	# 2.75
+*17918	SourcesCal 	# 2.25
+*17919	SourcesCal 	# 1.75
+@sources Ce Sn
+*17920	SourcesCal 	# 1.25
+*17921	SourcesCal 	# .75
+@sources Ce
+*17922	SourcesCal 	# .25
+
+# long runs
+@sources Ce Sn Bi
+*17925	SourcesCal
+*17926	SourcesCal
+*17927	SourcesCal
+# long runs, facing East
+*17928	SourcesCal
+*17929	SourcesCal
+*17930	SourcesCal
+*17931	SourcesCal
+*17932	SourcesCal
+*17933	SourcesCal
+*17934	SourcesCal
+*17935	SourcesCal
+*17936	SourcesCal
+*17937	SourcesCal
+*17938	SourcesCal
+*17939	SourcesCal
+*17940	SourcesCal
+*17941	SourcesCal
+@sources
+
+#######################
+@cycle November 14 Long Source Runs
+#######################
+
+@sources Ce Sn Bi
+*17942	SourcesCal
+*17943	SourcesCal
+*17945	SourcesCal
+*17946	SourcesCal
+@sources
+
+#######################
+@cycle November 15 Long Source Runs
+#######################
+
+@sources Ce Sn Bi
+*17948	SourcesCal
+*17949	SourcesCal
+*17950	SourcesCal
+*17951	SourcesCal
+*17952	SourcesCal
+*17953	SourcesCal
+*17954	SourcesCal
+*17955	SourcesCal
+@sources
+
+#######################
+@cycle November 18 Sources with Cd
+#######################
+
+# using 12/2007 Cd source (was ~56nC new)
+
+@sources Ce Cd113m Bi
+*18020	SourcesCal	# 2.5in
+@sources Ce
+*18021	SourcesCal	# 0.0in
+*18022	SourcesCal	# 0.5in
+@sources Ce Cd113m
+*18023	SourcesCal	# 1.0in
+*18024	SourcesCal	# 1.5in
+@sources Ce Cd113m Bi
+*18025	SourcesCal	# 2.0in
+*18026	SourcesCal	# 2.5in
+*18027	SourcesCal	# 3.0in
+*18028	SourcesCal	# 3.5in
+@sources Cd113m Bi
+*18029	SourcesCal	# 4.0in
+*18030	SourcesCal	# 4.5in
+*18031	SourcesCal	# 4.5in --- source rod is being pulled in ~0.5in during run
+@sources Bi
+*18032	SourcesCal	# 5.0in
+
+# switched to new Cd source
+@sources Ce Cd Bi
+*18033	SourcesCal	# 2.5in
+@sources Ce
+*18034	SourcesCal	# 0.0in
+@sources E Ce Cd
+*18035	SourcesCal	# 0.5in
+@sources Ce Cd
+*18036	SourcesCal	# 1.0in
+@sources E Ce Cd Bi
+*18037	SourcesCal	# 1.5in
+@sources Ce Cd Bi
+*18038	SourcesCal	# 2.0in
+*18039	SourcesCal	# 2.5in
+*18040	SourcesCal	# 3.0in
+*18041	SourcesCal	# 3.5in
+@sources Cd Bi
+*18042	SourcesCal	# 4.0in
+*18043	SourcesCal	# 4.5in
+@sources Bi
+*18044	SourcesCal	# 5.0in
+*18045	SourcesCal	# 5.25in
+*18046	SourcesCal	# 4.75in
+@sources Cd Bi
+*18047	SourcesCal	# 4.25in
+*18048	SourcesCal	# 3.75in
+@sources Ce Cd Bi
+*18049	SourcesCal	# 3.25in
+*18050	SourcesCal	# 2.75in
+*18051	SourcesCal	# 2.25in
+*18052	SourcesCal	# 1.75in
+@sources Ce Cd
+*18053	SourcesCal	# 1.25in
+*18054	SourcesCal	# 0.75in
+@sources Ce
+*18055	SourcesCal	# 0.25in
+
+
+#######################
+@cycle November 30 Xenon
+#######################
+
+# All the PMTs working now, I hope
+# only a little (84mtorr) Xe produced (??)
+
+*18081	Xe
+*18082	Xe
+*18083	Xe
+*18084	Xe
+*18085	Xe
+*18086	Xe
+*18087	Xe
+*18088	Xe
+*18089	Xe
+*18090	Xe
+
+#######################
+@cycle December 2 Bucking Coil Scans
+#######################
+
+# SCS, AFP on
+# 5 minute runs to watch Bi pulser peak
+# East Beta/Backing, West Beta/Backing bucking coil currents
+
+			# EBeta EBack	WBeta	WBack		E PMTs Pulser				W PMTs Pulser
+*18102	BgOff		# 0.25	0.50	0.25	0.40		2701.0	2666.1	2951.3	2639.1		2569.2	2057.9	2477.9	1496.1
+*18103	BgOff		# 0.20	0.40	0.20	0.30		2627.0	2651.2	3074.6	2602.0		2575.5	2024.7	2506.7	1742.4
+*18104	BgOff		# 0.15	0.30	0.15	0.20		2611.0	2647.3	3097.9	2601.7		2559.1	1993.9	2532.4	2134.2
+*18105	BgOff		# 0.10	0.20	0.10	0.10		2607.8	2640.6	3094.8	2599.9		2572.3	1825.4	2536.9	2327.0
+*18106	BgOff		# 0.05	0.10	0.05	0.00		2600.0	2628.2	3301.8	2573.2		2529.9	1407.1	2541.7	2582.5
+*18107	BgOff		# 0.00	0.00	0.00	0.00		2558.7	2580.8	3602.2	2540.6		2385.8	851.6	2548.4	2686.2
+*18108	BgOff		# -0.05	-0.10	-0.05	-0.10		2061.0	2198.2	2815.3	2133.2		2387.5	814.2	2529.9	2280.4
+*18109	BgOff		# -0.10	-0.20	-0.10	-0.20		845.7	1188.5	1207.0	1392.9		2386.9	777.3	2480.1	1830.8
+*18110	BgOff		# -0.15	-0.30	-0.15	-0.30		0	0	0	0		2403.3	752.3	2424.5	1398.4
+*18111	BgOff		# -0.20	-0.40	-0.20	-0.40		0	0	0	0		2404.0	755.6	2453.6	1526.6
+*18112	BgOff		# 0.30	0.60	0.30	0.50		2834.8	2715.0	2502.9	2714.7		2616.6	2052.5	2467.8	1431.8
+*18113	BgOff		# 0.35	0.70	0.35	0.60		2106.1	2736.8	1687.4	3274.5		2743.5	2061.1	2464.5	1407.6
+*18114	BgOff		# 0.40	0.80	0.40	0.70		0	1844.7	981.3	1751.4		2774.1	2109.9	2467.2	1457.2
+*18115	BgOff		# 0.45	0.90	0.45	0.80		0	0	642.9	0		2010.4	2243.1	2477.8	1456.2
+*18116	BgOff		# 0.50	1.00	0.50	0.90		0	0	0	0		776.0	2349.3	2490.9	1495.0
+
+#######################
+@cycle December 3-5 Beta Decay
+#######################
+
+### B->A ###
+
+*18119	B1
+*18120	B2
+*18121	B3
+*18122	B4
+*18123	B5
+*18124	B6
+*18125	B7
+*18126	B8
+*18127	B9
+*18128	B10
+*18129	B11
+*18130	B12
+
+*18131	A1
+*18132	A2
+*18133	A3
+*18134	A4
+*18135	A5
+*18136	A6
+*18137	A7
+*18138	A8
+*18139	A9
+*18140	A10
+*18141	A11
+*18142	A12
+
+### A->B ###
+
+*18143	A1
+*18144	A2
+*18145	A3
+*18146	A4
+*18147	A5
+*18148	A6
+*18149	A7
+*18150	A8
+*18151	A9
+*18152	A10
+*18153	A11
+*18154	A12
+
+*18155	B1
+*18156	B2
+*18157	B3
+*18158	B4
+*18159	B5
+*18160	B6
+*18161	B7
+*18162	B8
+*18163	B9
+*18164	B10
+*18165	B11
+*18166	B12
+
+### B->A ###
+
+*18167	B1
+*18168	B2
+*18169	B3
+*18170	B4
+*18171	B5
+*18172	B6
+*18173	B7
+*18174	B8
+*18175	B9
+*18176	B10
+*18177	B11
+*18179	B12
+
+# turned up E backing veto HV and turned off bucking coil (trying to get higher gain)
+
+*18182	A1
+*18183	A2
+*18184	A3
+*18185	A4
+*18186	A5
+*18187	A6
+*18188	A7
+*18189	A8
+*18190	A9
+*18191	A10
+*18192	A11
+*18193	A12
+
+### A->B ###
+
+*18195	A1
+*18196	A2
+*18197	A3
+*18198	A4
+*18199	A5
+*18200	A6
+*18201	A7
+*18202	A8
+*18203	A9
+*18204	A10
+*18205	A11
+*18206	A12
+
+# short beam out
+
+*18209	B1
+*18210	B2
+*18211	B3
+*18212	B4
+*18213	B5
+*18214	B6
+*18215	B7
+*18216	B8
+*18217	B9
+*18218	B10
+*18219	B11
+*18220	B12		# beam out at end
+
+### B->A ###
+
+*18221	B1
+*18222	B2
+*18223	B3
+*18224	B4
+*18225	B5
+*18226	B6
+*18227	B7
+*18228	B8
+*18229	B9
+*18230	B10
+*18231	B11
+*18232	B12
+
+*18233	A1
+*18234	A2
+*18235	A3
+*18236	A4
+*18237	A5
+*18238	A6
+*18239	A7
+*18240	A8
+*18241	A9
+*18242	A10
+*18243	A11
+*18244	A12
+
+### B -> A ###
+
+*18245	B1
+*18246	B2
+*18247	B3
+*18248	B4
+*18249	B5
+*18250	B6
+*18251	B7
+*18252	B8
+*18253	B9
+*18254	B10
+*18255	B11
+*18256	B12
+
+*18257	A1
+*18258	A2
+*18259	A3
+*18260	A4
+*18261	A5
+*18262	A6
+*18263	A7
+*18264	A8
+*18265	A9
+*18266	A10
+*18267	A11
+*18268	A12
+
+### B->A ###
+
+*18269	B1
+*18270	B2
+*18271	B3
+*18272	B4
+*18273	B5
+*18274	B6
+*18275	B7
+*18276	B8
+*18277	B9
+*18278	B10
+*18279	B11
+*18280	B12
+
+*18281	A1
+*18282	A2
+*18283	A3
+*18284	A4
+*18285	A5
+*18286	A6
+*18287	A7
+*18288	A8
+*18289	A9
+*18290	A10
+*18291	A11
+*18292	A12
+
+### A -> B ###
+
+*18293	A1
+*18294	A2
+*18295	A3
+*18296	A4
+*18297	A5
+*18298	A6
+*18299	A7
+*18300	A8
+*18301	A9
+*18302	A10
+*18303	A11
+*18304	A12
+
+*18305	B1
+*18306	B2
+*18307	B3
+*18308	B4
+*18309	B5
+*18310	B6
+*18311	B7
+*18312	B8
+*18313	B9
+*18314	B10
+*18315	B11
+*18316	B12
+
+### B->A ###
+# mini-octet 20min beta, 3min bkg
+
+*18317	B1
+*18318	B2
+*18319	B3
+*18320	B4
+*18321	B5
+*18322	B6
+*18323	B7
+*18324	B8
+*18325	B9
+*18326	B10
+*18327	B11
+*18328	B12
+
+*18329	A1
+*18330	A2
+*18331	A3
+*18332	A4
+*18333	A5
+*18334	A6
+*18335	A7
+*18336	A8
+*18337	A9
+*18338	A10
+*18339	A11
+*18340	A12
+
+
+#######################
+@cycle December 7 Source Calibrations with In114
+#######################
+
+@sources Ce
+*18357	SourcesCal	# 0.0in
+@sources E Ce Sn
+*18358	SourcesCal	# 0.5in
+@sources Ce Sn
+*18359	SourcesCal	# 1.0in
+*18360	SourcesCal	# 1.5in
+@sources Ce Sn Bi
+*18361	SourcesCal	# 2.0in
+*18362	SourcesCal	# 2.5in
+*18363	SourcesCal	# 3.0in
+@sources E Sn Bi
+*18364	SourcesCal	# 3.5in
+@sources Sn Bi
+*18365	SourcesCal	# 4.0in
+@sources E Bi
+*18366	SourcesCal	# 4.5in
+@sources Bi
+*18367	SourcesCal	# 5.0in
+*18368	SourcesCal	# 5.5in
+
+@sources In Cd
+*18370	SourcesCal	# 3.0in W
+*18371	SourcesCal	# 1.5in W
+@sources In
+*18372	SourcesCal	# 1.0in W
+@sources In Cd
+*18373	SourcesCal	# 2.0in W
+*18374	SourcesCal	# 2.5in W
+*18375	SourcesCal	# 3.5in W
+*18376	SourcesCal	# 4.0in W
+*18377	SourcesCal	# 4.5in W
+@sources Cd
+*18378	SourcesCal	# 5.0in W
+
+@sources In Cd
+*18379	SourcesCal	# 4.5in E
+*18380	SourcesCal	# 4.0in E
+*18381	SourcesCal	# 3.5in E
+*18382	SourcesCal	# 3.0in E
+*18383	SourcesCal	# 2.5in E
+*18384	SourcesCal	# 2.0in E
+*18385	SourcesCal	# 1.5in E
+@sources In
+*18386	SourcesCal	# 1.0in E
+
+@sources
+
+
+#######################
+@cycle December 10 Xenon
+#######################
+
+# after AFP quench (AFP still off) and SCS ramp;
+# SCS vented afterwards.
+
+*18390	Xe
+*18391	Xe
+*18392	Xe
+*18393	Xe
+*18394	Xe
+*18395	Xe
+*18396	Xe
+*18397	Xe
+*18398	Xe
+*18399	Xe
+*18400	Xe
+*18401	Xe
+*18402	Xe
+*18403	Xe
+*18404	Xe
+*18405	Xe
+*18406	Xe
+*18407	Xe
+*18408	Xe
+*18409	Xe
+*18410	Xe
+*18411	Xe
+*18412	Xe
+*18413	Xe
+
+
+#
+# down for week due to AFP quench, fill valve failure
+#
+
+
+#######################
+@cycle December 17-20 Snow Days Beta
+#######################
+
+### A->B ###
+
+*18432	A1
+*18433	A2
+*18434	A3
+*18435	A4
+*18436	A5
+*18437	A6
+*18438	A7
+*18439	A8
+*18440	A9
+*18441	A10
+*18442	A11
+*18443	A12
+
+*18444	B1
+*18445	B2
+*18446	B3
+*18447	B4
+*18448	B5
+*18449	B6
+*18450	B7
+*18451	B8
+*18452	B9		# E cathode sum anomaly starts
+*18453	B10
+*18454	B11
+*18455	B12
+
+### A->B ###
+
+*18457	A1
+*18458	A2
+*18459	A3
+*18460	A4
+*18461	A5
+*18462	A6
+*18463	A7
+*18464	A8
+*18465	A9
+*18466	A10
+*18467	A11
+*18468	A12
+
+*18470	B1
+*18471	B2
+*18472	B3
+*18473	B4
+*18474	B5
+# beam out ~2 hours
+*18476	B6
+*18477	B7
+*18478	B8
+*18479	B9
+*18480	B10
+*18481	B11
+*18482	B12
+
+### A->B ###
+
+*18483	A1
+*18484	A2
+*18485	A3
+*18486	A4
+*18487	A5
+*18488	A6
+*18489	A7
+*18490	A8
+*18491	A9
+*18492	A10
+*18493	A11
+*18494	A12
+
+*18495	B1
+*18496	B2
+*18497	B3
+*18498	B4
+*18499	B5
+*18500	B6
+*18501	B7
+*18502	B8
+*18503	B9
+*18504	B10
+*18505	B11
+*18506	B12
+
+### A->B ###
+
+*18507	A1
+*18508	A2
+*18508	A3
+*18510	A4
+*18511	A5
+*18512	A6
+*18513	A7
+*18514	A8
+*18515	A9
+*18516	A10
+*18517	A11
+*18518	A12
+
+# trying to improve beam tune... fail
+
+*18522	B1
+*18523	B2
+*18524	B3
+*18525	B4
+*18526	B5
+*18527	B6
+*18528	B7
+*18529	B8
+*18530	B9
+*18531	B10
+*18532	B11
+*18533	B12
+
+### B->A ###
+
+*18534	B1
+*18535	B2
+*18536	B3
+*18537	B4
+*18538	B5
+*18539	B6
+*18540	B7
+*18541	B8
+*18542	B9
+*18543	B10
+*18544	B11
+*18545	B12
+
+*18446	A1
+*18447	A2
+*18448	A3
+*18449	A4
+*18450	A5
+*18451	A6
+*18452	A7
+*18453	A8
+*18454	A9
+*18455	A10
+*18456	A11
+*18457	A12
+
+### A->B ###
+
+*18561	A1
+*18562	A2
+*18563	A3
+*18564	A4
+*18565	A5
+*18566	A6
+*18567	A7
+*18568	A8
+*18569	A9
+*18570	A10
+*18571	A11
+*18572	A12
+
+# melt-and-refreeze
+
+*18574	B1
+*18575	B2
+*18576	B3
+*18577	B4
+*18578	B5
+*18579	B6
+
+# check depol on
+
+*18587	B7
+*18588	B8
+*18589	B9
+*18590	B10
+*18591	B11
+*18592	B12
+
+### B->A ###
+
+*18593	B1
+*18594	B2
+*18595	B3
+*18596	B4
+*18597	B5
+*18598	B6
+*18599	B7
+*18600	B8
+*18601	B9
+*18602	B10
+*18603	B11
+*18604	B12
+
+*18605	A1
+*18606	A2
+*18607	A3
+*18608	A4
+*18609	A5
+*18610	A6
+*18611	A7
+*18612	A8
+*18613	A9
+*18614	A10
+*18615	A11
+*18616	A12
+
+
+#######################
+@cycle December 20 Calibrations
+#######################
+
+@sources Ce
+*18617	SourcesCal	# 0.0in, W
+@sources E Ce Sn
+*18618	SourcesCal	# 0.5in, W
+@sources Ce Sn
+*18619	SourcesCal	# 1.0in, W
+@sources E Ce Sn Bi
+*18620	SourcesCal	# 1.5in, W
+@sources Ce Sn Bi
+*18621	SourcesCal	# 2.0in, W
+*18622	SourcesCal	# 2.5in, W
+*18623	SourcesCal	# 3.0in, W
+@sources E Sn Bi
+*18624	SourcesCal	# 3.5in, W
+@sources Sn Bi
+*18625	SourcesCal	# 4.0in, W
+*18626	SourcesCal	# 4.5in, W
+@sources Bi
+*18627	SourcesCal	# 5.0in, W
+*18628	SourcesCal	# 5.5in, W
+@sources
+
+@sources Cd113m
+*18629	SourcesCal	# 0.0in, W
+@sources Cd113m InE
+*18630	SourcesCal	# 0.5in, E
+@sources Cd113m InW
+*18631	SourcesCal	# 1.0in, W
+@sources E Cd113m InE Cd
+*18632	SourcesCal	# 1.5in, E
+@sources Cd113m InW Cd
+*18633	SourcesCal	# 2.0in, W
+@sources Cd113m InE Cd
+*18634	SourcesCal	# 2.5in, E
+@sources Cd113m InW Cd
+*18634	SourcesCal	# 3.0in, W
+@sources E InE Cd
+@sources W Cd113m InE Cd
+*18636	SourcesCal	# 3.5in, E
+@sources InW Cd
+*18637	SourcesCal	# 4.0in, W
+@sources InE Cd
+*18638	SourcesCal	# 4.5in, E
+@sources Cd
+*18639	SourcesCal	# 5.0in, W
+*18640	SourcesCal	# 5.5in, E
+@sources
