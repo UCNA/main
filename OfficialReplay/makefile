@@ -7,7 +7,7 @@ ROOTGLIBS     = $(shell root-config --glibs)
 ROOTLIBS      = $(shell root-config --libs)
 ROOTCFLAGS    = $(shell root-config --cflags)
 
-VPATH = ./:../IOUtils/:../RootUtils/:../BaseTypes/:../Detectors/:../MathUtils/:../Calibration/:../Analysis/:Studies/
+VPATH = ./:../IOUtils/:../RootUtils/:../BaseTypes/:../MathUtils/:../Calibration/:../Analysis/:Studies/
 
 CXX           = g++ 
 CXXFLAGS      = -O3 -m32 -Wall -fPIC

@@ -31,7 +31,7 @@ endif
 # things to build
 #
 
-VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:Detectors/:MathUtils/:Calibration/:Analysis/:Studies/
+VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/
 
 Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
 	Enums.o Types.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RData.o
