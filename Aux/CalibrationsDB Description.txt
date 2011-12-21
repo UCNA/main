@@ -1,0 +1,164 @@
+# Calibrations DB tables description
+
+# energy calibration ranges
+CREATE TABLE energy_calibration (
+	ecal_id SERIAL,			# unique ID number for this calibration
+	start_run INT UNSIGNED,		# first run number this applies to
+	end_run INT UNSIGNED,		# last run number this applies to
+	gms_run INT UNSIGNED,		# run that tubes need to be GMS normalized to for the calibration to be valid
+	posmap_set_id INT UNSIGNED,	# ID number for position map to apply
+	INDEX(start_run), INDEX(end_run));
+
+# calibration data for a PMT
+CREATE TABLE tube_calibration (
+	tubecal_id SERIAL,		# unique ID for this tube calibration
+	ecal_id BIGINT UNSIGNED,	# ID number of calibration set this belongs to
+	side ENUM('East','West'),	# tube side
+	quadrant INT UNSIGNED,		# tube quadrant (tube number) in {0,1,2,3}
+	linearity_graph INT UNSIGNED,	# graph ID for linearity correction
+	encal_xpos DOUBLE,		# x position of energy calibration source
+	encal_ypos DOUBLE,		# y position of energy calibration source
+	encal_adc DOUBLE,		# raw (pedestal-subtracted) ADC of energy calibration peak
+	encal_evis DOUBLE,		# visible energy of energy calibration peak
+	noisecal_adc DOUBLE,		# raw (pedestal-subtracted) ADC of noise calibration peak
+	noisecal_width DOUBLE,		# raw (pedestal-subtracted) ADC peak width of noise calibration peak
+	INDEX (ecal_id) );
+
+CREATE TABLE kurie_cal (run_number INT UNSIGNED, side ENUM('East','West'), quadrant INT UNSIGNED, energy DOUBLE, adc DOUBLE, INDEX (run_number) );
+
+# PMT trigger efficiency extracted by analyzer
+CREATE TABLE mpm_trigeff (
+	mpm_trigeff_id SERIAL,		# unique ID for this efficiency curve
+	run_number BIGINT UNSIGNED,	# run number of this curve
+	side ENUM('East','West'),	# side for curve
+	quadrant INT UNSIGNED,		# quadrant (tube number) for curve
+	params_graph INT UNSIGNED,	# graph encoding function parameters
+	INDEX(run_number));
+
+# light transport position maps
+CREATE TABLE posmap_info (
+	posmap_info_id SERIAL,		# unique ID for this tube position map
+	posmap_set_id INT UNSIGNED,	# ID of position map set this belongs to
+	side ENUM('East','West'),	# tube side
+	quadrant INT UNSIGNED,		# tube quadrant
+	n_rings INT UNSIGNED,		# number of rings dividing position map
+	radius DOUBLE,			# radius of mapped region
+	INDEX(posmap_set_id));
+
+# data points for each position map
+CREATE TABLE posmap_points (
+	posmap_point_id SERIAL,		# unique ID for this position map point
+	posmap_set_id INT UNSIGNED,	# position map set to which this point belongs
+	side ENUM('East','West'),	# tube side
+	quadrant INT UNSIGNED,		# tube quadrant
+	pixel_id INT UNSIGNED,		# pixel number of this point
+	endpoint_adc DOUBLE,		# raw (pedestal-subtracted) ADC value corresponding to beta endpoint in this pixel
+	center_x DOUBLE,		# x coordinate of pixel center
+	center_y DOUBLE,		# y coordinate of pixel center
+	smear_correction DOUBLE,	# amount of correction made for energy resolution smearing
+	INDEX (posmap_set_id), INDEX (pixel_id), INDEX (side), INDEX (quadrant) );
+
+
+# E_vis to E_true conversion functions
+CREATE TABLE evis_conversion (
+	evis_conversion_id SERIAL,		# unique ID
+	start_run INT UNSIGNED,			# starting run for calibration range
+	end_run INT UNSIGNED,			# ending run for calibration range
+	side ENUM('East','West'),		# which side this calibration applies to
+	type INT UNSIGNED,			# which event type this calibration applies to (0,1,2)
+	conversion_curve_id INT UNSIGNED,	# graph for E_vis->E_true conversion
+	INDEX (start_run), INDEX(end_run), INDEX (side), INDEX (type) );
+
+# anode calibration
+CREATE TABLE anode_cal (
+	anode_cal_id SERIAL,			# unique ID
+	start_run INT UNSIGNED,			# starting run for calibration range
+	end_run INT UNSIGNED,			# ending run for calibration range
+	anode_posmap_id INT UNSIGNED,		# anode position response map
+	calfactor_E DOUBLE,			# East calibration factor
+	calfactor_W DOUBLE,			# West calibration factor
+	INDEX(start_run), INDEX(end_run) );
+
+# run grouping names
+CREATE TABLE run_group(
+	run_group_id SERIAL,			# unique ID
+	start_run INT UNSIGNED,			# first run in group
+	end_run INT UNSIGNED,			# last run in group
+	name VARCHAR(1012),			# name for group
+	INDEX(start_run), INDEX(end_run) );
+
+# generic graph-like data tables
+CREATE TABLE graphs(
+	graph_id SERIAL,
+	text_description VARCHAR(512));
+
+CREATE TABLE graph_points(
+	graph_point_id SERIAL,
+	graph_id INT UNSIGNED,
+	x_value DOUBLE,
+	x_error DOUBLE,
+	y_value DOUBLE,
+	y_error DOUBLE,
+	INDEX (graph_id), INDEX (x_value));
+
+# watching in-run variables
+CREATE TABLE run_monitors(
+	monitor_id SERIAL,
+	run_number INT UNSIGNED,
+	sensors_sensor_id INT UNSIGNED,
+	monitor_type ENUM('pedestal','GMS_peak'),
+	center_graph_id INT UNSIGNED,
+	width_graph_id INT UNSIGNED,
+	INDEX (run_number), INDEX (sensors_sensor_id));
+
+# named sensors
+CREATE TABLE sensors (
+	sensor_id SERIAL,
+	sensor_name text,
+	INDEX(sensor_id), INDEX(sensor_name));
+
+# analysis pass info
+CREATE TABLE analysis (
+	analysis_id SERIAL,
+	run_number INT UNSIGNED,	# run number being analyzed
+	analysis_time DATETIME,		# time analyzer was run
+	live_time_e DOUBLE,		# blinded East live time
+	live_time_w DOUBLE,		# blinded West live time
+	live_time DOUBLE,		# unblinded live time
+	total_time DOUBLE,		# total time
+	misaligned INT UNSIGNED,
+	tdc_corrupted INT UNSIGNED,
+	INDEX(run_number));
+
+# calibration sources
+CREATE TABLE sources (
+	source_id SERIAL,						# unique ID number
+	run_number INT UNSIGNED,					# run number for source
+	side ENUM('East','West'),					# side of source
+	x_pos DOUBLE,							# x position of source
+	y_pos DOUBLE,							# y position of source
+	x_width DOUBLE,							# 1 sigma x position width
+	y_width DOUBLE,							# 1 sigma y position width
+	counts DOUBLE,							# number of event counts
+	sourcetype ENUM('Cd109','Cd113m','Ce139','In114','In114E','In114W','Sn113','Bi207'),	# type of source
+	INDEX(run_number), INDEX(source_id)
+);
+
+# peaks from sources
+CREATE TABLE sourcepeaks (
+	sourcepeak_id SERIAL,			# unique ID number
+	source_id INT UNSIGNED,			# source ID number
+	side ENUM('East','West'),		# side of source event
+	tube INT UNSIGNED,			# PMT observing source event
+	peak_num INT UNSIGNED,			# peak number from source (applied to multi-peak sources like Bismuth)
+	peak_data ENUM('data','simulation'),	# real data or simulation for peak
+	adc DOUBLE, dadc DOUBLE,		# raw ADC value of peak and uncertainty
+	erecon DOUBLE, derecon DOUBLE,		# reconstructed energy of peak and uncertainty
+	adcwidth DOUBLE, dadcwidth DOUBLE,	# width of peak in ADC channels and uncertainty
+	ereconwidth DOUBLE, dereconwidth DOUBLE,# width of peak in reconstructed energy and uncertainty
+	eta DOUBLE,				# light transport factor from peak
+	gms DOUBLE,				# GMS correction factor to ADC
+	integral DOUBLE,			# one sigma integral peak area
+	height DOUBLE,	dheight DOUBLE,		# height of peak and uncertainty
+	nPE DOUBLE,				# estimated peak photoelectrons
+	INDEX(sourcepeak_id), INDEX(source_id));
