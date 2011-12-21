@@ -357,7 +357,7 @@ void uploadRunSources() {
 	std::string l;
 	
 	printf("Loading run log...\n");
-	std::ifstream fin("../SummaryData/UCNA Run Log.txt");
+	std::ifstream fin("Aux/UCNA Run Log.txt");
 	
 	while (fin.good()) {
 		

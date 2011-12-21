@@ -115,7 +115,6 @@ protected:
 	Float_t nFailedEvnb;						//< total Evnb failures
 	Float_t nFailedBkhf;						//< total Bkhf failures
 	RangeCut ScintSelftrig[2];					//< self-trigger range cut for each scintillator (used for Type I origin side determination)
-	static ManualInfo MI;								//< source for manual cuts info
 	std::vector< std::pair<double,double> > manualCuts;	//< manually cut time segments
 	std::vector<Blip> cutBlips;							//< keep track of cut run time
 	

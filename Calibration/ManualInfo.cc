@@ -1,7 +1,7 @@
 #include "ManualInfo.hh"
 #include <cfloat>
 
-ManualInfo* ManualInfo::MI = new ManualInfo("../SummaryData/ManualInfo.txt");
+ManualInfo ManualInfo::MI("Aux/ManualInfo.txt");
 
 std::vector< std::pair<double,double> > ManualInfo::getRanges(const std::string& key, const std::string& k1, const std::string& k2) const {
 	std::vector< std::pair<double,double> > v;

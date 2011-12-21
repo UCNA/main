@@ -10,8 +10,6 @@
 
 RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
 
-ManualInfo ucnaDataAnalyzer11b::MI = ManualInfo("../../SummaryData/ManualInfo.txt");
-
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
 TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), rn(R), PCal(R,CDB), CDBout(NULL),
 deltaT(0), totalTime(0), ignore_beam_out(false), nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
@@ -46,7 +44,7 @@ void ucnaDataAnalyzer11b::analyze() {
 }
 
 void ucnaDataAnalyzer11b::loadCut(CutVariable& c, const std::string& cutName) {
-	std::vector<Stringmap> v = MI.getInRange(cutName,rn);
+	std::vector<Stringmap> v = ManualInfo::MI.getInRange(cutName,rn);
 	if(v.size() != 1) {
 		printf("*** Expected 1 cut but found %i for %s/%i! Fail!\n",int(v.size()),cutName.c_str(),rn);
 		assert(false);
@@ -70,7 +68,7 @@ void ucnaDataAnalyzer11b::loadCuts() {
 	loadCut(fBeamclock,"Cut_BeamBurst");
 	if(ignore_beam_out)
 		fBeamclock.R.end = FLT_MAX;
-	manualCuts = MI.getRanges(itos(rn)+"_timecut");
+	manualCuts = ManualInfo::MI.getRanges(itos(rn)+"_timecut");
 	if(manualCuts.size())
 		printf("Manually cutting %i time ranges...\n",(int)manualCuts.size());
 }
