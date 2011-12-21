@@ -3,6 +3,7 @@
 #include "ManualInfo.hh"
 #include "GraphicsUtils.hh"
 #include "MultiGaus.hh"
+#include "UCNAException.hh"
 #include <stdio.h>
 #include <unistd.h>
 #include <TStyle.h>
@@ -46,8 +47,11 @@ void ucnaDataAnalyzer11b::analyze() {
 void ucnaDataAnalyzer11b::loadCut(CutVariable& c, const std::string& cutName) {
 	std::vector<Stringmap> v = ManualInfo::MI.getInRange(cutName,rn);
 	if(v.size() != 1) {
-		printf("*** Expected 1 cut but found %i for %s/%i! Fail!\n",int(v.size()),cutName.c_str(),rn);
-		assert(false);
+		UCNAException e("missingCut");
+		e.insert("cutName",cutName);
+		e.insert("runNum",rn);
+		e.insert("nFound",v.size());
+		throw(e);
 	}
 	c.R = RangeCut(v[0]);
 	printf("Loaded cut %s/%i = (%g,%g)\n",cutName.c_str(),rn,c.R.start,c.R.end);
