@@ -19,7 +19,7 @@ CC = cc
 CXX = g++
 
 CXXFLAGS = -O3 -m32 -Wall `root-config --cflags` \
-	-I. -IIOUtils -IRootUtils -IBaseTypes -IDetectors -IMathUtils -ICalibration -IAnalysis -IStudies
+	-I. -IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies
 LDFLAGS = `root-config --libs` -lSpectrum 
 
 ifdef PROFILER_COMPILE
@@ -34,11 +34,9 @@ endif
 VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/
 
 Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
-	Enums.o Types.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RData.o
+	Enums.o Types.o UCNAException.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RData.o
 
-Detectors = WirechamberReconstruction.o
-
-Calibration = PositionResponse.o SimNonlinearity.o PMTGenerator.o \
+Calibration = PositionResponse.o SimNonlinearity.o PMTGenerator.o WirechamberReconstruction.o \
 	EnergyCalibrator.o WirechamberCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o ManualInfo.o
 	
 Analysis = TChainScanner.o ProcessedDataScanner.o PostAnalyzer.o PostOfficialAnalyzer.o G4toPMT.o TH1toPMT.o DataSource.o \
@@ -46,7 +44,7 @@ Analysis = TChainScanner.o ProcessedDataScanner.o PostAnalyzer.o PostOfficialAna
 
 Studies = PlotMakers.o SRAsym.o PositionStudies.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o
 
-objects = $(Utils) $(Detectors) $(Calibration) $(Analysis) $(Studies)
+objects = $(Utils) $(Calibration) $(Analysis) $(Studies)
 
 all:
 	make UCNAnalyzer
