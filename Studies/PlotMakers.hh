@@ -8,9 +8,6 @@
 #include <vector>
 #include <string>
 
-/// process a file to query Calibrations DB for info
-void processCalibrationsFile(const std::string& fInName, const std::string& fOutName);
-
 /// plot run-by-run GMS corrections, output data
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath = "../PostPlots/");
 

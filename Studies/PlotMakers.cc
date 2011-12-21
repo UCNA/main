@@ -16,53 +16,6 @@
 #include "G4toPMT.hh"
 #include "BetaSpectrum.hh"
 
-void processCalibrationsFile(const std::string& fInName, const std::string& fOutName) {
-	
-	QFile qIn(fInName,true);
-	QFile qOut(fOutName,false);
-	std::map<RunNum,PMTCalibrator*> PCals;
-	
-	std::vector<Stringmap> srs = qIn.retrieve("SourceLine");
-	for(std::vector<Stringmap>::iterator sit = srs.begin(); sit != srs.end(); sit++) {
-		
-		RunNum rn = RunNum(sit->getDefault("runNum",0));
-		std::string sname = sit->getDefault("side","N");
-		Side s = NONE;
-		if(sname == "E")
-			s = EAST;
-		else if(sname == "W")
-			s = WEST;
-		unsigned int t = (unsigned int)(sit->getDefault("tube",1000));
-		float x = sit->getDefault("x",0);
-		float y = sit->getDefault("y",0);
-		float adc = sit->getDefault("adc",0);
-		float dadc = sit->getDefault("dadc",0);
-		float evis = sit->getDefault("evis",0);
-		float evisExp = sit->getDefault("evisExp",0);
-		
-		std::map<RunNum,PMTCalibrator*>::iterator it = PCals.find(rn);
-		if(it == PCals.end()) {
-			PCals.insert(std::make_pair(rn,new PMTCalibrator(rn, CalDBSQL::getCDB())));
-			it = PCals.find(rn);
-			it->second->printSummary();
-		}
-		
-		if(t==nBetaTubes) {
-			sit->insert("eta",it->second->combEta(s,x,y));
-		}
-		if(t<nBetaTubes) {
-			sit->insert("eta",it->second->eta(s,t,x,y));
-			sit->insert("lvis",it->second->linearityCorrector(s, t, adc, 0));
-			sit->insert("dlinearity",it->second->dLinearity(s, t, adc, 0)*dadc);
-		}
-		
-		qOut.insert("SourceLine",*sit);
-	}
-	
-	qOut.commit();
-}
-
-
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
 	QFile fout(foutPath+"/GMS_Plot.txt",false);
 	for(unsigned int i=0; i<runs.size(); i++) {
