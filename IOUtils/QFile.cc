@@ -3,10 +3,10 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <cassert>
 #include <utility>
 #include "strutils.hh"
 #include "PathUtils.hh"
+#include "UCNAException.hh"
 
 Stringmap::Stringmap(const std::string& s) {
 	std::vector<std::string> pairs = split(s,"\t");
@@ -103,6 +103,11 @@ QFile::QFile(const std::string& fname, bool readit) {
 	name = fname;
 	if(!readit || name=="")
 		return;
+	if(!fileExists(fname)) {
+		UCNAException e("fileUnreadable");
+		e.insert("filename",fname);
+		throw(e);
+	}
 	std::ifstream fin(fname.c_str());
 	std::string s;
 	while (fin.good()) {
@@ -145,8 +150,9 @@ void QFile::commit(std::string outname) const {
 	makePath(outname,true);
 	std::ofstream fout(outname.c_str());
 	if(!fout.good()) {
-		printf("Unable to write to '%s'!\n",name.c_str());
-		assert(false);
+		UCNAException e("fileUnwriteable");
+		e.insert("filename",outname);
+		throw(e);
 	}
 	printf("Writing File '%s'.\n",outname.c_str());
 	for(std::multimap<std::string, Stringmap>::const_iterator it = dat.begin(); it != dat.end(); it++)
