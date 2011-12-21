@@ -1,4 +1,4 @@
-#!/sw/bin/python2.6
+#!/usr/bin/python
 
 from LinFitter import *
 from PyxUtils import *
@@ -141,13 +141,13 @@ class LinearityCurve:
 		self.gResid=graph.graphxy(width=10,height=2,
 				x=self.axisType(title="PMT ADC",min=xrange[0],max=xrange[1]),
 				y=graph.axis.lin(title="\\% Resid",min=-10,max=10))
-		self.gResid.texrunner.set(lfs='foils17pt')
+		#self.gResid.texrunner.set(lfs='foils17pt')
 
 		self.gEvis=graph.graphxy(width=10,height=10,ypos=self.gResid.height+0.5,
 				x=graph.axis.linkedaxis(self.gResid.axes["x"]),
 				y=self.axisType(title="Expected Light $\\eta\\cdot E_Q$",min=yrange[0],max=yrange[1]),
 				key = graph.key.key(pos="tl"))
-		self.gEvis.texrunner.set(lfs='foils17pt')
+		#self.gEvis.texrunner.set(lfs='foils17pt')
 		
 		self.cnvs = canvas.canvas()
 		self.cnvs.insert(self.gResid)
@@ -212,7 +212,7 @@ class LinearityCurve:
 		self.gRes=graph.graphxy(width=15,height=3,xpos=rwidth+0.5,
 			x=graph.axis.lin(title="Expected Visible Energy",min=0,max=1200),
 			y=graph.axis.lin(title="\\% Error",min=-10,max=10))
-		self.gRes.texrunner.set(lfs='foils17pt')
+		#self.gRes.texrunner.set(lfs='foils17pt')
 		
 		rmin = min([l.src.run for l in slines])
 		rmax = max([l.src.run for l in slines])
@@ -228,19 +228,19 @@ class LinearityCurve:
 				x2=runaxis,
 				y=graph.axis.lin(title="Observed Visible Energy",min=0,max=1200),
 				key = graph.key.key(pos="tl"))
-		self.gRuns.texrunner.set(lfs='foils17pt')
+		#self.gRuns.texrunner.set(lfs='foils17pt')
 					
 		self.gEn=graph.graphxy(width=15,height=15,ypos=self.gRes.height+0.5,xpos=rwidth+0.5,
 				x=graph.axis.linkedaxis(self.gRes.axes["x"]),
 				y=graph.axis.linkedaxis(self.gRuns.axes["y"]),
 				key = graph.key.key(pos="tl"))
-		self.gEn.texrunner.set(lfs='foils17pt')
+		#self.gEn.texrunner.set(lfs='foils17pt')
 		
 		self.gWidth=graph.graphxy(width=15,height=15,
 				x=graph.axis.lin(title="Expected Width [keV]",min=0),
 				y=graph.axis.lin(title="Observed Width [keV]",min=0),
 				key = graph.key.key(pos="tl"))
-		self.gWidth.texrunner.set(lfs='foils17pt')
+		#self.gWidth.texrunner.set(lfs='foils17pt')
 		
 		self.cnvs = canvas.canvas()
 		self.cnvs.insert(self.gRes)
@@ -314,10 +314,11 @@ def makeCalset(conn,r0,r1,rgms,posmap,replace=False):
 if __name__=="__main__":
 
 	# set up output paths
-	os.system("mkdir -p Sources/Linearity")
-	os.system("mkdir -p Sources/ERecon")
-	os.system("mkdir -p Sources/Widths")	
-	os.system("mkdir -p Sources/Positions")
+	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/"
+	os.system("mkdir -p %s/Linearity"%outpath)
+	os.system("mkdir -p %s/Erecon"%outpath)
+	os.system("mkdir -p %s/Widths"%outpath)	
+	os.system("mkdir -p %s/Positions"%outpath)
 	
 	# calibration definitions:
 	#				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
@@ -338,15 +339,15 @@ if __name__=="__main__":
 				#(	17871,	17922,	17876	),	# Big Scan; W0 pulser still dead
 				#(17903,17735,17956,x,x),		# Beta decay, long source runs
 				(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		1	),	# Old and new Cd Source; W0 pulser still dead
-				(	18357,	18386,	18362,	18081,	100000,		1469,	1472,		1	)	# Beta decay, new In source, Xe; everything working now
-				#(	x,		x,		x,		18432,										)	# Beta decay; PMT W4 Bi pulser very low
+				(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		1	),	# Beta decay, new In source, Xe; everything working now
+				(	18617,	18640,	18622,	18432,	100000,		1894,	1897,		1	)	# Beta decay; PMT W4 Bi pulser very low
 				]
 
 		
 	conn = open_connection() # connection to calibrations DB
 	replace = False	# whether to replace previous calibration data
 	
-	for c in cal_2011[3:]:
+	for c in cal_2011[4:]:
 	
 		# make new calibrations set
 		ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
@@ -361,10 +362,10 @@ if __name__=="__main__":
 				if t<4:
 					LC = LinearityCurve(s,t)
 					LC.fitLinearity(slines)
-					LC.cnvs.writetofile("Sources/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
+					LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
 					if ecid:
 						LC.dbUpload(conn,ecid,c[5+sn])
 				LC.plot_erecon(slines)
-				LC.cnvs.writetofile("Sources/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
-				LC.gWidth.writetofile("Sources/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
+				LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
+				LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
 				
