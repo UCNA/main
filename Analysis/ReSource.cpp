@@ -213,12 +213,12 @@ void reSource(RunNum rn) {
 	}	
 	
 	// set up output paths
-	std::string outPath = "../PostPlots/LivermoreSources/";
+	std::string outPath = getEnvSafe("UCNA_ANA_PLOTS")+"/LivermoreSources/";
 	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
 	RunInfo RI = CalDBSQL::getCDB()->getRunInfo(rn);
 	OutputManager TM("Run_"+itos(RI.runNum), outPath);
 	TM.dataPath = outPath+"/RunData/";
-	TM.plotPath = TM.basePath = outPath+"/Plots/"+replace(RI.groupName,' ','_')+"/"+itos(rn)+"_"+RI.roleName+"/";
+	TM.plotPath = TM.basePath = outPath+replace(RI.groupName,' ','_')+"/"+itos(rn)+"_"+RI.roleName+"/";
 	
 	// get sources list; set up ReSourcer for each
 	std::map<unsigned int,ReSourcer> sources;

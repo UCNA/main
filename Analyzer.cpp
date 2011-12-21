@@ -69,7 +69,7 @@ void mi_EndpointEnresPlot(std::deque<std::string>&, std::stack<std::string>&) {
 void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	unsigned int pmid = streamInteractor::popInt(stack);
 	if(CalDBSQL::getCDB()->isValid(13883)) {
-		OutputManager OM("Foo",std::string("../PostPlots/Eta/Posmap_")+itos(pmid));
+		OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/Eta/Posmap_"+itos(pmid));
 		etaPlot(OM,CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),pmid<1000,pmid<1000?2.5:250);
 	} else {
 		printf("Invalid CalDB!\n");
@@ -79,7 +79,7 @@ void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	RunNum rn = streamInteractor::popInt(stack);
 	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
-	OutputManager OM("Foo",std::string("../PostPlots/nPE/Posmap_")+itos(rn));
+	OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/nPE/Posmap_"+itos(rn));
 	npePlot(OM,&PCal);
 }
 
@@ -107,7 +107,7 @@ void mi_PlotGMS(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 void mi_dumpPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int pnum = streamInteractor::popInt(stack);
-	dumpPosmap("../PostPlots/PosmapDump/",pnum);
+	dumpPosmap(getEnvSafe("UCNA_ANA_PLOTS")+"/PosmapDump/",pnum);
 }
 
 void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -144,7 +144,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 }
 
 void simulations_evis() {
-	OutputManager OM("Evis2ETrue","../PostPlots/Evis2ETrue/Livermore/");
+	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/Livermore/");
 	G4toPMT g2p;
 	g2p.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
 	PMTCalibrator PCal(16000,CalDBSQL::getCDB());
@@ -162,7 +162,7 @@ void mi_Special(std::deque<std::string>&, std::stack<std::string>&) {
 	simulations_evis();
 	return;
 	
-	makeCorrectionsFile("../PostPlots/SpectrumCorrection.txt");
+	makeCorrectionsFile(getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection.txt");
 	return;	
 	
 	if(1) {
