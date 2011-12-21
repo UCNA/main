@@ -206,7 +206,7 @@ class GeantSimManager:
 			allpts = ""
 			if self.settings["generator"] in ["neutronBetaUnpol","eGunRandMomentum","eGun"]:
 				allpts = " y"
-			jobsout.write("$G4WORKDIR/ucnG4_dev/analyzer %s %s/analyzed_%i.root%s\n"%(outlist_name,self.g4_out_dir,nanalyzed,allpts))
+			jobsout.write("../ucnG4_dev/analyzer %s %s/analyzed_%i.root%s\n"%(outlist_name,self.g4_out_dir,nanalyzed,allpts))
 			nanalyzed += 1
 		jobsout.close()
 		print "\n----- %s ------"%resim_jobfile
