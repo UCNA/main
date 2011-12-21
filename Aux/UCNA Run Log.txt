@@ -3895,7 +3895,6 @@
 *18361	SourcesCal	# 2.0in
 *18362	SourcesCal	# 2.5in
 *18363	SourcesCal	# 3.0in
-@sources E Sn Bi
 *18364	SourcesCal	# 3.5in
 @sources Sn Bi
 *18365	SourcesCal	# 4.0in
@@ -4219,7 +4218,7 @@
 @sources Cd113m InE Cd
 *18634	SourcesCal	# 2.5in, E
 @sources Cd113m InW Cd
-*18634	SourcesCal	# 3.0in, W
+*18635	SourcesCal	# 3.0in, W
 @sources E InE Cd
 @sources W Cd113m InE Cd
 *18636	SourcesCal	# 3.5in, E

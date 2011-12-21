@@ -196,7 +196,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 
 
 void reSource(RunNum rn) {
-		
+	
 	// load data
 	ProcessedDataScanner* P = getDataSource(INPUT_OFFICIAL,true);
 	P->addRun(rn);
@@ -296,28 +296,43 @@ void reSource(RunNum rn) {
 		// fit simulated source data with same parameters
 		Source simSource = it->second.mySource;
 		simSource.x = simSource.y = 0;		
-		if(!(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" || simSource.t=="Cd109" || simSource.t=="In114")) {
+		Sim2PMT* g2p = NULL;
+		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_";
+		
+		if(simSource.t=="In114E" || simSource.t=="In114W")
+			simSource.t="In114";
+		if(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" || simSource.t=="Cd109" || simSource.t=="In114") {
+			g2p = new G4toPMT();
+			g2p->addFile(g4dat+simSource.t + "G_geomC/analyzed_*.root");
+		} else if(simSource.t=="Cd113m") {
+			G4toPMT* cd109 = new G4toPMT();
+			cd109->addFile(g4dat+"Cd109G_geomC/analyzed_*.root");
+			G4toPMT* cd113m = new G4toPMT();
+			cd113m->addFile(g4dat+"Cd113mG_geomC/analyzed_*.root");
+			MixSim* MS = new MixSim();
+			MS->addSim(cd109, 1.0, 461.4*24*3600);
+			MS->addSim(cd113m, 1.0, 14.1*365*24*3600);
+			g2p = MS;
+		}
+		if(!g2p) {
 			printf("Unknown source '%s'!\n",simSource.t.c_str());
 			continue;
 		}
+		
 		ReSourcer RS(&TM,simSource,&PCal);
 		RS.simMode = true;
 		RS.dbgplots = false;
-						
-		G4toPMT g2p;
-		g2p.setCalibrator(PCal);
+		
+		g2p->setCalibrator(PCal);
 		for(Side s = EAST; s <= WEST; ++s)
-			g2p.PGen[s].setPosition(it->second.mySource.x, it->second.mySource.y);
-		std::string datfile = "/home/mmendenhall/geant4/output/";
-		datfile += "LivPhys_";
-		datfile += simSource.t + "G_geomC/analyzed_*.root";
-		g2p.addFile(datfile);
+			g2p->PGen[s].setPosition(it->second.mySource.x, it->second.mySource.y);
 		unsigned int nSimmed = 0;
-		g2p.startScan(100000);
+		g2p->startScan(100000);
 		while(nSimmed<100000) {
-			g2p.nextPoint();
-			nSimmed+=RS.fill(g2p);
+			g2p->nextPoint();
+			nSimmed+=RS.fill(*g2p);
 		}
+		delete(g2p);
 		RS.findSourcePeaks(1000.0);
 		
 		// plot data and MC together
@@ -372,23 +387,33 @@ void uploadRunSources() {
 			RunNum rn;
 			if(!sscanf(words[0].c_str(),"*%i",&rn) || words[1] != "SourcesCal")
 				continue;
-			unsigned int nExpected = SourceDBSQL::getSourceDBSQL()->runSources(rn).size();
-			if(nExpected != sources[EAST].size()+sources[WEST].size()) {
+			
+			bool needsUpdate = false;
+			for (Side s = EAST; s <= WEST; ++s) {
+				std::vector<Source> expectedSources =  SourceDBSQL::getSourceDBSQL()->runSources(rn,s);
+				if(expectedSources.size() != sources[s].size()) { needsUpdate = true; break; }
+				for(unsigned int n=0; n<expectedSources.size(); n++) {
+					if(expectedSources[n].t != sources[s][n])
+						needsUpdate = true;
+				}
+			}
+			if(needsUpdate) {
 				SourceDBSQL::getSourceDBSQL()->clearSources(rn);
-				int nsrc = 0;
 				printf("Run %i: Loading %i,%i sources\n",rn,(int)sources[EAST].size(),(int)sources[WEST].size());
 				for (Side s = EAST; s <= WEST; ++s) {
+					unsigned int nsrc=0;
 					for(std::vector<std::string>::iterator it = sources[s].begin(); it != sources[s].end(); it++) {
 						Source src(*it,s);
 						src.myRun = rn;
 						src.x = nsrc++;
+						src.display();
 						SourceDBSQL::getSourceDBSQL()->addSource(src);
 					}
 				}
 			} else {
-				printf("Run %i: %i sources already loaded.\n",rn,nExpected);
+				printf("Run %i: sources already loaded.\n",rn);
 			}
-
+			
 		} else if(words[0]=="@sources") {
 			
 			bool notSide[2];
@@ -410,12 +435,18 @@ void uploadRunSources() {
 						sources[s].push_back("Bi207");
 					else if(*it == "Cd")
 						sources[s].push_back("Cd109");
+					else if(*it == "Cd113m")
+						sources[s].push_back("Cd113m");
 					else if(*it == "Sr85")
 						sources[s].push_back("Sr85");
 					else if(*it == "Sr90")
 						sources[s].push_back("Sr90");
 					else if(*it == "In")
 						sources[s].push_back("In114");
+					else if(*it == "InE")
+						sources[s].push_back("In114E");
+					else if(*it == "InW")
+						sources[s].push_back("In114W");
 					else if(*it == "Ce")
 						sources[s].push_back("Ce139");
 				}

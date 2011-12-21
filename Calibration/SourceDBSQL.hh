@@ -12,7 +12,7 @@ class SourceDBSQL: protected SQLHelper {
 public:
 	/// get singleton instance
 	static SourceDBSQL* getSourceDBSQL();
-	/// get list of sources for run (optionally for one side)
+	/// get list of sources for run (optionally for one side), sorted by x
 	std::vector<Source> runSources(RunNum rn, Side s = BOTH);
 	/// clear all run sources
 	void clearSources(RunNum rn);

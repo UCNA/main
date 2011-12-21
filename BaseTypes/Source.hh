@@ -10,7 +10,7 @@ class Source: public StringmapProvider {
 public:
 		
 	/// constructor
-	Source(std::string T = "", Side s = NONE, unsigned int sid=0): t(T), mySide(s), sID(sid) {}
+	Source(std::string T = "", Side s = NONE, unsigned int sid=0): t(T), mySide(s), x(0), y(0), wx(0), wy(0), nCounts(0), sID(sid) {}
 	/// constructor from a StringMap
 	Source(Stringmap S);
 	
