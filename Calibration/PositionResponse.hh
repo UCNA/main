@@ -60,8 +60,6 @@ public:
 	PositioningCorrector& operator=(PositioningCorrector&) { assert(false); return *this; }
 	/// get positioning correction for given tube
 	double eval(Side s, unsigned int t, double x, double y, bool normalize = false) const;
-	/// generate positioning information for each line in a file
-	void processFile(const std::string& fInName, const std::string& fOutName) const;
 	
 private:
 	/// init positioning interpolators

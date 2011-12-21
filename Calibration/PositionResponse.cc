@@ -99,29 +99,3 @@ double PositioningCorrector::eval(Side s, unsigned int t, double x, double y, bo
 		return tubes[s][t]->eval(x,y)/neta[s][t];
 	return tubes[s][t]->eval(x,y);
 }
-
-void PositioningCorrector::processFile(const std::string& fInName, const std::string& fOutName) const {
-	
-	std::ifstream fin(fInName.c_str());
-	std::ofstream fout(fOutName.c_str());
-	
-	std::string l;
-	while (fin.good()) {
-		std::getline(fin,l);
-		fout << l;
-		if(!l.size()) continue;
-		std::vector<std::string> words = split(l);
-		if(words.size() < 5) {
-			fout << '\n';
-			continue;
-		}
-		fout << '\t';
-		if(words[1] == "E")
-			fout << eval(EAST,atoi(words[2].c_str()),atof(words[3].c_str()),atof(words[4].c_str()),true);
-		else
-			fout << eval(WEST,atoi(words[2].c_str()),atof(words[3].c_str()),atof(words[4].c_str()),true);
-		fout << '\n';
-	}
-	fin.close();
-	fout.close();
-}

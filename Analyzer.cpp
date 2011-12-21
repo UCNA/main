@@ -83,10 +83,6 @@ void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	npePlot(OM,&PCal);
 }
 
-void mi_EndpointProcessFile(std::deque<std::string>&, std::stack<std::string>&) {
-	CalDBSQL::getCDB()->getPositioningCorrector(10200)->processFile("../_PlotMakers/SourcePositions.txt", "../_PlotMakers/SourcePositions_2.txt");
-}
-
 void mi_PostprocessSources(std::deque<std::string>&, std::stack<std::string>& stack) {
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
@@ -232,7 +228,6 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	pm_posmap.addArg("n Rings","12");
 	inputRequester pm_mi2("Energy Resolution Plots",&mi_EndpointEnresPlot);
 	pm_mi2.addArg("Run Number");
-	inputRequester pm_mi3("Process positions file",&mi_EndpointProcessFile);	
 	inputRequester pm_mi5("Verify calibration assignments",&mi_VerifyCalperiods);
 	
 	inputRequester plotGMS("Plot GMS corrections",&mi_PlotGMS);
@@ -258,7 +253,6 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OptionsMenu PostRoutines("Postprocessing Routines");
 	PostRoutines.addChoice(&pm_posmap,"pmap");
 	PostRoutines.addChoice(&pm_mi2);	
-	PostRoutines.addChoice(&pm_mi3);
 	PostRoutines.addChoice(&pm_mi5);
 	PostRoutines.addChoice(&plotGMS);
 	PostRoutines.addChoice(&posmapPlot);
