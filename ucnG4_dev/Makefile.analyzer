@@ -1,0 +1,46 @@
+# simple Makefile to build the event reader with libdywMCEvent.so
+# Jianglai 05-12-06
+NAME          = analyzer
+ObjSuf        = o
+SrcSuf        = C
+DllSuf        = so
+OutPutOpt     = -o  
+ROOTLIBS      = $(shell root-config --libs)
+ROOTGLIBS     = $(shell root-config --glibs)
+ROOTCFLAGS    = $(shell root-config --cflags)
+
+CLHEPLIBS      = $(shell clhep-config --libs)
+CLHEPFLAGS     = $(shell clhep-config --include)
+
+
+# Work with Linux with egcs	
+#CXX           = g++ 
+CXX           = mpiCC
+CXXFLAGS      = -O2 -Wall -fPIC
+LD            = $(CXX)
+SOFLAGS       = -shared
+LIBS          = $(ROOTLIBS) $(ROOTGLIBS)
+CXXFLAGS     += $(ROOTCFLAGS) -Iinclude
+LIBS         += -lSpectrum ./libMCEvent.so
+
+# -------------------------------------------------------------------------------
+#  Generic compilation and linking step to make an executable from
+#  a single *.cc file
+#
+#$(NAME).exe : $(NAME).$(SrcSuf)
+#	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS)
+#	@echo "$@ done"
+
+# -------------------------------------------------------------------------------
+#  Generic compilation and linking step to make an executable from
+#  a single *.cc file
+#
+%: %.$(SrcSuf)
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS)
+	@echo "$@ done"
+
+%.exe: %.$(SrcSuf)
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS)
+	@echo "$@ done"
+clean:
+		@rm -f *.o *~  core
