@@ -76,7 +76,8 @@ unsigned int ReSourcer::fill(const ProcessedDataScanner& P) {
 
 void ReSourcer::findSourcePeaks(float runtime) {
 	
-	printf("Fitting peaks for %s source (%i hits, %.2f hours)...\n",mySource.name().c_str(),counts(),runtime/3600.0);
+	std::vector<SpectrumPeak> expectedPeaks = mySource.getPeaks();
+	printf("Fitting peaks for %s source (%i hits, %.2f hours, %i peaks)...\n",mySource.name().c_str(),counts(),runtime/3600.0,(int)expectedPeaks.size());
 	OM->defaultCanvas->SetLogy(true);
 	
 	// normalize to rate Hz/keV
@@ -88,57 +89,56 @@ void ReSourcer::findSourcePeaks(float runtime) {
 	}
 	
 	// perform fits, draw histograms
-	std::vector<SpectrumPeak> expectedPeaks = mySource.getPeaks();
 	float searchsigma;
-	
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
 		
-		if(PCal)
-			searchsigma = 0.5*PCal->energyResolution(mySource.mySide, t, expectedPeaks[0].energy(), mySource.x, mySource.y, 0);
-		else
-			searchsigma = 0.5*sqrt((t==nBetaTubes?2.5:10)*expectedPeaks[0].energy());
-		if(!(searchsigma==searchsigma)) {
-			printf("Bad search range! Aborting!\n");
-			continue;
-		}
-		if(searchsigma > 120)
-			searchsigma = 120;
-		if(searchsigma < 4)
-			searchsigma = 4;		
-		
-		std::string fitPlotName = "";
-		if(dbgplots)
-			fitPlotName = OM->plotPath+"/"+mySource.name()+"/Fit_Spectrum_"+(t==nBetaTubes?"Combined":itos(t))+".pdf";
-		printf("Fitting %s for %i peaks in tube %i (sigma = %f)\n", mySource.name().c_str(), (int)expectedPeaks.size(), t, searchsigma);
-		tubePeaks[t] = fancyMultiFit(hTubes[t][TYPE_0_EVENT], searchsigma, expectedPeaks, false, fitPlotName, nSigma, pkMin);
-		for(std::vector<SpectrumPeak>::iterator it = tubePeaks[t].begin(); it != tubePeaks[t].end(); it++) {
-			it->simulated = simMode;
-			it->t = t;
-			if(PCal) {
-				it->eta = PCal->eta(mySource.mySide,t,mySource.x,mySource.y);
-				it->nPE = PCal->nPE(mySource.mySide,t,it->energyCenter.x,mySource.x,mySource.y,0);
+		if(expectedPeaks.size()) {
+			if(PCal)
+				searchsigma = 0.5*PCal->energyResolution(mySource.mySide, t, expectedPeaks[0].energy(), mySource.x, mySource.y, 0);
+			else
+				searchsigma = 0.5*sqrt((t==nBetaTubes?2.5:10)*expectedPeaks[0].energy());
+			if(!(searchsigma==searchsigma)) {
+				printf("Bad search range! Aborting!\n");
+				continue;
+			}
+			if(searchsigma > 120)
+				searchsigma = 120;
+			if(searchsigma < 4)
+				searchsigma = 4;		
+			
+			std::string fitPlotName = "";
+			if(dbgplots)
+				fitPlotName = OM->plotPath+"/"+mySource.name()+"/Fit_Spectrum_"+(t==nBetaTubes?"Combined":itos(t))+".pdf";
+			printf("Fitting %s for %i peaks in tube %i (sigma = %f)\n", mySource.name().c_str(), (int)expectedPeaks.size(), t, searchsigma);
+			tubePeaks[t] = fancyMultiFit(hTubes[t][TYPE_0_EVENT], searchsigma, expectedPeaks, false, fitPlotName, nSigma, pkMin);
+			for(std::vector<SpectrumPeak>::iterator it = tubePeaks[t].begin(); it != tubePeaks[t].end(); it++) {
+				it->simulated = simMode;
+				it->t = t;
+				if(PCal) {
+					it->eta = PCal->eta(mySource.mySide,t,mySource.x,mySource.y);
+					it->nPE = PCal->nPE(mySource.mySide,t,it->energyCenter.x,mySource.x,mySource.y,0);
+				}
+			}
+			
+			if(tubePeaks[t].size()<expectedPeaks.size()) {
+				Stringmap m;
+				m.insert("peak",expectedPeaks.back().name());
+				m.insert("sID",mySource.sID);
+				m.insert("tube",t);
+				m.insert("simulated",simMode?"yes":"no");
+				m.insert("side",ctos(sideNames(mySource.mySide)));
+				OM->warn(MODERATE_WARNING,"Missing_Peak",m);
+				printf("Cancelling fit.\n");
+				continue;
+			} else if(t==nBetaTubes) {
+				for(unsigned int i=0; i<tubePeaks[t].size(); i++) {
+					printf("-------- %c%i --------\n",sideNames(mySource.mySide),t);
+					tubePeaks[t][i].toStringmap().display();
+					OM->qOut.insert(std::string("Main_")+tubePeaks[t][i].name()+"_peak_"+itos(t),tubePeaks[t][i].toStringmap());
+					SourceDBSQL::getSourceDBSQL()->addPeak(tubePeaks[t][i]);
+				}
 			}
 		}
-		
-		if(tubePeaks[t].size()<expectedPeaks.size()) {
-			Stringmap m;
-			m.insert("peak",expectedPeaks.back().name());
-			m.insert("sID",mySource.sID);
-			m.insert("tube",t);
-			m.insert("simulated",simMode?"yes":"no");
-			m.insert("side",ctos(sideNames(mySource.mySide)));
-			OM->warn(MODERATE_WARNING,"Missing_Peak",m);
-			printf("Cancelling fit.\n");
-			continue;
-		} else if(t==nBetaTubes) {
-			for(unsigned int i=0; i<tubePeaks[t].size(); i++) {
-				printf("-------- %c%i --------\n",sideNames(mySource.mySide),t);
-				tubePeaks[t][i].toStringmap().display();
-				OM->qOut.insert(std::string("Main_")+tubePeaks[t][i].name()+"_peak_"+itos(t),tubePeaks[t][i].toStringmap());
-				SourceDBSQL::getSourceDBSQL()->addPeak(tubePeaks[t][i]);
-			}
-		}
-		
 		
 		if(t==nBetaTubes)
 			continue;
@@ -310,8 +310,8 @@ void reSource(RunNum rn) {
 			G4toPMT* cd113m = new G4toPMT();
 			cd113m->addFile(g4dat+"Cd113mG_geomC/analyzed_*.root");
 			MixSim* MS = new MixSim();
-			MS->addSim(cd109, 1.0, 461.4*24*3600);
 			MS->addSim(cd113m, 1.0, 14.1*365*24*3600);
+			MS->addSim(cd109, 0.25, 461.4*24*3600);
 			g2p = MS;
 		}
 		if(!g2p) {
