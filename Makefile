@@ -42,7 +42,7 @@ Calibration = PositionResponse.o SimNonlinearity.o PMTGenerator.o WirechamberRec
 Analysis = TChainScanner.o ProcessedDataScanner.o PostAnalyzer.o PostOfficialAnalyzer.o G4toPMT.o TH1toPMT.o DataSource.o \
 	KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o BetaSpectrum.o
 
-Studies = PlotMakers.o SRAsym.o PositionStudies.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o
+Studies = PlotMakers.o PositionStudies.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies)
 
