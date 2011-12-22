@@ -1,6 +1,7 @@
 #include "SQL_Utils.hh"
 #include <stdlib.h>
 #include "strutils.hh"
+#include "UCNAException.hh"
 
 SQLHelper::SQLHelper(const std::string& dbnm,
 					 const std::string& dbAddress,
@@ -24,19 +25,19 @@ SQLHelper::SQLHelper(const std::string& dbnm,
 			return;
 		}
 	}
-	printf("\n\n************* FAILED TO CONNECT TO ANALYSIS DB! *******************\n\n\n");
-	assert(false || IGNORE_DEAD_DB);
+	UCNAException e("DBConnectFail");
+	e.insert("dbAddress",dbAddressFull);
+	e.insert("dbUser",dbUser);
+	throw(e);
 }
 
 void SQLHelper::execute() {
-	assert(db || IGNORE_DEAD_DB);
 	if(res) delete(res);
 	res = NULL;
 	db->Exec(query);
 }
 
 void SQLHelper::Query() { 
-	assert(db || IGNORE_DEAD_DB);
 	if(!db) {
 		res = NULL;
 	} else {
