@@ -2,7 +2,6 @@
 #define SIMCALIBRATIONS_HH 1
 
 #include "EnergyCalibrator.hh"
-#include "SimNonlinearity.hh"
 #include "Types.hh"
 #include "EfficCurve.hh"
 #include <vector>
@@ -32,8 +31,6 @@ public:
 	void setOffsets(float xxs, float yys, float xxw, float yyw);
 	/// set event side
 	void setSide(Side s) { mySide = s; }
-	/// set nonlinearity
-	void setNonlinearity(SimNonlinearizer* snl) { SNL = snl; }
 	
 	/// get current calibrator
 	const PMTCalibrator* getCalibrator() const { return currentCal; }
@@ -52,7 +49,6 @@ public:
 protected:
 
 	PMTCalibrator* currentCal;		//< current PMT Calibrator in use
-	SimNonlinearizer* SNL;			//< nonlinearization
 	
 	Side mySide;					//< side to simulate
 	float pmtRes[2][nBetaTubes];	//< individual PMT nPE per keV
