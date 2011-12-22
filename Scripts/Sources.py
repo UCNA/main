@@ -359,8 +359,8 @@ if __name__=="__main__":
 		# fit linearity curves for each PMT
 		for (sn,s) in enumerate(["East","West"]):
 			for t in range(5):
+				LC = LinearityCurve(s,t)
 				if t<4:
-					LC = LinearityCurve(s,t)
 					LC.fitLinearity(slines)
 					LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
 					if ecid:
