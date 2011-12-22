@@ -4230,3 +4230,8 @@
 *18639	SourcesCal	# 5.0in, W
 *18640	SourcesCal	# 5.5in, E
 @sources
+
+#######################
+@cycle December 21 Beta Decay
+#######################
+

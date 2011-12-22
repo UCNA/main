@@ -39,7 +39,7 @@ std::vector<SpectrumPeak> Source::getPeaks() const {
 		v.push_back(SpectrumPeak(SN_PEAK,sID,mySide));
 	if(t=="Cd109")
 		v.push_back(SpectrumPeak(CD109_PEAK,sID,mySide));
-	if(t=="In114")
+	if(t=="In114" || t=="In114E" || t=="In114W")
 		v.push_back(SpectrumPeak(IN114_PEAK,sID,mySide));
 	if(t=="Ce139")
 		v.push_back(SpectrumPeak(CE139_PEAK,sID,mySide));

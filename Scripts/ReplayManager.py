@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import os
 import time
-import OctetList
 from UCNAUtils import *
 from optparse import OptionParser	
 	
@@ -27,7 +26,7 @@ def processOctets(sim=False):
 	
 
 def processSources(rmin,rmax):
-		pcmd = "cd ~/mpmAnalyzer/Source/; ./UCNAnalyzer sr %i %i x\n"
+		pcmd = "cd ..; ./UCNAnalyzer sr %i %i x\n"
 		freplaylist = open("source_replaylist.txt","w")
 		for rg in sourcegroups:
 			for r in range(rg[0],rg[1]+1):

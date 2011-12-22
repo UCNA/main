@@ -345,7 +345,7 @@ if __name__=="__main__":
 
 		
 	conn = open_connection() # connection to calibrations DB
-	replace = False	# whether to replace previous calibration data
+	replace = True	# whether to replace previous calibration data
 	
 	for c in cal_2011[4:]:
 	
