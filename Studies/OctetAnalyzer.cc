@@ -3,6 +3,7 @@
 #include "strutils.hh"
 #include "GraphicsUtils.hh"
 #include "EnergyCalibrator.hh"
+#include "PostOfficialAnalyzer.hh"
 #include "CalDBSQL.hh"
 #include "Types.hh"
 
@@ -240,7 +241,7 @@ unsigned int processPulsePair(OctetAnalyzer& OA, const Octet& PP) {
 		nproc++;
 		ProcessedDataScanner* PDSs[2] = {NULL,NULL};
 		for(unsigned int fg = 0; fg <= 1; fg++) {
-			PDSs[fg] = getDataSource(INPUT_OFFICIAL,true);
+			PDSs[fg] = new PostOfficialAnalyzer(true);
 			PDSs[fg]->addRuns(sd->getAsymRuns(fg));
 		}
 		if(PDSs[0]->getnFiles()+PDSs[1]->getnFiles())

@@ -2,6 +2,7 @@
 #include "CalDBSQL.hh"
 #include "MultiGaus.hh"
 #include "TH1toPMT.hh"
+#include "PostOfficialAnalyzer.hh"
 #include <TStyle.h>
 
 /// convert Stringmap to SectorDat

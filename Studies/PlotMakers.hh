@@ -27,9 +27,6 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0 = 1000, float s0 =
 /// extract Evis<->Etrue info from contiunuum spectrum simulation
 void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM);
 
-/// Fit Xe spectrum 915keV endpoint
-void XeEndpointStudy();
-
 /// generate a file with spectrum correction factors
 void makeCorrectionsFile(const std::string& fout);
 

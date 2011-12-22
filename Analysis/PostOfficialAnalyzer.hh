@@ -1,7 +1,7 @@
 #ifndef POSTOFFICIALANALYZER_HH
 #define POSTOFFICIALANALYZER_HH 1
 
-#include "PostAnalyzer.hh"
+#include "ProcessedDataScanner.hh"
 
 /// class for assembling and scanning TChain of official replay data
 class PostOfficialAnalyzer: public ProcessedDataScanner {

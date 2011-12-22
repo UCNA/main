@@ -1,5 +1,5 @@
 #include "ReSource.hh"
-#include "ProcessedDataScanner.hh"
+#include "PostOfficialAnalyzer.hh"
 #include "PMTGenerator.hh"
 #include "TSpectrumUtils.hh"
 #include "GraphicsUtils.hh"
@@ -198,7 +198,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 void reSource(RunNum rn) {
 	
 	// load data
-	ProcessedDataScanner* P = getDataSource(INPUT_OFFICIAL,true);
+	PostOfficialAnalyzer* P = new PostOfficialAnalyzer(true);
 	P->addRun(rn);
 	
 	if(!P->getnFiles()) {

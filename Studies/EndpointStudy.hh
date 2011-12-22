@@ -5,7 +5,6 @@
 #include "SectorCutter.hh"
 #include "EnergyCalibrator.hh"
 #include "PMTGenerator.hh"
-#include "DataSource.hh"
 #include "KurieFitter.hh"
 #include "RunAccumulator.hh"
 

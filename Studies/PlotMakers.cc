@@ -11,7 +11,6 @@
 #include "PathUtils.hh"
 #include "ReSource.hh"
 #include "Types.hh"
-#include "DataSource.hh"
 #include "KurieFitter.hh"
 #include "G4toPMT.hh"
 #include "BetaSpectrum.hh"
@@ -327,70 +326,6 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 			}
 		}
 	}
-}
-
-void XeEndpointStudy() {
-	// load data
-	OutputManager OM("XeEndpoint","../PostPlots/XeEndpoint");
-	std::vector<RunNum> xeRunNums;
-	for(RunNum rn = 16070; rn <= 16077; rn++)
-		xeRunNums.push_back(rn);
-	PostAnalyzer XeRuns;
-	XeRuns.addRuns(xeRunNums);
-	
-	// set up histograms
-	TH1F* hXe[2][nBetaTubes+1];
-	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			hXe[s][t] = OM.registeredTH1F(sideSubst("XeSpectrum_%c",s)+itos(t),"Xe Spectrum",150,0,1500);
-			hXe[s][t]->Sumw2();
-			hXe[s][t]->SetLineColor(nBetaTubes+1-t);
-		}
-	}
-	
-	// scan data and fill histograms
-	XeRuns.startScan();
-	while (XeRuns.nextPoint()) {
-		for(Side s = EAST; s <= WEST; ++s) {
-			if(!(XeRuns.fSide==s && XeRuns.fPID==PID_BETA && XeRuns.fType==TYPE_0_EVENT) || XeRuns.radius(s) > 30.0)
-				continue;
-			hXe[s][nBetaTubes]->Fill(XeRuns.scints[s].energy.x);
-			for(unsigned int t=0; t<nBetaTubes; t++)
-				hXe[s][t]->Fill(XeRuns.scints[s].tuben[t].x);
-		}
-	}
-	
-	// fits
-	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			TGraphErrors* tgData = NULL;
-			float_err ep = kurieIterator(hXe[s][t],850.0,&tgData,915.,350,700);
-			if(tgData) {
-				tgData->SetMarkerColor(2);
-				tgData->Draw("AP");
-				OM.printCanvas(sideSubst("Kurie_Plot_%c",s)+itos(t));
-				delete(tgData);
-			}
-			Stringmap M;
-			M.insert("side",ctos(sideNames(s)));
-			M.insert("tube",t);
-			M.insert("ep",ep.x);
-			M.insert("dep",ep.err);
-			OM.qOut.insert("endpointFit",M);
-		}
-	}
-	
-	// draw histograms
-	for(Side s = EAST; s <= WEST; ++s) {
-		hXe[s][nBetaTubes]->Draw();
-		for(unsigned int t=0; t<nBetaTubes; t++) {
-			hXe[s][t]->Draw("Same");
-		}
-		OM.printCanvas(sideSubst("Spectra_%c",s));
-	}
-	
-	OM.write();
-	OM.setWriteRoot(true);
 }
 
 void makeCorrectionsFile(const std::string& fout) {
