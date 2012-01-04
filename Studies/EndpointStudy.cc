@@ -142,6 +142,19 @@ void PositionBinner::calculateResults() {
 }
 
 void PositionBinner::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
+	
+	PositionBinner* PB = (PositionBinner*)&OAdata;
+	
+	// overall energy spectrum
+	for(Side s=EAST; s<=WEST; ++s) {
+		energySpectrum[s].h[GV_OPEN]->Scale(PB->energySpectrum[s].h[GV_OPEN]->GetMaximum()/energySpectrum[s].h[GV_OPEN]->GetMaximum());
+		energySpectrum[s].h[GV_OPEN]->SetLineColor(4);
+		energySpectrum[s].h[GV_OPEN]->Draw();
+		PB->energySpectrum[s].h[GV_OPEN]->SetLineColor(2);
+		PB->energySpectrum[s].h[GV_OPEN]->Draw("Same");
+		printCanvas(sideSubst("Comparison/hEnergy_%c",s));		
+	}
+		
 	// TODO
 	// upload as posmap
 	// load & draw posmap
@@ -162,6 +175,7 @@ void PositionBinner::makePlots() {
 		// positions
 		hitPos[s].h[GV_OPEN]->Draw("COL");
 		drawSectors(sects,6);
+		labelSectors(sects,6);
 		printCanvas(sideSubst("hPos_%c",s));
 		// energy in each sector
 		for(unsigned int m=0; m<getNSectors(); m++) {
@@ -214,7 +228,7 @@ void simulate_xenon(RunNum r0, RunNum r1) {
 		t2p.setCalibrator(PCal);
 		t2p.setAFP(AFP_OTHER);
 		t2p.genside = s;
-		t2p.randomPositionRadius = 60.0;
+		t2p.randomPositionRadius = PB.sects.r+3.0;
 		PBM.loadSimData(t2p, simFactor*0.5*PB.getTotalCounts(AFP_OTHER, GV_OPEN));
 	}
 					 
