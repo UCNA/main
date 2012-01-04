@@ -223,13 +223,17 @@ void simulate_xenon(RunNum r0, RunNum r1) {
 	float simFactor = 4.0;
 	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1), PB.sects.r, PB.sects.n);
 	PMTCalibrator PCal(r0,CalDBSQL::getCDB());
+	SectPosGen SPG(PB.sects);
 	for(Side s = EAST; s <= WEST; ++s) {
-		TH1toPMT t2p(PB.energySpectrum[s].h[GV_OPEN]);
+		TH1toPMT t2p(PB.energySpectrum[s].h[GV_OPEN],&SPG);
 		t2p.setCalibrator(PCal);
 		t2p.setAFP(AFP_OTHER);
 		t2p.genside = s;
-		t2p.randomPositionRadius = PB.sects.r+3.0;
-		PBM.loadSimData(t2p, simFactor*0.5*PB.getTotalCounts(AFP_OTHER, GV_OPEN));
+		for(unsigned int m=0; m<PB.sects.nSectors(); m++) {
+			printf("Simulating sector %c%i...\n",sideNames(s),m);
+			SPG.m = m;
+			PBM.loadSimData(t2p, simFactor*0.5*PB.getTotalCounts(AFP_OTHER, GV_OPEN)*SPG.sects.sectorArea(m)/SPG.sects.totalArea());
+		}
 	}
 					 
 	// finish and output
