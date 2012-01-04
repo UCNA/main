@@ -2,7 +2,6 @@
 #define SECTORCUTTER_HH 1
 
 #include <vector>
-#include <math.h>
 
 /// class for dividing a circular region into smaller radial/angular patches
 class SectorCutter {
@@ -17,8 +16,12 @@ public:
 	unsigned int getRing(unsigned int s) const;	
 	/// get number of sectors in ring
 	unsigned int getNDivs(unsigned int s) const { return s<n?ndivs[s]:0; }
+	/// get boundaries of given sector, radius and angle
+	void sectorBounds(unsigned int s, float& r0, float& r1, float& ph0, float& ph1) const;
 	/// get coordinates for the center of the given sector
 	void sectorCenter(unsigned int s, float& x, float& y) const;	
+	/// get uniform random position within sector
+	void randPos(unsigned int s, float& x, float& y) const;
 	/// get area of specified sector
 	float sectorArea(unsigned int s) const;	
 	/// get total area
