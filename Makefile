@@ -33,7 +33,7 @@ endif
 
 VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/
 
-Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
+Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o SectorCutter.o \
 	Enums.o Types.o UCNAException.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RData.o
 
 Calibration = PositionResponse.o PMTGenerator.o WirechamberReconstruction.o \
