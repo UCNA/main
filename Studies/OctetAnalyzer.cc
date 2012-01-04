@@ -352,7 +352,7 @@ unsigned int simuClone(const std::string& basedata, OctetAnalyzer& OA, Sim2PMT& 
 				RunInfo RI = CalDBSQL::getCDB()->getRunInfo(it->first);
 				if(RI.gvState != GV_OPEN) continue;	// no simulation for background runs
 				// estimate background count share for this run (and reduce simulation by this amount)
-				double bgEst = origOA->getTotalCounts(RI.afpState,0)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,0).t[BOTH];
+				double bgEst = origOA->getTotalCounts(RI.afpState,GV_CLOSED)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,0).t[BOTH];
 				if(it->second <= bgEst) continue;
 				int nToSim = (int)it->second-bgEst;
 				printf("\n\t---Simulation cloning for run %i (%i+%i counts)---\n",it->first,nToSim,(int)bgEst);

@@ -1,5 +1,6 @@
 #include "CalDBSQL.hh"
 #include "PathUtils.hh"
+#include "UCNAException.hh"
 #include <utility>
 
 CalDBSQL* CalDBSQL::getCDB(bool readonly) {
@@ -33,11 +34,15 @@ TGraphErrors* CalDBSQL::getRunMonitor(RunNum rn, const std::string& sensorName, 
 		printf("Failed to locate requested monitor:\n\t%s\n",query);
 		return NULL;
 	}
-	TGraphErrors* tg = getGraph(fieldAsInt(r,0));
+	int gID = fieldAsInt(r,0);
 	delete(r);
-	if(!tg)
-		printf("*** Warning: no graph for run monitor %i %s (%s)\n",rn,sensorName.c_str(),monType.c_str());
-	return tg;
+	try {
+		return getGraph(gID);
+	} catch(UCNAException& e) {
+		e.insert("sensorName",sensorName);
+		e.insert("monType",monType);
+		throw(e);
+	}
 }
 
 float CalDBSQL::getRunMonitorStart(RunNum rn, const std::string& sensorName, const std::string& monType) {
@@ -69,17 +74,21 @@ TGraphErrors* CalDBSQL::getContinuousMonitor(const std::string& sensorName, cons
 		printf("Failed to locate requested monitor:\n\t%s\n",query);
 		return NULL;
 	}
-	TGraphErrors* tg; 
-	if(centers)
-		tg = getGraph(fieldAsInt(r,0),rn);
-	else
-		tg = getGraph(fieldAsInt(r,1),rn);
-	delete(r);
-	if(tg && !tg->GetN()) {
-		delete(tg);
-		return NULL;
+	try {
+		TGraphErrors* tg;
+		int cgid = fieldAsInt(r,0);
+		int wgid = fieldAsInt(r,1);
+		delete(r);
+		if(centers)
+			tg = getGraph(cgid,rn);
+		else
+			tg = getGraph(wgid,rn);
+		return tg;
+	} catch (UCNAException& e) {
+		e.insert("sensorName",sensorName);
+		e.insert("monType",monType);
+		throw(e);
 	}
-	return tg;
 }
 
 
@@ -115,7 +124,12 @@ float CalDBSQL::getAnodeCalInfo(RunNum R, const char* field) {
 	if(!r) {
 		sprintf(query,"SELECT %s,start_run,end_run FROM anode_cal ORDER BY pow(1.0*end_run-%i,2)+pow(1.0*start_run-%i,2) LIMIT 1",field,R,R);
 		r = getFirst();
-		assert(r);
+		if(!r) {
+			UCNAException e("noQueryResults");
+			e.insert("runNum",R);
+			e.insert("field",field);
+			throw(e);
+		}
 		unsigned int r0 = fieldAsInt(r,1);
 		unsigned int r1 = fieldAsInt(r,2);
 		printf("**** WARNING: No matching anode calibration found for %i; using nearest range (%i,%i)...\n",R,r0,r1);
@@ -299,7 +313,11 @@ RunInfo CalDBSQL::getRunInfo(RunNum r) {
 	//                    0               1        2        3          4       5
 	sprintf(query,"SELECT slow_run_number,run_type,asym_oct,gate_valve,flipper,scs_field FROM run WHERE run_number = %u",r);
 	TSQLRow* row = getFirst();
-	assert(row);
+	if(!row) {
+		UCNAException e("noQueryResults");
+		e.insert("runNum",r);
+		throw(e);
+	}
 	
 	R.roleName = fieldAsString(row,2,"Other");
 	R.octet = 0;
@@ -411,8 +429,9 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid) {
 	sprintf(query,"SELECT x_value,x_error,y_value,y_error FROM graph_points WHERE graph_id = %i ORDER BY x_value ASC",gid);
 	Query();
 	if(!res) {
-		printf("*** Warning: no graph found for <%i>!\n",gid);
-		return NULL;
+		UCNAException e("missingGraph");
+		e.insert("graph_id",gid);
+		throw(e);
 	}
 	TSQLRow* r;
 	while((r = res->Next())) {
@@ -422,8 +441,9 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid) {
 	}
 	unsigned int npts = gdata[0].size();
 	if(!npts) {
-		printf("*** Warning: no points found for graph <%i>!\n",gid);
-		return NULL;
+		UCNAException e("missingGraphData");
+		e.insert("graph_id",gid);
+		throw(e);
 	}
 	if(npts == 1) {
 		printf("Notice: only 1 graph point found for <%i>; extending to 2.\n",gid);
@@ -447,8 +467,9 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 			AND x_value < %i ORDER BY %i-x_value ASC LIMIT 1",gid,startTime(rn),startTime(rn));
 	Query();
 	if(!res) {
-		printf("*** Warning: no graph found for <%i>!\n",gid);
-		return NULL;
+		UCNAException e("missingGraph");
+		e.insert("graph_id",gid);
+		throw(e);
 	}
 	TSQLRow* r = res->Next();
 	if(!r) {
@@ -457,8 +478,9 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 		r = res->Next();
 	}
 	if(!r) {
-		printf("*** Warning: no points found for graph <%i>!\n",gid);
-		return NULL;
+		UCNAException e("missingGraphData");
+		e.insert("graph_id",gid);
+		throw(e);
 	}
 	float tstart = fieldAsFloat(r);
 	delete(r);
@@ -473,8 +495,11 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 		Query();
 		r = res->Next();
 	}
-	if(!r)
-		return NULL;
+	if(!r) {
+		UCNAException e("missingGraphData");
+		e.insert("graph_id",gid);
+		throw(e);
+	}
 	float tend = fieldAsFloat(r);
 	delete(r);
 	
@@ -491,8 +516,11 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 	
 	// compile graph
 	unsigned int npts = gdata[0].size();
-	if(!npts)
-		return NULL;
+	if(!npts) {
+		UCNAException e("missingGraphData");
+		e.insert("graph_id",gid);
+		throw(e);
+	}
 	if(npts == 1) {
 		printf("Notice: only 1 graph point found for <%i;%i>; extending to 2.\n",gid,rn);
 		for(unsigned int i=0; i<4; i++)
@@ -515,7 +543,8 @@ unsigned int CalDBSQL::newGraph(const std::string& description) {
 	sprintf(query,"SELECT LAST_INSERT_ID()");
 	Query();
 	TSQLRow* r = getFirst();
-	assert(r);
+	if(!r)
+		throw(UCNAException("failedInsert"));
 	int gid = fieldAsInt(r,0);
 	delete(r);
 	return gid;
@@ -531,7 +560,8 @@ void CalDBSQL::deleteGraph(unsigned int gid) {
 
 unsigned int CalDBSQL::uploadGraph(const std::string& description, std::vector<double> x, std::vector<double> y,
 								   std::vector<double> dx, std::vector<double> dy) {
-	assert(x.size()==y.size()||!x.size());
+	if(!(x.size()==y.size()||!x.size()))
+		throw(UCNAException("dimensionMismatch"));
 	unsigned int gid = newGraph(description);
 	for(unsigned int i=0; i<y.size(); i++) {
 		double pdx = dx.size()>i?dx[i]:0;

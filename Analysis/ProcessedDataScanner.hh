@@ -52,7 +52,9 @@ public:
 	PMTCalibrator* ActiveCal;	//< PMTCalibrator currently active for loaded run
 	
 	/// print info about this scanner
-	void display();
+	virtual void display();
+	/// get info about current event
+	virtual Stringmap evtInfo();
 	/// write run calibrations info to QFile
 	void writeCalInfo(QFile& qout, std::string tag);
 	

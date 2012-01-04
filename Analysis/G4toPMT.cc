@@ -16,6 +16,14 @@ reSimulate(true), afp(AFP_OTHER) {
 	fPID = PID_BETA;	// only simulating beta events
 }
 
+Stringmap Sim2PMT::evtInfo() {
+	Stringmap m = ProcessedDataScanner::evtInfo();
+	m.insert("Eprim",ePrim);
+	m.insert("costh",costheta);
+	m.insert("weight",physicsWeight);
+	return m;
+}
+	
 void Sim2PMT::calcReweight() {
 	physicsWeight = 1.0; //= spectrumCorrectionFactor(ePrim) for beta spectrum
 	if(afp==AFP_ON||afp==AFP_OFF)
@@ -25,6 +33,7 @@ void Sim2PMT::calcReweight() {
 void Sim2PMT::setCalibrator(PMTCalibrator& PCal) {
 	for(Side s = EAST; s <= WEST; ++s)
 		PGen[s].setCalibrator(&PCal);
+	evtRun = PCal.rn;
 	ActiveCal = &PCal;
 }
 
@@ -32,6 +41,7 @@ bool Sim2PMT::nextPoint() {
 	bool np = ProcessedDataScanner::nextPoint();
 	reverseCalibrate();
 	calcReweight();
+	nSimmed++;
 	return np;
 }
 
@@ -128,12 +138,12 @@ void G4toPMT::doUnits() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		if(matchPenelope)
 			eQ[s] = eDep[s];
-		for(unsigned int i=0; i<2; i++) {
-			mwpcPos[s][i] *= wcPosConversion;
-			scintPos[s][i] *= wcPosConversion;
+		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
+			mwpcPos[s][d] *= wcPosConversion;
+			scintPos[s][d] *= wcPosConversion;
 			if(matchPenelope)
-				scintPos[s][i] = wires[s][i].center = mwpcPos[s][i] = primPos[i];
-			wires[s][i].center = mwpcs[s].pos[i]=mwpcPos[s][i];
+				scintPos[s][d] = wires[s][d].center = mwpcPos[s][d] = primPos[d];
+			wires[s][d].center = mwpcPos[s][d];
 		}
 	}
 	costheta=cos(costheta);
@@ -147,10 +157,10 @@ void PenelopeToPMT::doUnits() {
 		eQ[s] = fEdep[s]*0.001;	// really Edep and not Equenched
 		eW[s] = fEW[s]*0.001;
 		time[s] = fTime[s];
-		for(unsigned int i=0; i<2; i++) {			
-			scintPos[s][i] = primPos[i];	// fake scintillator pos from primary
-			mwpcPos[s][i]  = primPos[i]; 	// same position in scintillator
-			wires[s][i].center = mwpcs[s].pos[i] = mwpcPos[s][i];
+		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {			
+			scintPos[s][d] = primPos[d];	// fake scintillator pos from primary
+			mwpcPos[s][d]  = primPos[d]; 	// same position in scintillator
+			wires[s][d].center = mwpcPos[s][d];
 		}
 	}
 	ePrim = fEprim*0.001;

@@ -15,7 +15,6 @@
 #include <TFile.h>
 #include <TMath.h>
 #include <map>
-#include <cassert>
 
 /// CDF for poisson function (for trigger efficiency fits)
 Double_t poiscdf(const Double_t *x, const Double_t *par);
@@ -78,15 +77,7 @@ struct ScintEvent {
 struct MWPCevent {
 	Float_t cathodeSum;	//< sum of constituent wirechamber cathodes
 	Float_t anode;		//< anode ADC
-	Int_t sourceID;		//< identified source region in wirechamber
-	Float_t pos[2];		//< x/y position
 	Int_t errflags[2];	//< reconstruction error flags
-};
-
-/// relevant flags for a beta hit event
-struct BetaHit {
-	Int_t typeFlags[2];	//< event type flags
-	Int_t sourceID;		//< originating source ID for source events
 };
 
 #endif

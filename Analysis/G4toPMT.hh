@@ -18,8 +18,12 @@ public:
 	
 	/// this does nothing for processed data
 	virtual void recalibrateEnergy() {}
+	/// start scanning events
+	virtual void startScan(unsigned int startRandom = 0) { nSimmed = 0; ProcessedDataScanner::startScan(startRandom); }
 	/// overrides ProcessedDataScanner::nextPoint to insert reverse-calibrations
 	virtual bool nextPoint();
+	/// get event info
+	virtual Stringmap evtInfo();
 	
 	/// get true energy
 	virtual float getEtrue();
@@ -44,6 +48,7 @@ public:
 	double costheta;			//< primary event cos pitch angle
 	double ePrim;				//< primary event energy
 	double physicsWeight;		//< event spectrum re-weighting factor
+	unsigned int nSimmed;		//< number of events simulated since scan start
 	
 protected:
 	/// perform unit conversions, etc.

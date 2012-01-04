@@ -57,7 +57,7 @@ public:
 	/// get total run time for given state
 	BlindTime getTotalTime(AFPState afp, bool fg) const { return totalTime[afp][fg]; }
 	/// get total counts for given state
-	float getTotalCounts(AFPState afp, bool fg) const { return totalCounts[afp][fg]; }
+	float getTotalCounts(AFPState afp, GVState gv) const { return totalCounts[afp][gv]; }
 	/// get time contributed from given rumber
 	float getRunTime(RunNum rn) const { return runTimes[rn]; }
 	/// save rates summary for core histograms to qOut

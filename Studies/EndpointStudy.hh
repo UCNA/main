@@ -43,13 +43,16 @@ public:
 	virtual void makePlots();
 	/// virtual routine for MC/Data comparison plots/calculations
 	virtual void compareMCtoData(RunAccumulator& OAdata, float simfactor);
-		
+	
+	fgbgPair energySpectrum[2];							//< combined energy spectrum, each side
+	fgbgPair hitPos[2];									//< hit positions on each side
+	SectorCutter sects;									//< sector cutter
+	
 protected:
 	std::vector<fgbgPair> sectEnergy[2][nBetaTubes];	//< visible light histograms by position, PMT
 	std::vector<SectorDat> sectDat[2][nBetaTubes];		//< processed data for each sector
-	fgbgPair energySpectrum[2];							//< combined energy spectrum, each side
 	std::vector<fgbgPair> sectAnode[2];					//< anode histograms by position
-	SectorCutter sects;									//< sector cutter
+	
 };
 
 /// process xenon runs

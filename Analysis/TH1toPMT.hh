@@ -3,10 +3,11 @@
 
 #include "ProcessedDataScanner.hh"
 #include "PMTGenerator.hh"
+#include "G4toPMT.hh"
 #include <cassert>
 
 // supply event data from an input energy spectrum
-class TH1toPMT: public ProcessedDataScanner {
+class TH1toPMT: public Sim2PMT {
 public:
 	/// constructor
 	TH1toPMT(TH1* h);
@@ -16,30 +17,18 @@ public:
 	virtual unsigned int addRun(RunNum rn) { assert(false); }
 	/// add list of runs to data; return number successfully added -- NO
 	virtual unsigned int addRuns(const std::vector<RunNum>& rns) { assert(false); }
-	/// speedload, keeping track of currently loaded run number
+	/// speedload: doesn't make sense for this class
 	virtual void speedload(unsigned int e) { assert(false); }
-	/// get run number of current event
-	virtual RunNum getRun() const { return 0; }
-	
-	// ------ hijack these for our use ------ //
-	/// load next "speed scan" point
-	virtual bool nextPoint();	
-	/// start a "speed scan," possibly at a random entry number
-	virtual void startScan(unsigned int startRandom = 0);
-	
-	/// set calibrator to use for simulations
-	void setCalibrator(PMTCalibrator& PCal);
-	/// set event generation postion
-	void setPosition(float x, float y);
 	
 	TH1* mySpectrum;			//< spectrum to throw events from
-	bool stochasticEnergy;		//< whether to select energies randomly or deterministically from spectrum
 	float randomPositionRadius;	//< random event positioning radius (set <0 for fixed position)
+	float genpos[2];			//< position of simulated events
+	Side genside;				//< side to generate events on
+	unsigned int nToSim;		//< total number of events to simulate (set to 0 for random energy selection)
 	
 protected:
-	unsigned int nToSim;	//< total number of events to simulate
-	unsigned int nSimmed;	//< number of events simulated so far
-	PMTGenerator PGen[2];	//< PMT simulator for each side
+	/// select energy for simulation
+	virtual void doUnits();
 };
 
 

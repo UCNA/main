@@ -490,7 +490,7 @@ int main(int argc, char** argv) {
 			nodbout = true;
 		else if(arg=="noroot")
 			noroot = true;
-		else
+		else 
 			assert(false);
 	}
 	

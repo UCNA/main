@@ -40,6 +40,8 @@ enum AxisDirection {
 	Z_DIRECTION = 2,
 	T_DIRECTION = 3
 };
+/// iteration to next axis
+inline AxisDirection& operator++(AxisDirection& d) { return d = AxisDirection(d+1); }
 
 /// float value with an error estimate
 struct float_err {

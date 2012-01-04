@@ -1,48 +1,35 @@
 #include "TH1toPMT.hh"
+#include <TRandom3.h>
 #include <climits>
 
-TH1toPMT::TH1toPMT(TH1* h): ProcessedDataScanner("",true), mySpectrum(h), stochasticEnergy(true), randomPositionRadius(-1),
-nToSim(0), nSimmed(0) {
-	for(Side s = EAST; s <= WEST; ++s) {
-		PGen[s].setSide(s);
-		PGen[s].larmorField = 0;
-	}
-	fSide = BOTH;
+TRandom3 TH1toPMTrand;
+
+TH1toPMT::TH1toPMT(TH1* h): Sim2PMT(""), mySpectrum(h), randomPositionRadius(-1), nToSim(0) {
+	genpos[X_DIRECTION]=genpos[Y_DIRECTION]=0;
+	ePrim = costheta = eW[EAST] = eW[WEST] = 0;
 }
 
-bool TH1toPMT::nextPoint() {	
-	assert(false); // TODO put energy simulation here
-	assert(fSide==EAST || fSide==WEST);
-	assert(mySpectrum);
+void TH1toPMT::doUnits() {
+	Side offside = otherSide(genside);
 	if(randomPositionRadius>=0) {
-		assert(false);
+		// select random event position in circle
+		genpos[X_DIRECTION]=genpos[Y_DIRECTION]=randomPositionRadius;
+		while(genpos[X_DIRECTION]*genpos[X_DIRECTION]+genpos[Y_DIRECTION]*genpos[Y_DIRECTION] > randomPositionRadius*randomPositionRadius) {
+			genpos[X_DIRECTION] = TH1toPMTrand.Uniform(-randomPositionRadius,randomPositionRadius);
+			genpos[Y_DIRECTION] = TH1toPMTrand.Uniform(-randomPositionRadius,randomPositionRadius);
+		}
 	}
-	float en = 0;
-	if(stochasticEnergy) {
-		en = mySpectrum->GetRandom();
+	for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
+		// set event position
+		primPos[d] = scintPos[genside][d] = mwpcPos[genside][d] = wires[genside][d].center = genpos[d];
+		scintPos[offside][d] = mwpcPos[offside][d] = wires[offside][d].center = 0;
+	}
+	// set event energy randomly selected from histogram
+	if(!nToSim) { 
+		eDep[genside] = eQ[genside] = mySpectrum->GetRandom();
 	} else {
-		assert(false);
+		assert(false); // TODO deterministic energy selections
 	}
-	scints[fSide] = PGen[fSide].generate(en);
-	if(PGen[fSide].triggered()) {
-		fPID = PID_BETA;
-		fType = TYPE_0_EVENT;
-	} else {
-		fPID = PID_SINGLE;
-		fType = TYPE_IV_EVENT;
-	}
-	nSimmed++;
-	return nSimmed<nToSim;
-}
-
-void TH1toPMT::startScan(unsigned int startRandom) {
-	if(startRandom) nToSim = startRandom;
-	else nToSim = INT_MAX;
-	nSimmed = 0;
-}
-
-void TH1toPMT::setCalibrator(PMTCalibrator& PCal) {
-	for(Side s = EAST; s <= WEST; ++s)
-		PGen[s].setCalibrator(&PCal);
-	ActiveCal = &PCal;
+	eW[genside] = 1.0;
+	eW[offside] = eDep[offside] = eQ[offside] = 0;
 }

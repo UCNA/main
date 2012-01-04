@@ -60,6 +60,12 @@ void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) 
 	process_xenon(r0,r1,nr);
 }
 
+void mi_EndpointStudySim(std::deque<std::string>&, std::stack<std::string>& stack) {
+	RunNum r1 = streamInteractor::popInt(stack);
+	RunNum r0 = streamInteractor::popInt(stack);
+	simulate_xenon(r0,r1);
+}
+
 void mi_EndpointEnresPlot(std::deque<std::string>&, std::stack<std::string>&) {
 	assert(false); //TODO
 	//RunNum r0 = streamInteractor::popInt(stack);
@@ -226,6 +232,9 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	pm_posmap.addArg("Start Run");
 	pm_posmap.addArg("End Run");
 	pm_posmap.addArg("n Rings","12");
+	inputRequester pm_posmap_sim("Simulate Position Map",&mi_EndpointStudySim);
+	pm_posmap_sim.addArg("Start Run");
+	pm_posmap_sim.addArg("End Run");
 	inputRequester pm_mi2("Energy Resolution Plots",&mi_EndpointEnresPlot);
 	pm_mi2.addArg("Run Number");
 	inputRequester pm_mi5("Verify calibration assignments",&mi_VerifyCalperiods);
@@ -252,6 +261,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
 	PostRoutines.addChoice(&pm_posmap,"pmap");
+	PostRoutines.addChoice(&pm_posmap_sim,"pmsim");
 	PostRoutines.addChoice(&pm_mi2);	
 	PostRoutines.addChoice(&pm_mi5);
 	PostRoutines.addChoice(&plotGMS);

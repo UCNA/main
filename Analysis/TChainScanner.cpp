@@ -25,6 +25,11 @@ int TChainScanner::addFile(const std::string& filename) {
 }
 
 void TChainScanner::startScan(unsigned int startRandom) { 
+	if(!nEvents) {
+		printf("Starting scan with no data... ");
+		fflush(stdout);
+		return;
+	}
 	if(startRandom) {
 		if(!currentEvent) {
 			srand(time(NULL));	// random random seed
@@ -62,6 +67,7 @@ void TChainScanner::speedload(unsigned int e) {
 }
 
 bool TChainScanner::nextPoint() {
+	if(!nEvents) return false;
 	++currentEvent;
 	if(currentEvent >= nEvents) {
 		printf("\n");

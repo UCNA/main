@@ -2,6 +2,7 @@
 #include "PathUtils.hh"
 #include "CalDBSQL.hh"
 #include "CalDBFake.hh"
+#include "UCNAException.hh"
 #include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,6 +47,21 @@ void ProcessedDataScanner::display() {
 	}
 }
 
+Stringmap ProcessedDataScanner::evtInfo() {
+	Stringmap m;
+	m.insert("EvtN",currentEvent);
+	for(Side s = EAST; s <= WEST; ++s)
+		m.insert(sideSubst("EQ%c",s),scints[s].energy.x);
+	m.insert("PID",fPID);
+	m.insert("side",sideSubst("%c",fSide));
+	m.insert("type",fType);
+	if(fSide <= WEST) {
+		m.insert("x",wires[fSide][X_DIRECTION].center);
+		m.insert("y",wires[fSide][Y_DIRECTION].center);
+	}
+	return m;
+}
+
 void ProcessedDataScanner::writeCalInfo(QFile& qout, std::string tag) {
 	for(std::map<RunNum,PMTCalibrator*>::iterator it=PCals.begin(); it !=PCals.end(); it++)
 		qout.insert(tag,it->second->calSummary());
@@ -80,8 +96,10 @@ void ProcessedDataScanner::speedload(unsigned int e) {
 		if(withCals) {
 			std::map<RunNum,PMTCalibrator*>::iterator it = PCals.find(evtRun);
 			if(it == PCals.end()) {
-				printf("\n*** Bad run number for calibrations: %i at %f\n\n",evtRun,runClock.t[BOTH]);
-				assert(false);
+				UCNAException e("missingCalibration");
+				e.insert("runNum",evtRun);
+				e.insert("time",runClock.t[BOTH]);
+				throw(e);
 			}			
 			ActiveCal = it->second;
 		}

@@ -260,6 +260,7 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
 	AFPState afp = simData.getAFP();
+	printf("Loading %i events of simulated data (AFP=%i)...\n",nToSim,afp);
 	currentGV = GV_OPEN;
 	currentAFP = afp;
 	simData.startScan(nToSim);
@@ -271,7 +272,14 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
 			nSimmed+=simData.physicsWeight;
 			runCounts.add(simData.getRun(),simData.physicsWeight);
 		}
-		if(!(int(nSimmed)%(nToSim/20))) { printf("*"); fflush(stdout); }
+		if(!(int(nSimmed)%(nToSim/20))) {
+			if(nToSim>1e6) {
+				printf("* %s\n",simData.evtInfo().toString().c_str());
+			} else {
+				printf("*");
+				fflush(stdout);
+			}
+		}
 	}
 	printf("\n--Scan complete.--\n");
 	totalCounts[afp][1] += nSimmed;

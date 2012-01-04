@@ -3,6 +3,7 @@
 #include "MultiGaus.hh"
 #include "TH1toPMT.hh"
 #include "PostOfficialAnalyzer.hh"
+#include "GraphicsUtils.hh"
 #include <TStyle.h>
 
 /// convert Stringmap to SectorDat
@@ -53,7 +54,9 @@ RunAccumulator(pnt,nm,infl), sects(nr,r) {
 	qOut.insert("SectorCutter",ms);
 	
 	// set up histograms, data
+	TH2F hPositionsTemplate("hPostions","Event Positions",200,-65,65,200,-65,65);
 	for(Side s = EAST; s <= WEST; ++s) {
+		hitPos[s] = registerFGBGPair(hPositionsTemplate,AFP_OTHER,s);
 		energySpectrum[s] = registerFGBGPair("hEnergy","Combined Energy",200,-100,1200,AFP_OTHER,s);
 		energySpectrum[s].h[GV_OPEN]->SetLineColor(2+2*s);
 		for(unsigned int m=0; m<getNSectors(); m++) {
@@ -85,6 +88,7 @@ RunAccumulator(pnt,nm,infl), sects(nr,r) {
 void PositionBinner::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	const Side s = PDS.fSide;
 	if(!(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA && (s==EAST||s==WEST))) return;
+	((TH2F*)(hitPos[s].h[currentGV]))->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 	unsigned int m = getSector(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center);
 	if(m>=getNSectors()) return;
 	for(unsigned int t=0; t<nBetaTubes; t++)
@@ -97,8 +101,8 @@ void PositionBinner::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 
 void PositionBinner::calculateResults() {
 	
-	assert(runTimes.counts.size());
-	PMTCalibrator PCal(runTimes.counts.begin()->first,CalDBSQL::getCDB());
+	assert(runCounts.counts.size());
+	PMTCalibrator PCal(runCounts.counts.begin()->first,CalDBSQL::getCDB());
 	printf("\n\n---- Using Calibrator: ----\n");
 	PCal.printSummary();
 	
@@ -153,8 +157,13 @@ void PositionBinner::makePlots() {
 	drawSimulHistos(hToPlot);
 	printCanvas("hEnergy");
 	
-	// energy in each sector
+	
 	for(Side s = EAST; s <= WEST; ++s) {
+		// positions
+		hitPos[s].h[GV_OPEN]->Draw("COL");
+		drawSectors(sects,6);
+		printCanvas(sideSubst("hPos_%c",s));
+		// energy in each sector
 		for(unsigned int m=0; m<getNSectors(); m++) {
 			hToPlot.clear();
 			for(unsigned int t=0; t<nBetaTubes; t++)
@@ -170,7 +179,7 @@ void PositionBinner::makePlots() {
 
 void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	// set up output
-	OutputManager OM("NameUnused","../PostPlots/PositionMaps/");
+	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/");
 	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), 55, nrings);
 	
 	// load data from each run
@@ -189,17 +198,30 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 
 void simulate_xenon(RunNum r0, RunNum r1) {
 	// set up output
-	OutputManager OM("NameUnused","../PostPlots/PositionMaps/");
+	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/");
 	
 	// read in comparison data
-	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), 0, 0, std::string("Xenon_")+itos(r0)+"-"+itos(r1));
+	std::string readname = std::string("Xenon_")+itos(r0)+"-"+itos(r1);
+	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), 0, 0, OM.basePath+"/"+readname+"/"+readname);
 	
 	// MC data
-	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1), 0, 0); //TODO
-	
+	printf("Simulating for position map %i-%i (%g,%i)\n",r0,r1,PB.sects.r, PB.sects.n);
+	float simFactor = 4.0;
+	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1), PB.sects.r, PB.sects.n);
+	PMTCalibrator PCal(r0,CalDBSQL::getCDB());
+	for(Side s = EAST; s <= WEST; ++s) {
+		TH1toPMT t2p(PB.energySpectrum[s].h[GV_OPEN]);
+		t2p.setCalibrator(PCal);
+		t2p.setAFP(AFP_OTHER);
+		t2p.genside = s;
+		t2p.randomPositionRadius = 60.0;
+		PBM.loadSimData(t2p, simFactor*0.5*PB.getTotalCounts(AFP_OTHER, GV_OPEN));
+	}
+					 
 	// finish and output
 	PBM.calculateResults();
 	PBM.makePlots();
+	PBM.compareMCtoData(PB,simFactor);
 	PBM.write();
 	PBM.setWriteRoot(true);
 }
