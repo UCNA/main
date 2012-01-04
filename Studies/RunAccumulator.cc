@@ -264,15 +264,14 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
 	currentGV = GV_OPEN;
 	currentAFP = afp;
 	simData.startScan(nToSim);
-	float nSimmed = 0;
-	while(nSimmed<=nToSim) {
+	while(simData.nSimmed<=nToSim) {
 		simData.nextPoint();
 		fillCoreHists(simData,simData.physicsWeight);
-		if(simData.fPID==PID_BETA && simData.fType==TYPE_0_EVENT) {
-			nSimmed+=simData.physicsWeight;
-			runCounts.add(simData.getRun(),simData.physicsWeight);
+		if(double evtc = simData.simEvtCounts()) {
+			runCounts.add(simData.getRun(),evtc);
+			totalCounts[afp][1] += evtc;
 		}
-		if(!(int(nSimmed)%(nToSim/20))) {
+		if(!(int(simData.nSimmed)%(nToSim/20))) {
 			if(nToSim>1e6) {
 				printf("* %s\n",simData.evtInfo().toString().c_str());
 			} else {
@@ -282,5 +281,4 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
 		}
 	}
 	printf("\n--Scan complete.--\n");
-	totalCounts[afp][1] += nSimmed;
 }

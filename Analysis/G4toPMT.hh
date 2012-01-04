@@ -22,6 +22,8 @@ public:
 	virtual void startScan(unsigned int startRandom = 0) { nSimmed = 0; ProcessedDataScanner::startScan(startRandom); }
 	/// overrides ProcessedDataScanner::nextPoint to insert reverse-calibrations
 	virtual bool nextPoint();
+	/// whether to count this event as successfully generated
+	virtual double simEvtCounts() const { return fPID==PID_BETA && fType==TYPE_0_EVENT?physicsWeight:0; }
 	/// get event info
 	virtual Stringmap evtInfo();
 	
@@ -48,6 +50,7 @@ public:
 	double costheta;			//< primary event cos pitch angle
 	double ePrim;				//< primary event energy
 	double physicsWeight;		//< event spectrum re-weighting factor
+	unsigned int nToSim;		//< total number of events to simulate (set to 0 for random energy selection)
 	unsigned int nSimmed;		//< number of events simulated since scan start
 	
 protected:

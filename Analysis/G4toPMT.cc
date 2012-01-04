@@ -7,7 +7,7 @@
 TRandom3 mc_rnd_source;	
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
-reSimulate(true), afp(AFP_OTHER) {
+reSimulate(true), nToSim(0), nSimmed(0), afp(AFP_OTHER) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		PGen[s].larmorField = 0;
@@ -41,7 +41,7 @@ bool Sim2PMT::nextPoint() {
 	bool np = ProcessedDataScanner::nextPoint();
 	reverseCalibrate();
 	calcReweight();
-	nSimmed++;
+	nSimmed+=simEvtCounts();
 	return np;
 }
 

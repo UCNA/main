@@ -1,10 +1,8 @@
 #include "TH1toPMT.hh"
-#include <TRandom3.h>
+#include "GraphUtils.hh"
 #include <climits>
 
-TRandom3 TH1toPMTrand;
-
-TH1toPMT::TH1toPMT(TH1* h, PosGen* P): Sim2PMT(""), mySpectrum(h), PG(P), nToSim(0) {
+TH1toPMT::TH1toPMT(TH1* h, PosGen* P): Sim2PMT(""), mySpectrum(h), PG(P) {
 	assert(PG);
 	ePrim = costheta = eW[EAST] = eW[WEST] = 0;
 }
@@ -21,7 +19,7 @@ void TH1toPMT::doUnits() {
 	if(!nToSim) { 
 		eDep[genside] = eQ[genside] = mySpectrum->GetRandom();
 	} else {
-		assert(false); // TODO deterministic energy selections
+		eDep[genside] = eQ[genside] = invCDF(mySpectrum,double(nSimmed)/double(nToSim));
 	}
 	eW[genside] = 1.0;
 	eW[offside] = eDep[offside] = eQ[offside] = 0;

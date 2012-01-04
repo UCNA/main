@@ -220,7 +220,7 @@ void simulate_xenon(RunNum r0, RunNum r1) {
 	
 	// MC data
 	printf("Simulating for position map %i-%i (%g,%i)\n",r0,r1,PB.sects.r, PB.sects.n);
-	float simFactor = 4.0;
+	float simFactor = 1.0;
 	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1), PB.sects.r, PB.sects.n);
 	PMTCalibrator PCal(r0,CalDBSQL::getCDB());
 	SectPosGen SPG(PB.sects);
@@ -232,7 +232,8 @@ void simulate_xenon(RunNum r0, RunNum r1) {
 		for(unsigned int m=0; m<PB.sects.nSectors(); m++) {
 			printf("Simulating sector %c%i...\n",sideNames(s),m);
 			SPG.m = m;
-			PBM.loadSimData(t2p, simFactor*0.5*PB.getTotalCounts(AFP_OTHER, GV_OPEN)*SPG.sects.sectorArea(m)/SPG.sects.totalArea());
+			t2p.nToSim=simFactor*0.5*PB.getTotalCounts(AFP_OTHER, GV_OPEN)*SPG.sects.sectorArea(m)/SPG.sects.totalArea();
+			PBM.loadSimData(t2p,t2p.nToSim);
 		}
 	}
 					 

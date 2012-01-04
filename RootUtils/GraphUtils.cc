@@ -222,3 +222,15 @@ TGraphErrors* interpolate(TGraphErrors& tg, float dx) {
 	return gout;
 }
 
+double invCDF(TH1* h, double p) {
+	assert(h);
+	unsigned int nbins = h->GetNbinsX()-2;
+	if(p<=0) return 0;
+	if(p>=1) return h->GetBinLowEdge(nbins+1);
+	Double_t* cdf = h->GetIntegral();
+	unsigned int mybin = std::upper_bound(cdf,cdf+nbins,p)-cdf;
+	assert(mybin>0);
+	assert(mybin<=nbins);
+	double l = (p-cdf[mybin-1])/(cdf[mybin]-cdf[mybin-1]);
+	return h->GetBinLowEdge(mybin)*(1.0-l)+h->GetBinLowEdge(mybin+1)*l;
+}
