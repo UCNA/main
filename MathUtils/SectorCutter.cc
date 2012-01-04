@@ -1,5 +1,5 @@
 #include "SectorCutter.hh"
-
+#include <algorithm>
 
 SectorCutter::SectorCutter(unsigned int N, float R): n(N), r(R) {
 	cumdivs.push_back(0);
@@ -31,12 +31,8 @@ unsigned int SectorCutter::sector(float x, float y) const {
 }
 
 unsigned int SectorCutter::getRing(unsigned int s) const {
-	// TODO efficiently
-	unsigned int n0;
-	for(n0=0; n0<n; n0++)
-		if(s < cumdivs[n0+1])
-			break;
-	return n0;
+	std::vector<unsigned int>::const_iterator it = std::upper_bound(cumdivs.begin(),cumdivs.end(),s);
+	return int(it-cumdivs.begin())-1;
 }
 
 void SectorCutter::sectorCenter(unsigned int s, float& x, float& y) const {
