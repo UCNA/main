@@ -46,19 +46,18 @@ public:
 	
 	fgbgPair energySpectrum[2];							//< combined energy spectrum, each side
 	fgbgPair hitPos[2];									//< hit positions on each side
+	std::vector<SectorDat> sectDat[2][nBetaTubes];		//< processed data for each sector
 	SectorCutter sects;									//< sector cutter
 	
 protected:
 	std::vector<fgbgPair> sectEnergy[2][nBetaTubes];	//< visible light histograms by position, PMT
-	std::vector<SectorDat> sectDat[2][nBetaTubes];		//< processed data for each sector
 	std::vector<fgbgPair> sectAnode[2];					//< anode histograms by position
-	
 };
 
 /// process xenon runs
 void process_xenon(RunNum r0, RunNum r1, unsigned int nrings);
 
 /// compare xenon to simulation
-void simulate_xenon(RunNum r0, RunNum r1);
+void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle=0);
  
 #endif

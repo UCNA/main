@@ -245,6 +245,8 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 	unsigned int nScanned = 0;
 	while(PDS.nextPoint()) {
 		nScanned++;
+		if(PDS.withCals)
+			PDS.recalibrateEnergy();
 		if(PDS.fPID==PID_BETA && PDS.fType==TYPE_0_EVENT) {
 			runCounts.add(PDS.getRun(),1.0);
 			totalCounts[afp][gv]++;

@@ -4,7 +4,7 @@
 PositioningInterpolator::PositioningInterpolator(const PosmapInfo& PMI):
 S(PMI.nRings,PMI.radius), sRadial(BC_DERIVCLAMP_ZERO), L(&sRadial, PMI.radius*(1.0+1.0/(2*PMI.nRings-1.0)), 0) {
 	
-	assert(PMI.adc.size() == S.nSectors());
+	assert(PMI.signal.size() == S.nSectors());
 	
 	// set up sequences/interpolators
 	for(unsigned int n=0; n<PMI.nRings; n++) {
@@ -16,7 +16,7 @@ S(PMI.nRings,PMI.radius), sRadial(BC_DERIVCLAMP_ZERO), L(&sRadial, PMI.radius*(1
 	
 	// load data points
 	for(unsigned int i=0; i<S.nSectors(); i++)
-		phiSeqs[S.getRing(i)]->addPoint(PMI.adc[i]/PMI.energy[i]);
+		phiSeqs[S.getRing(i)]->addPoint(PMI.signal[i]/PMI.norm[i]);
 	
 }
 
@@ -63,8 +63,8 @@ PositioningCorrector::PositioningCorrector(QFile& qin) {
 			pmi.t = t;
 			pmi.nRings = nRings;
 			pmi.radius = radius;
-			pmi.adc.resize(S.nSectors());
-			pmi.energy.resize(S.nSectors());
+			pmi.signal.resize(S.nSectors());
+			pmi.norm.resize(S.nSectors());
 			pinf.push_back(pmi);
 		}
 	}
@@ -79,8 +79,8 @@ PositioningCorrector::PositioningCorrector(QFile& qin) {
 		float z = it->getDefault("light",1.0);
 		float z0 = it->getDefault("energy",1.0);
 		assert(t<nBetaTubes && n<S.nSectors());
-		pinf[nBetaTubes*s+t].adc[n] = z;
-		pinf[nBetaTubes*s+t].energy[n] = z0;
+		pinf[nBetaTubes*s+t].signal[n] = z;
+		pinf[nBetaTubes*s+t].norm[n] = z0;
 	}
 	
 	initPIs(pinf);

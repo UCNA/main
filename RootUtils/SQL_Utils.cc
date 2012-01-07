@@ -68,6 +68,19 @@ float SQLHelper::fieldAsFloat(TSQLRow* row, unsigned int fieldnum, float dflt) {
 	return atof(s.c_str());
 }
 
+int SQLHelper::getInsertID() {
+	sprintf(query,"SELECT LAST_INSERT_ID()");
+	Query();
+	TSQLRow* r = getFirst();
+	if(!r)
+		throw(UCNAException("failedInsert"));
+	int rid = fieldAsInt(r,0);
+	delete(r);
+	if(!rid)
+		throw(UCNAException("failedInsert"));
+	return rid;	
+}
+
 void SQLHelper::printResult() {
 	TSQLRow* row;
 	while( (row = res->Next()) ) {

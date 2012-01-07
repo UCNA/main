@@ -66,22 +66,6 @@ def getGraph(conn,gid):
 	conn.execute("SELECT x_value,x_error,y_value,y_error FROM graph_points WHERE graph_id = %i"%gid)
 	return conn.fetchall()
 
-# delete a posmap
-def delete_posmap(conn,pmid):
-	print "Deleting posmap",pmid
-	conn.execute("SELECT linearity_graph FROM posmap_info WHERE posmap_set_id = %i"%pmid)
-	for i in conn.fetchall():
-		if i[0]:
-			delete_graph(conn,i[0])
-	conn.execute("DELETE FROM posmap_info WHERE posmap_set_id = %i"%pmid)
-	conn.execute("DELETE FROM posmap_points WHERE posmap_set_id = %i"%pmid)
-
-# delete all posmaps
-def delete_all_posmaps(conn):
-	conn.execute("SELECT DISTINCT posmap_set_id FROM posmap_info")
-	for i in conn.fetchall():
-		delete_posmap(conn,i[0])
-
 # delete a run monitor		
 def delete_run_monitor(conn,rmid):
 	conn.execute("SELECT center_graph_id,width_graph_id FROM run_monitors WHERE monitor_id = %i"%rmid)	

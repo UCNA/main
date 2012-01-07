@@ -157,31 +157,42 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 	printf("Loading positioning corrector %i...\n",psid);
 	std::vector<PosmapInfo> pinf;
 	TSQLRow* r;
+	sprintf(query,"SELECT n_rings,radius FROM posmap_set WHERE posmap_set_id = %i",psid);
+	r = getFirst();
+	if(!r) {
+		UCNAException e("badPosmapID");
+		e.insert("pmid",psid);
+		throw(e);
+	}
+	unsigned int nrings = fieldAsInt(r,0);
+	float radius = fieldAsFloat(r,1);
+	delete(r);
+	
 	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			sprintf(query,"SELECT n_rings,radius FROM posmap_info WHERE posmap_set_id = %i AND side = %s AND quadrant = %i",psid,dbSideName(s),t);
-			r = getFirst();
-			if(!r)
-				continue;
+			sprintf(query,
+					"SELECT signal,norm FROM posmap_points WHERE posmap_set_id = %i AND side = %s AND quadrant = %i ORDER BY pixel_id ASC",
+					psid,dbSideName(s),t);
+			Query();
+			if(!res) {
+				UCNAException e("badPosmapID");
+				e.insert("pmid",psid);
+				e.insert("side",sideSubst("%c",s));
+				e.insert("tube",t);
+				throw(e);
+			}	
 			pinf.push_back(PosmapInfo());
 			pinf.back().s = s;
 			pinf.back().t = t;
-			pinf.back().nRings = fieldAsInt(r,0);
-			pinf.back().radius = fieldAsFloat(r,1);
-			delete(r);
-			sprintf(query,
-					"SELECT endpoint_adc,smear_correction FROM posmap_points WHERE posmap_set_id = %i AND side = %s AND quadrant = %i ORDER BY pixel_id ASC",
-					psid,dbSideName(s),t);
-			Query();
-			if(!res)
-				return NULL;
+			pinf.back().nRings = nrings;
+			pinf.back().radius = radius;
 			while((r = res->Next())) {
-				pinf.back().adc.push_back(fieldAsFloat(r,0));
-				pinf.back().energy.push_back(fieldAsFloat(r,1));
+				pinf.back().signal.push_back(fieldAsFloat(r,0));
+				pinf.back().norm.push_back(fieldAsFloat(r,1));
 				delete(r);
 			}
 			// delete entries with no data points
-			if(!pinf.back().adc.size())
+			if(!pinf.back().signal.size())
 				pinf.pop_back();
 		}
 	}
@@ -540,14 +551,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 unsigned int CalDBSQL::newGraph(const std::string& description) {
 	sprintf(query,"INSERT INTO graphs (text_description) VALUES ('%s')",description.c_str());
 	execute();
-	sprintf(query,"SELECT LAST_INSERT_ID()");
-	Query();
-	TSQLRow* r = getFirst();
-	if(!r)
-		throw(UCNAException("failedInsert"));
-	int gid = fieldAsInt(r,0);
-	delete(r);
-	return gid;
+	return getInsertID();
 }
 
 void CalDBSQL::deleteGraph(unsigned int gid) {
@@ -643,3 +647,57 @@ void CalDBSQL::addRunMonitor(RunNum rn, const std::string& sensorName, const std
 	execute();
 }
 
+unsigned int CalDBSQL::newPosmap(const std::string& descrip, unsigned int nrings, double radius) {
+	assert(descrip.size()<1024);
+	sprintf(query,"INSERT INTO posmap_set(descrip,n_rings,radius) VALUES ('%s',%i,%g)",descrip.c_str(),nrings,radius);
+	execute();
+	return getInsertID();
+}
+
+void CalDBSQL::addPosmapPoint(unsigned int pmid, Side s, unsigned int t, unsigned int n, double sig, double norm, double x, double y) {
+	Stringmap m;
+	m.insert("posmap_set_id",pmid);
+	m.insert("side",sideSubst("'%s'",s));
+	m.insert("quadrant",t);
+	m.insert("pixel_id",n);
+	m.insert("signal",sig);
+	m.insert("norm",norm);
+	m.insert("center_x",x);
+	m.insert("center_y",y);
+	sprintf(query,"INSERT INTO posmap_points%s",sm2insert(m).c_str());
+	execute();
+}
+
+void CalDBSQL::listPosmaps() {
+	sprintf(query,"SELECT posmap_set_id,n_rings,radius,descrip FROM posmap_set WHERE 1 ORDER BY posmap_set_id");
+	Query();
+	TSQLRow* r;
+	printf("----- Position Maps -----\n");
+	while((r = res->Next())) {
+		printf("[%i] n=%i,r=%g '%s'\n",fieldAsInt(r,0),fieldAsInt(r,1),fieldAsFloat(r,2),fieldAsString(r,3).c_str());
+		delete(r);
+	}
+	printf("-------------------------\n");
+}
+
+void CalDBSQL::deletePosmap(unsigned int pmid) {
+	sprintf(query,"SELECT COUNT(*) FROM energy_calibration WHERE posmap_set_id=%i",pmid);
+	TSQLRow* r = getFirst();
+	assert(r);
+	unsigned int ncals = fieldAsInt(r,0);
+	delete(r);
+	sprintf(query,"SELECT COUNT(*) FROM anode_cal WHERE anode_posmap_id=%i",pmid);
+	r = getFirst();
+	assert(r);
+	ncals += fieldAsInt(r,0);
+	delete(r);	
+	if(ncals) {
+		printf("Posmap %i in use by %i calibrations; deletion forbidden!\n",pmid,ncals);
+		return;
+	}
+	printf("Deleting position map %i...\n",pmid);
+	sprintf(query,"DELETE FROM posmap_set WHERE posmap_set_id = %i",pmid);
+	execute();
+	sprintf(query,"DELETE FROM posmap_points WHERE posmap_set_id = %i",pmid);
+	execute();
+}

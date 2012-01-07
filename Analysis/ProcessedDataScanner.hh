@@ -76,13 +76,13 @@ public:
 	float fiducialRadius;		//< radius for position cut
 	
 	TagCounter<RunNum>	runTimes;	//< times for each run loaded
+	bool withCals;					//< whether to use energy recalibrators
 	
 protected:
 	
 	/// generate event classification flags
 	virtual void calcEventFlags() {}
 	
-	bool withCals;							//< whether to use energy recalibrators
 	CalDB* CDB;								//< calibrations DB
 	std::vector<RunNum> runlist;			//< list of loaded runs
 	std::map<RunNum,PMTCalibrator*> PCals;	//< calibrators for each run

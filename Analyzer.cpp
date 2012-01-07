@@ -12,7 +12,6 @@
 #include "PlotMakers.hh"
 #include "PMTGenerator.hh"
 #include "ReSource.hh"
-#include "RData.hh"
 #include "G4toPMT.hh"
 
 
@@ -61,9 +60,10 @@ void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) 
 }
 
 void mi_EndpointStudySim(std::deque<std::string>&, std::stack<std::string>& stack) {
+	RunNum rsingle = streamInteractor::popInt(stack);
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
-	simulate_xenon(r0,r1);
+	simulate_xenon(r0,r1,rsingle);
 }
 
 void mi_EndpointEnresPlot(std::deque<std::string>&, std::stack<std::string>&) {
@@ -75,7 +75,7 @@ void mi_EndpointEnresPlot(std::deque<std::string>&, std::stack<std::string>&) {
 void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	unsigned int pmid = streamInteractor::popInt(stack);
 	if(CalDBSQL::getCDB()->isValid(13883)) {
-		OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/Eta/Posmap_"+itos(pmid));
+		OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Posmap_"+itos(pmid));
 		etaPlot(OM,CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),pmid<1000,pmid<1000?2.5:250);
 	} else {
 		printf("Invalid CalDB!\n");
@@ -114,6 +114,15 @@ void mi_PlotGMS(std::deque<std::string>&, std::stack<std::string>& stack) {
 void mi_dumpPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int pnum = streamInteractor::popInt(stack);
 	dumpPosmap(getEnvSafe("UCNA_ANA_PLOTS")+"/PosmapDump/",pnum);
+}
+
+void mi_delPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
+	int pnum = streamInteractor::popInt(stack);
+	CalDBSQL::getCDB(false)->deletePosmap(pnum);
+}
+
+void mi_listPosmaps(std::deque<std::string>&, std::stack<std::string>&) {
+	CalDBSQL::getCDB()->listPosmaps();
 }
 
 void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -227,7 +236,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	selectRuntype.addChoice("GMS Reference Runs","ref");
 	selectRuntype.setDefault("all");
 		
-	// postprocessing/plots routines
+	// position map routines and menu
 	inputRequester pm_posmap("Generate Position Map",&mi_EndpointStudy);
 	pm_posmap.addArg("Start Run");
 	pm_posmap.addArg("End Run");
@@ -235,6 +244,24 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	inputRequester pm_posmap_sim("Simulate Position Map",&mi_EndpointStudySim);
 	pm_posmap_sim.addArg("Start Run");
 	pm_posmap_sim.addArg("End Run");
+	pm_posmap_sim.addArg("Single Run","0");
+	inputRequester posmapLister("List Posmaps",&mi_listPosmaps);
+	inputRequester posmapPlot("Plot Position Map",&mi_PosmapPlot);
+	posmapPlot.addArg("Posmap ID");
+	inputRequester posmapDumper("Dump Posmap",&mi_dumpPosmap);
+	posmapDumper.addArg("Posmap ID");
+	inputRequester posmapDel("Delete Posmap",&mi_delPosmap);
+	posmapDel.addArg("Posmap ID");
+	OptionsMenu PMapR("Position Map Routines");
+	PMapR.addChoice(&pm_posmap,"gen");
+	PMapR.addChoice(&pm_posmap_sim,"sim");
+	PMapR.addChoice(&posmapLister,"ls");
+	PMapR.addChoice(&posmapPlot,"plot");
+	PMapR.addChoice(&posmapDumper,"dump");
+	PMapR.addChoice(&posmapDel,"del");
+	PMapR.addChoice(&exitMenu,"x");
+	
+	// postprocessing/plots routines
 	inputRequester pm_mi2("Energy Resolution Plots",&mi_EndpointEnresPlot);
 	pm_mi2.addArg("Run Number");
 	inputRequester pm_mi5("Verify calibration assignments",&mi_VerifyCalperiods);
@@ -244,15 +271,10 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	plotGMS.addArg("End Run");
 	plotGMS.addArg("","",&selectRuntype);
 	
-	inputRequester posmapPlot("Plot Position Map",&mi_PosmapPlot);
-	posmapPlot.addArg("Posmap ID");
-	
 	inputRequester nPEPlot("Plot nPE/MeV",&mi_nPEPlot);
 	nPEPlot.addArg("Run Number");
 	
-	inputRequester posmapDumper("Dump Posmap",&mi_dumpPosmap);
-	posmapDumper.addArg("Posmap ID");
-	
+		
 	inputRequester octetProcessor("Process Octet",&mi_processOctet);
 	octetProcessor.addArg("Octet number");
 	
@@ -260,14 +282,10 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
-	PostRoutines.addChoice(&pm_posmap,"pmap");
-	PostRoutines.addChoice(&pm_posmap_sim,"pmsim");
 	PostRoutines.addChoice(&pm_mi2);	
 	PostRoutines.addChoice(&pm_mi5);
 	PostRoutines.addChoice(&plotGMS);
-	PostRoutines.addChoice(&posmapPlot);
 	PostRoutines.addChoice(&nPEPlot);
-	PostRoutines.addChoice(&posmapDumper,"dpm");
 	PostRoutines.addChoice(&octetProcessor,"oct");
 	PostRoutines.addChoice(&specialJunk,"spec");
 	PostRoutines.addChoice(&exitMenu,"x");	
@@ -279,6 +297,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	// main menu
 	OptionsMenu OM("Analyzer Main Menu");
+	OM.addChoice(&PMapR,"pmap");
 	OM.addChoice(&PostRoutines,"pr");
 	OM.addChoice(&postSources,"sr");
 	OM.addChoice(&exitMenu,"x");

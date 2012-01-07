@@ -115,8 +115,16 @@ public:
 	/// upload a trigger efficiency curve
 	void uploadTrigeff(RunNum rn, Side s, unsigned int t, std::vector<double> params, std::vector<double> dparams);	
 	/// delete a trigger efficiency curve
-	void deleteTrigeff(RunNum rn, Side s, unsigned int t) ;
-	
+	void deleteTrigeff(RunNum rn, Side s, unsigned int t);
+	/// list position maps
+	void listPosmaps();
+	/// add new position map set
+	unsigned int newPosmap(const std::string& descrip, unsigned int nrings, double radius);
+	/// upload position map point
+	void addPosmapPoint(unsigned int pmid, Side s, unsigned int t, unsigned int n, double sig, double norm, double x, double y);
+	/// delete a position map
+	void deletePosmap(unsigned int pmid);
+
 protected:
 	/// constructor (use CalDBSQL::getCDB() if you need access to DB)
 	CalDBSQL(const std::string& dbName = getEnvSafe("UCNADB"),

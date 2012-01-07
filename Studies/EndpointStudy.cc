@@ -5,6 +5,7 @@
 #include "PostOfficialAnalyzer.hh"
 #include "GraphicsUtils.hh"
 #include <TStyle.h>
+#include <time.h>
 
 /// convert Stringmap to SectorDat
 SectorDat sm2sd(const Stringmap& m) {
@@ -129,7 +130,7 @@ void PositionBinner::calculateResults() {
 				} else {
 					sectDat[s][t][m].low_peak = sectDat[s][t][m].low_peak_width = 0;
 				}
-
+				
 				//----------------------
 				// 915keV endpoint fit
 				//----------------------
@@ -154,10 +155,31 @@ void PositionBinner::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
 		PB->energySpectrum[s].h[GV_OPEN]->Draw("Same");
 		printCanvas(sideSubst("Comparison/hEnergy_%c",s));		
 	}
-		
-	// TODO
-	// upload as posmap
-	// load & draw posmap
+	
+	// upload posmap
+	std::string pmapname = itos(PB->runCounts.counts.begin()->first)+"-"+itos(PB->runCounts.counts.rbegin()->first)+"/"+itos(time(NULL));
+	CalDBSQL* CDBout = CalDBSQL::getCDB(false);
+	unsigned int pmid_ep = CDBout->newPosmap(std::string("Xe Endpoint ")+pmapname,sects.n,sects.r);
+	unsigned int pmid_lp = CDBout->newPosmap(std::string("Xe Low Peak ")+pmapname,sects.n,sects.r);
+	float x,y;
+	for(unsigned int m=0; m<getNSectors(); m++) {
+		sects.sectorCenter(m,x,y);
+		for(Side s=EAST; s<=WEST; ++s) {
+			for(unsigned int t=0; t<nBetaTubes; t++) {
+				CDBout->addPosmapPoint(pmid_ep,s,t,m,
+									   PB->sectDat[s][t][m].xe_ep.x*PB->sectDat[s][t][m].eta,
+									   sectDat[s][t][m].xe_ep.x,x,y);
+				CDBout->addPosmapPoint(pmid_lp,s,t,m,
+									   PB->sectDat[s][t][m].low_peak.x*PB->sectDat[s][t][m].eta,
+									   sectDat[s][t][m].low_peak.x,x,y);
+			}
+		}
+	}
+	Stringmap pmsm;
+	pmsm.insert("pmid_ep",pmid_ep);
+	pmsm.insert("pmid_lp",pmid_lp);
+	pmsm.insert("name",pmapname);
+	qOut.insert("posmap",pmsm);
 }
 
 void PositionBinner::makePlots() {
@@ -191,16 +213,36 @@ void PositionBinner::makePlots() {
 }
 
 
-void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
-	// set up output
-	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/");
-	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), 55, nrings);
+void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {	
 	
-	// load data from each run
+	double fidRadius = 52;
+	
+	// scan data from each run
+	std::vector<std::string> snames;
+	OutputManager OM1("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/SingleRuns/");
 	for(RunNum r = r0; r <= r1; r++) {
-		PostOfficialAnalyzer POA(true);
-		POA.addRun(r);
-		PB.loadProcessedData(AFP_OTHER, GV_OPEN, POA);
+		std::string singleName = std::string("Xenon_")+itos(r)+"_"+itos(nrings)+"_"+dtos(fidRadius);
+		std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
+		snames.push_back(singleName);
+		if(r0==r1 || !fileExists(prevFile+".root")) {
+			PositionBinner PB1(&OM1, singleName, fidRadius, nrings);
+			PostOfficialAnalyzer POA(true);
+			POA.addRun(r);
+			PB1.loadProcessedData(AFP_OTHER, GV_OPEN, POA);
+			PB1.write();
+			PB1.setWriteRoot(true);
+		}
+	}
+	
+	if(r0==r1) return;
+	
+	// reload data
+	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/");
+	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), fidRadius, nrings);	
+	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
+		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;
+		PositionBinner PB1(&OM1, *it, 0, 0, prevFile);
+		PB.addSegment(PB1);
 	}
 	
 	// finish and output
@@ -210,33 +252,58 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	PB.setWriteRoot(true);	
 }
 
-void simulate_xenon(RunNum r0, RunNum r1) {
-	// set up output
-	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/");
+std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB, float simFactor) {
+	std::string singleName = std::string("Xenon_")+itos(r)+"_"+itos(PB.sects.n)+"_"+dtos(PB.sects.r);
+	std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
+	if(!fileExists(prevFile+".root")) {
+		PositionBinner PBM(&OM1,singleName,PB.sects.r,PB.sects.n);
+		SectPosGen SPG(PB.sects);
+		PMTCalibrator PCal(r,CalDBSQL::getCDB());
+		for(Side s = EAST; s <= WEST; ++s) {
+			TH1toPMT t2p(PB.energySpectrum[s].h[GV_OPEN],&SPG);
+			t2p.setCalibrator(PCal);
+			t2p.setAFP(AFP_OTHER);
+			t2p.genside = s;
+			for(unsigned int m=0; m<PB.sects.nSectors(); m++) {
+				printf("Simulating sector %c%i...\n",sideNames(s),m);
+				SPG.m = m;
+				t2p.nToSim=simFactor*0.5*PB.runCounts[r]*SPG.sects.sectorArea(m)/SPG.sects.totalArea();
+				PBM.loadSimData(t2p,t2p.nToSim);
+			}
+		}
+		PBM.write();
+		PBM.setWriteRoot(true);
+	}
+	return singleName;
+}
+
+void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle) {
 	
 	// read in comparison data
+	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/");
 	std::string readname = std::string("Xenon_")+itos(r0)+"-"+itos(r1);
 	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), 0, 0, OM.basePath+"/"+readname+"/"+readname);
 	
-	// MC data
+	// MC data for each run
 	printf("Simulating for position map %i-%i (%g,%i)\n",r0,r1,PB.sects.r, PB.sects.n);
-	float simFactor = 1.0;
-	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1), PB.sects.r, PB.sects.n);
-	PMTCalibrator PCal(r0,CalDBSQL::getCDB());
-	SectPosGen SPG(PB.sects);
-	for(Side s = EAST; s <= WEST; ++s) {
-		TH1toPMT t2p(PB.energySpectrum[s].h[GV_OPEN],&SPG);
-		t2p.setCalibrator(PCal);
-		t2p.setAFP(AFP_OTHER);
-		t2p.genside = s;
-		for(unsigned int m=0; m<PB.sects.nSectors(); m++) {
-			printf("Simulating sector %c%i...\n",sideNames(s),m);
-			SPG.m = m;
-			t2p.nToSim=simFactor*0.5*PB.getTotalCounts(AFP_OTHER, GV_OPEN)*SPG.sects.sectorArea(m)/SPG.sects.totalArea();
-			PBM.loadSimData(t2p,t2p.nToSim);
-		}
+	OutputManager OM1("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/SingleRunsSim/");
+	float simFactor = 4.0;
+	if(rsingle) {
+		simulate_one_xenon(rsingle,OM1,PB,simFactor);
+		return;
 	}
-					 
+	std::vector<std::string> snames;
+	for(std::map<RunNum,double>::const_iterator rit = PB.runCounts.counts.begin(); rit != PB.runCounts.counts.end(); rit++)
+		snames.push_back(simulate_one_xenon(rit->first,OM1,PB,simFactor));
+	
+	// reload data
+	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1), PB.sects.r, PB.sects.n);
+	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
+		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;
+		PositionBinner PBM1(&OM1, *it, 0, 0, prevFile);
+		PBM.addSegment(PBM1);
+	}
+	
 	// finish and output
 	PBM.calculateResults();
 	PBM.makePlots();

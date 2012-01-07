@@ -17,8 +17,8 @@ struct PosmapInfo {
 	float radius;				//< radius of sampled area
 	Side s;						//< side this calibration applies to
 	unsigned int t;				//< tube number for this calibration
-	std::vector<float> adc;		//< adc of Kurie plot endpoint
-	std::vector<float> energy;	//< estimated energy of Kurie plot endpoint
+	std::vector<float> signal;	//< light signal at each position
+	std::vector<float> norm;	//< normalization at each position (accounting for energy resolution smearing, etc.)
 };
 
 /// r-theta interpolator for beta tube position response map

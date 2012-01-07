@@ -125,6 +125,10 @@ class LinearityCurve:
 	
 		self.slines = [l for l in slines if l.side==self.side and l.tube==self.tube]
 		pks = sort_peaks_by_type(self.slines)
+		if not pks:
+			print "\n\n*********",self.side,self.tube,"NO DATA FOUND!! ************\n\n"
+			self.cnvs=None
+			return
 		cP = rainbowDict(pks.keys())
 		adcmax = max([l.adc for l in self.slines])
 
@@ -198,6 +202,10 @@ class LinearityCurve:
 	
 		self.slines = [l for l in slines if l.side==self.side and l.tube==self.tube]
 		pks = sort_peaks_by_type(self.slines)
+		if not pks:
+			print "\n\n*********",self.side,self.tube,"NO DATA FOUND!! ************\n\n"
+			self.cnvs=None
+			return
 		cP = rainbowDict(pks.keys())
 		
 		# set up graphs
@@ -309,8 +317,9 @@ def makeCalset(conn,r0,r1,rgms,posmap,replace=False):
 	ecid = int(conn.fetchone()[0])
 	print "Added new calibration set",ecid
 	return ecid
-			
-						
+	
+	
+							
 if __name__=="__main__":
 
 	# set up output paths
@@ -323,31 +332,31 @@ if __name__=="__main__":
 	# calibration definitions:
 	#				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
 	cal_2010 = [
-				(	13883,	13894,	13890,	13879,	13964,		94,		97,			2	),	# 0 first usable data + little Xe
-				(	14104,	14116,	14111,	14077,	14380,		144,	147,		2	),	# 1	Columbus Day weekend + big Xe	
-				(	14383,	14394,	14390,	14383,	14507,		212,	215,		2	),	# 2 Oct. 15-21 week
-				(	14516,	14530,	14524,	14513,	14667,		268,	271,		2	),	# 3 Oct. 22-24 weekend
-				(	14736,	14746,	14743,	14688,	14994,		330,	333,		2	),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
-				(	15645,	15662,	15653,	15084,	15915,		437,	440,		1	),	# 5 Nov. 22-29 Thanksgiving Week
-				(	15916,	15939,	15931,	15916,	100000,		553,	555,		1	)	# 6 Post-Thanksgiving
+				(	13883,	13894,	13890,	13879,	13964,		94,		97,			27	),	# 0 first usable data + little Xe
+				(	14104,	14116,	14111,	14077,	14380,		144,	147,		27	),	# 1	Columbus Day weekend + big Xe	
+				(	14383,	14394,	14390,	14383,	14507,		212,	215,		27	),	# 2 Oct. 15-21 week
+				(	14516,	14530,	14524,	14513,	14667,		268,	271,		27	),	# 3 Oct. 22-24 weekend
+				(	14736,	14746,	14743,	14688,	14994,		330,	333,		27	),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
+				(	15645,	15662,	15653,	15084,	15915,		437,	440,		29	),	# 5 Nov. 22-29 Thanksgiving Week
+				(	15916,	15939,	15931,	15916,	100000,		553,	555,		29	)	# 6 Post-Thanksgiving
 				]
 				
 	cal_2011 = [
-				(	17233,	17249,	17238,	16983,	17279,		678,	681,		1	),	# New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+				(	17233,	17249,	17238,	16983,	17279,		678,	681,		29	),	# New Sn, Ce sources; Xenon, Betas, Dead PMT W2
 				#(17368,17359,17509,x,x),		# Beta Decay; PMT W0 missing pulser
-				(	17517,	17527,	17522,	17517,	17734,		1125,	1128,		1	),	# Calibrations for Xe; W0 pulser still dead
+				(	17517,	17527,	17522,	17517,	17734,		1125,	1128,		29	),	# Calibrations for Xe; W0 pulser still dead
 				#(	17871,	17922,	17876	),	# Big Scan; W0 pulser still dead
 				#(17903,17735,17956,x,x),		# Beta decay, long source runs
-				(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		1	),	# Old and new Cd Source; W0 pulser still dead
-				(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		1	),	# Beta decay, new In source, Xe; everything working now
-				(	18617,	18640,	18622,	18432,	100000,		1894,	1897,		1	)	# Beta decay; PMT W4 Bi pulser very low
+				(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		29	),	# Old and new Cd Source; W0 pulser still dead
+				(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		29	),	# Beta decay, new In source, Xe; everything working now
+				(	18617,	18640,	18622,	18432,	100000,		1894,	1897,		29	)	# Beta decay; PMT W4 Bi pulser very low
 				]
 
 		
 	conn = open_connection() # connection to calibrations DB
 	replace = True	# whether to replace previous calibration data
 	
-	for c in cal_2011[4:]:
+	for c in cal_2010:
 	
 		# make new calibrations set
 		ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
@@ -362,10 +371,14 @@ if __name__=="__main__":
 				LC = LinearityCurve(s,t)
 				if t<4:
 					LC.fitLinearity(slines)
+					if not LC.cnvs:
+						continue
 					LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
 					if ecid:
 						LC.dbUpload(conn,ecid,c[5+sn])
 				LC.plot_erecon(slines)
+				if not LC.cnvs:
+						continue
 				LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
 				LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
 				
