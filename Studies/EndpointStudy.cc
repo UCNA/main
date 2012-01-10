@@ -2,8 +2,10 @@
 #include "CalDBSQL.hh"
 #include "MultiGaus.hh"
 #include "TH1toPMT.hh"
+#include "KurieFitter.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "GraphicsUtils.hh"
+#include "GraphUtils.hh"
 #include <TStyle.h>
 #include <time.h>
 
@@ -145,6 +147,7 @@ void PositionBinner::calculateResults() {
 void PositionBinner::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
 	
 	PositionBinner* PB = (PositionBinner*)&OAdata;
+	defaultCanvas->cd();
 	
 	// overall energy spectrum
 	for(Side s=EAST; s<=WEST; ++s) {
@@ -187,12 +190,12 @@ void PositionBinner::makePlots() {
 	std::vector<TH1*> hToPlot;
 	
 	// overall energy spectrum
+	defaultCanvas->cd();
 	hToPlot.push_back(energySpectrum[EAST].h[GV_OPEN]);
 	hToPlot.push_back(energySpectrum[WEST].h[GV_OPEN]);
 	drawSimulHistos(hToPlot);
 	printCanvas("hEnergy");
-	
-	
+		
 	for(Side s = EAST; s <= WEST; ++s) {
 		// positions
 		hitPos[s].h[GV_OPEN]->Draw("COL");
@@ -252,10 +255,21 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	PB.setWriteRoot(true);	
 }
 
-std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB, float simFactor) {
+double avgSmear(PMTCalibrator& PCal, Side s, SectorCutter& sects) {
+	double sm = 0;
+	double e0 = 500.0;
+	float x,y;
+	for(unsigned int m=0; m<sects.nSectors(); m++) {
+		sects.sectorCenter(m,x,y);
+		sm+=PCal.nPE(s,nBetaTubes,e0,x,y)/e0;
+	}
+	return sm/sects.nSectors();
+}
+
+std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB, float simFactor, bool forceResim=false) {
 	std::string singleName = std::string("Xenon_")+itos(r)+"_"+itos(PB.sects.n)+"_"+dtos(PB.sects.r);
 	std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
-	if(!fileExists(prevFile+".root")) {
+	if(forceResim || !fileExists(prevFile+".root")) {
 		PositionBinner PBM(&OM1,singleName,PB.sects.r,PB.sects.n);
 		SectPosGen SPG(PB.sects);
 		PMTCalibrator PCal(r,CalDBSQL::getCDB());
@@ -263,6 +277,9 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 			TH1toPMT t2p(PB.energySpectrum[s].h[GV_OPEN],&SPG);
 			t2p.setCalibrator(PCal);
 			t2p.setAFP(AFP_OTHER);
+			t2p.PGen[s].presmear = avgSmear(PCal,s,PB.sects);
+			printf("Setting pre-smearing to %g PE/keV...\n",t2p.PGen[s].presmear);
+			//t2p.PGen[s].larmorField = sqrt(0.6);
 			t2p.genside = s;
 			for(unsigned int m=0; m<PB.sects.nSectors(); m++) {
 				printf("Simulating sector %c%i...\n",sideNames(s),m);
@@ -289,7 +306,7 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle) {
 	OutputManager OM1("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/SingleRunsSim/");
 	float simFactor = 4.0;
 	if(rsingle) {
-		simulate_one_xenon(rsingle,OM1,PB,simFactor);
+		simulate_one_xenon(rsingle,OM1,PB,simFactor,true);
 		return;
 	}
 	std::vector<std::string> snames;

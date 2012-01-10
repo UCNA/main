@@ -1,11 +1,7 @@
 #ifndef ENDPOINTSTUDY_HH
 #define ENDPOINTSTUDY_HH 1
 
-#include "GraphicsUtils.hh"
 #include "SectorCutter.hh"
-#include "EnergyCalibrator.hh"
-#include "PMTGenerator.hh"
-#include "KurieFitter.hh"
 #include "RunAccumulator.hh"
 
 /// data collected for each sector
