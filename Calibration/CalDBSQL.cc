@@ -196,8 +196,11 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 				pinf.pop_back();
 		}
 	}
-	assert(pinf.size() || IGNORE_DEAD_DB);
-	if(!pinf.size()) return NULL;
+	if(!pinf.size()) {
+		UCNAException e("missingPosmap");
+		e.insert("pmid",psid);
+		throw(e);
+	}
 	
 	pcors.insert(std::make_pair(psid,new PositioningCorrector(pinf)));
 	return getPositioningCorrectorByID(psid);
