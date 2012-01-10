@@ -234,3 +234,15 @@ double invCDF(TH1* h, double p) {
 	double l = (p-cdf[mybin-1])/(cdf[mybin]-cdf[mybin-1]);
 	return h->GetBinLowEdge(mybin)*(1.0-l)+h->GetBinLowEdge(mybin+1)*l;
 }
+
+void fixNaNs(TH1* h) {
+	unsigned int nb = h->GetNbinsX();
+	for(unsigned int i=0; i<nb; i++) {
+		if(!(h->GetBinContent(i)==h->GetBinContent(i))) {
+			printf("NaN found in bin %i/%i!\n",i,nb);
+			h->SetBinContent(i,0);
+			h->SetBinError(i,0);
+		}
+	}
+}
+
