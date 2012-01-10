@@ -7,7 +7,7 @@ import os
 
 sourceNames = { 1:"Sn113", 2:"Bi207", 3:"Sr85", 4:"Cd109", 7:"Sr90", 8:"In114", 9:"Ce139", 10:"Monosmuth", 11:"500keV" }
 fancySourceNames = { 1:"$^{113}$Sn", 2:"$^{207}$Bi", 3:"$^{85}$Sr", 4:"$^{109}$Cd", 7:"$^{90}$Sr", 8:"$^{114}$In", 9:"$^{139}$Ce", 10:"Monosmuth", 11:"500keV" }		
-peakNames = { 8:"$^{207}$Bi 1", 9:"$^{207}$Bi 2", 11:"$^{113}$Sn", 12:"Sr85", 13:"$^{109}$Cd", 14:"$^{114}$In", 15:"$^{139}$Ce", 16:"Monosmuth", 17:"500keV" }  
+peakNames = { 8:"$^{207}$Bi 1", 9:"$^{207}$Bi 2", 11:"$^{113}$Sn", 12:"Sr85", 13:"$^{109}$Cd", 14:"$^{114}$In", 15:"$^{139}$Ce", 16:"Monosmuth", 17:"500keV", 20:"Cs137" }  
 				
 class SourcePos:
 	"""Position of a source for a run"""

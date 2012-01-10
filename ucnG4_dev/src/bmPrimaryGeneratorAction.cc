@@ -991,6 +991,8 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		Ce139SourceGenerator(anEvent);
 	} else if(gunType=="Ce139G") {
 		Ce139GSourceGenerator(anEvent);
+	} else if(gunType=="Cs137G") {
+		Cs137GSourceGenerator(anEvent);
 	} else if(gunType=="Xe125_1/2+") {
 		Xe125_1_2p_SourceGenerator(anEvent);
 	} else if(gunType=="Xe133_11/2-") {

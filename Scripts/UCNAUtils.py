@@ -7,16 +7,6 @@ import numpy.linalg as linalg
 #from Histogram import *
 #from LinFitter import *
 from QFile import *
-
-sourceNames = { 1:"Sn113", 2:"Bi207", 3:"Sr85", 4:"Cd109", 7:"Sr90", 8:"In114", 9:"Ce139", 10:"Monosmuth", 11:"500keV" }
-fancySourceNames = { 1:"$^{113}$Sn", 2:"$^{207}$Bi", 3:"$^{85}$Sr", 4:"$^{109}$Cd", 7:"$^{90}$Sr", 8:"$^{114}$In", 9:"$^{139}$Ce", 10:"Monosmuth", 11:"500keV" }		
-peakNames = { 8:"Bi207 1", 9:"Bi207 2", 11:"Sn113", 12:"Sr85", 13:"Cd109", 14:"In114", 15:"Ce139", 16:"Monosmuth", 17:"500keV" }  
-betaSensorNames = { 'E':["ADCE3Beta","ADCE4Beta","ADCE1Beta","ADCE2Beta","ADCRefELED"], 'W':["ADCW1Beta","ADCW2Beta","ADCW3Beta","ADCW4Beta","ADCRefWLED"] }
-class PeakNum:
-	Sn = 11
-	Ce = 15
-	Bi_1 = 8
-	Bi_2 = 9
 	
 #'official analyzer' tube numbering	
 jTubes = {'E':[3,4,1,2,5],'W':[1,2,3,4,5]}

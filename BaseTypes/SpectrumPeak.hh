@@ -27,7 +27,8 @@ enum PeakType {
 	M000_PEAK	= 16,		//< imaginary Monosmuth peak
 	M500_PEAK	= 17,		//< imaginary 500keV monoenergetic peak
 	LINE_PEAK	= 18,		//< monoenergetic line peak
-	BI_COINC	= 19		//< Bi207 coincidence peak between 500 and 1000
+	BI_COINC	= 19,		//< Bi207 coincidence peak between 500 and 1000
+	CS137_PEAK	= 20		//< Cs137 ~630keV peak
 };
 
 /// location of a peak in the spectrum

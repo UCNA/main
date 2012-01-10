@@ -12,6 +12,8 @@ Float_t SpectrumPeak::energy() const {
 		return 502.6;
 	if(type==BI_PEAK_2)
 		return 1000.0;
+	if(type==CS137_PEAK)
+		return 629.;
 	if(type==M000_PEAK)
 		return 502.6;
 	if(type==M500_PEAK)
@@ -43,6 +45,8 @@ const char* SpectrumPeak::name() const {
 		return "Sr85";
 	if(type==CD109_PEAK)
 		return "Cd109";
+	if(type==CS137_PEAK)
+		return "Cs137";
 	if(type==IN114_PEAK)
 		return "In114";
 	if(type==CE139_PEAK)

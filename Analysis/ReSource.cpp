@@ -301,7 +301,7 @@ void reSource(RunNum rn) {
 		
 		if(simSource.t=="In114E" || simSource.t=="In114W")
 			simSource.t="In114";
-		if(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" || simSource.t=="Cd109" || simSource.t=="In114") {
+		if(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" || simSource.t=="Cs137" || simSource.t=="Cd109" || simSource.t=="In114") {
 			g2p = new G4toPMT();
 			g2p->addFile(g4dat+simSource.t + "G_geomC/analyzed_*.root");
 		} else if(simSource.t=="Cd113m") {
@@ -449,6 +449,8 @@ void uploadRunSources() {
 						sources[s].push_back("In114W");
 					else if(*it == "Ce")
 						sources[s].push_back("Ce139");
+					else if(*it == "Cs137")
+						sources[s].push_back("Ce137");
 				}
 			}
 		}
