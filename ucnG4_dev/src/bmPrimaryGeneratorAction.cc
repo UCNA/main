@@ -506,6 +506,39 @@ Cd113mGSourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
+// lines based on NuDat 2.6
+void bmPrimaryGeneratorAction::
+Cs137GSourceGenerator(G4Event* anEvent) {
+	
+	G4double gunEnergy;
+	
+	std::vector<G4double> electrons;
+	std::vector<G4double> gammas;
+	int selected(-1);
+	
+	// Beta spectrum
+	const double lineBeta[] =	{513.97,	1175.63};
+	const double branchBeta[] =	{94.70,		5.30};
+	gunEnergy = rand_outof_list(lineBeta, branchBeta, 2, selected);
+	funcHeavyBeta->FixParameter(0,gunEnergy);
+	funcHeavyBeta->FixParameter(1,137.);
+	funcHeavyBeta->FixParameter(2,56.);
+	electrons.push_back(funcHeavyBeta->GetRandom()*keV);
+	
+	// lines
+	if(G4UniformRand()*100. < 85.10+7.79+1.402+0.300+0.0646) {
+		// 662keV line:				gamma		CE K		CE L		CE M		CE N
+		const double line662[] =	{661.657,	624.216,	665.668,	660.364,	661.404};
+		const double branch662[] =	{85.10,		7.79,		1.402,		0.300,		0.0646};
+		gunEnergy = rand_outof_list(line662, branch662, 5, selected)*keV;
+		if(selected)
+			electrons.push_back(gunEnergy);
+		else
+			gammas.push_back(gunEnergy);
+	}
+	
+	throwElectronsAndGammas(electrons,gammas,anEvent);
+}
 
 // lines based on NuDat 2.6
 void bmPrimaryGeneratorAction::In114GSourceGenerator(G4Event* anEvent) {
