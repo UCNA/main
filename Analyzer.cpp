@@ -42,16 +42,6 @@ std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
 	return CalDBSQL::getCDB()->findRuns(tmp);
 }
 
-void mi_VerifyCalperiods(std::deque<std::string>&, std::stack<std::string>&) {
-	std::vector<RunNum> C = CalDBSQL::getCDB()->findRuns("1 ORDER BY run_number ASC");
-	printf("Runs DB contains %i runs...\n",(int)C.size());
-	for(std::vector<RunNum>::iterator it=C.begin(); it!=C.end(); it++) {
-		RunNum gmsrun = CalDBSQL::getCDB()->getGMSRun(*it);
-		if(!gmsrun)
-			printf("*** WARNING: No calibrations found for run %i!\n",gmsrun);
-	}
-}
-
 void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
 	unsigned int nr = streamInteractor::popInt(stack);
 	RunNum r1 = streamInteractor::popInt(stack);
@@ -64,12 +54,6 @@ void mi_EndpointStudySim(std::deque<std::string>&, std::stack<std::string>& stac
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
 	simulate_xenon(r0,r1,rsingle);
-}
-
-void mi_EndpointEnresPlot(std::deque<std::string>&, std::stack<std::string>&) {
-	assert(false); //TODO
-	//RunNum r0 = streamInteractor::popInt(stack);
-	//energyResolution(r0);
 }
 
 void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -85,7 +69,7 @@ void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	RunNum rn = streamInteractor::popInt(stack);
 	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
-	OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/nPE/Posmap_"+itos(rn));
+	OutputManager OM("NPE",getEnvSafe("UCNA_ANA_PLOTS")+"/nPE/Run_"+itos(rn));
 	npePlot(OM,&PCal);
 }
 
@@ -121,9 +105,7 @@ void mi_delPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
 	CalDBSQL::getCDB(false)->deletePosmap(pnum);
 }
 
-void mi_listPosmaps(std::deque<std::string>&, std::stack<std::string>&) {
-	CalDBSQL::getCDB()->listPosmaps();
-}
+void mi_listPosmaps(std::deque<std::string>&, std::stack<std::string>&) { CalDBSQL::getCDB()->listPosmaps(); }
 
 void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octn = streamInteractor::popInt(stack);
@@ -158,7 +140,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	}
 }
 
-void simulations_evis() {
+void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
 	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/Livermore/");
 	G4toPMT g2p;
 	g2p.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
@@ -169,15 +151,12 @@ void simulations_evis() {
 	OM.write();
 }
 
+void mi_sourcelog(std::deque<std::string>&, std::stack<std::string>&) { uploadRunSources(); }
+
+void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrectionsFile(getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection.txt"); }
+
 void mi_Special(std::deque<std::string>&, std::stack<std::string>&) {
-	
-	uploadRunSources();
-	return;
-	
-	simulations_evis();
-	return;
-	
-	makeCorrectionsFile(getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection.txt");
+		
 	return;	
 	
 	if(1) {
@@ -252,6 +231,8 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	posmapDumper.addArg("Posmap ID");
 	inputRequester posmapDel("Delete Posmap",&mi_delPosmap);
 	posmapDel.addArg("Posmap ID");
+	inputRequester nPEPlot("Plot nPE/MeV",&mi_nPEPlot);
+	nPEPlot.addArg("Run Number");
 	OptionsMenu PMapR("Position Map Routines");
 	PMapR.addChoice(&pm_posmap,"gen");
 	PMapR.addChoice(&pm_posmap_sim,"sim");
@@ -259,20 +240,15 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	PMapR.addChoice(&posmapPlot,"plot");
 	PMapR.addChoice(&posmapDumper,"dump");
 	PMapR.addChoice(&posmapDel,"del");
+	PMapR.addChoice(&nPEPlot,"npe");
 	PMapR.addChoice(&exitMenu,"x");
 	
-	// postprocessing/plots routines
-	inputRequester pm_mi2("Energy Resolution Plots",&mi_EndpointEnresPlot);
-	pm_mi2.addArg("Run Number");
-	inputRequester pm_mi5("Verify calibration assignments",&mi_VerifyCalperiods);
-	
+	// postprocessing/plots routines	
 	inputRequester plotGMS("Plot GMS corrections",&mi_PlotGMS);
 	plotGMS.addArg("Start Run");
 	plotGMS.addArg("End Run");
 	plotGMS.addArg("","",&selectRuntype);
 	
-	inputRequester nPEPlot("Plot nPE/MeV",&mi_nPEPlot);
-	nPEPlot.addArg("Run Number");
 	
 		
 	inputRequester octetProcessor("Process Octet",&mi_processOctet);
@@ -282,24 +258,29 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
-	PostRoutines.addChoice(&pm_mi2);	
-	PostRoutines.addChoice(&pm_mi5);
 	PostRoutines.addChoice(&plotGMS);
-	PostRoutines.addChoice(&nPEPlot);
 	PostRoutines.addChoice(&octetProcessor,"oct");
 	PostRoutines.addChoice(&specialJunk,"spec");
 	PostRoutines.addChoice(&exitMenu,"x");	
 	
-	// special run processing
-	inputRequester postSources("Reprocess Source Runs",&mi_PostprocessSources);
+	// sources
+	inputRequester postSources("Fit source data",&mi_PostprocessSources);
 	postSources.addArg("Start Run");
 	postSources.addArg("End Run");
-	
+	inputRequester uploadSources("Upload runlog sources",&mi_sourcelog);
+	// evis2etrue
+	inputRequester evis2etrue("Caluculate eVis->eTrue curves",&mi_evis2etrue);
+	// radiative corrections
+	inputRequester radcor("Make radiative corrections table",&mi_radcor);
+						  
 	// main menu
 	OptionsMenu OM("Analyzer Main Menu");
 	OM.addChoice(&PMapR,"pmap");
 	OM.addChoice(&PostRoutines,"pr");
 	OM.addChoice(&postSources,"sr");
+	OM.addChoice(&uploadSources,"us");
+	OM.addChoice(&evis2etrue,"ev");
+	OM.addChoice(&radcor,"rc");
 	OM.addChoice(&exitMenu,"x");
 	OM.addSynonym("x","exit");
 	OM.addSynonym("x","quit");
