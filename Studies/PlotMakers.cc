@@ -149,12 +149,14 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 	
 	for(Side s = EAST; s<=WEST; ++s) {
 		
-		TH2F interpogrid[nBetaTubes+1];
+		TH2F* interpogrid[nBetaTubes+1];
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			interpogrid[t] = TH2F((sideSubst("%c",s)+itos(t+1)+"_nPE").c_str(),"nPE",200,-60,60,200,-60,60);
-			interpogrid[t].SetAxisRange(0,300,"Z");
+			interpogrid[t] = OM.registeredTH2F(sideSubst("%c",s)+itos(t+1)+"_nPE",
+											   (t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" PE per MeV",
+											   200,-60,60,200,-60,60);
+			interpogrid[t]->SetAxisRange(0,300,"Z");
 			if(t==nBetaTubes)
-				interpogrid[t].SetAxisRange(0,600,"Z");
+				interpogrid[t]->SetAxisRange(0,600,"Z");
 		}
 		
 		float x,y,npe;
@@ -164,10 +166,10 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 		float gradsum = 0;
 		float nn = 0;
 		
-		for(int nx=1; nx<=interpogrid[0].GetNbinsX(); nx++) {
-			for(int ny=1; ny<=interpogrid[0].GetNbinsY(); ny++) {
-				x = interpogrid[0].GetXaxis()->GetBinCenter(nx);
-				y = interpogrid[0].GetYaxis()->GetBinCenter(ny);
+		for(int nx=1; nx<=interpogrid[0]->GetNbinsX(); nx++) {
+			for(int ny=1; ny<=interpogrid[0]->GetNbinsY(); ny++) {
+				x = interpogrid[0]->GetXaxis()->GetBinCenter(nx);
+				y = interpogrid[0]->GetYaxis()->GetBinCenter(ny);
 				for(unsigned int t=0; t<=nBetaTubes; t++) {
 					if(x*x+y*y <= r0*r0*rscale) {
 						npe = PCal->nPE(s,t,e0*s0,x,y,0)/s0;
@@ -188,7 +190,7 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 					} else {
 						npe = 0;
 					}
-					interpogrid[t].SetBinContent(nx,ny,npe);
+					interpogrid[t]->SetBinContent(nx,ny,npe);
 				}
 			}
 		}
@@ -199,9 +201,10 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 		
 		
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
+			gStyle->SetOptStat("");
 			OM.defaultCanvas->SetRightMargin(0.125);
 			OM.defaultCanvas->SetBottomMargin(0.125);
-			interpogrid[t].Draw("COL Z");
+			interpogrid[t]->Draw("COL Z");
 			drawSectors(PCal->P->getSectors(s,0),6);
 			if(dumbsum && t==nBetaTubes)
 				OM.printCanvas(sideSubst("nPE_%c_dumbsum",s));
