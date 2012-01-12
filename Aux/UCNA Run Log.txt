@@ -4266,3 +4266,89 @@
 ###
 # End of 2011 data
 ###
+
+#######################
+@cycle January 11 Xenon and Sources
+#######################
+
+*18712	Xe
+*18713	Xe
+*18714	Xe
+*18715	Xe
+*18716	Xe
+*18717	Xe
+*18718	Xe
+*18719	Xe
+*18720	Xe
+*18721	Xe
+*18722	Xe
+*18723	Xe
+*18724	Xe
+*18725	Xe
+*18726	Xe
+*18727	Xe
+*18728	Xe
+*18729	Xe
+*18730	Xe
+*18731	Xe
+*18732	Xe
+*18733	Xe
+*18734	Xe
+*18735	Xe
+*18736	Xe
+*18737	Xe
+*18738	Xe
+*18739	Xe
+*18740	Xe
+*18741	Xe
+*18742	Xe
+*18743	Xe
+*18744	Xe
+
+@sources Ce
+*18745	SourcesCal	# 0.0in W
+@sources E Ce Sn
+*18746	SourcesCal	# 0.5in
+@sources Ce Sn
+*18747	SourcesCal	# 1.0in
+@sources E Ce Sn Bi
+*18748	SourcesCal	# 1.5in
+@sources Ce Sn Bi
+*18749	SourcesCal	# 2.0in
+*18750	SourcesCal	# 2.5in
+*18751	SourcesCal	# 3.0in
+*18752	SourcesCal	# 3.5in
+@sources Sn Bi
+*18753	SourcesCal	# 4.0in
+*18754	SourcesCal	# 4.5in
+@sources Bi
+*18755	SourcesCal	# 5.0in
+*18756	SourcesCal	# 5.5in
+@sources
+
+@sources Cd113m
+*18757	SourcesCal	# 0.0in W
+@sources Cd113m InE
+*18758	SourcesCal	# 0.5in E
+@sources Cd113m InW
+*18759	SourcesCal	# 1.0in W
+@sources E Cd113m InE Cd
+@sources W Cd113m InE
+*18760	SourcesCal	# 1.5in E
+@sources Cd113m InW Cd
+*18761	SourcesCal	# 2.0in W
+@sources Cd113m InE Cd
+*18762	SourcesCal	# 2.5in E
+@sources Cd113m InW Cd
+*18763	SourcesCal	# 3.0in W
+@sources E InE Cd
+@sources W Cd113m InE Cd
+*18764	SourcesCal	# 3.5in E
+@sources InW Cd
+*18765	SourcesCal	# 4.0in W
+@sources InE Cd
+*18766	SourcesCal	# 4.5in E
+@sources Cd
+*18767	SourcesCal	# 5.0in W
+*18768	SourcesCal	# 5.0in E	
+@sources

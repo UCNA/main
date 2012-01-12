@@ -176,6 +176,7 @@ class LinearityCurve:
 		##
 		if not combodat:
 			print "****** No data found!"
+			self.fitter = (lambda x: x)
 			return
 		dmin,dmax = min([p[0] for p in combodat]),max([p[0] for p in combodat])
 		dmin=min(dmin,100)
@@ -279,10 +280,23 @@ class LinearityCurve:
 		lgid = upload_graph(conn,"Tube Linearity %s %i ID=%i"%(self.side,self.tube,ecid),lindat)
 		
 		# reference line for anchoring energy, resolution
-		refline = [l for l in self.slines if l.src.sID==refline_id][0]
-		# rescaled width to true nPE width based on simulation
-		simApparentnPE = (refline.sim.erecon/refline.sim.enwidth)**2
-		widthscale = sqrt(simApparentnPE/refline.sim.nPE)
+		reflines = [l for l in self.slines if l.src.sID==refline_id]
+		refline = SourceLine()
+		widthscale = 1.0
+		if reflines:
+			refline = reflines[0]
+			# rescaled width to true nPE width based on simulation
+			simApparentnPE = (refline.sim.erecon/refline.sim.enwidth)**2
+			widthscale = sqrt(simApparentnPE/refline.sim.nPE)
+		else:
+			print "\n\n******** Reference source",refline_id,"not found!!! Using defaults!\n"
+			raw_input("Press enter to acknowledge and continue...")
+			refline.adc=500
+			refline.adcwidth=200
+			refline.gms=1.0
+			refline.eta=1.0
+			refline.src=SourcePos(0)
+			refline.src.x=refline.src.y=0.0
 		print t,"width",refline.adcwidth,"Corrected width by",widthscale
 		
 		# upload to DB
@@ -342,21 +356,22 @@ if __name__=="__main__":
 				]
 				
 	cal_2011 = [
-				(	17233,	17249,	17238,	16983,	17279,		678,	681,		29	),	# New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+				(	17233,	17249,	17238,	16983,	17279,		678,	681,		55	),	# New Sn, Ce sources; Xenon, Betas, Dead PMT W2
 				#(17368,17359,17509,x,x),		# Beta Decay; PMT W0 missing pulser
-				(	17517,	17527,	17522,	17517,	17734,		1125,	1128,		29	),	# Calibrations for Xe; W0 pulser still dead
+				(	17517,	17527,	17522,	17517,	17734,		1125,	1128,		55	),	# Calibrations for Xe; W0 pulser still dead
 				#(	17871,	17922,	17876	),	# Big Scan; W0 pulser still dead
 				#(17903,17735,17956,x,x),		# Beta decay, long source runs
-				(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		29	),	# Old and new Cd Source; W0 pulser still dead
-				(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		29	),	# Beta decay, new In source, Xe; everything working now
-				(	18617,	18640,	18622,	18432,	100000,		1894,	1897,		29	)	# Beta decay; PMT W4 Bi pulser very low
+				(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		55	),	# Old and new Cd Source; W0 pulser still dead
+				(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		55	),	# Beta decay, new In source, Xe; everything working now
+				(	18617,	18640,	18622,	18432,	18683,		1894,	1897,		55	),	# Beta decay; PMT W4 Bi pulser very low
+				(	18745,	18768,	18750,	18712,	100000,		2113,	2116,		59	)	# Start of 2012; PMT W4 pulser still low
 				]
 
 		
 	conn = open_connection() # connection to calibrations DB
 	replace = True	# whether to replace previous calibration data
 	
-	for c in cal_2010:
+	for c in cal_2011[-1:]:
 	
 		# make new calibrations set
 		ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
@@ -371,9 +386,8 @@ if __name__=="__main__":
 				LC = LinearityCurve(s,t)
 				if t<4:
 					LC.fitLinearity(slines)
-					if not LC.cnvs:
-						continue
-					LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
+					if LC.cnvs:
+						LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
 					if ecid:
 						LC.dbUpload(conn,ecid,c[5+sn])
 				LC.plot_erecon(slines)
