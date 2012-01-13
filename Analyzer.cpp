@@ -5,7 +5,7 @@
 #include "ControlMenu.hh"
 #include "PathUtils.hh"
 #include "PositionResponse.hh"
-#include "PositionStudies.hh"
+#include "WirechamberStudy.hh"
 #include "AsymmetryAnalyzer.hh"
 #include "EndpointStudy.hh"
 #include "PostOfficialAnalyzer.hh"
@@ -54,6 +54,13 @@ void mi_EndpointStudySim(std::deque<std::string>&, std::stack<std::string>& stac
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
 	simulate_xenon(r0,r1,rsingle);
+}
+
+void mi_WirechamberStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
+	unsigned int nr = streamInteractor::popInt(stack);
+	RunNum r1 = streamInteractor::popInt(stack);
+	RunNum r0 = streamInteractor::popInt(stack);
+	runWirechamberAnalyzer(r0,r1,nr);
 }
 
 void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -155,43 +162,6 @@ void mi_sourcelog(std::deque<std::string>&, std::stack<std::string>&) { uploadRu
 
 void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrectionsFile(getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection.txt"); }
 
-void mi_Special(std::deque<std::string>&, std::stack<std::string>&) {
-		
-	return;	
-	
-	if(1) {
-		RunNum rmin = 15991; //14264;
-		RunNum rmax = 16077; //14347;
-		OutputManager OM("AnodeCal",std::string("../PostPlots/AnodeCal_")+itos(rmin)+"_"+itos(rmax));
-		PostOfficialAnalyzer POA(true);
-		for(unsigned int i=rmin; i<=rmax; i++)
-			POA.addRun(i);
-		AnodeCalibration(POA,OM,12);
-		return;
-	}
-	
-	if(0) {
-		OutputManager OM("SimAnodeCal","../PostPlots/SimAnodeCal/");
-		G4toPMT g2p;
-		g2p.addFile("/home/mmendenhall/geant4/output/Baseline_20110914_uniformRandMomentum_geomC/analyzed_*.root");
-		
-		PMTCalibrator PCal(16000,CalDBSQL::getCDB());
-		g2p.setCalibrator(PCal);
-		
-		AnodeCalibration(g2p,OM,1);
-		return;
-	}
-	
-	if(0) {
-		OutputManager OM("CathodeCal","../PostPlots/CathodeCal_14269_14270/");
-		PostOfficialAnalyzer POA(true);
-		for(unsigned int i=14264; i<=14269; i++)
-			POA.addRun(i);
-		CathodeCalibration(POA,OM);
-		return;
-	}
-}
-
 void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	gStyle->SetPalette(1);
@@ -249,18 +219,13 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	plotGMS.addArg("End Run");
 	plotGMS.addArg("","",&selectRuntype);
 	
-	
-		
 	inputRequester octetProcessor("Process Octet",&mi_processOctet);
 	octetProcessor.addArg("Octet number");
-	
-	inputRequester specialJunk("Special Junk",&mi_Special);
-	
+		
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
 	PostRoutines.addChoice(&plotGMS);
 	PostRoutines.addChoice(&octetProcessor,"oct");
-	PostRoutines.addChoice(&specialJunk,"spec");
 	PostRoutines.addChoice(&exitMenu,"x");	
 	
 	// sources
@@ -272,7 +237,12 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	inputRequester evis2etrue("Caluculate eVis->eTrue curves",&mi_evis2etrue);
 	// radiative corrections
 	inputRequester radcor("Make radiative corrections table",&mi_radcor);
-						  
+	// wirechamber calibration
+	inputRequester anawc("Gather wirechamber calibration data",&mi_WirechamberStudy);
+	anawc.addArg("Start Run");
+	anawc.addArg("End Run");
+	anawc.addArg("n Rings","6");
+	
 	// main menu
 	OptionsMenu OM("Analyzer Main Menu");
 	OM.addChoice(&PMapR,"pmap");
@@ -281,6 +251,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OM.addChoice(&uploadSources,"us");
 	OM.addChoice(&evis2etrue,"ev");
 	OM.addChoice(&radcor,"rc");
+	OM.addChoice(&anawc,"wc");
 	OM.addChoice(&exitMenu,"x");
 	OM.addSynonym("x","exit");
 	OM.addSynonym("x","quit");

@@ -62,7 +62,7 @@ RunAccumulator(pnt,nm,infl), sects(nr,r) {
 		hitPos[s] = registerFGBGPair(hPositionsTemplate,AFP_OTHER,s);
 		energySpectrum[s] = registerFGBGPair("hEnergy","Combined Energy",200,-100,1200,AFP_OTHER,s);
 		energySpectrum[s].h[GV_OPEN]->SetLineColor(2+2*s);
-		for(unsigned int m=0; m<getNSectors(); m++) {
+		for(unsigned int m=0; m<sects.nSectors(); m++) {
 			sectAnode[s].push_back(registerFGBGPair(std::string("hAnode_Sector_")+itos(m),std::string("Sector ")+itos(m)+" Anode",200,0,4000,AFP_OTHER,s));
 			for(unsigned int t=0; t<nBetaTubes; t++) {
 				sectEnergy[s][t].push_back(registerFGBGPair(std::string("hTuben_")+itos(t)+"_Sector_"+itos(m),
@@ -92,8 +92,8 @@ void PositionBinner::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	const Side s = PDS.fSide;
 	if(!(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA && (s==EAST||s==WEST))) return;
 	((TH2F*)(hitPos[s].h[currentGV]))->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
-	unsigned int m = getSector(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center);
-	if(m>=getNSectors()) return;
+	unsigned int m = sects.sector(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center);
+	if(m>=sects.nSectors()) return;
 	for(unsigned int t=0; t<nBetaTubes; t++)
 		sectEnergy[s][t][m].h[currentGV]->Fill(PDS.scints[s].tuben[t].x,weight);
 	if(PDS.radius2(s) <= 25*25)
@@ -113,7 +113,7 @@ void PositionBinner::calculateResults() {
 	
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
-			for(unsigned int m=0; m<getNSectors(); m++) {
+			for(unsigned int m=0; m<sects.nSectors(); m++) {
 				
 				TH1* hSpec = sectEnergy[s][t][m].h[GV_OPEN];
 				hSpec->SetLineColor(2+t);
@@ -165,7 +165,7 @@ void PositionBinner::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
 	unsigned int pmid_ep = CDBout->newPosmap(std::string("Xe Endpoint ")+pmapname,sects.n,sects.r);
 	unsigned int pmid_lp = CDBout->newPosmap(std::string("Xe Low Peak ")+pmapname,sects.n,sects.r);
 	float x,y;
-	for(unsigned int m=0; m<getNSectors(); m++) {
+	for(unsigned int m=0; m<sects.nSectors(); m++) {
 		sects.sectorCenter(m,x,y);
 		for(Side s=EAST; s<=WEST; ++s) {
 			for(unsigned int t=0; t<nBetaTubes; t++) {
@@ -203,7 +203,7 @@ void PositionBinner::makePlots() {
 		labelSectors(sects,6);
 		printCanvas(sideSubst("hPos_%c",s));
 		// energy in each sector
-		for(unsigned int m=0; m<getNSectors(); m++) {
+		for(unsigned int m=0; m<sects.nSectors(); m++) {
 			hToPlot.clear();
 			for(unsigned int t=0; t<nBetaTubes; t++)
 				hToPlot.push_back(sectEnergy[s][t][m].h[GV_OPEN]);

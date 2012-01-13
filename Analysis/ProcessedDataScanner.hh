@@ -61,6 +61,7 @@ public:
 	ScintEvent scints[2];		//< readout point for scintillator data
 	Float_t led_pd[2];			//< readout point for reference photodiode
 	wireHit wires[2][2];		//< readout point for wirechamber data [side][plane]
+	float cathodes[2][2][16];	//< readout point for pedestal-subtracted cathode values, [side][plane][cathode]
 	MWPCevent mwpcs[2];			//< readout point for mwpc data (anode & cathode sum)
 	Float_t mwpcEnergy[2];		//< calibrated wirechamber energy deposition on each side
 	BlindTime runClock;			//< time of current event since run start

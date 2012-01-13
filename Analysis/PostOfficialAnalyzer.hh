@@ -16,7 +16,6 @@ public:
 	static std::string locateRun(RunNum r);	
 	
 	float Etrue;				//< reconstructed "true" energy
-	float cathodes[2][2][16];	//< pedestal-subtracted cathode values
 	
 protected:
 	/// set TChain branch data readpoints

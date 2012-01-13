@@ -28,11 +28,6 @@ public:
 	/// process a data point into position histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	
-	/// determine what section a point belongs to
-	virtual unsigned int getSector(float x, float y) { return sects.sector(x,y); }
-	/// get number of sectors
-	virtual unsigned int getNSectors() const { return sects.nSectors(); }
-	
 	/// fit enpoints in each sector
 	virtual void calculateResults();
 	/// make output plots
