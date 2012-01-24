@@ -4584,8 +4584,284 @@
 *18993	B11
 *18994	B12
 
+#######################
+@cycle January 18-19 Beta Decay
+#######################
+
+### B->A ###
+# 57min beta, 7min bkg
+
+*19023	B1
+*19024	B2
+*19025	B3
+*19026	B4
+*19027	B5
+*19028	B6
+*19029	B7
+*19030	B8
+*19031	B9
+*19032	B10
+*19033	B11
+*19034	B12
+
+*19035	A1
+*19036	A2
+*19037	A3
+*19038	A4
+*19039	A5
+*19040	A6
+*19041	A7
+*19042	A8
+*19043	A9
+*19044	A10
+*19045	A11
+*19046	A12
+
 
 #######################
-@cycle January 17-18 Beta Decay
+@cycle January 19-20 Beta Decay
 #######################
 
+### A->B ###
+
+*19050	A1
+*19051	A2
+*19052	A3
+*19053	A4
+*19054	A5
+*19055	A6
+*19056	A7
+*19057	A8
+*19058	A9
+*19059	A10
+*19060	A11
+*19061	A12
+
+*19062	B1
+*19063	B2
+*19064	B3
+*19065	B4
+*19066	B5
+*19067	B6
+*19068	B7
+*19069	B8
+*19070	B9
+*19071	B10
+*19072	B11
+*19073	B12
+
+
+#######################
+@cycle January 20-23 Beta Decay
+#######################
+
+### B->A ###
+
+*19076	B1
+*19077	B2
+*19078	B3
+*19079	B4
+*19080	B5
+# beam out
+*19082	B6
+*19083	B7
+*19084	B8
+*19085	B9
+*19086	B10
+*19087	B11
+*19088	B12
+
+*19089	A1
+*19090	A2
+*19091	A3
+*19092	A4
+*19093	A5
+*19094	A6
+# beam out ~4hr
+*19097	A7
+*19098	A8
+*19099	A9
+*19100	A10
+*19101	A11
+*19102	A12
+
+### B->A ###
+
+*19103	B1
+*19104	B2
+*19105	B3
+*19106	B4
+*19107	B5
+*19108	B6
+*19109	B7
+*19110	B8
+*19111	B9
+*19112	B10
+*19113	B11
+*19114	B12
+
+*19115	A1
+*19116	A2
+*19117	A3
+*19118	A4
+*19119	A5
+*19120	A6
+*19121	A7
+*19122	A8
+*19123	A9
+*19124	A10
+*19125	A11
+*19126	A12
+
+### B->A ###
+
+*19127	B1
+*19128	B2
+*19129	B3
+*19130	B4
+*19131	B5
+*19132	B6
+*19133	B7
+*19134	B8
+*19135	B9
+*19136	B10
+*19137	B11
+*19138	B12
+
+*19139	A1
+*19140	A2
+*19141	A3
+*19142	A4
+*19143	A5
+*19144	A6
+*19145	A7
+*19146	A8
+*19147	A9
+*19148	A10
+*19149	A11
+*19150	A12
+
+### B->A ###
+
+*19151	B1
+*19152	B2
+*19153	B3
+*19156	B4
+*19157	B5
+*19158	B6
+*19159	B7
+*19160	B8
+*19161	B9
+*19162	B10
+*19163	B11
+*19164	B12
+
+*19165	A1
+*19166	A2
+*19167	A3
+*19168	A4
+*19169	A5
+*19170	A6
+*19171	A7
+*19172	A8
+*19173	A9
+*19174	A10
+*19175	A11
+*19176	A12
+
+### A->B ###
+
+*19177	A1
+*19178	A2
+*19179	A3
+*19180	A4
+*19181	A5
+*19182	A6
+*19183	A7
+*19184	A7
+*19185	A8
+*19186	A9
+*19187	A10
+*19188	A11
+*19189	A12
+
+*19190	B1
+*19191	B2
+*19192	B3
+*19193	B4
+*19194	B5
+*19195	B6
+*19196	B7
+*19197	B8
+*19198	B9
+*19199	B10
+*19200	B11
+*19201	B12
+
+#######################
+@cycle January 23 Sources
+#######################
+
+@sources Cd113m
+*19203	SourcesCal		# 0.0in
+@sources Cd113m InW
+*19204	SourcesCal		# 0.5in
+*19205	SourcesCal		# 1.0in
+@sources Cd113m InW Cd
+*19206	SourcesCal		# 1.5in
+*19207	SourcesCal		# 2.0in
+*19208	SourcesCal		# 2.5in
+*19209	SourcesCal		# 3.0in
+*19210	SourcesCal		# 3.5in
+@sources InW Cd
+*19211	SourcesCal		# 4.0in
+*19212	SourcesCal		# 4.5in
+@sources Cd
+*19213	SourcesCal		# 5.0in
+*19214	SourcesCal		# 5.5in
+@sources
+*19215	SourcesCal		# 6.0in
+
+@sources E Cd113m InE
+@sources W Cd113m
+*19216	SourcesCal		# 0.25in
+@sources Cd113m InE
+*19217	SourcesCal		# 0.75in
+*19218	SourcesCal		# 1.25in
+@sources Cd113m InE Cd
+*19219	SourcesCal		# 1.75in
+*19220	SourcesCal		# 2.25in
+*19221	SourcesCal		# 2.75in
+*19222	SourcesCal		# 3.25in
+@sources E InE Cd
+*19223	SourcesCal		# 3.75in
+@sources InE Cd
+*19224	SourcesCal		# 4.25in
+@sources E Cd
+*19225	SourcesCal		# 4.75in
+@sources Cd
+*19226	SourcesCal		# 5.25in
+@sources E
+*19227	SourcesCal		# 5.75in
+
+@sources Ce
+*19228	SourcesCal		# 0.0in
+@sources E Ce Sn
+*19229	SourcesCal		# 0.5in
+@sources Ce Sn
+*19230	SourcesCal		# 1.0in
+@sources E Ce Sn Bi
+*19231	SourcesCal		# 1.5in
+@sources Ce Sn Bi
+*19232	SourcesCal		# 2.0in
+*19233	SourcesCal		# 2.5in
+*19234	SourcesCal		# 3.0in
+@sources E Sn Bi
+*19235	SourcesCal		# 3.5in
+@sources Sn Bi
+*19236	SourcesCal		# 4.0in
+*19237	SourcesCal		# 4.5in
+@sources Bi
+*19238	SourcesCal		# 5.0in
+*19239	SourcesCal		# 5.5in
+@sources

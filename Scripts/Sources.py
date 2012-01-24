@@ -364,7 +364,8 @@ if __name__=="__main__":
 				(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		55	),	# Old and new Cd Source; W0 pulser still dead
 				(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		55	),	# Beta decay, new In source, Xe; everything working now
 				(	18617,	18640,	18622,	18432,	18683,		1894,	1897,		55	),	# Beta decay; PMT W4 Bi pulser very low
-				(	18745,	18768,	18750,	18712,	100000,		2113,	2116,		59	)	# Start of 2012; PMT W4 pulser still low
+				(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# Start of 2012; PMT W4 pulser still low
+				(	19203,	19239,	19233,	19023,	100000,		2338,	2341,		59	)	# W4 Pulser now higher... drifty
 				]
 
 		
