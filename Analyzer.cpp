@@ -78,6 +78,7 @@ void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
 	OutputManager OM("NPE",getEnvSafe("UCNA_ANA_PLOTS")+"/nPE/Run_"+itos(rn));
 	npePlot(OM,&PCal);
+	OM.write();
 }
 
 void mi_PostprocessSources(std::deque<std::string>&, std::stack<std::string>& stack) {

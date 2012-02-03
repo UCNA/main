@@ -159,8 +159,9 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 				interpogrid[t]->SetAxisRange(0,600,"Z");
 		}
 		
+		SectorCutter& Sects = PCal->P->getSectors(s,0);
 		float x,y,npe;
-		float r0 = PCal->P->getSectors(s,0).r;
+		float r0 = Sects.r;
 		float rscale = 1.2;
 		float npesum = 0;
 		float gradsum = 0;
@@ -195,6 +196,22 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 			}
 		}
 		
+		
+		for(unsigned int m=0; m<Sects.nSectors(); m++) {
+			Sects.sectorCenter(m,x,y);
+			for(unsigned int t=0; t<=nBetaTubes; t++) {
+				Stringmap sdat;
+				sdat.insert("side",s==EAST?"E":"W");
+				sdat.insert("sector",m);
+				sdat.insert("x",x);
+				sdat.insert("y",y);
+				sdat.insert("t",t);
+				sdat.insert("eta",PCal->eta(s,t,x,y));
+				sdat.insert("nPE",PCal->nPE(s,t,e0*s0,x,y,0)/s0);
+				OM.qOut.insert("pmap",sdat);
+			}
+		}
+		
 		gradsum = sqrt(gradsum/nn/2);
 		printf("**** %c RMS gradient sqrt < |Grad K|^2 / K^2 / 2 > = %g 1/mm ****\n",sideNames(s),gradsum);
 		printf("**** %c average nPE = %g ****\n",sideNames(s),npesum/nn);
@@ -205,7 +222,7 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 			OM.defaultCanvas->SetRightMargin(0.125);
 			OM.defaultCanvas->SetBottomMargin(0.125);
 			interpogrid[t]->Draw("COL Z");
-			drawSectors(PCal->P->getSectors(s,0),6);
+			drawSectors(Sects,6);
 			if(dumbsum && t==nBetaTubes)
 				OM.printCanvas(sideSubst("nPE_%c_dumbsum",s));
 			else
