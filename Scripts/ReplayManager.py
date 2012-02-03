@@ -5,7 +5,7 @@ from UCNAUtils import *
 from optparse import OptionParser	
 	
 def processOctets(sim=False):
-	pcmd = "cd ~/mpmAnalyzer/Source/; ./UCNAnalyzer pr oct %i x x\n"
+	pcmd = "cd ..; ./UCNAnalyzer pr oct %i x x\n"
 	freplaylist = open("oct_replaylist.txt","w")
 	for r in range(60):
 		if sim:
@@ -20,9 +20,9 @@ def processOctets(sim=False):
 		os.system("parallel --nice 10 < oct_replaylist.txt")
 	os.system("rm oct_replaylist.txt")
 	if sim:
-		os.system("cd ~/mpmAnalyzer/Source/; ./UCNAnalyzer pr oct -1000 x x\n");
+		os.system("cd ..; ./UCNAnalyzer pr oct -1000 x x\n");
 	else:
-		os.system("cd ~/mpmAnalyzer/Source/; ./UCNAnalyzer pr oct 1000 x x\n");
+		os.system("cd ..; ./UCNAnalyzer pr oct 1000 x x\n");
 	
 
 def processSources(rmin,rmax):

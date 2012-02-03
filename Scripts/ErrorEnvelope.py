@@ -8,13 +8,13 @@ def plot_Cal_Uncertainty(g,title=None,st=[graph.style.line([style.linestyle.dash
 	limdat = []
 	if year==2008:
 		limdat=[(0,5.0),(250,5.0),(500,500*0.013),(900,900*0.025),(1000,1000*0.025),(1200,1200*0.025)]
-	if year==2010:
+	if year in [2010,2011]:
 		limdat=[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)]
 	g.plot(graph.data.points(limdat,x=1,y=2,title=title),st)
 	g.plot(graph.data.points([ (x[0],-x[1]) for x in limdat],x=1,y=2,title=None),st)
 	
 # plot linearity calibration source errors
-def plotAllErrors(outpath):
+def plotAllErrors(outpath,year):
 	
 	yrange = 15
 
@@ -25,11 +25,15 @@ def plotAllErrors(outpath):
 	g.texrunner.set(lfs='foils17pt')
 	
 	# plot error envelope
-	plot_Cal_Uncertainty(g,"Provisional Envelope 2010",[graph.style.line([style.linestyle.dashed,style.linewidth.THick])],year=2010)
+	plot_Cal_Uncertainty(g,"Provisional Envelope 2010",[graph.style.line([style.linestyle.dashed,style.linewidth.THick])],year=year)
 
 	# gather source data from calibration runs
 	conn = open_connection()
-	rlist = range(13883,14746+1)+range(15645,15939+1)
+	rlist = []
+	if year==2010:
+		rlist = range(13883,14746+1)+range(15645,15939+1)
+	if year==2011:
+		rlist = range(17233,100000)
 	slines = gather_peakdat(conn,rlist)
 	srs = sort_peaks_by_type(slines)
 	scols = rainbowDict(srs)
@@ -51,7 +55,7 @@ def plotAllErrors(outpath):
 		g.plot(graph.data.points(hErr.lineData(yoff=x0),x=2,y=1,title="%s: $%.1f\\pm%.1f$keV"%(peakNames[k],hErr.avg(),hErr.rms())), [graph.style.line([scols[k],style.linewidth.THIck]),])
 		g.plot(graph.data.points([[x0,-30],[x0,30]],x=1,y=2,title=None), [graph.style.line([scols[k],style.linestyle.dashed]),])
 		
-	g.writetofile(outpath+"/CalErrors_2010.pdf")
+	g.writetofile(outpath+"/CalErrors_%i.pdf"%year)
 	
 	
 	
@@ -62,6 +66,6 @@ if __name__=="__main__":
 	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/"
 	os.system("mkdir -p %s"%outpath)
 		
-	plotAllErrors(outpath)
-	
+	#plotAllErrors(outpath,2010)
+	plotAllErrors(outpath,2011)
 	

@@ -51,7 +51,7 @@ class GeantSimManager:
 		self.settings["magf"] = "on"
 		needsHolder = False
 		
-		if self.settings["generator"][:2] in ["Bi","Ce","Sn","Cd","In","Sr"]:
+		if self.settings["generator"][:2] in ["Bi","Ce","Sn","Cd","In","Sr","Cs"]:
 			needsHolder = True
 			self.settings["positioner"] = "SourceDrop"
 		if self.settings["generator"] == "eGun":
@@ -221,8 +221,8 @@ if __name__ == "__main__":
 	
 	# sources
 	sourceSim = GeantSimManager("LivPhys")
-	sourceSim.set_generator("Cd113mG")
-	sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
+	sourceSim.set_generator("Cs137G")
+	#sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
 	sourceSim.launch_postanalyzer()
 		
 	# magnetic field effects plus bad vacuum

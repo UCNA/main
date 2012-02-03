@@ -118,6 +118,8 @@ def load_mylog(fname="../Aux/UCNA Run Log.txt"):
 	calcycle = 0
 	scs = 0
 	cname = "Unknown"
+	sources={'E':[],'W':[]}
+	
 	for l in f:
 		if l[0] == '@cal':
 			calcycle += 1
@@ -128,6 +130,8 @@ def load_mylog(fname="../Aux/UCNA Run Log.txt"):
 			scs = float(l[1])
 		if l[0] == '@cycle':
 			cname = l[-1][6:].strip()
+		if l[0] == '@sources':
+			pass
 		if l[0][0] == '*':
 			rn = int(l[0][1:])
 			rt = l[1]

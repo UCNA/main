@@ -5,16 +5,11 @@ from UCNAUtils import *
 from EncalDB import *
 from optparse import OptionParser
 
-def replay_betas(rmin=13000,rmax=16400):
+def replay_betas(rmin,rmax):	
 	
-	import OctetList
-	
-	rlist = OctetList.octetFile().runlist(betaOnly=True)
 	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i cutbeam\n"	
-	rlist = [r for r in rlist if rmin <= r <= rmax]
-		
+	rlist = expandRanges(betagroups,rmin,rmax)
 	freplaylist = open("officialreplaylist.txt","w")
-	
 	rlist.sort()
 	for r in rlist:
 		freplaylist.write(pcmd%r)
@@ -24,7 +19,7 @@ def replay_betas(rmin=13000,rmax=16400):
 	os.system("parallel --nice 10 < officialreplaylist.txt")
 	os.system("rm officialreplaylist.txt")
 	
-def replay_new(rmin=16606,rmax=16747):
+def replay_new(rmin,rmax):
 	
 	rlist = range(rmin,rmax+1)
 	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i\n"	
