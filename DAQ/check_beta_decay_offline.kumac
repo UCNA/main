@@ -1,0 +1,377 @@
+* This kumac will produce plots of online histograms relevant to
+* SCS beta-decay running.
+*
+* B. Plaster, 07/16/07
+
+*fortran/file 66 check_beta_decay.ps
+*metafile 66 -111
+
+mess *** GUNZIPPING FILE ***
+sh gunzip /home/data_analyzed/2010/hbooks/full//[1]//.rz.gz
+
+hi/file 1 /home/data_analyzed/2010/hbooks/full//[1]//.rz 8190
+
+h/del *
+
+opt logy
+opt stat
+opt grid
+opt utit
+
+set hcol 2
+set hwid 5
+
+zone 1 2
+opt liny
+nt/pl 1.s8200/1e6
+atitle 'Event Trigger Timing Spectrum'
+opt liny
+h/pl 1200(:17.)
+atitle 'SIS Input Register'
+
+wait
+
+opt linx
+opt logy
+
+zone 2 2
+hi/pl 8000(:800.)
+atitle 'East Anode' ''
+hi/pl 8004(:1200.)
+atitle 'West Anode' ''
+hi/pl 1099(:15000.)
+atitle 'East QADC Sum' ''
+hi/pl 1088(:15000.)
+atitle 'West QADC Sum' ''
+
+wait
+
+opt liny
+zone 1 2
+h/pl 9991(100.:8000.)
+atitle 'East QADC Sum With East Anode Cut' ''
+h/pl 9992(100.:8000.)
+atitle 'West QADC Sum With West Anode Cut' ''
+opt logy
+
+wait
+
+zone 1 2
+h/pl 9993(:180.)
+atitle 'East Two-Fold Timing (ns)' ''
+h/pl 9994(:180.)
+atitle 'West Two-Fold Timing (ns)' ''
+wait
+
+zone 2 2
+hi/pl 1000(:4000.)
+atitle 'East PMT 1 QADC' ''
+hi/pl 1001(:4000.)
+atitle 'East PMT 2 QADC' ''
+hi/pl 1002(:4000.)
+atitle 'East PMT 3 QADC' ''
+hi/pl 1003(:4000.)
+atitle 'East PMT 4 QADC' ''
+
+wait
+
+zone 2 2
+hi/pl 1900(:4000.)
+atitle 'E1 QADC Anode Cut' ''
+hi/pl 1901(:4000.)
+atitle 'E2 QADC Anode Cut' ''
+hi/pl 1902(:4000.)
+atitle 'E3 QADC Anode Cut' ''
+hi/pl 1903(:4000.)
+atitle 'E4 QADC Anode Cut' ''
+
+wait
+
+zone 2 2
+hi/pl 1004(:4000.)
+atitle 'West PMT 1 QADC' ''
+hi/pl 1005(:4000.)
+atitle 'West PMT 2 QADC' ''
+hi/pl 1006(:4000.)
+atitle 'West PMT 3 QADC' ''
+hi/pl 1007(:4000.)
+atitle 'West PMT 4 QADC' ''
+
+wait
+
+zone 2 2
+hi/pl 1904(:4000.)
+atitle 'W1 QADC Anode Cut' ''
+hi/pl 1905(:4000.)
+atitle 'W2 QADC Anode Cut' ''
+hi/pl 1906(:4000.)
+atitle 'W3 QADC Anode Cut' ''
+hi/pl 1907(:4000.)
+atitle 'W4 QADC Anode Cut' ''
+
+wait
+
+zone 4 4
+h/pl 9001(:4100.)
+atitle 'E PMT1 LED' ''
+h/pl 9002(:4100.)
+atitle 'E PMT2 LED' ''
+h/pl 9003(:4100.)
+atitle 'E PMT3 LED' ''
+h/pl 9004(:4100.)
+atitle 'E PMT4 LED' ''
+h/pl 9005(:4100.)
+atitle 'W PMT1 LED' ''
+h/pl 9006(:4100.)
+atitle 'W PMT2 LED' ''
+h/pl 9007(:4100.)
+atitle 'W PMT3 LED' ''
+h/pl 9008(:4100.)
+atitle 'W PMT4 LED' ''
+h/pl 9101(:4100.)
+atitle 'E PMT1 Bi' ''
+h/pl 9102(:4100.)
+atitle 'E PMT2 Bi' ''
+h/pl 9103(:4100.)
+atitle 'E PMT3 Bi' ''
+h/pl 9104(:4100.)
+atitle 'E PMT4 Bi' ''
+h/pl 9105(:4100.)
+atitle 'W PMT1 Bi' ''
+h/pl 9106(:4100.)
+atitle 'W PMT2 Bi' ''
+h/pl 9107(:4100.)
+atitle 'W PMT3 Bi' ''
+h/pl 9108(:4100.)
+atitle 'W PMT4 Bi' ''
+
+wait
+
+*zone 1 2
+*hi/pl 8002(0.:4000.)
+*atitle 'East GMS PMT'
+*hi/pl 8006(0.:4000.)
+*atitle 'Wesmess *** GUNZIPPING FILE ***
+t GMS PMT'
+
+*wait
+
+zone 2 2
+hi/pl 1009(:4000.)
+atitle 'East Top Veto QADC'
+hi/pl 5019(:4100.)
+atitle 'East Top Veto TDC'
+hi/pl 8013(:4100.)
+atitle 'East Side Veto TAC'
+hi/pl 8015(:4100.)
+atitle 'West Side Veto TAC'
+
+wait
+
+zone 2 2
+hi/pl 1008(:1500.)
+atitle 'East Backing Veto QADC' ''
+hi/pl 1010(:1500.)
+atitle 'West Backing Veto QADC' ''
+hi/pl 5018
+atitle 'East Backing Veto TDC' ''
+hi/pl 5020
+atitle 'West Backing Veto TDC' ''
+
+wait
+
+zone 4 4
+hi/pl 6016(:2500.)
+atitle 'E x = +59.02 mm'
+hi/pl 6017(:2500.)
+atitle 'E x = +51.15 mm'
+hi/pl 6018(:2500.)
+atitle 'E x = +43.28 mm'
+hi/pl 6019(:2500.)
+atitle 'E x = +35.41 mm'
+hi/pl 6020(:2500.)
+atitle 'E x = +27.54 mm'
+hi/pl 6021(:2500.)
+atitle 'E x = +19.67 mm'
+hi/pl 6022(:2500.)
+atitle 'E x = +11.80 mm'
+hi/pl 6023(:2500.)
+atitle 'E x = +3.93 mm'
+hi/pl 6024(:2500.)
+atitle 'E x = -3.93 mm'
+hi/pl 6025(:2500.)
+atitle 'E x = -11.80 mm'
+hi/pl 6026(:2500.)
+atitle 'E x = -19.67 mm'
+hi/pl 6027(:2500.)
+atitle 'E x = -27.54 mm'
+hi/pl 6028(:2500.)
+atitle 'E x = -35.41 mm'
+hi/pl 6029(:2500.)
+atitle 'E x = -43.28 mm'
+hi/pl 6030(:2500.)
+atitle 'E x = -51.15 mm'
+hi/pl 6031(:2500.)
+atitle 'E x = -59.02 mm'
+
+wait
+ 
+zone 4 4
+hi/pl 6000(:2500.)
+atitle 'E y = +59.02 mm'
+hi/pl 6001(:2500.)
+atitle 'E y = +51.15 mm'
+hi/pl 6002(:2500.)
+atitle 'E y = +43.28 mm'
+hi/pl 6003(:2500.)
+atitle 'E y = +35.41 mm'
+hi/pl 6004(:2500.)
+atitle 'E y = +27.54 mm'
+hi/pl 6005(:2500.)
+atitle 'E y = +19.67 mm'
+hi/pl 6006(:2500.)
+atitle 'E y = +11.80 mm'
+hi/pl 6007(:2500.)
+atitle 'E y = +3.93 mm'
+hi/pl 6008(:2500.)
+atitle 'E y = -3.93 mm'
+hi/pl 6009(:2500.)
+atitle 'E y = -11.80 mm'
+hi/pl 6010(:2500.)
+atitle 'E y = -19.67 mm'
+hi/pl 6011(:2500.)
+atitle 'E y = -27.54 mm'
+hi/pl 6012(:2500.)
+atitle 'E y = -35.41 mm'
+hi/pl 6013(:2500.)
+atitle 'E y = -43.28 mm'
+hi/pl 6014(:2500.)
+atitle 'E y = -51.15 mm'
+hi/pl 6015(:2500.)
+atitle 'E y = -59.02 mm'
+
+wait
+
+zone 4 4
+hi/pl 3000(:2500.)
+atitle 'W y = +59.02 mm'
+hi/pl 3001(:2500.)
+atitle 'W y = +51.15 mm'
+hi/pl 3002(:2500.)
+atitle 'W y = +43.28 mm'
+hi/pl 3003(:2500.)
+atitle 'W y = +35.41 mm'
+hi/pl 3004(:2500.)
+atitle 'W y = +27.54 mm'
+hi/pl 3005(:2500.)
+atitle 'W y = +19.67 mm'
+hi/pl 3006(:2500.)
+atitle 'W y = +11.80 mm'
+hi/pl 3007(:2500.)
+atitle 'W y = +3.93 mm'
+hi/pl 3008(:2500.)
+atitle 'W y = -3.93 mm'
+hi/pl 3009(:2500.)
+atitle 'W y = -11.80 mm'
+hi/pl 3010(:2500.)
+atitle 'W y = -19.67 mm'
+hi/pl 3011(:2500.)
+atitle 'W y = -27.54 mm'
+hi/pl 3012(:2500.)
+atitle 'W y = -35.41 mm'
+hi/pl 3013(:2500.)
+atitle 'W y = -43.28 mm'
+hi/pl 3014(:2500.)
+atitle 'W y = -51.15 mm'
+hi/pl 3015(:2500.)
+atitle 'W y = -59.02 mm'
+
+wait
+
+zone 4 4
+hi/pl 3016(:2500.)
+atitle 'W x = -59.02 mm'
+hi/pl 3017(:2500.)
+atitle 'W x = -51.15 mm'
+hi/pl 3018(:2500.)
+atitle 'W x = -43.28 mm'
+hi/pl 3019(:2500.)
+atitle 'W x = -35.41 mm'
+hi/pl 3020(:2500.)
+atitle 'W x = -27.54 mm'
+hi/pl 3021(:2500.)
+atitle 'W x = -19.67 mm'
+hi/pl 3022(:2500.)
+atitle 'W x = -11.80 mm'
+hi/pl 3023(:2500.)
+atitle 'W x = -3.93 mm'
+hi/pl 3024(:2500.)
+atitle 'W x = +3.93 mm'
+hi/pl 3025(:2500.)
+atitle 'W x = +11.80 mm'
+hi/pl 3026(:2500.)
+atitle 'W x = +19.67 mm'
+hi/pl 3027(:2500.)
+atitle 'W x = +27.54 mm'
+hi/pl 3028(:2500.)
+atitle 'W x = +35.41 mm'
+hi/pl 3029(:2500.)
+atitle 'W x = +43.28 mm'
+hi/pl 3030(:2500.)
+atitle 'W x = +51.15 mm'
+hi/pl 3031(:2500.)
+atitle 'W x = +59.02 mm'
+
+wait
+
+zone 1 1
+opt linx
+opt liny
+opt linz
+hi/pl 66 col,z
+atitle 'East x (mm)' 'East y (mm)'
+set txal 23
+*itx 65 0 'AFP'
+*itx -60 0 'Garage Door'
+opt linz
+
+wait
+
+zone 1 2
+h/pl 60
+atitle 'East x (mm)'
+h/pl 61
+atitle 'East y (mm)'
+
+wait
+
+zone 1 1
+opt linx
+opt liny
+opt linz
+hi/pl 76 col,z
+atitle 'West x (mm)' 'West y (mm)'
+set txal 23
+*itx 65 0 'AFP'
+*itx -60 0 'Garage Door'
+opt linz
+
+wait
+
+zone 1 2
+h/pl 70
+atitle 'West x (mm)'
+h/pl 71
+atitle 'West y (mm)'
+
+wait
+
+exe check_ucn_monitors_2009.kumac
+
+close 1
+
+mess *** RE-GZIPPING FILE ***
+sh gzip /home/data_analyzed/2010/hbooks/full//[1]//.rz
+
+
+*close 66
