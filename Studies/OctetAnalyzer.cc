@@ -103,9 +103,9 @@ void OctetAnalyzer::loadProcessedData(AFPState afp, ProcessedDataScanner& FG, Pr
 }
 
 void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
-	for(int afp=AFP_OFF; afp<=AFP_ON; afp++) {
+	for(AFPState afp=AFP_OFF; afp<=AFP_ON; ++afp) {
 		if(afp != simData.getAFP() && simData.getAFP() != AFP_OTHER) continue;
-		setFillPoints(AFPState(afp),GV_OPEN);
+		setFillPoints(afp,GV_OPEN);
 		RunAccumulator::loadSimData(simData,nToSim);
 	}
 }

@@ -98,6 +98,8 @@ enum AFPState {
 	AFP_ON2OFF	=	4	//< (Depolarization run) AFP on->off
 };
 
+inline AFPState& operator++(AFPState& a) { return a = AFPState(a+1); }
+
 /// state of gate valve during a run
 enum GVState {
 	GV_CLOSED	= 0,	//< GV closed (background)

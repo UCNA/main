@@ -38,6 +38,11 @@ public:
 	/// set desired AFP state for simulation data
 	virtual void setAFP(AFPState a) { afp=a; }
 	
+	/// Determine event classification flags
+	virtual void classifyEvent();
+	/// calculate spectrum re-weighting factor
+	virtual void calcReweight();
+	
 	PMTGenerator PGen[2];		//< PMT simulator for each side
 	bool reSimulate;			//< whether to re-simulate energy or use "raw" values
 	double eQ[2];				//< Scintillator quenched energy
@@ -52,16 +57,16 @@ public:
 	double physicsWeight;		//< event spectrum re-weighting factor
 	unsigned int nToSim;		//< total number of events to simulate (set to 0 for random energy selection)
 	unsigned int nSimmed;		//< number of events simulated since scan start
+	double mwpcThresh[2];		//< MWPC trigger threshold on each side
 	
 protected:
 	/// perform unit conversions, etc.
 	virtual void doUnits() { assert(false); }
 	/// "reverse calibration" from simulated data
 	virtual void reverseCalibrate();
-	/// calculate spectrum re-weighting factor
-	virtual void calcReweight();
 	
 	AFPState afp;				//< AFP state for data
+	bool passesScint[2];		//< whether simulation passed scintillator cut
 };
 
 

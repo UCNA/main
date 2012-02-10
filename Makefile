@@ -63,6 +63,9 @@ OctetAnalyzerExample: OctetAnalyzerExample.cc $(objects)
 	
 ExtractFierzTerm: ExtractFierzTerm.cc $(objects)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) ExtractFierzTerm.cc $(objects) -o ExtractFierzTerm
+
+MWPC_Efficiency_Sim: MWPC_Efficiency_Sim.cc $(objects)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/MWPC_Efficiency_Sim.cc $(objects) -o MWPC_Efficiency_Sim
 	
 QCalc: FPNCalc.cc $(Utils)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) IOUtils/FPNCalc.cc $(objects) -o QCalc
@@ -86,7 +89,7 @@ latex/ : documentationConfig
 #
 .PHONY: clean
 clean:
-	-rm -f UCNAnalyzer OctetAnalyzerExample DataScannerExample CalibratorExample ExtractFierzTerm Analyzer
+	-rm -f UCNAnalyzer OctetAnalyzerExample DataScannerExample CalibratorExample ExtractFierzTerm Analyzer MWPC_Efficiency_Sim
 	-rm -f *.o
 	-rm -rf *.dSYM
 	-rm -rf latex/

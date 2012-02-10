@@ -261,18 +261,13 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 }
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
-	AFPState afp = simData.getAFP();
-	printf("Loading %i events of simulated data (AFP=%i)...\n",nToSim,afp);
 	currentGV = GV_OPEN;
-	currentAFP = afp;
+	currentAFP = simData.getAFP();
+	printf("Loading %i events of simulated data (AFP=%i)...\n",nToSim,currentAFP);
 	simData.startScan(nToSim);
 	while(simData.nSimmed<=nToSim) {
 		simData.nextPoint();
-		fillCoreHists(simData,simData.physicsWeight);
-		if(double evtc = simData.simEvtCounts()) {
-			runCounts.add(simData.getRun(),evtc);
-			totalCounts[afp][1] += evtc;
-		}
+		loadSimPoint(simData);
 		if(!(int(simData.nSimmed)%(nToSim/20))) {
 			if(nToSim>1e6) {
 				printf("* %s\n",simData.evtInfo().toString().c_str());
@@ -283,4 +278,12 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
 		}
 	}
 	printf("\n--Scan complete.--\n");
+}
+
+void RunAccumulator::loadSimPoint(Sim2PMT& simData) {
+	fillCoreHists(simData,simData.physicsWeight);
+	if(double evtc = simData.simEvtCounts()) {
+		runCounts.add(simData.getRun(),evtc);
+		totalCounts[currentAFP][1] += evtc;
+	}	
 }

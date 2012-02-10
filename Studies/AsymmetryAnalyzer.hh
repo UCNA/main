@@ -16,18 +16,22 @@ public:
 	/// MC/data comparison
 	void compareMCtoData(RunAccumulator& OAdata, float simfactor);
 	
+	/// calculate super-ratio asymmetry from anode spectra
+	virtual void calculateResults();
+	/// output plot generation
+	virtual void makePlots();
+	
 	/// location of already-processed data (after first run) for errorbar estimation
 	virtual std::string estimatorHistoLocation() const { return AsymmetryAnalyzer::processedLocation; }
 	static std::string processedLocation;	//< set location here for already-processed files
+	
+	TH1F* hAsym;									//< asymmetry
+	TH1F* hSuperSum;								//< super-sum spectrum
 	
 protected:
 	
 	/// fill from scan data point
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
-	/// calculate super-ratio asymmetry from anode spectra
-	virtual void calculateResults();
-	/// output plot generation
-	virtual void makePlots();
 	
 	/// fit asymmetry over given range
 	void fitAsym(float fmin, float fmax, unsigned int color);
@@ -45,9 +49,6 @@ protected:
 	TH2F* hPositions[2][TYPE_III_EVENT+1];			//< event positions write point for [side][type]
 	quadHists qAnodeCal[2];							//< anode calibration spectrum (Type 0, Erecon>225)
 	TH1F* hAnodeCal[2];								//< anode cal write point
-	
-	TH1F* hAsym;									//< asymmetry
-	TH1F* hSuperSum;								//< super-sum spectrum
 };
 
 #endif

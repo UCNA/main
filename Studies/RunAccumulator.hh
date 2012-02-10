@@ -69,6 +69,8 @@ public:
 	virtual void loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS);
 	/// fill data from simulations
 	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim);
+	/// load single current event from simulator
+	virtual void loadSimPoint(Sim2PMT& simData);
 	/// simulate background fluctuations based on "reference" data
 	void simBgFlucts(const RunAccumulator& RefOA, double simfactor);
 	/// perform background subtraction
@@ -89,15 +91,15 @@ public:
 	/// location of errorbar estimates for low-rate histograms
 	virtual std::string estimatorHistoLocation() const { return ""; }
 	
-protected:
-	
-	/// get matching RunAccumulator with "master" histograms for estimating error bars on low-counts bins
-	RunAccumulator* getErrorEstimator();	
-	
 	std::map<std::string,fgbgPair> fgbgHists;	//< background-subtractable quantities
 	float totalCounts[AFP_OTHER+1][2];			//< total type-0 event counts by [flipper][fg/bg], for re-simulation
 	BlindTime totalTime[AFP_OTHER+1][2]; 		//< total time for [flipper][fg/bg]
 	TagCounter<RunNum> runTimes;				//< time spent on each run
+	
+protected:
+	
+	/// get matching RunAccumulator with "master" histograms for estimating error bars on low-counts bins
+	RunAccumulator* getErrorEstimator();	
 };
 
 #endif

@@ -11,6 +11,7 @@ reSimulate(true), nToSim(0), nSimmed(0), afp(AFP_OTHER) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		PGen[s].larmorField = 0;
+		mwpcThresh[s] = 0.02;
 	}
 	totalTime = BlindTime(1.0);
 	fPID = PID_BETA;	// only simulating beta events
@@ -49,17 +50,9 @@ void Sim2PMT::reverseCalibrate() {
 	
 	doUnits();
 	
-	bool passesMWPC[2];
-	bool passesScint[2];
-	bool is2fold[2];
-	
 	// simulate event on both sides
 	for(Side s = EAST; s <= WEST; ++s) {
-		
-		// TODO efficiency/resolution fancier wirechamber simulation
 		mwpcEnergy[s] = eW[s];
-		passesMWPC[s] = (eW[s] > 0.02);		
-		
 		// simulate detector energy response, or use un-smeared original data 
 		if(reSimulate) {
 			PGen[s].setOffsets(scintPos[s][X_DIRECTION], scintPos[s][Y_DIRECTION], wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center);
@@ -69,10 +62,21 @@ void Sim2PMT::reverseCalibrate() {
 			scints[s].energy = eQ[s];
 			passesScint[s] = (eQ[s] > 0);
 		}
-		
-		is2fold[s] = passesMWPC[s] && passesScint[s];
 	}
 	
+	classifyEvent();
+}
+
+void Sim2PMT::classifyEvent() {
+	
+	bool passesMWPC[2];
+	bool is2fold[2];
+	
+	for(Side s = EAST; s <= WEST; ++s) {
+		passesMWPC[s] = (eW[s] > mwpcThresh[s]);		
+		is2fold[s] = passesMWPC[s] && passesScint[s];
+	}
+
 	if(is2fold[EAST] || is2fold[WEST]) fPID = PID_BETA;
 	else fPID = PID_SINGLE;
 	
