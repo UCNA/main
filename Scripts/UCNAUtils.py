@@ -26,15 +26,18 @@ sourcegroups = [(13883,13894), (14104,14118), (14383,14394), (14516,14530), (147
 				(18357,18386),	# new In source
 				(18617,18640),	#
 				(18745,18768),	#
-				(19203,19239)	# Jan 23
+				(19203,19239),	# Jan 23
+				(19347,19377)	# Feb 10
 				]
 thecalruns = [13890,14111,14390,14524,14743,15653,15931]
-xegroups = [	(14264,14347), (15991,16077), (16983,17078),
+xegroups = [	(14264,14347),	# 2010 #1
+				(15991,16077),	# 2010 #2
+				(16983,17078),	# 2011 start; PMT W2 dead
 				(17224,17230),	# old Xenon
 				(17561,17734),	# long, W0 pulser dead
 				(18081,18090),	# everything working; not much Xe produced; short set
 				(18390,18413),	# everything working; W0 pulser very low (& badly gain calibrated)
-				(18712,18744)	# W0 pulser still low
+				(18712,18744)	# 2012 start; W0 pulser still low
 				]
 				
 def expandRanges(rgs,rmin=0,rmax=100000):

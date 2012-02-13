@@ -4865,3 +4865,175 @@
 *19238	SourcesCal		# 5.0in
 *19239	SourcesCal		# 5.5in
 @sources
+
+#######################
+@cycle February 10 Sources
+#######################
+
+@sources Ce
+*19347	SourcesCal		# 0.0in
+@sources E Ce Sn
+*19355	SourcesCal		# 0.5in
+@sources Ce Sn
+*19356	SourcesCal		# 1.0in
+@sources E Ce Sn Bi
+*19357	SourcesCal		# 1.5in
+@sources Ce Sn Bi
+*19358	SourcesCal		# 2.0in
+*19359	SourcesCal		# 2.5in
+*19360	SourcesCal		# 3.0in
+@sources E Sn Bi
+*19361	SourcesCal		# 3.5in
+@sources Sn Bi
+*19362	SourcesCal		# 4.0in
+*19363	SourcesCal		# 4.5in
+@sources Bi
+*19364	SourcesCal		# 5.0in
+*19365	SourcesCal		# 5.5in
+@sources
+
+@sources Cd113m
+*19366	SourcesCal	# 0.0in W
+@sources Cd113m InE
+*19367	SourcesCal	# 0.5in E
+@sources Cd113m InW
+*19368	SourcesCal	# 1.0in W
+@sources E Cd113m InE Cd
+@sources W Cd113m InE
+*19369	SourcesCal	# 1.5in E
+@sources Cd113m InW Cd
+*19370	SourcesCal	# 2.0in W
+@sources Cd113m InE Cd
+*19371	SourcesCal	# 2.5in E
+@sources Cd113m InW Cd
+*19372	SourcesCal	# 3.0in W
+@sources Cd113m InE Cd
+*19373	SourcesCal	# 3.5in E
+@sources InW Cd
+*19374	SourcesCal	# 4.0in W
+@sources InE Cd
+*19375	SourcesCal	# 4.5in E
+@sources Cd
+*19376	SourcesCal	# 5.0in W
+*19377	SourcesCal	# 5.5in E	
+@sources
+
+
+#######################
+@cycle February 11-13 Beta Decay
+#######################
+
+### A->B ###
+
+*19380	A1
+*19381	A2
+*19382	A3
+*19383	A4
+*19384	A5
+*19385	A6
+*19386	A7
+*19387	A8
+*19388	A9
+*19389	A10
+*19390	A11
+*19391	A12
+
+*19392	B1
+*19393	B2
+*19395	B3
+*19396	B4
+*19397	B5
+*19398	B6
+*19399	B7
+*19400	B8
+*19401	B9
+*19402	B10
+*19403	B11
+*19404	B12
+
+### A->B ###
+
+*19405	A1
+*19406	A2
+*19407	A3
+*19408	A4
+# 5hr beam out
+*19410	A5
+*19411	A6
+*19412	A7
+*19413	A8
+*19414	A9
+*19415	A10
+*19416	A11
+*19417	A12
+
+*19418	B1
+*19419	B2
+*19420	B3
+*19421	B4
+*19422	B5
+*19423	B6
+*19424	B7
+*19425	B8
+*19426	B9
+*19427	B10
+*19428	B11
+*19429	B12
+
+### B->A ###
+
+*19430	B1
+*19431	B2
+*19432	B3
+*19433	B4
+*19434	B5
+*19435	B6
+*19436	B7
+*19437	B8
+*19438	B9
+*19439	B10
+*19440	B11
+*19441	B12
+
+*19442	A1
+*19443	A2
+*19444	A3
+*19445	A4
+*19446	A5
+*19447	A6
+# poisoned source with argon from b-Box
+# 5 hour outage; long melt & refreeze
+*19452	A7
+*19453	A8
+*19454	A9
+*19455	A10
+*19456	A11
+*19457	A12
+
+### B->A ###
+
+*19462	B1
+*19463	B2
+*19464	B3
+*19465	B4
+*19466	B5
+*19467	B6
+*19468	B7
+*19469	B8
+*19470	B9
+*19471	B10
+*19472	B11
+*19473	B12
+
+*19474	A1
+*19475	A2
+*19476	A3
+*19477	A4
+*19478	A5
+*19479	A6
+*19480	A7
+*19481	A8
+*19482	A9
+*19483	A10
+*19484	A11
+*19485	A12
