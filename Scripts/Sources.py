@@ -366,7 +366,8 @@ if __name__=="__main__":
 				(	18617,	18640,	18622,	18432,	18683,		1894,	1897,		55	),	# Beta decay; PMT W4 Bi pulser very low
 				(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# Start of 2012; PMT W4 pulser still low
 				(	19203,	19239,	19233,	19023,	19239,		2338,	2341,		59	),	# W4 Pulser now higher... drifty
-				(	19347,	19377,	19359,	19347,	100000,		2387,	2390,		59	)	# W4 Pulser now low...
+				(	19347,	19377,	19359,	19347,	100000,		2387,	2390,		59	),	# W4 Pulser now low...
+				(	19505,	19544)															# Cd/In only
 				]
 
 		
@@ -376,7 +377,9 @@ if __name__=="__main__":
 	for c in cal_2011[-1:]:
 	
 		# make new calibrations set
-		ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
+		ecid = None
+		if len(c)>2:
+			ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
 			
 		# gather source data from calibration runs
 		rlist = range(c[0],c[1]+1)

@@ -38,7 +38,7 @@ def replay_new(rmin,rmax):
 	
 def replay_sources(rmin,rmax,doXe=False):
 	
-	rlist = [r for r in thecalruns if rmin <= r <= rmax] + [r for r in expandRanges(sourcegroups,rmin,rmax) if r not in thecalruns]
+	rlist = getRunType(open_connection(),"SourceCalib",rmin,rmax)
 	if doXe:
 		rlist = expandRanges(xegroups,rmin,rmax)
 	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i\n"

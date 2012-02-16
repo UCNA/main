@@ -5037,3 +5037,52 @@
 *19483	A10
 *19484	A11
 *19485	A12
+
+#######################
+@cycle February 14 Sources
+#######################
+
+@sources Cd113m
+*19505	SourcesCal
+@sources E Cd113m InW
+*19511	SourcesCal
+@sources Cd113m InW
+*19513	SourcesCal
+@sources E Cd113m InW Cd
+*19516	SourcesCal
+@sources Cd113m InW Cd
+*19518	SourcesCal
+*19520	SourcesCal
+*19521	SourcesCal
+*19523	SourcesCal
+@sources InW Cd
+*19524	SourcesCal
+*19526	SourcesCal
+@sources Cd
+*19528	SourcesCal
+@sources
+
+# flipped
+
+@sources Cd
+*19529	SourcesCal
+@sources W InE Cd
+*19532	SourcesCal
+@sources InE Cd
+*19534	SourcesCal
+@sources W Cd113m InE Cd
+*19535	SourcesCal
+@sources Cd113m InE Cd
+*19536	SourcesCal
+*19537	SourcesCal
+*19538	SourcesCal
+@sources W Cd113m InE
+*19540	SourcesCal
+@sources Cd113m InE
+*19541	SourcesCal
+@sources W Cd113m
+*19543	SourcesCal
+@sources Cd113m
+*19544	SourcesCal
+@sources
+

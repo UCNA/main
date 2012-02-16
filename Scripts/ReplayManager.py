@@ -2,6 +2,7 @@
 import os
 import time
 from UCNAUtils import *
+from EncalDB import *
 from optparse import OptionParser	
 	
 def processOctets(sim=False):
@@ -28,10 +29,8 @@ def processOctets(sim=False):
 def processSources(rmin,rmax):
 		pcmd = "cd ..; ./UCNAnalyzer sr %i %i x\n"
 		freplaylist = open("source_replaylist.txt","w")
-		for rg in sourcegroups:
-			for r in range(rg[0],rg[1]+1):
-				if rmin<=r<=rmax:
-					freplaylist.write(pcmd%(r,r))
+		for r in getRunType(open_connection(),"SourceCalib",rmin,rmax):
+			freplaylist.write(pcmd%(r,r))
 		freplaylist.close()
 		os.system("cat source_replaylist.txt")
 		os.system("parallel --nice 10 < source_replaylist.txt")
