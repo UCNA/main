@@ -7,8 +7,8 @@ from optparse import OptionParser
 
 def replay_betas(rmin,rmax):	
 	
-	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i cutbeam\n"	
-	rlist = expandRanges(betagroups,rmin,rmax)
+	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i cutbeam\n"
+	rlist = getRunType(open_connection(),"Asymmetry",rmin,rmax)	
 	freplaylist = open("officialreplaylist.txt","w")
 	rlist.sort()
 	for r in rlist:
