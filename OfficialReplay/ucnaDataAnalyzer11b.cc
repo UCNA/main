@@ -369,7 +369,7 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 					} else {
 						nskip++;
 					}
-					if(pmax>20 && nskip>20)
+					if(pmax>hBiPulser[s][t][i]->GetMaximum()*0.3 && nskip>20)
 						break;
 				}
 				float bcenter = hBiPulser[s][t][i]->GetBinCenter(bmax);
