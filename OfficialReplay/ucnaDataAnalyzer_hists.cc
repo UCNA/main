@@ -39,9 +39,11 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 			hTopADC[s][1]->SetLineColor(2);
 			hTopADC[s][0]->GetXaxis()->SetTitle("ADC Channels");
 		}
-		hScintTDC[s] = registeredTH1F(sideSubst("hScintTDC_%c",s),"2-of-4 TDC",200,0,5000);
-		hScintTDC[s]->SetLineColor(2+2*s);
-		hScintTDC[s]->GetXaxis()->SetTitle("TDC Channels");
+		for(unsigned int t=0; t<=nBetaTubes; t++) {
+			hScintTDC[s][t] = registeredTH1F(sideSubst("hScintTDC_%c",s)+(t<nBetaTubes?itos(t):""),"2-of-4 TDC",200,0,5000);
+			hScintTDC[s][t]->SetLineColor(t<nBetaTubes?t+2:2+2*s);
+			hScintTDC[s][t]->GetXaxis()->SetTitle("TDC Channels");
+		}
 		
 		for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
 			if(t==TYPE_III_EVENT) continue;	// not separated out at this stage
@@ -77,9 +79,9 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 			sevt[s].adc[t]=3950;
 		PCal.pedSubtract(s,sevt[s].adc,0);
 		for(unsigned int t=0; t<nBetaTubes; t++) {
-			hTrigEffic[s][t][0] = registeredTH1F(sideSubst("hTrigEfficAll_%c",s)+itos(t),"Trigger Efficiency Events",125,-50,200);
+			hTrigEffic[s][t][0] = registeredTH1F(sideSubst("hTrigEfficAll_%c",s)+itos(t),"Trigger Efficiency Events",100,-50,150);
 			hTrigEffic[s][t][0]->SetLineColor(4);
-			hTrigEffic[s][t][1] = registeredTH1F(sideSubst("hTrigEfficTrig_%c",s)+itos(t),"Trigger Efficiency Events",125,-50,200);
+			hTrigEffic[s][t][1] = registeredTH1F(sideSubst("hTrigEfficTrig_%c",s)+itos(t),"Trigger Efficiency Events",100,-50,150);
 			hTrigEffic[s][t][1]->SetLineColor(2);
 			for(unsigned int i=0; i<nBiDivs; i++) {
 				hBiPulser[s][t].push_back(registeredTH1F(sideSubst("hPulserSpectrum_%c",s)+itos(t)+"_"+itos(i),"Bi Pulser Spectrum",
@@ -180,7 +182,8 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 		}
 		
 		if(fPID==PID_BETA)
-			hScintTDC[s]->Fill(fScint_tdc[s][nBetaTubes].val);
+			for(unsigned int t=0; t<=nBetaTubes; t++)
+				hScintTDC[s][t]->Fill(fScint_tdc[s][t].val);
 		
 		if(fSide != s)
 			continue;
@@ -258,6 +261,15 @@ void ucnaDataAnalyzer11b::plotHistos() {
 			hTrigEffic[s][t][1]->Draw("Same");
 			printCanvas(sideSubst("PMTs/TrigEffic_Input_%c",s)+itos(t));
 		}
+		
+		// PMT TDCs
+		hToPlot.clear();
+		for(unsigned int t=0; t<nBetaTubes; t++)
+			hToPlot.push_back(hScintTDC[s][t]);
+		drawSimulHistos(hToPlot);
+		for(unsigned int t=0; t<nBetaTubes; t++)
+			drawCutRange(fScint_tdc[s][t].R,2+t);
+		printCanvas(sideSubst("PMTs/TDC_2of4_%c",s));
 	}
 	
 	// 1-D hit positions
@@ -289,8 +301,8 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	printCanvas("MuVeto/Drift_TAC");
 	
 	// PMT TDCs
-	hScintTDC[EAST]->Draw();
-	hScintTDC[WEST]->Draw("Same");
+	hScintTDC[EAST][nBetaTubes]->Draw();
+	hScintTDC[WEST][nBetaTubes]->Draw("Same");
 	drawCutRange(fScint_tdc[EAST][nBetaTubes].R,2);
 	drawCutRange(fScint_tdc[WEST][nBetaTubes].R,4);
 	drawCutRange(ScintSelftrig[EAST],2);

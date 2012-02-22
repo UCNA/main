@@ -67,6 +67,8 @@ void ucnaDataAnalyzer11b::loadCuts() {
 		loadCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c_Selftrig",s));
 		ScintSelftrig[s] = fScint_tdc[s][nBetaTubes].R;
 		loadCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c",s));
+		for(unsigned int t=0; t<nBetaTubes; t++)
+			loadCut(fScint_tdc[s][t], sideSubst("Cut_TDC_Scint_%c_",s)+itos(t));
 	}
 	loadCut(fTop_tdc[EAST], "Cut_TDC_Top_E");
 	loadCut(fBeamclock,"Cut_BeamBurst");
@@ -262,19 +264,29 @@ void ucnaDataAnalyzer11b::calcTrigEffic() {
 			}
 			
 			// fit
-			TF1 efficfit("efficfit",&fancyfish,-50,200,4);
+			printf("Pre-fit threshold guess: %.1f\n",midx);
+			TF1 efficfit("efficfit",&fancyfish,-5,150,4);
+			
 			efficfit.SetParameter(0,midx);
-			efficfit.SetParameter(1,10.0);
-			efficfit.SetParameter(2,1.4);
-			efficfit.SetParameter(3,0.99);
 			efficfit.SetParLimits(0,0,100.0);
-			efficfit.SetParLimits(1,2,200.0);
+			efficfit.FixParameter(1,10.0);
+			efficfit.FixParameter(2,10.0);
+			efficfit.FixParameter(3,0.999);
+			efficfit.SetLineColor(38);
+			gEffic.Fit(&efficfit,"QR");
+			
+			efficfit.SetParameter(1,10.0);
+			efficfit.SetParLimits(1,2,200.0);			
+			efficfit.SetLineColor(7);
+			gEffic.Fit(&efficfit,"QR+");
+			
+			efficfit.SetParameter(2,10.0);
+			efficfit.SetParameter(3,0.999);
 			efficfit.SetParLimits(2,0.1,1000.0);
 			efficfit.SetParLimits(3,0.75,1.0);
-			
 			efficfit.SetLineColor(4);
-			printf("Pre-fit threshold guess: %.1f\n",midx);
-			gEffic.Fit(&efficfit,"Q");
+			gEffic.Fit(&efficfit,"QR+");
+			
 			
 			float_err trigef(efficfit.GetParameter(3),efficfit.GetParError(3));
 			float_err trigc(efficfit.GetParameter(0),efficfit.GetParError(0));
@@ -310,7 +322,7 @@ void ucnaDataAnalyzer11b::calcTrigEffic() {
 			gEffic.Draw("AP");
 			gEffic.SetTitle((sideSubst("%c",s)+itos(t)+" PMT Trigger Efficiency").c_str());
 			gEffic.GetXaxis()->SetTitle("ADC channels above pedestal");
-			gEffic.GetXaxis()->SetLimits(-50,200);
+			gEffic.GetXaxis()->SetLimits(-50,150);
 			gEffic.GetYaxis()->SetTitle("Efficiency");
 			gEffic.Draw("AP");
 			printCanvas(sideSubst("PMTs/TrigEffic_%c",s)+itos(t));
@@ -440,7 +452,7 @@ void ucnaDataAnalyzer11b::replaySummary() {
 }
 
 void ucnaDataAnalyzer11b::quickAnalyzerSummary() const {
-	printf("\n------------------ Quick Summary ------------------\n");
+	printf("\n--------------- Quick Summary %i ---------------\n",rn);
 	float gvcounts = hMonADC[UCN_MON_GV]->Integral();
 	printf("GV Mon: %i = %.2f +/- %.2f Hz\n",(int)gvcounts,gvcounts/wallTime,sqrt(10*gvcounts)/10/wallTime);
 	float fecounts = hMonADC[UCN_MON_FE]->Integral();
