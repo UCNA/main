@@ -34,13 +34,14 @@ protected:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	
 	/// fit asymmetry over given range
-	void fitAsym(float fmin, float fmax, unsigned int color);
+	void fitAsym(float fmin, float fmax, unsigned int color, bool avg = false);
 	/// various beta spectrum endpoint fits
 	void endpointFits();
 	/// anode calibration fits
 	void anodeCalFits();
 	
-	static TF1 asymmetryFit;	//< fit function for asymmetry
+	static TF1 asymmetryFit;		//< fit function for asymmetry
+	static TF1 averagerFit;			//< pol0 line fit for averaging
 	static AnalysisChoice anChoice;	//< asymmetry analysis choice
 	
 	quadHists qEnergySpectra[2][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][event type]

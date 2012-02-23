@@ -12,6 +12,7 @@ Double_t asymmetryFitFunc(const Double_t* x, const Double_t* par) {
 }
 
 TF1 AsymmetryAnalyzer::asymmetryFit = TF1("asymFit",&asymmetryFitFunc,0,neutronBetaEp,1);
+TF1 AsymmetryAnalyzer::averagerFit = TF1("averagerFir","pol0",0,neutronBetaEp);
 AnalysisChoice  AsymmetryAnalyzer::anChoice = ANCHOICE_A;
 
 AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname): OctetAnalyzer(pnt,nm,inflname) {
@@ -44,18 +45,20 @@ void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 		hPositions[s][PDS.fType]->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 }
 
-void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color) {
-	Stringmap m;	
-	asymmetryFit.SetParameter(0,A0_PDG);
-	asymmetryFit.SetLineColor(color);
-	hAsym->Fit(&asymmetryFit,"Q+","",fmin,fmax);
-	m.insert("A0_fit",asymmetryFit.GetParameter(0));
-	m.insert("dA0",asymmetryFit.GetParError(0));
-	m.insert("A0_chi2",asymmetryFit.GetChisquare());
-	m.insert("A0_NDF",asymmetryFit.GetNDF());
+void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, bool avg) {
+	Stringmap m;
+	TF1* fitter = avg?&averagerFit:&asymmetryFit;
+	fitter->SetParameter(0,A0_PDG);
+	fitter->SetLineColor(color);
+	hAsym->Fit(fitter,"Q+","",fmin,fmax);
+	m.insert("A0_fit",fitter->GetParameter(0));
+	m.insert("dA0",fitter->GetParError(0));
+	m.insert("A0_chi2",fitter->GetChisquare());
+	m.insert("A0_NDF",fitter->GetNDF());
 	m.insert("fitMin",fmin);
 	m.insert("fitMax",fmax);
 	m.insert("anChoice",itos(anChoice));
+	m.insert("method",avg?"average":"fit");
 	qOut.insert("asymmetry",m);
 }
 
@@ -102,7 +105,7 @@ void AsymmetryAnalyzer::anodeCalFits() {
 }
 
 void AsymmetryAnalyzer::calculateResults() {
-	/// build total spectra based on analysis choice
+	// build total spectra based on analysis choice
 	quadHists qTotalSpectrum[2];
 	for(Side s = EAST; s <= WEST; ++s) {
 		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][TYPE_0_EVENT], "hTotalEvents");
@@ -115,11 +118,12 @@ void AsymmetryAnalyzer::calculateResults() {
 		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C)
 			qTotalSpectrum[s] += qEnergySpectra[s][TYPE_III_EVENT];
 	}
-	/// calculate SR and SS
+	// calculate SR and SS
 	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	hSuperSum = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	
-	/// perform data fits
+	// perform data fits
+	fitAsym(200,675,1,true);	// match Robby's analysis
 	fitAsym(50,800,7);
 	fitAsym(225,675,6);
 	endpointFits();

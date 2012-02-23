@@ -9,7 +9,7 @@
 
 ProcessedDataScanner::ProcessedDataScanner(const std::string& treeName, bool withCalibrators):
 TChainScanner(treeName), ActiveCal(NULL), totalTime(0),
-anChoice(ANCHOICE_A), fiducialRadius(50.0), withCals(withCalibrators) {
+anChoice(ANCHOICE_A), fiducialRadius(55.0), withCals(withCalibrators) {
 	CDB = CalDBSQL::getCDB();
 	if(!CDB->isValid(15926)) {
 		printf("\n**** WARNING: Fake Calibrations in use!!! ****\n\n");
