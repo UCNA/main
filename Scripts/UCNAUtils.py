@@ -38,7 +38,8 @@ xegroups = [	(14264,14347),	# 2010 #1
 				(17561,17734),	# long, W0 pulser dead
 				(18081,18090),	# everything working; not much Xe produced; short set
 				(18390,18413),	# everything working; W0 pulser very low (& badly gain calibrated)
-				(18712,18744)	# 2012 start; W0 pulser still low
+				(18712,18744),	# 2012 start; W0 pulser still low
+				(19589,19606)	# Feb. 16, short-ish high rates run
 				]
 				
 def expandRanges(rgs,rmin=0,rmax=100000):

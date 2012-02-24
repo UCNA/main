@@ -91,3 +91,20 @@ def getGMSruns(conn):
 def gmsRunTimes(conn):
 	conn.execute("SELECT run_number,UNIX_TIMESTAMP(start_time) FROM run WHERE run_number IN (SELECT gms_run FROM energy_calibration WHERE 1 ORDER BY gms_run ASC)")
 	return conn.fetchall()
+	
+# get sensor ID number for name
+sensorIDtable = {}
+def getSensorID(conn,sname):
+	if sname in sensorIDtable:
+		return sensorIDtable[sname]
+	conn.execute("SELECT sensor_id FROM sensors WHERE sensor_name = '%s'"%sname)
+	sid = conn.fetchone()[0]
+	sensorIDtable[sname] = sid
+	return sid
+	
+# get graph IDs for run monitor
+def getRunMonitorGIDs(conn,rn,sname,tp):
+	if type(sname) != type(123):
+		sname = getSensorID(conn,sname)
+	conn.execute("SELECT center_graph_id,width_graph_id FROM run_monitors WHERE run_number = %i AND sensors_sensor_id = %i AND monitor_type = '%s'"%(rn,sname,tp))
+	return conn.fetchone()
