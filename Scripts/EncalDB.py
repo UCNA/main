@@ -108,3 +108,10 @@ def getRunMonitorGIDs(conn,rn,sname,tp):
 		sname = getSensorID(conn,sname)
 	conn.execute("SELECT center_graph_id,width_graph_id FROM run_monitors WHERE run_number = %i AND sensors_sensor_id = %i AND monitor_type = '%s'"%(rn,sname,tp))
 	return conn.fetchone()
+
+# get trigger efficiency params
+def getTrigeffParams(conn, rn, s, t):
+	if s in ['E','W']:
+		s = {'E':"East",'W':"West"}[s]
+	conn.execute("SELECT params_graph FROM mpm_trigeff WHERE run_number = %i AND side = '%s' AND quadrant = %i"%(rn,s,t))
+	return getGraph(conn,conn.fetchone()[0])

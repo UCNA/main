@@ -43,7 +43,7 @@ def plot_run_monitor(rlist,sname,tp="pedestal",outpath=None):
 	#grmon.texrunner.set(lfs='foils17pt')
 
 	grmon.plot(graph.data.points(gdat,x=1,y=2,dy=4,title=None),
-				[graph.style.symbol(symbol.circle,size=0.15),graph.style.errorbar()])
+				[graph.style.errorbar(errorbarattrs=[rgb.blue,]),graph.style.symbol(symbol.circle,size=0.10,symbolattrs=[rgb.red,])])
 
 	if outpath:
 		grmon.writetofile(outpath+"/%s.pdf"%sname)
@@ -69,10 +69,41 @@ def plot_all_pedestals(rmin,rmax):
 			for c in range(16):
 				sname = "MWPC%s%s%i"%(s,p,c+1)
 				grmon = plot_run_monitor(rlist,sname,"pedestal",outpath)
-		
-		
+	
+			
+def plot_trigeff_history(rmin,rmax):
+	
+	rlist = getRunType(open_connection(),"Asymmetry",rmin,rmax)
+	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Trigeff/%i-%i/"%(rlist[0],rlist[-1])
+	os.system("mkdir -p %s"%outpath)
+	conn = open_connection()
+	
+	for s in ['E','W']:
+		for t in range(4):
+			gdat = []
+			for rn in rlist:
+				tparms = list(getTrigeffParams(conn,rn,s,t))
+				tparms.sort()
+				if not rn%10:
+					print rn
+				gdat.append([rn,tparms[0][2],tparms[1][2]])
+			
+			geff=graph.graphxy(width=25,height=8,
+						x=make_runaxis(rlist[0]-1,rlist[-1]+1),
+						y=graph.axis.lin(title="Trigger ADC Threshold",min=0,max=100),
+						key = None)
+			#grmon.texrunner.set(lfs='foils17pt')
+
+			geff.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
+						[graph.style.errorbar(errorbarattrs=[rgb.blue,]),graph.style.symbol(symbol.circle,size=0.10,symbolattrs=[rgb.red,])])
+
+			geff.writetofile(outpath+"/%s%i.pdf"%(s,t))
+	
 	
 if __name__ == "__main__":
+	
 	plot_all_pedestals(13900,16300)
 	plot_all_pedestals(16500,19900)
 	
+	plot_trigeff_history(13900,16300)
+	plot_trigeff_history(16500,19900)
