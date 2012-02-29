@@ -84,7 +84,10 @@ def plot_trigeff_history(rmin,rmax):
 			for rn in rlist:
 				tparms = list(getTrigeffParams(conn,rn,s,t))
 				tparms.sort()
-				if not rn%10:
+				if not tparms:
+					print "***** Missing data for",rn,s,t
+					continue
+				if not rn%50:
 					print rn
 				gdat.append([rn,tparms[0][2],tparms[1][2]])
 			
@@ -102,8 +105,8 @@ def plot_trigeff_history(rmin,rmax):
 	
 if __name__ == "__main__":
 	
-	plot_all_pedestals(13900,16300)
-	plot_all_pedestals(16500,19900)
+	#plot_all_pedestals(13900,16300)
+	#plot_all_pedestals(16500,19900)
 	
-	plot_trigeff_history(13900,16300)
+	#plot_trigeff_history(13900,16300)
 	plot_trigeff_history(16500,19900)
