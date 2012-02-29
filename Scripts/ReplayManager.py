@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import os
 import time
-from UCNAUtils import *
 from EncalDB import *
 from optparse import OptionParser	
 	

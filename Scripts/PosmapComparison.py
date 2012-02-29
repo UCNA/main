@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-from UCNAUtils import *
 from PyxUtils import *
 from EncalDB import *
 from QFile import *

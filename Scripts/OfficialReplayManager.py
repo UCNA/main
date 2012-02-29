@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import os
 import time
-from UCNAUtils import *
 from EncalDB import *
 from optparse import OptionParser
 
@@ -40,7 +39,7 @@ def replay_sources(rmin,rmax,doXe=False):
 	
 	rlist = getRunType(open_connection(),"SourceCalib",rmin,rmax)
 	if doXe:
-		rlist = expandRanges(xegroups,rmin,rmax)
+		rlist = getRunType(open_connection(),"Xenon",rmin,rmax)
 	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i\n"
 			
 	freplaylist = open("officialreplaylist_sources.txt","w")

@@ -1,6 +1,5 @@
 #!/sw/bin/python2.6
 
-from UCNAUtils import *
 from LinFitter import *
 from PyxUtils import *
 from QFile import *
