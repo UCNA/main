@@ -31,8 +31,8 @@ Cut_ADC_Drift_W:	start = 800	end = 2300	runStart = 13000	runEnd = 100000
 
 Cut_BeamBurst:		start = 0.05	end = 10	runStart = 13000	runEnd = 100000
 
-Cut_TDC_Scint_E_Selftrig:	start = 2790	end = 4080	runStart = 13000	runEnd = 17300
-Cut_TDC_Scint_W_Selftrig:	start = 3010	end = 4080	runStart = 13000	runEnd = 17300
+Cut_TDC_Scint_E_Selftrig:	start = 2790	end = 4080	runStart = 13000	runEnd = 100000
+Cut_TDC_Scint_W_Selftrig:	start = 3010	end = 4080	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_E:	start = 50	end = 4080	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_W:	start = 50	end = 4080	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_E_0:	start = 5	end = 3700	runStart = 13000	runEnd = 100000
