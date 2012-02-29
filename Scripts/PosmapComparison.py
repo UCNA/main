@@ -82,5 +82,7 @@ def compareEndpoints(rn1,rn2):
 			cnvs.writetofile(outdir+"%s_%i.pdf"%(s,t))
 
 if __name__=="__main__":
-	compareEndpoints(16000,18362)
-	compareEndpoints(18362,18750)
+	compareEndpoints(14300,16000)
+	#compareEndpoints(16000,18362)
+	#compareEndpoints(18362,18750)
+	#compareEndpoints(18081,18362)

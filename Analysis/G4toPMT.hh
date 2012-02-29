@@ -85,7 +85,7 @@ protected:
 };
 
 
-/// converts Robbie's Penelope data to PMT spectra
+/// converts Robby's Penelope data to PMT spectra
 class PenelopeToPMT: public Sim2PMT {
 public:
 	/// constructor

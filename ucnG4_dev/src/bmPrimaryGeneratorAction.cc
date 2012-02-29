@@ -765,7 +765,7 @@ void bmPrimaryGeneratorAction::Xe125_1_2p_SourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// Xe133 metastable 11/2-
+// Xe133 metastable 11/2- (T_half=2.198 days)
 void bmPrimaryGeneratorAction::Xe133_11_2m_SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
@@ -780,7 +780,7 @@ void bmPrimaryGeneratorAction::Xe133_11_2m_SourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// Xe133 3/2+ (incorrect correlations and chains)
+// Xe133 3/2+ (T_half=5.25days) (incorrect correlations and chains)
 void bmPrimaryGeneratorAction::Xe133_3_2p_SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;

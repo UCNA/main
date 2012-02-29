@@ -51,7 +51,7 @@ float PedestalCorrector::getPedwidth(const std::string& sensorName, float time) 
 }
 void PedestalCorrector::insertPedestal(const std::string& sensorName, TGraph* g) {
 	if(g->GetN()<2)
-		throw(UCNAException("toFewPoints"));
+		throw(UCNAException("tooFewPoints"));
 	pedestals.erase(sensorName);
 	pedestals.insert(std::make_pair(sensorName,g));
 }
