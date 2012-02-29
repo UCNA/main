@@ -81,8 +81,8 @@ doc : latex/refman.pdf
 
 latex/refman.pdf: latex/ 
 	cd latex; make
-latex/ : documentationConfig
-	doxygen documentationConfig
+latex/ : Doxyfile
+	doxygen
 
 #
 # cleanup
