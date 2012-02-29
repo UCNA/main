@@ -15,6 +15,8 @@ public:
 	~UCNAException() throw() {}
 	/// display error
 	virtual const char* what() const throw();
+	/// string for holding error message
+	mutable std::string msg;
 };
 
 #endif

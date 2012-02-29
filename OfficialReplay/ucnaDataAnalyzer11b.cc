@@ -46,11 +46,10 @@ void ucnaDataAnalyzer11b::analyze() {
 
 void ucnaDataAnalyzer11b::loadCut(CutVariable& c, const std::string& cutName) {
 	std::vector<Stringmap> v = ManualInfo::MI.getInRange(cutName,rn);
-	if(v.size() < 1) {
+	if(!v.size()) {
 		UCNAException e("missingCut");
 		e.insert("cutName",cutName);
 		e.insert("runNum",rn);
-		e.insert("nFound",v.size());
 		throw(e);
 	}
 	c.R = RangeCut(v[0]);

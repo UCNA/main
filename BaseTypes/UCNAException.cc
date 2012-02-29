@@ -5,5 +5,6 @@ UCNAException::UCNAException(std::string tp): std::exception(), Stringmap() {
 }
 
 const char* UCNAException::what() const throw() { 
-	return toString().c_str(); 
+	msg = toString();
+	return msg.c_str(); 
 }
