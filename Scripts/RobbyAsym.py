@@ -124,8 +124,8 @@ def compareMichaelRobbyAsyms(depth):
 	
 		
 	gAsyms.plot(graph.data.points(gdat,x=2,dx=3,y=4,dy=5,title=None),
-				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
-				graph.style.errorbar(errorbarattrs=[rgb.red,])
+				[graph.style.errorbar(errorbarattrs=[rgb.blue,]),
+				graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
 				])
 	gAsyms.plot(graph.data.function("y(x)=x",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
 	

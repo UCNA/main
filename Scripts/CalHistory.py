@@ -84,24 +84,30 @@ def plot_trigeff_history(rmin,rmax):
 			for rn in rlist:
 				tparms = list(getTrigeffParams(conn,rn,s,t))
 				tparms.sort()
-				if not tparms:
+				try:
+					gdat.append([rn,tparms[0][2],tparms[1][2],tparms[3][2],tparms[3][3]])
+				except:
 					print "***** Missing data for",rn,s,t
 					continue
 				if not rn%50:
 					print rn
-				gdat.append([rn,tparms[0][2],tparms[1][2]])
+				
 			
-			geff=graph.graphxy(width=25,height=8,
+			gthresh=graph.graphxy(width=25,height=8,
 						x=make_runaxis(rlist[0]-1,rlist[-1]+1),
 						y=graph.axis.lin(title="Trigger ADC Threshold",min=0,max=100),
 						key = None)
-			#grmon.texrunner.set(lfs='foils17pt')
-
-			geff.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
+			gthresh.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
 						[graph.style.errorbar(errorbarattrs=[rgb.blue,]),graph.style.symbol(symbol.circle,size=0.10,symbolattrs=[rgb.red,])])
-
-			geff.writetofile(outpath+"/%s%i.pdf"%(s,t))
+			gthresh.writetofile(outpath+"/%s%i.pdf"%(s,t))
 	
+			geff=graph.graphxy(width=25,height=8,
+						x=make_runaxis(rlist[0]-1,rlist[-1]+1),
+						y=graph.axis.lin(title="Trigger Efficiency"),
+						key = None)
+			geff.plot(graph.data.points(gdat,x=1,y=4,dy=5,title=None),
+						[graph.style.errorbar(errorbarattrs=[rgb.blue,]),graph.style.symbol(symbol.circle,size=0.10,symbolattrs=[rgb.red,])])
+			geff.writetofile(outpath+"/Eff_%s%i.pdf"%(s,t))
 	
 if __name__ == "__main__":
 	

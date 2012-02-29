@@ -16,7 +16,7 @@ def replay_betas(rmin,rmax):
 	freplaylist.close()
 	print "------- Replay List -------"
 	os.system("cat officialreplaylist.txt")
-	os.system("parallel --nice 10 < officialreplaylist.txt")
+	os.system("nice -n 10 parallel < officialreplaylist.txt")
 	os.system("rm officialreplaylist.txt")
 	
 def replay_new(rmin,rmax):
@@ -32,7 +32,7 @@ def replay_new(rmin,rmax):
 	freplaylist.close()
 	print "------- Replay List -------"
 	os.system("cat officialreplaylist.txt")
-	os.system("parallel --nice 10 < officialreplaylist.txt")
+	os.system("nice -n 10 parallel < officialreplaylist.txt")
 	os.system("rm officialreplaylist.txt")
 
 	
@@ -51,7 +51,7 @@ def replay_sources(rmin,rmax,doXe=False):
 	freplaylist.close()
 	print "------- Replay List -------"
 	os.system("cat officialreplaylist_sources.txt")
-	os.system("parallel --nice 10 < officialreplaylist_sources.txt")
+	os.system("nice -n 10 parallel < officialreplaylist_sources.txt")
 	os.system("rm officialreplaylist_sources.txt")
 	
 	

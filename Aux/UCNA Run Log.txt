@@ -5038,6 +5038,7 @@
 *19484	A11
 *19485	A12
 
+
 #######################
 @cycle February 14 Sources
 #######################
@@ -5086,3 +5087,425 @@
 *19544	SourcesCal
 @sources
 
+
+#######################
+@cycle February 16 Xenon and Betas
+#######################
+
+# 19583...19588 Xe runs too long for analyzer
+
+*19589	Xe
+*19590	Xe
+*19591	Xe
+*19592	Xe
+*19593	Xe
+*19594	Xe
+*19595	Xe
+*19596	Xe
+*19597	Xe
+*19598	Xe
+*19599	Xe
+*19600	Xe
+*19601	Xe
+*19602	Xe
+*19603	Xe
+*19604	Xe
+*19605	Xe
+*19606	Xe
+
+### A->B ###
+
+*19616	A1
+*19617	A2
+*19618	A3
+*19619	A4
+*19620	A5
+*19621	A6
+*19622	A7
+*19623	A8
+*19624	A9
+*19625	A10
+*19626	A11
+*19627	A12
+
+*19628	B1
+*19629	B2
+*19630	B3
+*19631	B4
+*19632	B5
+*19633	B6
+*19634	B7
+*19635	B8
+*19636	B9
+*19637	B10
+*19638	B11
+*19639	B12
+
+
+#######################
+@cycle February 17-21 Presidents Day Weekend Betas
+#######################
+
+### A->B ###
+
+*19643	A1
+*19644	A2
+*19645	A3
+*19646	A4
+*19647	A5
+*19648	A6
+*19650	A7
+*19651	A8
+*19652	A9
+*19653	A10
+*19654	A11
+*19655	A12
+
+*19656	B1
+*19657	B2
+*19658	B3
+*19659	B4
+*19661	B5
+*19662	B6
+*19663	B7
+*19665	B8
+*19666	B9
+*19667	B10
+*19668	B11
+*19669	B12
+
+### B->A ###
+
+*19670	B1
+*19671	B2
+*19672	B3
+*19673	B4
+*19674	B5
+*19675	B6
+*19676	B7
+*19677	B8
+*19678	B9
+*19679	B10
+*19680	B11
+*19681	B12
+
+*19682	A1
+*19683	A2
+*19684	A3
+*19685	A4
+*19686	A5
+*19688	A6
+*19689	A7
+*19690	A8
+*19691	A9
+*19692	A10
+*19693	A11
+*19694	A12
+
+### A->B ###
+
+*19695	A1
+*19696	A2
+*19697	A3
+*19698	A4
+*19699	A5
+*19700	A6
+*19701	A7
+*19702	A8
+*19703	A9
+*19704	A10
+*19705	A11
+*19706	A12
+
+*19707	B1
+*19708	B2
+*19709	B3
+*19710	B4
+*19711	B5
+*19712	B6
+*19713	B7
+*19714	B8
+*19715	B9
+*19716	B10
+*19717	B11
+*19718	B12
+
+### A->B ###
+
+*19719	A1
+*19720	A2
+*19721	A3
+*19722	A4
+*19723	A5
+*19724	A6
+*19725	A7
+*19726	A8
+*19727	A9
+*19728	A10
+*19729	A11
+*19730	A12
+
+*19731	B1
+*19732	B2
+*19733	B3
+*19734	B4
+*19735	B5
+*19737	B6
+*19738	B7
+*19739	B8
+*19740	B9
+*19741	B10
+*19742	B11
+*19743	B12
+
+### A->B ###
+
+*19744	A1
+*19745	A2
+*19746	A3
+*19748	A4
+*19749	A5
+*19750	A6
+*19751	A7
+*19752	A8
+*19753	A9
+*19754	A10
+*19755	A11
+*19756	A12
+
+*19757	B1
+*19758	B2
+*19759	B3
+*19760	B4
+*19761	B5
+*19762	B6
+*19763	B7
+*19764	B8
+*19765	B9
+*19766	B10
+*19767	B11
+*19768	B12
+
+### A->B ###
+
+*19769	A1
+*19770	A2
+*19771	A3
+*19772	A4
+*19773	A5
+*19774	A6
+*19778	A7
+*19779	A8
+*19780	A9
+*19781	A10
+*19782	A11
+*19783	A12
+
+*19784	B1
+*19785	B2
+*19786	B3
+*19787	B4
+*19788	B5
+*19789	B6
+*19790	B7
+*19791	B8
+*19792	B9
+*19793	B10
+*19794	B11
+*19795	B12
+
+### B->A ###
+
+*19796	B1
+*19797	B2
+*19798	B3
+*19799	B4
+*19801	B5
+*19802	B6
+*19803	B7
+*19804	B8
+*19805	B9
+*19806	B10
+*19807	B11
+*19808	B12
+
+*19809	A1
+*19810	A2
+*19811	A3
+*19812	A4
+*19813	A5
+*19814	A6
+*19815	A7
+*19816	A8
+*19817	A9
+*19818	A10
+*19819	A11
+*19820	A12
+
+#######################
+@cycle February 21 Source Calibration
+#######################
+
+@sources Cd113m
+*19823	SourcesCal			# 0.0in
+@sources E Cd113m InW
+*19824	SourcesCal			# 0.5in
+@sources Cd113m InW
+*19825	SourcesCal			# 1.0in
+@sources E Cd113m InW Cd
+*19826	SourcesCal			# 1.5in
+@sources Cd113m InW Cd
+*19827	SourcesCal			# 2.0in
+*19828	SourcesCal			# 2.5in long time
+*19829	SourcesCal			# 2.5in long time
+*19830	SourcesCal			# 2.5in long time
+*19831	SourcesCal			# 2.5in
+*19832	SourcesCal			# 3.0in
+*19833	SourcesCal			# 3.5in
+@sources InW Cd
+*19834	SourcesCal			# 4.0in
+*19835	SourcesCal			# 4.5in
+@sources Cd
+*19836	SourcesCal			# 5.0in
+*19837	SourcesCal			# 5.5in
+@sources
+*19838	SourcesCal			# 6.0in
+
+# flipped
+
+@sources W Cd
+*19839	SourcesCal			# 6.0in
+@sources Cd
+*19840	SourcesCal			# 5.5in
+*19841	SourcesCal			# 5.0in
+@sources InE Cd
+*19842	SourcesCal			# 4.5in
+*19843	SourcesCal			# 4.0in
+@sources Cd113m InE Cd
+*19844	SourcesCal			# 3.5in
+*19845	SourcesCal			# 3.0in
+*19846	SourcesCal			# 2.5in
+*19847	SourcesCal			# 2.0in
+@sources W Cd113m InE
+*19848	SourcesCal			# 1.5in
+@sources Cd113m InE
+*19849	SourcesCal			# 1.0in
+@sources W Cd113m			
+*19850	SourcesCal			# 0.5in
+@sources Cd113m
+*19851	SourcesCal			# 0.0in
+@sources
+
+@sources Ce
+*19853	SourcesCal		# 0.0in
+@sources E Ce Sn
+*19854	SourcesCal		# 0.5in
+@sources Ce Sn
+*19855	SourcesCal		# 1.0in
+@sources E Ce Sn Bi
+*19856	SourcesCal		# 1.5in
+@sources Ce Sn Bi
+*19857	SourcesCal		# 2.0in
+*19858	SourcesCal		# 2.5in
+*19859	SourcesCal		# 3.0in
+@sources E Sn Bi
+*19860	SourcesCal		# 3.5in
+@sources Sn Bi
+*19861	SourcesCal		# 4.0in
+*19862	SourcesCal		# 4.5in
+@sources Bi
+*19863	SourcesCal		# 5.0in
+@sources
+
+#######################
+@cycle February 22 Xenon, Long Sn
+#######################
+
+*19873	Xe
+*19874	Xe
+*19875	Xe
+*19876	Xe
+*19877	Xe
+*19878	Xe
+*19879	Xe
+*19880	Xe
+*19881	Xe
+*19882	Xe
+*19883	Xe
+*19884	Xe
+*19885	Xe
+*19886	Xe
+*19887	Xe
+*19888	Xe
+*19889	Xe
+*19890	Xe
+*19891	Xe
+*19892	Xe
+*19893	Xe
+*19894	Xe
+*19895	Xe
+*19896	Xe
+*19897	Xe
+*19898	Xe
+
+@sources Sn
+*19899	SourcesCal		# facing West
+*19900	SourcesCal
+@sources
+*19901	BgOff
+@sources Sn
+*19902	SourcesCal		# facing East
+@sources
+*19903	BgOff
+@sources Sn
+*19904	SourcesCal		# facing East
+@sources
+
+# Feb 23 afternoon
+
+@sources Sn
+*19924	SourcesCal
+*19925	SourcesCal
+@sources
+*19926	BgOff
+@sources Sn
+*19927	SourcesCal		# West
+@sources
+*19928	BgOff
+@sources Sn
+*19929	SourcesCal		# East
+@sources
+*19930	BgOff
+
+# Feb 24 morning
+
+@sources Sn
+*19952	SourcesCal		# ties down
+@sources
+*19953	BgOff
+@sources Sn
+*19954	SourcesCal		# ties up
+@sources
+*19955	BgOff
+@sources Sn
+*19956	SourcesCal		# ties down
+@sources
+*19957	BgOff
+@sources Sn
+*19958	SourcesCal		# ties up
+*19959	SourcesCal
+@sources
+*19960	BgOff
+
+#######################
+@cycle February 24 Tiny Beta
+#######################
+
+*19961	B1
+*19962	B2
+*19963	B3
+*19964	B4
+*19965	B5
+*19966	B6
+
+# Beam out; end of beta decay data
