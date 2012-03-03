@@ -246,3 +246,9 @@ void MixSim::setCalibrator(PMTCalibrator& PCal) {
 	Sim2PMT::setCalibrator(PCal);	
 }
 
+unsigned int MixSim::getnFiles() const {
+	unsigned int nf = 0;
+	for(std::vector<Sim2PMT*>::const_iterator it = subSims.begin(); it != subSims.end(); it++)
+		nf += (*it)->getnFiles();
+	return nf;
+}

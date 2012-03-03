@@ -298,12 +298,12 @@ void reSource(RunNum rn) {
 		simSource.x = simSource.y = 0;		
 		Sim2PMT* g2p = NULL;
 		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_";
-		
-		if(simSource.t=="In114E" || simSource.t=="In114W")
-			simSource.t="In114";
 		if(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" || simSource.t=="Cs137" || simSource.t=="Cd109" || simSource.t=="In114") {
 			g2p = new G4toPMT();
 			g2p->addFile(g4dat+simSource.t + "G_geomC/analyzed_*.root");
+		} else if(simSource.t=="In114E" || simSource.t=="In114W") {
+			g2p = new G4toPMT();
+			g2p->addFile(g4dat+simSource.t + "_geomC/analyzed_*.root");
 		} else if(simSource.t=="Cd113m") {
 			G4toPMT* cd109 = new G4toPMT();
 			cd109->addFile(g4dat+"Cd109G_geomC/analyzed_*.root");
@@ -314,7 +314,7 @@ void reSource(RunNum rn) {
 			MS->addSim(cd109, 0.25, 461.4*24*3600);
 			g2p = MS;
 		}
-		if(!g2p) {
+		if(!g2p || !g2p->getnFiles()) {
 			printf("Unknown source '%s'!\n",simSource.t.c_str());
 			continue;
 		}

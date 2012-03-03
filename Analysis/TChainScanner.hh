@@ -33,7 +33,7 @@ public:
 	/// get local event number
 	unsigned int getLocal(unsigned int e) { return Tch->LoadTree(e); }
 	/// get number of files
-	unsigned int getnFiles() const { return nFiles; }
+	virtual unsigned int getnFiles() const { return nFiles; }
 		
 	UInt_t nEvents;						//< number of events in current TChain
 	

@@ -5,9 +5,7 @@ from PyxUtils import *
 from EncalDB import *
 import os
 
-sourceNames = { 1:"Sn113", 2:"Bi207", 3:"Sr85", 4:"Cd109", 7:"Sr90", 8:"In114", 9:"Ce139", 10:"Monosmuth", 11:"500keV" }
-fancySourceNames = { 1:"$^{113}$Sn", 2:"$^{207}$Bi", 3:"$^{85}$Sr", 4:"$^{109}$Cd", 7:"$^{90}$Sr", 8:"$^{114}$In", 9:"$^{139}$Ce", 10:"Monosmuth", 11:"500keV" }		
-peakNames = { 8:"$^{207}$Bi 1", 9:"$^{207}$Bi 2", 11:"$^{113}$Sn", 12:"Sr85", 13:"$^{109}$Cd", 14:"$^{114}$In", 15:"$^{139}$Ce", 16:"Monosmuth", 17:"500keV", 20:"Cs137" }  
+peakNames = { 8:"$^{207}$Bi 1", 9:"$^{207}$Bi 2", 11:"$^{113}$Sn", 12:"Sr85", 13:"$^{109}$Cd", 14:"$^{114}$In", 15:"$^{139}$Ce", 20:"$^{137}$Cs" }  
 				
 class SourcePos:
 	"""Position of a source for a run"""
@@ -163,7 +161,7 @@ class LinearityCurve:
 		combodat = []
 		for k in pks:
 			gdat = [ (l.adc*l.gms,l.sim.erecon*l.eta,l.dadc*l.gms,l) for l in pks[k] if l.adc > 0]
-			combodat += [g for g in gdat if g[-1].src.type != "Sn113"]
+			combodat += gdat
 			if not gdat:
 				continue
 			self.gEvis.plot(graph.data.points(gdat,x=1,y=2,dx=3,title=peakNames[k]),
@@ -375,7 +373,7 @@ if __name__=="__main__":
 	conn = open_connection() # connection to calibrations DB
 	replace = True	# whether to replace previous calibration data
 	
-	for c in cal_2011[-1:]:
+	for c in cal_2010:
 	
 		# make new calibrations set
 		ecid = None

@@ -39,6 +39,7 @@
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithADouble.hh"
 #include "G4UIcmdWith3VectorAndUnit.hh"
+#include "G4UIcmdWithABool.hh"
 #include "Rtypes.h"
 #include <TString.h>
 #include "bmTrackerSD.hh"
@@ -46,6 +47,7 @@
 #include "bmDecayTrapConstruction.hh"
 #include "bmSourceHolderConstruction.hh"
 #include "bmDetectorPackageConstruction.hh"
+#include "bmSiliconDetectorConstruction.hh"
 
 class bmDetectorConstruction : public G4VUserDetectorConstruction, G4UImessenger, MaterialUser {
 public:
@@ -70,8 +72,10 @@ private:
 	G4VPhysicalVolume* source_phys;
 	bmDetectorPackageConstruction dets[2];
 	G4VPhysicalVolume* detPackage_phys[2];
+	bmSiliconDetectorConstruction siDet;
+	G4VPhysicalVolume* siDet_phys;
 	
-	//sensitive volumes
+	// sensitive volumes
 	bmTrackerSD* scint_SD[2];
 	bmTrackerSD* Dscint_SD[2];
 	bmTrackerSD* backing_SD[2];
@@ -86,6 +90,9 @@ private:
 	bmTrackerSD* source_SD;
 	bmTrackerSD* trap_monitor_SD[2];
 	
+	bmTrackerSD* siDet_SD;
+	
+	// UI commands
 	G4UIdirectory* fDetectorDir;					//< UI Directory for detector-related commands
 	
 	G4UIcommand* fDetectorGeometry;					//< which detector geometry to construct
@@ -99,6 +106,9 @@ private:
 	
 	G4UIcmdWith3VectorAndUnit* fSourceHolderPosCmd;	//< source holder position
 	G4ThreeVector fSourceHolderPos;
+	
+	G4UIcmdWithABool* fInFoilCmd;					//< construction of Indium 10um Al source foil
+	bool makeInFoil;
 	
 	G4UIcommand* fVacuumLevelCmd;					//< SCS bore vacuum
 	Float_t fVacuumInTorr;

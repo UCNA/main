@@ -49,11 +49,19 @@ class GeantSimManager:
 		self.settings["positioner"] = "DecayTrapFiducial" # DecayTrapUniform
 		self.settings["gunpos"] = "0 0 0 m"
 		self.settings["magf"] = "on"
+		if self.settings["generator"] in ["In114E","In114W"]:
+			self.settings["makeinfoil"] = "y"
+		else:
+			self.settings["makeinfoil"] = "n"
 		needsHolder = False
 		
 		if self.settings["generator"][:2] in ["Bi","Ce","Sn","Cd","In","Sr","Cs"]:
 			needsHolder = True
 			self.settings["positioner"] = "SourceDrop"
+		if self.settings["generator"] == "In114E":
+			self.settings["gunpos"] = "0 0 4.975 um"
+		if self.settings["generator"] == "In114W":
+			self.settings["gunpos"] = "0 0 -4.975 um"
 		if self.settings["generator"] == "eGun":
 			needsHolder = True
 			self.settings["positioner"] = "Fixed"
@@ -66,7 +74,7 @@ class GeantSimManager:
 				
 		if not self.settings["sourceholderpos"]:	
 			if needsHolder:
-				self.settings["sourceholderpos"] = "0 0 0 m"
+				self.settings["sourceholderpos"] = "0 0	0 m"
 			else:
 				self.settings["sourceholderpos"] = "0 0.5 0 m"
 		
@@ -180,7 +188,7 @@ class GeantSimManager:
 			print "Running simulation jobs..."
 			os.system("cat "+parallel_jobfile)
 			if nruns > 1:
-				os.system("parallel --nice 20 < %s"%parallel_jobfile)
+				os.system("nice -n 20 parallel < %s"%parallel_jobfile)
 			else:
 				os.system(onejob)
 			os.system("rm "+parallel_jobfile)
@@ -212,18 +220,19 @@ class GeantSimManager:
 		print "\n----- %s ------"%resim_jobfile
 		os.system("cat "+resim_jobfile)
 		print
-		os.system("parallel --nice 10 < %s"%resim_jobfile)
+		os.system("nice -n 10 parallel < %s"%resim_jobfile)
 		os.system("rm %s/outlist_*.txt"%self.g4_out_dir)
 		os.system("rm "+resim_jobfile)
 				
 			
 if __name__ == "__main__":
 	
-	# sources
-	sourceSim = GeantSimManager("LivPhys")
-	sourceSim.set_generator("Cs137G")
-	#sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
-	sourceSim.launch_postanalyzer()
+	# sources: ["Sn113G","Bi207G","Ce139G","Cd109G","Cd113mG","In114E","In114W"]
+	for g in ["Ce139G","Cd109G","Cd113mG"]:
+		sourceSim = GeantSimManager("LivPhys")
+		sourceSim.set_generator(g)
+		sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
+		sourceSim.launch_postanalyzer()
 		
 	# magnetic field effects plus bad vacuum
 	#launch_simulations(generators = ["neutronBetaUnpol"], nEvents = 1e7, nClusters=18,

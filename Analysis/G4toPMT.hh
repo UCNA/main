@@ -126,6 +126,8 @@ public:
 	virtual void setAFP(AFPState a);
 	/// set calibrator to use for simulations
 	virtual void setCalibrator(PMTCalibrator& PCal);
+	/// get number of files loaded by sub simulations
+	virtual unsigned int getnFiles() const;
 	
 protected:
 	

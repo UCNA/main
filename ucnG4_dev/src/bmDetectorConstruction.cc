@@ -75,6 +75,10 @@ bmDetectorConstruction::bmDetectorConstruction() {
 	fSourceHolderPosCmd->SetDefaultValue(G4ThreeVector());
 	fSourceHolderPosCmd->AvailableForStates(G4State_PreInit);    
 	
+	fInFoilCmd = new G4UIcmdWithABool("/detector/infoil",this);
+	fInFoilCmd->SetGuidance("Set true to build In source foil instead of usual sealed sources");
+	fInFoilCmd->SetDefaultValue(false);
+	
 	for(Side s = EAST; s <= WEST; ++s) {
 		fMatterScaleCmd[s] = new G4UIcmdWithADouble(sideSubst("/detector/matterscale%c",s).c_str(),this);
 		fMatterScaleCmd[s]->SetGuidance("Matter interaction scaling factor");
@@ -108,6 +112,9 @@ void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValu
 		fMatterScale[EAST] = fMatterScaleCmd[EAST]->GetNewDoubleValue(newValue);
 	} else if (command == fMatterScaleCmd[WEST]) {
 		fMatterScale[WEST] = fMatterScaleCmd[WEST]->GetNewDoubleValue(newValue);
+	} else if (command == fInFoilCmd) {
+		makeInFoil = fInFoilCmd->GetNewBoolValue(newValue);
+		G4cout << "Setting In source foil construction to " << makeInFoil << G4endl;
 	}else {
 		G4cerr << "Unknown command:" << command->GetCommandName() << " passed to bmDetectorConstruction::SetNewValue\n";
     }
@@ -119,6 +126,20 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 	//------------------------------------------------------ materials
 	setVacuumPressure(fVacuumInTorr*atmosphere/760.);
 	
+	////////////////////////////////////////
+	// user step limits
+	////////////////////////////////////////	
+	G4UserLimits* bmUserCoarseLimits = new G4UserLimits();
+	bmUserCoarseLimits->SetMaxAllowedStep(10*m);
+	G4UserLimits* bmUserGasLimits = new G4UserLimits();
+	bmUserGasLimits->SetMaxAllowedStep(10*cm);
+	
+	////////////////////////////////////////
+	// sensisitve detectors
+	////////////////////////////////////////	
+	G4SDManager* SDman = G4SDManager::GetSDMpointer();
+	G4String trackerBlockSDname;
+	
 	///////////////////////////////////////
 	//experimental Hall
 	///////////////////////////////////////
@@ -128,7 +149,22 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 	G4Box* experimentalHall_box = new G4Box("expHall_box",expHall_halfx,expHall_halfy,expHall_halfz);
 	experimentalHall_log = new G4LogicalVolume(experimentalHall_box,Vacuum,"World_Log");  
 	experimentalHall_log->SetVisAttributes(G4VisAttributes::Invisible);
+	experimentalHall_log->SetUserLimits(bmUserCoarseLimits);
 	experimentalHall_phys = new G4PVPlacement(NULL,G4ThreeVector(),"World_Phys", experimentalHall_log,0,false,0);  
+	
+	
+	///////////////////////////////////////
+	// source holder
+	///////////////////////////////////////
+	if(makeInFoil) {
+		G4cout << "Constructing In source foil" << G4endl;
+		source.fWindowMat = source.Al;
+		source.fCoatingMat = source.Vacuum;
+		source.fWindowThick=5.0*um;
+		source.fCoatingThick=0.1*um;
+	}
+	source.Construct();
+	source_phys = new G4PVPlacement(NULL,fSourceHolderPos,source.container_log,"source_container_phys",experimentalHall_log,false,0);
 	
 	///////////////////////////////////////
 	// geometry-dependent settings
@@ -147,130 +183,129 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 		// open-ended decay trap
 		trap.fWindowMat=Vacuum;
 		trap.fCoatingMat=Vacuum;
-	} else if(sGeometry=="2007"){
+	} else if(sGeometry=="2007") {
 		// thick windows
 		dets[EAST].mwpc.fWindowThick=dets[WEST].mwpc.fWindowThick=25*um;
 		trap.fWindowThick=2.5*um;
+	} else if(sGeometry=="siDet") {
+		
 	} else {
 		G4cout<<"Unknown geometry!!"<<G4endl;
 		assert(false);
 	}
 	
-	
-	////////////////////////////////////////
-	// construct and place components
-	////////////////////////////////////////	
-	trap.Construct(experimentalHall_log);
-	source.Construct();
-	source_phys = new G4PVPlacement(NULL,fSourceHolderPos,source.container_log,"source_container_phys",experimentalHall_log,false,0);
-	for(Side s = EAST; s <= WEST; ++s) {
-		dets[s].Construct(s);
-		G4RotationMatrix* sideFlip = NULL;
-		if(s==WEST) {
-			sideFlip=new G4RotationMatrix();
-			sideFlip->rotateY(M_PI*rad);
+	if(sGeometry=="siDet") {
+		
+		////////////////////////////////////////
+		// silicon detector setup components
+		////////////////////////////////////////
+		siDet.Construct();
+		siDet_phys = new G4PVPlacement(NULL,G4ThreeVector(0,0,siDet.fHolderThick*0.5+source.getHolderThick()*0.5),
+									   siDet.container_log,"silicon_detector_phys",experimentalHall_log,false,0);	
+		
+		trackerBlockSDname = "siDet_SD";
+		siDet_SD = new bmTrackerSD(trackerBlockSDname);
+		SDman->AddNewDetector(siDet_SD);
+		siDet.det_log->SetSensitiveDetector(siDet_SD);
+		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
+		
+	} else {
+		
+		////////////////////////////////////////
+		// beta decay setup components
+		////////////////////////////////////////	
+		trap.Construct(experimentalHall_log);
+		for(Side s = EAST; s <= WEST; ++s) {
+			dets[s].Construct(s);
+			dets[s].mwpc.container_log->SetUserLimits(bmUserGasLimits);
+			dets[s].scint.container_log->SetUserLimits(bmUserGasLimits);
+			G4RotationMatrix* sideFlip = NULL;
+			if(s==WEST) {
+				sideFlip=new G4RotationMatrix();
+				sideFlip->rotateY(M_PI*rad);
+			}
+			detPackage_phys[s] = new G4PVPlacement(sideFlip,G4ThreeVector(0.,0.,sign(s)*(2.2*m-dets[s].getScintFacePos())),
+												   dets[s].container_log,sideSubst("detPackage_phys%c",s),experimentalHall_log,false,0);
 		}
-		detPackage_phys[s] = new G4PVPlacement(sideFlip,G4ThreeVector(0.,0.,sign(s)*(2.2*m-dets[s].getScintFacePos())),
-											   dets[s].container_log,sideSubst("detPackage_phys%c",s),experimentalHall_log,false,0);
+		
+		for(Side s = EAST; s <= WEST; ++s ) {
+			
+			trackerBlockSDname = sideSubst("scint_SD%c",s);
+			scint_SD[s] = new bmTrackerSD(trackerBlockSDname);
+			SDman->AddNewDetector(scint_SD[s]);
+			dets[s].scint.scint_log->SetSensitiveDetector(scint_SD[s]);
+			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
+			
+			trackerBlockSDname = sideSubst("Dscint_SD%c",s);
+			Dscint_SD[s] = new bmTrackerSD(trackerBlockSDname);
+			SDman->AddNewDetector(Dscint_SD[s]);
+			dets[s].scint.Dscint_log->SetSensitiveDetector(Dscint_SD[s]);
+			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
+			
+			trackerBlockSDname = sideSubst("backing_SD%c",s);
+			backing_SD[s] = new bmTrackerSD(trackerBlockSDname);
+			SDman->AddNewDetector(backing_SD[s]);
+			dets[s].scint.backing_log->SetSensitiveDetector(backing_SD[s]);
+			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
+			
+			trackerBlockSDname = sideSubst("winOut_SD%c",s);
+			winOut_SD[s] = new bmTrackerSD(trackerBlockSDname);
+			SDman->AddNewDetector(winOut_SD[s]);
+			dets[s].mwpc.winOut_log->SetSensitiveDetector(winOut_SD[s]);
+			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
+			
+			trackerBlockSDname = sideSubst("winIn_SD%c",s);
+			winIn_SD[s] = new bmTrackerSD(trackerBlockSDname);
+			SDman->AddNewDetector(winIn_SD[s]);
+			dets[s].mwpc.winIn_log->SetSensitiveDetector(winIn_SD[s]);
+			dets[s].mwpc.kevlar_log->SetSensitiveDetector(winIn_SD[s]);
+			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
+			
+			trackerBlockSDname = sideSubst("trap_win_SD%c",s);
+			trap_win_SD[s] = new bmTrackerSD(trackerBlockSDname);
+			SDman->AddNewDetector(trap_win_SD[s]);
+			trap.mylar_win_log[s]->SetSensitiveDetector(trap_win_SD[s]);
+			trap.be_win_log[s]->SetSensitiveDetector(trap_win_SD[s]);
+			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
+			
+			trackerBlockSDname = sideSubst("mwpc_SD%c",s);
+			mwpc_SD[s] = new bmTrackerSD(trackerBlockSDname);
+			SDman->AddNewDetector(mwpc_SD[s]);
+			dets[s].mwpc.activeRegion.gas_log->SetSensitiveDetector(mwpc_SD[s]);
+			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
+			
+			trackerBlockSDname = sideSubst("mwpcDead_SD%c",s);
+			mwpcDead_SD[s] = new bmTrackerSD(trackerBlockSDname);
+			SDman->AddNewDetector(mwpcDead_SD[s]);
+			dets[s].mwpc.container_log->SetSensitiveDetector(mwpcDead_SD[s]);
+			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
+			
+		}
+		
+		// source holder
+		trackerBlockSDname = "source_SD";
+		source_SD = new bmTrackerSD( trackerBlockSDname );
+		SDman->AddNewDetector(source_SD);
+		source.window_log->SetSensitiveDetector(source_SD);
+		for(Side s = EAST; s <= WEST; ++s)
+			source.coating_log[s]->SetSensitiveDetector(source_SD);
+		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
+		
+		// decay trap monitor volumes
+		for(Side s = EAST; s <= WEST; ++s ) {
+			trackerBlockSDname = sideSubst("trap_monitor_SD%c",s);
+			trap_monitor_SD[s] = new bmTrackerSD(trackerBlockSDname);
+			SDman->AddNewDetector(trap_monitor_SD[s]);
+			trap.trap_monitor_log[s]->SetSensitiveDetector(trap_monitor_SD[s]);
+			gbmAnalysisManager->SaveSDName(trackerBlockSDname);		
+		}
+		
+		// construct magnetic field
+		cout<<"##### "<<sFieldMapFile<<" #####"<<endl;
+		ConstructField(sFieldMapFile);
+		//then switch the field on or off based on the UI
+		SetFieldOnOff(fieldSwitch);
 	}
-	
-	////////////////////////////////////////
-	// user step limits
-	////////////////////////////////////////	
-	G4UserLimits* bmUserCoarseLimits = new G4UserLimits();
-	bmUserCoarseLimits->SetMaxAllowedStep(10*m);
-	experimentalHall_log->SetUserLimits(bmUserCoarseLimits);
-	G4UserLimits* bmUserGasLimits = new G4UserLimits();
-	bmUserGasLimits->SetMaxAllowedStep(10*cm);
-	for(Side s = EAST; s <= WEST; ++s) {
-		dets[s].mwpc.container_log->SetUserLimits(bmUserGasLimits);
-		dets[s].scint.container_log->SetUserLimits(bmUserGasLimits);
-	}
-	
-	////////////////////////////////////////
-	// sensisitve detectors
-	////////////////////////////////////////	
-	G4SDManager* SDman = G4SDManager::GetSDMpointer();
-	G4String trackerBlockSDname;
-	
-	for(Side s = EAST; s <= WEST; ++s ) {
-		
-		trackerBlockSDname = sideSubst("scint_SD%c",s);
-		scint_SD[s] = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(scint_SD[s]);
-		dets[s].scint.scint_log->SetSensitiveDetector(scint_SD[s]);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
-		
-		trackerBlockSDname = sideSubst("Dscint_SD%c",s);
-		Dscint_SD[s] = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(Dscint_SD[s]);
-		dets[s].scint.Dscint_log->SetSensitiveDetector(Dscint_SD[s]);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
-		
-		trackerBlockSDname = sideSubst("backing_SD%c",s);
-		backing_SD[s] = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(backing_SD[s]);
-		dets[s].scint.backing_log->SetSensitiveDetector(backing_SD[s]);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
-		
-		trackerBlockSDname = sideSubst("winOut_SD%c",s);
-		winOut_SD[s] = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(winOut_SD[s]);
-		dets[s].mwpc.winOut_log->SetSensitiveDetector(winOut_SD[s]);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
-		
-		trackerBlockSDname = sideSubst("winIn_SD%c",s);
-		winIn_SD[s] = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(winIn_SD[s]);
-		dets[s].mwpc.winIn_log->SetSensitiveDetector(winIn_SD[s]);
-		dets[s].mwpc.kevlar_log->SetSensitiveDetector(winIn_SD[s]);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
-		
-		trackerBlockSDname = sideSubst("trap_win_SD%c",s);
-		trap_win_SD[s] = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(trap_win_SD[s]);
-		trap.mylar_win_log[s]->SetSensitiveDetector(trap_win_SD[s]);
-		trap.be_win_log[s]->SetSensitiveDetector(trap_win_SD[s]);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
-		
-		trackerBlockSDname = sideSubst("mwpc_SD%c",s);
-		mwpc_SD[s] = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(mwpc_SD[s]);
-		dets[s].mwpc.activeRegion.gas_log->SetSensitiveDetector(mwpc_SD[s]);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
-		
-		trackerBlockSDname = sideSubst("mwpcDead_SD%c",s);
-		mwpcDead_SD[s] = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(mwpcDead_SD[s]);
-		dets[s].mwpc.container_log->SetSensitiveDetector(mwpcDead_SD[s]);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
-		
-	}
-	
-	// source holder
-	trackerBlockSDname = "source_SD";
-	source_SD = new bmTrackerSD( trackerBlockSDname );
-	SDman->AddNewDetector(source_SD);
-	source.window_log->SetSensitiveDetector(source_SD);
-	for(Side s = EAST; s <= WEST; ++s)
-		source.coating_log[s]->SetSensitiveDetector(source_SD);
-	gbmAnalysisManager->SaveSDName(trackerBlockSDname);
-	
-	// decay trap monitor volumes
-	for(Side s = EAST; s <= WEST; ++s ) {
-		trackerBlockSDname = sideSubst("trap_monitor_SD%c",s);
-		trap_monitor_SD[s] = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(trap_monitor_SD[s]);
-		trap.trap_monitor_log[s]->SetSensitiveDetector(trap_monitor_SD[s]);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);		
-	}
-	
-	cout<<"##### "<<sFieldMapFile<<" #####"<<endl;
-	ConstructField(sFieldMapFile);
-	//then switch the field on or off based on the UI
-	SetFieldOnOff(fieldSwitch);
-	
-	//   G4RunManager::GetRunManager()->DefineWorldVolume(Construct());
 	
 	return experimentalHall_phys;
 }

@@ -1008,7 +1008,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	} else if (gunType=="In114") {
 		funcBetaSpectrum->FixParameter(0,1988.7);
 		In114SourceGenerator(anEvent);
-	} else if (gunType=="In114G") {
+	} else if (gunType=="In114G" || gunType=="In114E" || gunType=="In114W") {
 		In114GSourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {
 		double eOrig = particleGun->GetParticleEnergy();

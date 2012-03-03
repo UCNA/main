@@ -8,7 +8,6 @@ void bmSourceHolderConstruction::Construct() {
 	const G4double fSourceRingThickness = 3.2*mm;			// suspiciously close to 1/8 in
 	const G4double fSourceHolderHeight = 1.5*inch;
 	const G4double fSourceHolderWidth = 1.5*inch;
-	const G4double fSourceHolderThickness = 3./16.*inch;	// need to measure this
 	
 	// source holder container
 	G4Box* holder_box = new G4Box("source_holder_box",0.5*fSourceHolderWidth,0.5*fSourceHolderHeight,0.5*fSourceHolderThickness);
@@ -25,17 +24,17 @@ void bmSourceHolderConstruction::Construct() {
 	
 	// sealed source foil
 	G4Tubs* window_tube = new G4Tubs("window_tube",0.,fSourceWindowRadius,fWindowThick,0.,2*M_PI);
-	window_log = new G4LogicalVolume(window_tube,Mylar,"source_window_log");
+	window_log = new G4LogicalVolume(window_tube,fWindowMat,"source_window_log");
 	G4VisAttributes* visWindow = new G4VisAttributes(G4Colour(0,1.0,0,1));
 	window_log->SetVisAttributes(visWindow);
 	window_phys = new G4PVPlacement(NULL,G4ThreeVector(),window_log,"source_window_phys",container_log,false,0);
 	
 	// source foil coating
-	G4Tubs* coating_tube = new G4Tubs("source_coating_tube",0.,fSourceWindowRadius,fCoatingThick,0.,2*M_PI);
+	G4Tubs* coating_tube = new G4Tubs("source_coating_tube",0.,fSourceWindowRadius,fCoatingThick*0.5,0.,2*M_PI);
 	for(Side s = EAST; s <= WEST; ++s) {
-		coating_log[s] = new G4LogicalVolume(coating_tube,Al,sideSubst("source_coating_log_%c",s));
+		coating_log[s] = new G4LogicalVolume(coating_tube,fCoatingMat,sideSubst("source_coating_log_%c",s));
 		coating_log[s]->SetVisAttributes(new G4VisAttributes(G4Colour(0,1,0,0.5)));
-		coating_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,sign(s)*(fWindowThick+fCoatingThick)/2),
+		coating_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,sign(s)*(fWindowThick+fCoatingThick*0.5)),
 											coating_log[s],sideSubst("source_coating_phys_%c",s),container_log,false,0);
 	}
 	

@@ -25,6 +25,7 @@
 /detector/vacuum %(vacuum)g
 
 /detector/sourceholderpos %(sourceholderpos)s
+/detector/infoil %(makeinfoil)s
 
 # cuts for generic physics list
 #/bm/phys/setCuts 1.0 um
