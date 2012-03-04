@@ -553,7 +553,7 @@ void bmPrimaryGeneratorAction::In114GSourceGenerator(G4Event* anEvent) {
 		// 5+ decay to:				114Cd ------------	or 1+ state ------------------
 		const double line190[] =	{725.24,	558.43,	190.27,	189.44,	186.03,	162.33};
 		const double branch190[] =	{3.2,		3.2,	15.56,	6.71,	31.9,	40.1};
-		gunEnergy = rand_outof_list(line190, branch190, 4, selected)*keV;
+		gunEnergy = rand_outof_list(line190, branch190, 6, selected)*keV;
 		if(selected < 3)
 			gammas.push_back(gunEnergy);
 		else
@@ -635,31 +635,6 @@ void bmPrimaryGeneratorAction::Ag110GSourceGenerator(G4Event* anEvent) {
 		gammas.push_back(1505.03*keV);
 	
 	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-
-//position is in units of mm, mom is dimensionless, energy is in units of keV
-void bmPrimaryGeneratorAction::
-In114SourceGenerator(G4Event* anEvent) {
-	
-	G4ThreeVector direction;
-	G4double gunEnergy;
-	
-	RandomizeMomentum(direction);
-	
-	const double line[4] = {162.33, 186.03, 189.44, 190.15};
-	const double branching[4] = {40.1, 31.9, 6.71, 1.351};
-	
-	double ran = G4UniformRand();
-	int selected(-1);
-	if(ran<0.5) gunEnergy = rand_outof_list(line, branching, 4, selected)*keV;
-	else gunEnergy = funcBetaSpectrum->GetRandom()*keV;
-	
-	particleGun->SetParticleEnergy(gunEnergy);
-	particleGun->SetParticleMomentumDirection(direction);
-	particleGun->GeneratePrimaryVertex(anEvent);
-	
-	return;
 }
 
 //position is in units of mm, mom is dimensionless, energy is in units of keV
@@ -1005,9 +980,6 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		Xe135_3_2p_SourceGenerator(anEvent);
 	} else if(gunType=="Xe137_7/2-") {
 		Xe137_7_2m_SourceGenerator(anEvent);
-	} else if (gunType=="In114") {
-		funcBetaSpectrum->FixParameter(0,1988.7);
-		In114SourceGenerator(anEvent);
 	} else if (gunType=="In114G" || gunType=="In114E" || gunType=="In114W") {
 		In114GSourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {

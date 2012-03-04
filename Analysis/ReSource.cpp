@@ -298,7 +298,8 @@ void reSource(RunNum rn) {
 		simSource.x = simSource.y = 0;		
 		Sim2PMT* g2p = NULL;
 		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_";
-		if(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" || simSource.t=="Cs137" || simSource.t=="Cd109" || simSource.t=="In114") {
+		if(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" ||
+		   simSource.t=="Cs137" || simSource.t=="Cd109" || simSource.t=="In114") {
 			g2p = new G4toPMT();
 			g2p->addFile(g4dat+simSource.t + "G_geomC/analyzed_*.root");
 		} else if(simSource.t=="In114E" || simSource.t=="In114W") {

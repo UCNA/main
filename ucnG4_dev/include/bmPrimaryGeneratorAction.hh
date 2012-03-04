@@ -100,7 +100,6 @@ private:
 	void Mn54SourceGenerator(G4Event* anEvent);
 	
 	// Indium source and backgrounds
-	void In114SourceGenerator(G4Event* anEvent);
 	void In114GSourceGenerator(G4Event* anEvent);
 	void Sc46GSourceGenerator(G4Event* anEvent);
 	void Co60GSourceGenerator(G4Event* anEvent);
