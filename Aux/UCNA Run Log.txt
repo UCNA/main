@@ -3904,12 +3904,12 @@
 *18367	SourcesCal	# 5.0in
 *18368	SourcesCal	# 5.5in
 
-@sources In Cd
+@sources InW Cd
 *18370	SourcesCal	# 3.0in W
 *18371	SourcesCal	# 1.5in W
-@sources In
+@sources InW
 *18372	SourcesCal	# 1.0in W
-@sources In Cd
+@sources InW Cd
 *18373	SourcesCal	# 2.0in W
 *18374	SourcesCal	# 2.5in W
 *18375	SourcesCal	# 3.5in W
@@ -3918,7 +3918,7 @@
 @sources Cd
 *18378	SourcesCal	# 5.0in W
 
-@sources In Cd
+@sources InE Cd
 *18379	SourcesCal	# 4.5in E
 *18380	SourcesCal	# 4.0in E
 *18381	SourcesCal	# 3.5in E
@@ -3926,7 +3926,7 @@
 *18383	SourcesCal	# 2.5in E
 *18384	SourcesCal	# 2.0in E
 *18385	SourcesCal	# 1.5in E
-@sources In
+@sources InE
 *18386	SourcesCal	# 1.0in E
 
 @sources
