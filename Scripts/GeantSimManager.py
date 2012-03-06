@@ -202,6 +202,9 @@ class GeantSimManager:
 		anafiles = [ (int(f[:-5].split("_")[-1]),self.g4_out_dir+"/"+f) for f in os.listdir(self.g4_out_dir) if f[:7]=="g4_run_"]
 		anafiles.sort()
 		nanalyzed = 0
+		self.settings["analyzer"]="UCNA_MC_Analyzer"
+		if self.settings["geometry"]=="siDet":
+			self.settings["analyzer"]="SiDet_Analyzer"
 		while anafiles:
 			outlist_name = self.g4_out_dir+"outlist_%i.txt"%nanalyzed
 			fout = open(outlist_name,"w")
@@ -214,7 +217,7 @@ class GeantSimManager:
 			allpts = ""
 			if self.settings["generator"] in ["neutronBetaUnpol","eGunRandMomentum","eGun"]:
 				allpts = " y"
-			jobsout.write("cd ../ucnG4_dev; ./UCNA_MC_Analyzer %s %s/analyzed_%i.root%s\n"%(outlist_name,self.g4_out_dir,nanalyzed,allpts))
+			jobsout.write("cd ../ucnG4_dev; ./%s %s %s/analyzed_%i.root%s\n"%(self.settings["analyzer"],outlist_name,self.g4_out_dir,nanalyzed,allpts))
 			nanalyzed += 1
 		jobsout.close()
 		print "\n----- %s ------"%resim_jobfile
@@ -228,11 +231,19 @@ class GeantSimManager:
 if __name__ == "__main__":
 	
 	# sources: ["Sn113G","Bi207G","Ce139G","Cd109G","Cd113mG","In114E","In114W"]
-	for g in ["In114W"]:
-		sourceSim = GeantSimManager("LivPhys")
-		sourceSim.set_generator(g)
-		#sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=24)
-		sourceSim.launch_postanalyzer()
+	if 0:
+		for g in ["In114W"]:
+			sourceSim = GeantSimManager("LivPhys")
+			sourceSim.set_generator(g)
+			#sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=24)
+			sourceSim.launch_postanalyzer()
+
+	# Silicon detector test
+	if 1:
+		siDet = GeantSimManager("SiDet",geometry="siDet")
+		siDet.set_generator("Bi207G")
+		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
+		siDet.launch_postanalyzer()
 		
 	# magnetic field effects plus bad vacuum
 	#launch_simulations(generators = ["neutronBetaUnpol"], nEvents = 1e7, nClusters=18,

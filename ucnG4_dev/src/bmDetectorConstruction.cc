@@ -159,7 +159,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 	if(makeInFoil) {
 		G4cout << "Constructing In source foil" << G4endl;
 		source.fWindowMat = source.Al;
-		source.fCoatingMat = source.Vacuum;
+		source.fCoatingMat = Vacuum;
 		source.fWindowThick=5.0*um;
 		source.fCoatingThick=0.1*um;
 	}
@@ -195,10 +195,11 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 	}
 	
 	if(sGeometry=="siDet") {
-		
+
 		////////////////////////////////////////
 		// silicon detector setup components
 		////////////////////////////////////////
+		siDet.pBackingMat = Vacuum;
 		siDet.Construct();
 		siDet_phys = new G4PVPlacement(NULL,G4ThreeVector(0,0,siDet.fHolderThick*0.5+source.getHolderThick()*0.5),
 									   siDet.container_log,"silicon_detector_phys",experimentalHall_log,false,0);	

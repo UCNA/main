@@ -23,7 +23,8 @@ all:
 	$(MAKE) libMCEvent.so
 	$(MAKE) lib  bin
 	$(MAKE) UCNA_MC_Analyzer
-
+	$(MAKE) SiDet_Analyzer
+	
 dict: include/bmMCEventDict.h include/bmTrackInfoDict.h \
 	include/bmPrimaryInfoDict.h
 
@@ -66,6 +67,11 @@ libMCEvent.so: dict
 UCNA_MC_Analyzer: UCNA_MC_Analyzer.cc AnalyzerBase.o libMCEvent.so
 	$(CXX) $(CPPFLAGS) UCNA_MC_Analyzer.cc $(EXTRALIBS) AnalyzerBase.o ./libMCEvent.so -o UCNA_MC_Analyzer
 
+# Analyzer for simple silicon detector data
+SiDet_Analyzer: SiDet_Analyzer.cc AnalyzerBase.o libMCEvent.so
+	$(CXX) $(CPPFLAGS) SiDet_Analyzer.cc $(EXTRALIBS) AnalyzerBase.o ./libMCEvent.so -o SiDet_Analyzer
+
+
 # cleanup
 clean::
 	rm -rf libMCEvent.so include/bmMCEventDict.h src/bmMCEventDict.cc \
@@ -74,6 +80,6 @@ clean::
 	rm -rf tmplibbuild
 	rm -rf $(G4WORKDIR)/tmp/
 	rm -rf $(G4WORKDIR)/bin/
-	rm -f  UCNA_MC_Analyzer
+	rm -f  UCNA_MC_Analyzer SiDet_Analyzer
 
 include $(G4INSTALL)/config/binmake.gmk 
