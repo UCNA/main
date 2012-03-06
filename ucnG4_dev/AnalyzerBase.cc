@@ -1,17 +1,7 @@
 #include "AnalyzerBase.hh"
 
-ucnG4_analyzer::ucnG4_analyzer(const std::string& outfname): outf(new TFile(outfname.c_str())), myevt(new bmMCEvent())  {
-	anaTree = new TTree("anaTree", "tree for analysis");
-	
-	anaTree->Branch("primKE",&primKE,"primKE/D");
-	anaTree->Branch("primTheta",&primTheta,"primTheta/D");
-	anaTree->Branch("primPos",primPos,"primPos[4]/D");
-	anaTree->Branch("trapped",&fTrapped,"trapped/I");
-	anaTree->Branch("compTime",&fCompTime,"compTime/D");
-	anaTree->Branch("seed",&seed,"seed/I");	
-	
-	setupOutputTree();
-}
+ucnG4_analyzer::ucnG4_analyzer(const std::string& outfname): anaTree(NULL),
+outf(new TFile(outfname.c_str(),"RECREATE")), myevt(new bmMCEvent()) { }
 
 void ucnG4_analyzer::analyzeFileList(const string& flist) {
 	ifstream file;
@@ -29,13 +19,25 @@ ucnG4_analyzer::~ucnG4_analyzer() {
 		outf->cd();
 		anaTree->Write();
 		outf->Close();
-		delete outf;
+		//delete outf;
 	}
-	delete anaTree;
-	delete myevt;
+	//delete anaTree;
+	//delete myevt;
 }
 
 void ucnG4_analyzer::analyzeFile(const string& fname) {
+	
+	if(!anaTree) {
+		outf->cd();
+		anaTree = new TTree("anaTree", "tree for analysis");
+		anaTree->Branch("primKE",&primKE,"primKE/D");
+		anaTree->Branch("primTheta",&primTheta,"primTheta/D");
+		anaTree->Branch("primPos",primPos,"primPos[4]/D");
+		anaTree->Branch("trapped",&fTrapped,"trapped/I");
+		anaTree->Branch("compTime",&fCompTime,"compTime/D");
+		anaTree->Branch("seed",&seed,"seed/I");	
+		setupOutputTree();		
+	}
 	
 	cout << "opening " << fname << endl;
 	TFile f(fname.c_str(),"read");

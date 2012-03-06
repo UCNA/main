@@ -3,6 +3,7 @@
 #include <cfloat>
 
 void UCNA_MC_Analyzer::setupOutputTree() {
+	printf("Adding branches for UCNA_MC_Analyzer...\n");
 	anaTree->Branch("Edep",Edep,"EdepE/D:EdepW/D");
 	anaTree->Branch("EdepQ",EdepQ,"EdepQE/D:EdepQW/D");
 	anaTree->Branch("EdepAll",&EdepAll,"EdepAll/D");
