@@ -228,7 +228,7 @@ void ucnaDataAnalyzer11b::checkMuonVetos() {
 	fTop_adc[EAST] = r_Top_ADC[EAST];
 	fTaggedTop[EAST] = fTop_tdc[EAST].inRange();
 	for(Side s = EAST; s<=WEST; ++s) {
-		fBacking_adc[s].val = r_Backing_ADC[s];
+		fBacking_adc[s] = r_Backing_ADC[s];
 		fBacking_tdc[s].val = r_Backing_TDC[s];
 		fTaggedBack[s] = fBacking_tdc[s].inRange();
 		fDrift_tac[s].val = r_Drift_TAC[s];
