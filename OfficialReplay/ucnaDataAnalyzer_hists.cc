@@ -91,7 +91,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 		}
 	}
 	
-	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
+	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_III_EVENT; t++) {
 		hTypeRate[t] = registeredTH1F(std::string("hTypeRate_")+itos(t),std::string("Type ")+itos(t)+" Event Rate",nTimeBins,-tpad,wallTime+tpad);
 		hTypeRate[t]->SetLineColor(5+t);
 		hTypeRate[t]->GetXaxis()->SetTitle("Time [s]");
@@ -110,6 +110,12 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 	hEvnbFailRate->SetLineColor(kOrange+10);
 	hBkhfFailRate = registeredTH1F("BkhfFail","Bkhf Fail Rate",nTimeBins,-tpad,wallTime+tpad);
 	hBkhfFailRate->SetLineColor(2);
+	
+	hClusterTiming[0] = registeredTH1F("ClusterTimingAll","Events in time window",100,1.0,5.0);
+	hClusterTiming[0]->GetXaxis()->SetTitle("log microseconds");
+	hClusterTiming[1] = registeredTH1F("ClusterTimingTrig","Events in time window",100,1.0,5.0);
+	hClusterTiming[1]->SetLineColor(4);
+	hClusterTiming[1]->GetXaxis()->SetTitle("log microseconds");
 }
 
 void ucnaDataAnalyzer11b::fillEarlyHistograms() {
@@ -174,7 +180,7 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			int nf = nFiring(s);
 			bool tfired = pmtFired(s,t);
-			if(nf-tfired<2 || int(fSis00)!=1+s || !fPassedGlobal)
+			if(nf-tfired<2 || iSis00!=1+s || !fPassedGlobal)
 				continue;
 			hTrigEffic[s][t][0]->Fill(sevt[s].adc[t]);
 			if(tfired)
@@ -200,8 +206,13 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 		}
 	}
 	
-	if(fPID==PID_BETA && fType<TYPE_III_EVENT)
+	if(fPID==PID_BETA)
+		hClusterTiming[0]->Fill(log10(fWindow.val*1.e6));
+	if(fPID==PID_BETA && fType<=TYPE_III_EVENT) {
 		hTypeRate[fType]->Fill(fTimeScaler.t[BOTH]);
+		if(fPassedGlobal)
+			hClusterTiming[1]->Fill(log10(fWindow.val*1.e6));
+	}
 }
 
 void ucnaDataAnalyzer11b::drawCutRange(const RangeCut& r, Int_t c) {
@@ -352,6 +363,11 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	drawSimulHistos(hToPlot);
 	drawExclusionBlips(4);
 	printCanvas("Rates/GlobalRates");
+	
+	hClusterTiming[0]->Draw();
+	hClusterTiming[1]->Draw("Same");
+	drawCutRange(RangeCut(log10(fWindow.R.start*1.e6),log10(fWindow.R.end*1.e6)),2);
+	printCanvas("Rates/ClusterTiming");
 	
 	// energy by event type
 	defaultCanvas->SetLogy(false);

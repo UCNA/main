@@ -29,11 +29,13 @@ void ucnaDataAnalyzer11b::analyze() {
 	pedestalPrePass();
 	printf("\nRun wall time is %.1fs\n\n",wallTime);
 	setupHistograms();
+	
 	printf("Scanning input data...\n");
 	startScan();
-	while (nextPoint())
-		processEvent();
+	nextPoint();	// load data for first event
+	while(processEvent()) continue;
 	printf("Done.\n");
+	
 	processBiPulser();
 	calcTrigEffic();
 	tallyRunTime();
@@ -71,6 +73,7 @@ void ucnaDataAnalyzer11b::loadCuts() {
 	}
 	loadCut(fTop_tdc[EAST], "Cut_TDC_Top_E");
 	loadCut(fBeamclock,"Cut_BeamBurst");
+	loadCut(fWindow,"Cut_ClusterEvt");
 	if(ignore_beam_out)
 		fBeamclock.R.end = FLT_MAX;
 	manualCuts = ManualInfo::MI.getRanges(itos(rn)+"_timecut");
@@ -81,28 +84,44 @@ void ucnaDataAnalyzer11b::loadCuts() {
 void ucnaDataAnalyzer11b::checkHeaderQuality() {
 	fEvnbGood = fBkhfGood = true;
 	for(size_t i=0; i<kNumModules; i++) {
-		if(int(fEvnb[i]-fTriggerNumber)) fEvnbGood = false;
-		if(int(fBkhf[i])!=17) fBkhfGood = false;
+		if(int(r_Evnb[i]-iTriggerNumber)) fEvnbGood = false;
+		if(int(r_Bkhf[i])!=17) fBkhfGood = false;
 	}
 	nFailedEvnb += !fEvnbGood;
 	nFailedBkhf += !fBkhfGood;
+}
+
+void ucnaDataAnalyzer11b::convertReadin() {
+	iSis00 = int(r_Sis00);
+	iTriggerNumber = int(r_TriggerNumber);
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(unsigned int t=0; t<=nBetaTubes; t++)
+			fScint_tdc[s][t].val = r_PMTTDC[s][t];
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) 
+			for(unsigned int c=0; c<kMWPCWires; c++)
+				fMWPC_caths[s][d][c] = r_MWPC_caths[s][d][c];
+		fMWPC_anode[s].val = r_MWPC_anode[s];
+		for(unsigned int t=0; t<nBetaTubes; t++)
+			sevt[s].adc[t] = r_PMTADC[s][t];
+	}
+	for(unsigned int i=0; i<kNumUCNMons; i++)
+		fMonADC[i].val = r_MonADC[i];
 }
 
 void ucnaDataAnalyzer11b::calibrateTimes() {
 	
 	// start/end times
 	if(currentEvent==0) {
-		fAbsTimeStart = fAbsTime;
+		fAbsTimeStart = r_AbsTime;
 		prevPassedCuts = prevPassedGVRate = true;
 		totalTime = deltaT = 0;
 	}
-	fAbsTimeEnd = fAbsTime;
+	fAbsTimeEnd = r_AbsTime;
 	
 	// convert microseconds to seconds
-	for(Side s = EAST; s<=BOTH; ++s)
-		fTimeScaler.t[s] *= 1.0e-6;	
-	fBeamclock.val *= 1.0e-6;	
-	fDelt0 *= 1.0e-6;
+	fTimeScaler = 1.e-6 * r_Clk;
+	fBeamclock.val = 1.e-6 * r_BClk;	
+	fDelt0 = 1.e-6 * r_Delt0;
 	
 	// check for overflow condition
 	if(fTimeScaler.t[BOTH] < totalTime.t[BOTH]-deltaT.t[BOTH]-1000.0) {
@@ -145,7 +164,7 @@ unsigned int ucnaDataAnalyzer11b::nFiring(Side s) const {
 }
 
 bool ucnaDataAnalyzer11b::isPulserTrigger() {
-	if(int(fSis00) & (1<<5) && !(trig2of4(EAST)||trig2of4(WEST)))
+	if(iSis00 & (1<<5) && !(trig2of4(EAST)||trig2of4(WEST)))
 		return true;
 	for(Side s = EAST; s <= WEST; ++s) {
 		unsigned int nthresh = 0;
@@ -205,9 +224,14 @@ void ucnaDataAnalyzer11b::reconstructVisibleEnergy() {
 
 void ucnaDataAnalyzer11b::checkMuonVetos() {
 	fTaggedTop[WEST] = false;
+	fTop_tdc[EAST].val = r_Top_TDC[EAST];
+	fTop_adc[EAST] = r_Top_ADC[EAST];
 	fTaggedTop[EAST] = fTop_tdc[EAST].inRange();
 	for(Side s = EAST; s<=WEST; ++s) {
+		fBacking_adc[s].val = r_Backing_ADC[s];
+		fBacking_tdc[s].val = r_Backing_TDC[s];
 		fTaggedBack[s] = fBacking_tdc[s].inRange();
+		fDrift_tac[s].val = r_Drift_TAC[s];
 		fTaggedDrift[s] = fDrift_tac[s].inRange();
 	}
 }
@@ -329,25 +353,36 @@ void ucnaDataAnalyzer11b::calcTrigEffic() {
 	}
 }
 
-void ucnaDataAnalyzer11b::processEvent() {
+bool ucnaDataAnalyzer11b::processEvent() {
+	// Stage I: uses read in data, moves to appropriate locations
+	convertReadin();
 	checkHeaderQuality();
 	calibrateTimes();
+	checkMuonVetos();
+	
+	// load data for next point for look-ahead capability; overwrites r_* variables after this point
+	bool np = nextPoint();
+	fWindow.val = fDelt0 + 1.e-6*r_Delt0;
+	
+	// Stage II: processing and histograms for all events
 	for(Side s = EAST; s <= WEST; ++s)
 		PCal.pedSubtract(s, sevt[s].adc, fTimeScaler.t[BOTH]);
 	fillEarlyHistograms();
 	
 	if(!isScintTrigger() || isLED())
-		return;
+		return np;
 	
+	// Stage III: processing and histograms for beta trigger events
 	reconstructPosition();
 	reconstructVisibleEnergy();
-	checkMuonVetos();
 	classifyEventType();
 	reconstructTrueEnergy();
 	fillHistograms();
 	
 	if(fPassedGlobal)
 		TPhys->Fill();
+	
+	return np;
 }
 
 void ucnaDataAnalyzer11b::processBiPulser() {
@@ -466,7 +501,7 @@ void ucnaDataAnalyzer11b::quickAnalyzerSummary() const {
 	printf("Beta/GV = %.2f\n",(scounts[EAST]+scounts[WEST])/gvcounts);
 	printf("Bonehead (E-W)/(E+W) = %.2f%%\n",100.0*(scounts[EAST]-scounts[WEST])/(scounts[EAST]+scounts[WEST]));
 	TDatime stime;
-	stime.Set(fAbsTime);
+	stime.Set(fAbsTimeEnd);
 	printf("----------------------------------------------------\n");
 	printf("%s\t%i\t%i\t%i\t%.1f\n",stime.AsSQLString(),rn,(int)scounts[EAST],(int)scounts[WEST],wallTime);
 	printf("----------------------------------------------------\n\n");
