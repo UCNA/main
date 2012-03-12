@@ -19,11 +19,11 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 	// search window bounds for Bi; plot ranges
 	if(mySource.t == "Bi207") {
 		pkMin = 200;
-	} else if(mySource.t == "Sn113" || mySource.t == "Cd109") {
+	} else if(mySource.t == "Sn113") {
 		nBins = 150;
 		eMin = -50;
 		eMax = 1000;
-	} else if(mySource.t == "Ce139") {
+	} else if(mySource.t == "Ce139" || mySource.t == "Cd109") {
 		nBins = 100;
 		eMin = -20;
 		eMax = 500;

@@ -210,20 +210,20 @@ Sn113SourceGenerator(G4Event* anEvent) {
 	return;
 }
 
-// Sn113 with gammas, data based on NuDat 2.0 www.nndc.bnl.gov/nudat2/decaysearchdirect.jsp?nuc=113SN&unc=nds
+// Sn113 with gammas, data based on NuDat 2.6 http://www.nndc.bnl.gov/nudat2/decaysearchdirect.jsp?nuc=113SN&unc=nds
 //position is in units of mm, mom is dimensionless, energy is in units of keV
 void bmPrimaryGeneratorAction::
 Sn113GSourceGenerator(G4Event* anEvent) {
-	G4double gunEnergy;    	
-	// choose gamma decay path
+	G4double gunEnergy;
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
 	int selected(-1);
 	unsigned int nklines = 0;
 	
-	const double p646 = 2.11 + 0.082+0.114+0.022+0.0004;
-	if(100.0*G4UniformRand() < p646) {
-		/// 255keV gamma and conversions
+	// choose gamma decay path
+	const double p646 = 2.11 + 0.082+0.0114+0.0022+0.0004;
+	if(G4UniformRand() < p646/(100.+p646)) {
+		// 255keV:					gamma		CE K		CE L		CE M		CE N
 		const double line255[] =	{255.134,	227.194,	250.896,	254.308,	255.012};
 		const double branch255[] =	{2.11,		0.082,		0.0114,		0.0022,		0.0004};
 		gunEnergy = rand_outof_list(line255, branch255, 5, selected)*keV;
@@ -233,17 +233,18 @@ Sn113GSourceGenerator(G4Event* anEvent) {
 			electrons.push_back(gunEnergy);
 		if(selected == 1)
 			nklines++;
+	} else {
+		// 392keV:					gamma		CE K		CE L		CE M		CE N		CE O
+		const double line392[] =	{391.698,	363.758,	387.461,	390.872,	391.576,	391.697};
+		const double branch392[] =	{64.97,		28.8,		5.60,		1.137,		0.205,		0.01260};
+		gunEnergy = rand_outof_list(line392, branch392, 6, selected)*keV;
+		if(!selected)
+			gammas.push_back(gunEnergy);
+		else
+			electrons.push_back(gunEnergy);
+		if(selected == 1)
+			nklines++;
 	}
-	
-	const double line392[] =	{391.698,	363.758,	387.461,	390.872,	391.576,	391.697};
-	const double branch392[] =	{64.97,			28.8,		5.60,		1.137,		0.205,		0.01260};
-	gunEnergy = rand_outof_list(line392, branch392, 6, selected)*keV;
-	if(!selected)
-		gammas.push_back(gunEnergy);
-	else
-		electrons.push_back(gunEnergy);
-	if(selected == 1)
-		nklines++;
 	
 	// uncorrelated K auger, without other K lines
 	if(!nklines) {
