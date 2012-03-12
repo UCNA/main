@@ -250,6 +250,7 @@ TGraphErrors* correlateProfiles(TProfile* x, TProfile* y) {
 	return g;
 }
 
+
 void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	double emax = 1000;
 	double nsegs = 100;
@@ -268,11 +269,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 				hEnergy[s][t][true].push_back(OM.registeredTH1F(sideSubst("hEtrue_%c",s)+itos(t)+"_"+itos(i),"True Energy",nbins,0,emax));
 				hEnergy[s][t][false].back()->GetXaxis()->SetTitle("Energy [keV]");
 				hEnergy[s][t][true].back()->GetXaxis()->SetTitle("Energy [keV]");
-				hEnergy[s][t][true].back()->GetYaxis()->SetTicks("");
-				hEnergy[s][t][true].back()->GetYaxis()->LabelsOption("");
 				hEnergy[s][t][true].back()->GetYaxis()->SetTitle("Counts");
-				hEnergy[s][t][false].back()->GetYaxis()->SetTicks("");
-				hEnergy[s][t][false].back()->GetYaxis()->LabelsOption("");
 				hEnergy[s][t][false].back()->GetYaxis()->SetTitle("Counts");
 			}
 		}
@@ -340,13 +337,15 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 				hCounts->Scale(hmax/hCounts->GetMaximum());
 				hCounts->SetLineWidth(3);
 				hCounts->Draw("SAME");
-				//for(unsigned int i=0; i<nsegs; i++)
-				//	drawVLine(hEnergy[s][t][n][i]->GetMean(),OM.defaultCanvas,2+(i%6));
 				OM.printCanvas(sideSubst("Energies_%c_Type_",s)+itos(t)+"_"+itos(n));
 			}
 		}
 	}
 }
+
+
+
+
 
 void makeCorrectionsFile(const std::string& fout) {
 	QFile Q;
