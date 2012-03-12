@@ -113,6 +113,17 @@ void G4toPMT::setReadpoints() {
 		primPos[0] = primPos[1] = primPos[2] = primPos[3] = 0;
 }
 
+void G4toPMT_SideSwap::doUnits() {
+	std::swap(eQ[EAST],eQ[WEST]);
+	std::swap(eDep[EAST],eDep[WEST]);
+	std::swap(eW[EAST],eW[WEST]);
+	for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
+		std::swap(mwpcPos[EAST][d],mwpcPos[WEST][d]);
+		std::swap(scintPos[EAST][d],scintPos[WEST][d]);
+	}
+	G4toPMT::doUnits();
+}
+
 void PenelopeToPMT::setReadpoints() {
 	Tch->SetBranchAddress("Epe",&fEdep[EAST]);
 	Tch->SetBranchAddress("Epw",&fEdep[WEST]);

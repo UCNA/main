@@ -81,8 +81,19 @@ public:
 	bool matchPenelope;		//< whether to apply fudge factors to better match Penelope data (until this is fixed)
 	
 protected:
+	/// set read points for input tree
 	virtual void setReadpoints();
 };
+
+/// For consistency checks, swaps E/W sides on Geant4 sim data
+class G4toPMT_SideSwap: public G4toPMT {
+public:
+	/// constructor
+	G4toPMT_SideSwap(): G4toPMT() { }
+	/// unit conversions
+	virtual void doUnits();
+};
+
 
 
 /// converts Robby's Penelope data to PMT spectra
