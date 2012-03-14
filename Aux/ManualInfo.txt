@@ -18,7 +18,7 @@
 
 Cut_MWPC_E_CathSum:	start = 700	end = 100e3	runStart = 13000	runEnd = 100000
 Cut_MWPC_W_CathSum:	start = 850	end = 100e3	runStart = 13000	runEnd = 100000
-Cut_MWPC_E_CathMax:	start = 150	end = 5000	runStart = 13000	runEnd = 100000
+Cut_MWPC_E_CathMax:	start = 125	end = 5000	runStart = 13000	runEnd = 100000
 Cut_MWPC_W_CathMax:	start = 150	end = 5000	runStart = 13000	runEnd = 100000
 Cut_MWPC_E_Anode:	start = 60	end = 5000	runStart = 13000	runEnd = 100000
 Cut_MWPC_W_Anode:	start = 75	end = 5000	runStart = 13000	runEnd = 100000
@@ -58,3 +58,8 @@ Cut_TDC_Scint_E_0:	start = 5	end = 4000	runStart = 18425	runEnd = 18700
 Cut_TDC_Scint_E_1:	start = 5	end = 4000	runStart = 18425	runEnd = 18700
 Cut_TDC_Scint_E_2:	start = 5	end = 4000	runStart = 18425	runEnd = 18700
 Cut_TDC_Scint_E_3:	start = 5	end = 4000	runStart = 18425	runEnd = 18700
+
+Cut_TDC_Scint_E_0:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
+Cut_TDC_Scint_E_1:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
+Cut_TDC_Scint_E_2:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
+Cut_TDC_Scint_E_3:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
