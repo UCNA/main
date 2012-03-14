@@ -19,10 +19,10 @@ ucnG4_analyzer::~ucnG4_analyzer() {
 		outf->cd();
 		anaTree->Write();
 		outf->Close();
-		//delete outf;
+		//delete outf; //TODO
 	}
-	//delete anaTree;
-	//delete myevt;
+	//delete anaTree; //TODO
+	//delete myevt; //TODO
 }
 
 void ucnG4_analyzer::analyzeFile(const string& fname) {

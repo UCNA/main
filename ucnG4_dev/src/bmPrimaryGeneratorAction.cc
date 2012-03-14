@@ -47,6 +47,7 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include <numeric>
 #include <bitset>  // djaffe 2aug06
 
 namespace CLHEP {}
@@ -178,277 +179,205 @@ throwElectronsAndGammas(const std::vector<G4double>& electrons,
 	}
 }
 
-//position is in units of mm, mom is dimensionless, energy is in units of keV
-void bmPrimaryGeneratorAction::
-Sn113SourceGenerator(G4Event* anEvent) {
+void bmPrimaryGeneratorAction::Sn113SourceGenerator(G4Event* anEvent) {
 	
-	G4ThreeVector direction;
-	G4double gunEnergy;
-	RandomizeMomentum(direction);
-	
-	const double line[4] = {363.758, 387.461, 390.872, 391.576};
-	const double branching[4] = {28.4, 5.57, 1.108, 0.2449};
-	
-	int selected(-1);
-	gunEnergy = rand_outof_list(line, branching, 4, selected)*keV;
-	
-	particleGun->SetParticleEnergy(gunEnergy);
-	particleGun->SetParticleMomentumDirection(direction);
-	particleGun->GeneratePrimaryVertex(anEvent);
-	
-	//now add in correlated Auger electrons
-	if(selected==0) {
-		double ran = G4UniformRand();
-		if(ran<0.1405) { //Auger coefficient
-			gunEnergy = 20.1*keV;
-			RandomizeMomentum(direction);
-			particleGun->SetParticleEnergy(gunEnergy);
-			particleGun->SetParticleMomentumDirection(direction);
-			particleGun->GeneratePrimaryVertex(anEvent);
-		}
-	}
-	return;
-}
-
-// Sn113 with gammas, data based on NuDat 2.6 http://www.nndc.bnl.gov/nudat2/decaysearchdirect.jsp?nuc=113SN&unc=nds
-//position is in units of mm, mom is dimensionless, energy is in units of keV
-void bmPrimaryGeneratorAction::
-Sn113GSourceGenerator(G4Event* anEvent) {
 	G4double gunEnergy;
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
 	int selected(-1);
-	unsigned int nklines = 0;
+	unsigned int nKlines = 0;
+	
+	// 647->392:				gamma		CE K		CE L		CE M		CE N
+	const double line255[] =	{255.134,	227.194,	250.896,	254.308,	255.012};
+	const double branch255[] =	{2.11,		0.082,		0.0114,		0.0022,		0.0004};
+	const double p255 = std::accumulate(branch255,branch255+5,0.0);
+	
+	// this decay has a several hour lifetime, so treat as uncorrelated with the above
+	// 392->0:					gamma		CE K		CE L		CE M		CE N		CE O
+	const double line392[] =	{391.698,	363.758,	387.461,	390.872,	391.576,	391.697};
+	const double branch392[] =	{64.97,		28.8,		5.60,		1.137,		0.205,		0.01260};
 	
 	// choose gamma decay path
-	const double p646 = 2.11 + 0.082+0.0114+0.0022+0.0004;
-	if(G4UniformRand() < p646/(100.+p646)) {
-		// 255keV:					gamma		CE K		CE L		CE M		CE N
-		const double line255[] =	{255.134,	227.194,	250.896,	254.308,	255.012};
-		const double branch255[] =	{2.11,		0.082,		0.0114,		0.0022,		0.0004};
+	if(G4UniformRand() < p255/(100.+p255)) {
 		gunEnergy = rand_outof_list(line255, branch255, 5, selected)*keV;
 		if(!selected)
 			gammas.push_back(gunEnergy);
 		else
 			electrons.push_back(gunEnergy);
-		if(selected == 1)
-			nklines++;
+		nKlines += (selected==1);
 	} else {
-		// 392keV:					gamma		CE K		CE L		CE M		CE N		CE O
-		const double line392[] =	{391.698,	363.758,	387.461,	390.872,	391.576,	391.697};
-		const double branch392[] =	{64.97,		28.8,		5.60,		1.137,		0.205,		0.01260};
 		gunEnergy = rand_outof_list(line392, branch392, 6, selected)*keV;
 		if(!selected)
 			gammas.push_back(gunEnergy);
 		else
 			electrons.push_back(gunEnergy);
-		if(selected == 1)
-			nklines++;
+		nKlines += (selected==1);
 	}
-	
-	// uncorrelated K auger, without other K lines
-	if(!nklines) {
-		if(G4UniformRand() < 0.170-0.1405*(0.00082+0.288))
-			electrons.push_back(20.1*keV);
-	}
-	// correlated K auger
-	while(nklines-- > 0) {
-		if(G4UniformRand() < 0.1405)
-			electrons.push_back(20.1*keV);
-	}
+
+	// Auger K
+	const double pCorrAuger = 0.1405;
+	const double pAuger = 0.170;
+	const double pKline = 0.01*(branch255[1]+branch392[1]);
+	if(G4UniformRand() < (nKlines >= 1)?pCorrAuger:pAuger-pCorrAuger*pKline)
+		electrons.push_back(20.1*keV);
 	
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-
-//position is in units of mm, mom is dimensionless, energy is in units of keV
-void bmPrimaryGeneratorAction::
-Bi207SourceGenerator(G4Event* anEvent) {
-	
-	G4ThreeVector direction;
-	G4double gunEnergy;
-	
-	RandomizeMomentum(direction);
-	
-	//note, the total Auger K intensity is 2.9% per decay. 
-	//The uncorrelated Auger K is computed as 
-	//2.9%-(1.515%+7.03%)*3.66% where 3.66% is the Auger coefficent estimated for
-	//Pb207
-	
-	const double line[9] = {56.7, 481.6935, 553.8372, 565.8473, 809.80, 881.94,
-		975.651, 1047.795, 1059.805};
-	const double branching[9] = {2.587, 1.515, 0.438, 0.147, 0.00263, 4.45E-4,
-		7.03, 1.84, 0.54};
-	
-	int selected(-1);
-	gunEnergy = rand_outof_list(line, branching, 9, selected)*keV;
-	
-	particleGun->SetParticleEnergy(gunEnergy);
-	particleGun->SetParticleMomentumDirection(direction);
-	particleGun->GeneratePrimaryVertex(anEvent);
-	
-	//now add in correlated Auger electrons 
-	if(selected==1||selected==4||selected==6) {
-		double ran = G4UniformRand();
-		if(ran<0.0366) { //Auger electron, 3.66% Auger coefficent
-			gunEnergy = 56.7*keV;                            
-			RandomizeMomentum(direction);
-			particleGun->SetParticleEnergy(gunEnergy);
-			particleGun->SetParticleMomentumDirection(direction);
-			particleGun->GeneratePrimaryVertex(anEvent);
-		}
-	}
-	
-	return;
-}
-
-//more complicated Bi207 including gammas, correlated decays
-//data from NuDat 2.5, www.nndc.bnl.gov/nudat2
-//position is in units of mm, mom is dimensionless, energy is in units of keV
-void bmPrimaryGeneratorAction::Bi207GSourceGenerator(G4Event* anEvent) {
+// Auger coefficient for correlated Augers:
+// see eLog 223, data from
+// J.H. Hubbell, et al, J. Phys. Chem. Ref. Data. Vol. 23, No. 2, 1994
+void bmPrimaryGeneratorAction::Bi207SourceGenerator(G4Event* anEvent) {
 	
 	G4double gunEnergy;
-	
-	// 2350 energy level branching
-	const double p1442 = 0.1310+0.00035;
-	const double p1770 = 6.87+0.0241+0.0034;
-	
-	// select which level we initially land on:
-	//	0: 560keV
-	//	1: 1630keV
-	//	2: 2350keV
-	const double p1630 = 74.6 + 0.54+1.84+7.03;			// observed gammas+electrons percent
-	const double p2350 = 6.87+0.1310 + 0.0034+0.0241;	// observed gammas+electrons percent
-	unsigned int gammaChoice = 0;
-	double randsel = 100.0*G4UniformRand();
-	if(randsel < p1630+p2350)
-		gammaChoice = 2;
-	if(randsel < p1630)
-		gammaChoice = 1;
-	
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
 	int selected(-1);
 	int nKlines = 0;	// number of K decays with possible correlated auger
 	
-	if(gammaChoice == 0 || gammaChoice == 1 || (gammaChoice == 2 && G4UniformRand()<p1770/(p1770+p1442))) {
-		// 569keV conversions
-		const double line569[] =		{569.698,	481.6935,	553.8372,	565.8473};
-		const double branching569[] =	{97.76,		1.515,		0.438,		0.147};
-		gunEnergy = rand_outof_list(line569, branching569, 4, selected)*keV;
+	//	Pb207 Energy Levels
+	enum Pb207_Level {
+		Pb207_0,	// 1/2- ground state (inaccessible directly from Bi)
+		Pb207_569,	// 5/2-
+		Pb207_897,	// 3/2- (inaccessible directly from Bi)
+		Pb207_1630, // 13/2+ 0.8s lifetime
+		Pb207_2340  // 7/2-
+	};
+	
+	// 2340->897:				gamma		CE K		CE L
+	const double line1442[] =	{1442.2,	1354.20,	1426.34};
+	const double branch1442[] =	{0.1310,	3.54E-4,	5.50E-5};
+	// total probability of this branch, percent
+	const double p1442 = std::accumulate(branch1442,branch1442+3,0.0);
+	
+	// 2340->569:				gamma		CE K		CE L
+	const double line1770[] =	{1770.228,	1682.224,	1754.367};
+	const double branch1770[] =	{6.87,		0.0241,		0.0034};
+	// total probability of this branch, percent
+	const double p1770 = std::accumulate(branch1770,branch1770+3,0.0);
+	
+	// total probability of landing on 2340 level, percent
+	const double p2340 = p1442+p1770;
+	
+	// 1630->569:				gamma		CE K		CE L		CE M
+	const double line1063[] =	{1063.656,	975.651,	1047.795,	1059.805};
+	const double branch1063[] =	{74.6,		7.03,		1.84,		0.54};
+	// total probability of landing on 1630 level, percent
+	const double p1630 = std::accumulate(branch1063,branch1063+4,0.0);
+	
+	// 897->0:					gamma		CE K		CE L
+	const double line897[] =	{897.8,		809.80,		881.94 };
+	const double branch897[] =	{0.131,		0.00263,	4.45E-4 };
+	const double p897 = std::accumulate(branch897,branch897+3,0.0);
+	// 897->569:				gamma		CE K		CE L
+	const double line328[] =	{328.10,	240.1,		312.24 };
+	const double branch328[] =	{6.9e-4,	1.88e-4,	3.2e-5 };
+	const double p328 = std::accumulate(branch328,branch328+3,0.0);
+	
+	// 569->0:					gamma		CE K		CE L		CE M
+	const double line569[] =	{569.698,	481.6935,	553.8372,	565.8473};
+	const double branch569[] =	{97.76,		1.515,		0.438,		0.147};
+	
+	// select which 207Pb level we initially land on:
+	Pb207_Level levelChoice = Pb207_569;
+	double randsel = 100.0*G4UniformRand();
+	if(randsel < p1630+p2340)
+		levelChoice = Pb207_2340;
+	if(randsel < p1630)
+		levelChoice = Pb207_1630;
+	
+	if(levelChoice == Pb207_2340) {
+		if(G4UniformRand()<p1770/p2340) {
+			// 2340->569 decays
+			gunEnergy = rand_outof_list(line1770, branch1770, 3, selected)*keV;
+			if(selected)
+				electrons.push_back(gunEnergy);
+			else
+				gammas.push_back(gunEnergy);
+			if(selected == 1)
+				nKlines++;	
+			levelChoice = Pb207_569;
+		} else {
+			// 2340->897 decays
+			gunEnergy = rand_outof_list(line1442, branch1442, 3, selected)*keV;
+			if(selected)
+				electrons.push_back(gunEnergy);
+			else
+				gammas.push_back(gunEnergy);
+			if(selected == 1)
+				nKlines++;		
+			levelChoice = Pb207_897;
+		}
+	}
+	
+	if(levelChoice == Pb207_1630) {
+		// 1630->569 decays
+		gunEnergy = rand_outof_list(line1063, branch1063, 4, selected)*keV;
+		if(selected)
+			electrons.push_back(gunEnergy);
+		else
+			gammas.push_back(gunEnergy);
+		if(selected == 1)
+			nKlines++;
+		levelChoice = Pb207_569;
+	}
+	
+	if(levelChoice == Pb207_897) {	
+		if(G4UniformRand()<p328/(p897+p328)) {
+			// 897->569 decays
+			gunEnergy = rand_outof_list(line328, branch328, 3, selected)*keV;
+			if(selected)
+				electrons.push_back(gunEnergy);
+			else
+				gammas.push_back(gunEnergy);	
+			if(selected == 1)
+				nKlines++;		
+			levelChoice = Pb207_569;
+		} else {
+			// 897->0 decays
+			gunEnergy = rand_outof_list(line897, branch897, 3, selected)*keV;
+			if(selected)
+				electrons.push_back(gunEnergy);
+			else
+				gammas.push_back(gunEnergy);	
+			if(selected == 1)
+				nKlines++;		
+			levelChoice = Pb207_0;
+		}
+	}
+	
+	if(levelChoice == Pb207_569) {
+		// 569->0 decays
+		gunEnergy = rand_outof_list(line569, branch569, 4, selected)*keV;
 		if(selected)
 			electrons.push_back(gunEnergy);
 		else
 			gammas.push_back(gunEnergy);
 		if(selected == 1 || selected == 3)
 			nKlines++;
-		
-		if(gammaChoice == 2) {
-			// 1770keV conversions
-			const double line1770[] =		{1770.228,	1682.224,	1754.367};
-			const double branching1770[] =	{6.87,		0.0241,		0.0034};
-			gunEnergy = rand_outof_list(line1770, branching1770, 3, selected)*keV;
-			if(selected)
-				electrons.push_back(gunEnergy);
-			else
-				gammas.push_back(gunEnergy);
-			if(selected == 1)
-				nKlines++;
-		}
-	} else if(gammaChoice == 2) {
-		// 1442keV conversions
-		const double line1442[] =		{1442.2,	1354.20,	1426.34};
-		const double branching1442[] =	{0.1310,	3.54E-4,	5.50E-5};
-		gunEnergy = rand_outof_list(line1442, branching1442, 3, selected)*keV;
-		if(selected)
-			electrons.push_back(gunEnergy);
-		else
-			gammas.push_back(gunEnergy);
-		if(selected == 1)
-			nKlines++;
-		// 897keV conversions
-		const double line897[] =		{897.8,		 881.94,	809.80};
-		const double branching897[] =	{0.131,		4.45E-4,	0.00263};
-		gunEnergy = rand_outof_list(line897, branching897, 3, selected)*keV;
-		if(selected)
-			electrons.push_back(gunEnergy);
-		else
-			gammas.push_back(gunEnergy);	
-		if(selected == 1)
-			nKlines++;
+		levelChoice = Pb207_0;
 	}
 	
-	// 1063keV conversions
-	if(gammaChoice == 1) {
-		const double line1063[] =		{1063.656,	975.651,	1047.795,	1059.805};
-		const double branching1063[] =	{74.6,		7.03,		1.84,		0.54};
-		gunEnergy = rand_outof_list(line1063, branching1063, 4, selected)*keV;
-		if(selected)
-			electrons.push_back(gunEnergy);
-		else
-			gammas.push_back(gunEnergy);
-		if(selected == 1)
-			nKlines++;
-	}
-	
-	// uncorrelated K auger, without other K lines
-	if(!nKlines) {
-		if(G4UniformRand() < 0.029-0.0366*(0.0703+0.01515))
+	const double pPbAuger = 0.0366; // Pb207 Auger coefficient
+	const double pBiAuger = 0.025;	// total Auger K probability from Bi207
+	const double pKline = 0.01*(branch1442[1]+branch897[1]+branch1770[1]+branch1063[1]+branch569[1]); // probability of K decay
+	if(nKlines >= 1) {
+		if(G4UniformRand() < pPbAuger)
 			electrons.push_back(56.7*keV);
-	}
-	
-	// correlated K auger, 3.66% chance with other K lines
-	while(nKlines-- > 0) {
-		if(G4UniformRand() < 0.0366)
-			electrons.push_back(56.7*keV);
-	}
+	} else if(G4UniformRand() < pBiAuger - pPbAuger*pKline)
+		electrons.push_back(56.7*keV);
 	
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-
-//position is in units of mm, mom is dimensionless, energy is in units of keV
-void bmPrimaryGeneratorAction::
-Ce139SourceGenerator(G4Event* anEvent) {
+void bmPrimaryGeneratorAction::Ce139SourceGenerator(G4Event* anEvent) {
 	
-	G4ThreeVector direction;
 	G4double gunEnergy;
-	RandomizeMomentum(direction);
-	
-	const double line[4] = {126.9329, 159.5912, 164.4962, 165.5871};
-	const double branching[4] = {17.1, 2.30, 0.48, 0.131};
-	int selected(-1);
-	gunEnergy = rand_outof_list(line, branching, 4, selected)*keV;
-	
-	particleGun->SetParticleEnergy(gunEnergy);
-	particleGun->SetParticleMomentumDirection(direction);
-	particleGun->GeneratePrimaryVertex(anEvent);
-	
-	//now add in correlated Auger electrons 
-	if(selected==0) {
-		double ran = G4UniformRand();
-		if(ran<0.0953) { //Auger electron, 9.53% Auger coefficent
-			gunEnergy = 28.4*keV;                            
-			RandomizeMomentum(direction);
-			particleGun->SetParticleEnergy(gunEnergy);
-			particleGun->SetParticleMomentumDirection(direction);
-			particleGun->GeneratePrimaryVertex(anEvent);
-		}
-	}
-	
-	return;
-}
-
-void bmPrimaryGeneratorAction::
-Ce139GSourceGenerator(G4Event* anEvent)
-{
-	G4double gunEnergy;
-	
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
 	int selected(-1);
 	
-	// 166keV gamma and conversions
+	// Decay to 139La 5/2+:		gamma		CE K		CE L		CE M		CE N
 	const double line166[] =	{166.8575,	126.9329,	159.5912,	164.4962,	165.5871};
 	const double branch166[] =	{80.0,		17.146,		2.2980,		0.4751,		0.13120};
 	gunEnergy = rand_outof_list(line166, branch166, 5, selected)*keV;
@@ -456,27 +385,26 @@ Ce139GSourceGenerator(G4Event* anEvent)
 		gammas.push_back(gunEnergy);
 	else
 		electrons.push_back(gunEnergy);
-	// correlated and uncorrelated auger
-	if(selected == 1) {
-		if(G4UniformRand() < 0.0953)
-			electrons.push_back(27.4*keV);
-	} else if(G4UniformRand() < 0.083-0.0953*0.17146)
+	
+	// Auger K
+	const double pCorrAuger = 0.0953;
+	const double pAuger = 0.083;
+	const double pKline = 0.01*branch166[1];
+	if(G4UniformRand() < (selected == 1)?pCorrAuger:pAuger-pCorrAuger*pKline)
 		electrons.push_back(27.4*keV);
 	
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
 
-void bmPrimaryGeneratorAction::
-Cd109GSourceGenerator(G4Event* anEvent) {
+void bmPrimaryGeneratorAction::Cd109SourceGenerator(G4Event* anEvent) {
 	
 	G4double gunEnergy;
-	
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
 	int selected(-1);
 	
-	// 88keV gamma and conversions
+	// Decay to 109Ag 7/2+:		gamma		CE K		CE L		CE M		CE N
 	const double line88[] =		{88.03,		62.5196,	84.2278,	87.3161,	87.9384};
 	const double branch88[] =	{3.7,		41.7,		44.0,		8.9,		1.6};
 	gunEnergy = rand_outof_list(line88, branch88, 5, selected)*keV;
@@ -485,7 +413,7 @@ Cd109GSourceGenerator(G4Event* anEvent) {
 	else
 		electrons.push_back(gunEnergy);
 	
-	// auger
+	// Auger K
 	if(G4UniformRand() < 0.208)
 		electrons.push_back(18.5*keV);
 	
@@ -493,8 +421,7 @@ Cd109GSourceGenerator(G4Event* anEvent) {
 }
 
 // lines based on NuDat 2.6
-void bmPrimaryGeneratorAction::
-Cd113mGSourceGenerator(G4Event* anEvent) {
+void bmPrimaryGeneratorAction::Cd113mSourceGenerator(G4Event* anEvent) {
 	
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
@@ -507,9 +434,7 @@ Cd113mGSourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// lines based on NuDat 2.6
-void bmPrimaryGeneratorAction::
-Cs137GSourceGenerator(G4Event* anEvent) {
+void bmPrimaryGeneratorAction::Cs137SourceGenerator(G4Event* anEvent) {
 	
 	G4double gunEnergy;
 	
@@ -541,8 +466,7 @@ Cs137GSourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// lines based on NuDat 2.6
-void bmPrimaryGeneratorAction::In114GSourceGenerator(G4Event* anEvent) {
+void bmPrimaryGeneratorAction::In114SourceGenerator(G4Event* anEvent) {
 	
 	G4double gunEnergy;
 	
@@ -560,7 +484,7 @@ void bmPrimaryGeneratorAction::In114GSourceGenerator(G4Event* anEvent) {
 		else
 			electrons.push_back(gunEnergy);
 		// auger K
-		if(selected==5 && G4UniformRand() < 0.0598/0.401)
+		if(selected >= 2 && G4UniformRand() < 0.0598/0.94)
 			electrons.push_back(20.1*keV);
 	} else {
 		// 1+ state 1988.7keV beta decay to 114Sn
@@ -575,8 +499,7 @@ void bmPrimaryGeneratorAction::In114GSourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// lines based on NuDat 2.6
-void bmPrimaryGeneratorAction::Sc46GSourceGenerator(G4Event* anEvent) {
+void bmPrimaryGeneratorAction::Sc46SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
 	funcHeavyBeta->FixParameter(0,356.9);
@@ -588,8 +511,7 @@ void bmPrimaryGeneratorAction::Sc46GSourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// lines based on NuDat 2.6
-void bmPrimaryGeneratorAction::Co60GSourceGenerator(G4Event* anEvent) {
+void bmPrimaryGeneratorAction::Co60SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
 	funcHeavyBeta->FixParameter(0,318.2);
@@ -601,8 +523,7 @@ void bmPrimaryGeneratorAction::Co60GSourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// lines based on NuDat 2.6
-void bmPrimaryGeneratorAction::Ag110GSourceGenerator(G4Event* anEvent) {
+void bmPrimaryGeneratorAction::Ag110SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
 	
@@ -638,95 +559,6 @@ void bmPrimaryGeneratorAction::Ag110GSourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-//position is in units of mm, mom is dimensionless, energy is in units of keV
-void bmPrimaryGeneratorAction::
-Sr85SourceGenerator(G4Event* anEvent) {
-	
-	G4ThreeVector direction;
-	G4double gunEnergy;
-	
-	RandomizeMomentum(direction);
-	
-	const double line[2] = {498.8070, 511.9416};
-	const double branching[2] = {0.6, 0.068};  
-	
-	double ran = G4UniformRand();
-	int selected(-1);
-	if(ran<0.9)
-		gunEnergy = rand_outof_list(line, branching, 2, selected)*keV;
-	else gunEnergy = funcBetaSpectrum->GetRandom()*keV;//simulate Sr89 background
-	
-	particleGun->SetParticleEnergy(gunEnergy);
-	particleGun->SetParticleMomentumDirection(direction);
-	particleGun->GeneratePrimaryVertex(anEvent);
-	
-	//now add in correlated Auger electrons 
-	if(selected==0) {
-		ran = G4UniformRand();
-		if(ran<0.3256) { //Auger electron, 32.56% Auger coefficent
-			gunEnergy = 11.4*keV;                            
-			RandomizeMomentum(direction);
-			particleGun->SetParticleEnergy(gunEnergy);
-			particleGun->SetParticleMomentumDirection(direction);
-			particleGun->GeneratePrimaryVertex(anEvent);
-		}
-	}
-	
-	return;
-}
-
-//position is in units of mm, mom is dimensionless, energy is in units of keV
-void bmPrimaryGeneratorAction::
-Cd109SourceGenerator(G4Event* anEvent) {
-	
-	G4ThreeVector direction;
-	G4double gunEnergy;
-	
-	RandomizeMomentum(direction);
-	
-	const double line[4] = {62.5196, 84.2278, 87.3161, 87.9384};
-	const double branching[4] = {41.7, 44.0, 8.9, 1.60};
-	
-	double ran = G4UniformRand();
-	int selected(-1);
-	if(ran<0.85) gunEnergy = rand_outof_list(line, branching, 4, selected)*keV;
-	//based on source spec sheet, 15% of Cd113m beta decay
-	else gunEnergy = funcBetaSpectrum->GetRandom()*keV;
-	
-	particleGun->SetParticleEnergy(gunEnergy);
-	particleGun->SetParticleMomentumDirection(direction);
-	particleGun->GeneratePrimaryVertex(anEvent);
-	
-	return;
-}
-
-//position is in units of mm, mom is dimensionless, energy is in units of keV
-void bmPrimaryGeneratorAction::
-Mn54SourceGenerator(G4Event* anEvent) {
-	
-	G4ThreeVector direction;
-	G4double gunEnergy; 
-	
-	RandomizeMomentum(direction);
-	
-	const double line[1] = {828.859};
-	const double branching[1] = {0.0224};
-	
-	int selected(-1);
-	gunEnergy = rand_outof_list(line, branching, 1, selected)*keV;
-	
-	particleGun->SetParticleEnergy(gunEnergy);
-	particleGun->SetParticleMomentumDirection(direction);
-	particleGun->GeneratePrimaryVertex(anEvent);
-	
-	return;
-}
-
-
-
-
-
-// Xe125 1/2+ (incorrect correlations)
 void bmPrimaryGeneratorAction::Xe125_1_2p_SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
@@ -741,7 +573,6 @@ void bmPrimaryGeneratorAction::Xe125_1_2p_SourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// Xe133 metastable 11/2- (T_half=2.198 days)
 void bmPrimaryGeneratorAction::Xe133_11_2m_SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
@@ -756,7 +587,6 @@ void bmPrimaryGeneratorAction::Xe133_11_2m_SourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// Xe133 3/2+ (T_half=5.25days) (incorrect correlations and chains)
 void bmPrimaryGeneratorAction::Xe133_3_2p_SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
@@ -780,7 +610,6 @@ void bmPrimaryGeneratorAction::Xe133_3_2p_SourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// Xe135 metastable 11/2-
 void bmPrimaryGeneratorAction::Xe135_11_2m_SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
@@ -795,7 +624,6 @@ void bmPrimaryGeneratorAction::Xe135_11_2m_SourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// Xe135 3/2+ (incorrect correlations and chains)
 void bmPrimaryGeneratorAction::Xe135_3_2p_SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
@@ -819,7 +647,6 @@ void bmPrimaryGeneratorAction::Xe135_3_2p_SourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// Xe137 7/2- (incorrect correlations and chains)
 void bmPrimaryGeneratorAction::Xe137_7_2m_SourceGenerator(G4Event* anEvent) {
 	std::vector<G4double> electrons;
 	std::vector<G4double> gammas;
@@ -945,30 +772,16 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	
 	if(gunType=="Sn113") {
 		Sn113SourceGenerator(anEvent);
-	} else if(gunType=="Sn113G") {
-		Sn113GSourceGenerator(anEvent);
 	} else if(gunType=="Bi207") {
 		Bi207SourceGenerator(anEvent);
-	} else if(gunType=="Bi207G") {
-		Bi207GSourceGenerator(anEvent);
 	} else if(gunType=="Cd109") {
-		funcBetaSpectrum->FixParameter(0,579.54);
 		Cd109SourceGenerator(anEvent);
-	} else if(gunType=="Cd109G") {
-		Cd109GSourceGenerator(anEvent);
-	} else if(gunType=="Cd113mG") {
-		Cd113mGSourceGenerator(anEvent);
-	} else if(gunType=="Sr85") {
-		funcBetaSpectrum->FixParameter(0,1495.1);//assume Sr89 impurity
-		Sr85SourceGenerator(anEvent);
-	} else if(gunType=="Mn54") {
-		Mn54SourceGenerator(anEvent);
+	} else if(gunType=="Cd113m") {
+		Cd113mSourceGenerator(anEvent);
 	} else if(gunType=="Ce139") {
 		Ce139SourceGenerator(anEvent);
-	} else if(gunType=="Ce139G") {
-		Ce139GSourceGenerator(anEvent);
-	} else if(gunType=="Cs137G") {
-		Cs137GSourceGenerator(anEvent);
+	} else if(gunType=="Cs137") {
+		Cs137SourceGenerator(anEvent);
 	} else if(gunType=="Xe125_1/2+") {
 		Xe125_1_2p_SourceGenerator(anEvent);
 	} else if(gunType=="Xe133_11/2-") {
@@ -981,8 +794,8 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		Xe135_3_2p_SourceGenerator(anEvent);
 	} else if(gunType=="Xe137_7/2-") {
 		Xe137_7_2m_SourceGenerator(anEvent);
-	} else if (gunType=="In114G" || gunType=="In114E" || gunType=="In114W") {
-		In114GSourceGenerator(anEvent);
+	} else if (gunType=="In114" || gunType=="In114E" || gunType=="In114W") {
+		In114SourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {
 		double eOrig = particleGun->GetParticleEnergy();
 		if(gunType=="neutronBetaUnpol") {

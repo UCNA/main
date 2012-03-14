@@ -86,31 +86,41 @@ private:
 	/// print what the particle gun is set up to do
 	void displayGunStatus();
 	
+	/// Sn113, based on NuDat 2.6 http://www.nndc.bnl.gov/nudat2/decaysearchdirect.jsp?nuc=113SN&unc=nds
 	void Sn113SourceGenerator(G4Event* anEvent);
-	void Sn113GSourceGenerator(G4Event* anEvent);
+	/// Bi207, based on NuDat 2.5, http://www.nndc.bnl.gov/nudat2
 	void Bi207SourceGenerator(G4Event* anEvent);
-	void Bi207GSourceGenerator(G4Event* anEvent);
+	/// Ce139
 	void Ce139SourceGenerator(G4Event* anEvent);
-	void Ce139GSourceGenerator(G4Event* anEvent);
-	void Sr85SourceGenerator(G4Event* anEvent);
+	/// Cd109
 	void Cd109SourceGenerator(G4Event* anEvent);
-	void Cd109GSourceGenerator(G4Event* anEvent);
-	void Cd113mGSourceGenerator(G4Event* anEvent);
-	void Cs137GSourceGenerator(G4Event* anEvent);
-	void Mn54SourceGenerator(G4Event* anEvent);
+	/// Cd113 Metastable 11/2-, 14.1year HL
+	void Cd113mSourceGenerator(G4Event* anEvent);
+	/// Cs137, based on NuDat 2.6
+	void Cs137SourceGenerator(G4Event* anEvent);
 	
 	// Indium source and backgrounds
-	void In114GSourceGenerator(G4Event* anEvent);
-	void Sc46GSourceGenerator(G4Event* anEvent);
-	void Co60GSourceGenerator(G4Event* anEvent);
-	void Ag110GSourceGenerator(G4Event* anEvent);
+	/// In114, based on NuDat 2.6
+	void In114SourceGenerator(G4Event* anEvent);
+	/// Sc46, based on NuDat 2.6
+	void Sc46SourceGenerator(G4Event* anEvent);
+	/// Co60, based on NuDat 2.6
+	void Co60SourceGenerator(G4Event* anEvent);
+	/// Ag110, based on NuDat 2.6
+	void Ag110SourceGenerator(G4Event* anEvent);
 	
 	// Xenon isotopes
+	/// Xe125 1/2+ (incorrect correlations)
 	void Xe125_1_2p_SourceGenerator(G4Event* anEvent);
+	/// Xe133 metastable 11/2- (T_half=2.198 days)
 	void Xe133_11_2m_SourceGenerator(G4Event* anEvent);
+	/// Xe133 3/2+ (T_half=5.25days) (incorrect correlations and chains)
 	void Xe133_3_2p_SourceGenerator(G4Event* anEvent);
+	/// Xe135 metastable 11/2-
 	void Xe135_11_2m_SourceGenerator(G4Event* anEvent);
+	/// Xe135 3/2+ (incorrect correlations and chains)
 	void Xe135_3_2p_SourceGenerator(G4Event* anEvent);
+	/// Xe137 7/2- (incorrect correlations and chains)
 	void Xe137_7_2m_SourceGenerator(G4Event* anEvent);
 };
 

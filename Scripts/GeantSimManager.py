@@ -125,9 +125,9 @@ class GeantSimManager:
 		
 		# account for low Bi conversion efficiency, ~14.3% as many electrons thrown as events run, mostly Auger
 		ineffic_mul = 1
-		if self.settings["generator"] == "Bi207G":
+		if self.settings["generator"] == "Bi207":
 			ineffic_mul = 4
-		if self.settings["generator"] == "Ce139G":
+		if self.settings["generator"] == "Ce139":
 			ineffic_mul = 2
 	
 		# main simulations
@@ -230,21 +230,21 @@ class GeantSimManager:
 			
 if __name__ == "__main__":
 	
-	# sources: ["Sn113G","Bi207G","Ce139G","Cd109G","Cd113mG","In114E","In114W"]
-	if 0:
-		for g in ["In114W"]:
-			sourceSim = GeantSimManager("LivPhys")
-			sourceSim.set_generator(g)
-			#sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=24)
-			sourceSim.launch_postanalyzer()
-
-	# Silicon detector test
+	# sources ["Sn113","Bi207","Ce139","Cd109","Cd113m","In114E","In114W"] in mag field wiggles
 	if 1:
+		for g in ["Ce139","In114E","In114W","Cd113m","Bi207"]:
+			sourceSim = GeantSimManager("LivPhys_MagF",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+			sourceSim.set_generator(g)
+			sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
+			sourceSim.launch_postanalyzer()
+			
+	# Silicon detector test
+	if 0:
 		siDet = GeantSimManager("SiDet",geometry="siDet")
-		siDet.set_generator("Bi207G")
-		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
+		siDet.set_generator("Bi207")
+		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=4)
 		siDet.launch_postanalyzer()
-		
+	
 	# magnetic field effects plus bad vacuum
 	#launch_simulations(generators = ["neutronBetaUnpol"], nEvents = 1e7, nClusters=18,
 	#	folderPrefix = "MagF_BadVac_20110725", hours_old = 10*24, vacuum=1.e-2,

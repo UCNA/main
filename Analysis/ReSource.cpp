@@ -298,18 +298,18 @@ void reSource(RunNum rn) {
 		simSource.x = simSource.y = 0;		
 		Sim2PMT* g2p = NULL;
 		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_";
-		if(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" ||
-		   simSource.t=="Cs137" || simSource.t=="Cd109" || simSource.t=="In114") {
-			g2p = new G4toPMT();
-			g2p->addFile(g4dat+simSource.t + "G_geomC/analyzed_*.root");
-		} else if(simSource.t=="In114E" || simSource.t=="In114W") {
+		if(simSource.t=="Cs137" || simSource.t=="In114") {
 			g2p = new G4toPMT();
 			g2p->addFile(g4dat+simSource.t + "_geomC/analyzed_*.root");
+		} else if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
+				  simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
+			g2p = new G4toPMT();
+			g2p->addFile(g4dat+"MagF_" + simSource.t + "_geomC/analyzed_*.root");
 		} else if(simSource.t=="Cd113m") {
 			G4toPMT* cd109 = new G4toPMT();
-			cd109->addFile(g4dat+"Cd109G_geomC/analyzed_*.root");
+			cd109->addFile(g4dat+"Cd109_geomC/analyzed_*.root");
 			G4toPMT* cd113m = new G4toPMT();
-			cd113m->addFile(g4dat+"Cd113mG_geomC/analyzed_*.root");
+			cd113m->addFile(g4dat+"Cd113m_geomC/analyzed_*.root");
 			MixSim* MS = new MixSim();
 			MS->addSim(cd113m, 1.0, 14.1*365*24*3600);
 			MS->addSim(cd109, 0.25, 461.4*24*3600);
