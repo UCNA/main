@@ -23,6 +23,7 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 
+/*
 #include "bmPhysicsList.hh"
 
 #include "G4ProcessManager.hh"
@@ -201,3 +202,4 @@ void bmPhysicsList::SetNewValue(G4UIcommand* command, G4String newValue) {
 		SetCuts();
     }
 }
+*/

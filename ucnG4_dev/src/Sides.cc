@@ -28,7 +28,7 @@ Side otherSide(Side s) {
 		case WEST:
 			return EAST;
 		case BOTH:
-			return NONE;
+			return NO_SIDE;
 		default:
 			return BOTH;
 	}

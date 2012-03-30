@@ -27,7 +27,7 @@ ucnaWireParameterisation::ucnaWireParameterisation(
    fXYZ=xyz;
    if(xyz==1) fRM->rotateX(90*deg);
    else if(xyz==2) fRM->rotateY(90*deg);
-   else G4Exception("WireParameterisation: rotation matrix needed!");
+   //else G4Exception("WireParameterisation: rotation matrix needed!");
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -47,7 +47,7 @@ void ucnaWireParameterisation::ComputeTransformation
   G4ThreeVector origin;
   if(fXYZ==1)   origin.set(position,0,fZpos);  //pos in the new frame.
   else if(fXYZ==2)  origin.set(0,position,fZpos); //pos in the new frame.
-  else G4Exception("WireParameterisation:rotation?");
+  //else G4Exception("WireParameterisation:rotation?");
   physVol->SetTranslation(origin);
   physVol->SetRotation(fRM);
 }

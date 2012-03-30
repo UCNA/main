@@ -113,6 +113,9 @@ private:
 	G4UIcommand* fVacuumLevelCmd;					//< SCS bore vacuum
 	Float_t fVacuumInTorr;
 	
+	G4UIcmdWithADoubleAndUnit* fScintStepLimitCmd;	//< step size limiter in scintillator
+	Float_t fScintStepLimit;
+	
 	G4UIcmdWithADouble* fMatterScaleCmd[2];			//< matter interaction scaling factor
 	G4double fMatterScale[2];
 	

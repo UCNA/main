@@ -42,7 +42,7 @@ void bmLivermore_EMPhysList::ConstructProcess() {
 
 // production cuts
 void bmLivermore_EMPhysList::SetCuts() {
-	G4double defaultCutValue = 1*um;
+	G4double defaultCutValue = 0.1*um;
 	if (GetVerboseLevel() >0){
 		G4cout << "PhysicsList::SetCuts:";
 		G4cout << "CutLength : " << G4BestUnit(defaultCutValue,"Length") << G4endl;

@@ -86,6 +86,10 @@ bmDetectorConstruction::bmDetectorConstruction() {
 		fMatterScale[s] = 1.0;
 	}
 	
+	fScintStepLimitCmd = new G4UIcmdWithADoubleAndUnit("/detector/scintstepsize",this);
+	fScintStepLimitCmd->SetGuidance("step size limit in scintillator, windows");
+	fScintStepLimitCmd->SetDefaultValue(1.0*mm);
+	
 	experimentalHall_log = NULL;
 	experimentalHall_phys = NULL;
 	
@@ -115,6 +119,9 @@ void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValu
 	} else if (command == fInFoilCmd) {
 		makeInFoil = fInFoilCmd->GetNewBoolValue(newValue);
 		G4cout << "Setting In source foil construction to " << makeInFoil << G4endl;
+	} else if (command == fScintStepLimitCmd) {
+		fScintStepLimit = fScintStepLimitCmd->GetNewDoubleValue(newValue);
+		G4cout << "Setting step limit in solids to " << fScintStepLimit/mm << "mm" << G4endl;
 	}else {
 		G4cerr << "Unknown command:" << command->GetCommandName() << " passed to bmDetectorConstruction::SetNewValue\n";
     }
@@ -132,7 +139,10 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 	G4UserLimits* bmUserCoarseLimits = new G4UserLimits();
 	bmUserCoarseLimits->SetMaxAllowedStep(10*m);
 	G4UserLimits* bmUserGasLimits = new G4UserLimits();
-	bmUserGasLimits->SetMaxAllowedStep(10*cm);
+	bmUserGasLimits->SetMaxAllowedStep(1*cm);
+	G4UserLimits* bmUserSolidLimits = new G4UserLimits();
+	bmUserSolidLimits->SetMaxAllowedStep(fScintStepLimit);
+	
 	
 	////////////////////////////////////////
 	// sensisitve detectors
@@ -218,8 +228,6 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 		trap.Construct(experimentalHall_log);
 		for(Side s = EAST; s <= WEST; ++s) {
 			dets[s].Construct(s);
-			dets[s].mwpc.container_log->SetUserLimits(bmUserGasLimits);
-			dets[s].scint.container_log->SetUserLimits(bmUserGasLimits);
 			G4RotationMatrix* sideFlip = NULL;
 			if(s==WEST) {
 				sideFlip=new G4RotationMatrix();
@@ -227,6 +235,13 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			}
 			detPackage_phys[s] = new G4PVPlacement(sideFlip,G4ThreeVector(0.,0.,sign(s)*(2.2*m-dets[s].getScintFacePos())),
 												   dets[s].container_log,sideSubst("detPackage_phys%c",s),experimentalHall_log,false,0);
+			
+			trap.trap_win_log[s]->SetUserLimits(bmUserSolidLimits);
+			dets[s].mwpc.container_log->SetUserLimits(bmUserGasLimits);
+			dets[s].mwpc.winIn_log->SetUserLimits(bmUserSolidLimits);
+			dets[s].mwpc.winOut_log->SetUserLimits(bmUserSolidLimits);
+			dets[s].mwpc.kevlar_log->SetUserLimits(bmUserSolidLimits);
+			dets[s].scint.container_log->SetUserLimits(bmUserSolidLimits);
 		}
 		
 		for(Side s = EAST; s <= WEST; ++s ) {

@@ -53,9 +53,10 @@
 int main(int argc, char** argv) {
 	
 	if(argc < 2) {
-		G4cout << "Usage:" << G4endl << "\t" << argv[0] << " [macro filename]" << G4endl;
+		G4cout << "Usage:" << G4endl << "\t" << argv[0] << " <macro filename> [physics list]" << G4endl;
 		return 0;
 	}
+	std::string physlist = (argc >= 3)?argv[2]:"livermore";
 	
 	// User Verbose stepping output class
 	G4VSteppingVerbose::SetInstance(new bmSteppingVerbose());
@@ -66,9 +67,18 @@ int main(int argc, char** argv) {
 	// User Initialization classes (mandatory)
 	bmDetectorConstruction* detector = new bmDetectorConstruction();
 	runManager->SetUserInitialization(detector);
-	//runManager->SetUserInitialization(new bmPhysicsList());
-	//runManager->SetUserInitialization(new bmPenelope2008_EMPhysList());
-	runManager->SetUserInitialization(new bmLivermore_EMPhysList());
+	
+	if(physlist=="livermore")
+		runManager->SetUserInitialization(new bmLivermore_EMPhysList());
+	//else if(physlist=="g4default")
+	//	runManager->SetUserInitialization(new bmPhysicsList());
+	else if(physlist=="penelope")
+		runManager->SetUserInitialization(new bmPenelope2008_EMPhysList());
+	else {
+		G4cout << "***ERROR*** Unknown physics list: " << physlist << G4endl;
+		exit(-1);
+	}
+	G4cout << "Using physics list: " << physlist << G4endl;
 	
 #ifdef G4VIS_USE
 	// Visualization, if you choose to have it!

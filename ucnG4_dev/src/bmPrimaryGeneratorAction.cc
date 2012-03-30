@@ -358,13 +358,16 @@ void bmPrimaryGeneratorAction::Bi207SourceGenerator(G4Event* anEvent) {
 		levelChoice = Pb207_0;
 	}
 	
-	const double pPbAuger = 0.0366; // Pb207 Auger coefficient
-	const double pBiAuger = 0.025;	// total Auger K probability from Bi207
-	const double pKline = 0.01*(branch1442[1]+branch897[1]+branch1770[1]+branch1063[1]+branch569[1]); // probability of K decay
-	if(nKlines >= 1) {
+	// correlated Auger lines following CE K emissions
+	// Pb207 Auger coefficient = 0.026, using fitted value from Durak & Sahin, Phys. Rev. A Vol.57 No.4 (1998)
+	const double pPbAuger = 0.026;
+	while(nKlines--)
 		if(G4UniformRand() < pPbAuger)
 			electrons.push_back(56.7*keV);
-	} else if(G4UniformRand() < pBiAuger - pPbAuger*pKline)
+	// uncorrelated remainder of total Auger rate
+	const double pBiAuger = 0.025;		// total Auger K probability from Bi207, NuDat 2.6
+	const double pKline = 0.01*(branch1442[1]+branch897[1]+branch1770[1]+branch1063[1]+branch569[1]); // probability of CE K emission
+	if(G4UniformRand() < (pBiAuger - pPbAuger*pKline)/(1.-pKline))
 		electrons.push_back(56.7*keV);
 	
 	throwElectronsAndGammas(electrons,gammas,anEvent);
