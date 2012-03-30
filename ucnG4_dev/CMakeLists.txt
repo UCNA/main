@@ -35,11 +35,12 @@ set(ucnG4_prod_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ucnG4_prodDict.cxx)
 MESSAGE("Generating dictionary ${ucnG4_prod_DICTIONARY}")
 set(DICTFILES "${PROJECT_SOURCE_DIR}/include/bmMCEvent.hh;${PROJECT_SOURCE_DIR}/include/bmTrackInfo.hh;${PROJECT_SOURCE_DIR}/include/bmPrimaryInfo.hh")
 ROOT_GENERATE_DICTIONARY("${DICTFILES}" "${ucnG4_prod_LINKDEF}" "${ucnG4_prod_DICTIONARY}" "${ROOT_INCLUDE_DIR};${PROJECT_SOURCE_DIR}/include/")
-SET(sources ${sources} ${ucnG4_prod_DICTIONARY})
+LIST(APPEND sources ${ucnG4_prod_DICTIONARY})
 MESSAGE(sources = ${sources})
 
 ############### build the library #####################
-add_library(ucnG4_prod_rootlibs SHARED ${sources})
+#add_library(ucnG4_prod_rootlibs SHARED ${sources})
+add_library(ucnG4_prod_rootlibs SHARED ${DICTFILES} ${ucnG4_prod_DICTIONARY})
 target_link_libraries(ucnG4_prod_rootlibs ${ROOT_LIBRARIES})
 SET(ucnG4_prod_MAJOR_VERSION 0)
 SET(ucnG4_prod_MINOR_VERSION 0)
@@ -78,11 +79,12 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # Add the executable, and link it to the Geant4 libraries
 #
 add_executable(ucnG4_prod ucnG4_prod.cc ${sources} ${headers})
-MESSAGE("Geant4_LIBRARIES ${Geant4_LIBRARIES}")
-MESSAGE("ROOT_LIBRARIES ${ROOT_LIBRARIES}")
 target_link_libraries(ucnG4_prod ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
+add_executable(UCNA_MC_Analyzer UCNA_MC_Analyzer.cc ${sources} ${headers})
+target_link_libraries(UCNA_MC_Analyzer ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
 install(TARGETS ucnG4_prod DESTINATION bin)
+install(TARGETS UCNA_MC_Analyzer DESTINATION bin)

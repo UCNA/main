@@ -145,7 +145,8 @@ G4bool bmTrackerSD::ProcessHits(G4Step* aStep,G4TouchableHistory*) {
 		if(sTrack->GetVolume() != aTrack->GetVolume())
 			continue;
 		const G4double eOrig = myTrack->second->originEnergy>0?myTrack->second->originEnergy:Ec;
-		assert(originEnergy.find(sTrack)==originEnergy.end());
+		assert(originEnergy.find(sTrack)==originEnergy.end()); //TODO figure out why this fails
+		//if(originEnergy.find(sTrack)==originEnergy.end())
 		originEnergy.insert(std::pair<const G4Track*,double>(sTrack,eOrig));
 	}
 	

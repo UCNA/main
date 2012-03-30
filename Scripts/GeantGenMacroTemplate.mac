@@ -30,6 +30,9 @@
 # cuts for generic physics list
 #/bm/phys/setCuts 1.0 um
 
+# max step size in scintillator, windows
+/detector/scintstepsize %(scintstep)s
+
 /run/initialize
 # generator initial position (0,0,0 = decay trap center)
 /gun/position %(gunpos)s

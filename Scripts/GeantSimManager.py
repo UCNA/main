@@ -19,6 +19,8 @@ class GeantSimManager:
 		self.settings["fieldmapcmd"] = "#/detector/fieldmapfile UNUSED"
 		if fmap:
 			self.settings["fieldmapcmd"] = "/detector/fieldmapfile "+fmap
+		self.settings["physlist"] = "livermore"
+		self.settings["scintstep"] = "1.0 mm"
 		
 		self.settings["vis_cmd"] = ""
 		if False: #nEvents <= 100:
@@ -156,13 +158,13 @@ class GeantSimManager:
 			
 			if os.path.exists(self.g4_out_name%str(self.settings["run_num"])) and os.stat(self.g4_out_name%str(self.settings["run_num"])).st_mtime > oldtime:
 				continue;
-			onejob = ucnG4_prod + " %s/geantgen_%i.mac"%(self.g4_macro_dir,self.settings["run_num"])
+			onejob = ucnG4_prod + " %s/geantgen_%i.mac %s"%(self.g4_macro_dir,self.settings["run_num"],self.settings["physlist"])
 			# geant macro
 			open(os.path.expanduser("%s/geantgen_%i.mac"%(self.g4_macro_dir,self.settings["run_num"])),"w").write(open("GeantGenMacroTemplate.mac","r").read()%self.settings)
 			# submission script
 			self.settings["jobcmd"] =  "mkdir -p %s\n"%self.g4_out_dir
 			self.settings["jobcmd"] += "mkdir -p %s\n"%self.g4_log_dir
-			self.settings["jobcmd"] += ucnG4_prod + " %s/geantgen_%i.mac\n"%(self.g4_macro_dir,self.settings["run_num"])
+			self.settings["jobcmd"] += onejob+"\n"
 			#self.settings["jobcmd"] += "rsync -av -e ssh %s 'mmendenhall@ucn.krl.caltech.edu:%s/'\n"%(self.settings["outfile"],g4_out_dir)
 			#self.settings["jobcmd"] += "rm %s\n"%self.settings["outfile"]
 			#self.settings["jobcmd"] += "rsync -av -e ssh %s 'mmendenhall@ucn.krl.caltech.edu:%s/'\n"%(self.settings["joblog"],g4_log_dir)
@@ -231,7 +233,7 @@ class GeantSimManager:
 if __name__ == "__main__":
 	
 	# sources ["Sn113","Bi207","Ce139","Cd109","Cd113m","In114E","In114W"] in mag field wiggles
-	if 1:
+	if 0:
 		for g in ["Ce139","In114E","In114W","Cd113m","Bi207"]:
 			sourceSim = GeantSimManager("LivPhys_MagF",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.set_generator(g)
@@ -244,6 +246,17 @@ if __name__ == "__main__":
 		siDet.set_generator("Bi207")
 		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=4)
 		siDet.launch_postanalyzer()
+	
+	# source sims
+	if 1:
+		for g in ["Sn113",]:
+			sourceSim = GeantSimManager("LivPhys_495",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+			sourceSim.settings["physlist"]="livermore"
+			#sourceSim.settings["scintstep"]="0.5 um"
+			sourceSim.set_generator(g)
+			sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
+			sourceSim.launch_postanalyzer()
+
 	
 	# magnetic field effects plus bad vacuum
 	#launch_simulations(generators = ["neutronBetaUnpol"], nEvents = 1e7, nClusters=18,
