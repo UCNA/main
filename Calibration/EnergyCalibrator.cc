@@ -2,6 +2,7 @@
 #include "GainStabilizer.hh"
 #include "GraphUtils.hh"
 #include "SQL_Utils.hh"
+#include "UCNAException.hh"
 #include <utility>
 
 
@@ -27,7 +28,11 @@ float PedestalCorrector::getPedestal(const std::string& sensorName, float time) 
 	if( it != pedestals.end() ) 
 		return it->second->Eval(time);
 	TGraph* tg = pCDB->getPedestals(myRun,sensorName);
-	assert(tg);
+	if(!tg) {
+		UCNAException e("missingPed");
+		e.insert("sensor",sensorName);
+		throw(e);
+	}
 	pedestals.insert(std::make_pair(sensorName,tg));
 	return getPedestal(sensorName,time);
 }
@@ -36,12 +41,17 @@ float PedestalCorrector::getPedwidth(const std::string& sensorName, float time) 
 	if( it != pedwidths.end() ) 
 		return it->second->Eval(time);
 	TGraph* tg = pCDB->getPedwidths(myRun,sensorName);
-	assert(tg);
+	if(!tg) {
+		UCNAException e("missingPed");
+		e.insert("sensor",sensorName);
+		throw(e);
+	}
 	pedwidths.insert(std::make_pair(sensorName,tg));
 	return getPedwidth(sensorName,time);
 }
 void PedestalCorrector::insertPedestal(const std::string& sensorName, TGraph* g) {
-	assert(g->GetN()>=2);
+	if(g->GetN()<2)
+		throw(UCNAException("tooFewPoints"));
 	pedestals.erase(sensorName);
 	pedestals.insert(std::make_pair(sensorName,g));
 }
@@ -74,8 +84,6 @@ scaleNoiseWithL(true), P(cdb->getPositioningCorrector(myRun)), GS(NULL), rn(myRu
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			linearityFunctions[s][t] = CDB->getLinearity(myRun,s,t);
 			linearityInverses[s][t] = invertGraph(linearityFunctions[s][t]);
-			assert(linearityFunctions[s][t]);
-			assert(linearityInverses[s][t]);
 		}
 		
 		if(isRefRun()) {

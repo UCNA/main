@@ -1,0 +1,93 @@
+macro chtxmit
+
+zone 1 3
+
+hi/pl //onln/3101(:3900.)
+hi/pl //onln/3102(:3900.)
+hi/pl //onln/3103(:3900.)
+
+mess "main detector"
+mess "Number of events between 750. and 2500. in hid=3101"
+*exec count 3101 750. 2500.
+  hid = 3101
+  x1  = 750.
+  x2  = 2500.
+  nbin = $hinfo([hid],'XBINS')
+*  mess 'nbin = ' [nbin]
+  xmin = $hinfo([hid],'XMIN')
+  xmax = $hinfo([hid],'XMAX')
+  binsize = $eval(([xmax]-[xmin])/[nbin])
+  vec/cre cont([nbin]) r
+  vec/cre abscissa([nbin]) r
+  hi/get_vec/cont [hid] cont
+  hi/get_vec/abscissa [hid] abscissa
+  counts3101 = 0
+  Do i = 1, [nbin]
+    xlo = abscissa([i]) - [binsize]/2.
+    xhi = abscissa([i]) + [binsize]/2.
+    y = cont([i])
+    if [xlo] >= [x1] .and. [xhi] <= [x2] then
+      counts3101 = [counts3101] + [y]
+    Endif
+  Enddo
+  mess [counts3101] 'counts between' [x1] 'and' [x2]
+
+mess " "
+mess "monitor number 2"
+mess "Numver of events between 1500. and 3500. in hid=3102"
+*exec count 3102 1500. 3500.
+  hid = 3102
+  x1  = 1500.
+  x2  = 3500.
+  nbin = $hinfo([hid],'XBINS')
+  xmin = $hinfo([hid],'XMIN')
+  xmax = $hinfo([hid],'XMAX')
+  binsize = $eval(([xmax]-[xmin])/[nbin])
+  vec/cre cont([nbin]) r
+  vec/cre abscissa([nbin]) r
+  hi/get_vec/cont [hid] cont
+  hi/get_vec/abscissa [hid] abscissa
+  counts3102 = 0
+  Do i = 1, [nbin]
+    xlo = abscissa([i]) - [binsize]/2.
+    xhi = abscissa([i]) + [binsize]/2.
+    y = cont([i])
+    if [xlo] >= [x1] .and. [xhi] <= [x2] then
+      counts3102 = [counts3102] + [y]
+    Endif
+  Enddo
+  mess [counts3102] 'counts between' [x1] 'and' [x2]
+
+mess " "
+mess "monitor number 1"
+mess "Numver of events between 1100. and 3000. in hid=3103"
+*exec count 3103 1100. 3000.
+  hid = 3103
+  x1  = 1100.
+  x2  = 3000.
+  nbin = $hinfo([hid],'XBINS')
+  xmin = $hinfo([hid],'XMIN')
+  xmax = $hinfo([hid],'XMAX')
+  binsize = $eval(([xmax]-[xmin])/[nbin])
+  vec/cre cont([nbin]) r
+  vec/cre abscissa([nbin]) r
+  hi/get_vec/cont [hid] cont
+  hi/get_vec/abscissa [hid] abscissa
+  counts3103 = 0
+  Do i = 1, [nbin]
+    xlo = abscissa([i]) - [binsize]/2.
+    xhi = abscissa([i]) + [binsize]/2.
+    y = cont([i])
+    if [xlo] >= [x1] .and. [xhi] <= [x2] then
+      counts3103 = [counts3103] + [y]
+    Endif
+  Enddo
+  mess [counts3103] 'counts between' [x1] 'and' [x2]
+
+*transmission  = ([counts3101]/[counts3103]) / [1]
+*dtransmissionr = (1/[counts3101]) + (1/[counts3103])
+*dtransmission = [transmission]*sqrt[dtransmissionr]
+
+*mess 'transmission = ' [transmission] '+/-' [dtransmission]
+
+zone 1 1

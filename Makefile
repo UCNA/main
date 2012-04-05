@@ -19,7 +19,7 @@ CC = cc
 CXX = g++
 
 CXXFLAGS = -O3 -m32 -Wall `root-config --cflags` \
-	-I. -IIOUtils -IRootUtils -IBaseTypes -IDetectors -IMathUtils -ICalibration -IAnalysis -IStudies
+	-I. -IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies
 LDFLAGS = `root-config --libs` -lSpectrum 
 
 ifdef PROFILER_COMPILE
@@ -31,22 +31,20 @@ endif
 # things to build
 #
 
-VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:Detectors/:MathUtils/:Calibration/:Analysis/:Studies/
+VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/
 
-Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
-	Enums.o Types.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RData.o
+Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o SectorCutter.o \
+	Enums.o Types.o UCNAException.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RData.o
 
-Detectors = WirechamberReconstruction.o
-
-Calibration = PositionResponse.o SimNonlinearity.o PMTGenerator.o \
-	EnergyCalibrator.o WirechamberCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o ManualInfo.o
+Calibration = PositionResponse.o PMTGenerator.o WirechamberReconstruction.o \
+	EnergyCalibrator.o WirechamberCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
 	
-Analysis = TChainScanner.o ProcessedDataScanner.o PostAnalyzer.o PostOfficialAnalyzer.o G4toPMT.o TH1toPMT.o DataSource.o \
+Analysis = TChainScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o G4toPMT.o TH1toPMT.o \
 	KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o BetaSpectrum.o
 
-Studies = PlotMakers.o SRAsym.o PositionStudies.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o
+Studies = PlotMakers.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o WirechamberStudy.o
 
-objects = $(Utils) $(Detectors) $(Calibration) $(Analysis) $(Studies)
+objects = $(Utils) $(Calibration) $(Analysis) $(Studies)
 
 all:
 	make UCNAnalyzer
@@ -65,6 +63,9 @@ OctetAnalyzerExample: OctetAnalyzerExample.cc $(objects)
 	
 ExtractFierzTerm: ExtractFierzTerm.cc $(objects)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) ExtractFierzTerm.cc $(objects) -o ExtractFierzTerm
+
+MWPC_Efficiency_Sim: MWPC_Efficiency_Sim.cc $(objects)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/MWPC_Efficiency_Sim.cc $(objects) -o MWPC_Efficiency_Sim
 	
 QCalc: FPNCalc.cc $(Utils)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) IOUtils/FPNCalc.cc $(objects) -o QCalc
@@ -80,15 +81,15 @@ doc : latex/refman.pdf
 
 latex/refman.pdf: latex/ 
 	cd latex; make
-latex/ : documentationConfig
-	doxygen documentationConfig
+latex/ : Doxyfile
+	doxygen
 
 #
 # cleanup
 #
 .PHONY: clean
 clean:
-	-rm -f UCNAnalyzer OctetAnalyzerExample DataScannerExample CalibratorExample ExtractFierzTerm Analyzer
+	-rm -f UCNAnalyzer OctetAnalyzerExample DataScannerExample CalibratorExample ExtractFierzTerm Analyzer MWPC_Efficiency_Sim
 	-rm -f *.o
 	-rm -rf *.dSYM
 	-rm -rf latex/

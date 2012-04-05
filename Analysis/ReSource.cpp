@@ -1,5 +1,5 @@
 #include "ReSource.hh"
-#include "ProcessedDataScanner.hh"
+#include "PostOfficialAnalyzer.hh"
 #include "PMTGenerator.hh"
 #include "TSpectrumUtils.hh"
 #include "GraphicsUtils.hh"
@@ -19,11 +19,11 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 	// search window bounds for Bi; plot ranges
 	if(mySource.t == "Bi207") {
 		pkMin = 200;
-	} else if(mySource.t == "Sn113" || mySource.t == "Cd109") {
+	} else if(mySource.t == "Sn113") {
 		nBins = 150;
 		eMin = -50;
 		eMax = 1000;
-	} else if(mySource.t == "Ce139") {
+	} else if(mySource.t == "Ce139" || mySource.t == "Cd109") {
 		nBins = 100;
 		eMin = -20;
 		eMax = 500;
@@ -76,7 +76,8 @@ unsigned int ReSourcer::fill(const ProcessedDataScanner& P) {
 
 void ReSourcer::findSourcePeaks(float runtime) {
 	
-	printf("Fitting peaks for %s source (%i hits, %.2f hours)...\n",mySource.name().c_str(),counts(),runtime/3600.0);
+	std::vector<SpectrumPeak> expectedPeaks = mySource.getPeaks();
+	printf("Fitting peaks for %s source (%i hits, %.2f hours, %i peaks)...\n",mySource.name().c_str(),counts(),runtime/3600.0,(int)expectedPeaks.size());
 	OM->defaultCanvas->SetLogy(true);
 	
 	// normalize to rate Hz/keV
@@ -88,57 +89,56 @@ void ReSourcer::findSourcePeaks(float runtime) {
 	}
 	
 	// perform fits, draw histograms
-	std::vector<SpectrumPeak> expectedPeaks = mySource.getPeaks();
 	float searchsigma;
-	
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
 		
-		if(PCal)
-			searchsigma = 0.5*PCal->energyResolution(mySource.mySide, t, expectedPeaks[0].energy(), mySource.x, mySource.y, 0);
-		else
-			searchsigma = 0.5*sqrt((t==nBetaTubes?2.5:10)*expectedPeaks[0].energy());
-		if(!(searchsigma==searchsigma)) {
-			printf("Bad search range! Aborting!\n");
-			continue;
-		}
-		if(searchsigma > 120)
-			searchsigma = 120;
-		if(searchsigma < 4)
-			searchsigma = 4;		
-		
-		std::string fitPlotName = "";
-		if(dbgplots)
-			fitPlotName = OM->plotPath+"/"+mySource.name()+"/Fit_Spectrum_"+(t==nBetaTubes?"Combined":itos(t))+".pdf";
-		printf("Fitting %s for %i peaks in tube %i (sigma = %f)\n", mySource.name().c_str(), (int)expectedPeaks.size(), t, searchsigma);
-		tubePeaks[t] = fancyMultiFit(hTubes[t][TYPE_0_EVENT], searchsigma, expectedPeaks, false, fitPlotName, nSigma, pkMin);
-		for(std::vector<SpectrumPeak>::iterator it = tubePeaks[t].begin(); it != tubePeaks[t].end(); it++) {
-			it->simulated = simMode;
-			it->t = t;
-			if(PCal) {
-				it->eta = PCal->eta(mySource.mySide,t,mySource.x,mySource.y);
-				it->nPE = PCal->nPE(mySource.mySide,t,it->energyCenter.x,mySource.x,mySource.y,0);
+		if(expectedPeaks.size()) {
+			if(PCal)
+				searchsigma = 0.5*PCal->energyResolution(mySource.mySide, t, expectedPeaks[0].energy(), mySource.x, mySource.y, 0);
+			else
+				searchsigma = 0.5*sqrt((t==nBetaTubes?2.5:10)*expectedPeaks[0].energy());
+			if(!(searchsigma==searchsigma)) {
+				printf("Bad search range! Aborting!\n");
+				continue;
+			}
+			if(searchsigma > 120)
+				searchsigma = 120;
+			if(searchsigma < 4)
+				searchsigma = 4;		
+			
+			std::string fitPlotName = "";
+			if(dbgplots)
+				fitPlotName = OM->plotPath+"/"+mySource.name()+"/Fit_Spectrum_"+(t==nBetaTubes?"Combined":itos(t))+".pdf";
+			printf("Fitting %s for %i peaks in tube %i (sigma = %f)\n", mySource.name().c_str(), (int)expectedPeaks.size(), t, searchsigma);
+			tubePeaks[t] = fancyMultiFit(hTubes[t][TYPE_0_EVENT], searchsigma, expectedPeaks, false, fitPlotName, nSigma, pkMin);
+			for(std::vector<SpectrumPeak>::iterator it = tubePeaks[t].begin(); it != tubePeaks[t].end(); it++) {
+				it->simulated = simMode;
+				it->t = t;
+				if(PCal) {
+					it->eta = PCal->eta(mySource.mySide,t,mySource.x,mySource.y);
+					it->nPE = PCal->nPE(mySource.mySide,t,it->energyCenter.x,mySource.x,mySource.y,0);
+				}
+			}
+			
+			if(tubePeaks[t].size()<expectedPeaks.size()) {
+				Stringmap m;
+				m.insert("peak",expectedPeaks.back().name());
+				m.insert("sID",mySource.sID);
+				m.insert("tube",t);
+				m.insert("simulated",simMode?"yes":"no");
+				m.insert("side",ctos(sideNames(mySource.mySide)));
+				OM->warn(MODERATE_WARNING,"Missing_Peak",m);
+				printf("Cancelling fit.\n");
+				continue;
+			} else if(t==nBetaTubes) {
+				for(unsigned int i=0; i<tubePeaks[t].size(); i++) {
+					printf("-------- %c%i --------\n",sideNames(mySource.mySide),t);
+					tubePeaks[t][i].toStringmap().display();
+					OM->qOut.insert(std::string("Main_")+tubePeaks[t][i].name()+"_peak_"+itos(t),tubePeaks[t][i].toStringmap());
+					SourceDBSQL::getSourceDBSQL()->addPeak(tubePeaks[t][i]);
+				}
 			}
 		}
-		
-		if(tubePeaks[t].size()<expectedPeaks.size()) {
-			Stringmap m;
-			m.insert("peak",expectedPeaks.back().name());
-			m.insert("sID",mySource.sID);
-			m.insert("tube",t);
-			m.insert("simulated",simMode?"yes":"no");
-			m.insert("side",ctos(sideNames(mySource.mySide)));
-			OM->warn(MODERATE_WARNING,"Missing_Peak",m);
-			printf("Cancelling fit.\n");
-			continue;
-		} else if(t==nBetaTubes) {
-			for(unsigned int i=0; i<tubePeaks[t].size(); i++) {
-				printf("-------- %c%i --------\n",sideNames(mySource.mySide),t);
-				tubePeaks[t][i].toStringmap().display();
-				OM->qOut.insert(std::string("Main_")+tubePeaks[t][i].name()+"_peak_"+itos(t),tubePeaks[t][i].toStringmap());
-				SourceDBSQL::getSourceDBSQL()->addPeak(tubePeaks[t][i]);
-			}
-		}
-		
 		
 		if(t==nBetaTubes)
 			continue;
@@ -196,9 +196,9 @@ void ReSourcer::findSourcePeaks(float runtime) {
 
 
 void reSource(RunNum rn) {
-		
+	
 	// load data
-	ProcessedDataScanner* P = getDataSource(INPUT_OFFICIAL,true);
+	PostOfficialAnalyzer* P = new PostOfficialAnalyzer(true);
 	P->addRun(rn);
 	
 	if(!P->getnFiles()) {
@@ -213,12 +213,12 @@ void reSource(RunNum rn) {
 	}	
 	
 	// set up output paths
-	std::string outPath = "../PostPlots/LivermoreSources/";
+	std::string outPath = getEnvSafe("UCNA_ANA_PLOTS")+"/LivermoreSources/";
 	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
 	RunInfo RI = CalDBSQL::getCDB()->getRunInfo(rn);
 	OutputManager TM("Run_"+itos(RI.runNum), outPath);
 	TM.dataPath = outPath+"/RunData/";
-	TM.plotPath = TM.basePath = outPath+"/Plots/"+replace(RI.groupName,' ','_')+"/"+itos(rn)+"_"+RI.roleName+"/";
+	TM.plotPath = TM.basePath = outPath+replace(RI.groupName,' ','_')+"/"+itos(rn)+"_"+RI.roleName+"/";
 	
 	// get sources list; set up ReSourcer for each
 	std::map<unsigned int,ReSourcer> sources;
@@ -296,28 +296,44 @@ void reSource(RunNum rn) {
 		// fit simulated source data with same parameters
 		Source simSource = it->second.mySource;
 		simSource.x = simSource.y = 0;		
-		if(!(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139" || simSource.t=="Cd109" || simSource.t=="In114")) {
+		Sim2PMT* g2p = NULL;
+		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_";
+		if(simSource.t=="Cs137" || simSource.t=="In114") {
+			g2p = new G4toPMT();
+			g2p->addFile(g4dat+simSource.t + "_geomC/analyzed_*.root");
+		} else if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
+				  simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
+			g2p = new G4toPMT();
+			g2p->addFile(g4dat+"MagF_" + simSource.t + "_geomC/analyzed_*.root");
+		} else if(simSource.t=="Cd113m") {
+			G4toPMT* cd109 = new G4toPMT();
+			cd109->addFile(g4dat+"Cd109_geomC/analyzed_*.root");
+			G4toPMT* cd113m = new G4toPMT();
+			cd113m->addFile(g4dat+"Cd113m_geomC/analyzed_*.root");
+			MixSim* MS = new MixSim();
+			MS->addSim(cd113m, 1.0, 14.1*365*24*3600);
+			MS->addSim(cd109, 0.25, 461.4*24*3600);
+			g2p = MS;
+		}
+		if(!g2p || !g2p->getnFiles()) {
 			printf("Unknown source '%s'!\n",simSource.t.c_str());
 			continue;
 		}
+		
 		ReSourcer RS(&TM,simSource,&PCal);
 		RS.simMode = true;
 		RS.dbgplots = false;
-						
-		G4toPMT g2p;
-		g2p.setCalibrator(PCal);
+		
+		g2p->setCalibrator(PCal);
 		for(Side s = EAST; s <= WEST; ++s)
-			g2p.PGen[s].setPosition(it->second.mySource.x, it->second.mySource.y);
-		std::string datfile = "/home/mmendenhall/geant4/output/";
-		datfile += "LivPhys_";
-		datfile += simSource.t + "G_geomC/analyzed_*.root";
-		g2p.addFile(datfile);
+			g2p->PGen[s].setPosition(it->second.mySource.x, it->second.mySource.y);
 		unsigned int nSimmed = 0;
-		g2p.startScan(100000);
+		g2p->startScan(100000);
 		while(nSimmed<100000) {
-			g2p.nextPoint();
-			nSimmed+=RS.fill(g2p);
+			g2p->nextPoint();
+			nSimmed+=RS.fill(*g2p);
 		}
+		delete(g2p);
 		RS.findSourcePeaks(1000.0);
 		
 		// plot data and MC together
@@ -357,7 +373,7 @@ void uploadRunSources() {
 	std::string l;
 	
 	printf("Loading run log...\n");
-	std::ifstream fin("../SummaryData/UCNA Run Log.txt");
+	std::ifstream fin("Aux/UCNA Run Log.txt");
 	
 	while (fin.good()) {
 		
@@ -372,23 +388,33 @@ void uploadRunSources() {
 			RunNum rn;
 			if(!sscanf(words[0].c_str(),"*%i",&rn) || words[1] != "SourcesCal")
 				continue;
-			unsigned int nExpected = SourceDBSQL::getSourceDBSQL()->runSources(rn).size();
-			if(nExpected != sources[EAST].size()+sources[WEST].size()) {
+			
+			bool needsUpdate = false;
+			for (Side s = EAST; s <= WEST; ++s) {
+				std::vector<Source> expectedSources =  SourceDBSQL::getSourceDBSQL()->runSources(rn,s);
+				if(expectedSources.size() != sources[s].size()) { needsUpdate = true; break; }
+				for(unsigned int n=0; n<expectedSources.size(); n++) {
+					if(expectedSources[n].t != sources[s][n])
+						needsUpdate = true;
+				}
+			}
+			if(needsUpdate) {
 				SourceDBSQL::getSourceDBSQL()->clearSources(rn);
-				int nsrc = 0;
 				printf("Run %i: Loading %i,%i sources\n",rn,(int)sources[EAST].size(),(int)sources[WEST].size());
 				for (Side s = EAST; s <= WEST; ++s) {
+					unsigned int nsrc=0;
 					for(std::vector<std::string>::iterator it = sources[s].begin(); it != sources[s].end(); it++) {
 						Source src(*it,s);
 						src.myRun = rn;
 						src.x = nsrc++;
+						src.display();
 						SourceDBSQL::getSourceDBSQL()->addSource(src);
 					}
 				}
 			} else {
-				printf("Run %i: %i sources already loaded.\n",rn,nExpected);
+				printf("Run %i: sources already loaded.\n",rn);
 			}
-
+			
 		} else if(words[0]=="@sources") {
 			
 			bool notSide[2];
@@ -410,14 +436,22 @@ void uploadRunSources() {
 						sources[s].push_back("Bi207");
 					else if(*it == "Cd")
 						sources[s].push_back("Cd109");
+					else if(*it == "Cd113m")
+						sources[s].push_back("Cd113m");
 					else if(*it == "Sr85")
 						sources[s].push_back("Sr85");
 					else if(*it == "Sr90")
 						sources[s].push_back("Sr90");
 					else if(*it == "In")
 						sources[s].push_back("In114");
+					else if(*it == "InE")
+						sources[s].push_back("In114E");
+					else if(*it == "InW")
+						sources[s].push_back("In114W");
 					else if(*it == "Ce")
 						sources[s].push_back("Ce139");
+					else if(*it == "Cs137")
+						sources[s].push_back("Ce137");
 				}
 			}
 		}

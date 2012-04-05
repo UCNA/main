@@ -8,9 +8,6 @@
 #include <vector>
 #include <string>
 
-/// process a file to query Calibrations DB for info
-void processCalibrationsFile(const std::string& fInName, const std::string& fOutName);
-
 /// plot run-by-run GMS corrections, output data
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath = "../PostPlots/");
 
@@ -29,12 +26,6 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0 = 1000, float s0 =
 
 /// extract Evis<->Etrue info from contiunuum spectrum simulation
 void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM);
-
-/// extract data from line simulations for eQuenched->eTrue calibration curves
-void ProcessLineSims(const std::string& baseDir, unsigned int nLines, float eMin, float eMax);
-
-/// Fit Xe spectrum 915keV endpoint
-void XeEndpointStudy();
 
 /// generate a file with spectrum correction factors
 void makeCorrectionsFile(const std::string& fout);

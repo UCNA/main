@@ -3,43 +3,59 @@
 
 #include "ProcessedDataScanner.hh"
 #include "PMTGenerator.hh"
+#include "G4toPMT.hh"
+#include "SectorCutter.hh"
 #include <cassert>
 
-// supply event data from an input energy spectrum
-class TH1toPMT: public ProcessedDataScanner {
+/// base class for generating event positions
+class PosGen {
 public:
 	/// constructor
-	TH1toPMT(TH1* h);
+	PosGen() { pos[X_DIRECTION]=pos[Y_DIRECTION]=pos[Z_DIRECTION]=0; }
+	/// destructor
+	virtual ~PosGen() {}
+	/// generate next position
+	virtual void next() {}
+	
+	float pos[3];	//< position
+};
+
+/// position generator from sector cutter
+class SectPosGen: public PosGen {
+public:
+	/// constructor
+	SectPosGen(const SectorCutter& S): PosGen(), sects(S) {}
+	/// generate next position
+	virtual void next() { sects.randPos(m,pos[X_DIRECTION],pos[Y_DIRECTION]); }
+	
+	SectorCutter sects;	//< position-generating sector cutter
+	unsigned int m;		//< sector to generator positions for
+};
+
+/// supply event data from an input energy spectrum
+class TH1toPMT: public Sim2PMT {
+public:
+	/// constructor
+	TH1toPMT(TH1* h, PosGen* P);
+	
+	/// whether to count this event as successfully generated (all events count)
+	virtual double simEvtCounts() const { return 1.0; }
 	
 	// ----- inapplicable disabled functions ----- //
 	/// add run to data -- NO
 	virtual unsigned int addRun(RunNum rn) { assert(false); }
 	/// add list of runs to data; return number successfully added -- NO
 	virtual unsigned int addRuns(const std::vector<RunNum>& rns) { assert(false); }
-	/// speedload, keeping track of currently loaded run number
+	/// speedload: doesn't make sense for this class
 	virtual void speedload(unsigned int e) { assert(false); }
-	/// get run number of current event
-	virtual RunNum getRun() const { return 0; }
 	
-	// ------ hijack these for our use ------ //
-	/// load next "speed scan" point
-	virtual bool nextPoint();	
-	/// start a "speed scan," possibly at a random entry number
-	virtual void startScan(unsigned int startRandom = 0);
-	
-	/// set calibrator to use for simulations
-	void setCalibrator(PMTCalibrator& PCal);
-	/// set event generation postion
-	void setPosition(float x, float y);
-	
-	TH1* mySpectrum;			//< spectrum to throw events from
-	bool stochasticEnergy;		//< whether to select energies randomly or deterministically from spectrum
-	float randomPositionRadius;	//< random event positioning radius (set <0 for fixed position)
+	TH1* mySpectrum;		//< spectrum to throw events from
+	PosGen* PG;				//< for generating event positions
+	Side genside;			//< side to generate events on
 	
 protected:
-	unsigned int nToSim;	//< total number of events to simulate
-	unsigned int nSimmed;	//< number of events simulated so far
-	PMTGenerator PGen[2];	//< PMT simulator for each side
+	/// select energy for simulation
+	virtual void doUnits();
 };
 
 

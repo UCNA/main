@@ -11,10 +11,10 @@ SourceDBSQL* SourceDBSQL::getSourceDBSQL() {
 std::vector<Source> SourceDBSQL::runSources(RunNum rn, Side s) {	
 	//                    0         1          2    3     4     5       6       7      8
 	if(s==EAST || s==WEST)
-		sprintf(query,"SELECT source_id,run_number,side,x_pos,y_pos,x_width,y_width,counts,sourcetype FROM sources WHERE run_number = %i and side = '%s'",
+		sprintf(query,"SELECT source_id,run_number,side,x_pos,y_pos,x_width,y_width,counts,sourcetype FROM sources WHERE run_number = %i and side = '%s' ORDER BY x_pos",
 				rn,s==EAST?"East":"West");
 	else 
-		sprintf(query,"SELECT source_id,run_number,side,x_pos,y_pos,x_width,y_width,counts,sourcetype FROM sources WHERE run_number = %i",rn);
+		sprintf(query,"SELECT source_id,run_number,side,x_pos,y_pos,x_width,y_width,counts,sourcetype FROM sources WHERE run_number = %i ORDER BY x_pos",rn);
 	Query();
 	TSQLRow* r;
 	std::vector<Source> srcs;

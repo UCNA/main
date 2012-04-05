@@ -18,8 +18,14 @@ public:
 	
 	/// this does nothing for processed data
 	virtual void recalibrateEnergy() {}
+	/// start scanning events
+	virtual void startScan(unsigned int startRandom = 0) { nSimmed = 0; ProcessedDataScanner::startScan(startRandom); }
 	/// overrides ProcessedDataScanner::nextPoint to insert reverse-calibrations
 	virtual bool nextPoint();
+	/// whether to count this event as successfully generated
+	virtual double simEvtCounts() const { return fPID==PID_BETA && fType==TYPE_0_EVENT?physicsWeight:0; }
+	/// get event info
+	virtual Stringmap evtInfo();
 	
 	/// get true energy
 	virtual float getEtrue();
@@ -31,6 +37,11 @@ public:
 	virtual AFPState getAFP() const { return afp; }
 	/// set desired AFP state for simulation data
 	virtual void setAFP(AFPState a) { afp=a; }
+	
+	/// Determine event classification flags
+	virtual void classifyEvent();
+	/// calculate spectrum re-weighting factor
+	virtual void calcReweight();
 	
 	PMTGenerator PGen[2];		//< PMT simulator for each side
 	bool reSimulate;			//< whether to re-simulate energy or use "raw" values
@@ -44,16 +55,18 @@ public:
 	double costheta;			//< primary event cos pitch angle
 	double ePrim;				//< primary event energy
 	double physicsWeight;		//< event spectrum re-weighting factor
+	unsigned int nToSim;		//< total number of events to simulate (set to 0 for random energy selection)
+	unsigned int nSimmed;		//< number of events simulated since scan start
+	double mwpcThresh[2];		//< MWPC trigger threshold on each side
 	
 protected:
 	/// perform unit conversions, etc.
 	virtual void doUnits() { assert(false); }
 	/// "reverse calibration" from simulated data
 	virtual void reverseCalibrate();
-	/// calculate spectrum re-weighting factor
-	virtual void calcReweight();
 	
 	AFPState afp;				//< AFP state for data
+	bool passesScint[2];		//< whether simulation passed scintillator cut
 };
 
 
@@ -68,11 +81,22 @@ public:
 	bool matchPenelope;		//< whether to apply fudge factors to better match Penelope data (until this is fixed)
 	
 protected:
+	/// set read points for input tree
 	virtual void setReadpoints();
 };
 
+/// For consistency checks, swaps E/W sides on Geant4 sim data
+class G4toPMT_SideSwap: public G4toPMT {
+public:
+	/// constructor
+	G4toPMT_SideSwap(): G4toPMT() { }
+	/// unit conversions
+	virtual void doUnits();
+};
 
-/// converts Robbie's Penelope data to PMT spectra
+
+
+/// converts Robby's Penelope data to PMT spectra
 class PenelopeToPMT: public Sim2PMT {
 public:
 	/// constructor
@@ -113,6 +137,8 @@ public:
 	virtual void setAFP(AFPState a);
 	/// set calibrator to use for simulations
 	virtual void setCalibrator(PMTCalibrator& PCal);
+	/// get number of files loaded by sub simulations
+	virtual unsigned int getnFiles() const;
 	
 protected:
 	

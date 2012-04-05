@@ -1,48 +1,26 @@
 #include "TH1toPMT.hh"
+#include "GraphUtils.hh"
 #include <climits>
 
-TH1toPMT::TH1toPMT(TH1* h): ProcessedDataScanner("",true), mySpectrum(h), stochasticEnergy(true), randomPositionRadius(-1),
-nToSim(0), nSimmed(0) {
-	for(Side s = EAST; s <= WEST; ++s) {
-		PGen[s].setSide(s);
-		PGen[s].larmorField = 0;
-	}
-	fSide = BOTH;
+TH1toPMT::TH1toPMT(TH1* h, PosGen* P): Sim2PMT(""), mySpectrum(h), PG(P) {
+	assert(PG);
+	ePrim = costheta = eW[EAST] = eW[WEST] = 0;
 }
 
-bool TH1toPMT::nextPoint() {	
-	assert(false); // TODO put energy simulation here
-	assert(fSide==EAST || fSide==WEST);
-	assert(mySpectrum);
-	if(randomPositionRadius>=0) {
-		assert(false);
+void TH1toPMT::doUnits() {
+	Side offside = otherSide(genside);
+	// set event position
+	PG->next();
+	for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
+		primPos[d] = scintPos[genside][d] = mwpcPos[genside][d] = wires[genside][d].center = PG->pos[d];
+		scintPos[offside][d] = mwpcPos[offside][d] = wires[offside][d].center = 0;
 	}
-	float en = 0;
-	if(stochasticEnergy) {
-		en = mySpectrum->GetRandom();
+	// set event energy randomly selected from histogram
+	if(!nToSim) { 
+		eDep[genside] = eQ[genside] = mySpectrum->GetRandom();
 	} else {
-		assert(false);
+		eDep[genside] = eQ[genside] = invCDF(mySpectrum,double(nSimmed)/double(nToSim));
 	}
-	scints[fSide] = PGen[fSide].generate(en);
-	if(PGen[fSide].triggered()) {
-		fPID = PID_BETA;
-		fType = TYPE_0_EVENT;
-	} else {
-		fPID = PID_SINGLE;
-		fType = TYPE_IV_EVENT;
-	}
-	nSimmed++;
-	return nSimmed<nToSim;
-}
-
-void TH1toPMT::startScan(unsigned int startRandom) {
-	if(startRandom) nToSim = startRandom;
-	else nToSim = INT_MAX;
-	nSimmed = 0;
-}
-
-void TH1toPMT::setCalibrator(PMTCalibrator& PCal) {
-	for(Side s = EAST; s <= WEST; ++s)
-		PGen[s].setCalibrator(&PCal);
-	ActiveCal = &PCal;
+	eW[genside] = 1.0;
+	eW[offside] = eDep[offside] = eQ[offside] = 0;
 }

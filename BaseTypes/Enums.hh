@@ -40,6 +40,8 @@ enum AxisDirection {
 	Z_DIRECTION = 2,
 	T_DIRECTION = 3
 };
+/// iteration to next axis
+inline AxisDirection& operator++(AxisDirection& d) { return d = AxisDirection(d+1); }
 
 /// float value with an error estimate
 struct float_err {
@@ -95,6 +97,8 @@ enum AFPState {
 	AFP_OFF2ON	=	3,	//< (Depolarization run) AFP off->on
 	AFP_ON2OFF	=	4	//< (Depolarization run) AFP on->off
 };
+
+inline AFPState& operator++(AFPState& a) { return a = AFPState(a+1); }
 
 /// state of gate valve during a run
 enum GVState {

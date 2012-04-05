@@ -48,6 +48,8 @@ protected:
 	float fieldAsFloat(TSQLRow* row, unsigned int fieldnum=0, float dflt = 0);
 	/// display a query result to stdout
 	void printResult();
+	/// get most recently inserted row ID
+	int getInsertID();
 	
 	/// check if table exists in DB
 	bool checkTable(const char* tname) { return db && db->HasTable(tname); }

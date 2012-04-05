@@ -5,7 +5,7 @@
 #include "Types.hh"
 #include "EnergyCalibrator.hh"
 #include "OutputManager.hh"
-#include "DataSource.hh"
+#include "ProcessedDataScanner.hh"
 #include <vector>
 #include <TH1F.h>
 

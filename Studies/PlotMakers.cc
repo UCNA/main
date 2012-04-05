@@ -11,57 +11,9 @@
 #include "PathUtils.hh"
 #include "ReSource.hh"
 #include "Types.hh"
-#include "DataSource.hh"
 #include "KurieFitter.hh"
 #include "G4toPMT.hh"
 #include "BetaSpectrum.hh"
-
-void processCalibrationsFile(const std::string& fInName, const std::string& fOutName) {
-	
-	QFile qIn(fInName,true);
-	QFile qOut(fOutName,false);
-	std::map<RunNum,PMTCalibrator*> PCals;
-	
-	std::vector<Stringmap> srs = qIn.retrieve("SourceLine");
-	for(std::vector<Stringmap>::iterator sit = srs.begin(); sit != srs.end(); sit++) {
-		
-		RunNum rn = RunNum(sit->getDefault("runNum",0));
-		std::string sname = sit->getDefault("side","N");
-		Side s = NONE;
-		if(sname == "E")
-			s = EAST;
-		else if(sname == "W")
-			s = WEST;
-		unsigned int t = (unsigned int)(sit->getDefault("tube",1000));
-		float x = sit->getDefault("x",0);
-		float y = sit->getDefault("y",0);
-		float adc = sit->getDefault("adc",0);
-		float dadc = sit->getDefault("dadc",0);
-		float evis = sit->getDefault("evis",0);
-		float evisExp = sit->getDefault("evisExp",0);
-		
-		std::map<RunNum,PMTCalibrator*>::iterator it = PCals.find(rn);
-		if(it == PCals.end()) {
-			PCals.insert(std::make_pair(rn,new PMTCalibrator(rn, CalDBSQL::getCDB())));
-			it = PCals.find(rn);
-			it->second->printSummary();
-		}
-		
-		if(t==nBetaTubes) {
-			sit->insert("eta",it->second->combEta(s,x,y));
-		}
-		if(t<nBetaTubes) {
-			sit->insert("eta",it->second->eta(s,t,x,y));
-			sit->insert("lvis",it->second->linearityCorrector(s, t, adc, 0));
-			sit->insert("dlinearity",it->second->dLinearity(s, t, adc, 0)*dadc);
-		}
-		
-		qOut.insert("SourceLine",*sit);
-	}
-	
-	qOut.commit();
-}
-
 
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
 	QFile fout(foutPath+"/GMS_Plot.txt",false);
@@ -197,25 +149,28 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 	
 	for(Side s = EAST; s<=WEST; ++s) {
 		
-		TH2F interpogrid[nBetaTubes+1];
+		TH2F* interpogrid[nBetaTubes+1];
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			interpogrid[t] = TH2F((sideSubst("%c",s)+itos(t+1)+"_nPE").c_str(),"nPE",200,-60,60,200,-60,60);
-			interpogrid[t].SetAxisRange(0,300,"Z");
+			interpogrid[t] = OM.registeredTH2F(sideSubst("%c",s)+itos(t+1)+"_nPE",
+											   (t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" PE per MeV",
+											   200,-60,60,200,-60,60);
+			interpogrid[t]->SetAxisRange(0,300,"Z");
 			if(t==nBetaTubes)
-				interpogrid[t].SetAxisRange(0,600,"Z");
+				interpogrid[t]->SetAxisRange(0,600,"Z");
 		}
 		
+		SectorCutter& Sects = PCal->P->getSectors(s,0);
 		float x,y,npe;
-		float r0 = PCal->P->getSectors(s,0).r;
+		float r0 = Sects.r;
 		float rscale = 1.2;
 		float npesum = 0;
 		float gradsum = 0;
 		float nn = 0;
 		
-		for(int nx=1; nx<=interpogrid[0].GetNbinsX(); nx++) {
-			for(int ny=1; ny<=interpogrid[0].GetNbinsY(); ny++) {
-				x = interpogrid[0].GetXaxis()->GetBinCenter(nx);
-				y = interpogrid[0].GetYaxis()->GetBinCenter(ny);
+		for(int nx=1; nx<=interpogrid[0]->GetNbinsX(); nx++) {
+			for(int ny=1; ny<=interpogrid[0]->GetNbinsY(); ny++) {
+				x = interpogrid[0]->GetXaxis()->GetBinCenter(nx);
+				y = interpogrid[0]->GetYaxis()->GetBinCenter(ny);
 				for(unsigned int t=0; t<=nBetaTubes; t++) {
 					if(x*x+y*y <= r0*r0*rscale) {
 						npe = PCal->nPE(s,t,e0*s0,x,y,0)/s0;
@@ -236,8 +191,24 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 					} else {
 						npe = 0;
 					}
-					interpogrid[t].SetBinContent(nx,ny,npe);
+					interpogrid[t]->SetBinContent(nx,ny,npe);
 				}
+			}
+		}
+		
+		
+		for(unsigned int m=0; m<Sects.nSectors(); m++) {
+			Sects.sectorCenter(m,x,y);
+			for(unsigned int t=0; t<=nBetaTubes; t++) {
+				Stringmap sdat;
+				sdat.insert("side",s==EAST?"E":"W");
+				sdat.insert("sector",m);
+				sdat.insert("x",x);
+				sdat.insert("y",y);
+				sdat.insert("t",t);
+				sdat.insert("eta",PCal->eta(s,t,x,y));
+				sdat.insert("nPE",PCal->nPE(s,t,e0*s0,x,y,0)/s0);
+				OM.qOut.insert("pmap",sdat);
 			}
 		}
 		
@@ -247,10 +218,11 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 		
 		
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
+			gStyle->SetOptStat("");
 			OM.defaultCanvas->SetRightMargin(0.125);
 			OM.defaultCanvas->SetBottomMargin(0.125);
-			interpogrid[t].Draw("COL Z");
-			drawSectors(PCal->P->getSectors(s,0),6);
+			interpogrid[t]->Draw("COL Z");
+			drawSectors(Sects,6);
 			if(dumbsum && t==nBetaTubes)
 				OM.printCanvas(sideSubst("nPE_%c_dumbsum",s));
 			else
@@ -278,6 +250,7 @@ TGraphErrors* correlateProfiles(TProfile* x, TProfile* y) {
 	return g;
 }
 
+
 void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	double emax = 1000;
 	double nsegs = 100;
@@ -296,11 +269,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 				hEnergy[s][t][true].push_back(OM.registeredTH1F(sideSubst("hEtrue_%c",s)+itos(t)+"_"+itos(i),"True Energy",nbins,0,emax));
 				hEnergy[s][t][false].back()->GetXaxis()->SetTitle("Energy [keV]");
 				hEnergy[s][t][true].back()->GetXaxis()->SetTitle("Energy [keV]");
-				hEnergy[s][t][true].back()->GetYaxis()->SetTicks("");
-				hEnergy[s][t][true].back()->GetYaxis()->LabelsOption("");
 				hEnergy[s][t][true].back()->GetYaxis()->SetTitle("Counts");
-				hEnergy[s][t][false].back()->GetYaxis()->SetTicks("");
-				hEnergy[s][t][false].back()->GetYaxis()->LabelsOption("");
 				hEnergy[s][t][false].back()->GetYaxis()->SetTitle("Counts");
 			}
 		}
@@ -368,8 +337,6 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 				hCounts->Scale(hmax/hCounts->GetMaximum());
 				hCounts->SetLineWidth(3);
 				hCounts->Draw("SAME");
-				//for(unsigned int i=0; i<nsegs; i++)
-				//	drawVLine(hEnergy[s][t][n][i]->GetMean(),OM.defaultCanvas,2+(i%6));
 				OM.printCanvas(sideSubst("Energies_%c_Type_",s)+itos(t)+"_"+itos(n));
 			}
 		}
@@ -377,147 +344,8 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 }
 
 
-void ProcessLineSims(const std::string& baseDir, unsigned int nLines, float eMin, float eMax) {
-	/*
-	 OutputManager OM("EQuench2ETrue","../PostPlots/EQuench2ETrue/");
-	 
-	 // make listing of files to consider
-	 std::vector<std::string> infnames;
-	 std::vector<double> energies;
-	 char tmp[1024];
-	 for(unsigned int i=0; i<nLines; i++) {
-	 energies.push_back(exp(log(eMin)+i*log(eMax/eMin)/(nLines-1.)));
-	 sprintf(tmp,"%s_%.1fkeV/analyzed*.root",baseDir.c_str(),energies.back());
-	 infnames.push_back(tmp);
-	 }
-	 
-	 // set up PMT generators to use
-	 PMTCalibrator PCal(15916,CalDBSQL::getCDB());
-	 PMTGenerator* PGens[] = {new PMTGenerator(EAST), new PMTGenerator(WEST)};
-	 for(Side s = EAST; s <= WEST; ++s)
-	 PGens[s]->setCalibrator(&PCal);
-	 
-	 unsigned int i=0;
-	 for(std::vector<std::string>::iterator it = infnames.begin(); it != infnames.end(); it++) {
-	 
-	 // load re-simulated data with PMT effects
-	 G4toPMT g2p;
-	 g2p.setGenerators(PGens[EAST],PGens[WEST]);
-	 g2p.addFile(*it);
-	 float e0 = energies[i];
-	 float sigmaEst = PCal.energyResolution(EAST,nBetaTubes,e0,0,0,0);
-	 AsymHists AH(&OM,std::string("SimLine_")+dtos(energies[i]),"",100,e0+5.*sigmaEst);
-	 assert(false); // TODO not using eTrue
-	 AH.loadSimData(g2p,0,AFP_OTHER);
-	 AH.calcAsym(true);
-	 AH.makePlots();
-	 
-	 for(Side s = EAST; s <= WEST; ++s) {
-	 for(unsigned int tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; tp++) {
-	 for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
-	 
-	 TH1F* hLine = AH.hTypes[afp][1][s][tp];
-	 
-	 Stringmap m;
-	 m.insert("etrue",energies[i]);
-	 m.insert("side",ctos(sideNames(s)));
-	 m.insert("afp",itos(afp));
-	 m.insert("type",itos(tp));
-	 m.insert("nCounts",hLine->Integral());
-	 m.insert("evis_mean",hLine->GetMean());
-	 m.insert("evis_rms",hLine->GetRMS());
-	 
-	 // fit peak
-	 float peak_est = hLine->GetBinCenter(hLine->GetMaximumBin());
-	 sigmaEst = PCal.energyResolution(s,nBetaTubes,peak_est,0,0,0);
-	 TF1 gausFit("gasufit","gaus",peak_est-1.5*sigmaEst,peak_est+1.5*sigmaEst);
-	 if(!hLine->Fit(&gausFit,"QR")) {
-	 m.insert("fitHeight",gausFit.GetParameter(0));
-	 m.insert("evis_mp",gausFit.GetParameter(1));
-	 m.insert("evis_fitwidth",gausFit.GetParameter(2));
-	 m.insert("d_evis_mp",gausFit.GetParError(1));
-	 }
-	 
-	 printf("\n------- %c %i %i %.2f -------\n",sideNames(s),tp,afp,energies[i]);
-	 m.display();
-	 OM.qOut.insert("linesim",m);
-	 }
-	 }
-	 }
-	 i++;
-	 }
-	 
-	 OM.write();
-	 OM.setWriteRoot(true);
-	 */
-}
 
 
-
-
-void XeEndpointStudy() {
-	// load data
-	OutputManager OM("XeEndpoint","../PostPlots/XeEndpoint");
-	std::vector<RunNum> xeRunNums;
-	for(RunNum rn = 16070; rn <= 16077; rn++)
-		xeRunNums.push_back(rn);
-	PostAnalyzer XeRuns;
-	XeRuns.addRuns(xeRunNums);
-	
-	// set up histograms
-	TH1F* hXe[2][nBetaTubes+1];
-	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			hXe[s][t] = OM.registeredTH1F(sideSubst("XeSpectrum_%c",s)+itos(t),"Xe Spectrum",150,0,1500);
-			hXe[s][t]->Sumw2();
-			hXe[s][t]->SetLineColor(nBetaTubes+1-t);
-		}
-	}
-	
-	// scan data and fill histograms
-	XeRuns.startScan();
-	while (XeRuns.nextPoint()) {
-		for(Side s = EAST; s <= WEST; ++s) {
-			if(!(XeRuns.fSide==s && XeRuns.fPID==PID_BETA && XeRuns.fType==TYPE_0_EVENT) || XeRuns.radius(s) > 30.0)
-				continue;
-			hXe[s][nBetaTubes]->Fill(XeRuns.scints[s].energy.x);
-			for(unsigned int t=0; t<nBetaTubes; t++)
-				hXe[s][t]->Fill(XeRuns.scints[s].tuben[t].x);
-		}
-	}
-	
-	// fits
-	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			TGraphErrors* tgData = NULL;
-			float_err ep = kurieIterator(hXe[s][t],850.0,&tgData,915.,350,700);
-			if(tgData) {
-				tgData->SetMarkerColor(2);
-				tgData->Draw("AP");
-				OM.printCanvas(sideSubst("Kurie_Plot_%c",s)+itos(t));
-				delete(tgData);
-			}
-			Stringmap M;
-			M.insert("side",ctos(sideNames(s)));
-			M.insert("tube",t);
-			M.insert("ep",ep.x);
-			M.insert("dep",ep.err);
-			OM.qOut.insert("endpointFit",M);
-		}
-	}
-	
-	// draw histograms
-	for(Side s = EAST; s <= WEST; ++s) {
-		hXe[s][nBetaTubes]->Draw();
-		for(unsigned int t=0; t<nBetaTubes; t++) {
-			hXe[s][t]->Draw("Same");
-		}
-		OM.printCanvas(sideSubst("Spectra_%c",s));
-	}
-	
-	OM.write();
-	OM.setWriteRoot(true);
-}
 
 void makeCorrectionsFile(const std::string& fout) {
 	QFile Q;

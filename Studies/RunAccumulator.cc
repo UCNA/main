@@ -245,6 +245,8 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 	unsigned int nScanned = 0;
 	while(PDS.nextPoint()) {
 		nScanned++;
+		if(PDS.withCals)
+			PDS.recalibrateEnergy();
 		if(PDS.fPID==PID_BETA && PDS.fType==TYPE_0_EVENT) {
 			runCounts.add(PDS.getRun(),1.0);
 			totalCounts[afp][gv]++;
@@ -259,20 +261,29 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 }
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
-	AFPState afp = simData.getAFP();
 	currentGV = GV_OPEN;
-	currentAFP = afp;
+	currentAFP = simData.getAFP();
+	printf("Loading %i events of simulated data (AFP=%i)...\n",nToSim,currentAFP);
 	simData.startScan(nToSim);
-	float nSimmed = 0;
-	while(nSimmed<=nToSim) {
+	while(simData.nSimmed<=nToSim) {
 		simData.nextPoint();
-		fillCoreHists(simData,simData.physicsWeight);
-		if(simData.fPID==PID_BETA && simData.fType==TYPE_0_EVENT) {
-			nSimmed+=simData.physicsWeight;
-			runCounts.add(simData.getRun(),simData.physicsWeight);
+		loadSimPoint(simData);
+		if(!(int(simData.nSimmed)%(nToSim/20))) {
+			if(nToSim>1e6) {
+				printf("* %s\n",simData.evtInfo().toString().c_str());
+			} else {
+				printf("*");
+				fflush(stdout);
+			}
 		}
-		if(!(int(nSimmed)%(nToSim/20))) { printf("*"); fflush(stdout); }
 	}
 	printf("\n--Scan complete.--\n");
-	totalCounts[afp][1] += nSimmed;
+}
+
+void RunAccumulator::loadSimPoint(Sim2PMT& simData) {
+	fillCoreHists(simData,simData.physicsWeight);
+	if(double evtc = simData.simEvtCounts()) {
+		runCounts.add(simData.getRun(),evtc);
+		totalCounts[currentAFP][1] += evtc;
+	}	
 }

@@ -1,0 +1,176 @@
+* This kumac will produce plots of online histograms relevant to
+* SCS beta-decay running.
+*
+* B. Plaster, 07/16/07
+
+*fortran/file 66 check_beta_decay.ps
+*metafile 66 -111
+
+h/del *
+
+opt logy
+opt stat
+opt grid
+opt utit
+
+set hcol 2
+set hwid 5
+
+opt linx
+opt logy
+
+zone 1 2
+hi/pl 1099(:15000.)
+atitle 'East QADC Sum' ''
+hi/pl 1088(:15000.)
+atitle 'West QADC Sum' ''
+
+wait
+
+opt liny
+zone 1 2
+h/pl 9991(100.:8000.)
+atitle 'East QADC Sum With East Anode Cut' ''
+h/pl 9992(100.:8000.)
+atitle 'West QADC Sum With West Anode Cut' ''
+opt logy
+
+wait
+
+zone 1 2
+h/pl 9993(:180.)
+atitle 'East Two-Fold Timing (ns)' ''
+h/pl 9994(:180.)
+atitle 'West Two-Fold Timing (ns)' ''
+wait
+
+zone 2 2
+hi/pl 1000(:4000.)
+atitle 'East PMT 1 QADC' ''
+hi/pl 1001(:4000.)
+atitle 'East PMT 2 QADC' ''
+hi/pl 1002(:4000.)
+atitle 'East PMT 3 QADC' ''
+hi/pl 1003(:4000.)
+atitle 'East PMT 4 QADC' ''
+
+wait
+
+zone 2 2
+hi/pl 1900(:4000.)
+atitle 'E1 QADC Anode Cut' ''
+hi/pl 1901(:4000.)
+atitle 'E2 QADC Anode Cut' ''
+hi/pl 1902(:4000.)
+atitle 'E3 QADC Anode Cut' ''
+hi/pl 1903(:4000.)
+atitle 'E4 QADC Anode Cut' ''
+
+wait
+
+zone 2 2
+hi/pl 1004(:4000.)
+atitle 'West PMT 1 QADC' ''
+hi/pl 1005(:4000.)
+atitle 'West PMT 2 QADC' ''
+hi/pl 1006(:4000.)
+atitle 'West PMT 3 QADC' ''
+hi/pl 1007(:4000.)
+atitle 'West PMT 4 QADC' ''
+
+wait
+
+zone 2 2
+hi/pl 1904(:4000.)
+atitle 'W1 QADC Anode Cut' ''
+hi/pl 1905(:4000.)
+atitle 'W2 QADC Anode Cut' ''
+hi/pl 1906(:4000.)
+atitle 'W3 QADC Anode Cut' ''
+hi/pl 1907(:4000.)
+atitle 'W4 QADC Anode Cut' ''
+
+wait
+
+zone 4 4
+h/pl 9001(:2050.)
+atitle 'E PMT1 LED' ''
+h/pl 9002(:2050.)
+atitle 'E PMT2 LED' ''
+h/pl 9003(:2050.)
+atitle 'E PMT3 LED' ''
+h/pl 9004(:2050.)
+atitle 'E PMT4 LED' ''
+h/pl 9005(:2050.)
+atitle 'W PMT1 LED' ''
+h/pl 9006(:2050.)
+atitle 'W PMT2 LED' ''
+h/pl 9007(:2050.)
+atitle 'W PMT3 LED' ''
+h/pl 9008(:2050.)
+atitle 'W PMT4 LED' ''
+h/pl 9101(:4100.)
+atitle 'E PMT1 Bi' ''
+h/pl 9102(:4100.)
+atitle 'E PMT2 Bi' ''
+h/pl 9103(:4100.)
+atitle 'E PMT3 Bi' ''
+h/pl 9104(:4100.)
+atitle 'E PMT4 Bi' ''
+h/pl 9105(:4100.)
+atitle 'W PMT1 Bi' ''
+h/pl 9106(:4100.)
+atitle 'W PMT2 Bi' ''
+h/pl 9107(:4100.)
+atitle 'W PMT3 Bi' ''
+h/pl 9108(:4100.)
+atitle 'W PMT4 Bi' ''
+
+wait
+
+zone 2 2
+h/pl 9001(:4100.)
+atitle 'E PMT1 LED' ''
+h/pl 9002(:4100.)
+atitle 'E PMT2 LED' ''
+h/pl 9003(:4100.)
+atitle 'E PMT3 LED' ''
+h/pl 9004(:4100.)
+atitle 'E PMT4 LED' ''
+wait
+
+zone 2 2
+
+h/pl 9101(:4100.)
+atitle 'E PMT1 Bi' ''
+h/pl 9102(:4100.)
+atitle 'E PMT2 Bi' ''
+h/pl 9103(:4100.)
+atitle 'E PMT3 Bi' ''
+h/pl 9104(:4100.)
+atitle 'E PMT4 Bi' ''
+
+wait
+
+zone 2 2
+
+h/pl 9005(:2050.)
+atitle 'W PMT1 LED' ''
+h/pl 9006(:2050.)
+atitle 'W PMT2 LED' ''
+h/pl 9007(:2050.)
+atitle 'W PMT3 LED' ''
+h/pl 9008(:2050.)
+atitle 'W PMT4 LED' ''
+wait
+
+zone 2 2
+h/pl 9105(:4100.)
+atitle 'W PMT1 Bi' ''
+h/pl 9106(:4100.)
+atitle 'W PMT2 Bi' ''
+h/pl 9107(:4100.)
+atitle 'W PMT3 Bi' ''
+h/pl 9108(:4100.)
+atitle 'W PMT4 Bi' ''
+wait

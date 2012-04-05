@@ -3,14 +3,14 @@
 void ucnaDataAnalyzer11b::setReadpoints() {
 	
 	// clock, trigger
-	SetBranchAddress("Sis00",&fSis00);					// trigger type flags Sis00
-	SetBranchAddress("Number",&fTriggerNumber);			// trigger number
-	SetBranchAddress("Clk0",&fTimeScaler.t[EAST]);		// E clock
-	SetBranchAddress("Clk1",&fTimeScaler.t[WEST]);		// W clock
-	SetBranchAddress("S83028",&fTimeScaler.t[BOTH]);	// unblinded runclock
-	SetBranchAddress("S8200",&fBeamclock.val);			// protonClock
-	SetBranchAddress("Delt0",&fDelt0);					// high resolution delta-t since previous event
-	SetBranchAddress("Time",&fAbsTime);					// absolute time during run
+	SetBranchAddress("Sis00",&r_Sis00);				// trigger type flags Sis00
+	SetBranchAddress("Number",&r_TriggerNumber);	// trigger number
+	SetBranchAddress("Clk0",&r_Clk.t[EAST]);		// E clock
+	SetBranchAddress("Clk1",&r_Clk.t[WEST]);		// W clock
+	SetBranchAddress("S83028",&r_Clk.t[BOTH]);		// unblinded runclock
+	SetBranchAddress("S8200",&r_BClk);				// protonClock
+	SetBranchAddress("Delt0",&r_Delt0);				// high resolution delta-t since previous event
+	SetBranchAddress("Time",&r_AbsTime);			// absolute time during run
 	
 	//TCh->SetBranchAddress("S8300","");					// E Beta Counter
 	//TCh->SetBranchAddress("S8301","");					// W Beta Counter
@@ -23,19 +23,19 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 	// ucn monitors
 	const int ucn_mon_adc_nums[kNumUCNMons] = {38,39,310,311};
 	for(unsigned int n=0; n<kNumUCNMons; n++)
-		SetBranchAddress(std::string("Pdc")+itos(ucn_mon_adc_nums[n]),&fMonADC[n].val);
+		SetBranchAddress(std::string("Pdc")+itos(ucn_mon_adc_nums[n]),&r_MonADC[n]);
 	
 	// PMTs and TDCs, in quadrant order (+x towards SCS, +y up, +z from East to West)
 	const int pmt_adc_nums[] = {2,3,0,1,4,5,6,7};
 	const int pmt_tdc_nums[] = {2,3,0,1,8,9,14,11};
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
-			SetBranchAddress(std::string("Qadc")+itos(pmt_adc_nums[t+4*s]),&sevt[s].adc[t]);
-			SetBranchAddress(std::string("Tdc0")+itos(pmt_tdc_nums[t+4*s]),&fScint_tdc[s][t].val);
+			SetBranchAddress(std::string("Qadc")+itos(pmt_adc_nums[t+4*s]),&r_PMTADC[s][t]);
+			SetBranchAddress(std::string("Tdc0")+itos(pmt_tdc_nums[t+4*s]),&r_PMTTDC[s][t]);
 		}
 	}
-	SetBranchAddress("Tdc016",&fScint_tdc[EAST][nBetaTubes].val);		// E 2of4 TDC
-	SetBranchAddress("Tdc017",&fScint_tdc[WEST][nBetaTubes].val);		// W 2of4 TDC
+	SetBranchAddress("Tdc016",&r_PMTTDC[EAST][nBetaTubes]);		// E 2of4 TDC
+	SetBranchAddress("Tdc017",&r_PMTTDC[WEST][nBetaTubes]);		// W 2of4 TDC
 	
 	// Wirechambers	
 	const int anode_pdc_nums[] = {30,34};
@@ -45,9 +45,9 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 			kWirePositions[s][d] = calcWirePositions(rn,s,AxisDirection(d));
 			cathNames[s][d] = getCathodeNames(rn,s,AxisDirection(d));
 			for(std::vector<unsigned int>::iterator it = padcNums.begin(); it != padcNums.end(); it++)
-				SetBranchAddress(std::string(s==EAST?"Pdc":"Padc")+itos(*it),&fMWPC_caths[s][d][it-padcNums.begin()]);
+				SetBranchAddress(std::string(s==EAST?"Pdc":"Padc")+itos(*it),&r_MWPC_caths[s][d][it-padcNums.begin()]);
 		}
-		SetBranchAddress(std::string("Pdc")+itos(anode_pdc_nums[s]),&fMWPC_anode[s].val);
+		SetBranchAddress(std::string("Pdc")+itos(anode_pdc_nums[s]),&r_MWPC_anode[s]);
 	}
 	
 	// muon vetos
@@ -55,17 +55,17 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 	const int back_adc_nums[] = {8,10};
 	const int drift_tac_nums[] = {313,315};
 	for(Side s = EAST; s<=WEST; ++s) {
-		SetBranchAddress(std::string("Tdc0")+itos(back_tdc_nums[s]),&fBacking_tdc[s].val);
-		SetBranchAddress(std::string("Pdc")+itos(drift_tac_nums[s]),&fDrift_tac[s].val);
-		SetBranchAddress(std::string("Qadc")+itos(back_adc_nums[s]),&fBacking_adc[s]);
+		SetBranchAddress(std::string("Tdc0")+itos(back_tdc_nums[s]),&r_Backing_TDC[s]);
+		SetBranchAddress(std::string("Pdc")+itos(drift_tac_nums[s]),&r_Drift_TAC[s]);
+		SetBranchAddress(std::string("Qadc")+itos(back_adc_nums[s]),&r_Backing_ADC[s]);
 	}
-	SetBranchAddress("Tdc019",&fTop_tdc[EAST].val);
-	SetBranchAddress("Qadc9",&fTop_adc[EAST]);
+	SetBranchAddress("Tdc019",&r_Top_TDC[EAST]);
+	SetBranchAddress("Qadc9",&r_Top_ADC[EAST]);
 	
 	// header checks
 	for(size_t i=0; i<kNumModules; i++) {
-		SetBranchAddress(std::string("Evnb")+itos(i),&fEvnb[i]);
-		SetBranchAddress(std::string("Bkhf")+itos(i),&fBkhf[i]);
+		SetBranchAddress(std::string("Evnb")+itos(i),&r_Evnb[i]);
+		SetBranchAddress(std::string("Bkhf")+itos(i),&r_Bkhf[i]);
 	}
 	
 	
@@ -76,8 +76,8 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 	TPhys = (TTree*)addObject(new TTree("phys","physics quantities"));
 	TPhys->SetMaxVirtualSize(1000000);
 	
-	TPhys->Branch("TriggerNum",&fTriggerNumber,"TriggerNum/F");
-	TPhys->Branch("Sis00",&fSis00,"Sis00/F");
+	TPhys->Branch("TriggerNum",&iTriggerNumber,"TriggerNum/I");
+	TPhys->Branch("Sis00",&iSis00,"Sis00/I");
 	TPhys->Branch("DeltaT",&fDelt0,"DeltaT/F");
 	TPhys->Branch("EvtN",&currentEvent,"EvtN/I");
 	

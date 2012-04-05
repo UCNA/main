@@ -5,7 +5,6 @@
 #include "SegmentSaver.hh"
 #include "RunAccumulator.hh"
 #include "ProcessedDataScanner.hh"
-#include "DataSource.hh"
 #include "G4toPMT.hh"
 #include "Octet.hh"
 #include <map>
@@ -57,6 +56,8 @@ public:
 	quadHists& getCoreHist(const std::string& qname);
 	/// get core histogram by name, const version
 	const quadHists& getCoreHist(const std::string& qname) const;
+	/// set all quadHists fill points
+	void setFillPoints(AFPState afp, GVState gv);
 	
 	/// load data from ProcessedDataScanner
 	void loadProcessedData(AFPState afp, ProcessedDataScanner& FG, ProcessedDataScanner& BG);
@@ -75,11 +76,6 @@ public:
 	void drawQuadSides(quadHists& qhE, quadHists& qhW, bool combineAFP = false,  const std::string& subfolder = ".", const std::string& opt = "");
 	
 	int depth;		//< octet division depth
-		
-protected:
-	
-	/// set all quadHists fill points
-	void setFillPoints(AFPState afp, GVState gv);
 	
 private:
 	

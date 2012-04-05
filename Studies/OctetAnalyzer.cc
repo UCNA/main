@@ -3,6 +3,7 @@
 #include "strutils.hh"
 #include "GraphicsUtils.hh"
 #include "EnergyCalibrator.hh"
+#include "PostOfficialAnalyzer.hh"
 #include "CalDBSQL.hh"
 #include "Types.hh"
 
@@ -102,9 +103,9 @@ void OctetAnalyzer::loadProcessedData(AFPState afp, ProcessedDataScanner& FG, Pr
 }
 
 void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
-	for(int afp=AFP_OFF; afp<=AFP_ON; afp++) {
+	for(AFPState afp=AFP_OFF; afp<=AFP_ON; ++afp) {
 		if(afp != simData.getAFP() && simData.getAFP() != AFP_OTHER) continue;
-		setFillPoints(AFPState(afp),GV_OPEN);
+		setFillPoints(afp,GV_OPEN);
 		RunAccumulator::loadSimData(simData,nToSim);
 	}
 }
@@ -240,7 +241,7 @@ unsigned int processPulsePair(OctetAnalyzer& OA, const Octet& PP) {
 		nproc++;
 		ProcessedDataScanner* PDSs[2] = {NULL,NULL};
 		for(unsigned int fg = 0; fg <= 1; fg++) {
-			PDSs[fg] = getDataSource(INPUT_OFFICIAL,true);
+			PDSs[fg] = new PostOfficialAnalyzer(true);
 			PDSs[fg]->addRuns(sd->getAsymRuns(fg));
 		}
 		if(PDSs[0]->getnFiles()+PDSs[1]->getnFiles())
@@ -351,7 +352,7 @@ unsigned int simuClone(const std::string& basedata, OctetAnalyzer& OA, Sim2PMT& 
 				RunInfo RI = CalDBSQL::getCDB()->getRunInfo(it->first);
 				if(RI.gvState != GV_OPEN) continue;	// no simulation for background runs
 				// estimate background count share for this run (and reduce simulation by this amount)
-				double bgEst = origOA->getTotalCounts(RI.afpState,0)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,0).t[BOTH];
+				double bgEst = origOA->getTotalCounts(RI.afpState,GV_CLOSED)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,0).t[BOTH];
 				if(it->second <= bgEst) continue;
 				int nToSim = (int)it->second-bgEst;
 				printf("\n\t---Simulation cloning for run %i (%i+%i counts)---\n",it->first,nToSim,(int)bgEst);

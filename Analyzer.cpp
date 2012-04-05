@@ -5,14 +5,13 @@
 #include "ControlMenu.hh"
 #include "PathUtils.hh"
 #include "PositionResponse.hh"
-#include "PositionStudies.hh"
+#include "WirechamberStudy.hh"
 #include "AsymmetryAnalyzer.hh"
 #include "EndpointStudy.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "PlotMakers.hh"
 #include "PMTGenerator.hh"
 #include "ReSource.hh"
-#include "RData.hh"
 #include "G4toPMT.hh"
 
 
@@ -43,16 +42,6 @@ std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
 	return CalDBSQL::getCDB()->findRuns(tmp);
 }
 
-void mi_VerifyCalperiods(std::deque<std::string>&, std::stack<std::string>&) {
-	std::vector<RunNum> C = CalDBSQL::getCDB()->findRuns("1 ORDER BY run_number ASC");
-	printf("Runs DB contains %i runs...\n",(int)C.size());
-	for(std::vector<RunNum>::iterator it=C.begin(); it!=C.end(); it++) {
-		RunNum gmsrun = CalDBSQL::getCDB()->getGMSRun(*it);
-		if(!gmsrun)
-			printf("*** WARNING: No calibrations found for run %i!\n",gmsrun);
-	}
-}
-
 void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
 	unsigned int nr = streamInteractor::popInt(stack);
 	RunNum r1 = streamInteractor::popInt(stack);
@@ -60,16 +49,24 @@ void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) 
 	process_xenon(r0,r1,nr);
 }
 
-void mi_EndpointEnresPlot(std::deque<std::string>&, std::stack<std::string>&) {
-	assert(false); //TODO
-	//RunNum r0 = streamInteractor::popInt(stack);
-	//energyResolution(r0);
+void mi_EndpointStudySim(std::deque<std::string>&, std::stack<std::string>& stack) {
+	RunNum rsingle = streamInteractor::popInt(stack);
+	RunNum r1 = streamInteractor::popInt(stack);
+	RunNum r0 = streamInteractor::popInt(stack);
+	simulate_xenon(r0,r1,rsingle);
+}
+
+void mi_WirechamberStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
+	unsigned int nr = streamInteractor::popInt(stack);
+	RunNum r1 = streamInteractor::popInt(stack);
+	RunNum r0 = streamInteractor::popInt(stack);
+	runWirechamberAnalyzer(r0,r1,nr);
 }
 
 void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	unsigned int pmid = streamInteractor::popInt(stack);
 	if(CalDBSQL::getCDB()->isValid(13883)) {
-		OutputManager OM("Foo",std::string("../PostPlots/Eta/Posmap_")+itos(pmid));
+		OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Posmap_"+itos(pmid));
 		etaPlot(OM,CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),pmid<1000,pmid<1000?2.5:250);
 	} else {
 		printf("Invalid CalDB!\n");
@@ -79,16 +76,9 @@ void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	RunNum rn = streamInteractor::popInt(stack);
 	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
-	OutputManager OM("Foo",std::string("../PostPlots/nPE/Posmap_")+itos(rn));
+	OutputManager OM("NPE",getEnvSafe("UCNA_ANA_PLOTS")+"/nPE/Run_"+itos(rn));
 	npePlot(OM,&PCal);
-}
-
-void mi_EndpointProcessFile(std::deque<std::string>&, std::stack<std::string>&) {
-	CalDBSQL::getCDB()->getPositioningCorrector(10200)->processFile("../_PlotMakers/SourcePositions.txt", "../_PlotMakers/SourcePositions_2.txt");
-}
-
-void mi_ProcessCalFile(std::deque<std::string>&, std::stack<std::string>&) {
-	processCalibrationsFile("../SummaryData/zCalIn.txt", "../SummaryData/zCalOut.txt");
+	OM.write();
 }
 
 void mi_PostprocessSources(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -115,8 +105,15 @@ void mi_PlotGMS(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 void mi_dumpPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int pnum = streamInteractor::popInt(stack);
-	dumpPosmap("../PostPlots/PosmapDump/",pnum);
+	dumpPosmap(getEnvSafe("UCNA_ANA_PLOTS")+"/PosmapDump/",pnum);
 }
+
+void mi_delPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
+	int pnum = streamInteractor::popInt(stack);
+	CalDBSQL::getCDB(false)->deletePosmap(pnum);
+}
+
+void mi_listPosmaps(std::deque<std::string>&, std::stack<std::string>&) { CalDBSQL::getCDB()->listPosmaps(); }
 
 void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octn = streamInteractor::popInt(stack);
@@ -151,8 +148,8 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	}
 }
 
-void simulations_evis() {
-	OutputManager OM("Evis2ETrue","../PostPlots/Evis2ETrue/Livermore/");
+void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
+	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/Livermore/");
 	G4toPMT g2p;
 	g2p.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
 	PMTCalibrator PCal(16000,CalDBSQL::getCDB());
@@ -162,49 +159,9 @@ void simulations_evis() {
 	OM.write();
 }
 
-void mi_Special(std::deque<std::string>&, std::stack<std::string>&) {
-	
-	uploadRunSources();
-	return;
-	
-	simulations_evis();
-	return;
-	
-	makeCorrectionsFile("../PostPlots/SpectrumCorrection.txt");
-	return;	
-	
-	if(1) {
-		RunNum rmin = 15991; //14264;
-		RunNum rmax = 16077; //14347;
-		OutputManager OM("AnodeCal",std::string("../PostPlots/AnodeCal_")+itos(rmin)+"_"+itos(rmax));
-		PostOfficialAnalyzer POA(true);
-		for(unsigned int i=rmin; i<=rmax; i++)
-			POA.addRun(i);
-		AnodeCalibration(POA,OM,12);
-		return;
-	}
-	
-	if(0) {
-		OutputManager OM("SimAnodeCal","../PostPlots/SimAnodeCal/");
-		G4toPMT g2p;
-		g2p.addFile("/home/mmendenhall/geant4/output/Baseline_20110914_uniformRandMomentum_geomC/analyzed_*.root");
-		
-		PMTCalibrator PCal(16000,CalDBSQL::getCDB());
-		g2p.setCalibrator(PCal);
-		
-		AnodeCalibration(g2p,OM,1);
-		return;
-	}
-	
-	if(0) {
-		OutputManager OM("CathodeCal","../PostPlots/CathodeCal_14269_14270/");
-		PostOfficialAnalyzer POA(true);
-		for(unsigned int i=14264; i<=14269; i++)
-			POA.addRun(i);
-		CathodeCalibration(POA,OM);
-		return;
-	}
-}
+void mi_sourcelog(std::deque<std::string>&, std::stack<std::string>&) { uploadRunSources(); }
+
+void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrectionsFile(getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection.txt"); }
 
 void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
@@ -229,60 +186,73 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	selectRuntype.addChoice("GMS Reference Runs","ref");
 	selectRuntype.setDefault("all");
 		
-	// postprocessing/plots routines
+	// position map routines and menu
 	inputRequester pm_posmap("Generate Position Map",&mi_EndpointStudy);
 	pm_posmap.addArg("Start Run");
 	pm_posmap.addArg("End Run");
 	pm_posmap.addArg("n Rings","12");
-	inputRequester pm_mi2("Energy Resolution Plots",&mi_EndpointEnresPlot);
-	pm_mi2.addArg("Run Number");
-	inputRequester pm_mi3("Process positions file",&mi_EndpointProcessFile);	
-	inputRequester pm_mi4("Process calibrations file",&mi_ProcessCalFile);
-	inputRequester pm_mi5("Verify calibration assignments",&mi_VerifyCalperiods);
+	inputRequester pm_posmap_sim("Simulate Position Map",&mi_EndpointStudySim);
+	pm_posmap_sim.addArg("Start Run");
+	pm_posmap_sim.addArg("End Run");
+	pm_posmap_sim.addArg("Single Run","0");
+	inputRequester posmapLister("List Posmaps",&mi_listPosmaps);
+	inputRequester posmapPlot("Plot Position Map",&mi_PosmapPlot);
+	posmapPlot.addArg("Posmap ID");
+	inputRequester posmapDumper("Dump Posmap",&mi_dumpPosmap);
+	posmapDumper.addArg("Posmap ID");
+	inputRequester posmapDel("Delete Posmap",&mi_delPosmap);
+	posmapDel.addArg("Posmap ID");
+	inputRequester nPEPlot("Plot nPE/MeV",&mi_nPEPlot);
+	nPEPlot.addArg("Run Number");
+	OptionsMenu PMapR("Position Map Routines");
+	PMapR.addChoice(&pm_posmap,"gen");
+	PMapR.addChoice(&pm_posmap_sim,"sim");
+	PMapR.addChoice(&posmapLister,"ls");
+	PMapR.addChoice(&posmapPlot,"plot");
+	PMapR.addChoice(&posmapDumper,"dump");
+	PMapR.addChoice(&posmapDel,"del");
+	PMapR.addChoice(&nPEPlot,"npe");
+	PMapR.addChoice(&exitMenu,"x");
 	
+	// postprocessing/plots routines	
 	inputRequester plotGMS("Plot GMS corrections",&mi_PlotGMS);
 	plotGMS.addArg("Start Run");
 	plotGMS.addArg("End Run");
 	plotGMS.addArg("","",&selectRuntype);
 	
-	inputRequester posmapPlot("Plot Position Map",&mi_PosmapPlot);
-	posmapPlot.addArg("Posmap ID");
-	
-	inputRequester nPEPlot("Plot nPE/MeV",&mi_nPEPlot);
-	nPEPlot.addArg("Run Number");
-	
-	inputRequester posmapDumper("Dump Posmap",&mi_dumpPosmap);
-	posmapDumper.addArg("Posmap ID");
-	
 	inputRequester octetProcessor("Process Octet",&mi_processOctet);
 	octetProcessor.addArg("Octet number");
-	
-	inputRequester specialJunk("Special Junk",&mi_Special);
-	
+		
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
-	PostRoutines.addChoice(&pm_posmap,"pmap");
-	PostRoutines.addChoice(&pm_mi2);	
-	PostRoutines.addChoice(&pm_mi3);
-	PostRoutines.addChoice(&pm_mi4);
-	PostRoutines.addChoice(&pm_mi5);
 	PostRoutines.addChoice(&plotGMS);
-	PostRoutines.addChoice(&posmapPlot);
-	PostRoutines.addChoice(&nPEPlot);
-	PostRoutines.addChoice(&posmapDumper,"dpm");
 	PostRoutines.addChoice(&octetProcessor,"oct");
-	PostRoutines.addChoice(&specialJunk,"spec");
 	PostRoutines.addChoice(&exitMenu,"x");	
 	
-	// special run processing
-	inputRequester postSources("Reprocess Source Runs",&mi_PostprocessSources);
+	// sources
+	inputRequester postSources("Fit source data",&mi_PostprocessSources);
 	postSources.addArg("Start Run");
 	postSources.addArg("End Run");
+	inputRequester uploadSources("Upload runlog sources",&mi_sourcelog);
+	// evis2etrue
+	inputRequester evis2etrue("Caluculate eVis->eTrue curves",&mi_evis2etrue);
+	// radiative corrections
+	inputRequester radcor("Make radiative corrections table",&mi_radcor);
+	// wirechamber calibration
+	inputRequester anawc("Gather wirechamber calibration data",&mi_WirechamberStudy);
+	anawc.addArg("Start Run");
+	anawc.addArg("End Run");
+	anawc.addArg("n Rings","6");
 	
 	// main menu
 	OptionsMenu OM("Analyzer Main Menu");
+	OM.addChoice(&PMapR,"pmap");
 	OM.addChoice(&PostRoutines,"pr");
 	OM.addChoice(&postSources,"sr");
+	OM.addChoice(&uploadSources,"us");
+	OM.addChoice(&evis2etrue,"ev");
+	OM.addChoice(&radcor,"rc");
+	OM.addChoice(&anawc,"wc");
 	OM.addChoice(&exitMenu,"x");
 	OM.addSynonym("x","exit");
 	OM.addSynonym("x","quit");

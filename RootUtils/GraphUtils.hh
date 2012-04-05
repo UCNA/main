@@ -45,4 +45,10 @@ void transformAxis(TGraph& g, TGraph& T, bool useJacobean = true);
 /// interpolate a TGraphErrors to a new grid spacing ~dx
 TGraphErrors* interpolate(TGraphErrors& tg, float dx);
 
+/// get inverse CDF x: CDF(x)=p for histogram
+double invCDF(TH1* h, double p);
+
+/// check histogram for NaNs
+void fixNaNs(TH1* h);
+
 #endif

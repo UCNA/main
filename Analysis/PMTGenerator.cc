@@ -10,7 +10,7 @@ TRandom3 sim_rnd_source;
 
 PMTGenerator::PMTGenerator(Side s, float xx, float yy): calcADC(true),
 x(xx), y(yy), dsx(0), dsy(0), dwx(0), dwy(0),
-presmear(0), larmorField(0), SNL(NULL), mySide(s) { }
+presmear(0), larmorField(0), mySide(s) { }
 
 void PMTGenerator::setCalibrator(PMTCalibrator* P) { 
 	assert(P);
@@ -56,11 +56,6 @@ ScintEvent PMTGenerator::generate(float en) {
 	}
 	//double correrr = sim_rnd_source.Gaus(0.0,1.0);
 	for(unsigned int t=0; t<nBetaTubes; t++) {
-		float ent = en;
-		if(SNL) {
-			float eta = currentCal->eta(mySide,t,x+dsx,y+dsy);
-			ent = SNL->delinearize(mySide,t,en*eta)/eta;
-		}
 		if(currentCal->scaleNoiseWithL)
 			tubeRes = pmtRes[mySide][t]*en;
 		else
@@ -72,7 +67,7 @@ ScintEvent PMTGenerator::generate(float en) {
 				tubeRes = 1.0/(1.0/tubeRes-1.0/(tubeRes+0.1));
 		}
 		restot += tubeRes;
-		float nPE = sim_rnd_source.PoissonD(tubeRes)*ent/en;
+		float nPE = sim_rnd_source.PoissonD(tubeRes);
 		nPE += sim_rnd_source.Gaus(0.0,0.7); // analog smoothing by PMT
 		nPEtot += nPE;
 		sevt.tuben[t] = nPE/tubeRes*en;

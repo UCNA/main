@@ -1,6 +1,6 @@
 #include "PathUtils.hh"
 #include "strutils.hh"
-#include <cassert>
+#include "UCNAException.hh"
 #include <dirent.h>
 #include <algorithm>
 #include <sys/stat.h>
@@ -36,8 +36,12 @@ void makePath(std::string p, bool forFile) {
 		if(!dirExists(thepath)) {
 			std::string cmd = std::string("mkdir -p '")+thepath+"'";
 			int err = system(cmd.c_str());
-			if(err) printf("Error %i creating path '%s'\n",err,thepath.c_str());
-			assert(dirExists(thepath));
+			if(err || !dirExists(thepath)) {
+				UCNAException e("badPath");
+				e.insert("pathName",thepath);
+				e.insert("errnum",err);
+				throw(e);
+			}
 		}
 	}
 }
@@ -69,8 +73,9 @@ std::string getEnvSafe(const std::string& v, const std::string& dflt) {
 	const char* envv = getenv(v.c_str());
 	if(!envv) {
 		if(dflt == "FAIL_IF_MISSING") {
-			printf("*** FAIL *** Request environment variable '%s' missing!\n",v.c_str());
-			assert(false);
+			UCNAException e("missingEnv");
+			e.insert("var",v);
+			throw(e);
 		}
 		return dflt;
 	}

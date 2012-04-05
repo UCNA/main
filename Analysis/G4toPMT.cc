@@ -7,15 +7,24 @@
 TRandom3 mc_rnd_source;	
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
-reSimulate(true), afp(AFP_OTHER) {
+reSimulate(true), nToSim(0), nSimmed(0), afp(AFP_OTHER) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		PGen[s].larmorField = 0;
+		mwpcThresh[s] = 0.02;
 	}
 	totalTime = BlindTime(1.0);
 	fPID = PID_BETA;	// only simulating beta events
 }
 
+Stringmap Sim2PMT::evtInfo() {
+	Stringmap m = ProcessedDataScanner::evtInfo();
+	m.insert("Eprim",ePrim);
+	m.insert("costh",costheta);
+	m.insert("weight",physicsWeight);
+	return m;
+}
+	
 void Sim2PMT::calcReweight() {
 	physicsWeight = 1.0; //= spectrumCorrectionFactor(ePrim) for beta spectrum
 	if(afp==AFP_ON||afp==AFP_OFF)
@@ -25,6 +34,7 @@ void Sim2PMT::calcReweight() {
 void Sim2PMT::setCalibrator(PMTCalibrator& PCal) {
 	for(Side s = EAST; s <= WEST; ++s)
 		PGen[s].setCalibrator(&PCal);
+	evtRun = PCal.rn;
 	ActiveCal = &PCal;
 }
 
@@ -32,6 +42,7 @@ bool Sim2PMT::nextPoint() {
 	bool np = ProcessedDataScanner::nextPoint();
 	reverseCalibrate();
 	calcReweight();
+	nSimmed+=simEvtCounts();
 	return np;
 }
 
@@ -39,17 +50,9 @@ void Sim2PMT::reverseCalibrate() {
 	
 	doUnits();
 	
-	bool passesMWPC[2];
-	bool passesScint[2];
-	bool is2fold[2];
-	
 	// simulate event on both sides
 	for(Side s = EAST; s <= WEST; ++s) {
-		
-		// TODO efficiency/resolution fancier wirechamber simulation
 		mwpcEnergy[s] = eW[s];
-		passesMWPC[s] = (eW[s] > 0.02);		
-		
 		// simulate detector energy response, or use un-smeared original data 
 		if(reSimulate) {
 			PGen[s].setOffsets(scintPos[s][X_DIRECTION], scintPos[s][Y_DIRECTION], wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center);
@@ -59,10 +62,21 @@ void Sim2PMT::reverseCalibrate() {
 			scints[s].energy = eQ[s];
 			passesScint[s] = (eQ[s] > 0);
 		}
-		
-		is2fold[s] = passesMWPC[s] && passesScint[s];
 	}
 	
+	classifyEvent();
+}
+
+void Sim2PMT::classifyEvent() {
+	
+	bool passesMWPC[2];
+	bool is2fold[2];
+	
+	for(Side s = EAST; s <= WEST; ++s) {
+		passesMWPC[s] = (eW[s] > mwpcThresh[s]);		
+		is2fold[s] = passesMWPC[s] && passesScint[s];
+	}
+
 	if(is2fold[EAST] || is2fold[WEST]) fPID = PID_BETA;
 	else fPID = PID_SINGLE;
 	
@@ -99,6 +113,17 @@ void G4toPMT::setReadpoints() {
 		primPos[0] = primPos[1] = primPos[2] = primPos[3] = 0;
 }
 
+void G4toPMT_SideSwap::doUnits() {
+	std::swap(eQ[EAST],eQ[WEST]);
+	std::swap(eDep[EAST],eDep[WEST]);
+	std::swap(eW[EAST],eW[WEST]);
+	for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
+		std::swap(mwpcPos[EAST][d],mwpcPos[WEST][d]);
+		std::swap(scintPos[EAST][d],scintPos[WEST][d]);
+	}
+	G4toPMT::doUnits();
+}
+
 void PenelopeToPMT::setReadpoints() {
 	Tch->SetBranchAddress("Epe",&fEdep[EAST]);
 	Tch->SetBranchAddress("Epw",&fEdep[WEST]);
@@ -128,12 +153,12 @@ void G4toPMT::doUnits() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		if(matchPenelope)
 			eQ[s] = eDep[s];
-		for(unsigned int i=0; i<2; i++) {
-			mwpcPos[s][i] *= wcPosConversion;
-			scintPos[s][i] *= wcPosConversion;
+		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
+			mwpcPos[s][d] *= wcPosConversion;
+			scintPos[s][d] *= wcPosConversion;
 			if(matchPenelope)
-				scintPos[s][i] = wires[s][i].center = mwpcPos[s][i] = primPos[i];
-			wires[s][i].center = mwpcs[s].pos[i]=mwpcPos[s][i];
+				scintPos[s][d] = wires[s][d].center = mwpcPos[s][d] = primPos[d];
+			wires[s][d].center = mwpcPos[s][d];
 		}
 	}
 	costheta=cos(costheta);
@@ -147,10 +172,10 @@ void PenelopeToPMT::doUnits() {
 		eQ[s] = fEdep[s]*0.001;	// really Edep and not Equenched
 		eW[s] = fEW[s]*0.001;
 		time[s] = fTime[s];
-		for(unsigned int i=0; i<2; i++) {			
-			scintPos[s][i] = primPos[i];	// fake scintillator pos from primary
-			mwpcPos[s][i]  = primPos[i]; 	// same position in scintillator
-			wires[s][i].center = mwpcs[s].pos[i] = mwpcPos[s][i];
+		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {			
+			scintPos[s][d] = primPos[d];	// fake scintillator pos from primary
+			mwpcPos[s][d]  = primPos[d]; 	// same position in scintillator
+			wires[s][d].center = mwpcPos[s][d];
 		}
 	}
 	ePrim = fEprim*0.001;
@@ -232,3 +257,9 @@ void MixSim::setCalibrator(PMTCalibrator& PCal) {
 	Sim2PMT::setCalibrator(PCal);	
 }
 
+unsigned int MixSim::getnFiles() const {
+	unsigned int nf = 0;
+	for(std::vector<Sim2PMT*>::const_iterator it = subSims.begin(); it != subSims.end(); it++)
+		nf += (*it)->getnFiles();
+	return nf;
+}

@@ -1,5 +1,6 @@
 #include "CalDBSQL.hh"
 #include "PathUtils.hh"
+#include "UCNAException.hh"
 #include <utility>
 
 CalDBSQL* CalDBSQL::getCDB(bool readonly) {
@@ -33,11 +34,15 @@ TGraphErrors* CalDBSQL::getRunMonitor(RunNum rn, const std::string& sensorName, 
 		printf("Failed to locate requested monitor:\n\t%s\n",query);
 		return NULL;
 	}
-	TGraphErrors* tg = getGraph(fieldAsInt(r,0));
+	int gID = fieldAsInt(r,0);
 	delete(r);
-	if(!tg)
-		printf("*** Warning: no graph for run monitor %i %s (%s)\n",rn,sensorName.c_str(),monType.c_str());
-	return tg;
+	try {
+		return getGraph(gID);
+	} catch(UCNAException& e) {
+		e.insert("sensorName",sensorName);
+		e.insert("monType",monType);
+		throw(e);
+	}
 }
 
 float CalDBSQL::getRunMonitorStart(RunNum rn, const std::string& sensorName, const std::string& monType) {
@@ -69,17 +74,21 @@ TGraphErrors* CalDBSQL::getContinuousMonitor(const std::string& sensorName, cons
 		printf("Failed to locate requested monitor:\n\t%s\n",query);
 		return NULL;
 	}
-	TGraphErrors* tg; 
-	if(centers)
-		tg = getGraph(fieldAsInt(r,0),rn);
-	else
-		tg = getGraph(fieldAsInt(r,1),rn);
-	delete(r);
-	if(tg && !tg->GetN()) {
-		delete(tg);
-		return NULL;
+	try {
+		TGraphErrors* tg;
+		int cgid = fieldAsInt(r,0);
+		int wgid = fieldAsInt(r,1);
+		delete(r);
+		if(centers)
+			tg = getGraph(cgid,rn);
+		else
+			tg = getGraph(wgid,rn);
+		return tg;
+	} catch (UCNAException& e) {
+		e.insert("sensorName",sensorName);
+		e.insert("monType",monType);
+		throw(e);
 	}
-	return tg;
 }
 
 
@@ -115,7 +124,12 @@ float CalDBSQL::getAnodeCalInfo(RunNum R, const char* field) {
 	if(!r) {
 		sprintf(query,"SELECT %s,start_run,end_run FROM anode_cal ORDER BY pow(1.0*end_run-%i,2)+pow(1.0*start_run-%i,2) LIMIT 1",field,R,R);
 		r = getFirst();
-		assert(r);
+		if(!r) {
+			UCNAException e("noQueryResults");
+			e.insert("runNum",R);
+			e.insert("field",field);
+			throw(e);
+		}
 		unsigned int r0 = fieldAsInt(r,1);
 		unsigned int r1 = fieldAsInt(r,2);
 		printf("**** WARNING: No matching anode calibration found for %i; using nearest range (%i,%i)...\n",R,r0,r1);
@@ -143,36 +157,50 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 	printf("Loading positioning corrector %i...\n",psid);
 	std::vector<PosmapInfo> pinf;
 	TSQLRow* r;
+	sprintf(query,"SELECT n_rings,radius FROM posmap_set WHERE posmap_set_id = %i",psid);
+	r = getFirst();
+	if(!r) {
+		UCNAException e("badPosmapID");
+		e.insert("pmid",psid);
+		throw(e);
+	}
+	unsigned int nrings = fieldAsInt(r,0);
+	float radius = fieldAsFloat(r,1);
+	delete(r);
+	
 	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			sprintf(query,"SELECT n_rings,radius FROM posmap_info WHERE posmap_set_id = %i AND side = %s AND quadrant = %i",psid,dbSideName(s),t);
-			r = getFirst();
-			if(!r)
-				continue;
+			sprintf(query,
+					"SELECT signal,norm FROM posmap_points WHERE posmap_set_id = %i AND side = %s AND quadrant = %i ORDER BY pixel_id ASC",
+					psid,dbSideName(s),t);
+			Query();
+			if(!res) {
+				UCNAException e("badPosmapID");
+				e.insert("pmid",psid);
+				e.insert("side",sideSubst("%c",s));
+				e.insert("tube",t);
+				throw(e);
+			}	
 			pinf.push_back(PosmapInfo());
 			pinf.back().s = s;
 			pinf.back().t = t;
-			pinf.back().nRings = fieldAsInt(r,0);
-			pinf.back().radius = fieldAsFloat(r,1);
-			delete(r);
-			sprintf(query,
-					"SELECT endpoint_adc,smear_correction FROM posmap_points WHERE posmap_set_id = %i AND side = %s AND quadrant = %i ORDER BY pixel_id ASC",
-					psid,dbSideName(s),t);
-			Query();
-			if(!res)
-				return NULL;
+			pinf.back().nRings = nrings;
+			pinf.back().radius = radius;
 			while((r = res->Next())) {
-				pinf.back().adc.push_back(fieldAsFloat(r,0));
-				pinf.back().energy.push_back(fieldAsFloat(r,1));
+				pinf.back().signal.push_back(fieldAsFloat(r,0));
+				pinf.back().norm.push_back(fieldAsFloat(r,1));
 				delete(r);
 			}
 			// delete entries with no data points
-			if(!pinf.back().adc.size())
+			if(!pinf.back().signal.size())
 				pinf.pop_back();
 		}
 	}
-	assert(pinf.size() || IGNORE_DEAD_DB);
-	if(!pinf.size()) return NULL;
+	if(!pinf.size()) {
+		UCNAException e("missingPosmap");
+		e.insert("pmid",psid);
+		throw(e);
+	}
 	
 	pcors.insert(std::make_pair(psid,new PositioningCorrector(pinf)));
 	return getPositioningCorrectorByID(psid);
@@ -299,7 +327,11 @@ RunInfo CalDBSQL::getRunInfo(RunNum r) {
 	//                    0               1        2        3          4       5
 	sprintf(query,"SELECT slow_run_number,run_type,asym_oct,gate_valve,flipper,scs_field FROM run WHERE run_number = %u",r);
 	TSQLRow* row = getFirst();
-	assert(row);
+	if(!row) {
+		UCNAException e("noQueryResults");
+		e.insert("runNum",r);
+		throw(e);
+	}
 	
 	R.roleName = fieldAsString(row,2,"Other");
 	R.octet = 0;
@@ -411,8 +443,9 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid) {
 	sprintf(query,"SELECT x_value,x_error,y_value,y_error FROM graph_points WHERE graph_id = %i ORDER BY x_value ASC",gid);
 	Query();
 	if(!res) {
-		printf("*** Warning: no graph found for <%i>!\n",gid);
-		return NULL;
+		UCNAException e("missingGraph");
+		e.insert("graph_id",gid);
+		throw(e);
 	}
 	TSQLRow* r;
 	while((r = res->Next())) {
@@ -422,8 +455,9 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid) {
 	}
 	unsigned int npts = gdata[0].size();
 	if(!npts) {
-		printf("*** Warning: no points found for graph <%i>!\n",gid);
-		return NULL;
+		UCNAException e("missingGraphData");
+		e.insert("graph_id",gid);
+		throw(e);
 	}
 	if(npts == 1) {
 		printf("Notice: only 1 graph point found for <%i>; extending to 2.\n",gid);
@@ -447,8 +481,9 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 			AND x_value < %i ORDER BY %i-x_value ASC LIMIT 1",gid,startTime(rn),startTime(rn));
 	Query();
 	if(!res) {
-		printf("*** Warning: no graph found for <%i>!\n",gid);
-		return NULL;
+		UCNAException e("missingGraph");
+		e.insert("graph_id",gid);
+		throw(e);
 	}
 	TSQLRow* r = res->Next();
 	if(!r) {
@@ -457,8 +492,9 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 		r = res->Next();
 	}
 	if(!r) {
-		printf("*** Warning: no points found for graph <%i>!\n",gid);
-		return NULL;
+		UCNAException e("missingGraphData");
+		e.insert("graph_id",gid);
+		throw(e);
 	}
 	float tstart = fieldAsFloat(r);
 	delete(r);
@@ -473,8 +509,11 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 		Query();
 		r = res->Next();
 	}
-	if(!r)
-		return NULL;
+	if(!r) {
+		UCNAException e("missingGraphData");
+		e.insert("graph_id",gid);
+		throw(e);
+	}
 	float tend = fieldAsFloat(r);
 	delete(r);
 	
@@ -491,8 +530,11 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 	
 	// compile graph
 	unsigned int npts = gdata[0].size();
-	if(!npts)
-		return NULL;
+	if(!npts) {
+		UCNAException e("missingGraphData");
+		e.insert("graph_id",gid);
+		throw(e);
+	}
 	if(npts == 1) {
 		printf("Notice: only 1 graph point found for <%i;%i>; extending to 2.\n",gid,rn);
 		for(unsigned int i=0; i<4; i++)
@@ -512,13 +554,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 unsigned int CalDBSQL::newGraph(const std::string& description) {
 	sprintf(query,"INSERT INTO graphs (text_description) VALUES ('%s')",description.c_str());
 	execute();
-	sprintf(query,"SELECT LAST_INSERT_ID()");
-	Query();
-	TSQLRow* r = getFirst();
-	assert(r);
-	int gid = fieldAsInt(r,0);
-	delete(r);
-	return gid;
+	return getInsertID();
 }
 
 void CalDBSQL::deleteGraph(unsigned int gid) {
@@ -531,7 +567,8 @@ void CalDBSQL::deleteGraph(unsigned int gid) {
 
 unsigned int CalDBSQL::uploadGraph(const std::string& description, std::vector<double> x, std::vector<double> y,
 								   std::vector<double> dx, std::vector<double> dy) {
-	assert(x.size()==y.size()||!x.size());
+	if(!(x.size()==y.size()||!x.size()))
+		throw(UCNAException("dimensionMismatch"));
 	unsigned int gid = newGraph(description);
 	for(unsigned int i=0; i<y.size(); i++) {
 		double pdx = dx.size()>i?dx[i]:0;
@@ -613,3 +650,57 @@ void CalDBSQL::addRunMonitor(RunNum rn, const std::string& sensorName, const std
 	execute();
 }
 
+unsigned int CalDBSQL::newPosmap(const std::string& descrip, unsigned int nrings, double radius) {
+	assert(descrip.size()<1024);
+	sprintf(query,"INSERT INTO posmap_set(descrip,n_rings,radius) VALUES ('%s',%i,%g)",descrip.c_str(),nrings,radius);
+	execute();
+	return getInsertID();
+}
+
+void CalDBSQL::addPosmapPoint(unsigned int pmid, Side s, unsigned int t, unsigned int n, double sig, double norm, double x, double y) {
+	Stringmap m;
+	m.insert("posmap_set_id",pmid);
+	m.insert("side",sideSubst("'%s'",s));
+	m.insert("quadrant",t);
+	m.insert("pixel_id",n);
+	m.insert("signal",sig);
+	m.insert("norm",norm);
+	m.insert("center_x",x);
+	m.insert("center_y",y);
+	sprintf(query,"INSERT INTO posmap_points%s",sm2insert(m).c_str());
+	execute();
+}
+
+void CalDBSQL::listPosmaps() {
+	sprintf(query,"SELECT posmap_set_id,n_rings,radius,descrip FROM posmap_set WHERE 1 ORDER BY posmap_set_id");
+	Query();
+	TSQLRow* r;
+	printf("----- Position Maps -----\n");
+	while((r = res->Next())) {
+		printf("[%i] n=%i,r=%g '%s'\n",fieldAsInt(r,0),fieldAsInt(r,1),fieldAsFloat(r,2),fieldAsString(r,3).c_str());
+		delete(r);
+	}
+	printf("-------------------------\n");
+}
+
+void CalDBSQL::deletePosmap(unsigned int pmid) {
+	sprintf(query,"SELECT COUNT(*) FROM energy_calibration WHERE posmap_set_id=%i",pmid);
+	TSQLRow* r = getFirst();
+	assert(r);
+	unsigned int ncals = fieldAsInt(r,0);
+	delete(r);
+	sprintf(query,"SELECT COUNT(*) FROM anode_cal WHERE anode_posmap_id=%i",pmid);
+	r = getFirst();
+	assert(r);
+	ncals += fieldAsInt(r,0);
+	delete(r);	
+	if(ncals) {
+		printf("Posmap %i in use by %i calibrations; deletion forbidden!\n",pmid,ncals);
+		return;
+	}
+	printf("Deleting position map %i...\n",pmid);
+	sprintf(query,"DELETE FROM posmap_set WHERE posmap_set_id = %i",pmid);
+	execute();
+	sprintf(query,"DELETE FROM posmap_points WHERE posmap_set_id = %i",pmid);
+	execute();
+}
