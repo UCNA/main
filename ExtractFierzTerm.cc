@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
 		G2P.recalibrateEnergy();
 		
 		// check the event characteristics on each side
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		for(Side s = EAST; s <= WEST; s = WEST) {
 			// get event classification type. TYPE_IV_EVENT means the event didn't trigger this side.
 			EventType tp = G2P.fType;
 
@@ -499,6 +499,11 @@ int main(int argc, char *argv[]) {
 
     TString fierz_ratio_pdf_filename = "/data/kevinh/mc/fierz_ratio.pdf";
     canvas->SaveAs(fierz_ratio_pdf_filename);
+
+	for (int i = 0; i < fierz_ratio_histogram->GetNbinsX(); i++)
+	{
+		std::cout << fierz_ratio_histogram->GetBinContent(i) << std::endl;
+	}
 
 	return 0;
 }
