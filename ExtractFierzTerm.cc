@@ -6,9 +6,13 @@
 //#include <TFitResult.h> // v5.27
 #include <TF1.h>
 
+#include <iostream>
+#include <fstream>
+#include <string>
+
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
 static double expected_fierz = 0.654026;
-static unsigned nToSim = 5E6;				// how many triggering events to simulate
+static unsigned nToSim = 1E7;				// how many triggering events to simulate
 static double loading_prob = 50; 			// ucn loading probability 
 
 class FierzHistogram {
@@ -222,6 +226,23 @@ double super_sum_error(double r[2][2]) {
 }
 */
 
+using namespace std;
+void output_histogram(string filename, TH1F* h)
+{
+	using namespace std;
+	ofstream ofs;
+	ofs.open(filename.c_str());
+	for (int i = 0; i < h->GetNbinsX(); i++)
+	{
+		double x = h->GetBinCenter(i);
+		double sx = h->GetBinWidth(i);
+		double r = 1000 * h->GetBinContent(i);
+		double sr = 1000 * h->GetBinError(i);
+		ofs << x << '\t' << r << '\t' << sr << endl;
+	}
+	ofs.close();
+}
+
 int main(int argc, char *argv[]) {
 	
 	// Geant4 MC data scanner object
@@ -275,7 +296,7 @@ int main(int argc, char *argv[]) {
 		G2P.recalibrateEnergy();
 		
 		// check the event characteristics on each side
-		for(Side s = EAST; s <= WEST; s = WEST) {
+		for(Side s = EAST; s <= WEST; ++s) {
 			// get event classification type. TYPE_IV_EVENT means the event didn't trigger this side.
 			EventType tp = G2P.fType;
 
@@ -366,7 +387,8 @@ int main(int argc, char *argv[]) {
         //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
 	    //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined.root");
         //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
-		"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/OctetAsym_10keV_Bins.root");
+		//"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/OctetAsym_10keV_Bins.root");
+		"/home/mmendenhall/UCNA/PostPlots/OctetAsym_Offic/OctetAsym_Offic.root");
 	if (ucna_data_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
@@ -500,10 +522,22 @@ int main(int argc, char *argv[]) {
     TString fierz_ratio_pdf_filename = "/data/kevinh/mc/fierz_ratio.pdf";
     canvas->SaveAs(fierz_ratio_pdf_filename);
 
+	
+	/*
+	ofstream super_sum_ofstream;
+	super_sum_ofstream.open("/data/kevinh/mc/super-sum-data.dat");
 	for (int i = 0; i < fierz_ratio_histogram->GetNbinsX(); i++)
 	{
-		std::cout << fierz_ratio_histogram->GetBinContent(i) << std::endl;
+		double x = fierz_ratio_histogram->GetBinCenter(i);
+		double sx = fierz_ratio_histogram->GetBinWidth(i);
+		double r = 1000 * fierz_ratio_histogram->GetBinContent(i);
+		double sr = 1000 * fierz_ratio_histogram->GetBinError(i);
+		super_sum_ofstream << x << '\t' << r << '\t' << sr << std::endl;
 	}
+	super_sum_ofstream.close();
+	*/
+	output_histogram("/data/kevinh/mc/super-sum-data.dat", fierz_ratio_histogram);
+	output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram);
 
 	return 0;
 }
