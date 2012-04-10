@@ -486,38 +486,38 @@ int main(int argc, char *argv[]) {
     TString super_sum_pdf_filename = "/data/kevinh/mc/super_sum_data.pdf";
     canvas->SaveAs(super_sum_pdf_filename);
 
-	// prevent division by zero
-	/*
-	for (int i = 0; i < mc.sm_super_sum_histogram->GetNbinsX() + 2; i++)
-		mc.sm_super_sum_histogram->AddBinContent(i, 1E-7);
-		*/
-
     // compute little b factor
     TH1F *fierz_ratio_histogram = new TH1F(*super_sum_histogram);
     fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
-    //fierz_ratio_histogram->Divide(mc.sm_super_sum_histogram);
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
 
+	// fit the Fierz ratio 
 	char fit_str[1024];
     sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", electron_mass, electron_mass, expected_fierz);
-
     TF1 *fierz_fit = new TF1("fierz_fit", fit_str, 120, 650);
     fierz_fit->SetParameter(0,0);
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
 
+	// A histogram for output to gnuplot
+    TH1F *fierz_fit_histogram = new TH1F(*super_sum_histogram);
+	for (int i = 0; i < mc.sm_super_sum_histogram->GetNbinsX() + 2; i++)
+		mc.sm_super_sum_histogram->AddBinContent(i, 1E-7);
+
+	// compute chi squared
     double chisq = fierz_fit->GetChisquare();
     double N = fierz_fit->GetNDF();
 	char b_str[1024];
 	sprintf(b_str, "b = %1.3f #pm %1.3f", fierz_fit->GetParameter(0), fierz_fit->GetParError(0));
-
 	char chisq_str[1024];
     printf("Chi^2 / ( N - 1) = %f / %f = %f\n", chisq, N-1, chisq/(N-1));
 	sprintf(chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(N-1));
 
+	// draw the ratio plot
 	fierz_ratio_histogram->SetStats(0);
     fierz_ratio_histogram->Draw();
 
+	// draw a legend on the plot
     TLegend* ratio_legend = new TLegend(0.3,0.85,0.6,0.65);
     ratio_legend->AddEntry(fierz_ratio_histogram, "Data ratio to Monte Carlo (Type 0)", "l");
     ratio_legend->AddEntry(fierz_fit, "Fierz term fit", "l");
@@ -528,25 +528,12 @@ int main(int argc, char *argv[]) {
     ratio_legend->SetBorderSize(0);
     ratio_legend->Draw();
 
+	// output for root
     TString fierz_ratio_pdf_filename = "/data/kevinh/mc/fierz_ratio.pdf";
     canvas->SaveAs(fierz_ratio_pdf_filename);
 
-	
-	/*
-	ofstream super_sum_ofstream;
-	super_sum_ofstream.open("/data/kevinh/mc/super-sum-data.dat");
-	for (int i = 0; i < fierz_ratio_histogram->GetNbinsX(); i++)
-	{
-		double x = fierz_ratio_histogram->GetBinCenter(i);
-		double sx = fierz_ratio_histogram->GetBinWidth(i);
-		double r = 1000 * fierz_ratio_histogram->GetBinContent(i);
-		double sr = 1000 * fierz_ratio_histogram->GetBinError(i);
-		super_sum_ofstream << x << '\t' << r << '\t' << sr << std::endl;
-	}
-	super_sum_ofstream.close();
-	*/
+	// output for gnuplot
 	output_histogram("/data/kevinh/mc/super-sum-data.dat", super_sum_histogram, 1, 1000);
-	//output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1.035, 1000/1.035);
 	output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
 	output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
 
