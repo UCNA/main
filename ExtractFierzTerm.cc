@@ -12,8 +12,10 @@
 
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
 static double expected_fierz = 0.654026;
-static unsigned nToSim = 1E7;				// how many triggering events to simulate
+static unsigned nToSim = 3E6;				// how many triggering events to simulate
 static double loading_prob = 50; 			// ucn loading probability 
+static int bins = 40;						// replace with value from data or smoothing fit
+double scale_x = 1.01;
 
 class FierzHistogram {
   public: 
@@ -53,7 +55,7 @@ class FierzHistogram {
 };
 
 // ug. needs to be static
-FierzHistogram mc(0,1000,100);
+FierzHistogram mc(0,1000,40);
 
 /**
  * x[0] : kenetic energy
@@ -101,7 +103,7 @@ TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
 }
 
 // S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
-TH1F* compute_super_sum(TH1F* rate_histogram[2][2] ) {
+TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
     TH1F *super_sum_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_sum_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) {
@@ -227,17 +229,17 @@ double super_sum_error(double r[2][2]) {
 */
 
 using namespace std;
-void output_histogram(string filename, TH1F* h)
+void output_histogram(string filename, TH1F* h, double ax, double ay)
 {
 	using namespace std;
 	ofstream ofs;
 	ofs.open(filename.c_str());
-	for (int i = 0; i < h->GetNbinsX(); i++)
+	for (int i = 1; i < h->GetNbinsX(); i++)
 	{
-		double x = h->GetBinCenter(i);
-		double sx = h->GetBinWidth(i);
-		double r = 1000 * h->GetBinContent(i);
-		double sr = 1000 * h->GetBinError(i);
+		double x = ax * h->GetBinCenter(i);
+		//double sx = h->GetBinWidth(i);
+		double r = ay * h->GetBinContent(i);
+		double sr = ay * h->GetBinError(i);
 		ofs << x << '\t' << r << '\t' << sr << endl;
 	}
 	ofs.close();
@@ -324,9 +326,9 @@ int main(int argc, char *argv[]) {
             
             //if (G2P.afp == AFP_ON)
             if (nSimmed % 100 > loading_prob) // redo with real loading eff.
-                mc.sm_histogram[s][0]->Fill(G2P.getEtrue(), 1);
+                mc.sm_histogram[s][0]->Fill(scale_x * G2P.getEtrue(), 1);
             else
-                mc.sm_histogram[s][1]->Fill(G2P.getEtrue(), 1);
+                mc.sm_histogram[s][1]->Fill(scale_x * G2P.getEtrue(), 1);
 
 			nSimmed++;
 		}
@@ -484,9 +486,16 @@ int main(int argc, char *argv[]) {
     TString super_sum_pdf_filename = "/data/kevinh/mc/super_sum_data.pdf";
     canvas->SaveAs(super_sum_pdf_filename);
 
+	// prevent division by zero
+	/*
+	for (int i = 0; i < mc.sm_super_sum_histogram->GetNbinsX() + 2; i++)
+		mc.sm_super_sum_histogram->AddBinContent(i, 1E-7);
+		*/
+
     // compute little b factor
     TH1F *fierz_ratio_histogram = new TH1F(*super_sum_histogram);
     fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
+    //fierz_ratio_histogram->Divide(mc.sm_super_sum_histogram);
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
 
@@ -536,8 +545,10 @@ int main(int argc, char *argv[]) {
 	}
 	super_sum_ofstream.close();
 	*/
-	output_histogram("/data/kevinh/mc/super-sum-data.dat", fierz_ratio_histogram);
-	output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram);
+	output_histogram("/data/kevinh/mc/super-sum-data.dat", super_sum_histogram, 1, 1000);
+	//output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1.035, 1000/1.035);
+	output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
+	output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
 
 	return 0;
 }
