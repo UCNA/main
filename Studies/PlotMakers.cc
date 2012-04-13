@@ -14,6 +14,7 @@
 #include "KurieFitter.hh"
 #include "G4toPMT.hh"
 #include "BetaSpectrum.hh"
+#include <TColor.h>
 
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
 	QFile fout(foutPath+"/GMS_Plot.txt",false);
@@ -90,7 +91,6 @@ void etaGradPlot(OutputManager& OM, PositioningCorrector* P) {
 		}
 	}
 }
-
 
 void dumpPosmap(std::string basepath, unsigned int pnum) {
 	
@@ -230,6 +230,61 @@ void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool du
 		}
 	}
 }
+
+void PosPlotter::startScan(TH2* h) {
+	hCurrent = h;
+	nx=ny=0;
+	x=y=1.e6;
+}
+
+bool PosPlotter::nextPoint() {
+	do {
+		nx = (nx%hCurrent->GetNbinsX())+1;
+		ny += (nx==1);
+		x = hCurrent->GetXaxis()->GetBinCenter(nx);
+		y = hCurrent->GetYaxis()->GetBinCenter(ny);
+	} while(x*x+y*y > r0*r0*rscale && ny <= hCurrent->GetNbinsY());
+	return ny <= hCurrent->GetNbinsY();
+}
+
+void PosPlotter::npePlot(PMTCalibrator* PCal) {
+	
+	SectorCutter& Sects = PCal->P->getSectors(EAST,0);
+	r0 = Sects.r;
+	gStyle->SetOptStat("");
+	
+	OM->defaultCanvas->SetRightMargin(0.125);
+	OM->defaultCanvas->SetBottomMargin(0.125);
+	float e0 = 1000;
+	float s0 = 0.5;
+	rscale = 1.0;
+	unsigned int nbin=100;
+	
+	for(Side s = EAST; s<=WEST; ++s) {
+		for(unsigned int t=0; t<=nBetaTubes; t++) {
+			
+			TH2F* interpogrid = OM->registeredTH2F(sideSubst("%c",s)+itos(t+1)+"_nPE",
+												   (t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" PE per MeV",
+												   nbin,-60,60,nbin,-60,60);
+			interpogrid->GetXaxis()->SetTitle("x Position [mm]");
+			interpogrid->GetYaxis()->SetTitle("y Position [mm]");
+			interpogrid->SetAxisRange(0,250,"Z");
+			if(t==nBetaTubes)
+				interpogrid->SetAxisRange(0,500,"Z");
+			
+			startScan(interpogrid);
+			while(nextPoint())
+				interpogrid->SetBinContent(nx,ny,PCal->nPE(s,t,e0*s0,x,y,0)/s0);
+			
+			interpogrid->Draw("COL Z");
+			//drawSectors(Sects,6);
+			OM->printCanvas(sideSubst("nPE_%c",s)+itos(t),".eps");			
+		}
+	}
+}
+
+
+
 
 // turn two profiles against the same axis into an x-y plot
 TGraphErrors* correlateProfiles(TProfile* x, TProfile* y) {

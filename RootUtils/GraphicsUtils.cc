@@ -10,6 +10,8 @@
 #include <TLine.h>
 #include <TLatex.h>
 #include <TBox.h>
+#include <TStyle.h>
+#include <TColor.h>
 
 bool compareHistosByMax(TH1* i, TH1* j) {
 	assert(i && j);
@@ -161,4 +163,12 @@ void labelSectors(const SectorCutter& S, int color) {
 	}
 }
 
+void makeGrayscalepalette() {
+	const unsigned int ncol = 256;
+	Int_t cnum[ncol];
+	for(unsigned int i=0; i<ncol; i++)
+		cnum[i] = TColor::GetColor(float(i)/float(ncol-1),float(i)/float(ncol-1),float(i)/float(ncol-1));
+	gStyle->SetPalette(ncol,cnum);
+	gStyle->SetNumberContours(64);	
+}
 

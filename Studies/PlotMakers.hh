@@ -30,4 +30,25 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM);
 /// generate a file with spectrum correction factors
 void makeCorrectionsFile(const std::string& fout);
 
+/// Class for generating position plots
+class PosPlotter {
+public:
+	/// constructor
+	PosPlotter(OutputManager* O): rscale(1.2), OM(O) {}
+	/// plot number of PE
+	void npePlot(PMTCalibrator* PCal);
+	
+	float rscale; //< extra radius to plot beyond edge of measured area
+	
+protected:
+	OutputManager* OM;
+	float x,y;
+	int nx,ny;
+	float r0;
+	TH2* hCurrent;
+	void startScan(TH2* h);
+	bool nextPoint();
+};
+
+
 #endif
