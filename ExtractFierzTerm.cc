@@ -6,10 +6,16 @@
 //#include <TFitResult.h> // v5.27
 #include <TF1.h>
 
+#include <iostream>
+#include <fstream>
+#include <string>
+
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
 static double expected_fierz = 0.654026;
-static unsigned nToSim = 5E6;				// how many triggering events to simulate
+static unsigned nToSim = 3E6;				// how many triggering events to simulate
 static double loading_prob = 50; 			// ucn loading probability 
+static int bins = 40;						// replace with value from data or smoothing fit
+double scale_x = 1.01;
 
 class FierzHistogram {
   public: 
@@ -49,7 +55,7 @@ class FierzHistogram {
 };
 
 // ug. needs to be static
-FierzHistogram mc(0,1000,100);
+FierzHistogram mc(0,1000,40);
 
 /**
  * x[0] : kenetic energy
@@ -97,7 +103,7 @@ TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
 }
 
 // S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
-TH1F* compute_super_sum(TH1F* rate_histogram[2][2] ) {
+TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
     TH1F *super_sum_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_sum_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) {
@@ -222,6 +228,23 @@ double super_sum_error(double r[2][2]) {
 }
 */
 
+using namespace std;
+void output_histogram(string filename, TH1F* h, double ax, double ay)
+{
+	using namespace std;
+	ofstream ofs;
+	ofs.open(filename.c_str());
+	for (int i = 1; i < h->GetNbinsX(); i++)
+	{
+		double x = ax * h->GetBinCenter(i);
+		//double sx = h->GetBinWidth(i);
+		double r = ay * h->GetBinContent(i);
+		double sr = ay * h->GetBinError(i);
+		ofs << x << '\t' << r << '\t' << sr << endl;
+	}
+	ofs.close();
+}
+
 int main(int argc, char *argv[]) {
 	
 	// Geant4 MC data scanner object
@@ -275,7 +298,7 @@ int main(int argc, char *argv[]) {
 		G2P.recalibrateEnergy();
 		
 		// check the event characteristics on each side
-		for(Side s = EAST; s <= WEST; s = nextSide(s)) {
+		for(Side s = EAST; s <= WEST; ++s) {
 			// get event classification type. TYPE_IV_EVENT means the event didn't trigger this side.
 			EventType tp = G2P.fType;
 
@@ -303,9 +326,9 @@ int main(int argc, char *argv[]) {
             
             //if (G2P.afp == AFP_ON)
             if (nSimmed % 100 > loading_prob) // redo with real loading eff.
-                mc.sm_histogram[s][0]->Fill(G2P.getEtrue(), 1);
+                mc.sm_histogram[s][0]->Fill(scale_x * G2P.getEtrue(), 1);
             else
-                mc.sm_histogram[s][1]->Fill(G2P.getEtrue(), 1);
+                mc.sm_histogram[s][1]->Fill(scale_x * G2P.getEtrue(), 1);
 
 			nSimmed++;
 		}
@@ -366,7 +389,8 @@ int main(int argc, char *argv[]) {
         //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
 	    //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined.root");
         //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
-		"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/OctetAsym_10keV_Bins.root");
+		//"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/OctetAsym_10keV_Bins.root");
+		"/home/mmendenhall/UCNA/PostPlots/OctetAsym_Offic/OctetAsym_Offic.root");
 	if (ucna_data_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
@@ -468,25 +492,32 @@ int main(int argc, char *argv[]) {
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
 
+	// fit the Fierz ratio 
 	char fit_str[1024];
     sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", electron_mass, electron_mass, expected_fierz);
-
     TF1 *fierz_fit = new TF1("fierz_fit", fit_str, 120, 650);
     fierz_fit->SetParameter(0,0);
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
 
+	// A histogram for output to gnuplot
+    TH1F *fierz_fit_histogram = new TH1F(*super_sum_histogram);
+	for (int i = 0; i < mc.sm_super_sum_histogram->GetNbinsX() + 2; i++)
+		mc.sm_super_sum_histogram->AddBinContent(i, 1E-7);
+
+	// compute chi squared
     double chisq = fierz_fit->GetChisquare();
     double N = fierz_fit->GetNDF();
 	char b_str[1024];
 	sprintf(b_str, "b = %1.3f #pm %1.3f", fierz_fit->GetParameter(0), fierz_fit->GetParError(0));
-
 	char chisq_str[1024];
     printf("Chi^2 / ( N - 1) = %f / %f = %f\n", chisq, N-1, chisq/(N-1));
 	sprintf(chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(N-1));
 
+	// draw the ratio plot
 	fierz_ratio_histogram->SetStats(0);
     fierz_ratio_histogram->Draw();
 
+	// draw a legend on the plot
     TLegend* ratio_legend = new TLegend(0.3,0.85,0.6,0.65);
     ratio_legend->AddEntry(fierz_ratio_histogram, "Data ratio to Monte Carlo (Type 0)", "l");
     ratio_legend->AddEntry(fierz_fit, "Fierz term fit", "l");
@@ -497,8 +528,14 @@ int main(int argc, char *argv[]) {
     ratio_legend->SetBorderSize(0);
     ratio_legend->Draw();
 
+	// output for root
     TString fierz_ratio_pdf_filename = "/data/kevinh/mc/fierz_ratio.pdf";
     canvas->SaveAs(fierz_ratio_pdf_filename);
+
+	// output for gnuplot
+	output_histogram("/data/kevinh/mc/super-sum-data.dat", super_sum_histogram, 1, 1000);
+	output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
+	output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
 
 	return 0;
 }
