@@ -4,6 +4,7 @@
 
 #include "ControlMenu.hh"
 #include "PathUtils.hh"
+#include "GraphicsUtils.hh"
 #include "PositionResponse.hh"
 #include "WirechamberStudy.hh"
 #include "AsymmetryAnalyzer.hh"
@@ -67,7 +68,8 @@ void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	unsigned int pmid = streamInteractor::popInt(stack);
 	if(CalDBSQL::getCDB()->isValid(13883)) {
 		OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Posmap_"+itos(pmid));
-		etaPlot(OM,CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),pmid<1000,pmid<1000?2.5:250);
+		PosPlotter PP(&OM);
+		PP.etaPlot(CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid));
 	} else {
 		printf("Invalid CalDB!\n");
 	}

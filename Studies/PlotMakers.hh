@@ -8,39 +8,25 @@
 #include <vector>
 #include <string>
 
-/// plot run-by-run GMS corrections, output data
-void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath = "../PostPlots/");
-
-/// generate position map plots from a PositioningCorrector
-void etaPlot(OutputManager& OM, PositioningCorrector* P, bool normalize = true, float axisRange = 2.5);
-
-/// generate position map gradient plots from a PositioningCorrector
-void etaGradPlot(OutputManager& OM, PositioningCorrector* P);
-
-
-/// dump position map data to a file
-void dumpPosmap(std::string basepath, unsigned int pnum);
-
-/// generate nPE plots from a PMTCalibrator
-void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0 = 1000, float s0 = 0.5, bool dumbsum = false);
-
-/// extract Evis<->Etrue info from contiunuum spectrum simulation
-void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM);
-
-/// generate a file with spectrum correction factors
-void makeCorrectionsFile(const std::string& fout);
-
 /// Class for generating position plots
 class PosPlotter {
 public:
 	/// constructor
-	PosPlotter(OutputManager* O): rscale(1.2), OM(O) {}
+	PosPlotter(OutputManager* O);
 	/// plot number of PE
 	void npePlot(PMTCalibrator* PCal);
+	/// plot normalized gradient of nPE
+	void npeGradPlot(PMTCalibrator* PCal);
+	/// plot light transport
+	void etaPlot(PositioningCorrector* P, double axisRange = 2.0);
 	
-	float rscale; //< extra radius to plot beyond edge of measured area
+	float rscale; 		//< extra radius to plot beyond edge of measured area
+	unsigned int nbin;	//< number of position bins
 	
 protected:
+	/// generate new position histogram
+	TH2F* makeHisto(const std::string& nm, const std::string& title);
+	
 	OutputManager* OM;
 	float x,y;
 	int nx,ny;
@@ -50,5 +36,17 @@ protected:
 	bool nextPoint();
 };
 
+
+/// plot run-by-run GMS corrections, output data
+void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath = "../PostPlots/");
+
+/// dump position map data to a file
+void dumpPosmap(std::string basepath, unsigned int pnum);
+
+/// extract Evis<->Etrue info from contiunuum spectrum simulation
+void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM);
+
+/// generate a file with spectrum correction factors
+void makeCorrectionsFile(const std::string& fout);
 
 #endif
