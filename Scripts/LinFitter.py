@@ -24,6 +24,10 @@ def latexPoly(varname,n):
 def returnZero(x):
 	return 0
 
+# one function
+def returnOne(x):
+	return 1
+	
 # polynomial term for fit (use in place of lambda for better picklability)
 class polyterm:
 	def __init__(self,n):

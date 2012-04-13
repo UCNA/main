@@ -23,6 +23,12 @@ Cut_MWPC_W_CathMax:	start = 150	end = 5000	runStart = 13000	runEnd = 100000
 Cut_MWPC_E_Anode:	start = 60	end = 5000	runStart = 13000	runEnd = 100000
 Cut_MWPC_W_Anode:	start = 75	end = 5000	runStart = 13000	runEnd = 100000
 
+Cut_MWPC_E_CathMax:	start = 125	end = 5000	runStart = 19924	runEnd = 19960
+Cut_MWPC_W_CathMax:	start = 250	end = 5000	runStart = 19924	runEnd = 19960
+
+Cut_MWPC_E_CathMax:	start = 125	end = 5000	runStart = 19823	runEnd = 19863
+Cut_MWPC_W_CathMax:	start = 200	end = 5000	runStart = 19823	runEnd = 19863
+
 Cut_TDC_Back_E:		start = 1000	end = 2800	runStart = 13000	runEnd = 100000
 Cut_TDC_Back_W:		start = 1200	end = 3200	runStart = 13000	runEnd = 100000
 Cut_TDC_Top_E:		start = 1250	end = 3250	runStart = 13000	runEnd = 100000
@@ -33,7 +39,8 @@ Cut_BeamBurst:		start = 0.05	end = 10	runStart = 13000	runEnd = 100000
 Cut_ClusterEvt:		start = 60.e-6	end = 10	runStart = 13000	runEnd = 100000
 
 Cut_TDC_Scint_E_Selftrig:	start = 2790	end = 4080	runStart = 13000	runEnd = 100000
-Cut_TDC_Scint_W_Selftrig:	start = 3010	end = 4080	runStart = 13000	runEnd = 100000
+#Cut_TDC_Scint_W_Selftrig:	start = 3010	end = 4080	runStart = 13000	runEnd = 100000
+Cut_TDC_Scint_W_Selftrig:	start = 3200	end = 4080	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_E:	start = 50	end = 4080	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_W:	start = 50	end = 4080	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_E_0:	start = 5	end = 3700	runStart = 13000	runEnd = 100000
@@ -63,3 +70,6 @@ Cut_TDC_Scint_E_0:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
 Cut_TDC_Scint_E_1:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
 Cut_TDC_Scint_E_2:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
 Cut_TDC_Scint_E_3:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
+
+Cut_TDC_Scint_E_Selftrig:	start = 2900	end = 4080	runStart = 19823	runEnd = 19960
+Cut_TDC_Scint_W_Selftrig:	start = 3050	end = 4080	runStart = 19823	runEnd = 19960

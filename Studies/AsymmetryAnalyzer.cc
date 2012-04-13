@@ -20,9 +20,11 @@ AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, 
 		qAnodeCal[s] = registerCoreHist("AnodeCal","Anode Calibration Events",50, 0, 8, s, &hAnodeCal[s]);
 		
 		for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
-			qEnergySpectra[s][t] = registerCoreHist(std::string("hEnergy_Type_")+itos(t),
-													std::string("Type ")+itos(t)+" Events Energy",
-													40, 0, 1000, s, &hEnergySpectra[s][t]);
+			for(unsigned int p=0; p<=nBetaTubes; p++) {
+				qEnergySpectra[s][p][t] = registerCoreHist(std::string("hEnergy_")+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
+														   std::string("Type ")+itos(t)+" Events Energy",
+														   40, 0, 1000, s, &hEnergySpectra[s][p][t]);
+			}
 			if(t>TYPE_III_EVENT) continue;
 			TH2F* hPositionsTemplate = new TH2F((std::string("hPos_Type_")+itos(t)).c_str(),
 												(std::string("Type ")+itos(t)+" Positions").c_str(),
@@ -39,8 +41,11 @@ void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 	if(PDS.fPID != PID_BETA) return;
 	if(PDS.passesPositionCut(s) && PDS.fType == TYPE_0_EVENT && PDS.getEtrue()>225)
 		hAnodeCal[s]->Fill(PDS.mwpcEnergy[s]/PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock.t[BOTH]),weight);
-	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_IV_EVENT)
-		hEnergySpectra[s][PDS.fType]->Fill(PDS.getEtrue(),weight);
+	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_IV_EVENT) {
+		hEnergySpectra[s][nBetaTubes][PDS.fType]->Fill(PDS.getEtrue(),weight);
+		for(unsigned int t=0; t<nBetaTubes; t++)
+			hEnergySpectra[s][t][PDS.fType]->Fill(PDS.scints[s].tuben[t].x,weight);
+	}
 	if(PDS.fType <= TYPE_III_EVENT)
 		hPositions[s][PDS.fType]->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 }
@@ -67,18 +72,22 @@ void AsymmetryAnalyzer::endpointFits() {
 	const float fitEnd = 750;	
 	for(Side s = EAST; s <= WEST; ++s) {		
 		for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
-			float_err ep = kurieIterator((TH1F*)qEnergySpectra[s][TYPE_0_EVENT].fgbg[afp].h[1], 800., NULL, neutronBetaEp, fitStart, fitEnd);
-			Stringmap m;
-			m.insert("fitStart",fitStart);
-			m.insert("fitEnd",fitEnd);
-			m.insert("afp",afp);
-			m.insert("side",ctos(sideNames(s)));
-			m.insert("type",TYPE_0_EVENT);
-			m.insert("endpoint",ep.x);
-			m.insert("dendpoint",ep.err);
-			m.insert("counts",qEnergySpectra[s][TYPE_0_EVENT].fgbg[afp].h[1]->Integral());
-			m.display("--- ");
-			qOut.insert("kurieFit",m);
+			for(unsigned int t=0; t<=nBetaTubes; t++) {
+				float_err ep = kurieIterator((TH1F*)qEnergySpectra[s][t][TYPE_0_EVENT].fgbg[afp].h[1],
+											 800., NULL, neutronBetaEp, fitStart, fitEnd);
+				Stringmap m;
+				m.insert("fitStart",fitStart);
+				m.insert("fitEnd",fitEnd);
+				m.insert("afp",afp);
+				m.insert("side",ctos(sideNames(s)));
+				m.insert("tube",t);
+				m.insert("type",TYPE_0_EVENT);
+				m.insert("endpoint",ep.x);
+				m.insert("dendpoint",ep.err);
+				m.insert("counts",qEnergySpectra[s][t][TYPE_0_EVENT].fgbg[afp].h[1]->Integral());
+				m.display("--- ");
+				qOut.insert("kurieFit",m);
+			}
 		}
 	}
 }
@@ -108,15 +117,15 @@ void AsymmetryAnalyzer::calculateResults() {
 	// build total spectra based on analysis choice
 	quadHists qTotalSpectrum[2];
 	for(Side s = EAST; s <= WEST; ++s) {
-		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][TYPE_0_EVENT], "hTotalEvents");
+		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents");
 		if(!(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C || anChoice == ANCHOICE_D))
 			qTotalSpectrum[s] *= 0;	// analysis choices without Type 0 events
 		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C)
-			qTotalSpectrum[s] += qEnergySpectra[s][TYPE_I_EVENT];
+			qTotalSpectrum[s] += qEnergySpectra[s][nBetaTubes][TYPE_I_EVENT];
 		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C)
-			qTotalSpectrum[s] += qEnergySpectra[s][TYPE_II_EVENT];
+			qTotalSpectrum[s] += qEnergySpectra[s][nBetaTubes][TYPE_II_EVENT];
 		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C)
-			qTotalSpectrum[s] += qEnergySpectra[s][TYPE_III_EVENT];
+			qTotalSpectrum[s] += qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
 	}
 	// calculate SR and SS
 	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
@@ -143,7 +152,7 @@ void AsymmetryAnalyzer::makePlots() {
 	drawQuadSides(qAnodeCal[EAST], qAnodeCal[WEST], true, "AnodeCal");
 	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++)
-		drawQuadSides(qEnergySpectra[EAST][t], qEnergySpectra[WEST][t], true, "Energy");
+		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][t], qEnergySpectra[WEST][nBetaTubes][t], true, "Energy");
 	
 	// positions
 	if(depth <= 0) {
@@ -175,13 +184,13 @@ void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor)
 		std::vector<TH1*> hToPlot;
 		for(Side s = EAST; s <= WEST; ++s) {		
 			for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
-				qEnergySpectra[s][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
-				qEnergySpectra[s][t].fgbg[afp].h[true]->SetMarkerStyle(22+4*afp);
-				qEnergySpectra[s][t].fgbg[afp].h[true]->Scale(simfactor);
-				hToPlot.push_back(qEnergySpectra[s][t].fgbg[afp].h[true]);
-				dat.qEnergySpectra[s][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
-				dat.qEnergySpectra[s][t].fgbg[afp].h[true]->SetMarkerStyle(20+4*afp);
-				hToPlot.push_back(dat.qEnergySpectra[s][t].fgbg[afp].h[true]);
+				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
+				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(22+4*afp);
+				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->Scale(simfactor);
+				hToPlot.push_back(qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]);
+				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
+				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(20+4*afp);
+				hToPlot.push_back(dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]);
 			}
 		}
 		drawSimulHistos(hToPlot,"HIST P");

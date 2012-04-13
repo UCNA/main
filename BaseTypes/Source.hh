@@ -18,7 +18,7 @@ public:
 	std::vector<SpectrumPeak> getPeaks() const;
 		
 	/// printable name for this source
-	std::string name() const { if(sID) return t + "_" + itos(sID); return t; }
+	std::string name() const { return sID?t+"_"+itos(sID):t; }
 	
 	/// check whether a point is within this source's range
 	inline bool inSourceRegion(float xx, float yy, float nSigma=3.0) const { return (xx-x)*(xx-x)/(wx*wx)+(yy-y)*(yy-y)/(wy*wy) < nSigma*nSigma; }
