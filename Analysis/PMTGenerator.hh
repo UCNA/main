@@ -26,9 +26,7 @@ public:
 	bool triggered() { return triggers() >= 2; }
 	
 	/// set generator position (sets scint and wirechamber position)
-	void setPosition(float xx, float yy);
-	/// set scint/wirechamber offsets
-	void setOffsets(float xxs, float yys, float xxw, float yyw);
+	void setPosition(float xx, float yy, float dxw=0, float dyw=0);
 	/// set event side
 	void setSide(Side s) { mySide = s; }
 	
@@ -37,11 +35,9 @@ public:
 	
 	bool calcADC;					//< whether to calculate PMT ADCs and trigger efficiency
 	
-	float x,y;						//< source position in scintillator (projected back to decay trap)
-	float dsx,dsy;					//< scintillator hit offset from source position
-	float dwx,dwy;					//< wirechamber hit offset from source position
+	float x,y;						//< event hit position in scintillator (projected back to decay trap)
+	float xw,yw;					//< wirechamber hit offset from source position
 	float presmear;					//< nPE/keV already smeared in input spectrum
-	float larmorField;				//< optional field spreading out hit positions (0 for no effect, and use ds*, dw* for offsets)
 	
 	unsigned int nTrigs;			//< number of individual PMTs triggered
 	bool pmtTriggered[nBetaTubes];	//< whether each PMT triggered above threshold
@@ -52,7 +48,6 @@ protected:
 	
 	Side mySide;					//< side to simulate
 	float pmtRes[2][nBetaTubes];	//< individual PMT nPE per keV
-	float resTot[2];				//< total resolution nPE per keV for all 4 tubes
 	ScintEvent sevt;				//< current generated event
 };
 

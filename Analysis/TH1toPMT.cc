@@ -1,9 +1,11 @@
 #include "TH1toPMT.hh"
 #include "GraphUtils.hh"
+#include <TRandom.h>
 #include <climits>
 
 TH1toPMT::TH1toPMT(TH1* h, PosGen* P): Sim2PMT(""), mySpectrum(h), PG(P) {
 	assert(PG);
+	fakeClip = true;
 	ePrim = costheta = eW[EAST] = eW[WEST] = 0;
 }
 
@@ -23,4 +25,8 @@ void TH1toPMT::doUnits() {
 	}
 	eW[genside] = 1.0;
 	eW[offside] = eDep[offside] = eQ[offside] = 0;
+	ePrim = eDep[genside];
+	static TRandom3 unifrandsource;
+	costheta = unifrandsource.Uniform(2.0)-1.0;
 }
+

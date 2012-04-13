@@ -26,8 +26,8 @@ int main(int argc, char *argv[]) {
 	PGen.setSide(EAST);
 	// set position to generate response at (decay tube coordinates x,y in mm)
 	PGen.setPosition(15., -7.3);
-	// advanced usage: set actual position (15,-7.3) in scintillator and observed position (17.1,-6.2) in wirechamber
-	PGen.setOffsets(15., -7.3, 17.1, -6.2);
+	// advanced usage: set actual position (15,-7.3) in scintillator and offset to (17.1,-6.2) in wirechamber
+	PGen.setPosition(15., -7.3, 2.1, 1.1);
 	
 	// generate events for a range of energies
 	for(float eq = 10; eq < 500; eq += 10) {

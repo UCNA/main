@@ -279,7 +279,6 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 			t2p.setAFP(AFP_OTHER);
 			t2p.PGen[s].presmear = avgSmear(PCal,s,PB.sects);
 			printf("Setting pre-smearing to %g PE/keV...\n",t2p.PGen[s].presmear);
-			//t2p.PGen[s].larmorField = sqrt(0.6);
 			t2p.genside = s;
 			for(unsigned int m=0; m<PB.sects.nSectors(); m++) {
 				printf("Simulating sector %c%i...\n",sideNames(s),m);

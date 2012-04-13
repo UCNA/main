@@ -70,6 +70,7 @@ public:
 	PID fPID;					//< analysis particle ID
 	EventType fType;			//< analysis event type
 	Side fSide;					//< analysis event side
+	double physicsWeight;		//< event spectrum re-weighting factor
 	
 	BlindTime totalTime;		//< combined length of runs in seconds	
 	unsigned int nAFP[2];		//< number of events in each AFP state

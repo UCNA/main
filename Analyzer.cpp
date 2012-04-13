@@ -77,7 +77,8 @@ void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	RunNum rn = streamInteractor::popInt(stack);
 	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
 	OutputManager OM("NPE",getEnvSafe("UCNA_ANA_PLOTS")+"/nPE/Run_"+itos(rn));
-	npePlot(OM,&PCal);
+	PosPlotter PP(&OM);
+	PP.npePlot(&PCal);
 	OM.write();
 }
 
