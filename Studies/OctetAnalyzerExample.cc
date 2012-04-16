@@ -68,9 +68,9 @@ int main(int argc, char *argv[]) {
 		// results will be placed in "Anode_Asymmetry_Example/" subfolder of base directory
 		OctetAnalyzerExample OAE(&OM,"Anode_Asymmetry_Example");
 		
-		// get list of octets to process, from file located at "UCNA_OCTET_LIST"
-		// (I use ucn:/home/mmendenhall/mpmAnalyzer/SummaryData/OctetList/OctetList.txt)
-		std::vector<Octet> octs = Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST")));
+		// get list of octets to process, available in Aux/OctetList_2010.txt
+		vector<Octet> octs = Octet::loadOctets(QFile("Aux/OctetList_2010.txt"));
+		
 		// for this example, limit to first three octets
 		while(octs.size() > 3)
 			octs.pop_back();
