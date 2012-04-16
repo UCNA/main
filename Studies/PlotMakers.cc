@@ -14,6 +14,7 @@
 #include "KurieFitter.hh"
 #include "G4toPMT.hh"
 #include "BetaSpectrum.hh"
+#include <TColor.h>
 
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
 	QFile fout(foutPath+"/GMS_Plot.txt",false);
@@ -26,71 +27,6 @@ void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& fout
 	}
 	fout.commit();
 }
-
-void etaPlot(OutputManager& OM, PositioningCorrector* P, bool normalize, float axisRange) {
-	
-	for(Side s = EAST; s<=WEST; ++s) {
-		for(int t=0; t<=nBetaTubes; t++) {
-			if(!P->eval(s, t, 0, 0))
-				continue;
-			TH2F interpogrid("Interpogrid",(sideSubst("%c ",s)+itos(t+1)+" Interpolated").c_str(),200,-60,60,200,-60,60);
-			interpogrid.SetAxisRange(0,axisRange,"Z");
-			float x,y;
-			float r0 = P->getSectors(s,t).r;
-			float rscale = 1.2;
-			for(int nx=1; nx<=interpogrid.GetNbinsX(); nx++) {
-				for(int ny=1; ny<=interpogrid.GetNbinsY(); ny++) {
-					x = interpogrid.GetXaxis()->GetBinCenter(nx);
-					y = interpogrid.GetYaxis()->GetBinCenter(ny);
-					if(x*x+y*y <= r0*r0*rscale)
-						interpogrid.SetBinContent(nx,ny,P->eval(s, t, x, y, normalize));
-					else
-						interpogrid.SetBinContent(nx,ny,0.0);
-				}
-			}
-			interpogrid.Draw("COL Z");
-			drawSectors(P->getSectors(s,t),6);
-			OM.printCanvas(sideSubst("Posmap_%c_",s)+itos(t));
-		}
-	}
-}
-
-void etaGradPlot(OutputManager& OM, PositioningCorrector* P) {
-	
-	for(Side s = EAST; s<=WEST; ++s) {
-		for(int t=0; t<nBetaTubes; t++) {
-			TH2F interpogrid("Interpogrid",(sideSubst("%c ",s)+itos(t+1)+" Interpolated").c_str(),200,-60,60,200,-60,60);
-			interpogrid.SetAxisRange(0,10,"Z");
-			float x,y;
-			float r0 = P->getSectors(s,t).r;
-			float gradsum = 0;
-			float nn = 0;
-			for(int nx=1; nx<interpogrid.GetNbinsX(); nx++) {
-				for(int ny=1; ny<interpogrid.GetNbinsY(); ny++) {
-					x = interpogrid.GetXaxis()->GetBinCenter(nx);
-					y = interpogrid.GetYaxis()->GetBinCenter(ny);
-					if(x*x+y*y <= r0*r0*1.001) {
-						float e0 = P->eval(s, t, x, y, true);
-						float e1 = P->eval(s, t, x+0.01, y, true);
-						float e2 = P->eval(s, t, x, y+0.01, true);
-						float gd = sqrt( (e1-e0)*(e1-e0)+(e2-e0)*(e2-e0) )/0.01/e0;
-						gradsum += gd*gd;
-						nn += 1.0;
-						interpogrid.SetBinContent(nx,ny,100.0*gd);
-					} else {
-						interpogrid.SetBinContent(nx,ny,0.0);
-					}
-				}
-			}
-			gradsum = sqrt(gradsum/nn);
-			printf("**** %c%i RMS gradient = %g 1/mm ****\n",sideNames(s),t,gradsum);
-			interpogrid.Draw("COL Z");
-			drawSectors(P->getSectors(s,t),6);
-			OM.printCanvas(sideSubst("Posmap_Grad_%c",s)+itos(t));
-		}
-	}
-}
-
 
 void dumpPosmap(std::string basepath, unsigned int pnum) {
 	
@@ -143,111 +79,6 @@ void dumpPosmap(std::string basepath, unsigned int pnum) {
 		
 	}
 	fout.commit();
-}
-
-void npePlot(OutputManager& OM, PMTCalibrator* PCal, float e0, float s0, bool dumbsum) {
-	
-	for(Side s = EAST; s<=WEST; ++s) {
-		
-		TH2F* interpogrid[nBetaTubes+1];
-		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			interpogrid[t] = OM.registeredTH2F(sideSubst("%c",s)+itos(t+1)+"_nPE",
-											   (t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" PE per MeV",
-											   200,-60,60,200,-60,60);
-			interpogrid[t]->SetAxisRange(0,300,"Z");
-			if(t==nBetaTubes)
-				interpogrid[t]->SetAxisRange(0,600,"Z");
-		}
-		
-		SectorCutter& Sects = PCal->P->getSectors(s,0);
-		float x,y,npe;
-		float r0 = Sects.r;
-		float rscale = 1.2;
-		float npesum = 0;
-		float gradsum = 0;
-		float nn = 0;
-		
-		for(int nx=1; nx<=interpogrid[0]->GetNbinsX(); nx++) {
-			for(int ny=1; ny<=interpogrid[0]->GetNbinsY(); ny++) {
-				x = interpogrid[0]->GetXaxis()->GetBinCenter(nx);
-				y = interpogrid[0]->GetYaxis()->GetBinCenter(ny);
-				for(unsigned int t=0; t<=nBetaTubes; t++) {
-					if(x*x+y*y <= r0*r0*rscale) {
-						npe = PCal->nPE(s,t,e0*s0,x,y,0)/s0;
-						if(t==nBetaTubes && dumbsum)
-							npe = PCal->pmtSumPE(s,e0*s0,x,y,0)/s0;
-						if(t==nBetaTubes && x*x+y*y<50*50) {
-							float npe1 = PCal->nPE(s,t,e0*s0,x+0.01,y,0)/s0;
-							float npe2 = PCal->nPE(s,t,e0*s0,x,y+.01,0)/s0;
-							if(dumbsum) {
-								npe1 = PCal->pmtSumPE(s,e0*s0,x+0.01,y,0)/s0;
-								npe2 = PCal->pmtSumPE(s,e0*s0,x,y+.01,0)/s0;
-							}
-							float gd = sqrt( (1/npe1-1/npe)*(1/npe1-1/npe)+(1/npe2-1/npe)*(1/npe2-1/npe) )/0.01*npe;
-							gradsum += gd*gd;
-							npesum += npe;
-							nn += 1.0;
-						}
-					} else {
-						npe = 0;
-					}
-					interpogrid[t]->SetBinContent(nx,ny,npe);
-				}
-			}
-		}
-		
-		
-		for(unsigned int m=0; m<Sects.nSectors(); m++) {
-			Sects.sectorCenter(m,x,y);
-			for(unsigned int t=0; t<=nBetaTubes; t++) {
-				Stringmap sdat;
-				sdat.insert("side",s==EAST?"E":"W");
-				sdat.insert("sector",m);
-				sdat.insert("x",x);
-				sdat.insert("y",y);
-				sdat.insert("t",t);
-				sdat.insert("eta",PCal->eta(s,t,x,y));
-				sdat.insert("nPE",PCal->nPE(s,t,e0*s0,x,y,0)/s0);
-				OM.qOut.insert("pmap",sdat);
-			}
-		}
-		
-		gradsum = sqrt(gradsum/nn/2);
-		printf("**** %c RMS gradient sqrt < |Grad K|^2 / K^2 / 2 > = %g 1/mm ****\n",sideNames(s),gradsum);
-		printf("**** %c average nPE = %g ****\n",sideNames(s),npesum/nn);
-		
-		
-		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			gStyle->SetOptStat("");
-			OM.defaultCanvas->SetRightMargin(0.125);
-			OM.defaultCanvas->SetBottomMargin(0.125);
-			interpogrid[t]->Draw("COL Z");
-			drawSectors(Sects,6);
-			if(dumbsum && t==nBetaTubes)
-				OM.printCanvas(sideSubst("nPE_%c_dumbsum",s));
-			else
-				OM.printCanvas(sideSubst("nPE_%c",s)+itos(t));			
-		}
-	}
-}
-
-// turn two profiles against the same axis into an x-y plot
-TGraphErrors* correlateProfiles(TProfile* x, TProfile* y) {
-	unsigned int nbins = x->GetNbinsX();
-	assert(nbins == (unsigned int)y->GetNbinsX());
-	TGraphErrors* g = new TGraphErrors(nbins-2);
-	unsigned int n = 0;
-	for(unsigned int i=1; i<nbins-1; i++) {
-		if(x->GetBinContent(i) > 25) {
-			g->SetPoint(n,x->GetBinContent(i),y->GetBinContent(i));
-			g->SetPointError(n,x->GetBinError(i),y->GetBinError(i));
-			n++;
-		} else {
-			g->RemovePoint(n);
-		}
-		
-	}
-	return g;
 }
 
 
@@ -375,4 +206,121 @@ void makeCorrectionsFile(const std::string& fout) {
 		Q.insert("spectrumPoint",m);
 	}
 	Q.commit(fout);
+}
+
+
+//-------------------------------------------------------------//
+
+PosPlotter::PosPlotter(OutputManager* O): rscale(1.0), nbin(100), OM(O) {
+	gStyle->SetOptStat("");
+	OM->defaultCanvas->SetRightMargin(0.125);
+	OM->defaultCanvas->SetBottomMargin(0.125);
+}
+
+void PosPlotter::startScan(TH2* h) {
+	hCurrent = h;
+	nx=ny=0;
+	x=y=1.e6;
+}
+
+bool PosPlotter::nextPoint() {
+	do {
+		nx = (nx%hCurrent->GetNbinsX())+1;
+		ny += (nx==1);
+		x = hCurrent->GetXaxis()->GetBinCenter(nx);
+		y = hCurrent->GetYaxis()->GetBinCenter(ny);
+	} while(x*x+y*y > r0*r0*rscale && ny <= hCurrent->GetNbinsY());
+	return ny <= hCurrent->GetNbinsY();
+}
+
+TH2F* PosPlotter::makeHisto(const std::string& nm, const std::string& title) {
+	TH2F* interpogrid = OM->registeredTH2F(nm,title,nbin,-60,60,nbin,-60,60);
+	interpogrid->GetXaxis()->SetTitle("x Position [mm]");
+	interpogrid->GetYaxis()->SetTitle("y Position [mm]");
+	return interpogrid;
+}
+
+void PosPlotter::npePlot(PMTCalibrator* PCal) {
+	
+	SectorCutter& Sects = PCal->P->getSectors(EAST,0);
+	r0 = Sects.r;
+	
+	float e0 = 1000;
+	float s0 = 0.5;
+	
+	for(Side s = EAST; s<=WEST; ++s) {
+		for(unsigned int t=0; t<=nBetaTubes; t++) {
+			
+			TH2F* interpogrid = makeHisto(sideSubst("%c",s)+itos(t+1)+"_nPE",
+										  (t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" PE per MeV");
+			interpogrid->SetAxisRange(0,250,"Z");
+			if(t==nBetaTubes)
+				interpogrid->SetAxisRange(0,500,"Z");
+			
+			startScan(interpogrid);
+			while(nextPoint())
+				interpogrid->SetBinContent(nx,ny,PCal->nPE(s,t,e0*s0,x,y,0)/s0);
+			
+			interpogrid->Draw("COL Z");
+			//drawSectors(Sects,6);
+			OM->printCanvas(sideSubst("nPE_%c",s)+itos(t),".eps");			
+		}
+	}
+}
+
+void PosPlotter::npeGradPlot(PMTCalibrator* PCal) {
+	
+	SectorCutter& Sects = PCal->P->getSectors(EAST,0);
+	r0 = Sects.r;
+	
+	for(Side s = EAST; s<=WEST; ++s) {
+		for(int t=0; t<=nBetaTubes; t++) {
+			TH2F* interpogrid = makeHisto(sideSubst("%c",s)+itos(t+1)+"_Grad",
+										  (t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" Light Transport Gradient");
+			interpogrid->SetAxisRange(0,10,"Z");
+			
+			float gradsum = 0;
+			float nn = 0;
+			startScan(interpogrid);
+			while(nextPoint()) {
+				float e0 = PCal->nPE(s,t,500,x,y,0);
+				float e1 = PCal->nPE(s,t,500,x+0.01,y,0);
+				float e2 = PCal->nPE(s,t,500,x,y+0.01,0);
+				float gd = sqrt( (e1-e0)*(e1-e0)+(e2-e0)*(e2-e0) )/0.01/e0;
+				gradsum += gd*gd;
+				nn += 1.0;
+				interpogrid->SetBinContent(nx,ny,100.0*gd);
+			}
+			gradsum = sqrt(gradsum/nn);
+			printf("**** %c%i RMS gradient = %g 1/mm ****\n",sideNames(s),t,gradsum);
+			interpogrid->Draw("COL Z");
+			drawSectors(Sects,6);
+			OM->printCanvas(sideSubst("Posmap_Grad_%c",s)+itos(t));
+		}
+	}
+}
+
+void PosPlotter::etaPlot(PositioningCorrector* P, double axisRange) {
+	
+	SectorCutter& Sects = P->getSectors(EAST,0);
+	r0 = Sects.r;
+	
+	for(Side s = EAST; s<=WEST; ++s) {
+		for(unsigned int t=0; t<nBetaTubes; t++) {
+			
+			if(!P->eval(s, t, 0, 0))
+				continue;
+			
+			TH2F* interpogrid = makeHisto(sideSubst("%c ",s)+itos(t+1), sideSubst("%s PMT ",s)+itos(t+1)+" Light Transport");
+			interpogrid->SetAxisRange(0,axisRange,"Z");
+			
+			startScan(interpogrid);
+			while(nextPoint())
+				interpogrid->SetBinContent(nx,ny,P->eval(s, t, x, y, true));
+			
+			interpogrid->Draw("COL Z");
+			drawSectors(Sects,6);
+			OM->printCanvas(sideSubst("Posmap_%c_",s)+itos(t));
+		}
+	}
 }

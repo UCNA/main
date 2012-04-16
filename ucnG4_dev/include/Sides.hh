@@ -7,9 +7,9 @@
 
 /// detector side specification
 enum Side {
-	EAST = 0,	//< East side of detector
-	WEST = 1,	//< West side of detector
-	BOTH = 2,	//< Both sides of detector
+	EAST = 0,		//< East side of detector
+	WEST = 1,		//< West side of detector
+	BOTH = 2,		//< Both sides of detector
 	NO_SIDE = 3,	//< Neither side of detector
 	BADSIDE = 4
 };

@@ -74,7 +74,7 @@ public:
 	/// generate a TH2F registered with this runs output objects list
 	TH2F* registeredTH2F(std::string hname, std::string htitle, unsigned int nbinsx, float x0, float x1, unsigned int nbinsy, float y0, float y1);
 	/// print current canvas
-	virtual void printCanvas(std::string fname) const;
+	virtual void printCanvas(std::string fname, std::string suffix=".pdf") const;
 
 	/// put a data quality warning in the parent output file
 	void warn(WarningLevel l, std::string descrip, Stringmap M = Stringmap());

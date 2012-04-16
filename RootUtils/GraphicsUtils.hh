@@ -35,5 +35,8 @@ void drawSectors(const SectorCutter& S, int color = 2);
 /// label SectorCutter sectors on current canvas
 void labelSectors(const SectorCutter& S, int color = 2);
 
+/// set up grayscale figures color palette
+void makeGrayscalepalette();
+
 #endif
 

@@ -7,14 +7,20 @@
 TRandom3 mc_rnd_source;	
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
-reSimulate(true), nToSim(0), nSimmed(0), afp(AFP_OTHER) {
+reSimulate(true), fakeClip(false), nToSim(0), nSimmed(0), afp(AFP_OTHER) {
+	offPos[X_DIRECTION] = offPos[Y_DIRECTION] = 0.;
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
-		PGen[s].larmorField = 0;
 		mwpcThresh[s] = 0.02;
 	}
 	totalTime = BlindTime(1.0);
 	fPID = PID_BETA;	// only simulating beta events
+}
+
+void Sim2PMT::setOffset(double dx, double dy) {
+	printf("Set simulation position offset to (%.2f,%.2f)\n",dx,dy);
+	offPos[X_DIRECTION]=dx;
+	offPos[Y_DIRECTION]=dy;
 }
 
 Stringmap Sim2PMT::evtInfo() {
@@ -24,11 +30,23 @@ Stringmap Sim2PMT::evtInfo() {
 	m.insert("weight",physicsWeight);
 	return m;
 }
-	
+
 void Sim2PMT::calcReweight() {
 	physicsWeight = 1.0; //= spectrumCorrectionFactor(ePrim) for beta spectrum
 	if(afp==AFP_ON||afp==AFP_OFF)
 		physicsWeight *= 1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_OFF?1:-1));
+	if(fakeClip) {
+		const double R = 70.*sqrt(0.6); // wirechamber entrance window radius, projected back to decay trap
+		// event origin distance from edge
+		double l = R-sqrt(primPos[X_DIRECTION]*primPos[X_DIRECTION]+primPos[Y_DIRECTION]*primPos[Y_DIRECTION]);	
+		if(l<=0) { physicsWeight=0; return; }
+		double pt = sqrt(1-costheta*costheta)*ePrim; // transverse momentum
+		double r = pt/(300.0*1.0); // larmor radius, same in decay trap as projected back from window
+		if(l>=2*r) return;
+		double cosalpha = (l*l+2.*R*(r-l))/(2.*r*(R-l));
+		physicsWeight *= acos(cosalpha)/3.1415926535;
+		if(!(physicsWeight==physicsWeight)) physicsWeight=0;
+	}
 }
 
 void Sim2PMT::setCalibrator(PMTCalibrator& PCal) {
@@ -50,12 +68,23 @@ void Sim2PMT::reverseCalibrate() {
 	
 	doUnits();
 	
+	// apply position offsets
+	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+		for(Side s = EAST; s <= WEST; ++s) {
+			scintPos[s][d] += offPos[d];
+			wires[s][d].center += offPos[d];
+			mwpcPos[s][d] += offPos[d];
+		}
+		primPos[d] += offPos[d];
+	}
+	
 	// simulate event on both sides
 	for(Side s = EAST; s <= WEST; ++s) {
 		mwpcEnergy[s] = eW[s];
 		// simulate detector energy response, or use un-smeared original data 
 		if(reSimulate) {
-			PGen[s].setOffsets(scintPos[s][X_DIRECTION], scintPos[s][Y_DIRECTION], wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center);
+			PGen[s].setPosition(scintPos[s][X_DIRECTION], scintPos[s][Y_DIRECTION],
+								wires[s][X_DIRECTION].center-scintPos[s][X_DIRECTION], wires[s][Y_DIRECTION].center-scintPos[s][Y_DIRECTION]);
 			scints[s] = PGen[s].generate(eQ[s]);
 			passesScint[s] = PGen[s].triggered();
 		} else {
@@ -76,7 +105,7 @@ void Sim2PMT::classifyEvent() {
 		passesMWPC[s] = (eW[s] > mwpcThresh[s]);		
 		is2fold[s] = passesMWPC[s] && passesScint[s];
 	}
-
+	
 	if(is2fold[EAST] || is2fold[WEST]) fPID = PID_BETA;
 	else fPID = PID_SINGLE;
 	

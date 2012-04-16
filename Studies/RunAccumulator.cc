@@ -251,7 +251,7 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 			runCounts.add(PDS.getRun(),1.0);
 			totalCounts[afp][gv]++;
 		}
-		fillCoreHists(PDS,1.0);
+		fillCoreHists(PDS,PDS.physicsWeight);
 	}
 	printf("\tFG=%i: scanned %i points\n",gv,nScanned);
 	if(gv==GV_CLOSED)

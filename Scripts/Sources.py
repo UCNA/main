@@ -3,6 +3,7 @@
 from LinFitter import *
 from PyxUtils import *
 from EncalDB import *
+from QFile import *
 import os
 
 peakNames = { 8:"$^{207}$Bi 1", 9:"$^{207}$Bi 2", 11:"$^{113}$Sn", 12:"Sr85", 13:"$^{109}$Cd", 14:"$^{114}$In", 15:"$^{139}$Ce", 20:"$^{137}$Cs" }  
@@ -18,7 +19,14 @@ class SourceLine:
 	"""Measured source spectrum line"""
 	def __init__(self):
 		pass
-		
+
+class SourceRate(KVMap):
+	def __init__(self,m):
+		KVMap.__init__(self)
+		self.dat = m.dat
+		self.loadFloats(["counts","rate","type","type0frac","sID"])
+		self.loadStrings(["side","name","simulated"])
+				
 def get_run_sources(conn,rn):
 	"""Get all sources present in listed run number."""
 	conn.execute("SELECT source_id,side,x_pos,y_pos,x_width,y_width,counts,sourcetype FROM sources WHERE run_number = %i"%rn)
@@ -60,14 +68,18 @@ def get_source_lines(conn,src):
 		slines.append(sline)
 	return slines
 
-def gather_peakdat(conn,rlist):
-	"""Collect source peak data for runs in list."""
-	
-	# load all lines
+def gather_sourcedat(conn,rlist):
 	srcs = []
 	for rn in rlist:
 		srcs += get_run_sources(conn,rn)
 	print "Located",len(srcs),"sources."
+	return srcs
+	
+def gather_peakdat(conn,rlist):
+	"""Collect source peak data for runs in list."""
+	
+	# load all lines
+	srcs = gather_sourcedat(conn,rlist)
 	slines = []
 	for src in srcs:
 		slines += get_source_lines(conn,src)
@@ -84,7 +96,7 @@ def gather_peakdat(conn,rlist):
 	print "\twith",len(slines),"lines."
 	return slines
 	
-def sort_peaks_by_type(slines):
+def sort_by_type(slines):
 	"""Sort out source peaks by peak type"""
 	pks = {}
 	for l in slines:
@@ -107,6 +119,29 @@ def delete_ALL_calibrations(conn):
 		delete_calibration(conn,f[0])
 			
 			
+class SourceDatDirectory:
+	"""Class for locating source cal output files"""
+	def __init__(self,bp="../Plots/LivermoreSources/"):
+		self.basepath = bp
+		self.runpaths = {}
+		self.rundat = {}
+		self.sourcerates = {}
+		for d in os.listdir(self.basepath):
+			for d2 in os.listdir(self.basepath+'/'+d):
+				rn = d2.split("_")[0]
+				if rn.isdigit():
+					self.runpaths[int(rn)]=self.basepath+'/'+d+'/'+d2
+	def getQFile(self,rn):
+		if rn not in self.rundat:
+			assert rn in self.runpaths
+			self.rundat[rn] = QFile(self.runpaths[rn]+"/Run_%i.txt"%rn)
+		return self.rundat[rn]
+	def getSourceRates(self,rn):
+		if rn not in self.sourcerates:
+			self.sourcerates[rn] = [SourceRate(r) for r in self.getQFile(rn).dat.get("rate",[])]
+			for rt in self.sourcerates[rn]:
+				rt.run = rn
+		return self.sourcerates[rn]
 			
 			
 			
@@ -122,7 +157,7 @@ class LinearityCurve:
 	def fitLinearity(self,slines):
 	
 		self.slines = [l for l in slines if l.side==self.side and l.tube==self.tube]
-		pks = sort_peaks_by_type(self.slines)
+		pks = sort_by_type(self.slines)
 		if not pks:
 			print "\n\n*********",self.side,self.tube,"NO DATA FOUND!! ************\n\n"
 			self.cnvs=None
@@ -161,7 +196,7 @@ class LinearityCurve:
 		combodat = []
 		for k in pks:
 			gdat = [ (l.adc*l.gms,l.sim.erecon*l.eta,l.dadc*l.gms,l) for l in pks[k] if l.adc > 0]
-			combodat += gdat
+			combodat += [g for g in gdat if g[-1].src.radius() <= 45. and k != 11]
 			if not gdat:
 				continue
 			self.gEvis.plot(graph.data.points(gdat,x=1,y=2,dx=3,title=peakNames[k]),
@@ -200,7 +235,7 @@ class LinearityCurve:
 	def plot_erecon(self,slines):
 	
 		self.slines = [l for l in slines if l.side==self.side and l.tube==self.tube]
-		pks = sort_peaks_by_type(self.slines)
+		pks = sort_by_type(self.slines)
 		if not pks:
 			print "\n\n*********",self.side,self.tube,"NO DATA FOUND!! ************\n\n"
 			self.cnvs=None
@@ -330,8 +365,54 @@ def makeCalset(conn,r0,r1,rgms,posmap,replace=False):
 	print "Added new calibration set",ecid
 	return ecid
 	
+
+def plotBackscatters(conn,rlist):
+
+	rlist.sort()
+	SDD = SourceDatDirectory()
+	slist = gather_sourcedat(conn,rlist)
+	srcs = sort_by_type(slist)
+	cP = rainbowDict(srcs.keys())
+	sdict = dict([(s.sID,s) for s in slist])
 	
+	# gather data by side, source type
+	typedat = {'E':{},'W':{}}
+	for rn in rlist:
+		for rt in SDD.getSourceRates(rn):
+			typedat[rt.side].setdefault(sdict[rt.sID].type,[]).append(rt)
+	
+	# set up graph		
+	tckdist = [5,1]
+	if rlist[-1]-rlist[0] > 100:
+		tckdist = [10,1]
+	runaxis = graph.axis.lin(title="Run Number",min=rlist[0]-5,max=rlist[-1]+1,
+						parter=graph.axis.parter.linear(tickdists=tckdist),
+						texter = graph.axis.texter.rational(),
+						painter=graph.axis.painter.regular(labeldist=0.1,labeldirection=graph.axis.painter.rotatetext(135)))
+	gRuns=graph.graphxy(width=30,height=15,
+		x2=runaxis,
+		y=graph.axis.lin(title="Backscatter Fraction",min=0,max=6.0),
+		key = graph.key.key(pos="tl"))
+	#self.gRuns.texrunner.set(lfs='foils17pt')
+	
+	# plot
+	ssymbs = {'E':symbol.circle,'W':symbol.triangle}
+	ssymbs2 = {'E':symbol.plus,'W':symbol.cross}
+	tpattrs = {1:[deco.filled],2:[]}
+	tplines = {1:[],2:[style.linestyle.dashed,]}
+	for s in ['E','W']:
+		for tp in typedat[s].keys():
+			for evtp in [1,2]:
+				gdat = [(rt.run,100.0*rt.type0frac) for rt in typedat[s][tp] if rt.type==evtp and rt.simulated == 'no']
+				gRuns.plot(graph.data.points(gdat,x=1,y=2,title="%s %s type %i"%(tp,s,evtp)),
+							[graph.style.symbol(ssymbs[s],symbolattrs=[cP[tp]]+tpattrs[evtp]),])
+				gdat = [(rt.run,100.0*rt.type0frac) for rt in typedat[s][tp] if rt.type==evtp and rt.simulated == 'yes']
+				gRuns.plot(graph.data.points(gdat,x=1,y=2,title="%s %s type %i MC"%(tp,s,evtp)),
+							[graph.style.line(lineattrs=[cP[tp]]+tplines[evtp]),graph.style.symbol(ssymbs2[s],symbolattrs=[cP[tp]])])
 							
+	return gRuns
+	
+	
 if __name__=="__main__":
 
 	# set up output paths
@@ -340,17 +421,18 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Erecon"%outpath)
 	os.system("mkdir -p %s/Widths"%outpath)	
 	os.system("mkdir -p %s/Positions"%outpath)
+	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	# calibration definitions:
 	#				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
 	cal_2010 = [
-				(	13883,	13894,	13890,	13879,	13964,		94,		97,			27	),	# 0 first usable data + little Xe
-				(	14104,	14116,	14111,	14077,	14380,		144,	147,		27	),	# 1	Columbus Day weekend + big Xe	
-				(	14383,	14394,	14390,	14383,	14507,		212,	215,		27	),	# 2 Oct. 15-21 week
-				(	14516,	14530,	14524,	14513,	14667,		268,	271,		27	),	# 3 Oct. 22-24 weekend
-				(	14736,	14746,	14743,	14688,	14994,		330,	333,		27	),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
-				(	15645,	15662,	15653,	15084,	15915,		437,	440,		29	),	# 5 Nov. 22-29 Thanksgiving Week
-				(	15916,	15939,	15931,	15916,	100000,		553,	555,		29	)	# 6 Post-Thanksgiving
+				(	13883,	13894,	13890,	13879,	13964,		94,		97,			63	),	# 0 first usable? data + little Xe
+				(	14104,	14116,	14111,	14077,	14380,		144,	147,		63	),	# 1	Columbus Day weekend + big Xe	
+				(	14383,	14394,	14390,	14383,	14507,		212,	215,		63	),	# 2 Oct. 15-21 week
+				(	14516,	14530,	14524,	14513,	14667,		268,	271,		63	),	# 3 Oct. 22-24 weekend
+				(	14736,	14746,	14743,	14688,	14994,		330,	333,		63	),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
+				(	15645,	15662,	15653,	15084,	15915,		437,	440,		65	),	# 5 Nov. 22-29 Thanksgiving Week
+				(	15916,	15939,	15931,	15916,	100000,		553,	555,		65	)	# 6 Post-Thanksgiving
 				]
 				
 	cal_2011 = [
@@ -399,4 +481,7 @@ if __name__=="__main__":
 						continue
 				LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
 				LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
-				
+			
+		# plot backscatters
+		plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
+		

@@ -231,15 +231,26 @@ class GeantSimManager:
 				
 			
 if __name__ == "__main__":
-	
-	# sources ["Sn113","Bi207","Ce139","Cd109","Cd113m","In114E","In114W"] in mag field wiggles
+
+	# unpolarized beta baseline: 5e7 in 18 clusters
+	if 1:
+		betaSim = GeantSimManager("LivPhys_495")
+		betaSim.settings["physlist"]="livermore"
+		betaSim.set_generator("neutronBetaUnpol")
+		betaSim.launch_postanalyzer()
+		betaSim.launch_sims(nEvents=5e7,nClusters=36,hours_old=12*24)
+		betaSim.launch_postanalyzer()
+		
+	# sources ["Sn113","Bi207","Ce139","Cd109","Cd113m","In114E","In114W"]
 	if 0:
-		for g in ["Ce139","In114E","In114W","Cd113m","Bi207"]:
-			sourceSim = GeantSimManager("LivPhys_MagF",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+		for g in ["Cd113m"]:
+			sourceSim = GeantSimManager("LivPhys_495",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+			sourceSim.settings["physlist"]="livermore"
 			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
+			sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=8)
 			sourceSim.launch_postanalyzer()
-			
+
+
 	# Silicon detector test
 	if 0:
 		siDet = GeantSimManager("SiDet",geometry="siDet")
@@ -247,29 +258,13 @@ if __name__ == "__main__":
 		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=4)
 		siDet.launch_postanalyzer()
 	
-	# source sims
-	if 1:
-		for g in ["Sn113",]:
-			sourceSim = GeantSimManager("LivPhys_495",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
-			sourceSim.settings["physlist"]="livermore"
-			#sourceSim.settings["scintstep"]="0.5 um"
-			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
-			sourceSim.launch_postanalyzer()
-
+	
 	
 	# magnetic field effects plus bad vacuum
 	#launch_simulations(generators = ["neutronBetaUnpol"], nEvents = 1e7, nClusters=18,
 	#	folderPrefix = "MagF_BadVac_20110725", hours_old = 10*24, vacuum=1.e-2,
 	#	fmap="/home/mmendenhall/mpmAnalyzer/SummaryData/Fieldmap_20101028_b.txt", resimOnly=True)
 
-	
-	# unpolarized beta baseline: 5e7 in 18 clusters
-	#launch_simulations(generators = ["neutronBetaUnpol"], nEvents = 5e7, nClusters=36, 
-	#					folderPrefix = "Livermore", hours_old = 10*24, resimOnly = False)
-	#betaSim = GeantSimManager("BetaTest")
-	#betaSim.set_generator("neutronBetaUnpol")
-	#betaSim.launch_sims(nEvents=1e4,nClusters=1,hours_old=0)
 	
 	# offset Bi source holder
 	#launch_simulations(generators = ["Bi207G"], nEvents = 10e5, folderPrefix="BigSpot", sourceHolderPos="0 0 0 mm", sourceRadius = "6.5 mm",

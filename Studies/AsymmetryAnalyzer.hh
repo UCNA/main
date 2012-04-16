@@ -44,8 +44,8 @@ protected:
 	static TF1 averagerFit;			//< pol0 line fit for averaging
 	static AnalysisChoice anChoice;	//< asymmetry analysis choice
 	
-	quadHists qEnergySpectra[2][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][event type]
-	TH1F* hEnergySpectra[2][TYPE_IV_EVENT+1];		//< energy spectra write point for [side][event type]
+	quadHists qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
+	TH1F* hEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];		//< energy spectra write point for [side][tube][event type]
 	quadHists qPositions[2][TYPE_III_EVENT+1];		//< event positions quad hists for [side][type]
 	TH2F* hPositions[2][TYPE_III_EVENT+1];			//< event positions write point for [side][type]
 	quadHists qAnodeCal[2];							//< anode calibration spectrum (Type 0, Erecon>225)

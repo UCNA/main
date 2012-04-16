@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 ProcessedDataScanner::ProcessedDataScanner(const std::string& treeName, bool withCalibrators):
-TChainScanner(treeName), ActiveCal(NULL), totalTime(0),
+TChainScanner(treeName), ActiveCal(NULL), physicsWeight(1.0), totalTime(0),
 anChoice(ANCHOICE_A), fiducialRadius(55.0), withCals(withCalibrators) {
 	CDB = CalDBSQL::getCDB();
 	if(!CDB->isValid(15926)) {

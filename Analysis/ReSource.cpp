@@ -32,16 +32,21 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 	// set up histograms
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
 		for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_II_EVENT; tp++) {
-			hTubes[t][tp] = OM->registeredTH1F(s.name()+(t==nBetaTubes?"_Combined":"_Tube_"+itos(t))+"_type_"+itos(tp),"Source energy spectrum",
+			hTubes[t][tp] = OM->registeredTH1F(s.name()+(t==nBetaTubes?"_Combined":"_Tube_"+itos(t))+"_type_"+itos(tp),mySource.t+" energy spectrum",
 											   tp==TYPE_0_EVENT?nBins:nBins/4,eMin,eMax);
 			if(tp==TYPE_0_EVENT) hTubes[t][tp]->Sumw2();
+			hTubes[t][tp]->GetXaxis()->SetTitle("Scintillator Visible Energy [keV]");
+			hTubes[t][tp]->GetYaxis()->SetTitle("Event Rate [Hz/keV]");
+			hTubes[t][tp]->GetYaxis()->SetTitleOffset(1.25);
 		}
 		hTubesRaw[t] = NULL;
 		if(t<nBetaTubes && !simMode) {
-			hTubesRaw[t] = OM->registeredTH1F(s.name()+"_"+itos(t)+"_ADC","Source raw ADC spectrum",nBins,
+			hTubesRaw[t] = OM->registeredTH1F(s.name()+"_"+itos(t)+"_ADC",mySource.t+" ADC spectrum",nBins,
 											  PCal?-PCal->invertCorrections(mySource.mySide, t, -eMin, mySource.x, mySource.y, 0.0):2*eMin,
 											  PCal?PCal->invertCorrections(mySource.mySide, t, eMax, mySource.x, mySource.y, 0.0):2*eMax);
 			hTubesRaw[t]->Sumw2();
+			hTubesRaw[t]->GetXaxis()->SetTitle("ADC Channels");
+			hTubesRaw[t]->GetYaxis()->SetTitle("Event Rate [Hz/keV]");
 		}
 	}	
 	for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
@@ -52,25 +57,26 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 
 unsigned int ReSourcer::fill(const ProcessedDataScanner& P) {
 	EventType tp = P.fType;
-	if(tp > TYPE_II_EVENT || P.fSide != mySource.mySide || P.fPID != PID_BETA) return 0;
+	if(tp > TYPE_II_EVENT || P.fSide != mySource.mySide) return 0;
 	float x = P.wires[P.fSide][X_DIRECTION].center;
 	float y = P.wires[P.fSide][Y_DIRECTION].center;
 	if(!mySource.inSourceRegion(x,y,4.0)) return 0;
+	if(P.fPID != PID_BETA) return 0;
 	if(tp==TYPE_0_EVENT) {
-		hitPos[X_DIRECTION]->Fill(x-mySource.x);
-		hitPos[Y_DIRECTION]->Fill(y-mySource.y);
+		hitPos[X_DIRECTION]->Fill(x-mySource.x,P.physicsWeight);
+		hitPos[Y_DIRECTION]->Fill(y-mySource.y,P.physicsWeight);
 	}
 	for(unsigned int t=0; t<nBetaTubes; t++) {
 		if(P.scints[P.fSide].adc[t]>3750 || P.scints[P.fSide].tuben[t].x < 1.0)
 			continue;
-		hTubes[t][tp]->Fill(P.scints[P.fSide].tuben[t].x);
+		hTubes[t][tp]->Fill(P.scints[P.fSide].tuben[t].x,P.physicsWeight);
 		if(PCal && !simMode && tp==TYPE_0_EVENT)
-			hTubesRaw[t]->Fill(P.scints[P.fSide].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock.t[BOTH]));
+			hTubesRaw[t]->Fill(P.scints[P.fSide].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock.t[BOTH]),P.physicsWeight);
 	}
 	if(tp==TYPE_0_EVENT)
-		hTubes[nBetaTubes][tp]->Fill(P.scints[P.fSide].energy.x);
+		hTubes[nBetaTubes][tp]->Fill(P.scints[P.fSide].energy.x,P.physicsWeight);
 	else
-		hTubes[nBetaTubes][tp]->Fill(P.getEnergy());
+		hTubes[nBetaTubes][tp]->Fill(P.getEnergy(),P.physicsWeight);
 	return 1;
 }
 
@@ -80,10 +86,24 @@ void ReSourcer::findSourcePeaks(float runtime) {
 	printf("Fitting peaks for %s source (%i hits, %.2f hours, %i peaks)...\n",mySource.name().c_str(),counts(),runtime/3600.0,(int)expectedPeaks.size());
 	OM->defaultCanvas->SetLogy(true);
 	
-	// normalize to rate Hz/keV
+	// normalize to rate Hz/keV; record rates
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
-		for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_II_EVENT; tp++)
+		double nType0 = hTubes[t][TYPE_0_EVENT]->Integral();
+		for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_II_EVENT; tp++) {
+			if(t==nBetaTubes) {
+				Stringmap m;
+				m.insert("type",itos(tp));
+				m.insert("sID",mySource.sID);
+				m.insert("name",mySource.name());
+				m.insert("simulated",simMode?"yes":"no");			
+				m.insert("side",sideSubst("%c",mySource.mySide));
+				m.insert("counts",hTubes[t][tp]->Integral());
+				m.insert("rate",hTubes[t][tp]->Integral()/runtime);
+				m.insert("type0frac",hTubes[t][tp]->Integral()/nType0);
+				OM->qOut.insert("rate",m);
+			}
 			hTubes[t][tp]->Scale(1.0/(runtime*hTubes[t][tp]->GetBinWidth(1)));
+		}
 		if(hTubesRaw[t])
 			hTubesRaw[t]->Scale(1.0/(runtime*hTubesRaw[t]->GetBinWidth(1)));
 	}
@@ -126,7 +146,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 				m.insert("sID",mySource.sID);
 				m.insert("tube",t);
 				m.insert("simulated",simMode?"yes":"no");
-				m.insert("side",ctos(sideNames(mySource.mySide)));
+				m.insert("side",sideSubst("%c",mySource.mySide));
 				OM->warn(MODERATE_WARNING,"Missing_Peak",m);
 				printf("Cancelling fit.\n");
 				continue;
@@ -216,9 +236,7 @@ void reSource(RunNum rn) {
 	std::string outPath = getEnvSafe("UCNA_ANA_PLOTS")+"/LivermoreSources/";
 	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
 	RunInfo RI = CalDBSQL::getCDB()->getRunInfo(rn);
-	OutputManager TM("Run_"+itos(RI.runNum), outPath);
-	TM.dataPath = outPath+"/RunData/";
-	TM.plotPath = TM.basePath = outPath+replace(RI.groupName,' ','_')+"/"+itos(rn)+"_"+RI.roleName+"/";
+	OutputManager TM("Run_"+itos(RI.runNum), outPath+replace(RI.groupName,' ','_')+"/"+itos(rn)+"_"+RI.roleName+"/");
 	
 	// get sources list; set up ReSourcer for each
 	std::map<unsigned int,ReSourcer> sources;
@@ -253,7 +271,7 @@ void reSource(RunNum rn) {
 	unsigned int nSPts = 0;
 	while(P->nextPoint()) {
 		Side s = P->fSide;
-		if(P->fType <= TYPE_II_EVENT && P->fPID == PID_BETA && (s==EAST || s==WEST)) {
+		if(P->fType <= TYPE_II_EVENT && (P->fPID == PID_BETA || P->fPID == PID_MUON) && (s==EAST || s==WEST)) {
 			P->recalibrateEnergy();
 			hitPos[s]->Fill(P->wires[P->fSide][X_DIRECTION].center,P->wires[P->fSide][Y_DIRECTION].center);
 			for(std::map<unsigned int, ReSourcer>::iterator it = sources.begin(); it != sources.end(); it++)
@@ -294,17 +312,14 @@ void reSource(RunNum rn) {
 		it->second.findSourcePeaks(P->totalTime.t[BOTH]);
 		
 		// fit simulated source data with same parameters
-		Source simSource = it->second.mySource;
-		simSource.x = simSource.y = 0;		
+		Source simSource = it->second.mySource;	
 		Sim2PMT* g2p = NULL;
-		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_";
-		if(simSource.t=="Cs137" || simSource.t=="In114") {
+		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_495_";
+		printf("Loading source simulation data...\n");
+		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
+		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
 			g2p = new G4toPMT();
-			g2p->addFile(g4dat+simSource.t + "_geomC/analyzed_*.root");
-		} else if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
-				  simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
-			g2p = new G4toPMT();
-			g2p->addFile(g4dat+"MagF_" + simSource.t + "_geomC/analyzed_*.root");
+			g2p->addFile(g4dat + simSource.t + "_geomC/analyzed_*.root");
 		} else if(simSource.t=="Cd113m") {
 			G4toPMT* cd109 = new G4toPMT();
 			cd109->addFile(g4dat+"Cd109_geomC/analyzed_*.root");
@@ -320,13 +335,16 @@ void reSource(RunNum rn) {
 			continue;
 		}
 		
+		printf("Preparing to simulate source data...\n");
+		
+		g2p->setOffset(simSource.x, simSource.y);
+		g2p->setCalibrator(PCal);
+		g2p->fakeClip = true;
+		
 		ReSourcer RS(&TM,simSource,&PCal);
 		RS.simMode = true;
 		RS.dbgplots = false;
 		
-		g2p->setCalibrator(PCal);
-		for(Side s = EAST; s <= WEST; ++s)
-			g2p->PGen[s].setPosition(it->second.mySource.x, it->second.mySource.y);
 		unsigned int nSimmed = 0;
 		g2p->startScan(100000);
 		while(nSimmed<100000) {
@@ -337,7 +355,7 @@ void reSource(RunNum rn) {
 		RS.findSourcePeaks(1000.0);
 		
 		// plot data and MC together
-		
+		TM.defaultCanvas->SetLeftMargin(1.25);
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			float simNorm = it->second.hTubes[t][TYPE_0_EVENT]->Integral()/RS.hTubes[t][TYPE_0_EVENT]->Integral();
 			for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_II_EVENT; tp++) {
@@ -356,7 +374,10 @@ void reSource(RunNum rn) {
 				RS.hTubes[t][tp]->SetMinimum(0);
 				it->second.hTubes[t][tp]->SetMinimum(0);
 				drawSimulHistos(hToPlot);
-				TM.printCanvas(it->second.mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp)));
+				std::string outName = it->second.mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp));
+				TM.printCanvas(outName);
+				//if(t==nBetaTubes && tp==TYPE_0_EVENT)
+				//	TM.printCanvas(outName,".root");
 			}
 		}
 		

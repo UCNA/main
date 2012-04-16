@@ -20,7 +20,7 @@ public:
 	virtual void recalibrateEnergy() {}
 	/// start scanning events
 	virtual void startScan(unsigned int startRandom = 0) { nSimmed = 0; ProcessedDataScanner::startScan(startRandom); }
-	/// overrides ProcessedDataScanner::nextPoint to insert reverse-calibrations
+	/// overrides ProcessedDataScanner::nextPoint to insert reverse-calibrations, offsets
 	virtual bool nextPoint();
 	/// whether to count this event as successfully generated
 	virtual double simEvtCounts() const { return fPID==PID_BETA && fType==TYPE_0_EVENT?physicsWeight:0; }
@@ -43,8 +43,12 @@ public:
 	/// calculate spectrum re-weighting factor
 	virtual void calcReweight();
 	
+	/// Set position offset (for, e.g., source simulated at center)
+	void setOffset(double dx, double dy);
+				   
 	PMTGenerator PGen[2];		//< PMT simulator for each side
 	bool reSimulate;			//< whether to re-simulate energy or use "raw" values
+	bool fakeClip;				//< whether to fake clipping on wirechamber entrance edge
 	double eQ[2];				//< Scintillator quenched energy
 	double eDep[2];				//< Scintillator deposited energy
 	double eW[2];				//< Wirechamber deposited energy
@@ -54,7 +58,6 @@ public:
 	double time[2];				//< hit time in each scintillator
 	double costheta;			//< primary event cos pitch angle
 	double ePrim;				//< primary event energy
-	double physicsWeight;		//< event spectrum re-weighting factor
 	unsigned int nToSim;		//< total number of events to simulate (set to 0 for random energy selection)
 	unsigned int nSimmed;		//< number of events simulated since scan start
 	double mwpcThresh[2];		//< MWPC trigger threshold on each side
@@ -67,6 +70,8 @@ protected:
 	
 	AFPState afp;				//< AFP state for data
 	bool passesScint[2];		//< whether simulation passed scintillator cut
+	
+	double offPos[2];			//< offset to apply to all positions
 };
 
 

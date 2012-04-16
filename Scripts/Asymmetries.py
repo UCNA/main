@@ -37,7 +37,7 @@ class eventRate(KVMap):
 class kurieFit(KVMap):
 	def __init__(self,m):
 		self.dat = m.dat
-		self.loadFloats(["endpoint","dendpoint"])
+		self.loadFloats(["endpoint","dendpoint","tube"])
 		self.loadStrings(["side","afp","type"])
 		self.ep = self.endpoint
 		self.dep = self.dendpoint
@@ -87,9 +87,9 @@ class AsymmetryFile(QFile,asymData):
 		kOff = self.getKurie(side,'0',type)
 		return [kOn.ep-kOff.ep,addQuad(kOn.dep,kOff.dep)]
 	
-	def getKurie(self,side,afp,type):
+	def getKurie(self,side,afp,type,tube=4):
 		for k in self.kuries:
-			if k.side==side and k.afp==afp and k.type==type:
+			if k.side==side and k.afp==afp and k.type==type and k.tube==tube:
 				return k
 		print "*** Can't find kurie in",side,afp,type,self.fname
 		return None
@@ -111,6 +111,9 @@ def collectAsymmetries(basedir,depth):
 	
 def plot_octet_asymmetries(basedir="../PostPlots/OctetAsym_div0",depth=0):
 	
+	##############
+	# collect data
+	##############
 	gdat = []
 	bgRateDat = {'E':{'0':[],'1':[]},'W':{'0':[],'1':[]}}
 	kdat = {'E':{'0':[],'1':[]},'W':{'0':[],'1':[]}}
@@ -119,13 +122,15 @@ def plot_octet_asymmetries(basedir="../PostPlots/OctetAsym_div0",depth=0):
 	afpNames = {'0':"Off",'1':"On"}
 	print "--------------------- Division",depth,"-------------------------"
 	for af in collectAsymmetries(basedir,depth):
+		# asymmetry data
 		a = af.getAsym()
 		if a:
 			if abs(a.A0+0.115) > 0.05 or abs(a.A0+0.115)/a.dA0 > 3:
 				print "*** Funny asym",a.A0,"+-",a.dA0,"in",af.fname
-			gdat.append([n,a.A0,a.dA0,1.0/a.dA0**2])
+			gdat.append([n,a.A0,a.dA0,af.getRuns()[0]])
 		else:
 			print "**** Missing asym in",af.fname
+		# kurie data
 		for s in kdat:
 			kepDelta[s].append([n,]+af.kepDelta(s))
 			if not (-15 < kepDelta[s][-1][1] < 15 and 0 < kepDelta[s][-1][2]):
@@ -133,7 +138,7 @@ def plot_octet_asymmetries(basedir="../PostPlots/OctetAsym_div0",depth=0):
 			for afp in kdat[s]:
 				k = af.getKurie(s,afp,"0")
 				if k:
-					kdat[s][afp].append([n,k.ep,k.dep])
+					kdat[s][afp].append([n,k.ep,k.dep]+[af.getKurie(s,afp,"0",t) for t in range(4)])
 					if not 780 < k.ep < 840:
 						print "*** Funny Endpoint",k.ep,k.side,k.afp,"in",af.fname
 				rt = af.getRate(s,afp,'0',"hEnergy_Type_0_%s_%s"%(s,afpNames[afp]))
@@ -150,6 +155,9 @@ def plot_octet_asymmetries(basedir="../PostPlots/OctetAsym_div0",depth=0):
 		n+=1
 	print
 
+	##############
+	# set up graphs
+	##############
 	unitName = "Octet"
 	if depth == 1:
 		unitName = "Half Octet"
@@ -164,7 +172,7 @@ def plot_octet_asymmetries(basedir="../PostPlots/OctetAsym_div0",depth=0):
 	
 	gBgRate=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
-				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.25),
+				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.50),
 				key = graph.key.key(pos="bl"))
 	gBgRate.texrunner.set(lfs='foils17pt')
 	
@@ -185,16 +193,35 @@ def plot_octet_asymmetries(basedir="../PostPlots/OctetAsym_div0",depth=0):
 				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
 				graph.style.errorbar(errorbarattrs=[rgb.red,])])
 	
+	##############
+	# asymmetry plots
+	##############
 	LF = LinearFitter(terms=[polyterm(0)])
-	LF.fit(gdat,cols=(0,1,2),errorbarWeights=True)
-	chi2 = LF.ssResids()
-	ndf = len(gdat)-len(LF.coeffs)
-	gAsyms.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,
-				title="$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$ $(p=%.2f)$"%(LF.coeffs[0],1.0/sqrt(LF.sumWeights()),chi2,ndf,stats.chisqprob(chi2,ndf))),
-				[graph.style.line()])
 	
+	gdat_A = [g for g in gdat if 14000 < g[3] < 14800]
+	gdat_B = [g for g in gdat if 14800 < g[3] ]
+	
+	if gdat_A:
+		LF.fit(gdat_A,cols=(0,1,2),errorbarWeights=True)
+		chi2 = LF.ssResids()
+		ndf = len(gdat_A)-len(LF.coeffs)
+		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_A[0][0],gdat_A[-1][0]),x=1,y=2,
+					title="$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$ $(p=%.2f)$"%(LF.coeffs[0],1.0/sqrt(LF.sumWeights()),chi2,ndf,stats.chisqprob(chi2,ndf))),
+					[graph.style.line()])
+	
+	if gdat_B:
+		LF.fit(gdat_B,cols=(0,1,2),errorbarWeights=True)
+		chi2 = LF.ssResids()
+		ndf = len(gdat_B)-len(LF.coeffs)
+		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_B[0][0],gdat_B[-1][0]),x=1,y=2,
+					title="$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$ $(p=%.2f)$"%(LF.coeffs[0],1.0/sqrt(LF.sumWeights()),chi2,ndf,stats.chisqprob(chi2,ndf))),
+					[graph.style.line([style.linestyle.dashed,])])
+				
 	gAsyms.writetofile(basedir+"/OctetAsym_%i.pdf"%depth)
 	
+	##############
+	# endpoint, background plots
+	##############
 	sideCols = {'E':rgb.red,'W':rgb.blue,'C':rgb(0.,0.7,0.)}
 	afpSymbs = {'0':symbol.circle,'1':symbol.triangle}
 	for s in ['E','C','W']:
@@ -242,6 +269,28 @@ def plot_octet_asymmetries(basedir="../PostPlots/OctetAsym_div0",depth=0):
 	gEp.writetofile(basedir+"/OctetEP_%i.pdf"%depth)
 	gdEp.writetofile(basedir+"/Octet_dEP_%i.pdf"%depth)
 	gBgRate.writetofile(basedir+"/Octet_BgRate_%i.pdf"%depth)
+	
+	##############
+	# individual PMT endpoint plots
+	##############
+	for s in ['E','W']:
+		for afp in kdat[s]:
+				
+			gEp=graph.graphxy(width=25,height=8,
+						x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
+						y=graph.axis.lin(title="Endpoint [keV]",min=700,max=850),
+						key = graph.key.key(pos="bl"))
+			gEp.texrunner.set(lfs='foils17pt')
+
+			for t in range(4):
+				plotdat = [ (k[0],k[t+3].ep,k[t+3].dep) for k in kdat[s][afp] ]
+				tcols = [rgb.red,rgb.green,rgb.blue,rgb(1,1,0)]
+				gEp.plot(graph.data.points(plotdat,x=1,y=2,dy=3,title="PMT %i"%t),
+							[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[tcols[t],]),
+							graph.style.errorbar(errorbarattrs=[tcols[t],])])
+			
+			gEp.writetofile(basedir+"/TubeEP_%i_%s_%s.pdf"%(depth,s,afp))
+	
 	
 if __name__=="__main__":
 	for i in range(3):

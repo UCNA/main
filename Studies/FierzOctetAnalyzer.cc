@@ -4,16 +4,14 @@
 
 FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, const string& inflname): OctetAnalyzer(pnt,nm,inflname) {
 	// set up histograms of interest
-	for(Side s = EAST; s <= WEST; s = nextSide(s))
-		//qAnodeSpectrum[s] = registerCoreHist("hAnode", "Full Energy", 100, 0, 20, s, &hAnodeSpectrum[s]);
-		qFullEnergySpectrum[s] = registerCoreHist("hFullEnergy", "Full Energy", 100, 0, 3600, s, &hFullEnergySpectrum[s]);
+	for(Side s = EAST; s <= WEST; ++s)
+		qFullEnergySpectrum[s] = registerCoreHist("hFullEnergy", "Full Energy", 100, 0, 1000, s, &hFullEnergySpectrum[s]);
 }
 
 void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
-	// fill wirechamber spectrum for Type 0 beta events on each side
+	// fill events spectrum for Type 0 beta events on each side
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
-		//hAnodeSpectrum[PDS.fSide]->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
 		hFullEnergySpectrum[PDS.fSide]->Fill(PDS.scints[PDS.fSide].energy.x, weight);
 }
 
@@ -72,13 +70,12 @@ int main(int argc, char *argv[]) {
 
 	if(string(argv[1])=="scan") {
 		
-		// results will be placed in "Anode_Asymmetry_Example/" subfolder of base directory
+		// results will be placed in "Fierz_Processed_Analysis/" subfolder of base directory
 		FierzOctetAnalyzer OAE(&OM,"Fierz_Processed_Analysis");
 		
-		// get list of octets to process, from file located at "UCNA_OCTET_LIST"
-		// (I use ucn:/home/mmendenhall/mpmAnalyzer/SummaryData/OctetList/OctetList.txt)
-		vector<Octet> octs = Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST")));
-
+		// get list of octets to process, available in Aux/OctetList_2010.txt
+		vector<Octet> octs = Octet::loadOctets(QFile("Aux/OctetList_2010.txt"));
+		
 		// for this example, limit to first three octets
 		while(octs.size() > 3)
 			octs.pop_back();
@@ -93,12 +90,10 @@ int main(int argc, char *argv[]) {
 
 		// and set up a simulation data source from neutron beta decay simulation
 		G4toPMT simData;
-		simData.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+		simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
 
 		// point the simulation cloner to the real data; clone equal amounts of counts where not already simulated within the past hour
-		//simuClone(OM.basePath+"/Anode_Asymmetry_Example", OAE_Sim, simData, 1.0, 3600);
-		simuClone(OM.basePath+"/Fierz_Processed_Analysis", OAE_Sim, simData, 1.0, 3600);
-		
+		simuClone(OM.basePath+"/Fierz_Processed_Analysis", OAE_Sim, simData, 1.0, 3600);		
 	}
 	
 	return 0;

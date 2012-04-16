@@ -105,9 +105,9 @@ TH2F* OutputManager::registeredTH2F(std::string hname, std::string htitle, unsig
 	return (TH2F*)addObject(new TH2F(hname.c_str(),htitle.c_str(),nbinsx,x0,x1,nbinsy,y0,y1));
 }
 
-void OutputManager::printCanvas(std::string fname) const {
-	makePath(plotPath+"/"+fname+".pdf",true);
+void OutputManager::printCanvas(std::string fname, std::string suffix) const {
+	makePath(plotPath+"/"+fname+suffix,true);
 	printf("Printing canvas '%s' in '%s'\n",fname.c_str(), plotPath.c_str());
-	defaultCanvas->Print((plotPath+"/"+fname+".pdf").c_str());
+	defaultCanvas->Print((plotPath+"/"+fname+suffix).c_str());
 }
 
