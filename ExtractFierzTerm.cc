@@ -12,10 +12,12 @@
 
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
 static double expected_fierz = 0.654026;
-static unsigned nToSim = 3E6;				// how many triggering events to simulate
+static unsigned nToSim = 1E6;				// how many triggering events to simulate
 static double loading_prob = 50; 			// ucn loading probability 
 static int bins = 40;						// replace with value from data or smoothing fit
-double scale_x = 1.01;
+double scale_x = 1.015;
+double min_E = 120;
+double max_E = 700;
 
 class FierzHistogram {
   public: 
@@ -495,14 +497,14 @@ int main(int argc, char *argv[]) {
 	// fit the Fierz ratio 
 	char fit_str[1024];
     sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", electron_mass, electron_mass, expected_fierz);
-    TF1 *fierz_fit = new TF1("fierz_fit", fit_str, 120, 650);
+    TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
     fierz_fit->SetParameter(0,0);
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
 
-	// A histogram for output to gnuplot
+	// A fit histogram for output to gnuplot
     TH1F *fierz_fit_histogram = new TH1F(*super_sum_histogram);
-	for (int i = 0; i < mc.sm_super_sum_histogram->GetNbinsX() + 2; i++)
-		mc.sm_super_sum_histogram->AddBinContent(i, 1E-7);
+	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
+		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
 
 	// compute chi squared
     double chisq = fierz_fit->GetChisquare();
@@ -536,6 +538,7 @@ int main(int argc, char *argv[]) {
 	output_histogram("/data/kevinh/mc/super-sum-data.dat", super_sum_histogram, 1, 1000);
 	output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
 	output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
+	output_histogram("/data/kevinh/mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
 
 	return 0;
 }
