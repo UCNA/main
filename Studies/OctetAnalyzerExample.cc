@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
 		// and set up a simulation data source from neutron beta decay simulation
 		G4toPMT simData;
-		simData.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+		simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
 		// point the simulation cloner to the real data; clone equal amounts of counts where not already simulated within the past hour
 		simuClone(OM.basePath+"/Anode_Asymmetry_Example", OAE_Sim, simData, 1.0, 3600);
 		

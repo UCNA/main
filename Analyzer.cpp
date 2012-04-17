@@ -132,7 +132,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR"));
 		AsymmetryAnalyzer AA_Sim(&OM,outputDir+"_Simulated",AsymmetryAnalyzer::processedLocation);
 		G4toPMT simData;
-		simData.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+		simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
 		simuClone(getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir, AA_Sim, simData, 1.0, 365*24*3600);
 	} else if(octn < 0) {
 		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),-octn-1);
@@ -140,7 +140,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"_Simulated");
 		AsymmetryAnalyzer AA_Sim(&OM,oct.octName(),getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"/"+oct.octName()+"/"+oct.octName());		
 		G4toPMT simData;
-		simData.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+		simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
 		simuClone(getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"/"+oct.octName(), AA_Sim, simData, 1.0, 24*3600);
 	} else {
 		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),octn);
@@ -154,7 +154,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
 	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/Livermore/");
 	G4toPMT g2p;
-	g2p.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+	g2p.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
 	PMTCalibrator PCal(16000,CalDBSQL::getCDB());
 	g2p.setCalibrator(PCal);
 	SimSpectrumInfo(g2p,OM);

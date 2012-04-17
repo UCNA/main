@@ -21,7 +21,7 @@ void runSimulation() {
 	
 	printf("Setting input file...\n");
 	G4toPMT simData;
-	simData.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+	simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
 	PMTCalibrator PCal(16000,CalDBSQL::getCDB());
 	simData.setCalibrator(PCal);
 	
