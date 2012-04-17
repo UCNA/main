@@ -12,7 +12,7 @@ void runSimulation() {
 	
 	printf("Simulating MWPC threshold variation...\n");
 	
-	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/MWPC_Effic_Sim/");
+	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/MWPC_Effic_Sim/");
 	std::vector<AsymmetryAnalyzer*> AAs;
 	for(unsigned int i=0; i<nThreshBins; i++) {
 		AAs.push_back(new AsymmetryAnalyzer(&OM,std::string("Threshold_")+itos(i)));
@@ -61,7 +61,7 @@ void runSimulation() {
 }
 
 void processSimulation() {
-	OutputManager OM("MWPC_Effic_Compare",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/MWPC_Effic_Sim/");
+	OutputManager OM("MWPC_Effic_Compare",getEnvSafe("UCNA_ANA_PLOTS")+"/MWPC_Effic_Sim/");
 	std::vector<AsymmetryAnalyzer*> AAs;
 	for(unsigned int i=0; i<nThreshBins; i++) {
 		std::string tname = std::string("Threshold_")+itos(i);

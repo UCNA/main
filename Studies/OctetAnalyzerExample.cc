@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
 	
 	gStyle->SetOptStat("e");	
 		
-	// environment variable "UCNA_ANALYSIS_PLOTS_DIR" needs to be set to an ouput directory where you keep analysis results
-	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR"));
+	// environment variable "UCNA_ANA_PLOTS" needs to be set to an ouput directory where you keep analysis results
+	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 	// after running once, we can use the results for errorbar estimation in low-count background bins on later scans
 	OctetAnalyzerExample::processedLocation = OM.basePath+"/Anode_Asymmetry_Example/Anode_Asymmetry_Example";
 

@@ -122,30 +122,30 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octn = streamInteractor::popInt(stack);
 	const std::string outputDir="OctetAsym_Offic";
 	//const std::string outputDir="OctetAsym_10keV_Bins";
-	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"/"+outputDir;
+	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
 	if(octn==1000) {
-		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR"));
+		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 		AsymmetryAnalyzer AA(&OM,outputDir);
 		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600);
 	} else if(octn==-1000) {
-		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR"));
+		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 		AsymmetryAnalyzer AA_Sim(&OM,outputDir+"_Simulated",AsymmetryAnalyzer::processedLocation);
 		G4toPMT simData;
 		simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
-		simuClone(getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir, AA_Sim, simData, 1.0, 365*24*3600);
+		simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, AA_Sim, simData, 1.0, 365*24*3600);
 	} else if(octn < 0) {
 		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),-octn-1);
 		if(!oct.getNRuns()) return;
-		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"_Simulated");
-		AsymmetryAnalyzer AA_Sim(&OM,oct.octName(),getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"/"+oct.octName()+"/"+oct.octName());		
+		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"_Simulated");
+		AsymmetryAnalyzer AA_Sim(&OM,oct.octName(),getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName()+"/"+oct.octName());		
 		G4toPMT simData;
 		simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
-		simuClone(getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir+"/"+oct.octName(), AA_Sim, simData, 1.0, 24*3600);
+		simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), AA_Sim, simData, 1.0, 24*3600);
 	} else {
 		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),octn);
 		if(!oct.getNRuns()) return;
-		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR")+"/"+outputDir);
+		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir);
 		AsymmetryAnalyzer AA(&OM,oct.octName());
 		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false));
 	}

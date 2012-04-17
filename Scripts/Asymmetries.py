@@ -1,9 +1,14 @@
-#!/sw/bin/python2.6
+#!/usr/bin/python
 
+import os
 from LinFitter import *
 from PyxUtils import *
 from QFile import *
-from scipy import stats
+from EncalDB import *
+try:
+	from scipy import stats
+except:
+	stats = None
 	
 # runs in pulse pair, half octet, and octet groups			  		  
 #ppSegments = [["A1","A2","A3","A4","A5","A6"],["A7","A8","A9","A10","A11","A12"],["B1","B2","B3","B4","B5","B6"],["B7","B8","B9","B10","B11","B12"]]
@@ -101,6 +106,7 @@ class AsymmetryFile(QFile,asymData):
 		return None
 		
 def collectAsymmetries(basedir,depth):
+	print "Collecting asymmetry data from",basedir,"at depth",depth
 	asyms = []
 	for f in [ (basedir+'/'+f+'/',basedir+'/'+f+'/'+f+'.txt') for f in os.listdir(basedir) if os.path.isdir(basedir+'/'+f) and '-' in f and f[:3]!="139"]:
 		if not depth and os.path.exists(f[1]):
@@ -109,7 +115,7 @@ def collectAsymmetries(basedir,depth):
 			asyms += collectAsymmetries(f[0],depth-1)
 	return asyms
 	
-def plot_octet_asymmetries(basedir="../PostPlots/OctetAsym_div0",depth=0):
+def plot_octet_asymmetries(basedir,depth=0):
 	
 	##############
 	# collect data
@@ -205,16 +211,19 @@ def plot_octet_asymmetries(basedir="../PostPlots/OctetAsym_div0",depth=0):
 		LF.fit(gdat_A,cols=(0,1,2),errorbarWeights=True)
 		chi2 = LF.ssResids()
 		ndf = len(gdat_A)-len(LF.coeffs)
-		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_A[0][0],gdat_A[-1][0]),x=1,y=2,
-					title="$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$ $(p=%.2f)$"%(LF.coeffs[0],1.0/sqrt(LF.sumWeights()),chi2,ndf,stats.chisqprob(chi2,ndf))),
-					[graph.style.line()])
+		gtitle = "$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],1.0/sqrt(LF.sumWeights()),chi2,ndf)
+		if stats:
+			gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
+		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_A[0][0],gdat_A[-1][0]),x=1,y=2,title=gtitle),[graph.style.line()])
 	
 	if gdat_B:
 		LF.fit(gdat_B,cols=(0,1,2),errorbarWeights=True)
 		chi2 = LF.ssResids()
 		ndf = len(gdat_B)-len(LF.coeffs)
-		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_B[0][0],gdat_B[-1][0]),x=1,y=2,
-					title="$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$ $(p=%.2f)$"%(LF.coeffs[0],1.0/sqrt(LF.sumWeights()),chi2,ndf,stats.chisqprob(chi2,ndf))),
+		gtitle = "$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],1.0/sqrt(LF.sumWeights()),chi2,ndf)
+		if stats:
+			gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
+		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_B[0][0],gdat_B[-1][0]),x=1,y=2,title=gtitle),
 					[graph.style.line([style.linestyle.dashed,])])
 				
 	gAsyms.writetofile(basedir+"/OctetAsym_%i.pdf"%depth)
@@ -291,9 +300,55 @@ def plot_octet_asymmetries(basedir="../PostPlots/OctetAsym_div0",depth=0):
 			
 			gEp.writetofile(basedir+"/TubeEP_%i_%s_%s.pdf"%(depth,s,afp))
 	
+def get_gain_tweak(conn,rn,s,t):
+	conn.execute("SELECT e_orig,e_final FROM gain_tweak WHERE start_run <= %i AND %i <= end_run AND side = '%s'\
+	 AND quadrant = %i ORDER BY end_run-start_run LIMIT 1"%(rn,rn,s,t))
+	tweak = conn.fetchall()
+	if not tweak:
+		return (500.,500.)
+	return tweak[0]
 	
+def delete_gain_tweak(conn,rn,s,t):
+	conn.execute("DELETE FROM gain_tweak WHERE start_run <= %i AND %i <= end_run AND side = '%s' AND quadrant = %i"%(rn,rn,s,t))
+
+def upload_gain_tweak(conn,rns,s,t,e0,e1):
+	conn.execute("INSERT INTO gain_tweak(start_run,end_run,side,quadrant,e_orig,e_final)\
+					VALUES (%i,%i,'%s',%i,%f,%f)"%(rns[0],rns[-1],s,t,e0,e1))
+
+def endpoint_gain_tweak(basedir,simdir,depth=0):
+	"""Set gain tweak factors to match spectrum endpoints between data and simulation"""
+	
+	# gather data
+	def sortByRuns(asyms):
+		return dict([(tuple(af.getRuns()),af) for af in asyms])
+	datAsyms = sortByRuns(collectAsymmetries(basedir,depth))
+	simAsyms = sortByRuns(collectAsymmetries(simdir,depth))
+	
+	# compare endpoints for each run grouping
+	rungrps = datAsyms.keys()
+	rungrps.sort()
+	conn = open_connection()
+	for rns in rungrps:
+		if rns not in simAsyms:
+			print "**** Missing simulations for ",rns
+			continue
+		print rns
+		for s in ["East","West"]:
+			for t in range(4):
+				kdat = 0.5*(datAsyms[rns].getKurie(s[0],'0',"0",t).ep+datAsyms[rns].getKurie(s[0],'1',"0",t).ep)
+				ksim = 0.5*(simAsyms[rns].getKurie(s[0],'0',"0",t).ep+simAsyms[rns].getKurie(s[0],'1',"0",t).ep)
+				oldtweak=get_gain_tweak(conn,rns[0],s,t)
+				print "\t%s %i:\t%f\t%f\t%f\tOld:"%(s,t,kdat,ksim,ksim/kdat),oldtweak,oldtweak[1]/oldtweak[0]
+				#delete_gain_tweak(conn,rns[0],s,t)
+				#upload_gain_tweak(conn,rns,s,t,kdat*oldtweak[0]/oldtweak[1],ksim)
+
 if __name__=="__main__":
+	
+	endpoint_gain_tweak(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",
+						os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated")
+	exit(0)
+	
 	for i in range(3):
-		plot_octet_asymmetries("../../PostPlots/OctetAsym_Offic/",2-i)
-		#plot_octet_asymmetries("../PostPlots/OctetAsym_Offic_Simulated",2-i)
+		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
+		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated",2-i)
 	
