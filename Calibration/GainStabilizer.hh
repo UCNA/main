@@ -12,9 +12,11 @@ public:
 	/// destructor
 	virtual ~GainStabilizer() {}
 	/// compute gain stabilization factor for given side, PMT
-	virtual float gmsFactor(Side s, unsigned int t, float time);
+	virtual float gmsFactor(Side s, unsigned int t, float time) const;
 	/// print gain stabilization info
 	virtual void printSummary() { printf("Null Gain Stabilization\n"); }
+	/// get a summary of GMS calibration parameters
+	virtual Stringmap gmsSummary() const;
 	
 	CalDB* CDB;					//< reference to calibration DB
 	LinearityCorrector* LCor;	//< reference to linearity corrector
@@ -27,13 +29,32 @@ public:
 	/// constructor
 	ChrisGainStabilizer(RunNum myRun, CalDB* cdb, LinearityCorrector* myCorrecter);
 	/// compute gain stabilization factor for given side, PMT
-	virtual float gmsFactor(Side s, unsigned int t, float time);
+	virtual float gmsFactor(Side s, unsigned int t, float time) const;
 	/// print gain stabilization info
 	virtual void printSummary();
 protected:
 	TGraph* pulserPeak[2][nBetaTubes];			//< Chris Pulser peak position
 	float pulser0[2][nBetaTubes];				//< Chris Pulser peak at reference time
 };
+
+/// Gain stabilizer wrapper with final manual tweaks
+class TweakedGainStabilizer: public GainStabilizer {
+public:
+	/// constructor
+	TweakedGainStabilizer(GainStabilizer* BG);
+	/// compute gain stabilization factor for given side, PMT
+	virtual float gmsFactor(Side s, unsigned int t, float time) const;
+	/// print gain stabilization info
+	virtual void printSummary();
+	/// get a summary of GMS calibration parameters
+	virtual Stringmap gmsSummary() const;
+protected:
+	GainStabilizer* baseGain;		//< base gain stabilization before tweaks
+	float eOrig[2][nBetaTubes+1];	//< starting energy for each PMT
+	float eFinal[2][nBetaTubes+1];	//< where starting energy gets scaled to
+};
+
+
 
 /*
  /// use GMS to correct LED brightness

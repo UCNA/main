@@ -53,7 +53,15 @@ public:
 	/// positioning intensity factor eta
 	virtual float eta(Side s, unsigned int t, float x, float y) const { return P->eval(s,t,x,y,true); }
 	/// linearize tube adc (plus GMS correction), ADC -> L = eta*Evis
-	float linearityCorrector(Side s, unsigned int t, float adc, float time) const;	
+	float linearityCorrector(Side s, unsigned int t, float adc, float time) const;
+	/// invert linearity correction to raw ADC
+	float invertLinearity(Side s, unsigned int t, float l, float time) const;
+	/// invert eta*Evis -> gain stabilized ADC
+	float invertLinearityStabilized(Side s, unsigned int t, float l) const;
+	/// derivative of inverse linearity
+	float dInverse(Side s, unsigned int t, float l, float time) const;	
+	/// invert linearity with float_err
+	float_err invertLinearity(Side s, unsigned int t, float_err l, float time) const;
 	/// linearity corrector derivative at given adc value
 	float dLinearity(Side s, unsigned int t, float adc, float time) const;	
 	/// get ref run t0 GMS factor
@@ -94,16 +102,8 @@ public:
 	PMTCalibrator(RunNum rn, CalDB* cdb);
 	/// Destructor
 	~PMTCalibrator();
-	/// invert linearity correction
-	float invertLinearity(Side s, unsigned int t, float l, float time) const;	
-	/// derivative of inverse linearity
-	float dInverse(Side s, unsigned int t, float l, float time) const;	
-	/// invert linearity with float_err
-	float_err invertLinearity(Side s, unsigned int t, float_err l, float time) const;	
-	
 	/// resolution deltaLight for given light seen in tube
 	float lightResolution(Side s, unsigned int t, float l, float time) const;
-	
 	/// expected width in raw ADC counts at given adc value
 	float adcResolution(Side s, unsigned int t, float adc, float time) const;	
 	/// expected energy resolution at given position, visible energy

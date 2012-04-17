@@ -1,8 +1,20 @@
 #include "GainStabilizer.hh"
 #include "EnergyCalibrator.hh"
 
-float GainStabilizer::gmsFactor(Side s, unsigned int t, float time) {
+float GainStabilizer::gmsFactor(Side s, unsigned int t, float time) const {
 	return LCor->getGMS0(s,t);
+}
+
+Stringmap GainStabilizer::gmsSummary() const {
+	Stringmap m;
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(unsigned int t=0; t<nBetaTubes; t++) {
+			std::string tname = sideSubst("%c",s)+itos(t);
+			m.insert(tname+"_gms0",LCor->getGMS0(s, t));
+			m.insert(tname+"_gms",gmsFactor(s,t,0));
+		}
+	}
+	return m;
 }
 
 ChrisGainStabilizer::ChrisGainStabilizer(RunNum myRun, CalDB* cdb, LinearityCorrector* myCorrecter):
@@ -17,7 +29,7 @@ GainStabilizer(myRun, cdb, myCorrecter) {
 	}
 }
 
-float ChrisGainStabilizer::gmsFactor(Side s, unsigned int t, float time) {
+float ChrisGainStabilizer::gmsFactor(Side s, unsigned int t, float time) const {
 	if(pulser0[s][t] && pulserPeak[s][t]
 	   && pulser0[s][t]>800 && pulserPeak[s][t]->Eval(time)>800)
 		return LCor->getGMS0(s,t)*pulser0[s][t]/pulserPeak[s][t]->Eval(time);
@@ -53,6 +65,42 @@ void ChrisGainStabilizer::printSummary() {
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			printf("\t%.3f",gmsFactor(s,t,0)/LCor->getGMS0(s,t));
 		printf("\t  Chris Pulser correction since reference run\n");
+	}
+}
+
+TweakedGainStabilizer::TweakedGainStabilizer(GainStabilizer* BG): GainStabilizer(BG->rn,BG->CDB,BG->LCor), baseGain(BG) {
+	for(Side s=EAST; s<=WEST; ++s)
+		for(unsigned int t=0; t<=nBetaTubes; t++)
+			CDB->getGainTweak(rn,s,t,eOrig[s][t],eFinal[s][t]);
+}
+float TweakedGainStabilizer::gmsFactor(Side s, unsigned int t, float time) const {
+	assert(s<=WEST && t<=nBetaTubes);
+	if(t==nBetaTubes) return baseGain->gmsFactor(s,t,time)*eFinal[s][t]/eOrig[s][t];
+	return baseGain->gmsFactor(s,t,time)*LCor->invertLinearityStabilized(s,t,eFinal[s][t])/LCor->invertLinearityStabilized(s,t,eOrig[s][t]);
+}
+Stringmap TweakedGainStabilizer::gmsSummary() const {
+	Stringmap m = baseGain->gmsSummary();
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(unsigned int t=0; t<=nBetaTubes; t++) {
+			std::string tname = sideSubst("%c",s)+itos(t);
+			m.insert(tname+"_eOrig",eOrig[s][t]);
+			m.insert(tname+"_eFinal",eFinal[s][t]);
+		}
+	}
+	return m;
+}
+void TweakedGainStabilizer::printSummary() {
+	baseGain->printSummary();
+	for(Side s = EAST; s <= WEST; ++s) {
+		printf("%c tweak e0:",sideNames(s));
+		for(unsigned int t=0; t<=nBetaTubes; t++)
+			printf("\t%.1f",eOrig[s][t]);
+		printf("\t  GMS tweaking original energy\n");
+		
+		printf("%c tweak e1:",sideNames(s));
+		for(unsigned int t=0; t<=nBetaTubes; t++)
+			printf("\t%.1f",eFinal[s][t]);
+		printf("\t  GMS tweaking final energy\n");	
 	}
 }
 
