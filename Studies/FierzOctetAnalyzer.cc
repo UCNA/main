@@ -11,7 +11,7 @@ FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, con
 void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	// fill events spectrum with Etrue on both sides
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
-	if(PS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
+	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
 		hFullEnergySpectrum[PDS.fSide]->Fill(PDS.getEtrue(), weight);
 }
 
