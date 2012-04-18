@@ -69,7 +69,9 @@ public:
 	virtual PositioningCorrector* getAnodePositioningCorrector(RunNum rn) = 0;
 	/// get anode gain correction factor for run
 	virtual float getAnodeGain(RunNum rn, Side s) = 0;
-
+	/// get GMS gain tweaking factors
+	virtual void getGainTweak(RunNum rn, Side s, unsigned int t, float& orig, float& final) = 0;
+	
 	/// get trigger efficiency function
 	virtual EfficCurve* getTrigeff(RunNum rn, Side s, unsigned int t) = 0;
 	/// get E_vis -> E_true parametrization

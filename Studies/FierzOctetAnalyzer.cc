@@ -64,8 +64,8 @@ int main(int argc, char *argv[]) {
 	
 	gStyle->SetOptStat("e");	
 		
-	// environment variable "UCNA_ANALYSIS_OUTPUT_DIR" needs to be set to an ouput directory where you keep analysis results
-	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR"));
+	// environment variable "UCNA_ANA_PLOTS" needs to be set to an ouput directory where you keep analysis results
+	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 
 	// after running once, we can use the results for errorbar estimation in low-count background bins on later scans
 	FierzOctetAnalyzer::processedLocation = OM.basePath+"/Fierz_Processed_Analysis/Fierz_Processed_Analysis";

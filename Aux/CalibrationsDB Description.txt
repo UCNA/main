@@ -7,7 +7,8 @@ CREATE TABLE energy_calibration (
 	end_run INT UNSIGNED,		# last run number this applies to
 	gms_run INT UNSIGNED,		# run that tubes need to be GMS normalized to for the calibration to be valid
 	posmap_set_id INT UNSIGNED,	# ID number for position map to apply
-	INDEX(start_run), INDEX(end_run));
+	INDEX(start_run), INDEX(end_run)
+);
 
 # calibration data for a PMT
 CREATE TABLE tube_calibration (
@@ -22,9 +23,23 @@ CREATE TABLE tube_calibration (
 	encal_evis DOUBLE,			# visible energy of energy calibration peak
 	noisecal_adc DOUBLE,		# raw (pedestal-subtracted) ADC of noise calibration peak
 	noisecal_width DOUBLE,		# raw (pedestal-subtracted) ADC peak width of noise calibration peak
-	INDEX (ecal_id) );
+	INDEX (ecal_id)
+);
 
 CREATE TABLE kurie_cal (run_number INT UNSIGNED, side ENUM('East','West'), quadrant INT UNSIGNED, energy DOUBLE, adc DOUBLE, INDEX (run_number) );
+
+# extra final gain calibration tweaks
+CREATE TABLE gain_tweak (
+	gain_tweak_id SERIAL,
+	start_run INT UNSIGNED,		# first run number this applies to
+	end_run INT UNSIGNED,		# last run number this applies to
+	side ENUM('East','West'),	# tube side
+	quadrant INT UNSIGNED,		# tube quadrant (tube number) in {0,1,2,3}, or 4 for combined
+	e_orig DOUBLE,				# original energy gets stretched to...
+	e_final DOUBLE,				# ...this final energy
+	INDEX(start_run), INDEX(end_run),
+	INDEX(side), INDEX(quadrant)
+);
 
 # PMT trigger efficiency extracted by analyzer
 CREATE TABLE mpm_trigeff (
@@ -33,7 +48,8 @@ CREATE TABLE mpm_trigeff (
 	side ENUM('East','West'),	# side for curve
 	quadrant INT UNSIGNED,		# quadrant (tube number) for curve
 	params_graph INT UNSIGNED,	# graph encoding function parameters
-	INDEX(run_number));
+	INDEX(run_number)
+);
 
 # light transport position maps
 CREATE TABLE posmap_set (
@@ -41,7 +57,8 @@ CREATE TABLE posmap_set (
 	descrip VARCHAR(1012),	# description of position map
 	n_rings INT UNSIGNED,	# number of rings dividing position map
 	radius DOUBLE,			# radius of mapped region
-INDEX(posmap_set_id));
+	INDEX(posmap_set_id)
+);
 
 CREATE TABLE posmap_info (
 	posmap_info_id SERIAL,		# unique ID for this tube position map
@@ -50,7 +67,8 @@ CREATE TABLE posmap_info (
 	quadrant INT UNSIGNED,		# tube quadrant
 	n_rings INT UNSIGNED,		# number of rings dividing position map
 	radius DOUBLE,				# radius of mapped region
-	INDEX(posmap_set_id));
+	INDEX(posmap_set_id)
+);
 
 # data points for each position map
 CREATE TABLE posmap_points (
@@ -63,8 +81,8 @@ CREATE TABLE posmap_points (
 	center_x DOUBLE,			# x coordinate of pixel center
 	center_y DOUBLE,			# y coordinate of pixel center
 	norm DOUBLE,				# normalization for energy resolution smearing
-	INDEX (posmap_set_id), INDEX (pixel_id), INDEX (side), INDEX (quadrant) );
-
+	INDEX (posmap_set_id), INDEX (pixel_id), INDEX (side), INDEX (quadrant)
+);
 
 # E_vis to E_true conversion functions
 CREATE TABLE evis_conversion (
@@ -74,7 +92,8 @@ CREATE TABLE evis_conversion (
 	side ENUM('East','West'),			# which side this calibration applies to
 	type INT UNSIGNED,					# which event type this calibration applies to (0,1,2)
 	conversion_curve_id INT UNSIGNED,	# graph for E_vis->E_true conversion
-	INDEX (start_run), INDEX(end_run), INDEX (side), INDEX (type) );
+	INDEX (start_run), INDEX(end_run), INDEX (side), INDEX (type)
+);
 
 # anode calibration
 CREATE TABLE anode_cal (
@@ -84,7 +103,8 @@ CREATE TABLE anode_cal (
 	anode_posmap_id INT UNSIGNED,	# anode position response map
 	calfactor_E DOUBLE,				# East calibration factor
 	calfactor_W DOUBLE,				# West calibration factor
-	INDEX(start_run), INDEX(end_run) );
+	INDEX(start_run), INDEX(end_run)
+);
 
 # run grouping names
 CREATE TABLE run_group(
@@ -92,12 +112,14 @@ CREATE TABLE run_group(
 	start_run INT UNSIGNED,			# first run in group
 	end_run INT UNSIGNED,			# last run in group
 	name VARCHAR(1012),				# name for group
-	INDEX(start_run), INDEX(end_run) );
+	INDEX(start_run), INDEX(end_run)
+);
 
 # generic graph-like data tables
 CREATE TABLE graphs(
 	graph_id SERIAL,
-	text_description VARCHAR(512));
+	text_description VARCHAR(512)
+);
 
 CREATE TABLE graph_points(
 	graph_point_id SERIAL,
@@ -106,7 +128,8 @@ CREATE TABLE graph_points(
 	x_error DOUBLE,
 	y_value DOUBLE,
 	y_error DOUBLE,
-	INDEX (graph_id), INDEX (x_value));
+	INDEX (graph_id), INDEX (x_value)
+);
 
 # watching in-run variables
 CREATE TABLE run_monitors(
@@ -116,13 +139,15 @@ CREATE TABLE run_monitors(
 	monitor_type ENUM('pedestal','GMS_peak'),
 	center_graph_id INT UNSIGNED,
 	width_graph_id INT UNSIGNED,
-	INDEX (run_number), INDEX (sensors_sensor_id));
+	INDEX (run_number), INDEX (sensors_sensor_id)
+);
 
 # named sensors
 CREATE TABLE sensors (
 	sensor_id SERIAL,
 	sensor_name text,
-	INDEX(sensor_id), INDEX(sensor_name));
+	INDEX(sensor_id), INDEX(sensor_name)
+);
 
 # analysis pass info
 CREATE TABLE analysis (
@@ -135,7 +160,8 @@ CREATE TABLE analysis (
 	total_time DOUBLE,			# total time
 	misaligned INT UNSIGNED,
 	tdc_corrupted INT UNSIGNED,
-	INDEX(run_number));
+	INDEX(run_number)
+);
 
 # calibration sources
 CREATE TABLE sources (
@@ -168,4 +194,5 @@ CREATE TABLE sourcepeaks (
 	integral DOUBLE,						# one sigma integral peak area
 	height DOUBLE,	dheight DOUBLE,			# height of peak and uncertainty
 	nPE DOUBLE,								# estimated peak photoelectrons
-	INDEX(sourcepeak_id), INDEX(source_id));
+	INDEX(sourcepeak_id), INDEX(source_id)
+);

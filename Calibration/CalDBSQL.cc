@@ -147,6 +147,23 @@ float CalDBSQL::getAnodeGain(RunNum rn, Side s) {
 	return getAnodeCalInfo(rn,sideSubst("calfactor_%c",s).c_str());
 }
 
+void CalDBSQL::getGainTweak(RunNum rn, Side s, unsigned int t, float& orig, float& final) {
+	if(!checkTable("gain_tweak")) {
+		orig=final=500.0;
+		return;
+	}
+	sprintf(query,"SELECT e_orig,e_final FROM gain_tweak WHERE start_run <= %i AND %i <= end_run \
+			AND side = %s AND quadrant = %i ORDER BY end_run-start_run LIMIT 1",rn,rn,dbSideName(s),t);
+	TSQLRow* r = getFirst();
+	if(!r) {
+		orig=final=500.0;
+		return;
+	}
+	orig = fieldAsFloat(r,0);
+	final = fieldAsFloat(r,1);
+	delete(r);
+}
+
 
 PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 	

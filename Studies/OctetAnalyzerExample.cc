@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
 	
 	gStyle->SetOptStat("e");	
 		
-	// environment variable "UCNA_ANALYSIS_PLOTS_DIR" needs to be set to an ouput directory where you keep analysis results
-	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANALYSIS_OUTPUT_DIR"));
+	// environment variable "UCNA_ANA_PLOTS" needs to be set to an ouput directory where you keep analysis results
+	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 	// after running once, we can use the results for errorbar estimation in low-count background bins on later scans
 	OctetAnalyzerExample::processedLocation = OM.basePath+"/Anode_Asymmetry_Example/Anode_Asymmetry_Example";
 
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
 		// and set up a simulation data source from neutron beta decay simulation
 		G4toPMT simData;
-		simData.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+		simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
 		// point the simulation cloner to the real data; clone equal amounts of counts where not already simulated within the past hour
 		simuClone(OM.basePath+"/Anode_Asymmetry_Example", OAE_Sim, simData, 1.0, 3600);
 		

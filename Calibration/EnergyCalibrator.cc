@@ -129,9 +129,23 @@ float LinearityCorrector::linearityCorrector(Side s, unsigned int t, float adc, 
 	}
 	return 0; //< TODO ref linearity PMT?
 }
+float LinearityCorrector::invertLinearityStabilized(Side s, unsigned int t, float l) const {
+	assert(s<=WEST && t<nBetaTubes && linearityInverses[s][t]);
+	return linearityInverses[s][t]->Eval(l);
+}
+float LinearityCorrector::invertLinearity(Side s, unsigned int t, float l, float time) const {
+	return invertLinearityStabilized(s,t,l)/gmsFactor(s,t,time);
+}
 float LinearityCorrector::dLinearity(Side s, unsigned int t, float adc, float time) const {
 	const float h = 0.1;
 	return (linearityCorrector(s,t,adc+h,time)-linearityCorrector(s,t,adc-h,time))/(2.0*h);
+}
+float LinearityCorrector::dInverse(Side s, unsigned int t, float l, float time) const {
+	const float h = 0.1;
+	return (invertLinearity(s, t, l+h, time)-invertLinearity(s, t, l-h, time))/(2.0*h);
+}
+float_err LinearityCorrector::invertLinearity(Side s, unsigned int t, float_err l, float time) const {
+	return float_err(invertLinearity(s,t,l.x,time),l.err*dInverse(s, t, l.x,time));
 }
 
 float LinearityCorrector::gmsFactor(Side s, unsigned int t, float time) const {
@@ -170,7 +184,7 @@ PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) 
 	}
 	printf("Creating PMTCalibrator for %i.\n",myRun);
 	clipThreshold = 3500;
-	GS = new ChrisGainStabilizer(myRun,CDB,this);
+	GS = new TweakedGainStabilizer(new ChrisGainStabilizer(myRun,CDB,this));
 	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			pmtEffic[s][t] = CDB->getTrigeff(myRun,s,t);
@@ -183,20 +197,6 @@ PMTCalibrator::~PMTCalibrator() {
 			if(pmtEffic[s][t])
 				delete(pmtEffic[s][t]);
 }
-float PMTCalibrator::invertLinearity(Side s, unsigned int t, float l, float time) const {
-	assert(linearityInverses[s][t]);
-	if(t<nBetaTubes)
-		return linearityInverses[s][t]->Eval(l)/gmsFactor(s,t,time);
-	return l;
-}
-float PMTCalibrator::dInverse(Side s, unsigned int t, float l, float time) const {
-	const float h = 0.1;
-	return (invertLinearity(s, t, l+h, time)-invertLinearity(s, t, l-h, time))/(2.0*h);
-}
-float_err PMTCalibrator::invertLinearity(Side s, unsigned int t, float_err l, float time) const {
-	return float_err(invertLinearity(s,t,l.x,time),l.err*dInverse(s, t, l.x,time));
-}
-
 
 float PMTCalibrator::lightResolution(Side s, unsigned int t, float l, float time) const {
 	if(scaleNoiseWithL)
@@ -374,7 +374,7 @@ void PMTCalibrator::printSummary() {
 }
 
 Stringmap PMTCalibrator::calSummary() const { 
-	Stringmap m;
+	Stringmap m = GS?GS->gmsSummary():Stringmap();
 	m.insert("run",itos(myRun));
 	m.insert("tstart",itos(CDB->startTime(myRun)));
 	m.insert("tend",itos(CDB->endTime(myRun)));
@@ -382,9 +382,7 @@ Stringmap PMTCalibrator::calSummary() const {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			std::string tname = ctos(sideNames(s))+itos(t);
-			m.insert(tname+"_gms0",getGMS0(s, t));
 			m.insert(tname+"_deltaL",getDeltaL(s,t));
-			m.insert(tname+"_gms",gmsFactor(s,t,0));
 			m.insert(tname+"_adc100",calibratedEnergy(s,t,0,0,100.0,0).x);
 			m.insert(tname+"_res500",energyResolution(s,t,500.0,0,0,0));
 			if(pmtEffic[s][t])

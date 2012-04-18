@@ -52,7 +52,7 @@ protected:
 	int getInsertID();
 	
 	/// check if table exists in DB
-	bool checkTable(const char* tname) { return db && db->HasTable(tname); }
+	bool checkTable(const std::string& tname) { return db && db->HasTable(tname.c_str()); }
 	
 	/// execute an info-returning query
 	void Query();

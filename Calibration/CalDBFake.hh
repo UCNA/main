@@ -60,6 +60,8 @@ public:
 	virtual PositioningCorrector* getAnodePositioningCorrector(RunNum rn) { return getPositioningCorrectorByID(0); }
 	/// get anode gain correction factor
 	virtual float getAnodeGain(RunNum rn, Side) { return 1.0; }
+	/// get GMS gain tweaking factors
+	virtual void getGainTweak(RunNum rn, Side s, unsigned int t, float& orig, float& final) { orig=final=500.0; }
 	
 	/// get positioning corrector by ID number
 	PositioningCorrector* getPositioningCorrectorByID(unsigned int psid) {

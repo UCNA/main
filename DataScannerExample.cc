@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
 	G4toPMT G2P;
 	// use data from these MC files (most recent unpolarized beta decay, includes Fermi function spectrum correction)
 	// note wildcard * in filename; MC output is split up over many files, but G2P will TChain them together
-	G2P.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
+	G2P.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
 	
 	// PMT Calibrator loads run-specific energy calibrations info for selected run (14111)
 	RunNum rn = 14111;
