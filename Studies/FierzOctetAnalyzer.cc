@@ -9,12 +9,12 @@ FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, con
 }
 
 void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
-	// fill events spectrum for Type 0 beta events on each side
+	// fill events spectrum with Etrue on both sides
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
-	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
-		//hFullEnergySpectrum[PDS.fSide]->Fill(PDS.scints[PDS.fSide].energy.x, weight);
+	if(PS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
 		hFullEnergySpectrum[PDS.fSide]->Fill(PDS.getEtrue(), weight);
 }
+
 
 void FierzOctetAnalyzer::calculateResults() {
 	// form (blinded) super-ratio and super-sum of anode spectra
@@ -29,13 +29,12 @@ void FierzOctetAnalyzer::makePlots() {
 	hFullEnergySR->Draw();
 	printCanvas("Full_Energy_Asymmetry");
 
-	// also draw the Super Sum
+	// also draw the Super Sum to "Full_Energy_SuperSum.pdf" in the same dir
 	hFullEnergySS->Draw();
 	printCanvas("Full_Energy_SuperSum");
 
 	// and draw the raw spectra (with both sides / AFP states in same plot), in their own subfolder "MWPC_Energy"
-	drawQuadSides(qFullEnergySpectrum[EAST],qFullEnergySpectrum[WEST],true,"MWPC_Energy");
-	//drawQuadSides(qFullEnergySpectrum[EAST],qFullEnergySpectrum[WEST],true,"E_vis");
+	drawQuadSides(qFullEnergySpectrum[EAST], qFullEnergySpectrum[WEST], true, "MWPC_Energy");
 }
 
 void FierzOctetAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
@@ -83,12 +82,12 @@ int main(int argc, char *argv[]) {
 			octs.pop_back();
 		
 		// process the octets; skip re-processing if already produced under one hour ago
-		processOctets(OAE,octs,3600);
+		processOctets(OAE, octs, 3600);
 		
 	} else if(string(argv[1])=="sim") {
 		
 		// make another version of the analyzer, with a different output path for simulation, pointing to the data to clone
-		FierzOctetAnalyzer OAE_Sim(&OM,"Full_Energy_Asymmetry_Example_Simulated",FierzOctetAnalyzer::processedLocation);
+		FierzOctetAnalyzer OAE_Sim(&OM, "Full_Energy_Asymmetry_Example_Simulated", FierzOctetAnalyzer::processedLocation);
 
 		// and set up a simulation data source from neutron beta decay simulation
 		G4toPMT simData;
