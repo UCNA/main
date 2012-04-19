@@ -12,7 +12,8 @@ void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 	// fill events spectrum for Type 0 beta events on each side
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
-		hFullEnergySpectrum[PDS.fSide]->Fill(PDS.scints[PDS.fSide].energy.x, weight);
+		//hFullEnergySpectrum[PDS.fSide]->Fill(PDS.scints[PDS.fSide].energy.x, weight);
+		hFullEnergySpectrum[PDS.fSide]->Fill(PDS.getEtrue(), weight);
 }
 
 void FierzOctetAnalyzer::calculateResults() {
@@ -34,6 +35,7 @@ void FierzOctetAnalyzer::makePlots() {
 
 	// and draw the raw spectra (with both sides / AFP states in same plot), in their own subfolder "MWPC_Energy"
 	drawQuadSides(qFullEnergySpectrum[EAST],qFullEnergySpectrum[WEST],true,"MWPC_Energy");
+	//drawQuadSides(qFullEnergySpectrum[EAST],qFullEnergySpectrum[WEST],true,"E_vis");
 }
 
 void FierzOctetAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
