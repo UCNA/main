@@ -146,11 +146,11 @@ def plot_octet_asymmetries(basedir,depth=0):
 				k = af.getKurie(s,afp,"0")
 				if k:
 					kdat[s][afp].append([n,k.ep,k.dep]+[af.getKurie(s,afp,"0",t) for t in range(4)])
-					if not 780 < k.ep < 840:
+					if not 782 < k.ep < 810:
 						print "*** Funny Endpoint",k.ep,k.side,k.afp,"in",af.fname
 				rt = af.getRate(s,afp,'0',"hEnergy_Type_0_%s_%s"%(s,afpNames[afp]))
 				if rt:
-					if not 0.10 < rt.rate < 0.25:
+					if not 0.15 < rt.rate < 0.35:
 						print "*** Funny rate",rt.rate,rt.side,rt.afp,"in",af.fname
 					if not 0.001 < rt.dRate():
 						print "**** Funny dRate",rt.dRate(),rt.side,rt.afp,"in",af.fname
@@ -175,7 +175,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 	
 	gBgRate=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
-				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.50),
+				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.40),
 				key = graph.key.key(pos="bl"))
 	gBgRate.texrunner.set(lfs='foils17pt')
 	
@@ -265,8 +265,11 @@ def plot_octet_asymmetries(basedir,depth=0):
 				chi2 = LF.ssResids()
 				print chi2
 				ndf = len(bgRateDat[s][afp])-len(LF.coeffs)
+				gtitle = s+" Side, AFP=%s: $%.4f$Hz $\\chi^2/\\nu = %.1f/%i$"%(afp,LF.coeffs[0],chi2,ndf)
+				if stats:	
+					gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
 				gBgRate.plot(graph.data.points(bgRateDat[s][afp],x=1,y=2,dy=3,
-								title=s+" Side, AFP=%s: $%.4f$Hz $\\chi^2/\\nu = %.1f/%i$ $(p=%.2f)$"%(afp,LF.coeffs[0],chi2,ndf,stats.chisqprob(chi2,ndf))),
+								title=gtitle),
 							[graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=[sideCols[s],]),
 							graph.style.errorbar(errorbarattrs=[sideCols[s],])])
 				gBgRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line([sideCols[s],])])
@@ -285,7 +288,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 			gEp=graph.graphxy(width=25,height=8,
 						x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
 						y=graph.axis.lin(title="Endpoint [keV]",min=700,max=850),
-						key = graph.key.key(pos="bl"))
+						key = graph.key.key(pos="tr"))
 			gEp.texrunner.set(lfs='foils17pt')
 
 			for t in range(4):
@@ -389,10 +392,10 @@ class MC_Comparator:
 		
 if __name__=="__main__":
 	
-	MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated")
-	#MCC.endpoint_gain_tweak()
-	MCC.backscatter_fractions()
-	exit(0)
+	if 0:
+		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated")
+		#MCC.endpoint_gain_tweak()
+		MCC.backscatter_fractions()
 	
 	for i in range(3):
 		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
