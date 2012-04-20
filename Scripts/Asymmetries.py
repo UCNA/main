@@ -16,7 +16,8 @@ ppSegments = [["A1","A2","A4","A5"],["A7","A9","A10","A12"],["B1","B2","B4","B5"
 hoSegments = [ppSegments[0]+ppSegments[1],ppSegments[2]+ppSegments[3]]
 octSegments = [hoSegments[0]+hoSegments[1],]
 divSegments = [octSegments,hoSegments,ppSegments]
-
+unitNames = {0:"Octet",1:"Half Octet",2:"Pulse Pair",3:"Run"}
+		
 def addQuad(a,b):
 	return sqrt(a**2+b**2)
 	
@@ -164,12 +165,8 @@ def plot_octet_asymmetries(basedir,depth=0):
 	##############
 	# set up graphs
 	##############
-	unitName = "Octet"
-	if depth == 1:
-		unitName = "Half Octet"
-	if depth == 2:
-		unitName = "Pulse Pair"
-		
+	unitName=unitNames[depth]
+	
 	gAsyms=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
 				y=graph.axis.lin(title="Asymmetry",min=-0.2,max=0),
@@ -315,37 +312,86 @@ def upload_gain_tweak(conn,rns,s,t,e0,e1):
 	conn.execute("INSERT INTO gain_tweak(start_run,end_run,side,quadrant,e_orig,e_final)\
 					VALUES (%i,%i,'%s',%i,%f,%f)"%(rns[0],rns[-1],s,t,e0,e1))
 
-def endpoint_gain_tweak(basedir,simdir,depth=0):
-	"""Set gain tweak factors to match spectrum endpoints between data and simulation"""
-	
-	# gather data
-	def sortByRuns(asyms):
-		return dict([(tuple(af.getRuns()),af) for af in asyms])
-	datAsyms = sortByRuns(collectAsymmetries(basedir,depth))
-	simAsyms = sortByRuns(collectAsymmetries(simdir,depth))
-	
-	# compare endpoints for each run grouping
-	rungrps = datAsyms.keys()
-	rungrps.sort()
-	conn = open_connection()
-	for rns in rungrps:
-		if rns not in simAsyms:
-			print "**** Missing simulations for ",rns
-			continue
-		print rns
-		for s in ["East","West"]:
-			for t in range(4):
-				kdat = 0.5*(datAsyms[rns].getKurie(s[0],'0',"0",t).ep+datAsyms[rns].getKurie(s[0],'1',"0",t).ep)
-				ksim = 0.5*(simAsyms[rns].getKurie(s[0],'0',"0",t).ep+simAsyms[rns].getKurie(s[0],'1',"0",t).ep)
-				oldtweak=get_gain_tweak(conn,rns[0],s,t)
-				print "\t%s %i:\t%f\t%f\t%f\tOld:"%(s,t,kdat,ksim,ksim/kdat),oldtweak,oldtweak[1]/oldtweak[0]
-				#delete_gain_tweak(conn,rns[0],s,t)
-				#upload_gain_tweak(conn,rns,s,t,kdat*oldtweak[0]/oldtweak[1],ksim)
 
+class MC_Comparator:
+	"""Class for comparing data and MC results"""
+
+	def __init__(self,basedir,simdir,depth=0):
+		def sortByRuns(asyms):
+			return dict([(tuple(af.getRuns()),af) for af in asyms])
+		self.basedir = basedir
+		self.simdir = simdir
+		self.depth = abs(depth)
+		self.datAsyms = sortByRuns(collectAsymmetries(basedir,depth))
+		self.simAsyms = sortByRuns(collectAsymmetries(simdir,depth))
+		self.rungrps = self.datAsyms.keys()
+		self.rungrps.sort()
+		for rns in self.rungrps:
+			if rns not in self.simAsyms:
+				print "**** Missing simulations for ",rns
+				self.datAsyms.pop(rns)
+
+	def endpoint_gain_tweak():
+		"""Set gain tweak factors to match spectrum endpoints between data and simulation"""
+		conn = open_connection()
+		for rns in self.rungrps:
+			print rns
+			for s in ["East","West"]:
+				for t in range(4):
+					kdat = 0.5*(self.datAsyms[rns].getKurie(s[0],'0',"0",t).ep+self.datAsyms[rns].getKurie(s[0],'1',"0",t).ep)
+					ksim = 0.5*(self.simAsyms[rns].getKurie(s[0],'0',"0",t).ep+self.simAsyms[rns].getKurie(s[0],'1',"0",t).ep)
+					oldtweak=get_gain_tweak(conn,rns[0],s,t)
+					print "\t%s %i:\t%f\t%f\t%f\tOld:"%(s,t,kdat,ksim,ksim/kdat),oldtweak,oldtweak[1]/oldtweak[0]
+					#delete_gain_tweak(conn,rns[0],s,t)
+					#upload_gain_tweak(conn,rns,s,t,kdat*oldtweak[0]/oldtweak[1],ksim)
+					
+	def backscatter_fractions(self):
+		"""Plot data and simulation backscatter fractions"""
+		nmax = len(self.rungrps)-1
+		gScatter=graph.graphxy(width=30,height=15,
+			x=graph.axis.lin(title=unitNames[self.depth],min=-nmax/3,max=nmax),
+			y=graph.axis.lin(title="Backscatter Fraction (\\% of Type 0)",min=0,max=3.0),
+			key = graph.key.key(pos="tl"))
+		gScatter.texrunner.set(lfs='foils17pt')
+		
+		afps = {'0':"Off",'1':"On"}
+		scols = {'E':rgb.red,'W':rgb.blue}
+		afpSymbs = {'0':symbol.circle,'1':symbol.triangle}
+		afpLines = {'0':style.linestyle.dashed,'1':style.linestyle.dotted}
+		
+		for s in ["E","W"]:
+			for afp in afps:
+				gdat = []
+				for (n,rns) in enumerate(self.rungrps):
+					dat0 = self.datAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_0_%s_%s"%(s,afps[afp])).counts
+					dat1 = self.datAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_1_%s_%s"%(s,afps[afp])).counts
+					dat2 = self.datAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_2_%s_%s"%(s,afps[afp])).counts
+					sim0 = self.simAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_0_%s_%s"%(s,afps[afp])).counts
+					sim1 = self.simAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_1_%s_%s"%(s,afps[afp])).counts
+					sim2 = self.simAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_2_%s_%s"%(s,afps[afp])).counts
+					gdat.append([n,rns[0],100.*dat1/dat0,100.*dat2/dat0,100.*sim1/sim0,100.*sim2/sim0])
+					print n,rns
+					print gdat[-1]
+				gScatter.plot(graph.data.points(gdat,x=1,y=3,title="%s$_{\\rm %s}$ Type I"%(s,afps[afp])),
+							[graph.style.symbol(afpSymbs[afp],symbolattrs=[scols[s],deco.filled]),])
+				gScatter.plot(graph.data.points(gdat,x=1,y=4,title="%s$_{\\rm %s}$ Type II/III"%(s,afps[afp])),
+							[graph.style.symbol(afpSymbs[afp],symbolattrs=[scols[s]]),])
+				gScatter.plot(graph.data.points(gdat,x=1,y=5,title="%s$_{\\rm %s}$ Type I MC"%(s,afps[afp])),
+							[graph.style.line([afpLines[afp],scols[s],style.linewidth.THick]),])
+				gScatter.plot(graph.data.points(gdat,x=1,y=6,title="%s$_{\\rm %s}$ Type II/III MC"%(s,afps[afp])),
+							[graph.style.line([afpLines[afp],scols[s]]),])	
+					
+		gScatter.writetofile(self.basedir+"/BacscatterFrac_%i.pdf"%self.depth)
+		
+		
+		
+		
+		
 if __name__=="__main__":
 	
-	endpoint_gain_tweak(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",
-						os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated")
+	MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated")
+	#MCC.endpoint_gain_tweak()
+	MCC.backscatter_fractions()
 	exit(0)
 	
 	for i in range(3):

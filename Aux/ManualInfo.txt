@@ -1,3 +1,17 @@
+
+
+#####
+# generic beam cuts
+######
+
+Cut_BeamBurst:		start = 0.05	end = 10	runStart = 13000	runEnd = 100000
+Cut_ClusterEvt:		start = 60.e-6	end = 10	runStart = 13000	runEnd = 100000
+
+
+######
+# cut unwanted run times
+######
+
 14897_timecut:		start = 1000	end = 100000	reason = bad_W_mwpc
 14908_timecut:		start = 0	end = 50	reason = bad_W_mwpc
 14913_timecut:		start = 950	end = 1100	reason = bad_W_mwpc
@@ -11,10 +25,10 @@
 15311_timecut:		start = 0	end = 150	reason = clean_trap
 15448_timecut:		start = 0	end = 150	reason = clean_trap
 
-#EastBackADC     150     4100    chan_above_ped
-#EastTopVetoADC  600     4100    chan
-#WestBackADC     100      4100    chan_above_ped
-#GVMonitorCuts   2.0     1000    Hz
+
+######
+# wirechamber cuts
+######
 
 Cut_MWPC_E_CathSum:	start = 700	end = 100e3	runStart = 13000	runEnd = 100000
 Cut_MWPC_W_CathSum:	start = 850	end = 100e3	runStart = 13000	runEnd = 100000
@@ -29,17 +43,24 @@ Cut_MWPC_W_CathMax:	start = 250	end = 5000	runStart = 19924	runEnd = 19960
 Cut_MWPC_E_CathMax:	start = 125	end = 5000	runStart = 19823	runEnd = 19863
 Cut_MWPC_W_CathMax:	start = 200	end = 5000	runStart = 19823	runEnd = 19863
 
+
+######
+# muon veto cuts
+######
+
 Cut_TDC_Back_E:		start = 1000	end = 2800	runStart = 13000	runEnd = 100000
 Cut_TDC_Back_W:		start = 1200	end = 3200	runStart = 13000	runEnd = 100000
 Cut_TDC_Top_E:		start = 1250	end = 3250	runStart = 13000	runEnd = 100000
 Cut_ADC_Drift_E:	start = 1400	end = 3300	runStart = 13000	runEnd = 100000
 Cut_ADC_Drift_W:	start = 800	end = 2300	runStart = 13000	runEnd = 100000
 
-Cut_BeamBurst:		start = 0.05	end = 10	runStart = 13000	runEnd = 100000
-Cut_ClusterEvt:		start = 60.e-6	end = 10	runStart = 13000	runEnd = 100000
 
+######
+# Scintillator TDC cuts
+######
+
+### generic ###
 Cut_TDC_Scint_E_Selftrig:	start = 2790	end = 4080	runStart = 13000	runEnd = 100000
-#Cut_TDC_Scint_W_Selftrig:	start = 3010	end = 4080	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_W_Selftrig:	start = 3200	end = 4080	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_E:	start = 50	end = 4080	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_W:	start = 50	end = 4080	runStart = 13000	runEnd = 100000
@@ -52,6 +73,11 @@ Cut_TDC_Scint_W_1:	start = 5	end = 3750	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_W_2:	start = 5	end = 3750	runStart = 13000	runEnd = 100000
 Cut_TDC_Scint_W_3:	start = 5	end = 3750	runStart = 13000	runEnd = 100000
 
+### 2010 ###
+Cut_TDC_Scint_W_Selftrig:	start = 3050	end = 4080	runStart = 13911	runEnd = 15900
+Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 15901	runStart = 14166	runEnd = 16300
+
+### 2011 ###
 Cut_TDC_Scint_E_Selftrig:	start = 2950	end = 4080	runStart = 17301	runEnd = 17550
 Cut_TDC_Scint_W_Selftrig:	start = 3350	end = 4080	runStart = 17301	runEnd = 17550
 Cut_TDC_Scint_E_0:	start = 5	end = 4000	runStart = 17301	runEnd = 17550
