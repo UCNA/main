@@ -2,13 +2,15 @@
 #define bmSourceHolderConstruction_HH 1
 
 #include "bmDetectorConstructionUtils.hh"
+#include "G4UImessenger.hh"
+#include "G4UIdirectory.hh"
+#include "G4UIcmdWithADoubleAndUnit.hh"
 
 /// gas-filled region containing anode, cathode planes
-class bmSourceHolderConstruction: public MaterialUser {
+class bmSourceHolderConstruction: public MaterialUser, G4UImessenger {
 public:
 	/// constructor
-	bmSourceHolderConstruction(): fWindowThick(3.6*um), fCoatingThick(0.1*um),
-	fWindowMat(Mylar), fCoatingMat(Al), fSourceHolderThickness(3./16.*inch) { }
+	bmSourceHolderConstruction();
 	
 	/// get thickness
 	G4double getHolderThick() const { return fSourceHolderThickness; }
@@ -25,10 +27,17 @@ public:
 	/// construct holder logical volume
 	void Construct();
 	
+	/// UI interface
+	virtual void SetNewValue(G4UIcommand * command,G4String newValue);
+	
 protected:
 	G4VPhysicalVolume* window_phys;
 	G4VPhysicalVolume* coating_phys[2];
 	G4double fSourceHolderThickness;
+
+private:
+	G4UIdirectory* pUIdir;						//< UI Directory for source holder construction
+	G4UIcmdWithADoubleAndUnit* pWindowThickCmd;	//< source holder window thickness command
 };
 
 #endif

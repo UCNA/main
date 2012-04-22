@@ -21,6 +21,7 @@ class GeantSimManager:
 			self.settings["fieldmapcmd"] = "/detector/fieldmapfile "+fmap
 		self.settings["physlist"] = "livermore"
 		self.settings["scintstep"] = "1.0 mm"
+		self.settings["extra_cmds"] = ""
 		
 		self.settings["vis_cmd"] = ""
 		if False: #nEvents <= 100:
@@ -98,7 +99,7 @@ class GeantSimManager:
 		self.g4_workdir = os.environ["G4WORKDIR"]
 		if self.podsh:
 			g4_workdir = "~/geant4/"
-		self.type_dir = self.settings["simName"]+"_%s_geom%s"%(self.settings["generator"].replace("/","_"),self.settings["geometry"])
+		self.type_dir = self.settings["simName"]+"_%s"%(self.settings["generator"].replace("/","_"))
 		if self.settings["gunenergy"]:
 			type_dir += "_%.1fkeV"%self.settings["gunenergy"]
 		self.g4_out_dir = self.g4_workdir+"/output/%s/"%self.type_dir
@@ -232,15 +233,39 @@ class GeantSimManager:
 			
 if __name__ == "__main__":
 
-	# unpolarized beta baseline: 5e7 in 18 clusters
-	if 1:
+	####################				
+	# neutrons
+	####################
+	
+	# unpolarized beta baseline: 5e7 in 36 clusters
+	if 0:
 		betaSim = GeantSimManager("LivPhys_495")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
+		betaSim.launch_sims(nEvents=5e7,nClusters=36,hours_old=100*24)
 		betaSim.launch_postanalyzer()
-		betaSim.launch_sims(nEvents=5e7,nClusters=36,hours_old=12*24)
+	
+	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 9 clusters
+	if 0:
+		betaSim = GeantSimManager("LivPhys_495_MagF",vacuum=1.e-3,fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+		betaSim.settings["physlist"]="livermore"
+		betaSim.set_generator("neutronBetaUnpol")
+		#betaSim.launch_sims(nEvents=1e7,nClusters=9,hours_old=1000)
 		betaSim.launch_postanalyzer()
-		
+	
+	# beta decay in 1e-3torr vacuum: 1e7 in 9 clusters
+	if 0:
+		betaSim = GeantSimManager("LivPhys_495_BadVac",vacuum=1.e-3)
+		betaSim.settings["physlist"]="livermore"
+		betaSim.set_generator("neutronBetaUnpol")
+		betaSim.launch_sims(nEvents=1e7,nClusters=9,hours_old=1000)
+		betaSim.launch_postanalyzer()
+			
+							
+	####################				
+	# calibration sources
+	####################
+					
 	# sources ["Sn113","Bi207","Ce139","Cd109","Cd113m","In114E","In114W"]
 	if 0:
 		for g in ["Cd113m"]:
@@ -251,33 +276,21 @@ if __name__ == "__main__":
 			sourceSim.launch_postanalyzer()
 
 
+	####################				
+	# silicon detector
+	####################
+
 	# Silicon detector test
-	if 0:
+	if 1:
 		siDet = GeantSimManager("SiDet",geometry="siDet")
-		siDet.set_generator("Bi207")
+		siDet.set_generator("Cs137")
+		siDet.settings["extra_cmds"] += "/sourceholder/windowthickness 1.5 mm\n"
 		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=4)
 		siDet.launch_postanalyzer()
 	
 	
-	
-	# magnetic field effects plus bad vacuum
-	#launch_simulations(generators = ["neutronBetaUnpol"], nEvents = 1e7, nClusters=18,
-	#	folderPrefix = "MagF_BadVac_20110725", hours_old = 10*24, vacuum=1.e-2,
-	#	fmap="/home/mmendenhall/mpmAnalyzer/SummaryData/Fieldmap_20101028_b.txt", resimOnly=True)
-
-	
-	# offset Bi source holder
-	#launch_simulations(generators = ["Bi207G"], nEvents = 10e5, folderPrefix="BigSpot", sourceHolderPos="0 0 0 mm", sourceRadius = "6.5 mm",
-	#					hours_old = 0*24, resimOnly = True)
-	#launch_simulations(generators = ["Bi207G"], nEvents = 10e5, folderPrefix="BigSpot_Offset", sourceHolderPos="0 -4.5 0 mm", sourceRadius = "4.5 mm",
-	#					hours_old = 0*24, resimOnly = True)
-	
-	# uniform energies to 1MeV
-	#launch_simulations(generators = ["uniformRandMomentum"], nEvents = 5e7, nClusters=24, folderPrefix = "Baseline_20110914",
-	#					nMonoLines=1, eStart=1000.0, eStop=1000.0, hours_old = 365*24, resimOnly=False)
-
-
 	# visualization test
 	#launch_simulations(generators = ["eGunRandMomentum"], forcePositioner="SourceDrop",
 	#					nEvents = 99, nClusters=0, folderPrefix = "VisTest",
 	#					nMonoLines=1, eStart=60.0, eStop=60.0, hours_old = 0, resimOnly=False)
+	
