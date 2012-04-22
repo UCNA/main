@@ -138,9 +138,7 @@ class GeantSimManager:
 		jobsout = None
 		if not self.podsh:
 			jobsout = open(parallel_jobfile,"w")
-		ucnG4_prod = self.g4_workdir+"/bin/Linux-g++/ucnG4_prod"
-		if os.path.exists(os.environ["G4WORKDIR"]+"/bin/Darwin-g++/ucnG4_prod"):
-			ucnG4_prod = "$G4WORKDIR/bin/Darwin-g++/ucnG4_prod"
+		ucnG4_prod = self.g4_workdir+"/bin/ucnG4_prod"
 		onejob = ""
 		subcmds = []
 		
@@ -220,7 +218,8 @@ class GeantSimManager:
 			allpts = ""
 			if self.settings["generator"] in ["neutronBetaUnpol","eGunRandMomentum","eGun"]:
 				allpts = " y"
-			jobsout.write("cd ../ucnG4_dev; ./%s %s %s/analyzed_%i.root%s\n"%(self.settings["analyzer"],outlist_name,self.g4_out_dir,nanalyzed,allpts))
+			analyzer_bin = self.g4_workdir+"/bin/"+self.settings["analyzer"]
+			jobsout.write("%s %s %s/analyzed_%i.root%s\n"%(analyzer_bin,outlist_name,self.g4_out_dir,nanalyzed,allpts))
 			nanalyzed += 1
 		jobsout.close()
 		print "\n----- %s ------"%resim_jobfile
@@ -285,7 +284,7 @@ if __name__ == "__main__":
 		siDet = GeantSimManager("SiDet",geometry="siDet")
 		siDet.set_generator("Cs137")
 		siDet.settings["extra_cmds"] += "/sourceholder/windowthickness 1.5 mm\n"
-		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=4)
+		siDet.launch_sims(nEvents=1e5,nClusters=6,hours_old=0)
 		siDet.launch_postanalyzer()
 	
 	
