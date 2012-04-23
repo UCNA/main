@@ -101,11 +101,11 @@ std::string join(const std::vector<std::string>& ss, const std::string& sep) {
 	return s;
 }
 
-std::string strip(const std::string& s, const std::string splitchars) {
-	size_t wstart = s.find_first_not_of(splitchars);
+std::string strip(const std::string& s, const std::string stripchars) {
+	size_t wstart = s.find_first_not_of(stripchars);
 	if(wstart == std::string::npos)
 		return "";
-	size_t wend = s.find_last_not_of(splitchars);
+	size_t wend = s.find_last_not_of(stripchars);
 	return s.substr(wstart,wend-wstart+1);
 }
 

@@ -1,5 +1,6 @@
 #include "SegmentSaver.hh"
 #include "Types.hh"
+#include "PathUtils.hh"
 
 TH1* SegmentSaver::registerSavedHist(const std::string& hname, const std::string& title,unsigned int nbins, float xmin, float xmax) {
 	assert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
@@ -26,12 +27,14 @@ TH1* SegmentSaver::registerSavedHist(const std::string& hname, const TH1& hTempl
 }
 
 SegmentSaver::SegmentSaver(OutputManager* pnt, const std::string& nm, const std::string& inflName):
-OutputManager(nm,pnt), inflname(inflName) {		
+OutputManager(nm,pnt), inflname(inflName), inflAge(0) {		
 	// open file to load existing data
 	fIn = (inflname.size())?(new TFile((inflname+".root").c_str(),"READ")):NULL;
 	assert(!fIn || !fIn->IsZombie());
-	if(fIn)
-		printf("Loading data from %s...\n",inflname.c_str());
+	if(fIn) {
+		inflAge = fileAge(inflname+".root");
+		printf("Loading data from %s [%.1f hours old]...\n",inflname.c_str(),inflAge/3600.);
+	}
 }
 
 SegmentSaver::~SegmentSaver() {
@@ -39,6 +42,10 @@ SegmentSaver::~SegmentSaver() {
 		fIn->Close();
 		delete(fIn);
 	}
+}
+
+bool SegmentSaver::inflExists(const std::string& inflName) {
+	return fileExists(inflName+".root") && fileExists(inflName+".txt");
 }
 
 TH1* SegmentSaver::getSavedHist(const std::string& hname) {

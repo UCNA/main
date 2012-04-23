@@ -42,7 +42,7 @@ std::vector<std::string> split(const std::string& s, const std::string splitchar
 /// join a list of strings into a single string
 std::string join(const std::vector<std::string>& ss, const std::string& sep = " ");
 /// strip junk chars off start and end of string
-std::string strip(const std::string& s, const std::string splitchars = " \t\r\n");
+std::string strip(const std::string& s, const std::string stripchars = " \t\r\n");
 /// split a string into a vector of doubles
 std::vector<double> sToDoubles(const std::string& s, const std::string splitchars = ", \t\r\n");
 /// split a string into a vector of floats

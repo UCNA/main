@@ -23,7 +23,7 @@ AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, 
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
 				qEnergySpectra[s][p][t] = registerCoreHist(std::string("hEnergy_")+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
 														   std::string("Type ")+itos(t)+" Events Energy",
-														   40, 0, 1000, s, &hEnergySpectra[s][p][t]);
+														   100, 0, 1000, s, &hEnergySpectra[s][p][t]);
 			}
 			if(t>TYPE_III_EVENT) continue;
 			TH2F* hPositionsTemplate = new TH2F((std::string("hPos_Type_")+itos(t)).c_str(),
