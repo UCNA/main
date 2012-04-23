@@ -32,7 +32,7 @@ Stringmap Sim2PMT::evtInfo() {
 }
 
 void Sim2PMT::calcReweight() {
-	physicsWeight = 1.0; //= spectrumCorrectionFactor(ePrim) for beta spectrum
+	physicsWeight = 1.0;
 	if(afp==AFP_ON||afp==AFP_OFF)
 		physicsWeight *= 1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_OFF?1:-1));
 	if(fakeClip) {

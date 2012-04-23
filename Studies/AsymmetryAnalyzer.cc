@@ -175,7 +175,7 @@ void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor)
 	dat.hAsym->Draw("SAME HIST E1");
 	printCanvas("DataComparison/Asymmetry");
 	
-	hSuperSum->Scale(simfactor);
+	hSuperSum->Scale(1.0/simfactor);
 	drawHistoPair(dat.hSuperSum,hSuperSum);
 	printCanvas("DataComparison/SuperSum");
 	
@@ -186,7 +186,7 @@ void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor)
 			for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
 				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
 				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(22+4*afp);
-				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->Scale(simfactor);
+				//qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->Scale(1.0/simfactor);
 				hToPlot.push_back(qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]);
 				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
 				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(20+4*afp);

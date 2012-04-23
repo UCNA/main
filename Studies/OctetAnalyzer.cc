@@ -118,8 +118,8 @@ TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists& qEast
 	addObject(hAsym);
 	
 	// first calculate R = E+W-/E-W+
-	zero(hR);
-	zero(hAsym);
+	hR->Reset();
+	hAsym->Reset();
 	hR->Add(qEast.fgbg[AFP_ON].h[fg]);
 	hR->Multiply(qWest.fgbg[AFP_OFF].h[fg]);
 	hR->Scale(1.0/(totalTime[AFP_ON][fg].t[EAST]*totalTime[AFP_OFF][fg].t[WEST]));
@@ -170,8 +170,8 @@ TH1* OctetAnalyzer::calculateSuperSum(const std::string& hname, const quadHists&
 	addObject(hSS);
 	
 	// calculate intermediate rate products
-	zero(hR);
-	zero(hSS);
+	hR->Reset();
+	hSS->Reset();
 	hR->Add(qEast.fgbg[AFP_ON].h[fg]);
 	hR->Multiply(qWest.fgbg[AFP_OFF].h[fg]);
 	hR->Scale(1.0/(totalTime[AFP_ON][fg].t[EAST]*totalTime[AFP_OFF][fg].t[WEST]));

@@ -19,7 +19,7 @@ TH1* SegmentSaver::registerSavedHist(const std::string& hname, const TH1& hTempl
 		h = (TH1*)addObject(fIn->Get(hname.c_str())->Clone(hname.c_str()));
 	} else {
 		h = (TH1*)addObject(hTemplate.Clone(hname.c_str()));
-		zero(h);
+		h->Reset();
 	}
 	saveHists.insert(std::make_pair(hname,h));
 	return h;
@@ -55,7 +55,7 @@ const TH1* SegmentSaver::getSavedHist(const std::string& hname) const {
 
 void SegmentSaver::zeroSavedHists() {
 	for(std::map<std::string,TH1*>::iterator it = saveHists.begin(); it != saveHists.end(); it++)
-		zero(it->second);
+		it->second->Reset();
 }
 
 bool SegmentSaver::isEquivalent(const SegmentSaver& S) const {
