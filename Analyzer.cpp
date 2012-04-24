@@ -121,27 +121,26 @@ void mi_listPosmaps(std::deque<std::string>&, std::stack<std::string>&) { CalDBS
 void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octn = streamInteractor::popInt(stack);
 	const std::string outputDir="OctetAsym_Offic";
-	//const std::string outputDir="OctetAsym_10keV_Bins";
 	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
 	if(octn==1000) {
 		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 		AsymmetryAnalyzer AA(&OM,outputDir);
 		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600);
-	} else if(octn==-1000) {
-		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
-		AsymmetryAnalyzer AA_Sim(&OM,outputDir+"_Simulated",AsymmetryAnalyzer::processedLocation);
-		G4toPMT simData;
-		simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
-		simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, AA_Sim, simData, 1.0, 365*24*3600);
 	} else if(octn < 0) {
-		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),-octn-1);
-		if(!oct.getNRuns()) return;
-		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"_Simulated");
-		AsymmetryAnalyzer AA_Sim(&OM,oct.octName(),getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName()+"/"+oct.octName());		
 		G4toPMT simData;
 		simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
-		simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), AA_Sim, simData, 1.0, 24*3600);
+		if(octn==-1000) {
+			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
+			AsymmetryAnalyzer AA_Sim(&OM,outputDir+"_Simulated");
+			simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, AA_Sim, simData, 1.0, 365*24*3600);
+		} else {
+			Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),-octn-1);
+			if(!oct.getNRuns()) return;
+			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"_Simulated");
+			AsymmetryAnalyzer AA_Sim(&OM,oct.octName());		
+			simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), AA_Sim, simData, 1.0, 24*3600);
+		}
 	} else {
 		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),octn);
 		if(!oct.getNRuns()) return;
@@ -174,7 +173,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	TCanvas defaultCanvas;
 	defaultCanvas.SetFillColor(0);
 	defaultCanvas.SetCanvasSize(300,300);
-		
+	
 	inputRequester exitMenu("Exit Menu",&menutils_Exit);
 	inputRequester peek("Show stack",&menutils_PrintStack);
 	
@@ -188,7 +187,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	selectRuntype.addChoice("Background Runs","bg");
 	selectRuntype.addChoice("GMS Reference Runs","ref");
 	selectRuntype.setDefault("all");
-		
+	
 	// position map routines and menu
 	inputRequester pm_posmap("Generate Position Map",&mi_EndpointStudy);
 	pm_posmap.addArg("Start Run");
@@ -225,7 +224,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	inputRequester octetProcessor("Process Octet",&mi_processOctet);
 	octetProcessor.addArg("Octet number");
-		
+	
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
 	PostRoutines.addChoice(&plotGMS);

@@ -29,37 +29,35 @@
 #	All other lines (those not starting with a '*' or an '@') are comments.
 #
 
-#########################################
-#					#
-#	A1	Background Off		#
+#########################
+#						#
+#	A1	Background Off	#
 #	A2	Beta Off		#
-#	A3	Depol Off->On		#
-#	A4	Background On		#
+#	A3	Depol Off->On	#
+#	A4	Background On	#
 #	A5	Beta On			#
-#	A6	Depol On->Off		#
+#	A6	Depol On->Off	#
 #	A7	Beta On			#
-#	A8	Depol On->Off		#
-#	A9	Background On		#
+#	A8	Depol On->Off	#
+#	A9	Background On	#
 #	A10	Beta Off		#
-#	A11	Depol Off->On		#
-#	A12	Background Off		#
-#					#
-#	B1	Background On		#
+#	A11	Depol Off->On	#
+#	A12	Background Off	#
+#						#
+#	B1	Background On	#
 #	B2	Beta On			#
-#	B3	Depol On->Off		#
-#	B4	Background Off		#
+#	B3	Depol On->Off	#
+#	B4	Background Off	#
 #	B5	Beta Off		#
-#	B6	Depol Off->On		#
+#	B6	Depol Off->On	#
 #	B7	Beta Off		#
-#	B8	Depol Off->On		#
-#	B9	Background Off		#
+#	B8	Depol Off->On	#
+#	B9	Background Off	#
 #	B10	Beta On			#
-#	B11	Depol On->Off		#
-#	B12	Background On		#
-#					#
-#  + SourcesCal, LED scans, etc.	#
-#					#
-#########################################
+#	B11	Depol On->Off	#
+#	B12	Background On	#
+#						#
+#########################
 
 ########
 # 2010 #

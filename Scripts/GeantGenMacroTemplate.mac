@@ -33,6 +33,9 @@
 # max step size in scintillator, windows
 /detector/scintstepsize %(scintstep)s
 
+# insert extra pre-initialization commands here
+%(extra_cmds)s
+
 /run/initialize
 # generator initial position (0,0,0 = decay trap center)
 /gun/position %(gunpos)s

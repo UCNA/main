@@ -32,7 +32,7 @@ Stringmap Sim2PMT::evtInfo() {
 }
 
 void Sim2PMT::calcReweight() {
-	physicsWeight = 1.0; //= spectrumCorrectionFactor(ePrim) for beta spectrum
+	physicsWeight = 1.0;
 	if(afp==AFP_ON||afp==AFP_OFF)
 		physicsWeight *= 1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_OFF?1:-1));
 	if(fakeClip) {
@@ -112,8 +112,12 @@ void Sim2PMT::classifyEvent() {
 	fType = TYPE_IV_EVENT;
 	fSide = NONE;
 	for(Side s = EAST; s<=WEST; ++s) {
-		if(is2fold[EAST] && is2fold[WEST]) fType = TYPE_I_EVENT;
-		if(is2fold[s] && !passesScint[otherSide(s)]) fType = passesMWPC[otherSide(s)]?TYPE_II_EVENT:TYPE_0_EVENT;
+		if(is2fold[s]) {
+			if(passesScint[otherSide(s)])
+				fType = TYPE_I_EVENT;
+			else
+				fType = passesMWPC[otherSide(s)]?TYPE_II_EVENT:TYPE_0_EVENT;
+		}
 		if(passesScint[s]&&!passesScint[otherSide(s)]) fSide = s;
 	}
 	if(passesScint[EAST] && passesScint[WEST])

@@ -16,6 +16,10 @@ public:
 	virtual ~SegmentSaver();
 	/// get location of this analyzer's input file
 	const std::string& getInflName() const { return inflname; }
+	/// get age of analyzer's input file
+	double getInflAge() const { return inflAge; }
+	/// check whether correct input files exist at given location
+	static bool inflExists(const std::string& inflName);
 	
 	/// generate or restore from file a saved TH1F histogram
 	TH1* registerSavedHist(const std::string& hname, const std::string& title,unsigned int nbins, float xmin, float xmax);
@@ -48,6 +52,7 @@ protected:
 	std::map<std::string,TH1*> saveHists;		//< saved histograms
 	TFile* fIn;									//< input file to read in histograms from
 	std::string inflname;						//< where to look for input file
+	double inflAge;								//< age of input file [s]; 0 for brand-new files
 };
 
 #endif

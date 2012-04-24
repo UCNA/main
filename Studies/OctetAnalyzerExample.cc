@@ -37,8 +37,8 @@ void OctetAnalyzerExample::makePlots() {
 void OctetAnalyzerExample::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
 	// re-cast to correct type
 	OctetAnalyzerExample& dat = (OctetAnalyzerExample&)OAdata;
-	// scale Super-Sum by simulation factor draw comparison with data (red=data, blue=MC)
-	hAnodeSS->Scale(simfactor);
+	// scale down Super-Sum by simulation factor to draw comparison with data (red=data, blue=MC)
+	hAnodeSS->Scale(1.0/simfactor);
 	drawHistoPair(dat.hAnodeSS,hAnodeSS);
 	printCanvas("DataComparison/Wirechamber_Energy_SuperSum");
 	// same for Super-Ratio, except normalization is not needed
@@ -80,8 +80,8 @@ int main(int argc, char *argv[]) {
 		
 	} else if(std::string(argv[1])=="sim") {
 		
-		// make another version of the analyzer, with a different output path for simulation, pointing to the data to clone
-		OctetAnalyzerExample OAE_Sim(&OM,"Anode_Asymmetry_Example_Simulated",OctetAnalyzerExample::processedLocation);
+		// make another version of the analyzer, with a different output path for simulation
+		OctetAnalyzerExample OAE_Sim(&OM,"Anode_Asymmetry_Example_Simulated");
 
 		// and set up a simulation data source from neutron beta decay simulation
 		G4toPMT simData;

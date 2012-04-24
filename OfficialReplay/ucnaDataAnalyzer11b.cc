@@ -250,10 +250,12 @@ void ucnaDataAnalyzer11b::classifyEventType() {
 	fType = TYPE_IV_EVENT;
 	fSide = NONE;
 	for(Side s = EAST; s<=WEST; ++s) {
-		if(Is2fold(EAST) && Is2fold(WEST))
-			fType = TYPE_I_EVENT;
-		else if (Is2fold(s) && !passedCutTDC(otherSide(s)))
-			fType = passedMWPC(otherSide(s))?TYPE_II_EVENT:TYPE_0_EVENT;		
+		if(Is2fold(s)) {
+			if(passedCutTDC(otherSide(s)))
+				fType = TYPE_I_EVENT;
+			else
+				fType = passedMWPC(otherSide(s))?TYPE_II_EVENT:TYPE_0_EVENT;
+		}
 		if(passedCutTDC(s)&&!passedCutTDC(otherSide(s))) fSide = s;
 	}
 	// if side is ambiguous, TDCW has a cleaner TDC separation; make an 1-D cut (JL)

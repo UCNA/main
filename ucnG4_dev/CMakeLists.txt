@@ -2,7 +2,7 @@
 # Usage:
 # cmake -DGeant4_DIR=~/geant4.9.5/geant4.9.5-install/lib/Geant4-9.5.0/ ../ucnG4_dev/
 # make -j1 VERBOSE=1
-# mv bin/ucnG4_prod /home/mmendenhall/geant4/bin/Linux-g++/
+# mv bin/* $G4WORKDIR/bin/
 
 #----------------------------------------------------------------------------
 # Setup the project
@@ -82,9 +82,10 @@ add_executable(ucnG4_prod ucnG4_prod.cc ${sources} ${headers})
 target_link_libraries(ucnG4_prod ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
 add_executable(UCNA_MC_Analyzer UCNA_MC_Analyzer.cc ${sources} ${headers})
 target_link_libraries(UCNA_MC_Analyzer ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
+add_executable(SiDet_Analyzer SiDet_Analyzer.cc ${sources} ${headers})
+target_link_libraries(SiDet_Analyzer ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
-install(TARGETS ucnG4_prod DESTINATION bin)
-install(TARGETS UCNA_MC_Analyzer DESTINATION bin)
+install(TARGETS ucnG4_prod UCNA_MC_Analyzer SiDet_Analyzer DESTINATION bin)

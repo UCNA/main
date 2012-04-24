@@ -1,6 +1,26 @@
 #include "bmSourceHolderConstruction.hh"
 #include "G4SubtractionSolid.hh"
 
+
+bmSourceHolderConstruction::bmSourceHolderConstruction():
+fWindowThick(3.6*um), fCoatingThick(0.1*um),
+fWindowMat(Mylar), fCoatingMat(Al), fSourceHolderThickness(3./16.*inch) {
+	pUIdir = new G4UIdirectory("/sourceholder/");	
+	pWindowThickCmd = new G4UIcmdWithADoubleAndUnit("/sourceholder/windowthickness",this);
+	pWindowThickCmd->AvailableForStates(G4State_PreInit);
+	pWindowThickCmd->SetGuidance("thickness of windows on either side of sealed source");
+	pWindowThickCmd->SetDefaultValue(3.6*um);
+}
+
+void bmSourceHolderConstruction::SetNewValue(G4UIcommand * command, G4String newValue) {
+	if (command == pWindowThickCmd) {
+		fWindowThick = pWindowThickCmd->GetNewDoubleValue(newValue);
+		G4cout << "Setting source holder window thickness to " << fWindowThick/um << "um" << G4endl;
+	}else {
+		G4cerr << "Unknown command:" << command->GetCommandName() << " passed to bmSourceHolderConstruction::SetNewValue\n";
+    }
+}
+
 void bmSourceHolderConstruction::Construct() {
 	
 	const G4double fSourceRingRadius = 0.5*inch;

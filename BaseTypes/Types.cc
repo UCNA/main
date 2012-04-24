@@ -23,12 +23,6 @@ double binterpolate(const TAxis* ax, double binloc) {
 	return ax->GetBinCenter(1) + (ax->GetBinCenter(2)-ax->GetBinCenter(1))*binloc;
 }
 
-void zero(TH1* h) {
-	assert(h);
-	h->Scale(0.0);
-	h->SetEntries(0);
-}
-
 unsigned int totalBins(const TH1* h) {
 	assert(h);
 	Int_t nbinsx = h->GetNbinsX()+2;

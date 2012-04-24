@@ -26,9 +26,6 @@ inline bool pointIsInEllipse(float x, float y, float wx, float wy) { return x*x/
 /// interpolate fractional bin positions from a TAxis (needed to interpret TSpectrum positions)
 double binterpolate(const TAxis* ax, double binloc);
 
-/// zero out a histogram
-void zero(TH1* h);
-
 /// get total number of bins in a (multi-dimensional) histogram
 unsigned int totalBins(const TH1* h);
 
