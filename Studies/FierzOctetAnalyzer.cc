@@ -1,27 +1,54 @@
 #include "FierzOctetAnalyzer.hh"
 #include "GraphicsUtils.hh"
+#include "PathUtils.hh"
 #include <TStyle.h>
+#include <TRandom3.h>
+
+TRandom3 fierz_rnd_src;
+
 
 FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, const string& inflname): OctetAnalyzer(pnt,nm,inflname) {
-	// set up histograms of interest
-	for(Side s = EAST; s <= WEST; ++s)
+	for(Side s = EAST; s <= WEST; ++s) {
+		// energy histograms
 		qFullEnergySpectrum[s] = registerCoreHist("hFullEnergy", "Full Energy", 100, 0, 1000, s, &hFullEnergySpectrum[s]);
+		// trigger threshold counts
+		pTriggerThreshold[s][0] = registerFGBGPair("hTriggerAll", "Trigger threshold, all events",150,0,300,AFP_OTHER,s);
+		pTriggerThreshold[s][1] = registerFGBGPair("hTriggerTrig", "Trigger threshold, triggered events",150,0,300,AFP_OTHER,s);
+	}
 }
 
 void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
-	// fill events spectrum with Etrue on both sides
-	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
-	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
-		hFullEnergySpectrum[PDS.fSide]->Fill(PDS.getEtrue(), weight);
+	Side s = PDS.fSide;
+	if(!(s==EAST || s==WEST)) return;
+	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA) {
+		// fill events spectrum with Etrue on both sides
+		hFullEnergySpectrum[s]->Fill(PDS.getEtrue(), weight);
+		// trigger threshold extraction histograms
+		if(currentGV==GV_OPEN) {
+			if(PGen.getCalibrator() != PDS.ActiveCal) PGen.setCalibrator(PDS.ActiveCal);
+			PGen.setSide(s);
+			PGen.setPosition(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center);
+			double evis = PGen.generate(fierz_rnd_src.Uniform(350)).energy.x;
+			double etrue = PDS.ActiveCal->Etrue(s,TYPE_0_EVENT,s==EAST?evis:0,s==WEST?evis:0);
+			pTriggerThreshold[s][0].h[GV_OPEN]->Fill(etrue);
+			pTriggerThreshold[s][1].h[GV_OPEN]->Fill(etrue,PGen.triggered());
+		}
+	}
 }
 
 
 void FierzOctetAnalyzer::calculateResults() {
-	// form (blinded) super-ratio and super-sum of anode spectra
+	// form (blinded) super-ratio and super-sum of energy spectra
 	hFullEnergySR = (TH1F*)calculateSR("Full_Energy_Asymmetry", qFullEnergySpectrum[EAST], qFullEnergySpectrum[WEST]);
 	hFullEnergySR->SetMinimum(-0.20);
 	hFullEnergySR->SetMaximum(0.0);
 	hFullEnergySS = (TH1F*)calculateSuperSum("Full_Energy_SuperSum", qFullEnergySpectrum[EAST], qFullEnergySpectrum[WEST]);
+	// Calculate trigger efficiency fraction
+	for(Side s = EAST; s <= WEST; ++s) {
+		gTrigCurve[s] = (TGraphAsymmErrors*)addObject(new TGraphAsymmErrors(pTriggerThreshold[s][0].h[GV_OPEN]->GetNbinsX()));
+		gTrigCurve[s]->SetName(sideSubst("gTrigCurve_%c",s).c_str());
+		gTrigCurve[s]->BayesDivide(pTriggerThreshold[s][1].h[GV_OPEN],pTriggerThreshold[s][0].h[GV_OPEN],"w");
+	}
 }
 
 void FierzOctetAnalyzer::makePlots() {
@@ -34,7 +61,26 @@ void FierzOctetAnalyzer::makePlots() {
 	printCanvas("Full_Energy_SuperSum");
 
 	// and draw the raw spectra (with both sides / AFP states in same plot), in their own subfolder "MWPC_Energy"
-	drawQuadSides(qFullEnergySpectrum[EAST], qFullEnergySpectrum[WEST], true, "MWPC_Energy");
+	drawQuadSides(qFullEnergySpectrum[EAST], qFullEnergySpectrum[WEST], true, "Full_Energy");
+	
+	// draw the trigger efficiency curves in their own subfolder
+	for(Side s = EAST; s <= WEST; ++s) {
+		pTriggerThreshold[s][0].h[GV_OPEN]->SetLineColor(4);
+		pTriggerThreshold[s][0].h[GV_OPEN]->Draw();
+		pTriggerThreshold[s][1].h[GV_OPEN]->SetLineColor(2);
+		pTriggerThreshold[s][1].h[GV_OPEN]->Draw("Same");
+		printCanvas(sideSubst("TrigEff/Input_%c",s));
+
+		gTrigCurve[s]->SetMinimum(-0.10);
+		gTrigCurve[s]->SetMaximum(1.10);
+		gTrigCurve[s]->Draw("AP");
+		gTrigCurve[s]->SetTitle(sideSubst("%s Trigger Efficiency",s).c_str());
+		gTrigCurve[s]->GetXaxis()->SetTitle("Energy [keV]");
+		gTrigCurve[s]->GetXaxis()->SetLimits(0,300);
+		gTrigCurve[s]->GetYaxis()->SetTitle("Efficiency");
+		gTrigCurve[s]->Draw("AP");
+		printCanvas(sideSubst("TrigEff/TrigEff_%c",s));
+	}
 }
 
 void FierzOctetAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor) {

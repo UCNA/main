@@ -3,7 +3,8 @@
 
 #include "OctetAnalyzer.hh"
 #include "RunAccumulator.hh"
-#include "PathUtils.hh"
+#include "PMTGenerator.hh"
+#include "TGraphAsymmErrors.h"
 
 using namespace std;
 
@@ -37,9 +38,13 @@ public:
 	virtual void compareMCtoData(RunAccumulator& OAdata, float simfactor);
 	
 	quadHists qFullEnergySpectrum[2];		//< set of histograms for extracting anode spectrum on each side
-	TH1F* hFullEnergySpectrum[2];			//< convenient pointer for currently active histogram
+	TH1F* hFullEnergySpectrum[2];			//< convenience pointer for currently active histogram
 	TH1F* hFullEnergySR;					//< super-ratio asymmetry of anode data
 	TH1F* hFullEnergySS;					//< super-sum of anode data
+	
+	PMTGenerator PGen;						//< event simulator for threshold extraction
+	fgbgPair pTriggerThreshold[2][2];		//< trigger threshold extraction histograms for each [side][all/trig]
+	TGraphAsymmErrors* gTrigCurve[2];		//< extracted trigger efficiency curve
 };
 
 #endif
