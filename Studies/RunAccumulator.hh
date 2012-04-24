@@ -17,7 +17,7 @@ public:
 	/// get (side,afp-mangled) name
 	std::string getName() const { return baseName+(mySide<=WEST?(mySide==EAST?"_E":"_W"):"")+(afp<=AFP_ON?(afp?"_On":"_Off"):""); }
 	/// get (side,afp-mangled) title
-	std::string getTitle() const { return (mySide<=WEST?sideSubst(baseTitle,mySide):baseTitle)+(afp<=AFP_ON?(afp?"AFP On":"AFP Off"):""); }
+	std::string getTitle() const { return (mySide<=WEST?sideSubst(baseTitle,mySide):baseTitle)+(afp<=AFP_ON?(afp?" AFP On":" AFP Off"):""); }
 	/// get histogram name
 	std::string getHistoName(bool fg) const { return getName()+(fg==GV_CLOSED?"_BG":""); }
 	/// get histogram title
