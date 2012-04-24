@@ -51,7 +51,7 @@ public:
 	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
 	quadHists registerCoreHist(const TH1& hTemplate, Side s = BOTH, TH1** fillPoint = NULL);
 	/// clone (and register) a quadHists
-	quadHists cloneQuadHist(const quadHists& qh, const std::string& newName);
+	quadHists cloneQuadHist(const quadHists& qh, const std::string& newName, const std::string& newTitle);
 	/// get core histogram by name
 	quadHists& getCoreHist(const std::string& qname);
 	/// get core histogram by name, const version

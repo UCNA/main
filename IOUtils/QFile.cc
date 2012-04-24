@@ -124,6 +124,8 @@ void QFile::insert(const std::string& s, const Stringmap& v) {
 	dat.insert(std::make_pair(s,v));
 }
 
+void QFile::erase(const std::string& s) { dat.erase(s); }
+
 std::vector<Stringmap> QFile::retrieve(const std::string& s) const {
 	std::vector<Stringmap> v;
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.lower_bound(s); it != dat.upper_bound(s); it++)

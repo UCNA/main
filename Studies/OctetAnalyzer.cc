@@ -66,10 +66,10 @@ quadHists OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s, TH1** fi
 	return qh;
 }
 
-quadHists OctetAnalyzer::cloneQuadHist(const quadHists& qh, const std::string& newName) {
+quadHists OctetAnalyzer::cloneQuadHist(const quadHists& qh, const std::string& newName, const std::string& newTitle) {
 	quadHists qnew(newName,qh.mySide);
 	for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++)
-		qnew.fgbg[afp] = cloneFGBGPair(qh.fgbg[afp],newName);
+		qnew.fgbg[afp] = cloneFGBGPair(qh.fgbg[afp],newName,newTitle);
 	return qnew;
 }
 
@@ -315,6 +315,9 @@ unsigned int simuClone(const std::string& basedata, OctetAnalyzer& OA, Sim2PMT& 
 	std::vector<std::string> datpath = split(strip(basedata,"/"),"/");
 	assert(datpath.size()>0);
 	OctetAnalyzer* origOA = (OctetAnalyzer*)OA.makeAnalyzer("nameUnused",basedata+"/"+datpath.back());
+	// copy over octet information
+	OA.qOut.erase("Octet");
+	OA.qOut.transfer(origOA->qOut,"Octet");
 	
 	// load/clone data in all subdirectories, if they exist
 	int nClonable = 0;

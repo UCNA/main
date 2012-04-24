@@ -93,6 +93,8 @@ public:
 	
 	/// insert key/(string)value pair
 	void insert(const std::string& s, const Stringmap& v);
+	/// remove a key
+	void erase(const std::string& s);
 	/// retrieve values for key
 	std::vector<Stringmap> retrieve(const std::string& s) const;
 	/// retrieve first value for key
