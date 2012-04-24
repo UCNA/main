@@ -72,6 +72,8 @@ SegmentSaver(pnt,nm,inflName), needsSubtraction(false) {
 		QFile qOld(inflname+".txt");
 		// transfer octet data to new output file
 		qOut.transfer(qOld, "Octet");
+		// transfer run calibration data
+		qOut.transfer(qOld, "runcal");
 		// fetch total time
 		std::vector<Stringmap> times = qOld.retrieve("totalTime");
 		for(std::vector<Stringmap>::iterator it = times.begin(); it != times.end(); it++) {
@@ -120,6 +122,8 @@ void RunAccumulator::addSegment(const SegmentSaver& S) {
 	// add run counts, times
 	runCounts += RA.runCounts;
 	runTimes += RA.runTimes;
+	// transfer run calibration data
+	qOut.transfer(S.qOut,"runcal");
 }
 
 fgbgPair& RunAccumulator::getFGBGPair(const std::string& qname) {
@@ -258,6 +262,7 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 		needsSubtraction = true;
 	runTimes += PDS.runTimes;
 	totalTime[afp][gv] += PDS.totalTime;
+	PDS.writeCalInfo(qOut,"runcal");
 }
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
