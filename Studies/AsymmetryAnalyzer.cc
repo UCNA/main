@@ -130,7 +130,10 @@ void AsymmetryAnalyzer::calculateResults() {
 	// calculate SR and SS
 	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	hSuperSum = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
-	
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp)
+		hEvtSS[tp] = (TH1F*)calculateSuperSum(std::string("SuperSum_Type_")+itos(tp),
+											  qEnergySpectra[EAST][nBetaTubes][tp],
+											  qEnergySpectra[WEST][nBetaTubes][tp]);
 	// perform data fits
 	fitAsym(200,675,1,true);	// match Robby's analysis
 	fitAsym(50,800,7);
@@ -178,7 +181,11 @@ void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor)
 	hSuperSum->Scale(1.0/simfactor);
 	drawHistoPair(dat.hSuperSum,hSuperSum);
 	printCanvas("DataComparison/SuperSum");
-	
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp) {
+		hEvtSS[tp]->Scale(1.0/simfactor);
+		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
+		printCanvas(std::string("DataComparison/SuperSum_Type_")+itos(tp));
+	}
 	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
 		std::vector<TH1*> hToPlot;

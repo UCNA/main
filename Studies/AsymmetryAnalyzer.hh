@@ -27,6 +27,7 @@ public:
 	
 	TH1F* hAsym;									//< asymmetry
 	TH1F* hSuperSum;								//< super-sum spectrum
+	TH1F* hEvtSS[TYPE_III_EVENT];					//< super-sum for each event type
 	
 protected:
 	
