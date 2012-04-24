@@ -12,12 +12,16 @@
 class fgbgPair {
 public:
 	/// constructor
-	fgbgPair(const std::string& nm="", AFPState a = AFP_OTHER, Side s = BOTH): baseName(nm), afp(a), mySide(s), isSubtracted(false) { }
+	fgbgPair(const std::string& nm="", const std::string& ttl="", AFPState a = AFP_OTHER, Side s = BOTH);
 
 	/// get (side,afp-mangled) name
 	std::string getName() const { return baseName+(mySide<=WEST?(mySide==EAST?"_E":"_W"):"")+(afp<=AFP_ON?(afp?"_On":"_Off"):""); }
+	/// get (side,afp-mangled) title
+	std::string getTitle() const { return (mySide<=WEST?sideSubst(baseTitle,mySide):baseTitle)+(afp<=AFP_ON?(afp?"AFP On":"AFP Off"):""); }
 	/// get histogram name
-	std::string getHistoName(bool fg) const { return getName()+(fg?"":"_BG"); }
+	std::string getHistoName(bool fg) const { return getName()+(fg==GV_CLOSED?"_BG":""); }
+	/// get histogram title
+	std::string getHistoTitle(bool fg) const { return getTitle()+(fg==GV_CLOSED?" Background":""); }
 	/// perform background subtraction
 	void bgSubtract(BlindTime tFG, BlindTime tBG);
 	/// add another fgbgPair
@@ -26,6 +30,7 @@ public:
 	void operator*=(double c);
 	
 	std::string baseName;	//< base naming convention
+	std::string baseTitle;	//< title naming convention
 	TH1* h[2];				//< background, foreground pair
 	AFPState afp;			//< AFP state for data (determines which time to use for BG subtraction)
 	Side mySide;			//< side for data
@@ -52,7 +57,7 @@ public:
 	/// get fgbg histogram by name, const version
 	const fgbgPair& getFGBGPair(const std::string& qname) const;
 	/// make a new (unregistered) fgbgPair copy
-	fgbgPair cloneFGBGPair(const fgbgPair& p, const std::string& newName);
+	fgbgPair cloneFGBGPair(const fgbgPair& p, const std::string& newName, const std::string& newTitle);
 
 	/// get total run time for given state
 	BlindTime getTotalTime(AFPState afp, bool fg) const { return totalTime[afp][fg]; }

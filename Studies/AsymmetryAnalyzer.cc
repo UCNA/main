@@ -71,7 +71,7 @@ void AsymmetryAnalyzer::endpointFits() {
 	const float fitStart = 250;
 	const float fitEnd = 750;	
 	for(Side s = EAST; s <= WEST; ++s) {		
-		for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
+		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			for(unsigned int t=0; t<=nBetaTubes; t++) {
 				float_err ep = kurieIterator((TH1F*)qEnergySpectra[s][t][TYPE_0_EVENT].fgbg[afp].h[1],
 											 800., NULL, neutronBetaEp, fitStart, fitEnd);
@@ -94,7 +94,7 @@ void AsymmetryAnalyzer::endpointFits() {
 
 void AsymmetryAnalyzer::anodeCalFits() {
 	for(Side s = EAST; s <= WEST; ++s) {		
-		for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
+		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			TF1 fLandau("landauFit","landau",0,15);
 			fLandau.SetLineColor(2+2*s);
 			int fiterr = qAnodeCal[s].fgbg[afp].h[1]->Fit(&fLandau,"Q");
@@ -117,7 +117,7 @@ void AsymmetryAnalyzer::calculateResults() {
 	// build total spectra based on analysis choice
 	quadHists qTotalSpectrum[2];
 	for(Side s = EAST; s <= WEST; ++s) {
-		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents");
+		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents", "All Events Energy");
 		if(!(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C || anChoice == ANCHOICE_D))
 			qTotalSpectrum[s] *= 0;	// analysis choices without Type 0 events
 		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C)
@@ -190,7 +190,7 @@ void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor)
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
 		std::vector<TH1*> hToPlot;
 		for(Side s = EAST; s <= WEST; ++s) {		
-			for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
+			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
 				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(22+4*afp);
 				//qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->Scale(1.0/simfactor);

@@ -23,17 +23,17 @@ bool quadHists::isEquivalent(const quadHists& qh) const {
 }
 
 void quadHists::operator+=(const quadHists& qh) {
-	for(unsigned int afp=AFP_OFF; afp<=AFP_ON; afp++)
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		fgbg[afp] += qh.fgbg[afp];
 }
 
 void quadHists::operator*=(double c) {
-	for(unsigned int afp=AFP_OFF; afp<=AFP_ON; afp++)
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		fgbg[afp] *= c;
 }
 
 void quadHists::setDrawMinimum(double y) {
-	for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++)
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		for(unsigned int fg = 0; fg <= 1; fg++)
 			fgbg[afp].h[fg]->SetMinimum(y);
 }
@@ -49,8 +49,8 @@ quadHists OctetAnalyzer::registerCoreHist(const std::string& hname, const std::s
 	quadHists qh(hname,s);
 	assert(coreHists.find(qh.getName())==coreHists.end());	// don't duplicate names!
 	qh.fillPoint = (TH1**)fillPoint;
-	for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++)
-		qh.fgbg[afp] = registerFGBGPair(hname,title,nbins,xmin,xmax,AFPState(afp),s);
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
+		qh.fgbg[afp] = registerFGBGPair(hname,title,nbins,xmin,xmax,afp,s);
 	coreHists.insert(std::make_pair(qh.getName(),qh));
 	return qh;
 }
@@ -60,7 +60,7 @@ quadHists OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s, TH1** fi
 	quadHists qh(hname,s);
 	assert(coreHists.find(qh.getName())==coreHists.end());	// don't duplicate names!
 	qh.fillPoint = fillPoint;
-	for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++)
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		qh.fgbg[afp] = registerFGBGPair(hTemplate,AFPState(afp),s);
 	coreHists.insert(std::make_pair(qh.getName(),qh));
 	return qh;
@@ -68,7 +68,7 @@ quadHists OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s, TH1** fi
 
 quadHists OctetAnalyzer::cloneQuadHist(const quadHists& qh, const std::string& newName, const std::string& newTitle) {
 	quadHists qnew(newName,qh.mySide);
-	for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++)
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		qnew.fgbg[afp] = cloneFGBGPair(qh.fgbg[afp],newName,newTitle);
 	return qnew;
 }
@@ -182,7 +182,7 @@ TH1* OctetAnalyzer::calculateSuperSum(const std::string& hname, const quadHists&
 
 void OctetAnalyzer::drawQuad(quadHists& qh, const std::string& subfolder, const char* opt) {
 	defaultCanvas->cd();
-	for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 		for(unsigned int fg = 0; fg <= 1; fg++) {
 			if(!qh.fgbg[afp].h[fg]->Integral()) continue; // automatically skip empty histograms
 			qh.fgbg[afp].h[fg]->Draw(opt);
@@ -195,7 +195,7 @@ void OctetAnalyzer::drawQuadSides(quadHists& qhE, quadHists& qhW, bool combineAF
 	defaultCanvas->cd();
 	std::vector<TH1*> hToPlot;
 	for(unsigned int fg = 0; fg <= 1; fg++) {
-		for(unsigned int afp = AFP_OFF; afp <= AFP_ON; afp++) {
+		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			qhE.fgbg[afp].h[fg]->SetLineColor(2);
 			qhW.fgbg[afp].h[fg]->SetLineColor(4);
 			hToPlot.push_back(qhE.fgbg[afp].h[fg]);

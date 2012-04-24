@@ -1,6 +1,9 @@
 #include "RunAccumulator.hh"
 #include <TRandom3.h>
 
+fgbgPair::fgbgPair(const std::string& nm, const std::string& ttl, AFPState a, Side s):
+baseName(nm), baseTitle(ttl), afp(a), mySide(s), isSubtracted(false) { }
+
 void fgbgPair::bgSubtract(BlindTime tFG, BlindTime tBG) {
 	assert(!isSubtracted); // don't BG subtract twice!
 	double bgScale = tBG.t[mySide]?tFG.t[mySide]/tBG.t[mySide]:1.0;
@@ -26,10 +29,10 @@ void fgbgPair::operator*=(double c) {
 
 fgbgPair RunAccumulator::registerFGBGPair(const std::string& hname, const std::string& title,
 										  unsigned int nbins, float xmin, float xmax, AFPState a, Side s) {
-	fgbgPair p(hname,a,s);
+	fgbgPair p(hname,title,a,s);
 	assert(fgbgHists.find(p.getName())==fgbgHists.end()); // don't duplicate names!
 	for(unsigned int fg = 0; fg <= 1; fg++) {
-		p.h[fg] = registerSavedHist(p.getHistoName(fg),title+(fg?"":" Background"),nbins,xmin,xmax);
+		p.h[fg] = registerSavedHist(p.getHistoName(fg),p.getHistoTitle(fg),nbins,xmin,xmax);
 		if(!p.h[fg]->GetSumw2N())
 			p.h[fg]->Sumw2();
 	}
@@ -39,24 +42,25 @@ fgbgPair RunAccumulator::registerFGBGPair(const std::string& hname, const std::s
 
 fgbgPair RunAccumulator::registerFGBGPair(const TH1& hTemplate, AFPState a, Side s) {
 	std::string hname = hTemplate.GetName();
-	fgbgPair p(hname,a,s);
+	std::string htitle = hTemplate.GetTitle();
+	fgbgPair p(hname,htitle,a,s);
 	assert(fgbgHists.find(p.getName())==fgbgHists.end()); // don't duplicate names!
 	for(int fg = 1; fg >=0; fg--) {
 		p.h[fg] = registerSavedHist(p.getHistoName(fg),hTemplate);
 		if(!p.h[fg]->GetSumw2N())
 			p.h[fg]->Sumw2();
-		if(!fg)
-			p.h[0]->SetTitle((std::string(p.h[1]->GetTitle())+" Background").c_str());
+		p.h[fg]->SetTitle(p.getHistoTitle(fg).c_str());
 	}
 	fgbgHists.insert(std::make_pair(p.getName(),p));	
 	return p;
 }
 
-fgbgPair RunAccumulator::cloneFGBGPair(const fgbgPair& p, const std::string& newName) {
-	fgbgPair pnew(newName,p.afp,p.mySide);
+fgbgPair RunAccumulator::cloneFGBGPair(const fgbgPair& p, const std::string& newName, const std::string& newTitle) {
+	fgbgPair pnew(newName,newTitle,p.afp,p.mySide);
 	for(unsigned int fg = 0; fg <= 1; fg++) {
 		std::string qname = pnew.getHistoName(fg);
 		pnew.h[fg] = (TH1*)addObject(p.h[fg]->Clone(qname.c_str()));
+		pnew.h[fg]->SetTitle(pnew.getHistoTitle(fg).c_str());
 	}
 	return pnew;
 }
@@ -97,7 +101,7 @@ SegmentSaver(pnt,nm,inflName), needsSubtraction(false) {
 }
 
 void RunAccumulator::zeroCounters() {
-	for(unsigned int afp = AFP_OFF; afp <= AFP_OTHER; afp++) {
+	for(AFPState afp = AFP_OFF; afp <= AFP_OTHER; ++afp) {
 		for(unsigned int fg = 0; fg <= 1; fg++) {
 			totalTime[afp][fg] = BlindTime(0.0);
 			totalCounts[afp][fg] = 0;
@@ -113,7 +117,7 @@ void RunAccumulator::addSegment(const SegmentSaver& S) {
 	// recast
 	const RunAccumulator& RA = (const RunAccumulator&)S;
 	// add times, counts
-	for(unsigned int afp = AFP_OFF; afp <= AFP_OTHER; afp++) {
+	for(AFPState afp = AFP_OFF; afp <= AFP_OTHER; ++afp) {
 		for(unsigned int fg = 0; fg <= 1; fg++) {
 			totalTime[afp][fg] += RA.totalTime[afp][fg];
 			totalCounts[afp][fg] += RA.totalCounts[afp][fg];
@@ -217,7 +221,7 @@ void RunAccumulator::makeRatesSummary() {
 
 void RunAccumulator::write(std::string outName) {
 	// record total times, counts
-	for(unsigned int afp = AFP_OFF; afp <= AFP_OTHER; afp++) {
+	for(AFPState afp = AFP_OFF; afp <= AFP_OTHER; ++afp) {
 		for(unsigned int fg = 0; fg <= 1; fg++) {
 			Stringmap tm = totalTime[afp][fg].toStringmap();
 			tm.insert("afp",itos(afp));

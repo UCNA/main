@@ -26,8 +26,10 @@ std::string sideSubst(std::string instr, Side s) {
 	char tmp[1024];
 	if(instr.find("%c") != instr.npos)
 		sprintf(tmp,instr.c_str(),sideNames(s));
-	if(instr.find("%s") != instr.npos)
+	else if(instr.find("%s") != instr.npos)
 		sprintf(tmp,instr.c_str(),sideWords(s));
+	else
+		return instr;
 	return std::string(tmp);
 }
 
