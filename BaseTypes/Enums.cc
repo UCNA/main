@@ -1,4 +1,5 @@
 #include "Enums.hh"
+#include "strutils.hh"
 #include <math.h>
 #include <stdio.h>
 #include <cassert>
@@ -21,16 +22,18 @@ std::string typeWords(EventType tp) {
 }
 
 
-// TODO: make this robust
-std::string sideSubst(std::string instr, Side s) {
-	char tmp[1024];
-	if(instr.find("%c") != instr.npos)
-		sprintf(tmp,instr.c_str(),sideNames(s));
-	else if(instr.find("%s") != instr.npos)
-		sprintf(tmp,instr.c_str(),sideWords(s));
-	else
-		return instr;
-	return std::string(tmp);
+std::string sideSubst(const std::string& instr, Side s) {
+	std::vector<std::string> segs = split(instr,"%");
+	if(!segs.size()) return "";
+	std::string sout = (instr[0]=='%')?"":segs[0];
+	for(unsigned int i=(instr[0]!='%'); i<segs.size(); i++) {
+		if(!segs[i].size()) continue;
+		if(segs[i][0]=='c') sout += ctos(sideNames(s));
+		else if(segs[i][0]=='s') sout += sideWords(s);
+		else sout += ctos(segs[i][0]);
+		sout += segs[i].substr(1,segs[i].size());
+	}
+	return sout;
 }
 
 Side otherSide(Side s) {

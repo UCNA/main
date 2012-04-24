@@ -28,7 +28,7 @@ char sideNames(Side s);
 /// get full word for side names
 const char* sideWords(Side s);
 /// substitute side names into string expression
-std::string sideSubst(std::string instr, Side s);
+std::string sideSubst(const std::string& instr, Side s);
 
 /// opposite side to given side
 Side otherSide(Side s);
