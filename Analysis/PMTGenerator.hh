@@ -32,12 +32,12 @@ public:
 	
 	/// get current calibrator
 	const PMTCalibrator* getCalibrator() const { return currentCal; }
-	
-	bool calcADC;					//< whether to calculate PMT ADCs and trigger efficiency
-	
+		
 	float x,y;						//< event hit position in scintillator (projected back to decay trap)
 	float xw,yw;					//< wirechamber hit offset from source position
 	float presmear;					//< nPE/keV already smeared in input spectrum
+	float threshnoise;				//< electronic threshold noise (equivalent photoelectrons)
+	float propnoise;				//< extra fraction of noise proportional to signal
 	
 	unsigned int nTrigs;			//< number of individual PMTs triggered
 	bool pmtTriggered[nBetaTubes];	//< whether each PMT triggered above threshold

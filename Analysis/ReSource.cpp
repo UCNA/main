@@ -23,10 +23,14 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 		nBins = 150;
 		eMin = -50;
 		eMax = 1000;
-	} else if(mySource.t == "Ce139" || mySource.t == "Cd109") {
+	} else if(mySource.t == "Ce139") {
 		nBins = 100;
 		eMin = -20;
 		eMax = 500;
+	} else if (mySource.t == "Cd109") {
+		nBins = 100;
+		eMin = -20;
+		eMax = 300;
 	}
 	
 	// set up histograms
@@ -321,6 +325,7 @@ void reSource(RunNum rn) {
 			g2p = new G4toPMT();
 			g2p->addFile(g4dat + simSource.t + "_geomC/analyzed_*.root");
 		} else if(simSource.t=="Cd113m") {
+			/*
 			G4toPMT* cd109 = new G4toPMT();
 			cd109->addFile(g4dat+"Cd109_geomC/analyzed_*.root");
 			G4toPMT* cd113m = new G4toPMT();
@@ -329,6 +334,7 @@ void reSource(RunNum rn) {
 			MS->addSim(cd113m, 1.0, 14.1*365*24*3600);
 			MS->addSim(cd109, 0.25, 461.4*24*3600);
 			g2p = MS;
+			 */
 		}
 		if(!g2p || !g2p->getnFiles()) {
 			printf("Unknown source '%s'!\n",simSource.t.c_str());
@@ -362,8 +368,11 @@ void reSource(RunNum rn) {
 				if(tp>TYPE_0_EVENT && t!=nBetaTubes) continue;
 				std::vector<TH1*> hToPlot;
 				RS.hTubes[t][tp]->Scale(simNorm);
+				
 				RS.hTubes[t][tp]->SetLineColor(4);
 				it->second.hTubes[t][tp]->SetLineColor(2);
+				//RS.hTubes[t][tp]->GetSumw2()->Set(0);
+				
 				hToPlot.push_back(RS.hTubes[t][tp]);
 				hToPlot.push_back(it->second.hTubes[t][tp]);
 				TM.defaultCanvas->SetLogy(true);
@@ -376,8 +385,6 @@ void reSource(RunNum rn) {
 				drawSimulHistos(hToPlot);
 				std::string outName = it->second.mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp));
 				TM.printCanvas(outName);
-				//if(t==nBetaTubes && tp==TYPE_0_EVENT)
-				//	TM.printCanvas(outName,".root");
 			}
 		}
 		

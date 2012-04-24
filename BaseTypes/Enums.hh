@@ -171,6 +171,8 @@ enum EventType {
 	TYPE_III_EVENT	= 3,
 	TYPE_IV_EVENT	= 4
 };
+/// iteration to next event type
+inline EventType& operator++(EventType& tp) { return tp = EventType(tp+1); }
 
 std::string typeWords(EventType tp);
 
