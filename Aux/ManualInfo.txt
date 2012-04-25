@@ -75,7 +75,7 @@ Cut_TDC_Scint_W_3:	start = 5	end = 3750	runStart = 13000	runEnd = 100000
 
 ### 2010 ###
 Cut_TDC_Scint_W_Selftrig:	start = 3050	end = 4080	runStart = 13911	runEnd = 15900
-Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 15901	runStart = 14166	runEnd = 16300
+Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 15901	runEnd = 16300
 
 ### 2011 ###
 Cut_TDC_Scint_E_Selftrig:	start = 2950	end = 4080	runStart = 17301	runEnd = 17550
