@@ -8,6 +8,7 @@
 #include "ProcessedDataScanner.hh"
 #include <vector>
 #include <TH1F.h>
+#include <TProfile.h>
 
 /// class for fitting source data
 class ReSourcer {
@@ -32,6 +33,12 @@ public:
 	float pkMin;			//< minimum peak value (avoid Bi auger peak false alarms)
 	float nSigma;			//< number of sigma to fit peaks
 	
+	TProfile* pPMTCorr[nBetaTubes][nBetaTubes];	//< correlation histograms between PMTs
+	/// add correlation fit window
+	void addCorrFit(float E0, float E1) { corrFitE0.push_back(E0); corrFitE1.push_back(E1); }
+	/// calculate inter-PMT correlations
+	void calcPMTcorr();
+	
 	/// fill histograms from source data; return whether point filled
 	unsigned int fill(const ProcessedDataScanner& P);
 	
@@ -40,6 +47,11 @@ public:
 	
 	/// get number of counts
 	unsigned int counts() const { assert(hTubes[nBetaTubes][TYPE_0_EVENT]); return (unsigned int)(hTubes[nBetaTubes][TYPE_0_EVENT]->GetEntries()); }
+
+protected:
+	std::vector<float> corrFitE0;	//< visible energy correlation measurement window start
+	std::vector<float> corrFitE1;	//< visible energy correlation measurement window end
+
 };
 
 /// re-generate source fits / plots

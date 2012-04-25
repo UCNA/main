@@ -131,14 +131,20 @@ class SourceDatDirectory:
 				rn = d2.split("_")[0]
 				if rn.isdigit():
 					self.runpaths[int(rn)]=self.basepath+'/'+d+'/'+d2
+		print "SourceDatDirectory loaded for",len(self.runpaths),"runs."
 	def getQFile(self,rn):
 		if rn not in self.rundat:
 			assert rn in self.runpaths
 			self.rundat[rn] = QFile(self.runpaths[rn]+"/Run_%i.txt"%rn)
 		return self.rundat[rn]
+	def getKey(self,rn,key):
+		if rn not in self.runpaths:
+			print "No data for",rn,"to get key",key
+			return []
+		return self.getQFile(rn).dat.get(key,[])
 	def getSourceRates(self,rn):
 		if rn not in self.sourcerates:
-			self.sourcerates[rn] = [SourceRate(r) for r in self.getQFile(rn).dat.get("rate",[])]
+			self.sourcerates[rn] = [SourceRate(r) for r in self.getKey("rate")]
 			for rt in self.sourcerates[rn]:
 				rt.run = rn
 		return self.sourcerates[rn]
@@ -284,6 +290,11 @@ class LinearityCurve:
 				key = graph.key.key(pos="tl"))
 		#self.gWidth.texrunner.set(lfs='foils17pt')
 		
+		self.gRPE=graph.graphxy(width=15,height=15,
+				x=graph.axis.lin(title="Expected Energy per Width",min=0),
+				y=graph.axis.lin(title="Observed Energy per Width",min=0),
+				key = graph.key.key(pos="tl"))
+				
 		self.cnvs = canvas.canvas()
 		self.cnvs.insert(self.gRes)
 		self.cnvs.insert(self.gEn)
@@ -291,18 +302,19 @@ class LinearityCurve:
 		
 		# plot
 		for k in pks.keys():
-			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.sim.enwidth) for q in pks[k]]
+			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.sim.enwidth,q.erecon/q.enwidth,q.sim.erecon/q.sim.enwidth) for q in pks[k]]
 			self.gEn.plot(graph.data.points(gdat,x=2,y=3,title=peakNames[k]), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRes.plot(graph.data.points(gdat,x=2,y=4,title=None), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=3,size=5,title=None), [ varCircle(symbolattrs=[cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=2,title=None), [ graph.style.line([style.linestyle.dashed,cP[k]]),])
 			self.gWidth.plot(graph.data.points(gdat,x=7,y=6,title=peakNames[k]), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
+			self.gRPE.plot(graph.data.points(gdat,x=9,y=8,title=peakNames[k]), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			
 		self.gEn.plot(graph.data.function("y(x)=x",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
 		self.gEn.text(11,1.5,"%s Reconstructed Energy"%self.side)
 		self.gRes.plot(graph.data.function("y(x)=0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
 		self.gWidth.plot(graph.data.function("y(x)=x",title="$y=x$"), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
-		
+		self.gRPE.plot(graph.data.function("y(x)=x",title="$y=x$"), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
 			
 	def dbUpload(self,conn,ecid,refline_id):
 		"""Upload PMT calibration curves to DB for given energy calibration ID."""
@@ -413,6 +425,36 @@ def plotBackscatters(conn,rlist):
 	return gRuns
 	
 	
+# calibration definitions:
+#				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
+cal_2010 = [
+			(	13883,	13894,	13890,	13879,	13964,		94,		97,			63	),	# 0 first usable? data + little Xe
+			(	14104,	14116,	14111,	14077,	14380,		144,	147,		63	),	# 1	Columbus Day weekend + big Xe	
+			(	14383,	14394,	14390,	14383,	14507,		212,	215,		63	),	# 2 Oct. 15-21 week
+			(	14516,	14530,	14524,	14513,	14667,		268,	271,		63	),	# 3 Oct. 22-24 weekend
+			(	14736,	14746,	14743,	14688,	14994,		330,	333,		63	),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
+			(	15645,	15662,	15653,	15084,	15915,		437,	440,		65	),	# 5 Nov. 22-29 Thanksgiving Week
+			(	15916,	15939,	15931,	15916,	100000,		553,	555,		65	)	# 6 Post-Thanksgiving
+			]
+			
+cal_2011 = [
+			(	17233,	17249,	17238,	16983,	17279,		678,	681,		55	),	# New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+			#(17368,17359,17509,x,x),		# Beta Decay; PMT W0 missing pulser
+			(	17517,	17527,	17522,	17517,	17734,		1125,	1128,		55	),	# Calibrations for Xe; W0 pulser still dead
+			#(	17871,	17922,	17876	),	# Big Scan; W0 pulser still dead
+			#(17903,17735,17956,x,x),		# Beta decay, long source runs
+			(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		55	),	# Old and new Cd Source; W0 pulser still dead
+			(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		55	),	# Beta decay, new In source, Xe; everything working now
+			(	18617,	18640,	18622,	18432,	18683,		1894,	1897,		55	),	# Beta decay; PMT W4 Bi pulser very low
+			(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# Start of 2012; PMT W4 pulser still low
+			(	19203,	19239,	19233,	19023,	19239,		2338,	2341,		59	),	# W4 Pulser now higher... drifty
+			(	19347,	19377,	19359,	19347,	19544,		2387,	2390,		61	),	# W4 Pulser now low...
+			(	19505,	19544),															# Cd/In only
+			(	19823,	19863,	19858,	19583,	100000,		2710,	2713,		61)		# 
+			]
+			
+			
+	
 if __name__=="__main__":
 
 	# set up output paths
@@ -423,39 +465,10 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Positions"%outpath)
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
-	# calibration definitions:
-	#				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
-	cal_2010 = [
-				(	13883,	13894,	13890,	13879,	13964,		94,		97,			63	),	# 0 first usable? data + little Xe
-				(	14104,	14116,	14111,	14077,	14380,		144,	147,		63	),	# 1	Columbus Day weekend + big Xe	
-				(	14383,	14394,	14390,	14383,	14507,		212,	215,		63	),	# 2 Oct. 15-21 week
-				(	14516,	14530,	14524,	14513,	14667,		268,	271,		63	),	# 3 Oct. 22-24 weekend
-				(	14736,	14746,	14743,	14688,	14994,		330,	333,		63	),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
-				(	15645,	15662,	15653,	15084,	15915,		437,	440,		65	),	# 5 Nov. 22-29 Thanksgiving Week
-				(	15916,	15939,	15931,	15916,	100000,		553,	555,		65	)	# 6 Post-Thanksgiving
-				]
-				
-	cal_2011 = [
-				(	17233,	17249,	17238,	16983,	17279,		678,	681,		55	),	# New Sn, Ce sources; Xenon, Betas, Dead PMT W2
-				#(17368,17359,17509,x,x),		# Beta Decay; PMT W0 missing pulser
-				(	17517,	17527,	17522,	17517,	17734,		1125,	1128,		55	),	# Calibrations for Xe; W0 pulser still dead
-				#(	17871,	17922,	17876	),	# Big Scan; W0 pulser still dead
-				#(17903,17735,17956,x,x),		# Beta decay, long source runs
-				(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		55	),	# Old and new Cd Source; W0 pulser still dead
-				(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		55	),	# Beta decay, new In source, Xe; everything working now
-				(	18617,	18640,	18622,	18432,	18683,		1894,	1897,		55	),	# Beta decay; PMT W4 Bi pulser very low
-				(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# Start of 2012; PMT W4 pulser still low
-				(	19203,	19239,	19233,	19023,	19239,		2338,	2341,		59	),	# W4 Pulser now higher... drifty
-				(	19347,	19377,	19359,	19347,	19544,		2387,	2390,		61	),	# W4 Pulser now low...
-				(	19505,	19544),															# Cd/In only
-				(	19823,	19863,	19858,	19583,	100000,		2710,	2713,		61)		# 
-				]
-
-		
 	conn = open_connection() # connection to calibrations DB
 	replace = True	# whether to replace previous calibration data
 	
-	for c in cal_2010:
+	for c in cal_2011[-4:-3]:
 	
 		# make new calibrations set
 		ecid = None
@@ -481,7 +494,8 @@ if __name__=="__main__":
 						continue
 				LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
 				LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
-			
+				LC.gRPE.writetofile(outpath+"/Widths/RootPE_%i_%s%i.pdf"%(rlist[0],s[0],t))
+				
 		# plot backscatters
-		plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
+		# plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
 		

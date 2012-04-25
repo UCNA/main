@@ -15,18 +15,22 @@
 ReSourcer::ReSourcer(OutputManager* O, const Source& s, PMTCalibrator* P):
 OM(O), mySource(s), PCal(P), dbgplots(false), simMode(false),
 nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
-	
-	// search window bounds for Bi; plot ranges
+		
+	// source-dependent ranges
 	if(mySource.t == "Bi207") {
 		pkMin = 200;
+		addCorrFit(400,475);
+		addCorrFit(900,1100);
 	} else if(mySource.t == "Sn113") {
 		nBins = 150;
 		eMin = -50;
 		eMax = 1000;
+		addCorrFit(300,450);
 	} else if(mySource.t == "Ce139") {
 		nBins = 100;
 		eMin = -20;
 		eMax = 500;
+		addCorrFit(70,140);
 	} else if (mySource.t == "Cd109") {
 		nBins = 100;
 		eMin = -20;
@@ -52,6 +56,14 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 			hTubesRaw[t]->GetXaxis()->SetTitle("ADC Channels");
 			hTubesRaw[t]->GetYaxis()->SetTitle("Event Rate [Hz/keV]");
 		}
+		for(unsigned int t2=0; t2<nBetaTubes; t2++) {
+			if(t==nBetaTubes || t==t2) continue;			
+			pPMTCorr[t][t2] = new TProfile((itos(t)+"_vs_"+itos(t2)).c_str(),
+										   "PMT Correlation",nBins,eMin,eMax);
+			pPMTCorr[t][t2]->SetMinimum(eMin);
+			pPMTCorr[t][t2]->SetMaximum(eMax);
+			OM->addObject(pPMTCorr[t][t2]);
+		}
 	}	
 	for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
 		hitPos[d] = OM->registeredTH1F(s.name()+"_hits_profile_"+itos(d),"Hit Positions",300,-10,10);
@@ -61,24 +73,31 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 
 unsigned int ReSourcer::fill(const ProcessedDataScanner& P) {
 	EventType tp = P.fType;
-	if(tp > TYPE_II_EVENT || P.fSide != mySource.mySide) return 0;
+	Side s = P.fSide;
+	
+	if(tp > TYPE_II_EVENT || s != mySource.mySide) return 0;
 	float x = P.wires[P.fSide][X_DIRECTION].center;
 	float y = P.wires[P.fSide][Y_DIRECTION].center;
 	if(!mySource.inSourceRegion(x,y,4.0)) return 0;
 	if(P.fPID != PID_BETA) return 0;
+	
 	if(tp==TYPE_0_EVENT) {
 		hitPos[X_DIRECTION]->Fill(x-mySource.x,P.physicsWeight);
 		hitPos[Y_DIRECTION]->Fill(y-mySource.y,P.physicsWeight);
+		for(unsigned int t1=0; t1<nBetaTubes; t1++)
+			for(unsigned int t2=0; t2<nBetaTubes; t2++)
+				if(t1!=t2)
+					pPMTCorr[t1][t2]->Fill(P.scints[s].tuben[t1].x,P.scints[s].tuben[t2].x);
 	}
 	for(unsigned int t=0; t<nBetaTubes; t++) {
-		if(P.scints[P.fSide].adc[t]>3750 || P.scints[P.fSide].tuben[t].x < 1.0)
+		if(P.scints[s].adc[t]>3750 || P.scints[s].tuben[t].x < 1.0)
 			continue;
-		hTubes[t][tp]->Fill(P.scints[P.fSide].tuben[t].x,P.physicsWeight);
+		hTubes[t][tp]->Fill(P.scints[s].tuben[t].x,P.physicsWeight);
 		if(PCal && !simMode && tp==TYPE_0_EVENT)
-			hTubesRaw[t]->Fill(P.scints[P.fSide].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock.t[BOTH]),P.physicsWeight);
+			hTubesRaw[t]->Fill(P.scints[s].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock.t[BOTH]),P.physicsWeight);
 	}
 	if(tp==TYPE_0_EVENT)
-		hTubes[nBetaTubes][tp]->Fill(P.scints[P.fSide].energy.x,P.physicsWeight);
+		hTubes[nBetaTubes][tp]->Fill(P.scints[s].energy.x,P.physicsWeight);
 	else
 		hTubes[nBetaTubes][tp]->Fill(P.getEnergy(),P.physicsWeight);
 	return 1;
@@ -217,7 +236,33 @@ void ReSourcer::findSourcePeaks(float runtime) {
 	OM->printCanvas(mySource.name()+"/Hit_Positions"+(simMode?"_Sim":""));
 }
 
-
+void ReSourcer::calcPMTcorr() {
+	printf("Calculating PMT correlations...\n");
+	assert(corrFitE0.size()==corrFitE1.size());
+	for(unsigned int i=0; i<corrFitE0.size(); i++) {
+		TF1 fLine("fLine","pol1",corrFitE0[i],corrFitE1[i]);
+		fLine.SetLineColor(simMode?4:2);
+		for(unsigned int t1 = 0; t1 < nBetaTubes; t1++) {
+			for(unsigned int t2 = 0; t2 < nBetaTubes; t2++) {
+				if(t1==t2) continue;
+				pPMTCorr[t1][t2]->Fit(&fLine,"QR+");
+				Stringmap m;
+				m.insert("t1",t1);
+				m.insert("t2",t2);
+				m.insert("corr",fLine.GetParameter(1));
+				m.insert("dcorr",fLine.GetParError(1));
+				m.insert("E0",corrFitE0[i]);
+				m.insert("E1",corrFitE1[i]);
+				m.insert("sID",mySource.sID);
+				m.insert("name",mySource.name());
+				m.insert("simulated",simMode?"yes":"no");			
+				m.insert("side",sideSubst("%c",mySource.mySide));
+				m.display();
+				OM->qOut.insert("correlation",m);
+			}
+		}
+	}
+}
 
 void reSource(RunNum rn) {
 	
@@ -314,6 +359,7 @@ void reSource(RunNum rn) {
 		it->second.dbgplots = PCal.isRefRun() || it->second.mySource.t=="Bi207" || it->second.mySource.t=="Cd109";
 		it->second.simMode = false;
 		it->second.findSourcePeaks(P->totalTime.t[BOTH]);
+		it->second.calcPMTcorr();
 		
 		// fit simulated source data with same parameters
 		Source simSource = it->second.mySource;	
@@ -326,14 +372,14 @@ void reSource(RunNum rn) {
 			g2p->addFile(g4dat + simSource.t + "_geomC/analyzed_*.root");
 		} else if(simSource.t=="Cd113m") {
 			/*
-			G4toPMT* cd109 = new G4toPMT();
-			cd109->addFile(g4dat+"Cd109_geomC/analyzed_*.root");
-			G4toPMT* cd113m = new G4toPMT();
-			cd113m->addFile(g4dat+"Cd113m_geomC/analyzed_*.root");
-			MixSim* MS = new MixSim();
-			MS->addSim(cd113m, 1.0, 14.1*365*24*3600);
-			MS->addSim(cd109, 0.25, 461.4*24*3600);
-			g2p = MS;
+			 G4toPMT* cd109 = new G4toPMT();
+			 cd109->addFile(g4dat+"Cd109_geomC/analyzed_*.root");
+			 G4toPMT* cd113m = new G4toPMT();
+			 cd113m->addFile(g4dat+"Cd113m_geomC/analyzed_*.root");
+			 MixSim* MS = new MixSim();
+			 MS->addSim(cd113m, 1.0, 14.1*365*24*3600);
+			 MS->addSim(cd109, 0.25, 461.4*24*3600);
+			 g2p = MS;
 			 */
 		}
 		if(!g2p || !g2p->getnFiles()) {
@@ -359,6 +405,7 @@ void reSource(RunNum rn) {
 		}
 		delete(g2p);
 		RS.findSourcePeaks(1000.0);
+		RS.calcPMTcorr();
 		
 		// plot data and MC together
 		TM.defaultCanvas->SetLeftMargin(1.25);
@@ -378,6 +425,7 @@ void reSource(RunNum rn) {
 				TM.defaultCanvas->SetLogy(true);
 				drawSimulHistos(hToPlot);
 				TM.printCanvas(it->second.mySource.name()+"/Spectrum_Comparison_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp)));
+				
 				// same, linear scale
 				TM.defaultCanvas->SetLogy(false);
 				RS.hTubes[t][tp]->SetMinimum(0);
@@ -385,6 +433,15 @@ void reSource(RunNum rn) {
 				drawSimulHistos(hToPlot);
 				std::string outName = it->second.mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp));
 				TM.printCanvas(outName);
+			}
+			TM.defaultCanvas->SetLogy(false);
+			for(unsigned int t2=0; t2<nBetaTubes; t2++) {
+				if(t==t2 || t==nBetaTubes) continue;
+				RS.pPMTCorr[t][t2]->SetLineColor(4);
+				RS.pPMTCorr[t][t2]->Draw();
+				it->second.pPMTCorr[t][t2]->SetLineColor(2);
+				it->second.pPMTCorr[t][t2]->Draw("Same");
+				TM.printCanvas(it->second.mySource.name()+"/PMTCorr/"+itos(t)+"_v_"+itos(t2));
 			}
 		}
 		
