@@ -195,7 +195,8 @@ protected:
 	/// pre-scan data to extract pedestals
 	void pedestalPrePass();
 	/// fit pedestals
-	void monitorPedestal(std::vector< std::pair<float,float> > dpts, const std::string& mon_name, double graphWidth);
+	void monitorPedestal(const std::vector<float>& vdata, const std::vector<float>& vtime,
+						 const std::string& mon_name, double graphWidth, float tmin=60., unsigned int cmin=3000);
 	
 	/*--- event processing loop ---*/
 	/// process current event raw->phys
