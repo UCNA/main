@@ -59,6 +59,7 @@ public:
 	unsigned int nToSim;		//< total number of events to simulate (set to 0 for random energy selection)
 	double nSimmed;				//< number of events simulated since scan start
 	double mwpcThresh[2];		//< MWPC trigger threshold on each side
+	double mwpcAccidentalProb;	//< probability of MWPC accidental triggers
 	
 protected:
 	/// perform unit conversions, etc.

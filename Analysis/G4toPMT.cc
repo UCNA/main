@@ -7,7 +7,7 @@
 TRandom3 mc_rnd_source;	
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
-reSimulate(true), fakeClip(false), nToSim(0), nSimmed(0), afp(AFP_OTHER) {
+reSimulate(true), fakeClip(false), nToSim(0), nSimmed(0), mwpcAccidentalProb(0.0), afp(AFP_OTHER) {
 	offPos[X_DIRECTION] = offPos[Y_DIRECTION] = 0.;
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
@@ -83,6 +83,10 @@ void Sim2PMT::reverseCalibrate() {
 	
 	// simulate event on both sides
 	for(Side s = EAST; s <= WEST; ++s) {
+		// wirechamber accidentals
+		if(!eW[s] && mc_rnd_source.Uniform(0.,1.)<mwpcAccidentalProb)
+			eW[s] = mwpcThresh[s]+0.1;
+		
 		mwpcEnergy[s] = eW[s];
 		// simulate detector energy response, or use un-smeared original data 
 		if(reSimulate) {
