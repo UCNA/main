@@ -55,7 +55,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 				anodePeds[s].push_back(fMWPC_anode[s].val);
 			}
 		}
-		if(isLED()) {
+		if(isLED() && analyzeLED) {
 			ledTimes.push_back(fTimeScaler.t[BOTH]);
 			for(Side s = EAST; s <= WEST; ++s)
 				for(unsigned int t=0; t<nBetaTubes; t++)
@@ -67,7 +67,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			monitorPedestal(pmtPeds[s][t],pmtTimes[s],PCal.sensorNames[s][t],50);
-			monitorPedestal(pmtLED[s][t],ledTimes,LI.ledNames[s][t],0,0.5,100.0,false);
+			if(analyzeLED) monitorPedestal(pmtLED[s][t],ledTimes,LI.ledNames[s][t],0,0.5,100.0,false);
 		}
 		for(AxisDirection p = X_DIRECTION; p <= Y_DIRECTION; ++p)
 			for(unsigned int c=0; c<cathNames[s][p].size(); c++)
