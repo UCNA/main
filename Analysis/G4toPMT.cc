@@ -52,8 +52,8 @@ void Sim2PMT::calcReweight() {
 void Sim2PMT::setCalibrator(PMTCalibrator& PCal) {
 	for(Side s = EAST; s <= WEST; ++s)
 		PGen[s].setCalibrator(&PCal);
-	evtRun = PCal.rn;
 	ActiveCal = &PCal;
+	evtRun = ActiveCal->rn;
 }
 
 bool Sim2PMT::nextPoint() {
@@ -67,6 +67,9 @@ bool Sim2PMT::nextPoint() {
 void Sim2PMT::reverseCalibrate() {
 	
 	doUnits();
+	
+	assert(ActiveCal);
+	evtRun = ActiveCal->rn;
 	
 	// apply position offsets
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {

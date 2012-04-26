@@ -18,8 +18,6 @@ public:
 	
 	/// this does nothing for processed data
 	virtual void recalibrateEnergy() {}
-	/// start scanning events
-	virtual void startScan(unsigned int startRandom = 0) { nSimmed = 0; ProcessedDataScanner::startScan(startRandom); }
 	/// overrides ProcessedDataScanner::nextPoint to insert reverse-calibrations, offsets
 	virtual bool nextPoint();
 	/// whether to count this event as successfully generated
