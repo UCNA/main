@@ -101,6 +101,9 @@ public:
 	/// qadc sum
 	inline double qadcSum(Side s) const { double q = 0; for(unsigned int t=0; t<nBetaTubes; t++) q+=sevt[s].adc[t]; return q; }
 	
+	/// set whether to separately analyze LED events
+	bool analyzeLED;
+	
 protected:
 	// read variables
 	Float_t r_Sis00;							//< Sis00 trigger flags

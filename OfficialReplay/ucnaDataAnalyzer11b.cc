@@ -12,7 +12,7 @@
 RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
 
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
-TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), rn(R), PCal(R,CDB), LI(R,CDB), CDBout(NULL),
+TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), analyzeLED(false), rn(R), PCal(R,CDB), LI(R,CDB), CDBout(NULL),
 deltaT(0), totalTime(0), ignore_beam_out(false), nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	if(R>16300 && !CDB->isValid(R)) {
 		printf("*** Bogus calibration for new runs! ***\n");
@@ -372,7 +372,7 @@ bool ucnaDataAnalyzer11b::processEvent() {
 	fillEarlyHistograms();
 	
 	// LED tree events
-	if(isLED()) {
+	if(isLED() && TLED) {
 		reconstructPosition();
 		for(Side s = EAST; s <= WEST; ++s)
 			PCal.calibrateEnergy(s,0.,0.,sevt[s],fTimeScaler.t[BOTH]);
@@ -538,6 +538,7 @@ int main(int argc, char** argv) {
 	bool cutBeam = false;
 	bool nodbout = false;
 	bool noroot = false;
+	bool ledtree = false;
 	for(int i=2; i<argc; i++) {
 		std::string arg(argv[i]);
 		if(arg=="cutbeam")
@@ -546,6 +547,8 @@ int main(int argc, char** argv) {
 			nodbout = true;
 		else if(arg=="noroot")
 			noroot = true;
+		else if(arg=="ledtree")
+			ledtree = true;
 		else 
 			assert(false);
 	}
@@ -564,6 +567,7 @@ int main(int argc, char** argv) {
 		
 		ucnaDataAnalyzer11b A(r,outDir,CalDBSQL::getCDB(true));
 		A.setIgnoreBeamOut(!cutBeam);
+		A.analyzeLED = ledtree;
 		if(!nodbout) {
 			printf("Connecting to output DB...\n");
 			A.setOutputDB(CalDBSQL::getCDB(false));

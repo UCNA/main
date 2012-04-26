@@ -17,7 +17,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 		for(Side s = EAST; s <= WEST; ++s) {
 			for(unsigned int t=0; t<nBetaTubes; t++) {
 				needsPeds += !PCal.checkPedestals(PCal.sensorNames[s][t]);
-				needsPeds += !LI.checkLED(s,t);
+				needsPeds += analyzeLED && !LI.checkLED(s,t);
 			}
 			for(unsigned int p = X_DIRECTION; p <= Y_DIRECTION; p++)
 				for(unsigned int c=0; c<cathNames[s][p].size(); c++)

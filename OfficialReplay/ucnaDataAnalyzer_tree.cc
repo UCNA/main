@@ -127,14 +127,18 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 	TPhys->Branch("Etrue",&fEtrue,"Etrue/F");
 	
 	// LED events tree
-	TLED = (TTree*)addObject(new TTree("LED","LED events"));
-	TLED->SetMaxVirtualSize(1000000);
-	TLED->Branch("EvtN",&currentEvent,"EvtN/I");
-	TLED->Branch("Time",&fTimeScaler.t[BOTH],"Time/F");
-	for(Side s = EAST; s <= WEST; ++s) {
-		TLED->Branch(sideSubst("Scint%c",s).c_str(),&sevt[s],
-					 "q1/F:q2/F:q3/F:q4/F:e1/F:de1/F:e2/F:de2/F:e3/F:de3/F:e4/F:de4/F:energy/F:denergy/F:nPE1/F:nPE2/F:nPE3/F:nPE4/F");
-		TLED->Branch(sideSubst("Anode%c",s).c_str(),&fMWPC_anode[s].val,sideSubst("ano%c/F",s).c_str());
-		TLED->Branch(sideSubst("CathMax%c",s).c_str(),&fCathMax[s].val,sideSubst("CathMax%c/F",s).c_str());
+	if(analyzeLED) {
+		TLED = (TTree*)addObject(new TTree("LED","LED events"));
+		TLED->SetMaxVirtualSize(1000000);
+		TLED->Branch("EvtN",&currentEvent,"EvtN/I");
+		TLED->Branch("Time",&fTimeScaler.t[BOTH],"Time/F");
+		for(Side s = EAST; s <= WEST; ++s) {
+			TLED->Branch(sideSubst("Scint%c",s).c_str(),&sevt[s],
+						 "q1/F:q2/F:q3/F:q4/F:e1/F:de1/F:e2/F:de2/F:e3/F:de3/F:e4/F:de4/F:energy/F:denergy/F:nPE1/F:nPE2/F:nPE3/F:nPE4/F");
+			TLED->Branch(sideSubst("Anode%c",s).c_str(),&fMWPC_anode[s].val,sideSubst("ano%c/F",s).c_str());
+			TLED->Branch(sideSubst("CathMax%c",s).c_str(),&fCathMax[s].val,sideSubst("CathMax%c/F",s).c_str());
+		}
+	} else {
+		TLED = NULL;
 	}
 }
