@@ -11,7 +11,7 @@
 #include <cfloat>
 
 /// draw several histograms simultaneously; return max histogram height
-double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt = "");
+double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt = "", const std::string& newTitle = "DEFAULT");
 /// draw a pair of histograms (red and blue by default)
 void drawHistoPair(TH1* hRed, TH1* hBlue, const std::string& opt = "", Int_t c1 = 2, Int_t c2 = 4);
 

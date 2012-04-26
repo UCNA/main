@@ -13,9 +13,10 @@
 class quadHists {
 public:
 	/// constructor
-	quadHists(std::string nm="", Side s = BOTH): name(nm), mySide(s), fillPoint(NULL) {}
+	quadHists(const std::string& nm="", const std::string& ttl="", Side s = BOTH): name(nm), title(ttl), mySide(s), fillPoint(NULL) {}
 	
 	std::string name;	//< histogram base name
+	std::string title;	//< histogram base title
 	Side mySide;		//< side for these histograms (for blind time rates)
 	TH1** fillPoint;	//< location of currently active histogram
 	fgbgPair fgbg[2];	//< background-subtracted pair for each flipper state

@@ -30,7 +30,7 @@ bool compareHistosByXmax(TH1* i, TH1* j) {
 	return getXmax(i) < getXmax(j);
 }
 
-double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt) {
+double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt, const std::string& newTitle) {
 	if(!hists.size())
 		return 0;
 	printf("Drawing %i histograms together",(int)hists.size()); fflush(stdout);
@@ -42,6 +42,9 @@ double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt) {
 	assert(maxHist);
 	printf("with ymax = %g...",maxHist->GetMaximum()); fflush(stdout);
 	maxHist->SetAxisRange(xmin,xmax,"X");
+	std::string oldTitle = maxHist->GetTitle();
+	if(newTitle != "DEFAULT")
+		maxHist->SetTitle(newTitle.c_str());
 	maxHist->Draw(opt.c_str());
 	for(std::vector<TH1*>::iterator it = hists.begin(); it != hists.end(); it++) {
 		assert(*it);
@@ -53,6 +56,8 @@ double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt) {
 			(*it)->Draw("SAME");
 	}
 	printf(" Done.\n");
+	
+	maxHist->SetTitle(oldTitle.c_str());
 	return maxHist->GetMaximum();
 }
 

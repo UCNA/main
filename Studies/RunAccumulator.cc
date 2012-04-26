@@ -273,6 +273,7 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
 	currentGV = GV_OPEN;
 	currentAFP = simData.getAFP();
 	printf("Loading %i events of simulated data (AFP=%i)...\n",nToSim,currentAFP);
+	simData.nSimmed=0;
 	simData.startScan(nToSim);
 	while(simData.nSimmed<=nToSim) {
 		simData.nextPoint();

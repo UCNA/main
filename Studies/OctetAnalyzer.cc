@@ -46,7 +46,7 @@ void quadHists::setDrawMinimum(double y) {
 quadHists OctetAnalyzer::registerCoreHist(const std::string& hname, const std::string& title,
 										  unsigned int nbins, float xmin, float xmax,
 										  Side s, TH1F** fillPoint) {
-	quadHists qh(hname,s);
+	quadHists qh(hname,title,s);
 	assert(coreHists.find(qh.getName())==coreHists.end());	// don't duplicate names!
 	qh.fillPoint = (TH1**)fillPoint;
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
@@ -56,8 +56,7 @@ quadHists OctetAnalyzer::registerCoreHist(const std::string& hname, const std::s
 }
 
 quadHists OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s, TH1** fillPoint) {
-	std::string hname = hTemplate.GetName();
-	quadHists qh(hname,s);
+	quadHists qh(hTemplate.GetName(),hTemplate.GetTitle(),s);
 	assert(coreHists.find(qh.getName())==coreHists.end());	// don't duplicate names!
 	qh.fillPoint = fillPoint;
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
@@ -67,7 +66,7 @@ quadHists OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s, TH1** fi
 }
 
 quadHists OctetAnalyzer::cloneQuadHist(const quadHists& qh, const std::string& newName, const std::string& newTitle) {
-	quadHists qnew(newName,qh.mySide);
+	quadHists qnew(newName,newTitle,qh.mySide);
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		qnew.fgbg[afp] = cloneFGBGPair(qh.fgbg[afp],newName,newTitle);
 	return qnew;
@@ -137,7 +136,7 @@ TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists& qEast
 	
 	hAsym->SetLineColor(1);
 	hAsym->SetLineStyle(1);
-	hAsym->SetTitle((std::string(hAsym->GetTitle())+" Asymmetry").c_str());
+	hAsym->SetTitle((qEast.title+" Asymmetry").c_str());
 	
 	delete(hR);
 	return (TH1*)addObject(hAsym);
@@ -172,7 +171,7 @@ TH1* OctetAnalyzer::calculateSuperSum(const std::string& hname, const quadHists&
 	hSS->Add(hR);
 	hSS->Scale(0.5);
 	
-	hSS->SetTitle((std::string(hSS->GetTitle())+" SuperSum").c_str());
+	hSS->SetTitle((qEast.title+" SuperSum").c_str());
 	hSS->SetLineColor(1);
 	hSS->SetLineStyle(1);
 	
@@ -210,7 +209,7 @@ void OctetAnalyzer::drawQuadSides(quadHists& qhE, quadHists& qhW, bool combineAF
 			}
 		}
 		if(combineAFP) {
-			drawSimulHistos(hToPlot,opt);
+			drawSimulHistos(hToPlot,opt,qhE.title+(fg?"":" Background"));
 			printCanvas(subfolder+"/"+qhE.name+(fg?"":"_BG"));
 			hToPlot.clear();
 		}
