@@ -73,7 +73,7 @@ quadHists OctetAnalyzer::cloneQuadHist(const quadHists& qh, const std::string& n
 }
 
 OctetAnalyzer::OctetAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
-RunAccumulator(pnt,nm,inflName), depth(-1) { }
+RunAccumulator(pnt,nm,inflName), depth(-1), simPerfectAsym(false) { }
 
 void OctetAnalyzer::setFillPoints(AFPState afp, GVState gv) {
 	for(std::map<std::string,quadHists>::iterator it = coreHists.begin(); it != coreHists.end(); it++)
@@ -101,12 +101,9 @@ void OctetAnalyzer::loadProcessedData(AFPState afp, ProcessedDataScanner& FG, Pr
 	}
 }
 
-void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
-	for(AFPState afp=AFP_OFF; afp<=AFP_ON; ++afp) {
-		if(afp != simData.getAFP() && simData.getAFP() != AFP_OTHER) continue;
-		setFillPoints(afp,GV_OPEN);
-		RunAccumulator::loadSimData(simData,nToSim);
-	}
+void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
+	setFillPoints(simData.getAFP(),GV_OPEN);
+	RunAccumulator::loadSimData(simData,nToSim,countAll);
 }
 
 TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists& qEast, const quadHists& qWest, bool fg) {
@@ -127,7 +124,7 @@ TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists& qEast
 		double dr = hR->GetBinError(i);
 		if(r>0 && r==r) {
 			hAsym->SetBinContent(i,(1.0-sqrt(r))/(1.0+sqrt(r)));
-			hAsym->SetBinError( i, dr/(sqrt(r)*(1+sqrt(r))*(1+sqrt(r))) );
+			hAsym->SetBinError(i, dr/(sqrt(r)*(1+sqrt(r))*(1+sqrt(r))) * (simPerfectAsym?0.33:1.0));
 		} else {
 			hAsym->SetBinContent(i,0);
 			hAsym->SetBinError(i,1e6);
@@ -217,6 +214,108 @@ void OctetAnalyzer::drawQuadSides(quadHists& qhE, quadHists& qhW, bool combineAF
 }
 
 
+unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor, double replaceIfOlder) {
+	
+	printf("\n------ Cloning asymmetry data in '%s'\n------                        to '%s'...\n",basedata.c_str(),basePath.c_str());
+	int nCloned = 0;
+	
+	// check if simulation is already up-to-date
+	if(getInflAge() && getInflAge() < replaceIfOlder) {
+		printf("\tSimulations in '%s' already recently generated, update skipped...\n",basePath.c_str());
+		return nCloned;
+	}
+	
+	// clear any existing data from out-of-date input
+	zeroSavedHists();
+	zeroCounters();
+	
+	// load original data for comparison
+	std::vector<std::string> datpath = split(strip(basedata,"/"),"/");
+	assert(datpath.size()>0);
+	OctetAnalyzer* origOA = (OctetAnalyzer*)makeAnalyzer("nameUnused",basedata+"/"+datpath.back());
+	// copy over octet information
+	qOut.erase("Octet");
+	qOut.transfer(origOA->qOut,"Octet");
+	
+	// load/clone data in all subdirectories, if they exist
+	int nClonable = 0;
+	std::vector<std::string> fnames = listdir(basedata);
+	for(std::vector<std::string>::iterator it = fnames.begin(); it != fnames.end(); it++) {
+		// check whether data directory contains cloneable subdirectories
+		std::string datinfl = basedata+"/"+(*it)+"/"+(*it);
+		if(!OctetAnalyzer::inflExists(datinfl)) continue;
+		std::string siminfl = basePath+"/"+(*it)+"/"+(*it);		
+		nClonable++;
+		
+		// load cloned sub-data
+		OctetAnalyzer* subOA = (OctetAnalyzer*)makeAnalyzer(*it,OctetAnalyzer::inflExists(siminfl)?siminfl:"");
+		subOA->depth = depth+1;
+		subOA->simPerfectAsym = simPerfectAsym;
+		nCloned += subOA->simuClone(basedata+"/"+(*it),simData,simfactor,replaceIfOlder);
+		addSegment(*subOA);
+		delete(subOA);
+	}
+	
+	// if there were no clonable subdrectories, we need to actually simulate the data
+	if(!nClonable) {
+		printf("\tNo data subdirectories found; assume data here needs cloning...\n");
+		printf("\tProcessing simulation data for each pulse-pair run...\n");
+		
+		// collate requested simulation counts
+		TagCounter<RunNum> countRequests[2];
+		for(std::map<RunNum,double>::iterator it = origOA->runCounts.counts.begin(); it != origOA->runCounts.counts.end(); it++) {
+			nCloned++;
+			if(!it->first || !it->second) continue;
+			RunInfo RI = CalDBSQL::getCDB()->getRunInfo(it->first);
+			if(RI.gvState != GV_OPEN) continue;	// no simulation for background runs
+			assert(RI.afpState <= AFP_ON);	// are you really trying to clone non-beta-octet runs here??
+			// estimate background count share for this run (and reduce simulation by this amount)
+			double bgEst = origOA->getTotalCounts(RI.afpState,GV_CLOSED)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,GV_CLOSED).t[BOTH];
+			if(it->second <= bgEst) continue;
+			double nToSim = simfactor*(it->second-bgEst);
+			printf("\t---Simulation cloning for run %i (%i+%i counts)---\n",it->first,int(nToSim),int(simfactor*bgEst));
+			countRequests[RI.afpState].add(it->first,nToSim);
+		}
+		
+		// see which kind of run got more AFP counts; clone first
+		AFPState bigafp = countRequests[AFP_OFF].total()>=countRequests[AFP_ON].total()?AFP_OFF:AFP_ON;
+		AFPState smallafp = bigafp?AFP_OFF:AFP_ON;
+		// determine starting point in simulation data to which we can return later
+		unsigned int startEvt = 0;
+		while(!startEvt) {
+			simData.startScan(true);
+			startEvt = simData.getCurrentEvent();
+		}
+		unsigned int pgen_seed = PMTGenerator::sim_rnd_source.GetSeed()+1;
+		PMTGenerator::sim_rnd_source.SetSeed(pgen_seed);
+		unsigned int nSimmed = simMultiRuns(simData, countRequests[bigafp]);
+		// return to starting point or continue on with different data
+		if(simPerfectAsym) {
+			printf("Returning to original position %i, seed=%i\n",startEvt,pgen_seed);
+			PMTGenerator::sim_rnd_source.SetSeed(pgen_seed);
+			simData.gotoEvent(startEvt);
+			simMultiRuns(simData, countRequests[smallafp], nSimmed);
+		} else {
+			simMultiRuns(simData, countRequests[smallafp]);
+		}
+					 
+		// clone background counts in original data
+		simBgFlucts(*origOA,simfactor);
+		// scale back out simulation factor
+		scaleSavedHists(1.0/simfactor);
+	}
+	
+	// generate output
+	calculateResults();
+	makePlots();
+	origOA->calculateResults();
+	compareMCtoData(*origOA);
+	write();
+	setWriteRoot(true);
+	
+	delete(origOA);
+	return nCloned;
+}
 
 /* --------------------------------------------------- */
 
@@ -285,87 +384,4 @@ unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, do
 	return nproc;
 }
 
-void simForRun(OctetAnalyzer& OA, Sim2PMT& simData, RunNum rn, AFPState afp, unsigned int nToSim, double rntime) {
-	assert(afp == AFP_ON || afp == AFP_OFF || afp == AFP_OTHER);
-	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
-	simData.setCalibrator(PCal);
-	simData.setAFP(afp);
-	OA.loadSimData(simData,nToSim);
-	OA.runTimes.add(rn,rntime);
-	OA.totalTime[afp][GV_OPEN] += rntime;
-}
 
-unsigned int simuClone(const std::string& basedata, OctetAnalyzer& OA, Sim2PMT& simData, double simfactor, double replaceIfOlder) {
-	
-	printf("\n------ Cloning asymmetry data in '%s'\n------                        to '%s'...\n",basedata.c_str(),OA.basePath.c_str());
-	int nCloned = 0;
-	
-	// check if simulation is already up-to-date
-	if(OA.getInflAge() && OA.getInflAge() < replaceIfOlder) {
-		printf("\tSimulations in '%s' already recently generated, update skipped...\n",OA.basePath.c_str());
-		return nCloned;
-	}
-	
-	// clear any existing data from out-of-date input
-	OA.zeroSavedHists();
-	OA.zeroCounters();
-	
-	// load original data for comparison
-	std::vector<std::string> datpath = split(strip(basedata,"/"),"/");
-	assert(datpath.size()>0);
-	OctetAnalyzer* origOA = (OctetAnalyzer*)OA.makeAnalyzer("nameUnused",basedata+"/"+datpath.back());
-	// copy over octet information
-	OA.qOut.erase("Octet");
-	OA.qOut.transfer(origOA->qOut,"Octet");
-	
-	// load/clone data in all subdirectories, if they exist
-	int nClonable = 0;
-	std::vector<std::string> fnames = listdir(basedata);
-	for(std::vector<std::string>::iterator it = fnames.begin(); it != fnames.end(); it++) {
-		// check whether data directory contains cloneable subdirectories
-		std::string datinfl = basedata+"/"+(*it)+"/"+(*it);
-		if(!OctetAnalyzer::inflExists(datinfl)) continue;
-		std::string siminfl = OA.basePath+"/"+(*it)+"/"+(*it);		
-		nClonable++;
-		
-		// load cloned sub-data
-		OctetAnalyzer* subOA = (OctetAnalyzer*)OA.makeAnalyzer(*it,OctetAnalyzer::inflExists(siminfl)?siminfl:"");
-		subOA->depth = OA.depth+1;
-		nCloned += simuClone(basedata+"/"+(*it),*subOA,simData,simfactor,replaceIfOlder);
-		OA.addSegment(*subOA);
-		delete(subOA);
-	}
-	
-	// if there were no clonable subdrectories, we need to actually simulate the data
-	if(!nClonable) {
-		printf("\tNo data subdirectories found; assume data here needs cloning...\n");
-		printf("\tProcessing simulation data for each pulse-pair run...\n");
-		for(std::map<RunNum,double>::iterator it = origOA->runCounts.counts.begin(); it != origOA->runCounts.counts.end(); it++) {
-			nCloned++;
-			if(!it->first || !it->second) continue;
-			RunInfo RI = CalDBSQL::getCDB()->getRunInfo(it->first);
-			if(RI.gvState != GV_OPEN) continue;	// no simulation for background runs
-			// estimate background count share for this run (and reduce simulation by this amount)
-			double bgEst = origOA->getTotalCounts(RI.afpState,GV_CLOSED)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,GV_CLOSED).t[BOTH];
-			if(it->second <= bgEst) continue;
-			int nToSim = int(simfactor*(it->second-bgEst));
-			printf("\n\t---Simulation cloning for run %i (%i+%i counts)---\n",it->first,nToSim,int(simfactor*bgEst));
-			simForRun(OA, simData, it->first,  RI.afpState, (unsigned int)nToSim,origOA->getRunTime(it->first));
-		}
-		// and clone background counts in original data
-		OA.simBgFlucts(*origOA,simfactor);
-		// scale back out simulation factor
-		OA.scaleSavedHists(1.0/simfactor);
-	}
-	
-	// generate output
-	OA.calculateResults();
-	OA.makePlots();
-	origOA->calculateResults();
-	OA.compareMCtoData(*origOA);
-	OA.write();
-	OA.setWriteRoot(true);
-	
-	delete(origOA);
-	return nCloned;
-}

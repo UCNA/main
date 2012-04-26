@@ -7,7 +7,7 @@
 TRandom3 mc_rnd_source;	
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
-reSimulate(true), fakeClip(false), nToSim(0), nSimmed(0), mwpcAccidentalProb(0.0), afp(AFP_OTHER) {
+reSimulate(true), fakeClip(false), nSimmed(0), nCounted(0), mwpcAccidentalProb(4.3e-4), afp(AFP_OTHER) {
 	offPos[X_DIRECTION] = offPos[Y_DIRECTION] = 0.;
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
@@ -60,7 +60,8 @@ bool Sim2PMT::nextPoint() {
 	bool np = ProcessedDataScanner::nextPoint();
 	reverseCalibrate();
 	calcReweight();
-	nSimmed+=simEvtCounts();
+	nSimmed++;
+	nCounted+=simEvtCounts();
 	return np;
 }
 
@@ -153,17 +154,6 @@ void G4toPMT::setReadpoints() {
 		primPos[0] = primPos[1] = primPos[2] = primPos[3] = 0;
 }
 
-void G4toPMT_SideSwap::doUnits() {
-	std::swap(eQ[EAST],eQ[WEST]);
-	std::swap(eDep[EAST],eDep[WEST]);
-	std::swap(eW[EAST],eW[WEST]);
-	for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
-		std::swap(mwpcPos[EAST][d],mwpcPos[WEST][d]);
-		std::swap(scintPos[EAST][d],scintPos[WEST][d]);
-	}
-	G4toPMT::doUnits();
-}
-
 void PenelopeToPMT::setReadpoints() {
 	Tch->SetBranchAddress("Epe",&fEdep[EAST]);
 	Tch->SetBranchAddress("Epw",&fEdep[WEST]);
@@ -187,7 +177,8 @@ void PenelopeToPMT::setReadpoints() {
 }
 
 void G4toPMT::doUnits() {
-	const double wcPosConversion = 10.0*sqrt(0.6);
+	// wirechamber position projection plus empirical window-diameter-matching fudge factor
+	const double wcPosConversion = 10.0*sqrt(0.6)*(51.96/52.8);
 	for(unsigned int i=0; i<3; i++)
 		primPos[i] *= 10.0;
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -222,11 +213,21 @@ void PenelopeToPMT::doUnits() {
 	costheta = fCostheta;
 }
 
+void G4toPMT_SideSwap::doUnits() {
+	std::swap(eQ[EAST],eQ[WEST]);
+	std::swap(eDep[EAST],eDep[WEST]);
+	std::swap(eW[EAST],eW[WEST]);
+	for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
+		std::swap(mwpcPos[EAST][d],mwpcPos[WEST][d]);
+		std::swap(scintPos[EAST][d],scintPos[WEST][d]);
+	}
+	G4toPMT::doUnits();
+}
 
 //-------------------------------------------
 
 
-void MixSim::startScan(unsigned int startRandom) {
+void MixSim::startScan(bool startRandom) {
 	for(std::vector<Sim2PMT*>::iterator it = subSims.begin(); it != subSims.end(); it++)
 		(*it)->startScan(startRandom);
 }

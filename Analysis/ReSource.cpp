@@ -121,7 +121,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 				m.insert("simulated",simMode?"yes":"no");			
 				m.insert("side",sideSubst("%c",mySource.mySide));
 				m.insert("counts",hTubes[t][tp]->Integral());
-				m.insert("rate",hTubes[t][tp]->Integral()/runtime);
+				m.insert("rate",runtime?hTubes[t][tp]->Integral()/runtime:0);
 				m.insert("type0frac",hTubes[t][tp]->Integral()/nType0);
 				OM->qOut.insert("rate",m);
 			}
@@ -398,7 +398,7 @@ void reSource(RunNum rn) {
 		RS.dbgplots = false;
 		
 		unsigned int nSimmed = 0;
-		g2p->startScan(100000);
+		g2p->startScan(true);
 		while(nSimmed<100000) {
 			g2p->nextPoint();
 			nSimmed+=RS.fill(*g2p);

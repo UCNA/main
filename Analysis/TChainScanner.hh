@@ -17,7 +17,9 @@ public:
 	virtual int addFile(const std::string& filename);
 	
 	/// start a "speed scan," possibly at a random entry number
-	virtual void startScan(unsigned int startRandom = 0);
+	virtual void startScan(bool startRandom = false);
+	/// jump scanner to specified event
+	void gotoEvent(unsigned int e);
 	/// load identified "speed scan" point
 	virtual void speedload(unsigned int e);	
 	/// load next "speed scan" point

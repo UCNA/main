@@ -269,13 +269,13 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 	PDS.writeCalInfo(qOut,"runcal");
 }
 
-void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim) {
+void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
 	currentGV = GV_OPEN;
 	currentAFP = simData.getAFP();
 	printf("Loading %i events of simulated data (AFP=%i)...\n",nToSim,currentAFP);
-	simData.nSimmed=0;
-	simData.startScan(nToSim);
-	while(simData.nSimmed<=nToSim) {
+	simData.resetSimCounters();
+	simData.startScan(true);
+	while((countAll?simData.nSimmed:simData.nCounted)<=nToSim) {
 		simData.nextPoint();
 		loadSimPoint(simData);
 		if(!(int(simData.nSimmed)%(nToSim/20))) {
@@ -296,4 +296,49 @@ void RunAccumulator::loadSimPoint(Sim2PMT& simData) {
 		runCounts.add(simData.getRun(),evtc);
 		totalCounts[currentAFP][1] += evtc;
 	}	
+}
+
+void RunAccumulator::simForRun(Sim2PMT& simData, RunNum rn, unsigned int nToSim, bool countAll) {
+	RunInfo RI = CalDBSQL::getCDB()->getRunInfo(rn);
+	if(RI.gvState != GV_OPEN) return;
+	assert(RI.afpState <= AFP_OTHER);
+	
+	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
+	simData.setCalibrator(PCal);
+	simData.setAFP(RI.afpState);
+	loadSimData(simData,nToSim,countAll);
+	
+	double rntime = CalDBSQL::getCDB()->fiducialTime(rn).t[BOTH];
+	runTimes.add(rn,rntime);
+	totalTime[RI.afpState][GV_OPEN] += rntime;
+}
+
+unsigned int RunAccumulator::simMultiRuns(Sim2PMT& simData, const TagCounter<RunNum>& runReqs, unsigned int nCounts) {
+	unsigned int nSimmed = 0;
+	// if nCounts==0, simulate all at requested levels
+	if(!nCounts) {
+		for(std::map<RunNum,double>::const_iterator it = runReqs.counts.begin(); it != runReqs.counts.end(); it++) {
+			simForRun(simData, it->first, it->second, false);
+			nSimmed += simData.nSimmed;
+		}
+	} else {
+		double nRequested = runReqs.total();
+		assert(nRequested);
+		double nGranted = 0;
+		printf("Dividing %i simulation events between %i runs requesting %i events...\n",nCounts,runReqs.nTags(),(int)nRequested);
+		for(std::map<RunNum,double>::const_iterator it = runReqs.counts.begin(); it != runReqs.counts.end(); it++) {
+			// calculate alloted number of events for this run
+			nGranted += it->second;
+			int nToSim = int((nGranted/nRequested)*nCounts)-nSimmed;
+			// simulate alloted requests and re-scale to requested counts
+			RunAccumulator* subRA = (RunAccumulator*)makeAnalyzer("nameUnused","");
+			subRA->simForRun(simData, it->first, nToSim, true);
+			nSimmed += simData.nSimmed;
+			printf("From %i input points, simulated %i/%i requested events for Run %i\n",simData.nSimmed,(int)simData.nCounted,(int)it->second,it->first);
+			subRA->scaleSavedHists(it->second/simData.nCounted);
+			addSegment(*subRA);
+			delete(subRA);
+		}
+	}
+	return nSimmed;
 }

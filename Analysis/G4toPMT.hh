@@ -22,6 +22,8 @@ public:
 	virtual bool nextPoint();
 	/// whether to count this event as successfully generated
 	virtual double simEvtCounts() const { return fPID==PID_BETA && fType==TYPE_0_EVENT?physicsWeight:0; }
+	/// reset simulation counters
+	virtual void resetSimCounters() { nSimmed = nCounted = 0; }
 	/// get event info
 	virtual Stringmap evtInfo();
 	
@@ -56,8 +58,8 @@ public:
 	double time[2];				//< hit time in each scintillator
 	double costheta;			//< primary event cos pitch angle
 	double ePrim;				//< primary event energy
-	unsigned int nToSim;		//< total number of events to simulate (set to 0 for random energy selection)
-	double nSimmed;				//< number of events simulated since scan start
+	unsigned int nSimmed;		//< number of events simulated since scan start
+	double nCounted;			//< physics-weighted number of counted events
 	double mwpcThresh[2];		//< MWPC trigger threshold on each side
 	double mwpcAccidentalProb;	//< probability of MWPC accidental triggers
 	
@@ -128,7 +130,7 @@ public:
 	MixSim(double tinit=0): Sim2PMT(""), currentSim(NULL), t0(tinit), t1(tinit) {}
 	
 	/// start scan
-	virtual void startScan(unsigned int startRandom = 0);
+	virtual void startScan(bool startRandom = false);
 	/// load sub-simulation
 	virtual bool nextPoint();
 	

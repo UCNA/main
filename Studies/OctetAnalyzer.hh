@@ -63,8 +63,10 @@ public:
 	/// load data from ProcessedDataScanner
 	void loadProcessedData(AFPState afp, ProcessedDataScanner& FG, ProcessedDataScanner& BG);
 	/// load simulation data
-	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim);
-		
+	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll = false);
+	/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs
+	unsigned int simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor = 1., double replaceIfOlder = 0.);
+	
 	// ---- some utility routines for common analysis/output operations ---- //
 	
 	/// calculate (blinded) super-ratio from quadHists for each side (optionally asymmetry of background)
@@ -76,7 +78,8 @@ public:
 	/// draw East/West pair of quadHists together, optionally also drawing AFP states together
 	void drawQuadSides(quadHists& qhE, quadHists& qhW, bool combineAFP = false,  const std::string& subfolder = ".", const std::string& opt = "");
 	
-	int depth;		//< octet division depth
+	int depth;				//< octet division depth
+	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
 	
 private:
 	
@@ -88,8 +91,5 @@ unsigned int processPulsePair(OctetAnalyzer& OA, const Octet& PP);
 
 /// process a set of octets; return number of processed pulse-pairs
 unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& O, double replaceIfOlder = 0);
-
-/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs
-unsigned int simuClone(const std::string& basedata, OctetAnalyzer& OA, Sim2PMT& simData, double simfactor = 1.0, double replaceIfOlder = 0);
 	
 #endif

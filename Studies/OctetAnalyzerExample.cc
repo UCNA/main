@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 		G4toPMT simData;
 		simData.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
 		// point the simulation cloner to the real data; clone equal amounts of counts where not already simulated within the past hour
-		simuClone(OM.basePath+"/Anode_Asymmetry_Example", OAE_Sim, simData, 1.0, 3600);
+		OAE_Sim.simuClone(OM.basePath+"/Anode_Asymmetry_Example", simData, 1.0, 3600);
 		
 	}
 	

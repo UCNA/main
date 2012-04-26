@@ -2,11 +2,10 @@
 #include "QFile.hh"
 #include "strutils.hh"
 #include "PathUtils.hh"
-#include <TRandom3.h>
 #include <algorithm>
 #include <Math/DistFunc.h>
 
-TRandom3 sim_rnd_source;		
+TRandom3 PMTGenerator::sim_rnd_source;
 
 PMTGenerator::PMTGenerator(Side s, float xx, float yy):
 x(xx), y(yy), xw(xx), yw(yy), presmear(0), threshnoise(0.0), propnoise(0.04), mySide(s) { }

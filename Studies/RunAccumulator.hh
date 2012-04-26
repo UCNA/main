@@ -73,9 +73,13 @@ public:
 	/// fill data from a ProcessedDataScanner
 	virtual void loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS);
 	/// fill data from simulations
-	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim);
+	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll = false);
 	/// load single current event from simulator
 	virtual void loadSimPoint(Sim2PMT& simData);
+	/// load sim data to match a given run
+	void simForRun(Sim2PMT& simData, RunNum rn, unsigned int nToSim, bool countAll = false);
+	/// simulate for many runs, possibly apportioning a fixed number of counts among them; return number of events thrown
+	unsigned int simMultiRuns(Sim2PMT& simData, const TagCounter<RunNum>& runReqs, unsigned int nCounts = 0);
 	/// simulate background fluctuations based on "reference" data
 	void simBgFlucts(const RunAccumulator& RefOA, double simfactor);
 	/// perform background subtraction

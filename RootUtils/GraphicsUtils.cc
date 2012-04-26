@@ -64,7 +64,9 @@ double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt, const s
 void drawHistoPair(TH1* hRed, TH1* hBlue, const std::string& opt, Int_t c1, Int_t c2) {
 	assert(hRed && hBlue);
 	hRed->SetLineColor(c1);
+	hRed->SetMarkerColor(c1);
 	hBlue->SetLineColor(c2);
+	hBlue->SetMarkerColor(c2);
 	std::vector<TH1*> hToPlot;
 	hToPlot.push_back(hRed);
 	hToPlot.push_back(hBlue);

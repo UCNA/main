@@ -5,6 +5,7 @@
 #include "Types.hh"
 #include "EfficCurve.hh"
 #include <vector>
+#include <TRandom3.h>
 
 /// Class for generating PMT signals with energy resolution, efficiency considerations
 class PMTGenerator {
@@ -41,6 +42,8 @@ public:
 	
 	unsigned int nTrigs;			//< number of individual PMTs triggered
 	bool pmtTriggered[nBetaTubes];	//< whether each PMT triggered above threshold
+	
+	static TRandom3 sim_rnd_source;	//< PMTGenerator random number generator
 	
 protected:
 

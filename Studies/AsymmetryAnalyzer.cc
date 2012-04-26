@@ -181,6 +181,8 @@ void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
 	drawHistoPair(dat.hSuperSum,hSuperSum);
 	printCanvas("DataComparison/SuperSum");
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp) {
+		dat.hEvtSS[tp]->SetMarkerStyle(1);
+		hEvtSS[tp]->SetMarkerStyle(1);
 		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
 		printCanvas(std::string("DataComparison/SuperSum_Type_")+itos(tp));
 	}

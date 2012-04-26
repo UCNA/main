@@ -24,7 +24,14 @@ int TChainScanner::addFile(const std::string& filename) {
 	return nfAdded;
 }
 
-void TChainScanner::startScan(unsigned int startRandom) { 
+void TChainScanner::gotoEvent(unsigned int e) {
+	currentEvent = e;
+	Tch->GetEvent(currentEvent);
+	assert(Tch->GetTree());
+	nLocalEvents = noffset = 0;
+}
+
+void TChainScanner::startScan(bool startRandom) { 
 	if(!nEvents) {
 		printf("Starting scan with no data... ");
 		fflush(stdout);
@@ -33,21 +40,17 @@ void TChainScanner::startScan(unsigned int startRandom) {
 	if(startRandom) {
 		if(!currentEvent) {
 			srand(time(NULL));	// random random seed
-			currentEvent = rand()%Tch->GetEntries();
-			Tch->GetEvent(currentEvent);
-			assert(Tch->GetTree());
+			gotoEvent(rand()%Tch->GetEntries());
 			printf("Scan Starting at offset %i/%i: ",currentEvent,nEvents);
 		} else {
 			printf("Scan Continuing at offset %i/%i: ",currentEvent,nEvents);
 		}
 	} else {
-		Tch->GetEvent(0);
-		assert(Tch->GetTree());
+		gotoEvent(0);
 		currentEvent = -1;
 		printf(">%i< ",nEvents);
 	}
 	fflush(stdout);
-	nLocalEvents = noffset = 0;
 }
 
 void TChainScanner::SetBranchAddress(const std::string& bname, void* bdata) {

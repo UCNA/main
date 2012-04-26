@@ -66,6 +66,7 @@ void SegmentSaver::zeroSavedHists() {
 }
 
 void SegmentSaver::scaleSavedHists(double s) {
+	if(s==1.) return;
 	for(std::map<std::string,TH1*>::iterator it = saveHists.begin(); it != saveHists.end(); it++)
 		it->second->Scale(s);
 }

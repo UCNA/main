@@ -52,6 +52,7 @@ public:
 	TH1* mySpectrum;		//< spectrum to throw events from
 	PosGen* PG;				//< for generating event positions
 	Side genside;			//< side to generate events on
+	unsigned int nToSim;	//< total number of events to simulate (set to 0 for random energy selection)
 	
 protected:
 	/// select energy for simulation

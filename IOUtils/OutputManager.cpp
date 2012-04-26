@@ -107,7 +107,7 @@ TH2F* OutputManager::registeredTH2F(std::string hname, std::string htitle, unsig
 
 void OutputManager::printCanvas(std::string fname, std::string suffix) const {
 	makePath(plotPath+"/"+fname+suffix,true);
-	printf("Printing canvas '%s' in '%s'\n",fname.c_str(), plotPath.c_str());
+	printf("Printing canvas '%s' in '%s'\n",(fname+suffix).c_str(), plotPath.c_str());
 	defaultCanvas->Print((plotPath+"/"+fname+suffix).c_str());
 }
 

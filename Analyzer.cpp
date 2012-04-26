@@ -145,13 +145,15 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 		if(octn==-1000) {
 			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 			AsymmetryAnalyzer AA_Sim(&OM,simOutputDir);
-			simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, AA_Sim, simData, 1.0, 365*24*3600);
+			AA_Sim.simPerfectAsym = true;
+			AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, simData, 1.0, 365*24*3600);
 		} else {
 			Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),-octn-1);
 			if(!oct.getNRuns()) return;
 			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+simOutputDir);
-			AsymmetryAnalyzer AA_Sim(&OM,oct.octName());		
-			simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), AA_Sim, simData, 1.0, 0.*3600);
+			AsymmetryAnalyzer AA_Sim(&OM,oct.octName());	
+			AA_Sim.simPerfectAsym = true;
+			AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), simData, 1.0, 0.*3600);
 		}
 	} else {
 		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),octn);
