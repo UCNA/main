@@ -14,7 +14,7 @@ public:
 									   const std::string& inflname) { return new AsymmetryAnalyzer(this,nm,inflname); }
 	
 	/// MC/data comparison
-	void compareMCtoData(RunAccumulator& OAdata, float simfactor);
+	void compareMCtoData(RunAccumulator& OAdata);
 	
 	/// calculate super-ratio asymmetry from anode spectra
 	virtual void calculateResults();

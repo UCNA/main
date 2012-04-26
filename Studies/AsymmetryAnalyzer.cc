@@ -168,7 +168,7 @@ void AsymmetryAnalyzer::makePlots() {
 	}
 }
 
-void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
+void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
 	// re-cast to correct type
 	AsymmetryAnalyzer& dat = (AsymmetryAnalyzer&)OAdata;
 	
@@ -178,11 +178,9 @@ void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor)
 	dat.hAsym->Draw("SAME HIST E1");
 	printCanvas("DataComparison/Asymmetry");
 	
-	hSuperSum->Scale(1.0/simfactor);
 	drawHistoPair(dat.hSuperSum,hSuperSum);
 	printCanvas("DataComparison/SuperSum");
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp) {
-		hEvtSS[tp]->Scale(1.0/simfactor);
 		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
 		printCanvas(std::string("DataComparison/SuperSum_Type_")+itos(tp));
 	}
@@ -193,7 +191,6 @@ void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor)
 			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
 				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(22+4*afp);
-				//qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->Scale(1.0/simfactor);
 				hToPlot.push_back(qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]);
 				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
 				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(20+4*afp);

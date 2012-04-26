@@ -292,7 +292,7 @@ void WirechamberAnalyzer::makePlots() {
 	}
 }
 
-void WirechamberAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
+void WirechamberAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
 }
 
 void runWirechamberAnalyzer(RunNum r0, RunNum r1, unsigned int nrings) {

@@ -83,12 +83,11 @@ void FierzOctetAnalyzer::makePlots() {
 	}
 }
 
-void FierzOctetAnalyzer::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
+void FierzOctetAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
 	// re-cast to correct type
 	FierzOctetAnalyzer& dat = (FierzOctetAnalyzer&)OAdata;
 
-	// scale down Super-Sum by simulation factor to draw comparison with data (red=data, blue=MC)
-	hFullEnergySS->Scale(1.0/simfactor);
+	// draw comparison with data (red=data, blue=MC)
 	drawHistoPair(dat.hFullEnergySS,hFullEnergySS);
 	printCanvas("DataComparison/Full_Energy_SuperSum");
 

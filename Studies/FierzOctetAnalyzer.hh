@@ -35,7 +35,7 @@ public:
 	virtual void makePlots();
 	/// MC/Data comparison routine
 	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
-	virtual void compareMCtoData(RunAccumulator& OAdata, float simfactor);
+	virtual void compareMCtoData(RunAccumulator& OAdata);
 	
 	quadHists qFullEnergySpectrum[2];		//< set of histograms for extracting anode spectrum on each side
 	TH1F* hFullEnergySpectrum[2];			//< convenience pointer for currently active histogram

@@ -93,7 +93,7 @@ public:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight) = 0;
 	/// virtual routine for MC/Data comparison plots/calculations
 	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
-	virtual void compareMCtoData(RunAccumulator& OAdata, float simfactor) { }
+	virtual void compareMCtoData(RunAccumulator& OAdata) { }
 	/// location of errorbar estimates for low-rate histograms
 	virtual std::string estimatorHistoLocation() const { return ""; }
 	

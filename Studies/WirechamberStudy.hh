@@ -45,7 +45,7 @@ public:
 	/// make output plots
 	virtual void makePlots();
 	/// virtual routine for MC/Data comparison plots/calculations
-	virtual void compareMCtoData(RunAccumulator& OAdata, float simfactor);
+	virtual void compareMCtoData(RunAccumulator& OAdata);
 	
 	double eMax;											//< maximum energy bin
 	unsigned int nEnergyBins;								//< number of energy bins

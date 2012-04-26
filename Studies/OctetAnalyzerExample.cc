@@ -34,11 +34,10 @@ void OctetAnalyzerExample::makePlots() {
 	drawQuadSides(qAnodeSpectrum[EAST],qAnodeSpectrum[WEST],true,"MWPC_Energy");
 }
 
-void OctetAnalyzerExample::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
+void OctetAnalyzerExample::compareMCtoData(RunAccumulator& OAdata) {
 	// re-cast to correct type
 	OctetAnalyzerExample& dat = (OctetAnalyzerExample&)OAdata;
-	// scale down Super-Sum by simulation factor to draw comparison with data (red=data, blue=MC)
-	hAnodeSS->Scale(1.0/simfactor);
+	// draw comparison with data (red=data, blue=MC)
 	drawHistoPair(dat.hAnodeSS,hAnodeSS);
 	printCanvas("DataComparison/Wirechamber_Energy_SuperSum");
 	// same for Super-Ratio, except normalization is not needed

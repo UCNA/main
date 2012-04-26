@@ -144,7 +144,7 @@ void PositionBinner::calculateResults() {
 	}	
 }
 
-void PositionBinner::compareMCtoData(RunAccumulator& OAdata, float simfactor) {
+void PositionBinner::compareMCtoData(RunAccumulator& OAdata) {
 	
 	PositionBinner* PB = (PositionBinner*)&OAdata;
 	defaultCanvas->cd();
@@ -323,7 +323,7 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle) {
 	// finish and output
 	PBM.calculateResults();
 	PBM.makePlots();
-	PBM.compareMCtoData(PB,simFactor);
+	PBM.compareMCtoData(PB);
 	PBM.write();
 	PBM.setWriteRoot(true);
 }

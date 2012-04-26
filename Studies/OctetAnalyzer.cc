@@ -346,21 +346,23 @@ unsigned int simuClone(const std::string& basedata, OctetAnalyzer& OA, Sim2PMT& 
 			RunInfo RI = CalDBSQL::getCDB()->getRunInfo(it->first);
 			if(RI.gvState != GV_OPEN) continue;	// no simulation for background runs
 			// estimate background count share for this run (and reduce simulation by this amount)
-			double bgEst = origOA->getTotalCounts(RI.afpState,GV_CLOSED)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,0).t[BOTH];
+			double bgEst = origOA->getTotalCounts(RI.afpState,GV_CLOSED)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,GV_CLOSED).t[BOTH];
 			if(it->second <= bgEst) continue;
-			int nToSim = (int)it->second-bgEst;
-			printf("\n\t---Simulation cloning for run %i (%i+%i counts)---\n",it->first,nToSim,(int)bgEst);
+			int nToSim = int(simfactor*(it->second-bgEst));
+			printf("\n\t---Simulation cloning for run %i (%i+%i counts)---\n",it->first,nToSim,int(simfactor*bgEst));
 			simForRun(OA, simData, it->first,  RI.afpState, (unsigned int)nToSim,origOA->getRunTime(it->first));
 		}
 		// and clone background counts in original data
 		OA.simBgFlucts(*origOA,simfactor);
+		// scale back out simulation factor
+		OA.scaleSavedHists(1.0/simfactor);
 	}
 	
 	// generate output
 	OA.calculateResults();
 	OA.makePlots();
 	origOA->calculateResults();
-	OA.compareMCtoData(*origOA,simfactor);
+	OA.compareMCtoData(*origOA);
 	OA.write();
 	OA.setWriteRoot(true);
 	

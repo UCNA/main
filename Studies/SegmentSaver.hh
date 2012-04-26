@@ -31,7 +31,9 @@ public:
 	/// get core histogram by name, const version
 	const TH1* getSavedHist(const std::string& hname) const;
 	/// zero out all saved histograms
-	virtual void zeroSavedHists();
+	void zeroSavedHists();
+	/// scale all saved histograms by a factor
+	void scaleSavedHists(double s);
 	
 	/// add histograms from another SegmentSaver of the same type
 	virtual void addSegment(const SegmentSaver& S);

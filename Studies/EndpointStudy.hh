@@ -33,7 +33,7 @@ public:
 	/// make output plots
 	virtual void makePlots();
 	/// virtual routine for MC/Data comparison plots/calculations
-	virtual void compareMCtoData(RunAccumulator& OAdata, float simfactor);
+	virtual void compareMCtoData(RunAccumulator& OAdata);
 	
 	fgbgPair energySpectrum[2];							//< combined energy spectrum, each side
 	fgbgPair hitPos[2];									//< hit positions on each side
