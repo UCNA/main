@@ -125,6 +125,7 @@ protected:
 	// whole run variables
 	RunNum rn;									//< run number for file being processed
 	PMTCalibrator PCal;							//< PMT Calibrator for this run
+	LEDInfo LI;									//< LED scanner info for this run
 	CalDBSQL* CDBout;							//< output database connection
 	std::vector<Float_t> kWirePositions[2][2];	//< wire positions on each [side][xplane]
 	std::vector<std::string> cathNames[2][2];	//< cathode sensor names on each [side][xplane]
@@ -196,7 +197,7 @@ protected:
 	void pedestalPrePass();
 	/// fit pedestals
 	void monitorPedestal(const std::vector<float>& vdata, const std::vector<float>& vtime,
-						 const std::string& mon_name, double graphWidth, float tmin=60., unsigned int cmin=3000);
+						 const std::string& mon_name, double graphWidth, float tmin=60., unsigned int cmin=3000, bool isPed=true);
 	
 	/*--- event processing loop ---*/
 	/// process current event raw->phys

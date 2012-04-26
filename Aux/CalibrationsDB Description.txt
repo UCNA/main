@@ -136,7 +136,7 @@ CREATE TABLE run_monitors(
 	monitor_id SERIAL,
 	run_number INT UNSIGNED,
 	sensors_sensor_id INT UNSIGNED,
-	monitor_type ENUM('pedestal','GMS_peak'),
+	monitor_type ENUM('pedestal','GMS_peak','Chris_peak'),
 	center_graph_id INT UNSIGNED,
 	width_graph_id INT UNSIGNED,
 	INDEX (run_number), INDEX (sensors_sensor_id)

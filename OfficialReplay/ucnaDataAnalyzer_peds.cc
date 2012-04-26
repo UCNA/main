@@ -15,8 +15,10 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 		// check if pedestal pre-pass needed
 		printf("Checking for pedestals data...\n");
 		for(Side s = EAST; s <= WEST; ++s) {
-			for(unsigned int t=0; t<nBetaTubes; t++)
+			for(unsigned int t=0; t<nBetaTubes; t++) {
 				needsPeds += !PCal.checkPedestals(PCal.sensorNames[s][t]);
+				needsPeds += !LI.checkLED(s,t);
+			}
 			for(unsigned int p = X_DIRECTION; p <= Y_DIRECTION; p++)
 				for(unsigned int c=0; c<cathNames[s][p].size(); c++)
 					needsPeds += !PCal.checkPedestals(cathNames[s][p][c]);
@@ -33,6 +35,8 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	std::vector<float> anodePeds[2];
 	std::vector<float> cathPeds[2][2][kMWPCWires];
 	std::vector<float> mwpcTimes[2];
+	std::vector<float> pmtLED[2][nBetaTubes];
+	std::vector<float> ledTimes;
 	startScan();
 	while (nextPoint()) {
 		convertReadin();
@@ -51,12 +55,20 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 				anodePeds[s].push_back(fMWPC_anode[s].val);
 			}
 		}
+		if(isLED()) {
+			ledTimes.push_back(fTimeScaler.t[BOTH]);
+			for(Side s = EAST; s <= WEST; ++s)
+				for(unsigned int t=0; t<nBetaTubes; t++)
+					pmtLED[s][t].push_back(sevt[s].adc[t]);
+		}
 	}
 	
 	// fit pedestals, save results
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t=0; t<nBetaTubes; t++)
+		for(unsigned int t=0; t<nBetaTubes; t++) {
 			monitorPedestal(pmtPeds[s][t],pmtTimes[s],PCal.sensorNames[s][t],50);
+			monitorPedestal(pmtLED[s][t],ledTimes,LI.ledNames[s][t],0,0.5,100.0,false);
+		}
 		for(AxisDirection p = X_DIRECTION; p <= Y_DIRECTION; ++p)
 			for(unsigned int c=0; c<cathNames[s][p].size(); c++)
 				monitorPedestal(cathPeds[s][p][c],mwpcTimes[s],cathNames[s][p][c],150);
@@ -68,7 +80,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 }
 
 void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const std::vector<float>& vtime,
-										  const std::string& mon_name, double graphWidth, float tmin, unsigned int cmin) {
+										  const std::string& mon_name, double graphWidth, float tmin, unsigned int cmin, bool isPed) {
 	
 	printf("Monitoring data '%s'\n",mon_name.c_str());
 	// collect data
@@ -87,6 +99,7 @@ void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const
 	
 	// estimate data range using TProfile
 	TProfile* p = new TProfile("pmon","PeakMonitor",ndivs,0,npts+1);
+	p->SetErrorOption("s");
 	TProfile* pTime = new TProfile("pmonT","PeakMonitor_Time",ndivs,0,npts+1);
 	for(unsigned int i=0; i<npts; i++) {
 		pTime->Fill(i,vtime[i]);
@@ -97,6 +110,7 @@ void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const
 	// extract pedestal in each interval
 	defaultCanvas->cd();
 	TGraph* tg = new TGraph(ndivs>1?ndivs:2);
+	TGraph* tgw = new TGraph(ndivs>1?ndivs:2);
 	std::vector<double> times;
 	std::vector<double> dtimes;
 	std::vector<double> centers;
@@ -105,10 +119,13 @@ void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const
 	std::vector<double> dwidths;
 	std::vector<TH1*> hToPlot;
 	unsigned int n=0;
+	bool autoWidth = !graphWidth;
 	printf("\tMaking histograms for each division...\n");
 	for(unsigned int i=0; i<ndivs; i++) {
 		// book histogram based on mean/sigma estimate
 		float c = p->GetBinContent(i+1);
+		if(autoWidth)
+			graphWidth = 3*p->GetBinError(i+1);
 		int x0 = int(c-graphWidth);
 		int x1 = int(c+graphWidth);
 		TH1F* hdiv = registeredTH1F(mon_name+"_Mon_Div_"+itos(i),mon_name+" Pedestals",x1-x0,x0,x1);
@@ -123,32 +140,46 @@ void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const
 		times.push_back(pTime->GetBinContent(i+1));
 		dtimes.push_back(pTime->GetBinError(i+1));
 		tg->SetPoint(i,times.back(),centers.back());
+		tgw->SetPoint(i,times.back(),sigmas.back());
 	}
 	if(ndivs==1) {
 		printf("Notice: only 1 graph point found; extending to 2.");
 		tg->SetPoint(1,p->GetBinCenter(1)+10.0,centers[0]);
+		tgw->SetPoint(1,p->GetBinCenter(1)+10.0,sigmas[0]);
 	}
 	printf("\tMaking plots...\n");
-	drawSimulHistos(hToPlot);
-	for(unsigned int i=0; i<ndivs; i++) {
-		drawVLine(centers[i],defaultCanvas,2);
-		drawVLine(centers[i]+sigmas[i],defaultCanvas,4);
-		drawVLine(centers[i]-sigmas[i],defaultCanvas,4);		
+	if(isPed) {
+		drawSimulHistos(hToPlot);
+		for(unsigned int i=0; i<ndivs; i++) {
+			drawVLine(centers[i],defaultCanvas,2);
+			drawVLine(centers[i]+sigmas[i],defaultCanvas,4);
+			drawVLine(centers[i]-sigmas[i],defaultCanvas,4);		
+		}
+		printCanvas("Pedestals/"+mon_name);
+	} else {
+		tg->Draw("AP");
+		tg->SetTitle(mon_name.c_str());
+		tg->GetXaxis()->SetTitle("Time [s]");
+		tg->GetYaxis()->SetTitle("Value");
+		tg->Draw("ALP");
+		tgw->SetLineColor(2);
+		tgw->Draw("LP");
+		printCanvas("Pedestals/"+mon_name);
 	}
-	printCanvas("Pedestals/"+mon_name);
 	
 	// load pedestals graph into memory
-	PCal.insertPedestal(mon_name,tg);
+	if(isPed) PCal.insertPedestal(mon_name,tg);
 	
 	// optionally add to Calibrations DB
 	if(CDBout) {
 		printf("Uploading pedestal '%s'...\n",mon_name.c_str());
-		unsigned int cgid = CDBout->uploadGraph(itos(rn)+" "+mon_name+" Pedestal Centers",times,centers,dtimes,dcenters);
-		unsigned int wgid = CDBout->uploadGraph(itos(rn)+" "+mon_name+" Pedestal Widths",times,sigmas,dtimes);
-		CDBout->deleteRunMonitor(rn,mon_name,"pedestal");
-		CDBout->addRunMonitor(rn,mon_name,"pedestal",cgid,wgid);
+		unsigned int cgid = CDBout->uploadGraph(itos(rn)+" "+mon_name+(isPed?" Pedestal":" Peak")+" Centers",times,centers,dtimes,dcenters);
+		unsigned int wgid = CDBout->uploadGraph(itos(rn)+" "+mon_name+(isPed?" Pedestal":" Peak")+" Widths",times,sigmas,dtimes);
+		CDBout->deleteRunMonitor(rn,mon_name,isPed?"pedestal":"GMS_peak");
+		CDBout->addRunMonitor(rn,mon_name,isPed?"pedestal":"GMS_peak",cgid,wgid);
 	}
 	
 	delete(p);
+	delete(tgw);
 	delete(pTime);
 }

@@ -66,7 +66,7 @@ scaleNoiseWithL(true), P(cdb->getPositioningCorrector(myRun)), GS(NULL), rn(myRu
 	
 	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<nBetaTubes; t++)
-			sensorNames[s][t] = std::string("ADC")+ctos(sideNames(s))+itos(pmtHardwareNum(s,t))+"Beta";
+			sensorNames[s][t] = sideSubst("ADC%c",s)+itos(pmtHardwareNum(s,t))+"Beta";
 	
 	if(rn < 5000) {
 		printf("******* Bogus Linearity Calibration Run! ********\n");
@@ -110,6 +110,7 @@ LinearityCorrector::~LinearityCorrector() {
 		return;
 	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
+			//TODO
 			//if(linearityFunctions[s][t]) delete(linearityFunctions[s][t]); //TODO why does this crash?
 			//if(ledPeaks[s][t]) delete(ledPeaks[s][t]);
 		}
@@ -167,14 +168,39 @@ std::map<RunNum,LinearityCorrector*> LinearityCorrector::cachedRuns = std::map<R
 
 
 
+//------------------------------------------------------------------------------------
 
+LEDInfo::LEDInfo(RunNum myRun, CalDB* cdb): rn(myRun), CDB(cdb) {
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(unsigned int t=0; t<nBetaTubes; t++) {
+			ledNames[s][t] = sideSubst("ADC%c",s)+itos(pmtHardwareNum(s,t))+"LED";
+			LEDVal[s][t] = NULL;
+		}
+	}
+}
 
+LEDInfo::~LEDInfo() {
+	//TODO
+}
 
+float LEDInfo::LEDADC(Side s, unsigned int t, float time) {
+	assert(s<=WEST && t<nBetaTubes);
+	if(!LEDVal[s][t] && !(LEDVal[s][t] = CDB->getRunMonitor(rn,ledNames[s][t],"GMS_Peak"))) return 0;
+	return LEDVal[s][t]->Eval(time);
+}
 
+float LEDInfo::LEDADCspread(Side s, unsigned int t, float time) {
+	assert(s<=WEST && t<nBetaTubes);
+	if(!LEDWidth[s][t] && !(LEDWidth[s][t] = CDB->getRunMonitor(rn,ledNames[s][t],"GMS_Peak",false))) return 0;
+	return LEDWidth[s][t]->Eval(time);
+}
 
+bool LEDInfo::checkLED(Side s, unsigned int t) {
+	LEDADC(s,t,0.0);
+	return LEDVal[s][t];
+}
 
-
-
+//------------------------------------------------------------------------------------
 
 PMTCalibrator::PMTCalibrator(RunNum rn, CalDB* cdb): LinearityCorrector(rn,cdb),
 PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) {

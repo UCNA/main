@@ -12,7 +12,7 @@
 RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
 
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
-TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), rn(R), PCal(R,CDB), CDBout(NULL),
+TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), rn(R), PCal(R,CDB), LI(R,CDB), CDBout(NULL),
 deltaT(0), totalTime(0), ignore_beam_out(false), nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	if(R>16300 && !CDB->isValid(R)) {
 		printf("*** Bogus calibration for new runs! ***\n");
