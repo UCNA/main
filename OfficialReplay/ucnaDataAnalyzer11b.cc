@@ -371,6 +371,14 @@ bool ucnaDataAnalyzer11b::processEvent() {
 		PCal.pedSubtract(s, sevt[s].adc, fTimeScaler.t[BOTH]);
 	fillEarlyHistograms();
 	
+	// LED tree events
+	if(isLED()) {
+		reconstructPosition();
+		for(Side s = EAST; s <= WEST; ++s)
+			PCal.calibrateEnergy(s,0.,0.,sevt[s],fTimeScaler.t[BOTH]);
+		TLED->Fill();
+	}
+	
 	if(!isScintTrigger() || isLED())
 		return np;
 	

@@ -174,7 +174,8 @@ protected:
 	void setupOutputTree();
 	
 	// additional event variables for output tree
-	TTree* TPhys;			//< output tree
+	TTree* TPhys;			//< physics events output tree
+	TTree* TLED;			//< LED pulser events output tree
 	Int_t fEvnbGood;		//< DAQ data quality checks
 	Int_t fBkhfGood;		//< DAQ data quality checks
 	Int_t fPassedAnode[2];	//< whether passed anode cut on each side 
