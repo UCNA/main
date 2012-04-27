@@ -48,6 +48,25 @@ class kurieFit(KVMap):
 		self.ep = self.endpoint
 		self.dep = self.dendpoint
 
+class runCal(KVMap):
+	def __init__(self,m):
+		self.dat = m.dat
+		self.run = int(self.getFirstF("run"))
+		self.eOrig={}
+		self.eFinal={}
+		self.gms={}
+		self.gms0={}
+		for s in ['E','W']:
+			for t in range(5):
+				self.eOrig[(s,t)]=self.getFirstF("%s%i_eOrig"%(s,t))
+				self.eFinal[(s,t)]=self.getFirstF("%s%i_eFinal"%(s,t))
+				if t<4:
+					self.gms[(s,t)]=self.getFirstF("%s%i_gms"%(s,t))
+					self.gms0[(s,t)]=self.getFirstF("%s%i_gms0"%(s,t))
+					
+	def getGMSTweak(self,side,tube):
+		return self.eFinal[(side,tube)]/self.eOrig[(side,tube)]
+															
 class asymData:
 	"""Asymmetry data extracted from a group of runs"""
 	def __init__(self):
@@ -80,12 +99,17 @@ class AsymmetryFile(QFile,asymData):
 		self.asyms = [asymmetryFit(m) for m in self.dat.get("asymmetry",[])]
 		self.kuries = [kurieFit(m) for m in self.dat.get("kurieFit",[])]
 		self.rates = [eventRate(m) for m in self.dat.get("rate",[])]
-		for m in self.dat.get("Octet"):
+		for m in self.dat.get("Octet",[]):
 			for k in m.dat:
 				if k in octSegments[0]:
 					for rns in m.dat[k]:
 						for rn in rns.split(","):
 							self.addRun(k,rn)
+		if not self.getRuns():
+			rns = self.fname.split("/")[-1].split("_")[0].split("-")
+			self.addRun("start",int(rns[0]))
+			self.addRun("end",int(rns[1]))
+		self.runcals = dict([(r.run,r) for r in [runCal(m) for m in self.dat.get("runcal",[])]])
 		
 	def kepDelta(self,side,type="0"):
 		"""Calculate difference between On/Off endpoint"""
@@ -105,11 +129,17 @@ class AsymmetryFile(QFile,asymData):
 			if r.side==side and r.afp==afp and r.fg==fg and r.name==name:
 				return r
 		return None
-		
+	
+	def getGMSTweak(self,side,tube):
+		tweaks = [self.runcals[r].getGMSTweak(side,tube) for r in self.runcals]
+		return sum(tweaks)/len(tweaks)
+				
 def collectAsymmetries(basedir,depth):
 	print "Collecting asymmetry data from",basedir,"at depth",depth
 	asyms = []
-	for f in [ (basedir+'/'+f+'/',basedir+'/'+f+'/'+f+'.txt') for f in os.listdir(basedir) if os.path.isdir(basedir+'/'+f) and '-' in f and f[:3]!="139"]:
+	fls = os.listdir(basedir)
+	fls.sort()
+	for f in [ (basedir+'/'+f+'/',basedir+'/'+f+'/'+f+'.txt') for f in fls if os.path.isdir(basedir+'/'+f) and '-' in f and f[:3]!="139"]:
 		if not depth and os.path.exists(f[1]):
 			asyms.append(AsymmetryFile(f[1]))
 		else:
@@ -171,26 +201,28 @@ def plot_octet_asymmetries(basedir,depth=0):
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
 				y=graph.axis.lin(title="Asymmetry",min=-0.2,max=0),
 				key = graph.key.key(pos="bl"))
-	gAsyms.texrunner.set(lfs='foils17pt')
-	
+	try:
+		gAsyms.texrunner.set(lfs='foils17pt')
+	except:
+		pass
+		
 	gBgRate=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
 				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.40),
 				key = graph.key.key(pos="bl"))
-	gBgRate.texrunner.set(lfs='foils17pt')
-	
-	gEp=graph.graphxy(width=25,height=8,
-				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
-				y=graph.axis.lin(title="Endpoint [keV]",min=750,max=850),
-				key = graph.key.key(pos="bl"))
-	gEp.texrunner.set(lfs='foils17pt')
-	
+	try:
+		gBgRate.texrunner.set(lfs='foils17pt')
+	except:
+		pass
+		
 	gdEp=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
 				y=graph.axis.lin(title="Endpoint On/Off Difference [keV]",min=-30,max=20),
 				key = graph.key.key(pos="bl"))
-	gdEp.texrunner.set(lfs='foils17pt')
-
+	try:
+		gdEp.texrunner.set(lfs='foils17pt')
+	except:
+		pass
 	
 	gAsyms.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
 				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
@@ -201,6 +233,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 	##############
 	LF = LinearFitter(terms=[polyterm(0)])
 	
+	print gdat
 	gdat_A = [g for g in gdat if 14000 < g[3] < 14800]
 	gdat_B = [g for g in gdat if 14800 < g[3] ]
 	
@@ -248,15 +281,6 @@ def plot_octet_asymmetries(basedir,depth=0):
 						graph.style.errorbar(errorbarattrs=[sideCols[s],])])
 		gdEp.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line([sideCols[s],])])
 		
-		if s in kdat:
-			for afp in kdat[s]:
-				LF.fit([kd for kd in kdat[s][afp] if 0<kd[2]],cols=(0,1,2),errorbarWeights=True)
-
-				gEp.plot(graph.data.points(kdat[s][afp],x=1,y=2,dy=3,title=s+" Side, AFP=%s: $\\mu=%.1f$, $\\sigma=%.1f$"%(afp,LF.coeffs[0],LF.rmsDeviation())),
-							[graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=[sideCols[s],]),
-							graph.style.errorbar(errorbarattrs=[sideCols[s],])])
-				gEp.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line([sideCols[s],])])
-		
 		if s in bgRateDat:
 			for afp in bgRateDat[s]:
 				if len(bgRateDat[s][afp])<2:
@@ -274,32 +298,13 @@ def plot_octet_asymmetries(basedir,depth=0):
 							graph.style.errorbar(errorbarattrs=[sideCols[s],])])
 				gBgRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line([sideCols[s],])])
 
-				
-	gEp.writetofile(basedir+"/OctetEP_%i.pdf"%depth)
 	gdEp.writetofile(basedir+"/Octet_dEP_%i.pdf"%depth)
 	gBgRate.writetofile(basedir+"/Octet_BgRate_%i.pdf"%depth)
 	
-	##############
-	# individual PMT endpoint plots
-	##############
-	for s in ['E','W']:
-		for afp in kdat[s]:
-				
-			gEp=graph.graphxy(width=25,height=8,
-						x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
-						y=graph.axis.lin(title="Endpoint [keV]",min=700,max=850),
-						key = graph.key.key(pos="tr"))
-			gEp.texrunner.set(lfs='foils17pt')
-
-			for t in range(4):
-				plotdat = [ (k[0],k[t+3].ep,k[t+3].dep) for k in kdat[s][afp] ]
-				tcols = [rgb.red,rgb.green,rgb.blue,rgb(1,1,0)]
-				gEp.plot(graph.data.points(plotdat,x=1,y=2,dy=3,title="PMT %i"%t),
-							[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[tcols[t],]),
-							graph.style.errorbar(errorbarattrs=[tcols[t],])])
-			
-			gEp.writetofile(basedir+"/TubeEP_%i_%s_%s.pdf"%(depth,s,afp))
 	
+		
+			
+					
 def get_gain_tweak(conn,rn,s,t):
 	conn.execute("SELECT e_orig,e_final FROM gain_tweak WHERE start_run <= %i AND %i <= end_run AND side = '%s'\
 	 AND quadrant = %i ORDER BY end_run-start_run LIMIT 1"%(rn,rn,s,t))
@@ -312,8 +317,9 @@ def delete_gain_tweak(conn,rn,s,t):
 	conn.execute("DELETE FROM gain_tweak WHERE start_run <= %i AND %i <= end_run AND side = '%s' AND quadrant = %i"%(rn,rn,s,t))
 
 def upload_gain_tweak(conn,rns,s,t,e0,e1):
-	conn.execute("INSERT INTO gain_tweak(start_run,end_run,side,quadrant,e_orig,e_final)\
-					VALUES (%i,%i,'%s',%i,%f,%f)"%(rns[0],rns[-1],s,t,e0,e1))
+	cmd = "INSERT INTO gain_tweak(start_run,end_run,side,quadrant,e_orig,e_final) VALUES (%i,%i,'%s',%i,%f,%f)"%(rns[0],rns[-1],s,t,e0,e1)
+	print cmd
+	conn.execute(cmd)
 
 
 class MC_Comparator:
@@ -321,7 +327,7 @@ class MC_Comparator:
 
 	def __init__(self,basedir,simdir,depth=0):
 		def sortByRuns(asyms):
-			return dict([(tuple(af.getRuns()),af) for af in asyms])
+			return dict([((af.getRuns()[0],af.getRuns()[-1]),af) for af in asyms])
 		self.basedir = basedir
 		self.simdir = simdir
 		self.depth = abs(depth)
@@ -333,27 +339,91 @@ class MC_Comparator:
 			if rns not in self.simAsyms:
 				print "**** Missing simulations for ",rns
 				self.datAsyms.pop(rns)
-
-	def endpoint_gain_tweak():
+		self.rungrps = self.datAsyms.keys()
+		self.rungrps.sort()
+		
+	def endpoint_gain_tweak(self,conn=None):
 		"""Set gain tweak factors to match spectrum endpoints between data and simulation"""
-		conn = open_connection()
-		for rns in self.rungrps:
-			print rns
+		# collect data
+		gdat = {}
+		for (n,rns) in enumerate(self.rungrps):
+			print n,(rns[0],rns[-1]),"-"*80
 			for s in ["East","West"]:
 				for t in range(4):
 					kdat = 0.5*(self.datAsyms[rns].getKurie(s[0],'0',"0",t).ep+self.datAsyms[rns].getKurie(s[0],'1',"0",t).ep)
 					ksim = 0.5*(self.simAsyms[rns].getKurie(s[0],'0',"0",t).ep+self.simAsyms[rns].getKurie(s[0],'1',"0",t).ep)
-					oldtweak=get_gain_tweak(conn,rns[0],s,t)
-					print "\t%s %i:\t%f\t%f\t%f\tOld:"%(s,t,kdat,ksim,ksim/kdat),oldtweak,oldtweak[1]/oldtweak[0]
-					#delete_gain_tweak(conn,rns[0],s,t)
-					#upload_gain_tweak(conn,rns,s,t,kdat*oldtweak[0]/oldtweak[1],ksim)
+					oldtweak = self.datAsyms[rns].getGMSTweak(s[0],t)
+					gdat.setdefault((s,t),[]).append((n,kdat,ksim))
+					print "\t%s %i:\t%f\t%f\t%f\tOld: %f"%(s,t,kdat,ksim,ksim/kdat,oldtweak)
+					if conn:
+						delete_gain_tweak(conn,rns[0],s,t)
+						upload_gain_tweak(conn,rns,s,t,kdat/oldtweak,ksim)
+		# plot
+		tcols = [rgb.red,rgb.green,rgb.blue,rgb(1,1,0)]
+		for s in ["East","West"]:
+			gEp=graph.graphxy(width=25,height=8,
+				x=graph.axis.lin(title=unitNames[self.depth],min=0,max=len(self.rungrps)-1),
+				y=graph.axis.lin(title="Endpoint [keV]",min=720,max=800),
+				key = graph.key.key(pos="tl"))
+			try:
+				gEp.texrunner.set(lfs='foils17pt')
+			except:
+				pass
+
+			for t in range(4):
+				LF = LinearFitter(terms=[polyterm(0)])
+				LFsim = LinearFitter(terms=[polyterm(0)])
+				LF.fit(gdat[(s,t)],cols=(0,1))
+				LFsim.fit(gdat[(s,t)],cols=(0,2))
+				err = LF.rmsDeviation()
+				gtitle = "%s %i: $\\mu=%.1f$, $\\sigma=%.1f$; $\\mu_{\\rm sim}=%.1f$"%(s,t,LF.coeffs[0],err,LFsim.coeffs[0])
+				gEp.plot(graph.data.points(gdat[(s,t)],x=1,y=2,title=gtitle),[graph.style.symbol(symbol.circle,symbolattrs=[tcols[t],])])
+				gEp.plot(graph.data.points(gdat[(s,t)],x=1,y=3,title=None),[graph.style.line([tcols[t]])])
+		
+			gEp.writetofile(self.basedir+"/TubeEp_%s_%i.pdf"%(s,self.depth))
+
+		
+	def plot_endpoints(self):
+		"""Compare data and MC spectrum endpoints"""
+		gEp=graph.graphxy(width=25,height=8,
+				x=graph.axis.lin(title=unitNames[self.depth],min=0,max=len(self.rungrps)-1),
+				y=graph.axis.lin(title="Endpoint [keV]",min=760,max=820),
+				key = graph.key.key(pos="bl"))
+		try:
+			gEp.texrunner.set(lfs='foils17pt')
+		except:
+			pass
+			
+		sideCols = {'E':rgb.red,'W':rgb.blue}
+		afpSymbs = {'0':symbol.circle,'1':symbol.triangle}
+		afpLines = {'0':style.linestyle.dashed,'1':style.linestyle.dotted}
+		afpNames = {'0':"Off",'1':"On"}
+		LF = LinearFitter(terms=[polyterm(0)])
+		LFsim = LinearFitter(terms=[polyterm(0)])
+		
+		for s in sideCols:
+			for afp in afpSymbs:
+				gdat = [(n,
+							self.datAsyms[rns].getKurie(s,afp,"0",4).ep,
+							self.simAsyms[rns].getKurie(s,afp,"0",4).ep)  for (n,rns) in enumerate(self.rungrps)]
+				
+				LF.fit(gdat,cols=(0,1))
+				LFsim.fit(gdat,cols=(0,2))
+				err = LF.rmsDeviation()
+				gtitle = "%s$_{\\rm %s}$: $\\mu=%.1f$, $\\sigma=%.1f$; $\\mu_{\\rm sim}=%.1f$"%(s,afpNames[afp],LF.coeffs[0],err,LFsim.coeffs[0])
+				gEp.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=gtitle),
+							[graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=[sideCols[s],])])
+				gEp.plot(graph.data.points(gdat,x=1,y=3,title=None),[graph.style.line([sideCols[s],afpLines[afp]])])
+		
+		gEp.writetofile(self.basedir+"/OctetEP_%i.pdf"%self.depth)
 					
+							
 	def backscatter_fractions(self):
 		"""Plot data and simulation backscatter fractions"""
 		nmax = len(self.rungrps)-1
 		gScatter=graph.graphxy(width=30,height=15,
 			x=graph.axis.lin(title=unitNames[self.depth],min=-nmax/3,max=nmax),
-			y=graph.axis.lin(title="Backscatter Fraction (\\% of Type 0)",min=0,max=3.0),
+			y=graph.axis.lin(title="Backscatter Fraction (\\% of Type 0)",min=0,max=4.0),
 			key = graph.key.key(pos="tl"))
 		gScatter.texrunner.set(lfs='foils17pt')
 		
@@ -393,10 +463,16 @@ class MC_Comparator:
 if __name__=="__main__":
 	
 	if 0:
-		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated")
-		#MCC.endpoint_gain_tweak()
-		MCC.backscatter_fractions()
-	
+		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF")
+		#MCC.backscatter_fractions()
+		#MCC.plot_endpoints()
+		
+		#conn=open_connection()
+		conn=None
+		MCC.endpoint_gain_tweak(conn)
+		
+		exit(0)
+		
 	for i in range(3):
 		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
 		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated",2-i)

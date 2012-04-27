@@ -15,7 +15,7 @@ def processOctets(sim=False):
 	freplaylist.close()
 	os.system("cat oct_replaylist.txt")
 	if sim:
-		os.system("nice -n 10 parallel -P 3 < oct_replaylist.txt")
+		os.system("nice -n 10 parallel -P 4 < oct_replaylist.txt")
 	else:
 		os.system("nice -n 10 parallel < oct_replaylist.txt")
 	os.system("rm oct_replaylist.txt")

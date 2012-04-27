@@ -249,15 +249,15 @@ if __name__ == "__main__":
 		betaSim = GeantSimManager("LivPhys_495_MagF",vacuum=1.e-3,fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
-		#betaSim.launch_sims(nEvents=1e7,nClusters=9,hours_old=1000)
+		betaSim.launch_sims(nEvents=1e7,nClusters=9,hours_old=1000)
 		betaSim.launch_postanalyzer()
 	
 	# beta decay in 1e-3torr vacuum: 1e7 in 9 clusters
-	if 0:
+	if 1:
 		betaSim = GeantSimManager("LivPhys_495_BadVac",vacuum=1.e-3)
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
-		betaSim.launch_sims(nEvents=1e7,nClusters=9,hours_old=1000)
+		#betaSim.launch_sims(nEvents=1e7,nClusters=9,hours_old=1000)
 		betaSim.launch_postanalyzer()
 			
 							
@@ -265,13 +265,13 @@ if __name__ == "__main__":
 	# calibration sources
 	####################
 					
-	# sources ["Sn113","Bi207","Ce139","Cd109","Cd113m","In114E","In114W"]
+	# sources ["Sn113","Bi207","Ce139","Cd109","In114E","In114W","Cd113m"]
 	if 0:
 		for g in ["Cd113m"]:
 			sourceSim = GeantSimManager("LivPhys_495",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=8)
+			#sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=8)
 			sourceSim.launch_postanalyzer()
 
 
@@ -280,11 +280,11 @@ if __name__ == "__main__":
 	####################
 
 	# Silicon detector test
-	if 1:
+	if 0:
 		siDet = GeantSimManager("SiDet",geometry="siDet")
 		siDet.set_generator("Cs137")
 		siDet.settings["extra_cmds"] += "/sourceholder/windowthickness 1.5 mm\n"
-		siDet.launch_sims(nEvents=1e5,nClusters=6,hours_old=0)
+		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
 		siDet.launch_postanalyzer()
 	
 	

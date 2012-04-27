@@ -43,7 +43,7 @@ def plotAllErrors(outpath,year,s="Both",t=4):
 	if year==2011:
 		rlist = range(17233,100000)
 	slines = gather_peakdat(conn,rlist)
-	srs = sort_peaks_by_type(slines)
+	srs = sort_by_type(slines)
 	scols = rainbowDict(srs)
 	
 	# plot
