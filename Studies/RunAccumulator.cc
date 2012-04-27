@@ -187,8 +187,8 @@ void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor) 
 		for(unsigned int i=0; i<totalBins(it->second.h[0]); i++) {
 			double rootn = qhRef.h[0]->GetBinError(i)*sqrt(simfactor);		// root(bg counts) from ref histogram errorbars
 			double n = rootn*rootn;											// background counts from reference histogram
-			double bgObsCounts = rnd_source.PoissonD(n);			// simulated background counts
-			double fgBgCounts = rnd_source.PoissonD(n*bgRatio);		// simulated foreground counts due to background
+			double bgObsCounts = rnd_source.PoissonD(n);					// simulated background counts
+			double fgBgCounts = rnd_source.PoissonD(n*bgRatio);				// simulated foreground counts due to background
 			it->second.h[0]->AddBinContent(i,bgObsCounts);					// fill fake background counts
 			it->second.h[0]->SetBinError(i,rootn);							// set root-n statitics for background
 			it->second.h[1]->AddBinContent(i,fgBgCounts);					// add simulated background to foreground histogram				

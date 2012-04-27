@@ -34,7 +34,7 @@ Stringmap Sim2PMT::evtInfo() {
 void Sim2PMT::calcReweight() {
 	physicsWeight = 1.0;
 	if(afp==AFP_ON||afp==AFP_OFF)
-		physicsWeight *= 1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_OFF?1:-1));
+		physicsWeight *= (1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_OFF?1:-1)))*spectrumCorrectionFactor(ePrim);
 	if(fakeClip) {
 		const double R = 70.*sqrt(0.6); // wirechamber entrance window radius, projected back to decay trap
 		// event origin distance from edge
