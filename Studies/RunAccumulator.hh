@@ -7,6 +7,7 @@
 #include "TagCounter.hh"
 #include "ProcessedDataScanner.hh"
 #include "G4toPMT.hh"
+#include <TRandom3.h>
 
 /// background-subtracting histograms pair
 class fgbgPair {
@@ -106,7 +107,10 @@ public:
 	BlindTime totalTime[AFP_OTHER+1][2]; 		//< total time for [flipper][fg/bg]
 	TagCounter<RunNum> runTimes;				//< time spent on each run
 	
+	
 protected:
+	
+	static TRandom3 rnd_source;
 	
 	/// get matching RunAccumulator with "master" histograms for estimating error bars on low-counts bins
 	RunAccumulator* getErrorEstimator();	

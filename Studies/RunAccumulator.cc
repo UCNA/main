@@ -1,5 +1,6 @@
 #include "RunAccumulator.hh"
-#include <TRandom3.h>
+
+TRandom3 RunAccumulator::rnd_source;
 
 fgbgPair::fgbgPair(const std::string& nm, const std::string& ttl, AFPState a, Side s):
 baseName(nm), baseTitle(ttl), afp(a), mySide(s), isSubtracted(false) { }
@@ -180,19 +181,14 @@ void RunAccumulator::bgSubtractAll() {
 void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor) {
 	assert(isEquivalent(RefOA));
 	printf("Adding background fluctuations to simulation...\n");
-	static TRandom3* OA_sim_rnd_source = NULL;
-	if(!OA_sim_rnd_source) {
-		OA_sim_rnd_source = new TRandom3();
-		OA_sim_rnd_source->SetSeed(0);
-	}
 	for(std::map<std::string,fgbgPair>::iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
 		fgbgPair qhRef = RefOA.getFGBGPair(it->first);
 		double bgRatio = RefOA.getTotalTime(it->second.afp,true).t[it->second.mySide]/RefOA.getTotalTime(it->second.afp,false).t[it->second.mySide];
 		for(unsigned int i=0; i<totalBins(it->second.h[0]); i++) {
 			double rootn = qhRef.h[0]->GetBinError(i)*sqrt(simfactor);		// root(bg counts) from ref histogram errorbars
 			double n = rootn*rootn;											// background counts from reference histogram
-			double bgObsCounts = OA_sim_rnd_source->PoissonD(n);			// simulated background counts
-			double fgBgCounts = OA_sim_rnd_source->PoissonD(n*bgRatio);		// simulated foreground counts due to background
+			double bgObsCounts = rnd_source.PoissonD(n);			// simulated background counts
+			double fgBgCounts = rnd_source.PoissonD(n*bgRatio);		// simulated foreground counts due to background
 			it->second.h[0]->AddBinContent(i,bgObsCounts);					// fill fake background counts
 			it->second.h[0]->SetBinError(i,rootn);							// set root-n statitics for background
 			it->second.h[1]->AddBinContent(i,fgBgCounts);					// add simulated background to foreground histogram				

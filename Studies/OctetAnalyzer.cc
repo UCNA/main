@@ -280,19 +280,21 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 		// see which kind of run got more AFP counts; clone first
 		AFPState bigafp = countRequests[AFP_OFF].total()>=countRequests[AFP_ON].total()?AFP_OFF:AFP_ON;
 		AFPState smallafp = bigafp?AFP_OFF:AFP_ON;
+		assert(countRequests[bigafp].nTags());
 		// determine starting point in simulation data to which we can return later
 		unsigned int startEvt = 0;
 		while(!startEvt) {
 			simData.startScan(true);
 			startEvt = simData.getCurrentEvent();
 		}
-		unsigned int pgen_seed = PMTGenerator::sim_rnd_source.GetSeed()+1;
-		PMTGenerator::sim_rnd_source.SetSeed(pgen_seed);
+		unsigned int rseed = countRequests[bigafp].counts.begin()->first;
+		PMTGenerator::sim_rnd_source.SetSeed(rseed);
+		RunAccumulator::rnd_source.SetSeed(rseed);
 		unsigned int nSimmed = simMultiRuns(simData, countRequests[bigafp]);
 		// return to starting point or continue on with different data
 		if(simPerfectAsym) {
-			printf("Returning to original position %i, seed=%i\n",startEvt,pgen_seed);
-			PMTGenerator::sim_rnd_source.SetSeed(pgen_seed);
+			PMTGenerator::sim_rnd_source.SetSeed(rseed);
+			RunAccumulator::rnd_source.SetSeed(rseed);
 			simData.gotoEvent(startEvt);
 			simMultiRuns(simData, countRequests[smallafp], nSimmed);
 		} else {
