@@ -82,7 +82,7 @@ public:
 	/// simulate for many runs, possibly apportioning a fixed number of counts among them; return number of events thrown
 	unsigned int simMultiRuns(Sim2PMT& simData, const TagCounter<RunNum>& runReqs, unsigned int nCounts = 0);
 	/// simulate background fluctuations based on "reference" data
-	void simBgFlucts(const RunAccumulator& RefOA, double simfactor);
+	void simBgFlucts(const RunAccumulator& RefOA, double simfactor, bool addFluctCounts = true);
 	/// perform background subtraction
 	virtual void bgSubtractAll();
 	

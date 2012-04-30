@@ -302,7 +302,7 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 		}
 					 
 		// clone background counts in original data
-		simBgFlucts(*origOA,simfactor);
+		simBgFlucts(*origOA,simfactor,!simPerfectAsym);
 		// scale back out simulation factor
 		scaleSavedHists(1.0/simfactor);
 	}

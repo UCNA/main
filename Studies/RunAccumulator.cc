@@ -178,7 +178,7 @@ void RunAccumulator::bgSubtractAll() {
 	needsSubtraction = false;
 }
 
-void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor) {
+void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor, bool addFluctCounts) {
 	assert(isEquivalent(RefOA));
 	printf("Adding background fluctuations to simulation...\n");
 	for(std::map<std::string,fgbgPair>::iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
@@ -189,6 +189,7 @@ void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor) 
 			double n = rootn*rootn;											// background counts from reference histogram
 			double bgObsCounts = rnd_source.PoissonD(n);					// simulated background counts
 			double fgBgCounts = rnd_source.PoissonD(n*bgRatio);				// simulated foreground counts due to background
+			if(!addFluctCounts) bgObsCounts = fgBgCounts = 0.;
 			it->second.h[0]->AddBinContent(i,bgObsCounts);					// fill fake background counts
 			it->second.h[0]->SetBinError(i,rootn);							// set root-n statitics for background
 			it->second.h[1]->AddBinContent(i,fgBgCounts);					// add simulated background to foreground histogram				
