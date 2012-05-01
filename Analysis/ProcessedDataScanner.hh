@@ -4,7 +4,7 @@
 #include "Types.hh"
 #include "Enums.hh"
 
-#include "TChainScanner.hh"
+#include "RunSetScanner.hh"
 #include "EnergyCalibrator.hh"
 #include "WirechamberReconstruction.hh"
 
@@ -16,17 +16,10 @@
 #include <map>
 
 /// Generic class for processed data TChains
-class ProcessedDataScanner: public TChainScanner {
+class ProcessedDataScanner: public RunSetScanner {
 public:
 	/// constructor
 	ProcessedDataScanner(const std::string& treeName, bool withCalibrators = false);
-	/// destructor
-	virtual ~ProcessedDataScanner();
-	
-	/// add run to data
-	virtual unsigned int addRun(RunNum rn);
-	/// add list of runs to data; return number successfully added
-	virtual unsigned int addRuns(const std::vector<RunNum>& rns);
 	
 	/// radius squared of event
 	virtual float radius2(Side s) const;
@@ -38,25 +31,10 @@ public:
 	virtual float getEtrue();
 	/// re-calibrate tube energy of currently loaded event
 	virtual void recalibrateEnergy();
-	/// speedload, keeping track of currently loaded run number
-	virtual void speedload(unsigned int e);
-	/// get run number of current event
-	virtual RunNum getRun() const { return evtRun; }
 	/// whether event passes fiducia/position cut on side
 	virtual bool passesPositionCut(Side s);
-	
-	
-	/// check whether this is simulated data
-	virtual bool isSimulated() const { return false; }
-	
-	PMTCalibrator* ActiveCal;	//< PMTCalibrator currently active for loaded run
-	
-	/// print info about this scanner
-	virtual void display();
 	/// get info about current event
 	virtual Stringmap evtInfo();
-	/// write run calibrations info to QFile
-	void writeCalInfo(QFile& qout, std::string tag);
 	
 	ScintEvent scints[2];		//< readout point for scintillator data
 	Float_t led_pd[2];			//< readout point for reference photodiode
@@ -65,29 +43,19 @@ public:
 	MWPCevent mwpcs[2];			//< readout point for mwpc data (anode & cathode sum)
 	Float_t mwpcEnergy[2];		//< calibrated wirechamber energy deposition on each side
 	BlindTime runClock;			//< time of current event since run start
-	RunNum evtRun;				//< run number for current event
 	
 	PID fPID;					//< analysis particle ID
 	EventType fType;			//< analysis event type
 	Side fSide;					//< analysis event side
 	double physicsWeight;		//< event spectrum re-weighting factor
 	
-	BlindTime totalTime;		//< combined length of runs in seconds	
-	unsigned int nAFP[2];		//< number of events in each AFP state
 	AnalysisChoice anChoice;	//< which analysis choice to use in identifying event types
 	float fiducialRadius;		//< radius for position cut
-	
-	TagCounter<RunNum>	runTimes;	//< times for each run loaded
-	bool withCals;					//< whether to use energy recalibrators
-	
+		
 protected:
 	
 	/// generate event classification flags
 	virtual void calcEventFlags() {}
-	
-	CalDB* CDB;								//< calibrations DB
-	std::vector<RunNum> runlist;			//< list of loaded runs
-	std::map<RunNum,PMTCalibrator*> PCals;	//< calibrators for each run
 };
 
 #endif

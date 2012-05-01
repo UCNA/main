@@ -4,30 +4,11 @@
 #include <utility>
 
 std::string PostOfficialAnalyzer::locateRun(RunNum r) {
-	std::vector<std::string> fpaths;
-	fpaths.push_back(getEnvSafe("UCNAOUTPUTDIR")+"/hists/spec_"+itos(r)+".root");
-	for(std::vector<std::string>::iterator it = fpaths.begin(); it != fpaths.end(); it++)
-		if(fileExists(*it))
-			return *it;
+	std::string fname = getEnvSafe("UCNAOUTPUTDIR")+"/hists/spec_"+itos(r)+".root";
+	if(fileExists(fname))
+		return fname;
 	printf("*** Replay of run %i not found! ***\n",r);
 	return "";
-}
-
-unsigned int PostOfficialAnalyzer::addRun(RunNum r) {
-	std::string f = locateRun(r);
-	if(f.size() && addFile(f)) {
-		ProcessedDataScanner::addRun(r);
-		if(withCals)
-			PCals.insert(std::make_pair(r,new PMTCalibrator(r,CDB)));
-		BlindTime b = CalDBSQL::getCDB()->fiducialTime(r);
-		if(!b.t[BOTH])
-			printf("**** WARNING: Run %i has zero fiducial time!\n",r);
-		totalTime += b;
-		runTimes.add(r,b.t[BOTH]);
-		return 1;
-	}
-	printf("**** FAILED TO LOCATE analyzed data for run %i at '%s'! *****\n",r,f.c_str());
-	return 0;
 }
 
 void PostOfficialAnalyzer::setReadpoints() {
