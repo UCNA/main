@@ -95,30 +95,6 @@ protected:
 	static LinearityCorrector* getCachedRun(RunNum r,CalDB* cdb);	//< retrieve a cached corrector, creating if necessary
 };
 
-/// LED pulser info class
-class LEDInfo {
-public:
-	/// constructor
-	LEDInfo(RunNum myRun, CalDB* cdb);
-	/// destructor
-	virtual ~LEDInfo();	
-	
-	/// get average LED PMT ADC at given time
-	float LEDADC(Side s, unsigned int t, float time);
-	/// get spread in LED PMT ADC at given time
-	float LEDADCspread(Side s, unsigned int t, float time);
-	/// check whether LED ADC tracker exists
-	bool checkLED(Side s, unsigned int t);
-	
-	std::string ledNames[2][nBetaTubes];	//< names for the PMT sensors LED readout
-	RunNum rn;								//< run number for this run
-	CalDB* CDB;								//< Calibration DB link
-
-protected:
-	TGraph* LEDVal[2][nBetaTubes];			//< LED average value history for each PMT
-	TGraph* LEDWidth[2][nBetaTubes];		//< LED value width history for each PMT
-};
-
 /// Energy reconstruction class
 class PMTCalibrator: public LinearityCorrector, public PedestalCorrector, public EvisConverter, public WirechamberCalibrator {
 public:
