@@ -64,6 +64,9 @@ OctetAnalyzerExample: OctetAnalyzerExample.cc $(objects)
 ExtractFierzTerm: ExtractFierzTerm.cc $(objects)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) ExtractFierzTerm.cc $(objects) -o ExtractFierzTerm
 
+ExtractCorrectBetaSpectrum: ExtractCorrectBetaSpectrum.cc $(objects)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) ExtractCorrectBetaSpectrum.cc $(objects) -o ExtractCorrectBetaSpectrum
+
 MWPC_Efficiency_Sim: MWPC_Efficiency_Sim.cc $(objects)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/MWPC_Efficiency_Sim.cc $(objects) -o MWPC_Efficiency_Sim
 	
