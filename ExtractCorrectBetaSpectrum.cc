@@ -8,7 +8,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "Studies/BetaSpectrum.hh"
+#include "Studies/BetaSpectrum.hh" 
+#include "ucnG4_dev/include/bmPrimaryGeneratorAction.hh"
 
 
 const double    Q           = 782.344;              /// end point KE        			(30)
@@ -21,7 +22,8 @@ double PhaseSpaceIntegral() {
 	double integral = 0;
 	for (double KE = 0; KE < Q; KE += Q/(double)n)
 	{
-		double P = correctedBetaSpectrum(KE) / n * 1.2078377907569861626768670;
+		//double P = correctedBetaSpectrum(KE) / n * 1.2078377907569861626768670;
+		double P = correctedBetaSpectrum(KE) / n;
 		integral += P;
 		printf("%f\t%.12f\n", KE, P);
 	}
