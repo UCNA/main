@@ -25,7 +25,7 @@ const double proton_M0 = m_p/m_e;				//< proton mass, ``natural'' units
 //-------------- Spectrum corrections ------------------
 
 /// beta decay phase space without corrections
-inline double plainPhaseSpace(double W, double W0=beta_W0) { return (1.<W && W<W0)?(W*W-1)*(W0-W)*(W0-W):0; }
+inline double plainPhaseSpace(double W, double W0=beta_W0) { return (1.<W && W<W0)?sqrt(W*W-1)*W*(W0-W)*(W0-W):0; }
 /// beta for particle with given KE
 inline double beta(double KE, double m = m_e) { return sqrt(KE*KE+2*m*KE)/(m+KE); }
 
