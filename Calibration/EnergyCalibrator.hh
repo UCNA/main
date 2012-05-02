@@ -138,10 +138,12 @@ public:
 	void printSummary();
 	/// stringmap energy calibrations summary
 	Stringmap calSummary() const;
+	/// get clipping threshold for a PMT
+	float getClipThreshold(Side s, unsigned int t) { assert(s<=WEST && t<nBetaTubes); return clipThreshold[s][t]; }
 	
 protected:
 	
-	float clipThreshold;					//< threshold to de-weight ADC in tube combination due to "clipping"
+	float clipThreshold[2][nBetaTubes];		//< threshold to de-weight ADC in tube combination due to "clipping"
 	EfficCurve* pmtEffic[2][nBetaTubes];	//< efficiency curves for each PMT
 };
 

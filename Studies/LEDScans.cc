@@ -31,6 +31,7 @@ void LEDScanScanner::setReadpoints() {
 
 std::vector<unsigned int> LEDScanScanner::findJumps(float emin, float emax, Side s) {
 	assert(s<=WEST);
+	printf("Locating LED scan transition points...\n");
 	std::vector<unsigned int> jumps;
 	bool isHi = false;
 	startScan();
@@ -48,9 +49,7 @@ std::vector<unsigned int> LEDScanScanner::findJumps(float emin, float emax, Side
 
 void LEDScanScanner::analyzeSegment(unsigned int estart, unsigned int eend, unsigned int w) {
 	assert(estart <= eend && eend < nEvents);
-	
-	printf("Averaging segment from %i to %i over %i events...\n",estart,eend,2*w+1);
-	
+		
 	// clear previous data; set up rolling windows
 	std::vector<RollingWindow> RWs[2];
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -94,17 +93,20 @@ void PMT_LED_Correlations(OutputManager& OM, LEDScanScanner& LSS) {
 	unsigned int nbinsx = 200;
 	float emax = 2000;
 	unsigned int nbinsy = 200;
-	float wmax = 500;
+	float wmax = 1000;
+	
+	float emin = -emax/(2*nbinsx);
+	emax += -emin;
+	nbinsx++;
 	
 	// set up profiles
-	printf("Setting up profiles...\n");
 	TH2F* corrs[2][nBetaTubes][nBetaTubes];
 	TProfile* corrsProf[2][nBetaTubes][nBetaTubes];
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t1=0; t1<nBetaTubes; t1++) {
-			corrs[s][t1][t1] = OM.registeredTH2F(sideSubst("PMT_%c_",s)+itos(t1),"PMT Width",nbinsx,0,emax,nbinsy,-wmax,wmax);
+			corrs[s][t1][t1] = OM.registeredTH2F(sideSubst("PMT_%c_",s)+itos(t1),"PMT Width",nbinsx,emin,emax,nbinsy,-wmax,wmax);
 			for(unsigned int t2=0; t2<t1; t2++)
-				corrs[s][t1][t2] = OM.registeredTH2F(sideSubst("corr_%c_",s)+itos(t1)+"_"+itos(t2),"PMT Correlation",nbinsx,0,emax,nbinsy,-wmax,wmax);
+				corrs[s][t1][t2] = OM.registeredTH2F(sideSubst("corr_%c_",s)+itos(t1)+"_"+itos(t2),"PMT Correlation",nbinsx,emin,emax,nbinsy,-wmax,wmax);
 		}
 	}
 	
@@ -113,7 +115,7 @@ void PMT_LED_Correlations(OutputManager& OM, LEDScanScanner& LSS) {
 	if(jumps.size()<2) return;
 	printf("Scanning data over %i intervals...\n",int(jumps.size())-1);
 	unsigned int pad = 5;
-	unsigned int w = 50;
+	unsigned int w = 25;
 	for(unsigned int j=0; j<jumps.size()-1; j++) {
 		if(jumps[j+1] < jumps[j]+20) continue;
 		LSS.analyzeSegment(jumps[j]+pad,jumps[j+1]-pad,w);
@@ -122,7 +124,10 @@ void PMT_LED_Correlations(OutputManager& OM, LEDScanScanner& LSS) {
 			LSS.nextPoint();
 			for(Side s = EAST; s <= WEST; ++s) {
 				// skip clipped events
-				if(LSS.scints[s].adc[0]>3500 || LSS.scints[s].adc[1]>3500 || LSS.scints[s].adc[2]>3500 || LSS.scints[s].adc[3]>3500) continue;
+				bool isClipped = false;
+				for(unsigned int t=0; t<nBetaTubes; t++)
+					isClipped |= LSS.scints[s].adc[t] > LSS.ActiveCal->getClipThreshold(s,t)-300;
+				if(isClipped) continue;
 				// calculate deviation from average
 				float Eavg = LSS.ledAvg[s][nBetaTubes][i];
 				for(unsigned int t1=0; t1<nBetaTubes; t1++) {
@@ -135,6 +140,7 @@ void PMT_LED_Correlations(OutputManager& OM, LEDScanScanner& LSS) {
 			}		
 		}
 	}
+	printf(" Done.\n\n");
 	
 		
 	// analyze and make plots
@@ -152,7 +158,7 @@ void PMT_LED_Correlations(OutputManager& OM, LEDScanScanner& LSS) {
 			
 			// individual PMT width graphs
 			TGraph gtb(nbinsx+1);
-			TF1 lineFit("lineFit","pol1",10,1000);
+			TF1 lineFit("lineFit","pol1",10,500);
 			lineFit.SetLineColor(2);
 			gtb.SetPoint(0,0,0);
 			for(unsigned int i=1; i<=nbinsx; i++)
@@ -165,28 +171,27 @@ void PMT_LED_Correlations(OutputManager& OM, LEDScanScanner& LSS) {
 			lx.SetTextSize(0.04);
 			char tmp[1024];
 			sprintf(tmp,"E=0 Width: %.1fkeV",sqrt(lineFit.GetParameter(0)));
-			lx.DrawLatex(100,lineFit.Eval(1000),tmp);			
+			lx.DrawLatex(100,lineFit.Eval(1500),tmp);			
 			OM.printCanvas(sideSubst("Width_%c",s)+itos(t1));
 			
 			// PMT correlation widths
 			for(unsigned int t2=0; t2<t1; t2++) {
-				TGraph gunc(nbinsx+1);
-				gunc.SetPoint(0,0,0);
+				TGraph gunc(nbinsx);
 				gunc.SetLineColor(4);
-				TGraph gcor(nbinsx+1);
-				gcor.SetPoint(0,0,0);
+				TGraph gcor(nbinsx);
 				gcor.SetLineColor(2);
-				TGraph grat(nbinsx+1);
-				grat.SetPoint(0,0,1);
-				for(unsigned int i=1; i<=nbinsx; i++) {
+				TGraph grat(nbinsx);
+				for(unsigned int i=0; i<nbinsx; i++) {
 					corrsProf[s][t1][t2] = corrs[s][t1][t2]->ProfileX();
 					corrsProf[s][t1][t2]->SetErrorOption("s");
-					float e0 = corrsProf[s][t1][t1]->GetBinCenter(i);
-					float xunc = pow(corrsProf[s][t1][t1]->GetBinError(i),2.0)+pow(corrsProf[s][t2][t2]->GetBinError(i),2.0);
-					float xcor = pow(corrsProf[s][t1][t2]->GetBinError(i),2.0);
+					float e0 = corrsProf[s][t1][t1]->GetBinCenter(i+1);
+					float xc1 = corrsProf[s][t1][t1]->GetBinError(i+1);
+					float xc2 = corrsProf[s][t2][t2]->GetBinError(i+1);
+					float xunc = pow(xc1,2.0)+pow(xc2,2.0);
+					float xcor = pow(corrsProf[s][t1][t2]->GetBinError(i+1),2.0);
 					gunc.SetPoint(i,e0,xunc);
 					gcor.SetPoint(i,e0,xcor);
-					grat.SetPoint(i,e0,xcor/xunc);
+					grat.SetPoint(i,e0,(xcor-xunc)/(2*xc1*xc2));
 				}
 				gunc.Draw("ALP");
 				gcor.Draw("LP");
