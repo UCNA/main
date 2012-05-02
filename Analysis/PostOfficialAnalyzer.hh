@@ -9,13 +9,10 @@ public:
 	/// constructor
 	PostOfficialAnalyzer(bool withCalibrators = false): ProcessedDataScanner("phys",withCalibrators) {}
 	
-	/// add run file
-	virtual unsigned int addRun(RunNum r);
-	
 	/// find path to processed run .root file
-	static std::string locateRun(RunNum r);	
+	virtual std::string locateRun(RunNum r);	
 	
-	float Etrue;				//< reconstructed "true" energy
+	float Etrue;	//< reconstructed "true" energy
 	
 protected:
 	/// set TChain branch data readpoints

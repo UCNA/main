@@ -42,10 +42,6 @@ public:
 	virtual double simEvtCounts() const { return 1.0; }
 	
 	// ----- inapplicable disabled functions ----- //
-	/// add run to data -- NO
-	virtual unsigned int addRun(RunNum rn) { assert(false); }
-	/// add list of runs to data; return number successfully added -- NO
-	virtual unsigned int addRuns(const std::vector<RunNum>& rns) { assert(false); }
 	/// speedload: doesn't make sense for this class
 	virtual void speedload(unsigned int e) { assert(false); }
 	

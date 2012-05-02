@@ -170,37 +170,8 @@ std::map<RunNum,LinearityCorrector*> LinearityCorrector::cachedRuns = std::map<R
 
 //------------------------------------------------------------------------------------
 
-LEDInfo::LEDInfo(RunNum myRun, CalDB* cdb): rn(myRun), CDB(cdb) {
-	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t=0; t<nBetaTubes; t++) {
-			ledNames[s][t] = sideSubst("ADC%c",s)+itos(pmtHardwareNum(s,t))+"LED";
-			LEDVal[s][t] = NULL;
-		}
-	}
-}
 
-LEDInfo::~LEDInfo() {
-	//TODO
-}
 
-float LEDInfo::LEDADC(Side s, unsigned int t, float time) {
-	assert(s<=WEST && t<nBetaTubes);
-	if(!LEDVal[s][t] && !(LEDVal[s][t] = CDB->getRunMonitor(rn,ledNames[s][t],"GMS_Peak"))) return 0;
-	return LEDVal[s][t]->Eval(time);
-}
-
-float LEDInfo::LEDADCspread(Side s, unsigned int t, float time) {
-	assert(s<=WEST && t<nBetaTubes);
-	if(!LEDWidth[s][t] && !(LEDWidth[s][t] = CDB->getRunMonitor(rn,ledNames[s][t],"GMS_Peak",false))) return 0;
-	return LEDWidth[s][t]->Eval(time);
-}
-
-bool LEDInfo::checkLED(Side s, unsigned int t) {
-	LEDADC(s,t,0.0);
-	return LEDVal[s][t];
-}
-
-//------------------------------------------------------------------------------------
 
 PMTCalibrator::PMTCalibrator(RunNum rn, CalDB* cdb): LinearityCorrector(rn,cdb),
 PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) {
@@ -209,11 +180,13 @@ PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) 
 		return;
 	}
 	printf("Creating PMTCalibrator for %i.\n",myRun);
-	clipThreshold = 3500;
 	GS = new TweakedGainStabilizer(new ChrisGainStabilizer(myRun,CDB,this));
-	for(Side s = EAST; s <= WEST; ++s)
-		for(unsigned int t=0; t<nBetaTubes; t++)
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(unsigned int t=0; t<nBetaTubes; t++) {
 			pmtEffic[s][t] = CDB->getTrigeff(myRun,s,t);
+			clipThreshold[s][t] = 4000-1.1*getPedestal(sensorNames[s][t],0);
+		}
+	}
 	printSummary();
 }
 PMTCalibrator::~PMTCalibrator() {
@@ -319,9 +292,9 @@ void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, f
 		evt.nPE[t] = E0*weight[t];
 		
 		// de-weight for clipping
-		if(evt.adc[t]>clipThreshold-500)
-			weight[t] *= (clipThreshold-evt.adc[t])/500.0;
-		if(evt.adc[t]>clipThreshold)
+		if(evt.adc[t]>clipThreshold[s][t]-300)
+			weight[t] *= (clipThreshold[s][t]-evt.adc[t])/300.0;
+		if(evt.adc[t]>clipThreshold[s][t])
 			weight[t] = 0;
 		
 		evt.energy.x += E0*weight[t];

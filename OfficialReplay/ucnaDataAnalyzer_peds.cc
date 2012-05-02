@@ -15,10 +15,8 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 		// check if pedestal pre-pass needed
 		printf("Checking for pedestals data...\n");
 		for(Side s = EAST; s <= WEST; ++s) {
-			for(unsigned int t=0; t<nBetaTubes; t++) {
+			for(unsigned int t=0; t<nBetaTubes; t++)
 				needsPeds += !PCal.checkPedestals(PCal.sensorNames[s][t]);
-				needsPeds += analyzeLED && !LI.checkLED(s,t);
-			}
 			for(unsigned int p = X_DIRECTION; p <= Y_DIRECTION; p++)
 				for(unsigned int c=0; c<cathNames[s][p].size(); c++)
 					needsPeds += !PCal.checkPedestals(cathNames[s][p][c]);
@@ -35,8 +33,6 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	std::vector<float> anodePeds[2];
 	std::vector<float> cathPeds[2][2][kMWPCWires];
 	std::vector<float> mwpcTimes[2];
-	std::vector<float> pmtLED[2][nBetaTubes];
-	std::vector<float> ledTimes;
 	startScan();
 	while (nextPoint()) {
 		convertReadin();
@@ -55,20 +51,12 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 				anodePeds[s].push_back(fMWPC_anode[s].val);
 			}
 		}
-		if(isLED() && analyzeLED) {
-			ledTimes.push_back(fTimeScaler.t[BOTH]);
-			for(Side s = EAST; s <= WEST; ++s)
-				for(unsigned int t=0; t<nBetaTubes; t++)
-					pmtLED[s][t].push_back(sevt[s].adc[t]);
-		}
 	}
 	
 	// fit pedestals, save results
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t=0; t<nBetaTubes; t++) {
+		for(unsigned int t=0; t<nBetaTubes; t++)
 			monitorPedestal(pmtPeds[s][t],pmtTimes[s],PCal.sensorNames[s][t],50);
-			if(analyzeLED) monitorPedestal(pmtLED[s][t],ledTimes,LI.ledNames[s][t],0,0.5,100.0,false);
-		}
 		for(AxisDirection p = X_DIRECTION; p <= Y_DIRECTION; ++p)
 			for(unsigned int c=0; c<cathNames[s][p].size(); c++)
 				monitorPedestal(cathPeds[s][p][c],mwpcTimes[s],cathNames[s][p][c],150);
