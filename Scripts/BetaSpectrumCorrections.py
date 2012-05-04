@@ -10,21 +10,7 @@ class spectrumCorrs(KVMap):
 		KVMap.__init__(self,m)
 		self.loadFloats(self.dat.keys())
 		
-def product1(l):
-	p = 1.
-	for x in l:
-		p *= 1.+x
-	return p
-
-def tensorCoeff(E):
-	m_e = 511.
-	l = 1.2694
-	return 2/(1+3*l)**2/938000*(m_e**2./E*l**2*(1-l)+782*(l**2+2./3.*l-1./3.)+E*2./3.*(1+l+3*l**2+3*l**3))*(1+3.*l**2)/(2*l*(1-l))
-
-def gluckx2E(x):
-	return x*(782.6+511.)-511.
-	
-	
+		
 def plotWilkinsonCorrs(fin,outpath):
 
 	os.system("mkdir -p %s"%outpath)
@@ -117,6 +103,8 @@ def plotWilkinsonCorrs(fin,outpath):
 	gWCA.plot(graph.data.points([(c.energy,c.RWM) for c in corrs],x=1,y=2,title="Wilkinson recoil-order"),[graph.style.line([style.linewidth.Thick])])
 	gWCA.plot(graph.data.points([(c.energy,c.hmg) for c in corrs],x=1,y=2,title="Radiative $h - g$"),[graph.style.line([style.linewidth.Thick,rgb.red])])
 	if 0:
+		def gluckx2E(x):
+			return x*(782.6+511.)-511.
 		gluck_da = [ [gluckx2E(0.4),0.03/1.66],[gluckx2E(0.5),0.01/6.55],[gluckx2E(0.6),0.01/8.08],
 						[gluckx2E(0.7),0.01/8.90],[gluckx2E(0.8),0.01/9.41],[gluckx2E(0.9),0.01/9.76]]
 		#gluck_da = [ [gluckx2E(0.4),0.003],[gluckx2E(0.5),0.001],[gluckx2E(0.6),0.001],
@@ -140,15 +128,21 @@ def plotWilkinsonCorrs(fin,outpath):
 
 	
 	
-	if 0:
-		# size of tensor corrections
-		gT=graph.graphxy(width=20,height=10,
-				x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
-				y=graph.axis.lin(title="$\\Delta A/A$ for $g_{II}/g_V=1$",min=-0.01,max=0.01),
-				key = graph.key.key(pos="tr"))
-		setTexrunner(gT)
-		gT.plot(graph.data.points(gdat,x=1,y=12,title=None),[graph.style.line([style.linewidth.Thick])])
-		gT.writetofile(outpath+"/GardnerTensor.pdf")
+	################
+	# shape of tensor coupling corrections to A
+	################
+	
+	def tensorCoeff(E):
+		m_e = 511.
+		l = 1.2694
+		return 2/(1+3*l)**2/938000*(m_e**2./E*l**2*(1-l)+782*(l**2+2./3.*l-1./3.)+E*2./3.*(1+l+3*l**2+3*l**3))*(1+3.*l**2)/(2*l*(1-l))
+	gT=graph.graphxy(width=20,height=10,
+			x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
+			y=graph.axis.lin(title="$\\Delta A/A$ for $g_{II}/g_V=1$",min=-0.01,max=0.01),
+			key = graph.key.key(pos="tr"))
+	setTexrunner(gT)
+	gT.plot(graph.data.points([(c.energy,tensorCoeff(c.energy)) for c in corrs],x=1,y=2,title=None),[graph.style.line([style.linewidth.Thick])])
+	gT.writetofile(outpath+"/GardnerTensor.pdf")
 		
 		
 		
