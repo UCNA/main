@@ -434,6 +434,7 @@ void reSource(RunNum rn) {
 				std::string outName = it->second.mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp));
 				TM.printCanvas(outName);
 			}
+			/*
 			TM.defaultCanvas->SetLogy(false);
 			for(unsigned int t2=0; t2<nBetaTubes; t2++) {
 				if(t==t2 || t==nBetaTubes) continue;
@@ -443,6 +444,7 @@ void reSource(RunNum rn) {
 				it->second.pPMTCorr[t][t2]->Draw("Same");
 				TM.printCanvas(it->second.mySource.name()+"/PMTCorr/"+itos(t)+"_v_"+itos(t2));
 			}
+			 */
 		}
 		
 		

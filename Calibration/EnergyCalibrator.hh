@@ -15,7 +15,7 @@
 class PedestalCorrector {
 public:
 	/// constructor
-	PedestalCorrector(RunNum rn, CalDB* cdb): myRun(rn), pCDB(cdb) {}
+	PedestalCorrector(RunNum rn, CalDB* cdb): myRun(rn), totalTime(cdb->totalTime(rn)), pCDB(cdb) {}
 	/// destructor
 	virtual ~PedestalCorrector();
 	/// check whether pedestal info exists
@@ -25,7 +25,8 @@ public:
 	/// get sensor pedestal at given time from beginning of run
 	float getPedwidth(const std::string& sensorName, float time);
 	
-	RunNum myRun;								//< run number for this run
+	RunNum myRun;			//< run number for this run
+	float totalTime;		//< run time for this run
 	
 	/// insert a pedestal graph
 	void insertPedestal(const std::string& sensorName, TGraph* g);

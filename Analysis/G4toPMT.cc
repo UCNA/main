@@ -72,12 +72,15 @@ void Sim2PMT::reverseCalibrate() {
 	assert(ActiveCal);
 	evtRun = ActiveCal->rn;
 	
-	// apply position offsets
+	// simulated event time stamp
+	runClock = mc_rnd_source.Uniform(0.,ActiveCal->totalTime);
+	
+	// apply position offsets; set wires position
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 		for(Side s = EAST; s <= WEST; ++s) {
 			scintPos[s][d] += offPos[d];
-			wires[s][d].center += offPos[d];
 			mwpcPos[s][d] += offPos[d];
+			wires[s][d].center = mwpcPos[s][d];
 		}
 		primPos[d] += offPos[d];
 	}
@@ -91,6 +94,7 @@ void Sim2PMT::reverseCalibrate() {
 		mwpcEnergy[s] = eW[s];
 		// simulate detector energy response, or use un-smeared original data 
 		if(reSimulate) {
+			PGen[s].evtm = runClock.t[BOTH];
 			PGen[s].setPosition(scintPos[s][X_DIRECTION], scintPos[s][Y_DIRECTION],
 								wires[s][X_DIRECTION].center-scintPos[s][X_DIRECTION], wires[s][Y_DIRECTION].center-scintPos[s][Y_DIRECTION]);
 			scints[s] = PGen[s].generate(eQ[s]);
@@ -182,14 +186,9 @@ void G4toPMT::doUnits() {
 	for(unsigned int i=0; i<3; i++)
 		primPos[i] *= 10.0;
 	for(Side s = EAST; s <= WEST; ++s) {
-		if(matchPenelope)
-			eQ[s] = eDep[s];
 		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
 			mwpcPos[s][d] *= wcPosConversion;
 			scintPos[s][d] *= wcPosConversion;
-			if(matchPenelope)
-				scintPos[s][d] = wires[s][d].center = mwpcPos[s][d] = primPos[d];
-			wires[s][d].center = mwpcPos[s][d];
 		}
 	}
 	costheta=cos(costheta);

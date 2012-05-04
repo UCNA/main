@@ -281,9 +281,10 @@ void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, f
 			l0 = 0;
 		float E0 = l0/eta0; // tube observed energy keV
 		
-		weight[t] = eta0*l0/pow(lightResolution(s,t,l0,time),2.0); // = nPE/keV for this position
 		if(evt.adc[t] < 5 || l0 < 50)
 			weight[t] = eta0*50/pow(lightResolution(s,t,50,time),2.0); // = nPE/keV @ 50keV to avoid uncertainty at 0
+		else
+			weight[t] = eta0*l0/pow(lightResolution(s,t,l0,time),2.0); // = nPE/keV for this position
 		
 		// remove bad weights
 		if(!(weight[t]>0.01 && weight[t]<10.0))

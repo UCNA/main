@@ -80,12 +80,10 @@ protected:
 class G4toPMT: public Sim2PMT {
 public:
 	/// constructor
-	G4toPMT(): Sim2PMT("anaTree"), matchPenelope(false) { }
+	G4toPMT(): Sim2PMT("anaTree") { }
 	/// unit conversions
 	virtual void doUnits();
-	
-	bool matchPenelope;		//< whether to apply fudge factors to better match Penelope data (until this is fixed)
-	
+		
 protected:
 	/// set read points for input tree
 	virtual void setReadpoints();
