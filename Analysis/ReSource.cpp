@@ -366,8 +366,11 @@ void reSource(RunNum rn) {
 		Sim2PMT* g2p = NULL;
 		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_495_";
 		printf("Loading source simulation data...\n");
-		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
-		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
+		if(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139") {
+			g2p = new G4toPMT();
+			g2p->addFile(g4dat + simSource.t + "/analyzed_*.root");
+		} else if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
+				  simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
 			g2p = new G4toPMT();
 			g2p->addFile(g4dat + simSource.t + "_geomC/analyzed_*.root");
 		} else if(simSource.t=="Cd113m") {
@@ -434,7 +437,7 @@ void reSource(RunNum rn) {
 				std::string outName = it->second.mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp));
 				TM.printCanvas(outName);
 			}
-			/*
+			
 			TM.defaultCanvas->SetLogy(false);
 			for(unsigned int t2=0; t2<nBetaTubes; t2++) {
 				if(t==t2 || t==nBetaTubes) continue;
@@ -444,7 +447,6 @@ void reSource(RunNum rn) {
 				it->second.pPMTCorr[t][t2]->Draw("Same");
 				TM.printCanvas(it->second.mySource.name()+"/PMTCorr/"+itos(t)+"_v_"+itos(t2));
 			}
-			 */
 		}
 		
 		

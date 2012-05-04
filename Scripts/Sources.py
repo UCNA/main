@@ -299,7 +299,7 @@ class LinearityCurve:
 		# plot
 		combodat = []
 		for k in pks.keys():
-			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.sim.enwidth) for q in pks[k]]
+			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.sim.enwidth,q) for q in pks[k]]
 			combodat += gdat
 			self.gEn.plot(graph.data.points(gdat,x=2,y=3,title=peakNames[k]), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRes.plot(graph.data.points(gdat,x=2,y=4,title=None), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
@@ -312,11 +312,20 @@ class LinearityCurve:
 		self.gRes.plot(graph.data.function("y(x)=0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
 		self.gWidth.plot(graph.data.function("y(x)=x",title="$y=x$"), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
 		
+		######
+		# Fit widths
+		######
+		combodat = [g for g in combodat if 1/1.25 < g[5]/g[6] < 1.25 and g[-1].src.radius() <= 45.]
 		self.LFwid = LinearFitter(terms=[polyterm(1)])
 		self.LFwid.fit(combodat,cols=(6,5))
 		wxmax = max([g[6] for g in combodat])
+		for g in combodat:
+			if not 1/1.2 < g[5]/self.LFwid(g[6]) < 1.2:
+				print "--> Check width",g[-1].src.run,g[-1].uid
+		self.LFwid.fit([g for g in combodat if 1/1.2 < g[5]/self.LFwid(g[6]) < 1.2],cols=(6,5))
 		self.gWidth.plot(graph.data.points(self.LFwid.fitcurve(0,wxmax),x=1,y=2,title="$y=%.3f \\cdot x$"%self.LFwid.coeffs[0]),
 			[graph.style.line(lineattrs=[style.linestyle.dashed,rgb.red]),])
+				
 				
 	def dbUpload(self,conn,ecid,refline_id):
 		"""Upload PMT calibration curves to DB for given energy calibration ID."""
@@ -336,8 +345,11 @@ class LinearityCurve:
 			# rescaled width to true nPE width based on simulation
 			simApparentnPE = (refline.sim.erecon/refline.sim.enwidth)**2
 			widthscale = sqrt(simApparentnPE/refline.sim.nPE)
+			print "MC width scale",widthscale
 			widthscale *= self.LFwid.coeffs[0]
+			print "Corrected for sources average",widthscale
 			widthscale *= self.LFwid(refline.sim.enwidth)/refline.enwidth
+			print "Corrected for reference source offset",widthscale
 		else:
 			print "\n\n******** Reference source",refline_id,"not found!!! Using defaults!\n"
 			raw_input("Press enter to acknowledge and continue...")
@@ -473,7 +485,7 @@ if __name__=="__main__":
 	conn = open_connection() # connection to calibrations DB
 	replace = True	# whether to replace previous calibration data
 	
-	for c in cal_2010[-1:]:
+	for c in cal_2010[4:5]:
 	
 		# make new calibrations set
 		ecid = None
