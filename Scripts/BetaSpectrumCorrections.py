@@ -25,7 +25,7 @@ def plotWilkinsonCorrs(fin,outpath):
 	gWC=graph.graphxy(width=24,height=10,
 			x=graph.axis.lin(title="Energy [keV]",min=0,max=1000),
 			y=graph.axis.log(title="Spectrum Correction",min=5e-6,max=0.5),
-			key = graph.key.key(pos="tr"))
+			key = graph.key.key(pos="mr"))
 	setTexrunner(gWC)
 
 	gdat = [ [	c.energy,		# 0
@@ -42,20 +42,19 @@ def plotWilkinsonCorrs(fin,outpath):
 				0.0004*(1+0.2*sin(c.energy/30)) ] for c in corrs if c.energy<783]
 				
 	gWC.plot(graph.data.points(gdat,x=1,y=2,title="$F_0-1$"),[graph.style.line([style.linewidth.Thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=10,title="g"),[graph.style.line([rgb.green,style.linestyle.dashdotted,style.linewidth.Thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=6,title="$R^A-1$"),[graph.style.line([rgb.red,style.linestyle.dotted,style.linewidth.Thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=5,title="$R^V-1$"),[graph.style.line([rgb.red,style.linestyle.dashed,style.linewidth.Thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=7,title="$|R+{\\rm WM}|$"),[graph.style.line([rgb.red,style.linewidth.Thick])])
+	gWC.plot(graph.data.points(gdat,x=1,y=10,title="$g$"),[graph.style.line([rgb.green,style.linestyle.dashdotted,style.linewidth.THick])])
+	gWC.plot(graph.data.points(gdat,x=1,y=6,title="$R^A-1$"),[graph.style.line([rgb.red,style.linestyle.dotted,style.linewidth.THick])])
+	gWC.plot(graph.data.points(gdat,x=1,y=5,title="$R^V-1$"),[graph.style.line([rgb.red,style.linestyle.dashed,style.linewidth.THick])])
+	gWC.plot(graph.data.points(gdat,x=1,y=7,title="$|R+{\\rm WM}|$"),[graph.style.line([rgb.red,style.linewidth.THick])])
 	
+	gWC.plot(graph.data.points(gdat,x=1,y=11,title="$J(Z)-1$"),[graph.style.line([rgb(0.7,0.,0.7),style.linestyle.dashdotted,style.linewidth.thick])])
+	gWC.plot(graph.data.points(gdat,x=1,y=12,title="$O[ K(\\alpha) ]$"),[graph.style.line([rgb(0.7,0.,0.7),style.linestyle.dotted,style.linewidth.thick])])
 	
-	gWC.plot(graph.data.points(gdat,x=1,y=11,title="$J(Z)-1$"),[graph.style.line([rgb(0.7,0.,0.7),style.linewidth.Thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=12,title="$O[ K(\\alpha) ]$"),[graph.style.line([rgb(0.7,0.,0.7),style.linestyle.dotted,style.linewidth.Thick])])
-	
-	gWC.plot(graph.data.points(gdat,x=1,y=4,title="$L_0-1$"),[graph.style.line([style.linestyle.dashed,style.linewidth.Thick])])
+	gWC.plot(graph.data.points(gdat,x=1,y=3,title="$1-Q$"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=8,title="$1-{^VC}$"),[graph.style.line([rgb.blue,style.linestyle.dashed,style.linewidth.Thick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=9,title="$1-{^AC}$"),[graph.style.line([rgb.blue,style.linestyle.dotted,style.linewidth.Thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=4,title="$1-Q$"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
-
+	gWC.plot(graph.data.points(gdat,x=1,y=4,title="$L_0-1$"),[graph.style.line([style.linestyle.dashed,style.linewidth.Thick])])
+	
 	gWC.writetofile(outpath+"/WilkinsonCorrs.pdf")
 	
 	##############
