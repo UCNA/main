@@ -4,7 +4,12 @@ from pyx import graph
 from pyx.color import rgb, hsb
 from pyx.graph.style import symbol
 
-
+def setTexrunner(g,opt='foils17pt'):
+	try:
+		g.texrunner.set(lfs=opt)
+	except:
+		pass
+		
 # variable size circles
 class varCircle(graph.style.symbol):
 
