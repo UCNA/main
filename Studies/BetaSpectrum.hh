@@ -59,7 +59,7 @@ double Sirlin_g(double E,double E0,double m=m_e);
 double Wilkinson_g(double W,double W0=beta_W0);
 
 /// combined spectrum correction factor
-inline double spectrumCorrectionFactor(double KE) { double W = (KE+m_e)/m_e; return WilkinsonF0(1.,W)*WilkinsonL0(1.,W)*(1.+Wilkinson_g(W)); }
+inline double spectrumCorrectionFactor(double KE) { double W = (KE+m_e)/m_e; return WilkinsonF0(1.,W)*WilkinsonL0(1.,W)*(1.+Wilkinson_g(W))*(1.+Bilenkii_1958_11(W)); }
 /// corrected beta spectrum
 inline double correctedBetaSpectrum(double KE) { double W = (KE+m_e)/m_e; return plainPhaseSpace(W)*spectrumCorrectionFactor(KE); }
 

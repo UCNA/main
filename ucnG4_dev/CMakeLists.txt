@@ -14,7 +14,9 @@ project(ucnG4_prod)
 # NB: headers are included so they will show up in IDEs
 #
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
+LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../Studies/BetaSpectrum.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
+LIST(APPEND headers ${PROJECT_SOURCE_DIR}/../Studies/BetaSpectrum.hh)
 
 #-------------------------------
 # ROOT dependencies
@@ -34,7 +36,7 @@ set(ucnG4_prod_LINKDEF ${PROJECT_SOURCE_DIR}/ucnG4_prod_LinkDef.h)
 set(ucnG4_prod_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ucnG4_prodDict.cxx) 
 MESSAGE("Generating dictionary ${ucnG4_prod_DICTIONARY}")
 set(DICTFILES "${PROJECT_SOURCE_DIR}/include/bmMCEvent.hh;${PROJECT_SOURCE_DIR}/include/bmTrackInfo.hh;${PROJECT_SOURCE_DIR}/include/bmPrimaryInfo.hh")
-ROOT_GENERATE_DICTIONARY("${DICTFILES}" "${ucnG4_prod_LINKDEF}" "${ucnG4_prod_DICTIONARY}" "${ROOT_INCLUDE_DIR};${PROJECT_SOURCE_DIR}/include/")
+ROOT_GENERATE_DICTIONARY("${DICTFILES}" "${ucnG4_prod_LINKDEF}" "${ucnG4_prod_DICTIONARY}" "${ROOT_INCLUDE_DIR};${PROJECT_SOURCE_DIR}/include/;${PROJECT_SOURCE_DIR}/../Studies/")
 LIST(APPEND sources ${ucnG4_prod_DICTIONARY})
 MESSAGE(sources = ${sources})
 
@@ -73,7 +75,7 @@ endif()
 # Setup include directory for this project
 #
 include(${Geant4_USE_FILE})
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/../Studies/)
 
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4 libraries

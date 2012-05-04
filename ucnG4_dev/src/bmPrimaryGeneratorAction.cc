@@ -96,8 +96,7 @@ void randomTubePosition(const G4ThreeVector centerpos, const G4double radius, co
 double genericBetaSpectrum(double* x, double *par) {
 	double KE = x[0];	// particle kinetic energy
 	double Q = par[0];	// spectrum endpoint
-	if(KE>=0 && KE<=Q) return (Q-KE)*(Q-KE)*(KE+m_e)*sqrt(KE*(KE+2*m_e));
-	else return 0;
+	return plainPhaseSpace((KE+m_e)/m_e,(Q+m_e)/m_e);
 }
 
 /// beta decay spectrum from heavy nucleus
@@ -112,6 +111,7 @@ double heavyBetaSpectrum(double* x, double* par) {
 	
 	//G4cout << "HeavyBeta: KE=" << KE << " Q=" << Q << " Z=" << Z << " W=" << W << " W0=" << W0 << " R=" << R << " s=" << plainPhaseSpace(W,W0) << " F0=" << WilkinsonF0(Z,W,R) << G4endl;
 	
+	// TODO: recoil/weak magnetism terms???
 	if(0<KE && KE<Q)
 		return plainPhaseSpace(W,W0)*WilkinsonF0(Z,W,R)*WilkinsonL0(Z,W,R)*(1.+Wilkinson_g(W,W0));
 	return 0;

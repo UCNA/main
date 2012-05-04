@@ -1,8 +1,5 @@
 /// 
 
-// standalone compile:
-// g++ BetaSpectrum.cc -g -O3 -m32 -Wall `root-config --cflags` `root-config --libs` -lSpectrum -o BetaSpectrum.o
-
 #include "BetaSpectrum.hh"
 #include <stdio.h>
 #include <TMath.h>
@@ -11,10 +8,10 @@
 #include <cassert>
 
 /// hyperbolic sine
-double sinh(double x) { return (exp(x)-exp(-x))*0.5; }
+double sinh(double x) throw() { return (exp(x)-exp(-x))*0.5; }
 
 /// inverse hyperbolic tangent
-double atanh(double x) { return 0.5*log((1.+x)/(1.-x)); }
+double atanh(double x) throw() { return 0.5*log((1.+x)/(1.-x)); }
 
 /// struct for 1-index coefficients
 struct coeff1 {
