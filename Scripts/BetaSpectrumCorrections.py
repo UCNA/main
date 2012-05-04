@@ -154,5 +154,5 @@ def plotWilkinsonCorrs(fin,outpath):
 		
 	
 if __name__ == "__main__":
-	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection.txt",os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection.txt",os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
 	

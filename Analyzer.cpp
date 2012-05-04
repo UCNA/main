@@ -14,7 +14,7 @@
 #include "PMTGenerator.hh"
 #include "ReSource.hh"
 #include "G4toPMT.hh"
-
+#include "LEDScans.hh"
 
 std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
 	char tmp[1024];
@@ -122,16 +122,16 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octn = streamInteractor::popInt(stack);
 	const std::string outputDir="OctetAsym_Offic";
 	
-	const std::string simOutputDir=outputDir+"_Simulated";
+	const std::string simOutputDir=outputDir+"_Sim_MagF";
 	
-	//std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_MagF_neutronBetaUnpol/analyzed_";
-	//simFile += itos(abs(octn)%4)+".root";
+	std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_MagF_neutronBetaUnpol/analyzed_";
+	simFile += itos(abs(octn)%6)+".root";
 	
 	//std::string simFile = "/home/mmendenhall/geant4/output/LivPhys_495_BadVac_neutronBetaUnpol/analyzed_";
 	//simFile += itos(abs(octn)%9)+".root";
 	
-	std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_";
-	simFile += itos(abs(octn)%32)+".root";
+	//std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_";
+	//simFile += itos(abs(octn)%32)+".root";
 	
 	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
@@ -177,7 +177,7 @@ void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
 
 void mi_sourcelog(std::deque<std::string>&, std::stack<std::string>&) { uploadRunSources(); }
 
-void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrectionsFile(getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection.txt"); }
+void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrectionsFile(getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection/SpectrumCorrection.txt"); }
 
 void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
@@ -187,6 +187,16 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	TCanvas defaultCanvas;
 	defaultCanvas.SetFillColor(0);
 	defaultCanvas.SetCanvasSize(300,300);
+	
+	/*
+	OutputManager OMLS("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorr");
+	LEDScanScanner LSS;
+	std::vector<RunNum> bruns = selectRuns(16193, 16216, "beta");
+	//std::vector<RunNum> bruns = selectRuns(16097, 16216, "beta");
+	LSS.addRuns(bruns);
+	PMT_LED_Correlations(OMLS,LSS);
+	exit(0);	
+	*/
 	
 	inputRequester exitMenu("Exit Menu",&menutils_Exit);
 	inputRequester peek("Show stack",&menutils_PrintStack);
