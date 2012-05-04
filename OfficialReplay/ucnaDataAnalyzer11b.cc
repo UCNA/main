@@ -12,7 +12,7 @@
 RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
 
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
-TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), analyzeLED(false), rn(R), PCal(R,CDB), CDBout(NULL),
+TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false), rn(R), PCal(R,CDB), CDBout(NULL),
 deltaT(0), totalTime(0), ignore_beam_out(false), nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	if(R>16300 && !CDB->isValid(R)) {
 		printf("*** Bogus calibration for new runs! ***\n");
@@ -521,7 +521,7 @@ int main(int argc, char** argv) {
 	
 	// check correct arguments
 	if(argc<2) {
-		printf("Syntax: %s <run number> [ignore beam/source status]\n",argv[0]);
+		printf("Syntax: %s <run number> [options...]\n",argv[0]);
 		exit(1);
 	}
 	
@@ -539,6 +539,7 @@ int main(int argc, char** argv) {
 	bool nodbout = false;
 	bool noroot = false;
 	bool ledtree = false;
+	bool forceped = false;
 	for(int i=2; i<argc; i++) {
 		std::string arg(argv[i]);
 		if(arg=="cutbeam")
@@ -549,6 +550,8 @@ int main(int argc, char** argv) {
 			noroot = true;
 		else if(arg=="ledtree")
 			ledtree = true;
+		else if(arg=="forceped")
+			forceped = true;
 		else 
 			assert(false);
 	}
@@ -568,6 +571,7 @@ int main(int argc, char** argv) {
 		ucnaDataAnalyzer11b A(r,outDir,CalDBSQL::getCDB(true));
 		A.setIgnoreBeamOut(!cutBeam);
 		A.analyzeLED = ledtree;
+		A.needsPeds = forceped;
 		if(!nodbout) {
 			printf("Connecting to output DB...\n");
 			A.setOutputDB(CalDBSQL::getCDB(false));

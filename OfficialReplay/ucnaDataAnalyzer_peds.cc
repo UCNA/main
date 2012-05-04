@@ -8,7 +8,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	
 	// get total run time; force pre-pass if missing
 	wallTime = PCal.CDB->totalTime(rn);
-	unsigned int needsPeds = !wallTime;
+	needsPeds |= !wallTime;
 	if(needsPeds)
 		printf("Total run time not found in DB; force pre-pass\n");
 	else {
@@ -16,11 +16,11 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 		printf("Checking for pedestals data...\n");
 		for(Side s = EAST; s <= WEST; ++s) {
 			for(unsigned int t=0; t<nBetaTubes; t++)
-				needsPeds += !PCal.checkPedestals(PCal.sensorNames[s][t]);
+				needsPeds |= !PCal.checkPedestals(PCal.sensorNames[s][t]);
 			for(unsigned int p = X_DIRECTION; p <= Y_DIRECTION; p++)
 				for(unsigned int c=0; c<cathNames[s][p].size(); c++)
-					needsPeds += !PCal.checkPedestals(cathNames[s][p][c]);
-			needsPeds += !PCal.checkPedestals(sideSubst("MWPC%cAnode",s));
+					needsPeds |= !PCal.checkPedestals(cathNames[s][p][c]);
+			needsPeds |= !PCal.checkPedestals(sideSubst("MWPC%cAnode",s));
 		}
 	}
 	if(!needsPeds) return;

@@ -103,6 +103,8 @@ public:
 	
 	/// set whether to separately analyze LED events
 	bool analyzeLED;
+	/// set whether pedestals need to be measured
+	bool needsPeds;
 	
 protected:
 	// read variables
