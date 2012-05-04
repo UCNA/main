@@ -38,7 +38,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 		convertReadin();
 		calibrateTimes();
 		for(Side s = EAST; s <= WEST; ++s) {
-			if( !trig2of4(s) && qadcSum(otherSide(s))>2000 && !isLED() ) {
+			if(isUCNMon() || iSis00==(s==EAST?2:1)) {
 				pmtTimes[s].push_back(fTimeScaler.t[BOTH]);
 				for(unsigned int t=0; t<nBetaTubes; t++)
 					pmtPeds[s][t].push_back(sevt[s].adc[t]);
