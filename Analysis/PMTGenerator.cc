@@ -8,7 +8,7 @@
 TRandom3 PMTGenerator::sim_rnd_source;
 
 PMTGenerator::PMTGenerator(Side s, float xx, float yy):
-x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), pedcorr(0.4), mySide(s) { }
+x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), pedcorr(0.3), crosstalk(0.015), mySide(s) { }
 
 void PMTGenerator::setCalibrator(PMTCalibrator* P) { 
 	assert(P);
@@ -29,57 +29,75 @@ void PMTGenerator::setPosition(float xx, float yy, float dxw, float dyw) {
 
 void PMTGenerator::setSide(Side s) { mySide = s; }
 
+void preuncorrelate(float* v, double a, unsigned int n = nBetaTubes) {
+	float d = (1.+(n-1)*a)*(1.-a);
+	float od = -a/d;
+	d = ((n-2)*a+1)/d;
+	std::vector<float> v2(n);
+	for(unsigned int i=0; i<n; i++)
+		for(unsigned int j=0; j<n; j++)
+			v2[i] += v[j]*(i==j?d:od);
+	for(unsigned int i=0; i<n; i++)
+		v[i]=v2[i];
+}
+
+void recorrelate(float* v, double a, unsigned int n = nBetaTubes) {
+	std::vector<float> v2(n);
+	for(unsigned int i=0; i<n; i++)
+		for(unsigned int j=0; j<n; j++)
+			v2[i] += v[j]*(i==j?1:a);
+	for(unsigned int i=0; i<n; i++)
+		v[i]=v2[i];
+}
+
 ScintEvent PMTGenerator::generate(float en) {
-	float nPEtot = 0;
-	float restot = 0;
-	float tubeRes;
 	if(en<=0) {
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			sevt.tuben[t]=sevt.adc[t]=0;
 		sevt.energy=0;
 		return sevt;
 	}
-	// PE-smeared energy
+	
+	// PE-smeared energy plus crosstalk
+	float nPE[nBetaTubes];
+	float tubeRes[nBetaTubes];
 	for(unsigned int t=0; t<nBetaTubes; t++) {
 		if(currentCal->scaleNoiseWithL)
-			tubeRes = pmtRes[mySide][t]*en;
+			tubeRes[t] = pmtRes[mySide][t]*en;
 		else
-			tubeRes = currentCal->nPE(mySide,t,en,x,y,evtm);
+			tubeRes[t] = currentCal->nPE(mySide,t,en,x,y,evtm);
 		if(presmear) {
-			if(en*presmear > tubeRes+0.1)
-				tubeRes = 1.0/(1.0/tubeRes-1.0/(en*presmear));
+			if(en*presmear > tubeRes[t]+0.1)
+				tubeRes[t] = 1.0/(1.0/tubeRes[t]-1.0/(en*presmear));
 			else
-				tubeRes = 1.0/(1.0/tubeRes-1.0/(tubeRes+0.1));
+				tubeRes[t] = 1.0/(1.0/tubeRes[t]-1.0/(tubeRes[t]+0.1));
 		}
-		restot += tubeRes;
-		float nPE = sim_rnd_source.PoissonD(tubeRes);      // photoelectrons produced
-		nPEtot += nPE;
-		sevt.tuben[t] = nPE/tubeRes*en;
+		nPE[t] = tubeRes[t];
 	}
-	
-	// Calculations for correlated pedestals
-	// target pedestal noise widths
-	float pedw[nBetaTubes];
+	preuncorrelate(nPE, crosstalk);
 	for(unsigned int t=0; t<nBetaTubes; t++)
-		pedw[t] = currentCal->getPedwidth(currentCal->sensorNames[mySide][t],evtm);
-	// generate uncorrelated fluctuations
-	float pedc[nBetaTubes];
-	float d = (1.+(nBetaTubes-1)*pedcorr)*(1.-pedcorr);
-	float od = -pedcorr/d;
-	d = ((nBetaTubes-2)*pedcorr+1)/d;
+		nPE[t] = sim_rnd_source.PoissonD(nPE[t]>0?nPE[t]:0);
+	recorrelate(nPE, crosstalk);
+	for(unsigned int t=0; t<nBetaTubes; t++)
+		sevt.tuben[t] = nPE[t]/tubeRes[t]*en;
+	
+	
+	// target pedestal noise widths squared
+	float pedw[nBetaTubes];
 	for(unsigned int t=0; t<nBetaTubes; t++) {
-		pedc[t] = 0;
-		for(unsigned int t2=0; t2<nBetaTubes; t2++)
-			pedc[t] += pedw[t2]*pedw[t2]*(t2==t?d:od);
-		pedc[t] = pedc[t]<0?0:sim_rnd_source.Gaus(0.,sqrt(pedc[t]));
+		pedw[t] = currentCal->getPedwidth(currentCal->sensorNames[mySide][t],evtm);
+		pedw[t] *= pedw[t];
 	}
-		   
+	preuncorrelate(pedw,pedcorr);
+	for(unsigned int t=0; t<nBetaTubes; t++)
+		pedw[t] = pedw[t]<0?0:sim_rnd_source.Gaus(0.,sqrt(pedw[t]));
+	recorrelate(pedw,pedcorr);
+	
 	for(unsigned int t=0; t<nBetaTubes; t++) {
 		// adc value
 		sevt.adc[t] = currentCal->invertCorrections(mySide,t,sevt.tuben[t].x,x,y,evtm); 
 		// correlated pedestal noise
-		for(unsigned int t2=0; t2<nBetaTubes; t2++)
-			sevt.adc[t] += pedc[t2]*(t2==t?1.:pedcorr);
+		sevt.adc[t] += pedw[t];
 		// quantization noise
 		float pedx = currentCal->getPedestal(currentCal->sensorNames[mySide][t],evtm);
 		sevt.adc[t] = int(sevt.adc[t]+pedx+0.5)-pedx;

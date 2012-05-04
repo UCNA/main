@@ -39,6 +39,7 @@ public:
 	float evtm;						//< event time during run
 	float presmear;					//< nPE/keV already smeared in input spectrum
 	float pedcorr;					//< pedestal noise correlation
+	float crosstalk;				//< inter-channel noise crosstalk
 	
 	unsigned int nTrigs;			//< number of individual PMTs triggered
 	bool pmtTriggered[nBetaTubes];	//< whether each PMT triggered above threshold
