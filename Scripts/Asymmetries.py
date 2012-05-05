@@ -347,7 +347,7 @@ class MC_Comparator:
 					kdat = 0.5*(self.datAsyms[rns].getKurie(s[0],'0',"0",t).ep+self.datAsyms[rns].getKurie(s[0],'1',"0",t).ep)
 					ksim = 0.5*(self.simAsyms[rns].getKurie(s[0],'0',"0",t).ep+self.simAsyms[rns].getKurie(s[0],'1',"0",t).ep)
 					oldtweak = self.datAsyms[rns].getGMSTweak(s[0],t)
-					gdat.setdefault((s,t),[]).append((n,kdat,ksim))
+					gdat.setdefault((s,t),[]).append((n,kdat,ksim,oldtweak))
 					print "\t%s %i:\t%f\t%f\t%f\tOld: %f"%(s,t,kdat,ksim,ksim/kdat,oldtweak)
 					if conn:
 						delete_gain_tweak(conn,rns[0],s,t)
@@ -362,7 +362,7 @@ class MC_Comparator:
 			setTexrunner(gEp)
 			
 			gTwk=graph.graphxy(width=15,height=15,
-				x=graph.axis.lin(title="\\% Gain Tweak",min=-2.,max=2.),
+				x=graph.axis.lin(title="\\% Gain Tweak",min=-4.,max=4.),
 				y=graph.axis.lin(title="Counts",min=0,max=15),
 				key = graph.key.key(pos="tl"))
 			setTexrunner(gTwk)
@@ -377,10 +377,10 @@ class MC_Comparator:
 				gEp.plot(graph.data.points(gdat[(s,t)],x=1,y=2,title=gtitle),[graph.style.symbol(symbol.circle,symbolattrs=[tcols[t],])])
 				gEp.plot(graph.data.points(gdat[(s,t)],x=1,y=3,title=None),[graph.style.line([tcols[t]])])
 		
-				hTweak = histogram(40,-2.,2.);
+				hTweak = histogram(40,-4.,4.);
 				for g in gdat[(s,t)]:
-					hTweak.fill(100*(g[2]/g[1]-1.),1.0,False)
-				gtitle = "%s %i: $\\mu=%+.2f$\\%, $\\sigma=%.2f$"%(s,t,hTweak.avg(),hTweak.rms())
+					hTweak.fill(100*(g[2]/g[1]*g[3]-1.),1.0,False)
+				gtitle = "%s %i: $\\mu=%+.2f$\\%%, $\\sigma=%.2f$"%(s,t,hTweak.avg(),hTweak.rms())
 				gTwk.plot(graph.data.points(hTweak.lineData(),x=1,y=2,title=gtitle),[graph.style.line([tcols[t]])])
 				
 			gEp.writetofile(self.basedir+"/TubeEp_%s_%i.pdf"%(s,self.depth))
