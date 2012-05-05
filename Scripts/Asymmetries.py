@@ -5,6 +5,7 @@ from LinFitter import *
 from PyxUtils import *
 from QFile import *
 from EncalDB import *
+from Histogram import *
 try:
 	from scipy import stats
 except:
@@ -201,28 +202,21 @@ def plot_octet_asymmetries(basedir,depth=0):
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
 				y=graph.axis.lin(title="Asymmetry",min=-0.2,max=0),
 				key = graph.key.key(pos="bl"))
-	try:
-		gAsyms.texrunner.set(lfs='foils17pt')
-	except:
-		pass
+	setTexrunner(gAsyms)
+
 		
 	gBgRate=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
 				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.40),
 				key = graph.key.key(pos="bl"))
-	try:
-		gBgRate.texrunner.set(lfs='foils17pt')
-	except:
-		pass
+	setTexrunner(gBgRate)
+
 		
 	gdEp=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
 				y=graph.axis.lin(title="Endpoint On/Off Difference [keV]",min=-30,max=20),
 				key = graph.key.key(pos="bl"))
-	try:
-		gdEp.texrunner.set(lfs='foils17pt')
-	except:
-		pass
+	setTexrunner(gdEp)
 	
 	gAsyms.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
 				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
@@ -365,11 +359,14 @@ class MC_Comparator:
 				x=graph.axis.lin(title=unitNames[self.depth],min=0,max=len(self.rungrps)-1),
 				y=graph.axis.lin(title="Endpoint [keV]",min=720,max=800),
 				key = graph.key.key(pos="tl"))
-			try:
-				gEp.texrunner.set(lfs='foils17pt')
-			except:
-				pass
-
+			setTexrunner(gEp)
+			
+			gTwk=graph.graphxy(width=15,height=15,
+				x=graph.axis.lin(title="\\% Gain Tweak",min=-2.,max=2.),
+				y=graph.axis.lin(title="Counts",min=0,max=15),
+				key = graph.key.key(pos="tl"))
+			setTexrunner(gTwk)
+			
 			for t in range(4):
 				LF = LinearFitter(terms=[polyterm(0)])
 				LFsim = LinearFitter(terms=[polyterm(0)])
@@ -380,8 +377,14 @@ class MC_Comparator:
 				gEp.plot(graph.data.points(gdat[(s,t)],x=1,y=2,title=gtitle),[graph.style.symbol(symbol.circle,symbolattrs=[tcols[t],])])
 				gEp.plot(graph.data.points(gdat[(s,t)],x=1,y=3,title=None),[graph.style.line([tcols[t]])])
 		
+				hTweak = histogram(40,-2.,2.);
+				for g in gdat[(s,t)]:
+					hTweak.fill(100*(g[2]/g[1]-1.),1.0,False)
+				gtitle = "%s %i: $\\mu=%+.2f$\\%, $\\sigma=%.2f$"%(s,t,hTweak.avg(),hTweak.rms())
+				gTwk.plot(graph.data.points(hTweak.lineData(),x=1,y=2,title=gtitle),[graph.style.line([tcols[t]])])
+				
 			gEp.writetofile(self.basedir+"/TubeEp_%s_%i.pdf"%(s,self.depth))
-
+			gTwk.writetofile(self.basedir+"/TubeEp_%s_%i_Tweak.pdf"%(s,self.depth))
 		
 	def plot_endpoints(self):
 		"""Compare data and MC spectrum endpoints"""
@@ -389,10 +392,8 @@ class MC_Comparator:
 				x=graph.axis.lin(title=unitNames[self.depth],min=0,max=len(self.rungrps)-1),
 				y=graph.axis.lin(title="Endpoint [keV]",min=760,max=820),
 				key = graph.key.key(pos="bl"))
-		try:
-			gEp.texrunner.set(lfs='foils17pt')
-		except:
-			pass
+		setTexrunner(gEp)
+
 			
 		sideCols = {'E':rgb.red,'W':rgb.blue}
 		afpSymbs = {'0':symbol.circle,'1':symbol.triangle}
@@ -425,7 +426,7 @@ class MC_Comparator:
 			x=graph.axis.lin(title=unitNames[self.depth],min=-nmax/3,max=nmax),
 			y=graph.axis.lin(title="Backscatter Fraction (\\% of Type 0)",min=0,max=4.0),
 			key = graph.key.key(pos="tl"))
-		gScatter.texrunner.set(lfs='foils17pt')
+		setTexrunner(gScatter)
 		
 		afps = {'0':"Off",'1':"On"}
 		scols = {'E':rgb.red,'W':rgb.blue}
@@ -462,10 +463,10 @@ class MC_Comparator:
 		
 if __name__=="__main__":
 	
-	if 0:
-		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF")
-		#MCC.backscatter_fractions()
-		#MCC.plot_endpoints()
+	if 1:
+		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated")
+		MCC.backscatter_fractions()
+		MCC.plot_endpoints()
 		
 		#conn=open_connection()
 		conn=None

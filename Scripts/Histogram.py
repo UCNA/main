@@ -20,11 +20,12 @@ class histogram:
 		self.xxsum = 0
 		self.wsum = 0
 
-	def fill(self,x,w=1.0):
-		self.xsum += w*x
-		self.xxsum += w*x*x
-		self.wsum += w
+	def fill(self,x,w=1.0,avgOutliers=True):
 		b = bisect(self.binEdges,x)
+		if avgOutliers or not (b<1 or b>self.nbins):
+			self.xsum += w*x
+			self.xxsum += w*x*x
+			self.wsum += w
 		if b<1 or b>self.nbins:
 			return
 		self.data[b-1] += w
