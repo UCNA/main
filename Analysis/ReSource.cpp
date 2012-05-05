@@ -366,13 +366,10 @@ void reSource(RunNum rn) {
 		Sim2PMT* g2p = NULL;
 		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_495_";
 		printf("Loading source simulation data...\n");
-		if(simSource.t=="Bi207" || simSource.t=="Sn113" || simSource.t=="Ce139") {
+		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
+		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
 			g2p = new G4toPMT();
 			g2p->addFile(g4dat + simSource.t + "/analyzed_*.root");
-		} else if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
-				  simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
-			g2p = new G4toPMT();
-			g2p->addFile(g4dat + simSource.t + "_geomC/analyzed_*.root");
 		} else if(simSource.t=="Cd113m") {
 			/*
 			 G4toPMT* cd109 = new G4toPMT();
