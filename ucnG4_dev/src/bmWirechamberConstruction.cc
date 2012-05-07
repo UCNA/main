@@ -14,7 +14,7 @@ void bmWirechamberConstruction::Construct(Side s) {
 	const G4double entranceToCathodes = 5.0*mm;		// entrance-window-to-cathode distance
 	const G4double exitToCathodes = 5.0*mm;			// exit-window-to-cathode distance
 	mwpcContainer_halfZ = 0.5*(entranceToCathodes+exitToCathodes+activeRegion.GetWidth());
-	mwpc_entrance_R= 7.0*cm;						// entrance window radius to MWPC, windowed by Kevlar holder
+	mwpc_entrance_R = 7.0*cm;						// entrance window radius to MWPC, windowed by Kevlar holder
 	mwpc_exit_R = 7.5*cm;							// exit window radius to MWPC
 	const G4double mwpc_volume_width=8.0*inch;		// MWPC gas box width
 	

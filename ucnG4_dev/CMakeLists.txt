@@ -2,7 +2,6 @@
 # Usage:
 # cmake -DGeant4_DIR=~/geant4.9.5/geant4.9.5-install/lib/Geant4-9.5.0/ ../ucnG4_dev/
 # make -j1 VERBOSE=1
-# mv bin/* $G4WORKDIR/bin/
 
 #----------------------------------------------------------------------------
 # Setup the project

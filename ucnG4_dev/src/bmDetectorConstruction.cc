@@ -229,7 +229,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 		for(Side s = EAST; s <= WEST; ++s) {
 			dets[s].Construct(s);
 			G4RotationMatrix* sideFlip = NULL;
-			if(s==WEST) {
+			if(s==EAST) {
 				sideFlip=new G4RotationMatrix();
 				sideFlip->rotateY(M_PI*rad);
 			}

@@ -4,6 +4,8 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 	scint.Construct(s);
 	mwpc.Construct(s);
 	
+	// place scintillator face at 0, construct all else relative to that
+	
 	const G4double detPackageRadius = 6.0*inch;
 	const G4double detPackageHalfZ = 5.0*inch;
 	const G4double mwpc_pos = -(mwpc.GetWidth()+scint.GetWidth())/2-scint.getScintFacePos();
@@ -19,7 +21,7 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 	// aluminum entrance, exit windows around container
 	const G4double mwpc_entrance_thickness = 2.0*inch;
 	const G4double mwpc_exit_thickness = 0.5*inch;
-	G4Tubs* mwpc_entrance_tube = new G4Tubs("mwpc_entrance_tube",mwpc.mwpc_entrance_R+0.1*mm,detPackageRadius,0.5*mwpc_entrance_thickness,0.,2*M_PI); 
+	G4Tubs* mwpc_entrance_tube = new G4Tubs("mwpc_entrance_tube",mwpc.mwpc_entrance_R,detPackageRadius,0.5*mwpc_entrance_thickness,0.,2*M_PI); 
 	G4Tubs* mwpc_exit_tube = new G4Tubs("mwpc_exit_tube",mwpc.mwpc_exit_R+0.1*mm,detPackageRadius,0.5*mwpc_exit_thickness,0.,2*M_PI);
 	G4VisAttributes* visMWPCEntrance = new G4VisAttributes(G4Colour(0.7,0.7,0.7,0.8));
 	G4VisAttributes* visMWPCExit = new G4VisAttributes(G4Colour(0.3,0.3,0.3,0.8));
