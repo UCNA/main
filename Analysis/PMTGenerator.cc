@@ -76,7 +76,7 @@ ScintEvent PMTGenerator::generate(float en) {
 	}
 	preuncorrelate(nPE, crosstalk);
 	for(unsigned int t=0; t<nBetaTubes; t++)
-		nPE[t] = sim_rnd_source.PoissonD(nPE[t]>0?nPE[t]:0);
+		nPE[t] = sim_rnd_source.PoissonD(10*sim_rnd_source.PoissonD(nPE[t]>0?nPE[t]:0))/10.0;
 	recorrelate(nPE, crosstalk);
 	for(unsigned int t=0; t<nBetaTubes; t++)
 		sevt.tuben[t] = nPE[t]/tubeRes[t]*en;
