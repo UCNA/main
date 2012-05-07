@@ -67,6 +67,22 @@ void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, bool
 	qOut.insert("asymmetry",m);
 }
 
+void AsymmetryAnalyzer::fitInstAsym(float fmin, float fmax, unsigned int color) {
+	Stringmap m;
+	averagerFit.SetLineColor(color);
+	hInstAsym->Fit(&averagerFit,"Q+","",fmin,fmax);
+	m.insert("IA",averagerFit.GetParameter(0));
+	m.insert("dIA",averagerFit.GetParError(0));
+	m.insert("IA_chi2",averagerFit.GetChisquare());
+	m.insert("IA_NDF",averagerFit.GetNDF());
+	m.insert("fitMin",fmin);
+	m.insert("fitMax",fmax);
+	m.insert("anChoice",itos(anChoice));
+	m.insert("method","average");
+	qOut.insert("instasym",m);
+}
+
+
 void AsymmetryAnalyzer::endpointFits() {
 	const float fitStart = 250;
 	const float fitEnd = 750;	
@@ -129,6 +145,7 @@ void AsymmetryAnalyzer::calculateResults() {
 	}
 	// calculate SR and SS
 	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
+	hInstAsym = (TH1F*)calculateSR("Total_Instrumental_Asym",qTotalSpectrum[EAST],qTotalSpectrum[WEST],true,true);
 	hSuperSum = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp)
 		hEvtSS[tp] = (TH1F*)calculateSuperSum(std::string("SuperSum_Type_")+itos(tp),
@@ -138,6 +155,7 @@ void AsymmetryAnalyzer::calculateResults() {
 	fitAsym(200,675,1,true);	// match Robby's analysis
 	fitAsym(50,800,7);
 	fitAsym(225,675,6);
+	fitInstAsym();
 	endpointFits();
 	anodeCalFits();
 	makeRatesSummary();
@@ -148,6 +166,11 @@ void AsymmetryAnalyzer::makePlots() {
 	hAsym->SetMaximum(0.0);
 	hAsym->Draw();
 	printCanvas("Asymmetry");
+	
+	hInstAsym->SetMinimum(-0.10);
+	hInstAsym->SetMaximum(0.10);
+	hInstAsym->Draw();
+	printCanvas("InstAsym");
 	
 	hSuperSum->Draw();
 	printCanvas("SuperSum");

@@ -22,14 +22,21 @@ unitNames = {0:"Octet",1:"Half Octet",2:"Pulse Pair",3:"Run"}
 def addQuad(a,b):
 	return sqrt(a**2+b**2)
 	
-class asymmetryFit:
+class asymmetryFit(KVMap):
 	def __init__(self,m=KVMap()):
-		self.fitMin = m.getFirstF("fitMin",0)
-		self.fitMax = m.getFirstF("fitMax",0)
-		self.A0 = m.getFirstF("A0_fit",0)
-		self.dA0 = m.getFirstF("dA0",0)
+		self.dat = m.dat
+		self.loadFloats(["fitMin","fitMax","A0_fit","dA0"])
+		self.A0 = self.A0_fit
 	def __repr__(self):
 		return "<Asym: %.2f +- %.2f, (%g,%g)>"%(self.A0,self.dA0,self.fitMin,self.fitMax)
+
+class instAsym(KVMap):
+	def __init__(self,m=KVMap()):
+		self.dat = m.dat
+		self.loadFloats(["fitMin","fitMax","IA","dIA"])
+	def __repr__(self):
+		return "<Asym: %.2f +- %.2f, (%g,%g)>"%(self.A0,self.dA0,self.fitMin,self.fitMax)
+
 
 class eventRate(KVMap):
 	def __init__(self,m):
@@ -134,6 +141,9 @@ class AsymmetryFile(QFile,asymData):
 	def getGMSTweak(self,side,tube):
 		tweaks = [self.runcals[r].getGMSTweak(side,tube) for r in self.runcals]
 		return sum(tweaks)/len(tweaks)
+		
+	def getInstAsym(self):
+		return instAsym(self.dat.get("instasym",[KVMap()])[0])
 				
 def collectAsymmetries(basedir,depth):
 	print "Collecting asymmetry data from",basedir,"at depth",depth
@@ -153,6 +163,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 	# collect data
 	##############
 	gdat = []
+	iadat = []
 	bgRateDat = {'E':{'0':[],'1':[]},'W':{'0':[],'1':[]}}
 	kdat = {'E':{'0':[],'1':[]},'W':{'0':[],'1':[]}}
 	kepDelta = {'E':[],'W':[],'C':[]}
@@ -168,6 +179,8 @@ def plot_octet_asymmetries(basedir,depth=0):
 			gdat.append([n,a.A0,a.dA0,af.getRuns()[0]])
 		else:
 			print "**** Missing asym in",af.fname
+		ia = af.getInstAsym()
+		iadat.append([n,ia.IA,ia.dIA])
 		# kurie data
 		for s in kdat:
 			kepDelta[s].append([n,]+af.kepDelta(s))
@@ -204,7 +217,6 @@ def plot_octet_asymmetries(basedir,depth=0):
 				key = graph.key.key(pos="bl"))
 	setTexrunner(gAsyms)
 
-		
 	gBgRate=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
 				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.40),
@@ -218,18 +230,19 @@ def plot_octet_asymmetries(basedir,depth=0):
 				key = graph.key.key(pos="bl"))
 	setTexrunner(gdEp)
 	
-	gAsyms.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
-				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
-				graph.style.errorbar(errorbarattrs=[rgb.red,])])
-	
+		
 	##############
 	# asymmetry plots
 	##############
+	gAsyms.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
+				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
+				graph.style.errorbar(errorbarattrs=[rgb.red,])])
+
 	LF = LinearFitter(terms=[polyterm(0)])
 	
-	print gdat
-	gdat_A = [g for g in gdat if 14000 < g[3] < 14800]
-	gdat_B = [g for g in gdat if 14800 < g[3] ]
+	rbreak = 15400 # 14800
+	gdat_A = [g for g in gdat if 14000 < g[3] < rbreak]
+	gdat_B = [g for g in gdat if rbreak < g[3] ]
 	
 	if gdat_A:
 		LF.fit(gdat_A,cols=(0,1,2),errorbarWeights=True)
@@ -252,6 +265,19 @@ def plot_octet_asymmetries(basedir,depth=0):
 				
 	gAsyms.writetofile(basedir+"/OctetAsym_%i.pdf"%depth)
 	
+	##############
+	# instrumental asymmetry
+	##############
+	gIA=graph.graphxy(width=25,height=8,
+				x=graph.axis.lin(title=unitName,min=0,max=iadat[-1][0]),
+				y=graph.axis.lin(title="Instrumental Asymmetry",min=-0.04,max=0.01),
+				key = graph.key.key(pos="bl"))
+	setTexrunner(gIA)
+	gIA.plot(graph.data.points(iadat,x=1,y=2,dy=3,title=None),
+				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
+				graph.style.errorbar(errorbarattrs=[rgb.red,])])
+	gIA.writetofile(basedir+"/OctetInstAsym_%i.pdf"%depth)
+
 	##############
 	# endpoint, background plots
 	##############
@@ -463,7 +489,7 @@ class MC_Comparator:
 		
 if __name__=="__main__":
 	
-	if 1:
+	if 0:
 		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated")
 		MCC.backscatter_fractions()
 		MCC.plot_endpoints()
@@ -475,6 +501,6 @@ if __name__=="__main__":
 		exit(0)
 		
 	for i in range(3):
-		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
-		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated",2-i)
+		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
+		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF",2-i)
 	

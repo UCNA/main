@@ -69,8 +69,8 @@ public:
 	
 	// ---- some utility routines for common analysis/output operations ---- //
 	
-	/// calculate (blinded) super-ratio from quadHists for each side (optionally asymmetry of background)
-	TH1* calculateSR(const std::string& hname, const quadHists& qEast, const quadHists& qWest, bool fg=true);
+	/// calculate (blinded) super-ratio from quadHists for each side (optionally asymmetry of background and/or instrumental)
+	TH1* calculateSR(const std::string& hname, const quadHists& qEast, const quadHists& qWest, bool fg=true, bool instr=false);
 	/// calculate super-sum from quadHists for each side (optionally super-sum of background)
 	TH1* calculateSuperSum(const std::string& hname, const quadHists& qEast, const quadHists& qWest, bool fg=true);
 	/// draw whole quadHists of histograms

@@ -106,15 +106,23 @@ void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool coun
 	RunAccumulator::loadSimData(simData,nToSim,countAll);
 }
 
-TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists& qEast, const quadHists& qWest, bool fg) {
+TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists& qEast, const quadHists& qWest, bool fg, bool instr) {
 	// first calculate R = E+W-/E-W+
 	TH1* hR = (TH1*)qEast.fgbg[AFP_ON].h[fg]->Clone("SR_intermediate_R");
-	hR->Multiply(qWest.fgbg[AFP_OFF].h[fg]);
-	hR->Scale(1.0/(totalTime[AFP_ON][fg].t[EAST]*totalTime[AFP_OFF][fg].t[WEST]));
+	if(instr) {
+		hR->Multiply(qEast.fgbg[AFP_OFF].h[fg]);
+	} else {
+		hR->Multiply(qWest.fgbg[AFP_OFF].h[fg]);
+		hR->Scale(1.0/(totalTime[AFP_ON][fg].t[EAST]*totalTime[AFP_OFF][fg].t[WEST]));
+	}
 	
-	TH1* hAsym = (TH1*)qEast.fgbg[AFP_OFF].h[fg]->Clone(hname.c_str());
-	hAsym->Multiply(qWest.fgbg[AFP_ON].h[fg]);
-	hAsym->Scale(1.0/(totalTime[AFP_OFF][fg].t[EAST]*totalTime[AFP_ON][fg].t[WEST]));
+	TH1* hAsym = (TH1*)qWest.fgbg[AFP_ON].h[fg]->Clone(hname.c_str());
+	if(instr) {
+		hAsym->Multiply(qWest.fgbg[AFP_OFF].h[fg]);
+	} else {
+		hAsym->Multiply(qEast.fgbg[AFP_OFF].h[fg]);
+		hAsym->Scale(1.0/(totalTime[AFP_OFF][fg].t[EAST]*totalTime[AFP_ON][fg].t[WEST]));
+	}
 	
 	hR->Divide(hAsym);
 
@@ -124,7 +132,7 @@ TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists& qEast
 		double dr = hR->GetBinError(i);
 		if(r>0 && r==r) {
 			hAsym->SetBinContent(i,(1.0-sqrt(r))/(1.0+sqrt(r)));
-			hAsym->SetBinError(i, dr/(sqrt(r)*(1+sqrt(r))*(1+sqrt(r))) * (simPerfectAsym?0.33:1.0));
+			hAsym->SetBinError(i, dr/(sqrt(r)*(1+sqrt(r))*(1+sqrt(r))) * (simPerfectAsym && !instr?0.33:1.0));
 		} else {
 			hAsym->SetBinContent(i,0);
 			hAsym->SetBinError(i,1e6);
@@ -304,7 +312,7 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 		// clone background counts in original data
 		simBgFlucts(*origOA,simfactor,!simPerfectAsym);
 		// scale back out simulation factor
-		scaleSavedHists(1.0/simfactor);
+		scaleData(1.0/simfactor);
 	}
 	
 	// generate output

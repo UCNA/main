@@ -25,9 +25,10 @@ public:
 	virtual std::string estimatorHistoLocation() const { return AsymmetryAnalyzer::processedLocation; }
 	static std::string processedLocation;	//< set location here for already-processed files
 	
-	TH1F* hAsym;									//< asymmetry
-	TH1F* hSuperSum;								//< super-sum spectrum
-	TH1F* hEvtSS[TYPE_III_EVENT];					//< super-sum for each event type
+	TH1F* hAsym;					//< asymmetry
+	TH1F* hInstAsym;				//< instrumental asymmetry
+	TH1F* hSuperSum;				//< super-sum spectrum
+	TH1F* hEvtSS[TYPE_III_EVENT];	//< super-sum for each event type
 	
 protected:
 	
@@ -36,6 +37,8 @@ protected:
 	
 	/// fit asymmetry over given range
 	void fitAsym(float fmin, float fmax, unsigned int color, bool avg = false);
+	/// fit instrumental asymmetry over given range
+	void fitInstAsym(float fmin=200, float fmax=600, unsigned int color = 2);
 	/// various beta spectrum endpoint fits
 	void endpointFits();
 	/// anode calibration fits
