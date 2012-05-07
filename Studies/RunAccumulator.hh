@@ -47,6 +47,8 @@ public:
 	virtual void addSegment(const SegmentSaver& S);
 	/// zero out run times
 	void zeroCounters();
+	/// scale all saved histograms by a factor
+	virtual void scaleData(double s);
 	
 	/// create or load a FG/BG TH1F* set
 	fgbgPair registerFGBGPair(const std::string& hname, const std::string& title,

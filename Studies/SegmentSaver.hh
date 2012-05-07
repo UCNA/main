@@ -33,7 +33,7 @@ public:
 	/// zero out all saved histograms
 	void zeroSavedHists();
 	/// scale all saved histograms by a factor
-	void scaleSavedHists(double s);
+	virtual void scaleData(double s);
 	
 	/// add histograms from another SegmentSaver of the same type
 	virtual void addSegment(const SegmentSaver& S);

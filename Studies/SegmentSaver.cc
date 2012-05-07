@@ -80,7 +80,7 @@ void SegmentSaver::zeroSavedHists() {
 		it->second->Reset();
 }
 
-void SegmentSaver::scaleSavedHists(double s) {
+void SegmentSaver::scaleData(double s) {
 	if(s==1.) return;
 	for(std::map<std::string,TH1*>::iterator it = saveHists.begin(); it != saveHists.end(); it++)
 		it->second->Scale(s);

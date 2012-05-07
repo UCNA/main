@@ -131,6 +131,14 @@ void RunAccumulator::addSegment(const SegmentSaver& S) {
 	qOut.transfer(S.qOut,"runcal");
 }
 
+void RunAccumulator::scaleData(double s) {
+	SegmentSaver::scaleData(s);
+	for(AFPState afp = AFP_OFF; afp <= AFP_OTHER; ++afp)
+		for(GVState fg = GV_CLOSED; fg <= GV_OPEN; ++fg)
+			totalCounts[afp][fg] *= s;
+	runCounts.scale(s);
+}
+
 fgbgPair& RunAccumulator::getFGBGPair(const std::string& qname) {
 	std::map<std::string,fgbgPair>::iterator it = fgbgHists.find(qname);
 	assert(it != fgbgHists.end());
@@ -210,7 +218,7 @@ void RunAccumulator::makeRatesSummary() {
 			rt.insert("fg",itos(fg));
 			double counts = it->second.h[fg]->Integral();
 			rt.insert("counts",counts);
-			rt.insert("rate",counts/totalTime[it->second.afp][fg].t[it->second.mySide]);
+			rt.insert("rate",counts?counts/totalTime[it->second.afp][fg].t[it->second.mySide]:0);
 			qOut.insert("rate",rt);
 		}
 	}
@@ -332,7 +340,7 @@ unsigned int RunAccumulator::simMultiRuns(Sim2PMT& simData, const TagCounter<Run
 			subRA->simForRun(simData, it->first, nToSim, true);
 			nSimmed += simData.nSimmed;
 			printf("From %i input points, simulated %i/%i requested events for Run %i\n",simData.nSimmed,(int)simData.nCounted,(int)it->second,it->first);
-			subRA->scaleSavedHists(it->second/simData.nCounted);
+			subRA->scaleData(it->second/simData.nCounted);
 			addSegment(*subRA);
 			delete(subRA);
 		}
