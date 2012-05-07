@@ -4,7 +4,9 @@
 #include "SQL_Utils.hh"
 #include "UCNAException.hh"
 #include <utility>
+#include <TRandom3.h>
 
+TRandom3 pcal_random_src;
 
 PedestalCorrector::~PedestalCorrector() {
 	for(std::map<std::string,TGraph*>::iterator it = pedestals.begin(); it != pedestals.end(); it++)
@@ -270,12 +272,13 @@ void PMTCalibrator::pedSubtract(Side s, float* adc, float time) {
 	for(unsigned int t=0; t<nBetaTubes; t++)
 		adc[t] -= getPedestal(sensorNames[s][t],time);
 }
-void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, float time) const {
+void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, float time, float poserr) const {
 	evt.energy.x = evt.energy.err = 0;
 	float weight[nBetaTubes];
 	for(unsigned int t=0; t<nBetaTubes; t++) {
 		
 		float eta0 = eta(s,t,x,y);
+		if(poserr) eta0 *= pcal_random_src.Gaus(1.,poserr);
 		float l0 = linearityCorrector(s,t,evt.adc[t],time); // tube observed light
 		if(l0 != l0)
 			l0 = 0;

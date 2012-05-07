@@ -8,7 +8,7 @@
 TRandom3 PMTGenerator::sim_rnd_source;
 
 PMTGenerator::PMTGenerator(Side s, float xx, float yy):
-x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), pedcorr(0.3), crosstalk(0.015), mySide(s) { }
+x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), pedcorr(0.3), crosstalk(0.015), xscatter(0.), mySide(s) { }
 
 void PMTGenerator::setCalibrator(PMTCalibrator* P) { 
 	assert(P);
@@ -102,7 +102,7 @@ ScintEvent PMTGenerator::generate(float en) {
 		float pedx = currentCal->getPedestal(currentCal->sensorNames[mySide][t],evtm);
 		sevt.adc[t] = int(sevt.adc[t]+pedx+0.5)-pedx;
 	}
-	currentCal->calibrateEnergy(mySide, xw, yw, sevt, evtm);
+	currentCal->calibrateEnergy(mySide, xw, yw, sevt, evtm, xscatter);
 	return sevt;
 }
 

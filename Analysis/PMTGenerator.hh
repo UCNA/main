@@ -40,6 +40,7 @@ public:
 	float presmear;					//< nPE/keV already smeared in input spectrum
 	float pedcorr;					//< pedestal noise correlation
 	float crosstalk;				//< inter-channel noise crosstalk
+	float xscatter;					//< "extra" proportional random scatter
 	
 	unsigned int nTrigs;			//< number of individual PMTs triggered
 	bool pmtTriggered[nBetaTubes];	//< whether each PMT triggered above threshold

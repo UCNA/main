@@ -132,7 +132,7 @@ public:
 	/// subtract pedestals from 4-tube ADC array (do this before energy calibrations!)
 	void pedSubtract(Side s, float* adc, float time);
 	/// convert all 4 tubes ped-subtracted ADC to energy estimates
-	void calibrateEnergy(Side s, float x, float y, ScintEvent& evt, float time) const;	
+	void calibrateEnergy(Side s, float x, float y, ScintEvent& evt, float time, float poserr = 0) const;	
 	/// convert all 4 tubes ped-subtracted ADC to energy estimates and return QADC-sum averaged energy (ignores individual tube resolutions)
 	void summedEnergy(Side s, float x, float y, ScintEvent& evt, float time) const;		
 	/// print summary of energy calibrations
