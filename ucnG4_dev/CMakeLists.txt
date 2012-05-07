@@ -95,3 +95,6 @@ target_link_libraries(SiDet_Analyzer ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
 install(TARGETS ucnG4_prod UCNA_MC_Analyzer SiDet_Analyzer DESTINATION bin)
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_BUILD_TYPE release)
