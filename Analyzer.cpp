@@ -125,14 +125,12 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	const std::string simOutputDir=outputDir+"_Sim_MagF";
 	
 	std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_MagF_neutronBetaUnpol/analyzed_";
-	simFile += itos(abs(octn)%6)+".root";
-	
 	//std::string simFile = "/home/mmendenhall/geant4/output/LivPhys_495_BadVac_neutronBetaUnpol/analyzed_";
-	//simFile += itos(abs(octn)%9)+".root";
-	
 	//std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_";
-	//simFile += itos(abs(octn)%32)+".root";
 	
+	unsigned int nTot = 32;
+	unsigned int stride = 7;
+		
 	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
 	if(octn==1000) {
@@ -141,7 +139,9 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600);
 	} else if(octn < 0) {
 		G4toPMT simData;
-		simData.addFile(simFile);
+		for(unsigned int i=0; i<stride; i++)
+			simData.addFile(simFile+itos((stride*abs(octn)+i)%nTot)+".root");
+		simData.PGen[EAST].xscatter = simData.PGen[WEST].xscatter = 0.01;
 		if(octn==-1000) {
 			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 			AsymmetryAnalyzer AA_Sim(&OM,simOutputDir);
@@ -187,6 +187,9 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	TCanvas defaultCanvas;
 	defaultCanvas.SetFillColor(0);
 	defaultCanvas.SetCanvasSize(300,300);
+	
+	//spectrumGenTest();
+	//exit(0);
 	
 	/*
 	OutputManager OMLS("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorr");

@@ -248,7 +248,7 @@ void ucnaDataAnalyzer11b::classifyEventType() {
 	
 	// type, side
 	fType = TYPE_IV_EVENT;
-	fSide = NONE;
+	fSide = NOSIDE;
 	for(Side s = EAST; s<=WEST; ++s) {
 		if(Is2fold(s)) {
 			if(passedCutTDC(otherSide(s)))

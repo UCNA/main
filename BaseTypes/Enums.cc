@@ -4,7 +4,10 @@
 #include <stdio.h>
 #include <cassert>
 
+//---------------------------------------
+
 char sideNames(Side s) {
+	assert(s<BADSIDE);
 	const char snm[] = {'E','W','B','N'};
 	return snm[s];
 };
@@ -37,29 +40,22 @@ std::string sideSubst(const std::string& instr, Side s) {
 }
 
 Side otherSide(Side s) {
-	switch(s) {
-		case EAST:
-			return WEST;
-		case WEST:
-			return EAST;
-		case BOTH:
-			return NONE;
-		default:
-			return BOTH;
-	}
+	return s==EAST?WEST : s==WEST?EAST : s==BOTH?NOSIDE : BOTH;
 }
 
 unsigned int pmtHardwareNum(Side s, unsigned int quadrant) {
-	if(s==EAST)
-		return (quadrant+2)%4+1;
-	if(s==WEST)
-		return quadrant+1;
-	return 0;
+	return s==EAST?(quadrant+2)%4+1 : s==WEST?quadrant+1 : 0;
 }
 
-float_err operator+(float_err a, float_err b) { return float_err(a.x+b.x,sqrt(a.err*a.err + b.err*b.err)); }
+//---------------------------------------
 
-float_err operator*(float a, float_err b) { return float_err(a*b.x,a*b.err); }
+float_err operator+(float_err a, float_err b) {
+	return float_err(a.x+b.x,sqrt(a.err*a.err + b.err*b.err));
+}
+
+float_err operator*(float a, float_err b) {
+	return float_err(a*b.x,a*b.err);
+}
 
 float_err weightedSum(unsigned int n, const float_err* d) {
 	float_err sum;
@@ -79,6 +75,8 @@ float proximity(unsigned int n, const float_err* d, float_err c) {
 		psum += (d[i].x-c.x)*(d[i].x-c.x)/(d[i].err*d[i].err + c.err*c.err);
 	return sqrt(psum/n);
 }
+
+//---------------------------------------
 
 RunGeometry whichGeometry(RunNum rn) {
 	if( rn < 1000 )

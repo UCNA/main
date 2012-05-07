@@ -15,8 +15,12 @@ project(ucnG4_prod)
 #
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../Studies/BetaSpectrum.cc)
+LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/strutils.cc)
+LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../BaseTypes/Enums.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 LIST(APPEND headers ${PROJECT_SOURCE_DIR}/../Studies/BetaSpectrum.hh)
+LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/strutils.hh)
+LIST(APPEND headers ${PROJECT_SOURCE_DIR}/../BaseTypes/Enums.hh)
 
 #-------------------------------
 # ROOT dependencies
@@ -75,7 +79,7 @@ endif()
 # Setup include directory for this project
 #
 include(${Geant4_USE_FILE})
-include_directories(${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/../Studies/)
+include_directories(${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/../Studies/ ${PROJECT_SOURCE_DIR}/../BaseTypes/ ${PROJECT_SOURCE_DIR}/../IOUtils/)
 
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4 libraries

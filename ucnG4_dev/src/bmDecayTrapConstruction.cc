@@ -34,19 +34,19 @@ void bmDecayTrapConstruction::Construct(G4LogicalVolume* world) {
 		
 		trap_win_log[s] = new G4LogicalVolume(trap_winInner_tube,Vacuum,sideSubst("trap_win_log%c",s));
 		trap_win_log[s]->SetVisAttributes(visWindow);
-		trap_win_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,sign(s)*trap_winPosZ),trap_win_log[s],
+		trap_win_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(s)*trap_winPosZ),trap_win_log[s],
 											 sideSubst("trap_win%c",s),world,false,0);
 		
 		mylar_win_log[s] = new G4LogicalVolume(mylarTube, fWindowMat,sideSubst("mylar_win_log%c",s));
-		mylar_win_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,sign(s)*mylarWinPosZ),mylar_win_log[s],
+		mylar_win_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(s)*mylarWinPosZ),mylar_win_log[s],
 											  sideSubst("mylar_win%c",s),trap_win_log[s],false,0);
 		
 		be_win_log[s] = new G4LogicalVolume(beTube, fCoatingMat,sideSubst("be_win_log%c",s));
-		be_win_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,sign(s)*beWinPosZ),be_win_log[s],
+		be_win_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(s)*beWinPosZ),be_win_log[s],
 										   sideSubst("be_win%c",s),trap_win_log[s],false,0);
 		
 		trap_monitor_log[s] = new G4LogicalVolume(trap_monitor_tube,Vacuum,sideSubst("trap_monitor_log%c",s));
-		trap_monitor_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,sign(s)*trap_monitor_posZ),
+		trap_monitor_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(s)*trap_monitor_posZ),
 												 trap_monitor_log[s],sideSubst("trap_monitor%c",s),world,false,0);
 	}
 }

@@ -22,7 +22,7 @@ void PostOfficialAnalyzer::setReadpoints() {
 	// clock
 	Tch->SetBranchAddress("TimeE",&runClock.t[EAST]);
 	Tch->SetBranchAddress("TimeW",&runClock.t[WEST]);
-	runClock.t[BOTH]=runClock.t[NONE]=0.0;
+	runClock.t[BOTH]=runClock.t[NOSIDE]=0.0;
 	
 	for(Side s=EAST; s<=WEST; ++s) {
 		

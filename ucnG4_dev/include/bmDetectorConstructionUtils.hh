@@ -2,7 +2,7 @@
 #define bmDetectorConstructionUtils_HH 1
 
 #include "globals.hh"
-#include "Sides.hh"
+#include "Enums.hh"
 #include "G4Material.hh"
 #include "G4Element.hh"
 #include "G4Box.hh"

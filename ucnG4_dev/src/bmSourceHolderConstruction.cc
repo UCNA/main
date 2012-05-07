@@ -54,7 +54,7 @@ void bmSourceHolderConstruction::Construct() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		coating_log[s] = new G4LogicalVolume(coating_tube,fCoatingMat,sideSubst("source_coating_log_%c",s));
 		coating_log[s]->SetVisAttributes(new G4VisAttributes(G4Colour(0,1,0,0.5)));
-		coating_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,sign(s)*(fWindowThick+fCoatingThick*0.5)),
+		coating_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(s)*(fWindowThick+fCoatingThick*0.5)),
 											coating_log[s],sideSubst("source_coating_phys_%c",s),container_log,false,0);
 	}
 	

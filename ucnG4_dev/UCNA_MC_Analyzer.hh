@@ -1,5 +1,5 @@
 #include "AnalyzerBase.hh"
-#include "Sides.hh"
+#include "Enums.hh"
 
 class UCNA_MC_Analyzer: public ucnG4_analyzer {
 public:

@@ -233,7 +233,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 				sideFlip=new G4RotationMatrix();
 				sideFlip->rotateY(M_PI*rad);
 			}
-			detPackage_phys[s] = new G4PVPlacement(sideFlip,G4ThreeVector(0.,0.,sign(s)*(2.2*m-dets[s].getScintFacePos())),
+			detPackage_phys[s] = new G4PVPlacement(sideFlip,G4ThreeVector(0.,0.,ssign(s)*(2.2*m-dets[s].getScintFacePos())),
 												   dets[s].container_log,sideSubst("detPackage_phys%c",s),experimentalHall_log,false,0);
 			
 			trap.trap_win_log[s]->SetUserLimits(bmUserSolidLimits);

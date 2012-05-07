@@ -174,10 +174,6 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	}
 }
 
-
-
-
-
 void makeCorrectionsFile(const std::string& fout) {
 	QFile Q;
 	double Z = 1.;

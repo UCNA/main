@@ -14,8 +14,8 @@ enum Side {
 	EAST = 0,	//< East side of detector
 	WEST = 1,	//< West side of detector
 	BOTH = 2,	//< Both sides of detector
-	NONE = 3,	//< Neither side of detector
-	BADSIDE = 4
+	NOSIDE = 3,	//< Neither side of detector
+	BADSIDE = 4 //< Improperly defined side
 };
 
 /// iteration to next side
@@ -32,6 +32,9 @@ std::string sideSubst(const std::string& instr, Side s);
 
 /// opposite side to given side
 Side otherSide(Side s);
+
+/// "sign" for side, East = -1, West = +1
+inline int ssign(Side s) { return s==EAST?-1:s==WEST?1:0; }
 
 /// directions, to clean up wireplane direction confusion
 enum AxisDirection {
@@ -125,7 +128,7 @@ enum DataQuality {
 	DQ_CHECKED		=	1<<0,	//< data quality has been checked
 	DQ_TRASH		=	1<<1,	//< run is garbage, DO NOT USE
 	DQ_CORRUPT_END	=	1<<2,	//< data at end of run is corrupted
-	DQ_BEAM_ISSUES	=	1<<3,	//< beam quality dubious during run
+	DQ_BEAM_ISSUES	=	1<<3	//< beam quality dubious during run
 };
 
 /// get the geometry for a given run
@@ -152,28 +155,23 @@ enum PID {
 	PID_SINGLE = 0,	//< "single" gamma event
 	PID_BETA = 1,	//< beta event
 	PID_MUON = 2,	//< muon event
-	PID_LED = 3,		//< tagged LED event
+	PID_LED = 3,	//< tagged LED event
 	PID_PULSER = 4	//< tagged Bi pulser event
 };
 
-//--------------------------------------------------------------------------
-// 1	"Type I" -- Both scintillators and wirechambers
-// 2	"Type II" -- Scatters off wirechamber, goes through other side
-// 3	"Type III" -- Scatters off scintillator, dies in other wirechamber
-// 5	"Type IV" -- Undetectable scatters off wirechamber surface
-//--------------------------------------------------------------------------
-
-/// event type enum
+/// event backscattering types
 enum EventType {
-	TYPE_0_EVENT	= 0,
-	TYPE_I_EVENT	= 1,
-	TYPE_II_EVENT	= 2,
-	TYPE_III_EVENT	= 3,
-	TYPE_IV_EVENT	= 4
+	TYPE_0_EVENT	= 0,	//< "Correct" events arrive on only one side of detector
+	TYPE_I_EVENT	= 1,	//< Scatters to hit both scintillators and wirechambers
+	TYPE_II_EVENT	= 2,	//< Scatters off wirechamber, hits scintillator and wirechamber on opposite side
+	TYPE_III_EVENT	= 3,	//< Triggers and scatters off scintillator; triggers only wirechamber on opposite side
+	TYPE_IV_EVENT	= 4		//< Undetectable backscatters (also used for "unclassifiable" events)
 };
+
 /// iteration to next event type
 inline EventType& operator++(EventType& tp) { return tp = EventType(tp+1); }
 
+/// names for event types
 std::string typeWords(EventType tp);
 
 #endif

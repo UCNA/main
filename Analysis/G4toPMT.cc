@@ -122,7 +122,7 @@ void Sim2PMT::classifyEvent() {
 	else fPID = PID_SINGLE;
 	
 	fType = TYPE_IV_EVENT;
-	fSide = NONE;
+	fSide = NOSIDE;
 	for(Side s = EAST; s<=WEST; ++s) {
 		if(is2fold[s]) {
 			if(passesScint[otherSide(s)])

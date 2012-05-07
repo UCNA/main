@@ -33,15 +33,15 @@ unsigned int totalBins(const TH1* h);
 class BlindTime {
 public:
 	/// constructor from time
-	BlindTime(Float_t t0=0) { t[EAST]=t[WEST]=t[BOTH]=t[NONE]=t0; }
+	BlindTime(Float_t t0=0) { t[EAST]=t[WEST]=t[BOTH]=t[NOSIDE]=t0; }
 	/// constructor from Stringmap
 	BlindTime(const Stringmap& m);
 	/// convert to Stringmap
 	Stringmap toStringmap() const;
 	/// add another blinded time
-	inline void operator+= (const BlindTime& bt) { for(Side s=EAST; s!=NONE; ++s) t[s] += bt.t[s]; }
+	inline void operator+= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] += bt.t[s]; }
 	/// subtract another blinded time
-	inline void operator-= (const BlindTime& bt) { for(Side s=EAST; s!=NONE; ++s) t[s] -= bt.t[s]; }
+	inline void operator-= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] -= bt.t[s]; }
 	
 	Float_t t[4];	//< blinded timings for each side
 };
