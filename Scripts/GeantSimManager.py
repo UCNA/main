@@ -5,7 +5,7 @@ from math import *
 
 class GeantSimManager:
 
-	def __init__(self, simName, vacuum=1.e-5,
+	def __init__(self, simName, vacuum="1.e-5 torr",
 					fmap=None, geometry="C", sourceHolderPos = None, sourceRadius = "1.5 mm"):
 						
 		self.podsh = False				
@@ -97,6 +97,7 @@ class GeantSimManager:
 	
 	def set_dirs(self):
 		self.g4_workdir = os.environ["G4WORKDIR"]
+		self.g4_bindir = os.environ["G4BINDIR"]
 		if self.podsh:
 			g4_workdir = "~/geant4/"
 		self.type_dir = self.settings["simName"]+"_%s"%(self.settings["generator"].replace("/","_"))
@@ -138,7 +139,7 @@ class GeantSimManager:
 		jobsout = None
 		if not self.podsh:
 			jobsout = open(parallel_jobfile,"w")
-		ucnG4_prod = self.g4_workdir+"/bin/ucnG4_prod"
+		ucnG4_prod = self.g4_bindir+"/ucnG4_prod"
 		onejob = ""
 		subcmds = []
 		
@@ -218,7 +219,7 @@ class GeantSimManager:
 			allpts = ""
 			if self.settings["generator"] in ["neutronBetaUnpol","eGunRandMomentum","eGun"]:
 				allpts = " y"
-			analyzer_bin = self.g4_workdir+"/bin/"+self.settings["analyzer"]
+			analyzer_bin = self.g4_bindir+"/"+self.settings["analyzer"]
 			jobsout.write("%s %s %s/analyzed_%i.root%s\n"%(analyzer_bin,outlist_name,self.g4_out_dir,nanalyzed,allpts))
 			nanalyzed += 1
 		jobsout.close()
@@ -244,17 +245,17 @@ if __name__ == "__main__":
 		betaSim.launch_sims(nEvents=5e7,nClusters=36,hours_old=100*24)
 		betaSim.launch_postanalyzer()
 	
-	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 9 clusters
-	if 0:
-		betaSim = GeantSimManager("LivPhys_495_MagF",vacuum=1.e-3,fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 52 clusters
+	if 1:
+		betaSim = GeantSimManager("LivPhys_495_MagF_B",vacuum="2.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b_xtra.txt")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
-		betaSim.launch_sims(nEvents=1e7,nClusters=9,hours_old=1000)
+		betaSim.launch_sims(nEvents=1e7,nClusters=52,hours_old=0)
 		betaSim.launch_postanalyzer()
 	
 	# beta decay in 1e-3torr vacuum: 1e7 in 9 clusters
-	if 1:
-		betaSim = GeantSimManager("LivPhys_495_BadVac",vacuum=1.e-3)
+	if 0:
+		betaSim = GeantSimManager("LivPhys_495_BadVac",vacuum="2.e-3 torr")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
 		#betaSim.launch_sims(nEvents=1e7,nClusters=9,hours_old=1000)
@@ -265,15 +266,14 @@ if __name__ == "__main__":
 	# calibration sources
 	####################
 					
-	# sources ["Sn113","Bi207","Ce139","Cd109","In114E","In114W","Cd113m"]
+	# sources ["Bi207","Sn113","Ce139","Cd109","In114E","In114W","Cd113m"] 1e6 each
 	if 0:
-		for g in ["Cd113m"]:
-			sourceSim = GeantSimManager("LivPhys_495",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+		for g in ["Bi207"]:
+			sourceSim = GeantSimManager("FixGeom",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.set_generator(g)
-			#sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=8)
+			sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
 			sourceSim.launch_postanalyzer()
-
 
 	####################				
 	# silicon detector

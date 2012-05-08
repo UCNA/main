@@ -66,8 +66,8 @@ bmDetectorConstruction::bmDetectorConstruction() {
 	fFieldMapFileCmd->SetGuidance("Set B field map file");
 	fFieldMapFileCmd->SetParameter( new G4UIparameter("fieldmapfile",'s',true) );  
 	
-	fVacuumLevelCmd = new G4UIcommand("/detector/vacuum",this);
-	fVacuumLevelCmd->SetGuidance("Set SCS vacuum in unit of torr");
+	fVacuumLevelCmd = new G4UIcmdWithADoubleAndUnit("/detector/vacuum",this);
+	fVacuumLevelCmd->SetGuidance("Set SCS vacuum pressure");
 	fVacuumLevelCmd->SetParameter( new G4UIparameter("vacuum",'f',true) ); 
 	
 	fSourceHolderPosCmd = new G4UIcmdWith3VectorAndUnit("/detector/sourceholderpos",this);
@@ -97,7 +97,7 @@ bmDetectorConstruction::bmDetectorConstruction() {
 	fpMagField = 0;
 	fieldSwitch = "on";
 	sFieldMapFile = "";
-	fVacuumInTorr = 0;
+	fVacuumPressure = 0;
 }
 
 void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValue) {
@@ -111,7 +111,7 @@ void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValu
 		fSourceHolderPos = fSourceHolderPosCmd->GetNew3VectorValue(newValue);
 		G4cout<<"setting the source at "<<fSourceHolderPos/m<<G4endl;
 	} else if (command == fVacuumLevelCmd) {
-		fVacuumInTorr = atof(newValue.data());
+		fVacuumPressure = fVacuumLevelCmd->GetNewDoubleValue(newValue);
 	} else if (command == fMatterScaleCmd[EAST]) {
 		fMatterScale[EAST] = fMatterScaleCmd[EAST]->GetNewDoubleValue(newValue);
 	} else if (command == fMatterScaleCmd[WEST]) {
@@ -131,7 +131,7 @@ void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValu
 G4VPhysicalVolume* bmDetectorConstruction::Construct()
 {  
 	//------------------------------------------------------ materials
-	setVacuumPressure(fVacuumInTorr*atmosphere/760.);
+	setVacuumPressure(fVacuumPressure);
 	
 	////////////////////////////////////////
 	// user step limits

@@ -42,7 +42,7 @@
 #include "bmSteppingAction.hh"
 #include "bmSteppingVerbose.hh"
 #include "bmAnalysisManager.hh"
-
+#include "G4UnitsTable.hh"
 
 
 #include "G4RunManager.hh"
@@ -84,6 +84,9 @@ int main(int argc, char** argv) {
 		exit(-1);
 	}
 	G4cout << "Using physics list: " << physlist << G4endl;
+	
+	G4UnitDefinition torr_def("torr","torr","Pressure",atmosphere/760.);
+	G4UnitDefinition::PrintUnitsTable();
 	
 #ifdef G4VIS_USE
 	// Visualization, if you choose to have it!

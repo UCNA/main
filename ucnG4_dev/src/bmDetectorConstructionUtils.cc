@@ -41,23 +41,24 @@ MaterialUser::MaterialUser() {
 	Brass->AddElement(G4Element::GetElement("Cu"),7);
 	Brass->AddElement(G4Element::GetElement("Zn"),3);
 	
-	Kevlar=new G4Material("Kevlar",1.44*g/cm3,4);
+	Kevlar = new G4Material("Kevlar",1.44*g/cm3,4);
 	Kevlar->AddElement(G4Element::GetElement("N"),2);
 	Kevlar->AddElement(G4Element::GetElement("C"),14);
 	Kevlar->AddElement(G4Element::GetElement("H"),10);
 	Kevlar->AddElement(G4Element::GetElement("O"),2);
 	
-	Mylar=new G4Material("Mylar",1.4*g/cm3,3);
+	Mylar = new G4Material("Mylar",1.4*g/cm3,3);
 	Mylar->AddElement(G4Element::GetElement("C"),5);
 	Mylar->AddElement(G4Element::GetElement("H"),4);
 	Mylar->AddElement(G4Element::GetElement("O"),2);
 	
 	//Wirechamber fill: pentane @ 100torr
-	WCPentane=new G4Material("Pentane",0.389*mg/cm3,2);
+	WCPentane = new G4Material("Pentane",0.388*mg/cm3,2,kStateGas,298*kelvin,100*torr);
 	WCPentane->AddElement(G4Element::GetElement("C"),5);
 	WCPentane->AddElement(G4Element::GetElement("H"),12);
-	//Wirechamber fill: Nitrogen @ 100torr
-	WCNitrogen = new G4Material("Nitrogen",7.,14.01*g/mole,1.251*100/760*mg/cm3);
+	//Wirechamber fill: N2 @ 95torr
+	WCNitrogen = new G4Material("MWPC_N2",0.143*mg/cm3,1,kStateGas,298*kelvin,95*torr);
+	WCNitrogen->AddElement(G4Element::GetElement("N"),2);
 	
 	//Scintillator
 	Sci=new G4Material("Scintillator",1.032*g/cm3,2);
@@ -69,8 +70,8 @@ MaterialUser::MaterialUser() {
 
 void MaterialUser::setVacuumPressure(G4double pressure) {
 	// our slightly crappy vacuum: low-pressure air (density @20c; 1.290*mg/cm3 @STP)
-	G4cout<<"+++++++++++++++++ Detector vacuum is set at "<<pressure/(atmosphere/760)<<" Torr"<<G4endl;
-	Vacuum = new G4Material("Vacuum",1.2048*mg/cm3*pressure/atmosphere,2);
+	G4cout<<"+++++++++++++++++ Detector vacuum is set at "<<pressure/torr<<" Torr"<<G4endl;
+	Vacuum = new G4Material("Vacuum",1.2048*mg/cm3*pressure/atmosphere,2,kStateGas,293*kelvin,pressure);
 	Vacuum->AddElement(G4Element::GetElement("N"),0.7);
 	Vacuum->AddElement(G4Element::GetElement("O"),0.3);	
 }

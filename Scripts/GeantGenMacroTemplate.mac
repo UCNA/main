@@ -21,8 +21,8 @@
 /detector/field %(magf)s
 #comment out line below to use uniform field
 %(fieldmapcmd)s
-# detector vacuum, in torr
-/detector/vacuum %(vacuum)g
+# detector vacuum
+/detector/vacuum %(vacuum)s
 
 /detector/sourceholderpos %(sourceholderpos)s
 /detector/infoil %(makeinfoil)s

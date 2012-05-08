@@ -110,8 +110,8 @@ private:
 	G4UIcmdWithABool* fInFoilCmd;					//< construction of Indium 10um Al source foil
 	bool makeInFoil;
 	
-	G4UIcommand* fVacuumLevelCmd;					//< SCS bore vacuum
-	Float_t fVacuumInTorr;
+	G4UIcmdWithADoubleAndUnit* fVacuumLevelCmd;		//< SCS bore vacuum
+	Float_t fVacuumPressure;
 	
 	G4UIcmdWithADoubleAndUnit* fScintStepLimitCmd;	//< step size limiter in scintillator
 	Float_t fScintStepLimit;

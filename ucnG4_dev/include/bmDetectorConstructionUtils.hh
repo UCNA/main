@@ -16,6 +16,7 @@
 #include "G4VisAttributes.hh"
 
 const G4double inch = 2.54*cm;
+const G4double torr = atmosphere/760.;
 
 /// class for building with common materials
 class MaterialUser {
@@ -25,6 +26,8 @@ public:
 	
 	/// set vacuum pressure
 	static void setVacuumPressure(G4double pressure);
+	
+	//static G4UnitDefinition torr_def;
 	
 	static G4Material* Be;			//< Beryllium for trap windows
 	static G4Material* Al;			//< Aluminum 
@@ -40,5 +43,6 @@ public:
 	static G4Material* WCNitrogen;	//< Wirechamber fill: Nitrogen @ 100torr
 	static G4Material* Sci;			//< scintillator material
 };
+
 
 #endif

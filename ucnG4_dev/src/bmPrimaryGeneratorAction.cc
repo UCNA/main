@@ -179,6 +179,7 @@ throwElectronsAndGammas(const std::vector<G4double>& electrons,
 	}
 }
 
+// lines from NuDat 2.6 from Jean Blachot Nuclear Data Sheets 111, 1471 (2010) 
 void bmPrimaryGeneratorAction::Sn113SourceGenerator(G4Event* anEvent) {
 	
 	G4double gunEnergy;
@@ -224,9 +225,8 @@ void bmPrimaryGeneratorAction::Sn113SourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-// Auger coefficient for correlated Augers:
-// see eLog 223, data from
-// J.H. Hubbell, et al, J. Phys. Chem. Ref. Data. Vol. 23, No. 2, 1994
+// Bi207 event generator
+// lines from NuDat 2.6, from F.G. KONDEV, S. LALKOVSKI Nuclear Data Sheets 112, 707 (2011) 
 void bmPrimaryGeneratorAction::Bi207SourceGenerator(G4Event* anEvent) {
 	
 	G4double gunEnergy;
@@ -246,37 +246,37 @@ void bmPrimaryGeneratorAction::Bi207SourceGenerator(G4Event* anEvent) {
 	
 	// 2340->897:				gamma		CE K		CE L
 	const double line1442[] =	{1442.2,	1354.20,	1426.34};
-	const double branch1442[] =	{0.1310,	3.54E-4,	5.50E-5};
+	const double branch1442[] =	{0.1310,	3.55E-4,	6.13E-5};
 	// total probability of this branch, percent
 	const double p1442 = std::accumulate(branch1442,branch1442+3,0.0);
 	
 	// 2340->569:				gamma		CE K		CE L
 	const double line1770[] =	{1770.228,	1682.224,	1754.367};
-	const double branch1770[] =	{6.87,		0.0241,		0.0034};
+	const double branch1770[] =	{6.87,		0.0238,		0.0034};
 	// total probability of this branch, percent
 	const double p1770 = std::accumulate(branch1770,branch1770+3,0.0);
 	
 	// total probability of landing on 2340 level, percent
 	const double p2340 = p1442+p1770;
 	
-	// 1630->569:				gamma		CE K		CE L		CE M
-	const double line1063[] =	{1063.656,	975.651,	1047.795,	1059.805};
-	const double branch1063[] =	{74.6,		7.03,		1.84,		0.54};
+	// 1630->569:				gamma		CE K		CE L		CE M		CE N+ Approx
+	const double line1063[] =	{1063.656,	975.651,	1047.795,	1059.805,	1062.};
+	const double branch1063[] =	{74.5,		7.08,		1.84,		0.44,		0.15};
 	// total probability of landing on 1630 level, percent
-	const double p1630 = std::accumulate(branch1063,branch1063+4,0.0);
+	const double p1630 = std::accumulate(branch1063,branch1063+5,0.0);
 	
 	// 897->0:					gamma		CE K		CE L
-	const double line897[] =	{897.8,		809.80,		881.94 };
-	const double branch897[] =	{0.131,		0.00263,	4.45E-4 };
+	const double line897[] =	{897.77,	809.80,		881.91 };
+	const double branch897[] =	{0.128,		0.00246,	4.07E-4 };
 	const double p897 = std::accumulate(branch897,branch897+3,0.0);
 	// 897->569:				gamma		CE K		CE L
 	const double line328[] =	{328.10,	240.1,		312.24 };
 	const double branch328[] =	{6.9e-4,	1.88e-4,	3.2e-5 };
 	const double p328 = std::accumulate(branch328,branch328+3,0.0);
 	
-	// 569->0:					gamma		CE K		CE L		CE M
-	const double line569[] =	{569.698,	481.6935,	553.8372,	565.8473};
-	const double branch569[] =	{97.76,		1.515,		0.438,		0.147};
+	// 569->0:					gamma		CE K		CE L		CE M		CE N+ approx
+	const double line569[] =	{569.698,	481.6935,	553.8372,	565.8473,	568};
+	const double branch569[] =	{97.75,		1.537,		0.442,		0.111,		0.03};
 	
 	// select which 207Pb level we initially land on:
 	Pb207_Level levelChoice = Pb207_569;
@@ -312,7 +312,7 @@ void bmPrimaryGeneratorAction::Bi207SourceGenerator(G4Event* anEvent) {
 	
 	if(levelChoice == Pb207_1630) {
 		// 1630->569 decays
-		gunEnergy = rand_outof_list(line1063, branch1063, 4, selected)*keV;
+		gunEnergy = rand_outof_list(line1063, branch1063, 5, selected)*keV;
 		if(selected)
 			electrons.push_back(gunEnergy);
 		else
@@ -348,24 +348,34 @@ void bmPrimaryGeneratorAction::Bi207SourceGenerator(G4Event* anEvent) {
 	
 	if(levelChoice == Pb207_569) {
 		// 569->0 decays
-		gunEnergy = rand_outof_list(line569, branch569, 4, selected)*keV;
+		gunEnergy = rand_outof_list(line569, branch569, 5, selected)*keV;
 		if(selected)
 			electrons.push_back(gunEnergy);
 		else
 			gammas.push_back(gunEnergy);
-		if(selected == 1 || selected == 3)
+		if(selected == 1)
 			nKlines++;
 		levelChoice = Pb207_0;
 	}
 	
+	// k x-rays:			 ka2		ka1		kb3		kb1		kb2
+	const double linekx[] =	{72.805,	74.969,	84.45,	84.938,	87.3};
+	const double branchkx[]={21.4,		35.7,	4.31,	8.27,	3.02};
+	const double pkx = std::accumulate(branchkx,branchkx+5,0.0);
+	if(G4UniformRand()*100 < pkx)
+		gammas.push_back(rand_outof_list(linekx, branchkx, 5, selected)*keV);
+	
 	// correlated Auger lines following CE K emissions
 	// Pb207 Auger coefficient = 0.026, using fitted value from Durak & Sahin, Phys. Rev. A Vol.57 No.4 (1998)
 	const double pPbAuger = 0.026;
-	while(nKlines--)
+	while(nKlines--) {
 		if(G4UniformRand() < pPbAuger)
 			electrons.push_back(56.7*keV);
+		if(G4UniformRand()*100 < pkx)
+			gammas.push_back(rand_outof_list(linekx, branchkx, 5, selected)*keV);
+	}
 	// uncorrelated remainder of total Auger rate
-	const double pBiAuger = 0.025;		// total Auger K probability from Bi207, NuDat 2.6
+	const double pBiAuger = 0.029;		// total Auger K probability from Bi207, NuDat 2.6
 	const double pKline = 0.01*(branch1442[1]+branch897[1]+branch1770[1]+branch1063[1]+branch569[1]); // probability of CE K emission
 	if(G4UniformRand() < (pBiAuger - pPbAuger*pKline)/(1.-pKline))
 		electrons.push_back(56.7*keV);
