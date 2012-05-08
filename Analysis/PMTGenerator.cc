@@ -8,7 +8,7 @@
 TRandom3 PMTGenerator::sim_rnd_source;
 
 PMTGenerator::PMTGenerator(Side s, float xx, float yy):
-x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), pedcorr(0.3), crosstalk(0.015), xscatter(0.), mySide(s) { }
+x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), dgain(10.0), pedcorr(0.3), crosstalk(0.015), xscatter(0.), mySide(s) { }
 
 void PMTGenerator::setCalibrator(PMTCalibrator* P) { 
 	assert(P);
@@ -76,7 +76,7 @@ ScintEvent PMTGenerator::generate(float en) {
 	}
 	preuncorrelate(nPE, crosstalk);
 	for(unsigned int t=0; t<nBetaTubes; t++)
-		nPE[t] = sim_rnd_source.PoissonD(10*sim_rnd_source.PoissonD(nPE[t]>0?nPE[t]:0))/10.0;
+		nPE[t] = sim_rnd_source.PoissonD(dgain*sim_rnd_source.PoissonD(nPE[t]>0?nPE[t]:0))/dgain;
 	recorrelate(nPE, crosstalk);
 	for(unsigned int t=0; t<nBetaTubes; t++)
 		sevt.tuben[t] = nPE[t]/tubeRes[t]*en;

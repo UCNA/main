@@ -38,6 +38,7 @@ public:
 	float xw,yw;					//< wirechamber hit offset from source position
 	float evtm;						//< event time during run
 	float presmear;					//< nPE/keV already smeared in input spectrum
+	float dgain;					//< gain at first photomultiplier stage (smears single-PE resolution)
 	float pedcorr;					//< pedestal noise correlation
 	float crosstalk;				//< inter-channel noise crosstalk
 	float xscatter;					//< "extra" proportional random scatter
