@@ -26,7 +26,11 @@ void fgbgPair::operator*=(double c) {
 	}
 }
 
-
+void fgbgPair::setAxisTitle(AxisDirection d, const std::string& ttl) {
+	if(d!=X_DIRECTION && d!=Y_DIRECTION) return;
+	for(unsigned int fg=0; fg<=1; fg++)
+		(d==X_DIRECTION?h[fg]->GetXaxis():h[fg]->GetYaxis())->SetTitle(ttl.c_str());
+}
 
 fgbgPair RunAccumulator::registerFGBGPair(const std::string& hname, const std::string& title,
 										  unsigned int nbins, float xmin, float xmax, AFPState a, Side s) {

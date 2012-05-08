@@ -38,6 +38,10 @@ void quadHists::setDrawMinimum(double y) {
 			fgbg[afp].h[fg]->SetMinimum(y);
 }
 
+void quadHists::setAxisTitle(AxisDirection d, const std::string& ttl) {
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
+		fgbg[afp].setAxisTitle(d,ttl);
+}
 
 /* --------------------------------------------------- */
 
@@ -142,6 +146,7 @@ TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists& qEast
 	hAsym->SetLineColor(1);
 	hAsym->SetLineStyle(1);
 	hAsym->SetTitle((qEast.title+" Asymmetry").c_str());
+	hAsym->GetXaxis()->SetTitle(qEast.fgbg[AFP_ON].h[fg]->GetXaxis()->GetTitle());
 	
 	delete(hR);
 	return (TH1*)addObject(hAsym);
@@ -179,6 +184,7 @@ TH1* OctetAnalyzer::calculateSuperSum(const std::string& hname, const quadHists&
 	hSS->SetTitle((qEast.title+" SuperSum").c_str());
 	hSS->SetLineColor(1);
 	hSS->SetLineStyle(1);
+	hSS->GetXaxis()->SetTitle(qEast.fgbg[AFP_ON].h[fg]->GetXaxis()->GetTitle());
 	
 	delete(hR);
 	return (TH1*)addObject(hSS);

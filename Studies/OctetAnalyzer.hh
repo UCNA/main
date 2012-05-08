@@ -31,6 +31,8 @@ public:
 	bool isEquivalent(const quadHists& qh) const;
 	/// set draw range minimum for all histograms
 	void setDrawMinimum(double y);
+	/// set axis title
+	void setAxisTitle(AxisDirection d, const std::string& ttl);
 	/// naming convention for each histogram
 	std::string getHistoName(AFPState afp, bool fg) const { return fgbg[afp].getHistoName(fg); }
 	/// get (side-mangled) name

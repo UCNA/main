@@ -23,6 +23,8 @@ public:
 	std::string getHistoName(bool fg) const { return getName()+(fg==GV_CLOSED?"_BG":""); }
 	/// get histogram title
 	std::string getHistoTitle(bool fg) const { return getTitle()+(fg==GV_CLOSED?" Background":""); }
+	/// set axis title
+	void setAxisTitle(AxisDirection d, const std::string& ttl);
 	/// perform background subtraction
 	void bgSubtract(BlindTime tFG, BlindTime tBG);
 	/// add another fgbgPair

@@ -24,12 +24,15 @@ AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, 
 				qEnergySpectra[s][p][t] = registerCoreHist(std::string("hEnergy_")+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
 														   std::string("Type ")+itos(t)+" Events Energy",
 														   100, 0, 1000, s, &hEnergySpectra[s][p][t]);
+				qEnergySpectra[s][p][t].setAxisTitle(X_DIRECTION,"Energy [keV]");
 			}
 			if(t>TYPE_III_EVENT) continue;
 			TH2F* hPositionsTemplate = new TH2F((std::string("hPos_Type_")+itos(t)).c_str(),
 												(std::string("Type ")+itos(t)+" Positions").c_str(),
 												200,-65,65,200,-65,65);
 			qPositions[s][t] = registerCoreHist(*hPositionsTemplate,s,(TH1**)&hPositions[s][t]);
+			qPositions[s][t].setAxisTitle(X_DIRECTION,"x Position [mm]");
+			qPositions[s][t].setAxisTitle(Y_DIRECTION,"y Position [mm]");
 			delete(hPositionsTemplate);
 		}
 	}
