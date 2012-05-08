@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
 	}
 	G4cout << "Using physics list: " << physlist << G4endl;
 	
-	G4UnitDefinition torr_def("torr","torr","Pressure",atmosphere/760.);
+	new G4UnitDefinition("torr","torr","Pressure",atmosphere/760.);
 	G4UnitDefinition::PrintUnitsTable();
 	
 #ifdef G4VIS_USE
