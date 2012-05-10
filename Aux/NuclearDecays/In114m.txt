@@ -1,0 +1,38 @@
+####
+# In114 5+ metastable decay chain
+####
+
+# In
+level:	nm = 114.49.1	E = 1447.2	hl = 4.2777e6	jpi = 5+
+level:	nm = 114.49.0	E = 1256.9	hl = 71.9		jpi = 1+
+
+# Cd, Nuc. Dat. Sheets 113 (2012) 565
+level:	nm = 114.48.4	E = 1305.7	hl = 0			jpi = 0+
+level:	nm = 114.48.3	E = 1283.67	hl = 0			jpi = 4+
+level:	nm = 114.48.2	E = 1134.2	hl = 0			jpi	= 0+
+level:	nm = 114.48.1	E = 558.43	hl = 0			jpi = 2+
+level:	nm = 114.48.0	E = 0		hl = -1			jpi = 0+
+
+# Sn, Nuc. Dat. Sheets 113 (2012) 626
+level:	nm = 114.50.1	E = 567.2	hl = 0.30e-12	jpi = 2+
+level:	nm = 114.50.0	E = -731.8	hl = -1			jpi = 0+
+
+# split 114.49.1 between internal conversion and EC to Cd
+# theory CK:CL:CM:CN = 2.58:2.052:0.431:0.0868
+# experiment CK=2.00 (1976Re14); NuDat uses theory values
+# remainder goes to electron capture
+gamma:	from = 114.49.1	to = 114.49.0	Igamma = 15.56	CE_K = 2.58	CE_L = 2.052	CE_M = 0.431	CE_N = 0.868
+ecapt:	from = 114.49.1	to = 114.48.3	I = 4.4
+
+# In114 ground state beta decays to Sn
+beta:	from = 114.49.0		to = 114.50.0	I = 99.36
+beta:	from = 114.49.0		to = 114.50.1	I = 0.14
+gamma:	from = 114.50.1		to = 114.50.0	Igamma = 0.14
+
+
+ecapt:	from = 114.49.0	to = 114.48.0	I = 0.50
+gamma:	from = 114.48.3	to = 114.48.1	Igamma = 100.0
+gamma:	from = 114.48.1	to = 114.48.0	Igamma = 100.0
+
+
+
