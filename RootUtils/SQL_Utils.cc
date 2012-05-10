@@ -1,7 +1,7 @@
 #include "SQL_Utils.hh"
 #include <stdlib.h>
 #include "strutils.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 
 SQLHelper::SQLHelper(const std::string& dbnm,
 					 const std::string& dbAddress,
@@ -25,7 +25,7 @@ SQLHelper::SQLHelper(const std::string& dbnm,
 			return;
 		}
 	}
-	UCNAException e("DBConnectFail");
+	SMExcept e("DBConnectFail");
 	e.insert("dbAddress",dbAddressFull);
 	e.insert("dbUser",dbUser);
 	throw(e);
@@ -73,11 +73,11 @@ int SQLHelper::getInsertID() {
 	Query();
 	TSQLRow* r = getFirst();
 	if(!r)
-		throw(UCNAException("failedInsert"));
+		throw(SMExcept("failedInsert"));
 	int rid = fieldAsInt(r,0);
 	delete(r);
 	if(!rid)
-		throw(UCNAException("failedInsert"));
+		throw(SMExcept("failedInsert"));
 	return rid;	
 }
 

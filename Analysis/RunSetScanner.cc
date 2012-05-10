@@ -2,7 +2,7 @@
 #include "PathUtils.hh"
 #include "CalDBSQL.hh"
 #include "CalDBFake.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 #include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,7 +57,7 @@ void RunSetScanner::speedload(unsigned int e) {
 		if(withCals) {
 			std::map<RunNum,PMTCalibrator*>::iterator it = PCals.find(evtRun);
 			if(it == PCals.end()) {
-				UCNAException e("missingCalibration");
+				SMExcept e("missingCalibration");
 				e.insert("runNum",evtRun);
 				throw(e);
 			}			

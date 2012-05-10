@@ -364,7 +364,7 @@ void reSource(RunNum rn) {
 		// fit simulated source data with same parameters
 		Source simSource = it->second.mySource;	
 		Sim2PMT* g2p = NULL;
-		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_495_";
+		std::string g4dat = "/home/mmendenhall/geant4/output/FixGeom_";
 		printf("Loading source simulation data...\n");
 		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
 		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {

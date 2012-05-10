@@ -1,7 +1,7 @@
 #include "SegmentSaver.hh"
 #include "Types.hh"
 #include "PathUtils.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 
 TH1* SegmentSaver::registerSavedHist(const std::string& hname, const std::string& title,unsigned int nbins, float xmin, float xmax) {
 	assert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
@@ -9,7 +9,7 @@ TH1* SegmentSaver::registerSavedHist(const std::string& hname, const std::string
 	if(fIn) {
 		TObject* o = fIn->Get(hname.c_str());
 		if(!o) {
-			UCNAException e("fileStructureMismatch");
+			SMExcept e("fileStructureMismatch");
 			e.insert("fileName",inflname);
 			e.insert("objectName",hname);
 			throw(e);
@@ -27,7 +27,7 @@ TH1* SegmentSaver::registerSavedHist(const std::string& hname, const TH1& hTempl
 	if(fIn) {
 		TObject* o = fIn->Get(hname.c_str());
 		if(!o) {
-			UCNAException e("fileStructureMismatch");
+			SMExcept e("fileStructureMismatch");
 			e.insert("fileName",inflname);
 			e.insert("objectName",hname);
 			throw(e);

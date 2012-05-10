@@ -2,7 +2,7 @@
 #include "GainStabilizer.hh"
 #include "GraphUtils.hh"
 #include "SQL_Utils.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 #include <utility>
 #include <TRandom3.h>
 
@@ -31,7 +31,7 @@ float PedestalCorrector::getPedestal(const std::string& sensorName, float time) 
 		return it->second->Eval(time);
 	TGraph* tg = pCDB->getPedestals(myRun,sensorName);
 	if(!tg) {
-		UCNAException e("missingPed");
+		SMExcept e("missingPed");
 		e.insert("sensor",sensorName);
 		throw(e);
 	}
@@ -44,7 +44,7 @@ float PedestalCorrector::getPedwidth(const std::string& sensorName, float time) 
 		return it->second->Eval(time);
 	TGraph* tg = pCDB->getPedwidths(myRun,sensorName);
 	if(!tg) {
-		UCNAException e("missingPed");
+		SMExcept e("missingPed");
 		e.insert("sensor",sensorName);
 		throw(e);
 	}
@@ -53,7 +53,7 @@ float PedestalCorrector::getPedwidth(const std::string& sensorName, float time) 
 }
 void PedestalCorrector::insertPedestal(const std::string& sensorName, TGraph* g) {
 	if(g->GetN()<2)
-		throw(UCNAException("tooFewPoints"));
+		throw(SMExcept("tooFewPoints"));
 	pedestals.erase(sensorName);
 	pedestals.insert(std::make_pair(sensorName,g));
 }

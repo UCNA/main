@@ -4,6 +4,7 @@
 #include <map>
 #include <iostream>
 #include <istream>
+#include <sstream>
 #include "QFile.hh"
 
 template<typename T>

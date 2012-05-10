@@ -1,6 +1,6 @@
 #include "CalDBSQL.hh"
 #include "PathUtils.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 #include <utility>
 
 CalDBSQL* CalDBSQL::getCDB(bool readonly) {
@@ -38,7 +38,7 @@ TGraphErrors* CalDBSQL::getRunMonitor(RunNum rn, const std::string& sensorName, 
 	delete(r);
 	try {
 		return getGraph(gID);
-	} catch(UCNAException& e) {
+	} catch(SMExcept& e) {
 		e.insert("sensorName",sensorName);
 		e.insert("monType",monType);
 		throw(e);
@@ -84,7 +84,7 @@ TGraphErrors* CalDBSQL::getContinuousMonitor(const std::string& sensorName, cons
 		else
 			tg = getGraph(wgid,rn);
 		return tg;
-	} catch (UCNAException& e) {
+	} catch (SMExcept& e) {
 		e.insert("sensorName",sensorName);
 		e.insert("monType",monType);
 		throw(e);
@@ -125,7 +125,7 @@ float CalDBSQL::getAnodeCalInfo(RunNum R, const char* field) {
 		sprintf(query,"SELECT %s,start_run,end_run FROM anode_cal ORDER BY pow(1.0*end_run-%i,2)+pow(1.0*start_run-%i,2) LIMIT 1",field,R,R);
 		r = getFirst();
 		if(!r) {
-			UCNAException e("noQueryResults");
+			SMExcept e("noQueryResults");
 			e.insert("runNum",R);
 			e.insert("field",field);
 			throw(e);
@@ -177,7 +177,7 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 	sprintf(query,"SELECT n_rings,radius FROM posmap_set WHERE posmap_set_id = %i",psid);
 	r = getFirst();
 	if(!r) {
-		UCNAException e("badPosmapID");
+		SMExcept e("badPosmapID");
 		e.insert("pmid",psid);
 		throw(e);
 	}
@@ -192,7 +192,7 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 					psid,dbSideName(s),t);
 			Query();
 			if(!res) {
-				UCNAException e("badPosmapID");
+				SMExcept e("badPosmapID");
 				e.insert("pmid",psid);
 				e.insert("side",sideSubst("%c",s));
 				e.insert("tube",t);
@@ -214,7 +214,7 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 		}
 	}
 	if(!pinf.size()) {
-		UCNAException e("missingPosmap");
+		SMExcept e("missingPosmap");
 		e.insert("pmid",psid);
 		throw(e);
 	}
@@ -345,7 +345,7 @@ RunInfo CalDBSQL::getRunInfo(RunNum r) {
 	sprintf(query,"SELECT slow_run_number,run_type,asym_oct,gate_valve,flipper,scs_field FROM run WHERE run_number = %u",r);
 	TSQLRow* row = getFirst();
 	if(!row) {
-		UCNAException e("noQueryResults");
+		SMExcept e("noQueryResults");
 		e.insert("runNum",r);
 		throw(e);
 	}
@@ -460,7 +460,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid) {
 	sprintf(query,"SELECT x_value,x_error,y_value,y_error FROM graph_points WHERE graph_id = %i ORDER BY x_value ASC",gid);
 	Query();
 	if(!res) {
-		UCNAException e("missingGraph");
+		SMExcept e("missingGraph");
 		e.insert("graph_id",gid);
 		throw(e);
 	}
@@ -472,7 +472,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid) {
 	}
 	unsigned int npts = gdata[0].size();
 	if(!npts) {
-		UCNAException e("missingGraphData");
+		SMExcept e("missingGraphData");
 		e.insert("graph_id",gid);
 		throw(e);
 	}
@@ -498,7 +498,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 			AND x_value < %i ORDER BY %i-x_value ASC LIMIT 1",gid,startTime(rn),startTime(rn));
 	Query();
 	if(!res) {
-		UCNAException e("missingGraph");
+		SMExcept e("missingGraph");
 		e.insert("graph_id",gid);
 		throw(e);
 	}
@@ -509,7 +509,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 		r = res->Next();
 	}
 	if(!r) {
-		UCNAException e("missingGraphData");
+		SMExcept e("missingGraphData");
 		e.insert("graph_id",gid);
 		throw(e);
 	}
@@ -527,7 +527,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 		r = res->Next();
 	}
 	if(!r) {
-		UCNAException e("missingGraphData");
+		SMExcept e("missingGraphData");
 		e.insert("graph_id",gid);
 		throw(e);
 	}
@@ -548,7 +548,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 	// compile graph
 	unsigned int npts = gdata[0].size();
 	if(!npts) {
-		UCNAException e("missingGraphData");
+		SMExcept e("missingGraphData");
 		e.insert("graph_id",gid);
 		throw(e);
 	}
@@ -585,7 +585,7 @@ void CalDBSQL::deleteGraph(unsigned int gid) {
 unsigned int CalDBSQL::uploadGraph(const std::string& description, std::vector<double> x, std::vector<double> y,
 								   std::vector<double> dx, std::vector<double> dy) {
 	if(!(x.size()==y.size()||!x.size()))
-		throw(UCNAException("dimensionMismatch"));
+		throw(SMExcept("dimensionMismatch"));
 	unsigned int gid = newGraph(description);
 	for(unsigned int i=0; i<y.size(); i++) {
 		double pdx = dx.size()>i?dx[i]:0;

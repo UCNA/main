@@ -6,7 +6,7 @@
 #include <utility>
 #include "strutils.hh"
 #include "PathUtils.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 
 Stringmap::Stringmap(const std::string& s) {
 	std::vector<std::string> pairs = split(s,"\t");
@@ -86,13 +86,14 @@ void Stringmap::mergeInto(Stringmap& S) const {
 		S.insert(it->first,it->second);	
 }
 
+/*
 RData* Stringmap::toRData() const {
 	RDataMem* RM = new RDataMem;
 	for(std::multimap<std::string,std::string>::const_iterator it = dat.begin(); it != dat.end(); it++)
 		RM->getForced(it->first)->insert(it->second);
 	return RM;
 }
-
+*/
 
 //----------------------------------------------------------------------------------------------
 
@@ -104,7 +105,7 @@ QFile::QFile(const std::string& fname, bool readit) {
 	if(!readit || name=="")
 		return;
 	if(!fileExists(fname)) {
-		UCNAException e("fileUnreadable");
+		SMExcept e("fileUnreadable");
 		e.insert("filename",fname);
 		throw(e);
 	}
@@ -152,7 +153,7 @@ void QFile::commit(std::string outname) const {
 	makePath(outname,true);
 	std::ofstream fout(outname.c_str());
 	if(!fout.good()) {
-		UCNAException e("fileUnwriteable");
+		SMExcept e("fileUnwriteable");
 		e.insert("filename",outname);
 		throw(e);
 	}
@@ -207,6 +208,7 @@ Stringmap QFile::getFirst(const std::string& s, const Stringmap& dflt) const {
 	return it->second;
 }
 
+/*
 RData* QFile::toRData() const {
 	RDataMem* RM = new RDataMem;
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.begin(); it != dat.end(); it++) {
@@ -216,4 +218,5 @@ RData* QFile::toRData() const {
 	}
 	return RM;
 }
+*/
 

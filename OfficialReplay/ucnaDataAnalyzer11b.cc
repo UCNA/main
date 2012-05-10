@@ -3,7 +3,7 @@
 #include "ManualInfo.hh"
 #include "GraphicsUtils.hh"
 #include "MultiGaus.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 #include <stdio.h>
 #include <unistd.h>
 #include <TStyle.h>
@@ -49,7 +49,7 @@ void ucnaDataAnalyzer11b::analyze() {
 void ucnaDataAnalyzer11b::loadCut(CutVariable& c, const std::string& cutName) {
 	std::vector<Stringmap> v = ManualInfo::MI.getInRange(cutName,rn);
 	if(!v.size()) {
-		UCNAException e("missingCut");
+		SMExcept e("missingCut");
 		e.insert("cutName",cutName);
 		e.insert("runNum",rn);
 		throw(e);

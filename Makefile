@@ -19,7 +19,7 @@ CC = cc
 CXX = g++
 
 CXXFLAGS = -O3 -m32 -Wall `root-config --cflags` \
-	-I. -IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies
+	-I. -IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics
 LDFLAGS = `root-config --libs` -lSpectrum 
 
 ifdef PROFILER_COMPILE
@@ -31,20 +31,22 @@ endif
 # things to build
 #
 
-VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/
+VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/:Physics/
+
+Physics = BetaSpectrum.o ElectronBindingEnergy.o NuclEvtGen.o
 
 Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o SectorCutter.o \
-	Enums.o Types.o UCNAException.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o RData.o
+	Enums.o Types.o SMExcept.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o RData.o
 
 Calibration = PositionResponse.o PMTGenerator.o WirechamberReconstruction.o \
 	EnergyCalibrator.o WirechamberCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
 	
 Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o G4toPMT.o TH1toPMT.o \
-	KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o BetaSpectrum.o
+	KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o 
 
 Studies = PlotMakers.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o WirechamberStudy.o LEDScans.o
 
-objects = $(Utils) $(Calibration) $(Analysis) $(Studies)
+objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
 all:
 	make UCNAnalyzer

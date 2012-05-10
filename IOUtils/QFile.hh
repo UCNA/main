@@ -5,8 +5,6 @@
 #include <vector>
 #include <string>
 
-#include "RData.hh"
-
 /// wrapper for multimap<std::string,std::string> with useful functions
 class Stringmap {
 public:
@@ -46,7 +44,7 @@ public:
 	void operator+=(const Stringmap& S) { S.mergeInto(*this); }
 	
 	/// convert to RData format
-	RData* toRData() const;
+	//RData* toRData() const;
 	
 	std::multimap< std::string, std::string > dat;	//< key-value multimap
 	
@@ -120,7 +118,7 @@ public:
 	void display() const;
 	
 	/// convert to RData format
-	RData* toRData() const;
+	//RData* toRData() const;
 
 protected:
 	

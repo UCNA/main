@@ -1,4 +1,4 @@
-/// \file UCNAException.hh \brief exception handling class
+/// \file SMExcept.hh \brief exception handling class
 #ifndef UCNAEXCEPTION_HH
 /// make sure this file is only included once
 #define UCNAEXCEPTION_HH 1
@@ -7,12 +7,12 @@
 #include "QFile.hh"
 
 /// exception class for error handling
-class UCNAException: public std::exception, public Stringmap {
+class SMExcept: public std::exception, public Stringmap {
 public:
 	/// constructor
-	UCNAException(std::string tp);
+	SMExcept(std::string tp);
 	/// destructor
-	~UCNAException() throw() {}
+	~SMExcept() throw() {}
 	/// display error
 	virtual const char* what() const throw();
 	/// string for holding error message
