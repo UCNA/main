@@ -3,13 +3,11 @@
 #include "strutils.hh"
 #include <cassert>
 #include <stdlib.h>
-#include <float.h>
 #include <algorithm>
-
-double rand_dbl() { return double(rand())/double(RAND_MAX); }
+#include <TRandom.h>
 
 unsigned int PSelector::select() const {
-	std::vector<double>::const_iterator itsel = std::upper_bound(cumprob.begin(),cumprob.end(),cumprob.back()*rand_dbl());
+	std::vector<double>::const_iterator itsel = std::upper_bound(cumprob.begin(),cumprob.end(),gRandom->Uniform(0,cumprob.back()));
 	unsigned int selected = (unsigned int)(itsel-cumprob.begin()-1);
 	assert(selected<cumprob.size()-1);
 	return selected;
@@ -125,6 +123,9 @@ double BetaDecayTrans::evalBeta(double* x, double*) {
 	return 1<W && W<W0 ? plainPhaseSpace(W,W0)*WilkinsonF0(to.Z*(positron?-1:1),W,R)*WilkinsonL0(to.Z,W,R)*(1.+Wilkinson_g(W,W0)) : 0;
 }
 
+//-----------------------------------------
+
+void ECapture::run(std::vector<NucDecayEvent>&) { isKCapt = gRandom->Uniform(0,1)<pKCapt; }
 
 //-----------------------------------------
 
@@ -147,7 +148,7 @@ void AugerManager::calculate() {
 
 bool sortLevels(const NucLevel& a, const NucLevel& b) { return (a.E < b.E); }
 
-NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B): BEL(B), AM(Q.getFirst("AugerK"),0) {
+NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, double t): BEL(B), AM(Q.getFirst("AugerK"),0) {
 	// load levels data
 	std::vector<Stringmap> levs = Q.retrieve("level");
 	for(std::vector<Stringmap>::iterator it = levs.begin(); it != levs.end(); it++) {
@@ -172,6 +173,9 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B): B
 		CG->display();
 		addTransition(CG);
 	}
+	
+	printf("Calculating for Augers...\n");	
+	AM.calculate();
 	
 	printf("Loading beta decays...\n");
 	std::vector<Stringmap> betatrans = Q.retrieve("beta");
@@ -198,6 +202,7 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B): B
 					EC->Itotal = missingFlux;
 					EC->display();
 					addTransition(EC);
+					EC->pKCapt = AM.pInitCapt;
 				}
 			}
 		} else {
@@ -207,12 +212,11 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B): B
 			EC->Itotal = it->getDefault("I",0.);
 			EC->display();
 			addTransition(EC);
+			EC->pKCapt = AM.pInitCapt;
 		}
 	}
 	
-	printf("Calculating for Augers...\n");	
-	AM.calculate();
-	setCutoff(DBL_MAX);
+	setCutoff(t);
 }
 
 void NucDecaySystem::addTransition(TransitionBase* T) {
@@ -276,9 +280,9 @@ void NucDecaySystem::genDecayChain(std::vector<NucDecayEvent>& v, unsigned int n
 	TransitionBase* T = transitions[transOut[n][levelDecays[n].select()]];
 	T->run(v);
 	
-	unsigned int nAugerK = init*(rand_dbl()<AM.pInitCapt)+T->nVacant(0);
+	unsigned int nAugerK = T->nVacant(0);
 	while(nAugerK--) {
-		if(rand_dbl() > AM.pAuger) continue;
+		if(gRandom->Uniform(0,1) > AM.pAuger) continue;
 		const BindingEnergyTable& BT = BEL.getBindingTable(T->to.Z);
 		NucDecayEvent evt;
 		evt.d = D_ELECTRON;

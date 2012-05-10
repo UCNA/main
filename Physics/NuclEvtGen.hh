@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <climits>
+#include <float.h>
 #include <stdio.h>
 
 /// random event selector
@@ -76,7 +77,7 @@ public:
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>&) { }
 	
-	/// get probability of knocking conversion electron from a given shell
+	/// get probability of removing an electron from a given shell
 	virtual double getPVacant(unsigned int) const { return 0; }
 	/// how many of given electron type were knocked out
 	virtual unsigned int nVacant(unsigned int) const { return 0; }
@@ -120,11 +121,18 @@ protected:
 class ECapture: public TransitionBase {
 public:
 	/// constructor
-	ECapture(NucLevel& f, NucLevel& t): TransitionBase(f,t) {}
+	ECapture(NucLevel& f, NucLevel& t): TransitionBase(f,t), pKCapt(0) {}
 	/// select transition outcome
-	virtual void run(std::vector<NucDecayEvent>&) { }
+	virtual void run(std::vector<NucDecayEvent>&);
 	/// display transition line info
 	virtual void display() const { printf("Ecapture "); TransitionBase::display(); }
+	/// get probability of removing an electron from a given shell
+	virtual double getPVacant(unsigned int n) const { return n==0?pKCapt:0; }
+	/// get whether said electron was knocked out
+	virtual unsigned int nVacant(unsigned int n) const { return n==0?isKCapt:0; }
+	
+	double pKCapt;	//< probability of k-shell capture
+	bool isKCapt;	//< whether transition was a K capture
 };
 
 /// beta decay transitions
@@ -169,7 +177,7 @@ public:
 class NucDecaySystem {
 public:
 	/// constructor from specification file
-	NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B);
+	NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, double t = DBL_MAX);
 	/// set cutoff lifetime for intermediate states
 	void setCutoff(double t);
 	/// display transitions summary

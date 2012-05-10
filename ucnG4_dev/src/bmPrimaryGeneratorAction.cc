@@ -36,6 +36,7 @@
 #include "globals.hh"
 #include "Randomize.hh"
 #include "bmAnalysisManager.hh"
+#include "PathUtils.hh"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -146,6 +147,21 @@ void bmPrimaryGeneratorAction::polarizedNeutronBetaDecayGenerator(G4Event* anEve
 	particleGun->GeneratePrimaryVertex(anEvent);
 }
 
+void bmPrimaryGeneratorAction::
+throwEvents(const std::vector<NucDecayEvent>& evts, G4Event* anEvent) {
+	G4ThreeVector direction;
+	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+	for(std::vector<NucDecayEvent>::const_iterator it = evts.begin(); it != evts.end(); it++) {
+		if(it->d == D_ELECTRON) particleGun->SetParticleDefinition(particleTable->FindParticle("e-"));
+		else if(it->d == D_GAMMA) particleGun->SetParticleDefinition(particleTable->FindParticle("gamma"));
+		else continue;
+		G4cout << "\t" << it->d << " = " << it->E << "keV" << G4endl;
+		RandomizeMomentum(direction);
+		particleGun->SetParticleEnergy(it->E*keV);
+		particleGun->SetParticleMomentumDirection(direction);
+		particleGun->GeneratePrimaryVertex(anEvent);
+	}
+}
 
 void bmPrimaryGeneratorAction::
 throwElectronsAndGammas(const std::vector<G4double>& electrons,
@@ -178,237 +194,6 @@ throwElectronsAndGammas(const std::vector<G4double>& electrons,
 		particleGun->GeneratePrimaryVertex(anEvent);
 	}
 }
-
-// lines from NuDat 2.6 from Jean Blachot Nuclear Data Sheets 111, 1471 (2010) 
-void bmPrimaryGeneratorAction::Sn113SourceGenerator(G4Event* anEvent) {
-	
-	G4double gunEnergy;
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	unsigned int nKlines = 0;
-	
-	// 647->392:				gamma		CE K		CE L		CE M		CE N
-	const double line255[] =	{255.134,	227.194,	250.896,	254.308,	255.012};
-	const double branch255[] =	{2.11,		0.082,		0.0114,		0.0022,		0.0004};
-	const double p255 = std::accumulate(branch255,branch255+5,0.0);
-	
-	// this decay has a several hour lifetime, so treat as uncorrelated with the above
-	// 392->0:					gamma		CE K		CE L		CE M		CE N		CE O
-	const double line392[] =	{391.698,	363.758,	387.461,	390.872,	391.576,	391.697};
-	const double branch392[] =	{64.97,		28.8,		5.60,		1.137,		0.205,		0.01260};
-	
-	// choose gamma decay path
-	if(G4UniformRand() < p255/(100.+p255)) {
-		gunEnergy = rand_outof_list(line255, branch255, 5, selected)*keV;
-		if(!selected)
-			gammas.push_back(gunEnergy);
-		else
-			electrons.push_back(gunEnergy);
-		nKlines += (selected==1);
-	} else {
-		gunEnergy = rand_outof_list(line392, branch392, 6, selected)*keV;
-		if(!selected)
-			gammas.push_back(gunEnergy);
-		else
-			electrons.push_back(gunEnergy);
-		nKlines += (selected==1);
-	}
-	
-	// Auger K
-	const double pCorrAuger = 0.1405;
-	const double pAuger = 0.170;
-	const double pKline = 0.01*(branch255[1]+branch392[1]);
-	if(G4UniformRand() < (nKlines >= 1)?pCorrAuger:pAuger-pCorrAuger*pKline)
-		electrons.push_back(20.1*keV);
-	
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-// Bi207 event generator
-// lines from NuDat 2.6, from F.G. KONDEV, S. LALKOVSKI Nuclear Data Sheets 112, 707 (2011) 
-void bmPrimaryGeneratorAction::Bi207SourceGenerator(G4Event* anEvent) {
-	
-	G4double gunEnergy;
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	int nKlines = 0;	// number of K decays with possible correlated auger
-	
-	//	Pb207 Energy Levels
-	enum Pb207_Level {
-		Pb207_0,	// 1/2- ground state (inaccessible directly from Bi)
-		Pb207_569,	// 5/2-
-		Pb207_897,	// 3/2- (inaccessible directly from Bi)
-		Pb207_1630, // 13/2+ 0.8s lifetime
-		Pb207_2340  // 7/2-
-	};
-	
-	// 2340->897:				gamma		CE K		CE L
-	const double line1442[] =	{1442.2,	1354.20,	1426.34};
-	const double branch1442[] =	{0.1310,	3.55E-4,	6.13E-5};
-	// total probability of this branch, percent
-	const double p1442 = std::accumulate(branch1442,branch1442+3,0.0);
-	
-	// 2340->569:				gamma		CE K		CE L
-	const double line1770[] =	{1770.228,	1682.224,	1754.367};
-	const double branch1770[] =	{6.87,		0.0238,		0.0034};
-	// total probability of this branch, percent
-	const double p1770 = std::accumulate(branch1770,branch1770+3,0.0);
-	
-	// total probability of landing on 2340 level, percent
-	const double p2340 = p1442+p1770;
-	
-	// 1630->569:				gamma		CE K		CE L		CE M		CE N+ Approx
-	const double line1063[] =	{1063.656,	975.651,	1047.795,	1059.805,	1062.};
-	const double branch1063[] =	{74.5,		7.08,		1.84,		0.44,		0.15};
-	// total probability of landing on 1630 level, percent
-	const double p1630 = std::accumulate(branch1063,branch1063+5,0.0);
-	
-	// 897->0:					gamma		CE K		CE L
-	const double line897[] =	{897.77,	809.80,		881.91 };
-	const double branch897[] =	{0.128,		0.00246,	4.07E-4 };
-	const double p897 = std::accumulate(branch897,branch897+3,0.0);
-	// 897->569:				gamma		CE K		CE L
-	const double line328[] =	{328.10,	240.1,		312.24 };
-	const double branch328[] =	{6.9e-4,	1.88e-4,	3.2e-5 };
-	const double p328 = std::accumulate(branch328,branch328+3,0.0);
-	
-	// 569->0:					gamma		CE K		CE L		CE M		CE N+ approx
-	const double line569[] =	{569.698,	481.6935,	553.8372,	565.8473,	568};
-	const double branch569[] =	{97.75,		1.537,		0.442,		0.111,		0.03};
-	
-	// select which 207Pb level we initially land on:
-	Pb207_Level levelChoice = Pb207_569;
-	double randsel = 100.0*G4UniformRand();
-	if(randsel < p1630+p2340)
-		levelChoice = Pb207_2340;
-	if(randsel < p1630)
-		levelChoice = Pb207_1630;
-	
-	if(levelChoice == Pb207_2340) {
-		if(G4UniformRand()<p1770/p2340) {
-			// 2340->569 decays
-			gunEnergy = rand_outof_list(line1770, branch1770, 3, selected)*keV;
-			if(selected)
-				electrons.push_back(gunEnergy);
-			else
-				gammas.push_back(gunEnergy);
-			if(selected == 1)
-				nKlines++;	
-			levelChoice = Pb207_569;
-		} else {
-			// 2340->897 decays
-			gunEnergy = rand_outof_list(line1442, branch1442, 3, selected)*keV;
-			if(selected)
-				electrons.push_back(gunEnergy);
-			else
-				gammas.push_back(gunEnergy);
-			if(selected == 1)
-				nKlines++;		
-			levelChoice = Pb207_897;
-		}
-	}
-	
-	if(levelChoice == Pb207_1630) {
-		// 1630->569 decays
-		gunEnergy = rand_outof_list(line1063, branch1063, 5, selected)*keV;
-		if(selected)
-			electrons.push_back(gunEnergy);
-		else
-			gammas.push_back(gunEnergy);
-		if(selected == 1)
-			nKlines++;
-		levelChoice = Pb207_569;
-	}
-	
-	if(levelChoice == Pb207_897) {	
-		if(G4UniformRand()<p328/(p897+p328)) {
-			// 897->569 decays
-			gunEnergy = rand_outof_list(line328, branch328, 3, selected)*keV;
-			if(selected)
-				electrons.push_back(gunEnergy);
-			else
-				gammas.push_back(gunEnergy);	
-			if(selected == 1)
-				nKlines++;		
-			levelChoice = Pb207_569;
-		} else {
-			// 897->0 decays
-			gunEnergy = rand_outof_list(line897, branch897, 3, selected)*keV;
-			if(selected)
-				electrons.push_back(gunEnergy);
-			else
-				gammas.push_back(gunEnergy);	
-			if(selected == 1)
-				nKlines++;		
-			levelChoice = Pb207_0;
-		}
-	}
-	
-	if(levelChoice == Pb207_569) {
-		// 569->0 decays
-		gunEnergy = rand_outof_list(line569, branch569, 5, selected)*keV;
-		if(selected)
-			electrons.push_back(gunEnergy);
-		else
-			gammas.push_back(gunEnergy);
-		if(selected == 1)
-			nKlines++;
-		levelChoice = Pb207_0;
-	}
-	
-	// k x-rays:			 ka2		ka1		kb3		kb1		kb2
-	const double linekx[] =	{72.805,	74.969,	84.45,	84.938,	87.3};
-	const double branchkx[]={21.4,		35.7,	4.31,	8.27,	3.02};
-	const double pkx = std::accumulate(branchkx,branchkx+5,0.0);
-	if(G4UniformRand()*100 < pkx)
-		gammas.push_back(rand_outof_list(linekx, branchkx, 5, selected)*keV);
-	
-	// correlated Auger lines following CE K emissions
-	// Pb207 Auger coefficient = 0.026, using fitted value from Durak & Sahin, Phys. Rev. A Vol.57 No.4 (1998)
-	const double pPbAuger = 0.026;
-	while(nKlines--) {
-		if(G4UniformRand() < pPbAuger)
-			electrons.push_back(56.7*keV);
-		if(G4UniformRand()*100 < pkx)
-			gammas.push_back(rand_outof_list(linekx, branchkx, 5, selected)*keV);
-	}
-	// uncorrelated remainder of total Auger rate
-	const double pBiAuger = 0.029;		// total Auger K probability from Bi207, NuDat 2.6
-	const double pKline = 0.01*(branch1442[1]+branch897[1]+branch1770[1]+branch1063[1]+branch569[1]); // probability of CE K emission
-	if(G4UniformRand() < (pBiAuger - pPbAuger*pKline)/(1.-pKline))
-		electrons.push_back(56.7*keV);
-	
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-void bmPrimaryGeneratorAction::Ce139SourceGenerator(G4Event* anEvent) {
-	
-	G4double gunEnergy;
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	
-	// Decay to 139La 5/2+:		gamma		CE K		CE L		CE M		CE N
-	const double line166[] =	{166.8575,	126.9329,	159.5912,	164.4962,	165.5871};
-	const double branch166[] =	{80.0,		17.146,		2.2980,		0.4751,		0.13120};
-	gunEnergy = rand_outof_list(line166, branch166, 5, selected)*keV;
-	if(!selected)
-		gammas.push_back(gunEnergy);
-	else
-		electrons.push_back(gunEnergy);
-	
-	// Auger K
-	const double pCorrAuger = 0.0953;
-	const double pAuger = 0.083;
-	const double pKline = 0.01*branch166[1];
-	if(G4UniformRand() < (selected == 1)?pCorrAuger:pAuger-pCorrAuger*pKline)
-		electrons.push_back(27.4*keV);
-	
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
 
 void bmPrimaryGeneratorAction::Cd109SourceGenerator(G4Event* anEvent) {
 	
@@ -762,6 +547,9 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	particleGun->SetParticleDefinition(particle);
 	particleGun->SetParticleTime(0.0*ns);
 	
+	static BindingEnergyLibrary BEL(QFile(getEnvSafe("UCNA_AUX")+"/NuclearDecays/ElectronBindingEnergy.txt"));
+	std::vector<NucDecayEvent> evts;
+	
 	// set vertex position for event according to position generator
 	// assumed position has been set in /gun/position!
 	static G4ThreeVector position_saved = particleGun->GetParticlePosition();
@@ -787,15 +575,21 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	particleGun->SetParticlePosition(vertex_position);
 	
 	if(gunType=="Sn113") {
-		Sn113SourceGenerator(anEvent);
+		static NucDecaySystem Sn113_gen(QFile(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Sn113.txt"),BEL,1e-6);
+		while(!evts.size())
+			Sn113_gen.genDecayChain(evts);
 	} else if(gunType=="Bi207") {
-		Bi207SourceGenerator(anEvent);
+		static NucDecaySystem Bi207_gen(QFile(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Bi207.txt"),BEL,1e-6);
+		while(!evts.size())
+			Bi207_gen.genDecayChain(evts);
 	} else if(gunType=="Cd109") {
 		Cd109SourceGenerator(anEvent);
 	} else if(gunType=="Cd113m") {
 		Cd113mSourceGenerator(anEvent);
 	} else if(gunType=="Ce139") {
-		Ce139SourceGenerator(anEvent);
+		static NucDecaySystem Ce139_gen(QFile(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Ce139.txt"),BEL,1e-6);
+		while(!evts.size())
+			Ce139_gen.genDecayChain(evts);
 	} else if(gunType=="Cs137") {
 		Cs137SourceGenerator(anEvent);
 	} else if(gunType=="Xe125_1/2+") {
@@ -858,6 +652,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		G4cout << "********* WARNING: Undefined generator type! No events generated!! **********" << G4endl;
 	}
 	
+	throwEvents(evts,anEvent);
 	
 	//now fill the primary tree here
 	gbmAnalysisManager->FillPrimaryData(anEvent,myseed);

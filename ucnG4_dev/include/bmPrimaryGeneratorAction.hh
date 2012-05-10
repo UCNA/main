@@ -40,6 +40,8 @@
 #include "G4Event.hh"
 #include "bmDetectorConstruction.hh"
 #include "bmPrimaryGeneratorMessenger.hh"
+#include "ElectronBindingEnergy.hh"
+#include "NuclEvtGen.hh"
 #include <vector>
 #include <Rtypes.h>
 #include <TF1.h>
@@ -82,16 +84,12 @@ private:
 	void throwElectronsAndGammas(const std::vector<G4double>& electrons,
 								 const std::vector<G4double>& gammas,
 								 G4Event* anEvent);
-
+	/// throw a cluster of events
+	void throwEvents(const std::vector<NucDecayEvent>& evts, G4Event* anEvent);
+	
 	/// print what the particle gun is set up to do
 	void displayGunStatus();
 	
-	/// Sn113, based on NuDat 2.6 http://www.nndc.bnl.gov/nudat2/decaysearchdirect.jsp?nuc=113SN&unc=nds
-	void Sn113SourceGenerator(G4Event* anEvent);
-	/// Bi207, based on NuDat 2.5, http://www.nndc.bnl.gov/nudat2
-	void Bi207SourceGenerator(G4Event* anEvent);
-	/// Ce139
-	void Ce139SourceGenerator(G4Event* anEvent);
 	/// Cd109
 	void Cd109SourceGenerator(G4Event* anEvent);
 	/// Cd113 Metastable 11/2-, 14.1year HL
