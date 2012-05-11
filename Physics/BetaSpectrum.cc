@@ -222,7 +222,7 @@ double WilkinsonAC(double Z, double W, double W0, double R) {
 			-4.*R*R/9.*W*W);
 }
 
-double WilkinsonQ(double Z,double W,double W0,double M) {
+double WilkinsonQ(double, double W, double W0, double M) {
 	double B = (1.-lambda)/(1.+3.*lambda*lambda);
 	return 1.-M_PI*alpha/(M*sqrt(W*W-1))*(1+B*(W0-W)/(3.*W));
 }

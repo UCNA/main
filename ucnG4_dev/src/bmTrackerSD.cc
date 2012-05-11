@@ -125,17 +125,10 @@ G4bool bmTrackerSD::ProcessHits(G4Step* aStep,G4TouchableHistory*) {
 	// accumulate edep, edepq, local position for this step
 	G4double edep = aStep->GetTotalEnergyDeposit();
 	G4double edepQ = edep*quenchFactor(myTrack->second->originEnergy==0?Ec:myTrack->second->originEnergy);
-	// "dead layer" loss effect in scintillator
 	G4ThreeVector localPosition = aStep->GetPreStepPoint()->GetTouchableHandle()->GetHistory()->GetTopTransform().TransformPoint(prePos);
-	G4double localZ = localPosition[2];
-	if(localZ < -1.75*mm || localZ > 1.75*mm)
-		localZ=1.75*mm;
-	G4double edgeLoss = 1.0-0.5*exp(-(1.75*mm-localZ)/(6*um))-0.5*exp(-(1.75*mm+localZ)/(6*um));
 	myTrack->second->AddEdep(edep,localPosition);
-	//myTrack->second->AddEdepQuenched(edepQ*edgeLoss);
 	myTrack->second->AddEdepQuenched(edepQ);
 	myTrack->second->SetExitMomentum(aStep->GetPostStepPoint()->GetMomentum());
-	
 	
 	// record origin energy for secondaries in same volume
 	const G4TrackVector* secondaries = aStep->GetSecondary();

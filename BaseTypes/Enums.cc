@@ -10,7 +10,7 @@ char sideNames(Side s) {
 	assert(s<BADSIDE);
 	const char snm[] = {'E','W','B','N'};
 	return snm[s];
-};
+}
 
 const char* sideWords(Side s) {
 	assert(s<=BADSIDE);

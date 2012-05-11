@@ -52,10 +52,10 @@ void bmField::LoadFieldMap(const TString filename) {
 void bmField::GetFieldValue(const G4double Point[3],G4double *Bfield) const {
 	
 	G4double z=Point[2];	// point z
-	int zindex = int(lower_bound(Zpoints.begin(), Zpoints.end(), z)-Zpoints.begin());	// location in points list
+	unsigned int zindex = int(lower_bound(Zpoints.begin(), Zpoints.end(), z)-Zpoints.begin());	// location in points list
 	
 	// no field defined outside experimental volume
-	if(zindex==0 || zindex==Zpoints.size() || Point[0]*Point[0]+Point[1]*Point[1]>rmax2 || !fieldScale) {
+	if(zindex==0 || zindex>=Zpoints.size() || Point[0]*Point[0]+Point[1]*Point[1]>rmax2 || !fieldScale) {
 		Bfield[0] = Bfield[1] = Bfield[2] = 0;
 		return;
 	}

@@ -53,10 +53,10 @@ void bmWireVolumeConstruction::Construct(Side s) {
 	G4LogicalVolume* anode_wire_log = new G4LogicalVolume(anode_tube,fAnodeWireMaterial,sideSubst("anode_log%c",s));				
 	anode_wire_log->SetVisAttributes(visAnodeWires);
 	
-	G4VPhysicalVolume* cathode_wire_phys = new G4PVPlacement(NULL,G4ThreeVector(),cathode_wire_log,
-															 sideSubst("cathode_wire_phys%c",s),cathSeg_log,true,0);
-	G4VPhysicalVolume* anode_wire_phys = new G4PVPlacement(NULL,G4ThreeVector(),anode_wire_log,
-														   sideSubst("anode_wire_phys%c",s),anodeSeg_log,true,0);
+	new G4PVPlacement(NULL,G4ThreeVector(),cathode_wire_log,
+					  sideSubst("cathode_wire_phys%c",s),cathSeg_log,true,0);
+	new G4PVPlacement(NULL,G4ThreeVector(),anode_wire_log,
+					  sideSubst("anode_wire_phys%c",s),anodeSeg_log,true,0);
 	
 	
 	// anode, cathode plane container volumes
@@ -64,32 +64,32 @@ void bmWireVolumeConstruction::Construct(Side s) {
 	G4LogicalVolume* cathContainer2_log = new G4LogicalVolume(cathContainer_box,fMWPCGas,sideSubst("cathContainer2_log%c",s));
 	G4LogicalVolume* anodContainer_log = new G4LogicalVolume(anodeContainer_box,fMWPCGas,sideSubst("anodContainer_log%c",s));
 	
-	G4VPhysicalVolume* cathContainer1_phys = new G4PVPlacement(xRot90,G4ThreeVector(0.,0.,cathode_R-planeSpacing),
-															   cathContainer1_log,sideSubst("cathContainer1_phys%c",s),gas_log,false,0);
-	G4VPhysicalVolume* cathContainer2_phys = new G4PVPlacement(xzRot90,G4ThreeVector(0.,0.,planeSpacing-cathode_R),
-															   cathContainer2_log,sideSubst("cathContainer2_phys%c",s),gas_log,false,0);
-	G4VPhysicalVolume* anodContainer_phys = new G4PVPlacement(xRot90,G4ThreeVector(0.,0.,0.),
-															  anodContainer_log,sideSubst("anodContainer_phys%c",s),gas_log,false,0);
+	new G4PVPlacement(xRot90,G4ThreeVector(0.,0.,cathode_R-planeSpacing),
+					  cathContainer1_log,sideSubst("cathContainer1_phys%c",s),gas_log,false,0);
+	new G4PVPlacement(xzRot90,G4ThreeVector(0.,0.,planeSpacing-cathode_R),
+					  cathContainer2_log,sideSubst("cathContainer2_phys%c",s),gas_log,false,0);
+	new G4PVPlacement(xRot90,G4ThreeVector(0.,0.,0.),
+					  anodContainer_log,sideSubst("anodContainer_phys%c",s),gas_log,false,0);
 	
 	// replicate segments into cathode, anode arrays
-	G4PVReplica* cathode_array_1 = new G4PVReplica(sideSubst("cathode_array_1_%c",s),
-												   cathSeg_log,
-												   cathContainer1_log,
-												   kXAxis,
-												   NbOfWires,
-												   spacing);
+	new G4PVReplica(sideSubst("cathode_array_1_%c",s),
+					cathSeg_log,
+					cathContainer1_log,
+					kXAxis,
+					NbOfWires,
+					spacing);
 	
-	G4PVReplica* cathode_array_2 = new G4PVReplica(sideSubst("cathode_array_2_%c",s),
-												   cathSeg_log,
-												   cathContainer2_log,
-												   kXAxis,
-												   NbOfWires,
-												   spacing);
+	new G4PVReplica(sideSubst("cathode_array_2_%c",s),
+					cathSeg_log,
+					cathContainer2_log,
+					kXAxis,
+					NbOfWires,
+					spacing);
 	
-	G4PVReplica* anode_array = new G4PVReplica(sideSubst("anode_array_%c",s),
-											   anodeSeg_log,
-											   anodContainer_log,
-											   kXAxis,
-											   NbOfWires,
-											   spacing);
+	new G4PVReplica(sideSubst("anode_array_%c",s),
+					anodeSeg_log,
+					anodContainer_log,
+					kXAxis,
+					NbOfWires,
+					spacing);
 }
