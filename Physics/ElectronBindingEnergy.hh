@@ -17,6 +17,10 @@ public:
 	double getSubshellBinding(unsigned int n, unsigned int m) const;
 	/// display summary of binding energies
 	void display() const;
+	/// get Z
+	unsigned int getZ() const { return Z; }
+	/// get element name
+	std::string getName() const { return nm; }
 	
 	static const std::string shellnames;
 	
@@ -31,12 +35,14 @@ class BindingEnergyLibrary {
 public:
 	/// constructor from QFile containing element tables
 	BindingEnergyLibrary(const QFile& Q);
+	/// destructor
+	~BindingEnergyLibrary();
 	/// get BindingEnergyTable for specified element
-	const BindingEnergyTable& getBindingTable(unsigned int Z) const;
+	const BindingEnergyTable* getBindingTable(unsigned int Z) const;
 	/// display contents
 	void display() const;
 protected:
-	std::map<unsigned int,BindingEnergyTable> tables;	//< binding energy tables by element
+	std::map<unsigned int,BindingEnergyTable*> tables;	//< binding energy tables by element
 };
 
 #endif

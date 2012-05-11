@@ -51,10 +51,9 @@ class bmPrimaryGeneratorMessenger;
 
 /// (uncorrected) beta spectrum probability with arbitrary endpoint (for use with TF1)
 double genericBetaSpectrum(double* x, double *par);
-/// (uncorrected) 2D polarized beta spectrum as a function of kinetic energy and cos theta (for use with TF2)
-double asymNeutronBetaSpectrum(double* x, double*);
-
-
+/// corrected beta decay spectrum from heavy nucleus (for use with TF1)
+double heavyBetaSpectrum(double* x, double* par);
+	
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 class bmPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
@@ -73,12 +72,9 @@ private:
 	G4ParticleGun* particleGun;
 	bmDetectorConstruction* myDetector;
 	bmPrimaryGeneratorMessenger* gunMessenger;	//< messenger of this class
-	G4String gunType;		//< event generator gun to use
-	G4String positioner;	//< how to position initial events
-	double sourceRadius;	//< radius for sealed source generator
-	
-	/// polarized neutron beta decay with given flipper state
-	void polarizedNeutronBetaDecayGenerator(G4Event* anEvent, bool flipper);
+	G4String gunType;							//< event generator gun to use
+	G4String positioner;						//< how to position initial events
+	double sourceRadius;						//< radius for sealed source generator
 	
 	/// throw multiple electrons and gammas in one event
 	void throwElectronsAndGammas(const std::vector<G4double>& electrons,
@@ -94,30 +90,8 @@ private:
 	void Cd113mSourceGenerator(G4Event* anEvent);
 	/// Cs137, based on NuDat 2.6
 	void Cs137SourceGenerator(G4Event* anEvent);
-	
-	// Indium source and backgrounds
 	/// In114, based on NuDat 2.6
 	void In114SourceGenerator(G4Event* anEvent);
-	/// Sc46, based on NuDat 2.6
-	void Sc46SourceGenerator(G4Event* anEvent);
-	/// Co60, based on NuDat 2.6
-	void Co60SourceGenerator(G4Event* anEvent);
-	/// Ag110, based on NuDat 2.6
-	void Ag110SourceGenerator(G4Event* anEvent);
-	
-	// Xenon isotopes
-	/// Xe125 1/2+ (incorrect correlations)
-	void Xe125_1_2p_SourceGenerator(G4Event* anEvent);
-	/// Xe133 metastable 11/2- (T_half=2.198 days)
-	void Xe133_11_2m_SourceGenerator(G4Event* anEvent);
-	/// Xe133 3/2+ (T_half=5.25days) (incorrect correlations and chains)
-	void Xe133_3_2p_SourceGenerator(G4Event* anEvent);
-	/// Xe135 metastable 11/2-
-	void Xe135_11_2m_SourceGenerator(G4Event* anEvent);
-	/// Xe135 3/2+ (incorrect correlations and chains)
-	void Xe135_3_2p_SourceGenerator(G4Event* anEvent);
-	/// Xe137 7/2- (incorrect correlations and chains)
-	void Xe137_7_2m_SourceGenerator(G4Event* anEvent);
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

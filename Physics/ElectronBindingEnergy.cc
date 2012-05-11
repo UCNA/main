@@ -56,11 +56,16 @@ void BindingEnergyTable::display() const {
 BindingEnergyLibrary::BindingEnergyLibrary(const QFile& Q) {
 	std::vector<Stringmap> v = Q.retrieve("binding");
 	for(unsigned int i=0; i<v.size(); i++)
-		tables.insert(std::pair<unsigned int,BindingEnergyTable>(v[i].getDefault("Z",0),BindingEnergyTable(v[i])));
+		tables.insert(std::pair<unsigned int,BindingEnergyTable*>(v[i].getDefault("Z",0),new BindingEnergyTable(v[i])));
 }
 
-const BindingEnergyTable& BindingEnergyLibrary::getBindingTable(unsigned int Z) const {
-	std::map<unsigned int,BindingEnergyTable>::const_iterator it =  tables.find(Z);
+BindingEnergyLibrary::~BindingEnergyLibrary() {
+	for(std::map<unsigned int,BindingEnergyTable*>::const_iterator it = tables.begin(); it != tables.end(); it++)
+		delete(it->second);
+}
+
+const BindingEnergyTable* BindingEnergyLibrary::getBindingTable(unsigned int Z) const {
+	std::map<unsigned int,BindingEnergyTable*>::const_iterator it =  tables.find(Z);
 	if(it==tables.end()) {
 		SMExcept e("MissingElement");
 		e.insert("Z",Z);
@@ -70,7 +75,7 @@ const BindingEnergyTable& BindingEnergyLibrary::getBindingTable(unsigned int Z) 
 }
 
 void BindingEnergyLibrary::display() const {
-	for(std::map<unsigned int,BindingEnergyTable>::const_iterator it = tables.begin(); it != tables.end(); it++)
-		it->second.display();
+	for(std::map<unsigned int,BindingEnergyTable*>::const_iterator it = tables.begin(); it != tables.end(); it++)
+		it->second->display();
 }
 

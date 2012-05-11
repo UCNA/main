@@ -66,6 +66,27 @@ struct NucDecayEvent {
 	double t;		//< time of event
 };
 
+/// Atom/electron information
+class DecayAtom {
+public:
+	/// constructor
+	DecayAtom(BindingEnergyTable const* B);
+	/// load Auger data from Stringmap
+	void load(const Stringmap& m);
+	/// generate Auger K probabilistically
+	void genAuger(std::vector<NucDecayEvent>& v);
+	/// display info
+	void display() const;
+	
+	BindingEnergyTable const* BET;	//< binding energy table
+	double Eauger;		//< Auger K energy
+	double Iauger;		//< intensity of Auger electron emissions
+	double Ikxr;		//< intensity of k X-Ray emissions
+	double ICEK;		//< intensity of CE K events
+	double IMissing;	//< intensity of un-accounted for Augers (from initial capture)
+	double pAuger;		//< probability of auger given any opening
+};
+
 /// Transition base class
 class TransitionBase {
 public:
@@ -74,7 +95,7 @@ public:
 	/// destructor
 	virtual ~TransitionBase() {}
 	/// display transition line info
-	virtual void display() const { printf("%s->%s (p=%.2g)\n",from.name.c_str(),to.name.c_str(),Itotal); }
+	virtual void display() const { printf("[%i]->[%i] %.3g\n",from.n,to.n,Itotal); }
 	
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>&) { }
@@ -84,6 +105,7 @@ public:
 	/// how many of given electron type were knocked out
 	virtual unsigned int nVacant(unsigned int) const { return 0; }
 	
+	DecayAtom* toAtom;	//< final state atom info
 	NucLevel& from;	//< level this transition is from
 	NucLevel& to;	//< level this transition is to
 	double Itotal;	//< total transition intensity
@@ -98,8 +120,9 @@ public:
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>& v);
 	/// display transition line info
-	virtual void display() const { printf("Gamma %.1f / CE %.1f ",Egamma,averageE()); TransitionBase::display(); }
-	
+	virtual void display() const { printf("Gamma %.1f, CE %.1f (%.2f%%)\t",Egamma,averageE(),100.*getConversionEffic()); TransitionBase::display(); }
+	/// get total conversion efficiency
+	double getConversionEffic() const;
 	/// get probability of knocking conversion electron from a given shell
 	virtual double getPVacant(unsigned int n) const { return n<shells.getN()-1?shells.getProb(n):0; }
 	/// get whether said electron was knocked out
@@ -113,7 +136,6 @@ public:
 	int shell;			//< selected conversion electron shell
 	int subshell;		//< selected conversion electron subshell
 	double Igamma;		//< total gamma intensity
-	BindingEnergyTable const* BET;		//< binding energy table
 	
 protected:
 	PSelector shells;					//< conversion electron shells
@@ -124,17 +146,16 @@ protected:
 class ECapture: public TransitionBase {
 public:
 	/// constructor
-	ECapture(NucLevel& f, NucLevel& t): TransitionBase(f,t), pKCapt(0) {}
+	ECapture(NucLevel& f, NucLevel& t): TransitionBase(f,t) {}
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>&);
 	/// display transition line info
 	virtual void display() const { printf("Ecapture "); TransitionBase::display(); }
 	/// get probability of removing an electron from a given shell
-	virtual double getPVacant(unsigned int n) const { return n==0?pKCapt:0; }
+	virtual double getPVacant(unsigned int n) const { return n==0?toAtom->IMissing:0; }
 	/// get whether said electron was knocked out
 	virtual unsigned int nVacant(unsigned int n) const { return n==0?isKCapt:0; }
 	
-	double pKCapt;	//< probability of k-shell capture
 	bool isKCapt;	//< whether transition was a K capture
 };
 
@@ -160,22 +181,6 @@ protected:
 	double W0;			//< endpoint, "natural" units
 };
 
-/// class for determining probability of Auger electron emission
-class AugerManager {
-public:
-	/// constructor
-	AugerManager(const Stringmap& m, unsigned int s);
-	/// calculate derived values
-	void calculate();
-	
-	unsigned int shell;	//< which shell to consider augers from
-	double Iauger;		//< intensity of Auger electron emissions
-	double Ikxr;		//< intensity of k X-Ray emissions
-	double IshellOpen;	//< intensity of known shell openings
-	double pInitCapt;	//< probability of initial e-capture from shell
-	double pAuger;		//< probability of auger given any opening
-};
-
 /// Decay system
 class NucDecaySystem {
 public:
@@ -191,21 +196,25 @@ public:
 	void displayLevels() const;
 	/// display list of transitions
 	void displayTransitions() const;
+	/// display list of atoms
+	void displayAtoms() const;
 	/// get index for named level
 	unsigned int levIndex(const std::string& s) const;
 	/// generate a chain of decay events starting from level n
 	void genDecayChain(std::vector<NucDecayEvent>& v, unsigned int n = UINT_MAX);
+	/// get atom info for given Z
+	DecayAtom* getAtom(unsigned int Z);
 protected:
 	/// add a transition
 	void addTransition(TransitionBase* T);
 	
 	BindingEnergyLibrary const&  BEL;					//< electron binding energy info
-	AugerManager AM;									//< Auger emission probability
 	double tcut;
 	std::vector<NucLevel> levels;						//< levels, enumerated
 	std::map<std::string,unsigned int> levelIndex;		//< energy levels by name
 	PSelector lStart;									//< selector for starting level (for breaking up long decays)
 	std::vector<PSelector> levelDecays;					//< probabilities for transitions from each level
+	std::map<unsigned int, DecayAtom*> atoms;			//< atom information
 	std::vector<TransitionBase*> transitions;			//< transitions, enumerated
 	std::vector< std::vector<unsigned int> > transIn;	//< transitions into each level
 	std::vector< std::vector<unsigned int> > transOut;	//< transitions out of each level

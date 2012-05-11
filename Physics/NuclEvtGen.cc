@@ -40,13 +40,44 @@ NucLevel::NucLevel(const Stringmap& m): fluxIn(0), fluxOut(0) {
 }
 
 void NucLevel::display() const {
-	printf("%s A=%i Z=%i n=%i jpi=%s\t E = %.2f keV\t HL = %.3g s\t Flux in = %.3g, out = %.3g\n",
-		   name.c_str(),A,Z,n,jpi.c_str(),E,hl,fluxIn,fluxOut);
+	printf("[%i] A=%i Z=%i jpi=%s\t E = %.2f keV\t HL = %.3g s\t Flux in = %.3g, out = %.3g\n",
+		   n,A,Z,jpi.c_str(),E,hl,fluxIn,fluxOut);
 }
 
 //-----------------------------------------
 
-ConversionGamma::ConversionGamma(NucLevel& f, NucLevel& t, const Stringmap& m): TransitionBase(f,t), BET(NULL) {
+DecayAtom::DecayAtom(BindingEnergyTable const* B): BET(B), Iauger(0), Ikxr(0), ICEK(0), IMissing(0), pAuger(0) {
+	Eauger = BET->getSubshellBinding(0,0) - BET->getSubshellBinding(1,0) - BET->getSubshellBinding(1,1);
+}
+
+void DecayAtom::load(const Stringmap& m) {
+	for(std::multimap< std::string, std::string >::const_iterator it = m.dat.begin(); it != m.dat.end(); it++) {
+		assert(it->first.size());
+		if(it->first[0]=='a') Iauger += atof(it->second.c_str())/100.0;
+		else if(it->first[0]=='k') Ikxr += atof(it->second.c_str())/100.0;
+	}
+	Iauger = m.getDefault("Iauger",0)/100.0;
+	
+	pAuger = Iauger/(Iauger+Ikxr);
+	IMissing = Iauger+Ikxr-ICEK;
+	if(!Iauger) IMissing = pAuger = 0;	
+}
+	
+void DecayAtom::genAuger(std::vector<NucDecayEvent>& v) {
+	if(gRandom->Uniform(0,1) > pAuger) return;
+	NucDecayEvent evt;
+	evt.d = D_ELECTRON;
+	evt.E = Eauger;
+	v.push_back(evt);
+}
+
+void DecayAtom::display() const {
+	printf("%s %i: pAuger = %.3f, Eauger = %.2f, initCapt = %.3f\n",BET->getName().c_str(),BET->getZ(),pAuger,Eauger,IMissing);
+}
+
+//-----------------------------------------
+
+ConversionGamma::ConversionGamma(NucLevel& f, NucLevel& t, const Stringmap& m): TransitionBase(f,t) {
 	Egamma = from.E - to.E;
 	Igamma = m.getDefault("Igamma",0.0)/100.0;
 	// load conversion electron and subshell probabilities
@@ -67,7 +98,6 @@ ConversionGamma::ConversionGamma(NucLevel& f, NucLevel& t, const Stringmap& m): 
 }
 
 void ConversionGamma::run(std::vector<NucDecayEvent>& v) {
-	assert(BET);
 	shell = (int)shells.select();
 	if(shell < (int)subshells.size())
 		subshell = (int)subshells[shell].select();
@@ -79,9 +109,16 @@ void ConversionGamma::run(std::vector<NucDecayEvent>& v) {
 		evt.d = D_GAMMA;
 	} else {
 		evt.d = D_ELECTRON;
-		evt.E -= BET->getSubshellBinding(shell,subshell);
+		evt.E -= toAtom->BET->getSubshellBinding(shell,subshell);
 	}	
 	v.push_back(evt);
+}
+
+double ConversionGamma::getConversionEffic() const {
+	double ce = 0;
+	for(unsigned int n=0; n<subshells.size(); n++)
+		ce += getPVacant(n);
+	return ce;	
 }
 
 double ConversionGamma::shellAverageE(unsigned int n) const {
@@ -91,7 +128,7 @@ double ConversionGamma::shellAverageE(unsigned int n) const {
 	for(unsigned int i=0; i<subshells[n].getN(); i++) {
 		double p = subshells[n].getProb(i);
 		w += p;
-		e += (Egamma-BET->getSubshellBinding(n,i))*p;
+		e += (Egamma-toAtom->BET->getSubshellBinding(n,i))*p;
 	}
 	return e/w;
 }
@@ -132,30 +169,13 @@ double BetaDecayTrans::evalBeta(double* x, double*) {
 
 //-----------------------------------------
 
-void ECapture::run(std::vector<NucDecayEvent>&) { isKCapt = gRandom->Uniform(0,1)<pKCapt; }
-
-//-----------------------------------------
-
-
-AugerManager::AugerManager(const Stringmap& m, unsigned int s): shell(s), Iauger(0), Ikxr(0), IshellOpen(0) {
-	for(std::multimap< std::string, std::string >::const_iterator it = m.dat.begin(); it != m.dat.end(); it++) {
-		assert(it->first.size());
-		if(it->first[0]=='a') Iauger += atof(it->second.c_str())/100.0;
-		else if(it->first[0]=='k') Ikxr += atof(it->second.c_str())/100.0;
-	}
-}
-
-void AugerManager::calculate() {
-	pInitCapt = Iauger+Ikxr-IshellOpen;
-	pAuger = Iauger/(Iauger+Ikxr);
-	if(!Iauger) pInitCapt = pAuger = 0;
-}
+void ECapture::run(std::vector<NucDecayEvent>&) { isKCapt = gRandom->Uniform(0,1)<toAtom->IMissing; }
 
 //-----------------------------------------
 
 bool sortLevels(const NucLevel& a, const NucLevel& b) { return (a.E < b.E); }
 
-NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, double t): BEL(B), AM(Q.getFirst("AugerK"),0) {
+NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, double t): BEL(B) {
 	// load levels data
 	std::vector<Stringmap> levs = Q.retrieve("level");
 	for(std::vector<Stringmap>::iterator it = levs.begin(); it != levs.end(); it++) {
@@ -175,12 +195,13 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 	std::vector<Stringmap> gammatrans = Q.retrieve("gamma");
 	for(std::vector<Stringmap>::iterator it = gammatrans.begin(); it != gammatrans.end(); it++) {
 		ConversionGamma* CG = new ConversionGamma(levels[levIndex(it->getDefault("from",""))],levels[levIndex(it->getDefault("to",""))],*it);
-		CG->BET = &BEL.getBindingTable(CG->to.Z);
 		addTransition(CG);
 	}
 	
-	// Auger K fraction
-	AM.calculate();
+	// set up Augers
+	std::vector<Stringmap> augers = Q.retrieve("AugerK");
+	for(std::vector<Stringmap>::iterator it = augers.begin(); it != augers.end(); it++)
+		getAtom(it->getDefault("Z",0))->load(*it);	
 	
 	// set up beta decays
 	std::vector<Stringmap> betatrans = Q.retrieve("beta");
@@ -204,7 +225,6 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 					ECapture* EC = new ECapture(Lorig,*Ldest);
 					EC->Itotal = missingFlux;
 					addTransition(EC);
-					EC->pKCapt = AM.pInitCapt;
 				}
 			}
 		} else {
@@ -213,20 +233,30 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 			ECapture* EC = new ECapture(Lorig,Ldest);
 			EC->Itotal = it->getDefault("I",0.);
 			addTransition(EC);
-			EC->pKCapt = AM.pInitCapt;
 		}
 	}
-	
+
 	setCutoff(t);
 }
 
 NucDecaySystem::~NucDecaySystem() {
 	for(std::vector<TransitionBase*>::iterator it = transitions.begin(); it != transitions.end(); it++)
 		delete(*it);
+	for(std::map<unsigned int,DecayAtom*>::iterator it = atoms.begin(); it != atoms.end(); it++)
+		delete(it->second);
+}
+
+DecayAtom* NucDecaySystem::getAtom(unsigned int Z) {
+	std::map<unsigned int,DecayAtom*>::iterator it = atoms.find(Z);
+	if(it != atoms.end()) return it->second;
+	DecayAtom* A = new DecayAtom(BEL.getBindingTable(Z));
+	atoms.insert(std::pair<unsigned int,DecayAtom*>(Z,A));
+	return A;
 }
 
 void NucDecaySystem::addTransition(TransitionBase* T) {
-	AM.IshellOpen += T->getPVacant(0)*T->Itotal;
+	T->toAtom = getAtom(T->to.Z);
+	T->toAtom->ICEK += T->getPVacant(0)*T->Itotal;
 	transIn[T->to.n].push_back(transitions.size());
 	transOut[T->from.n].push_back(transitions.size());
 	levelDecays[T->from.n].addProb(T->Itotal);
@@ -253,19 +283,10 @@ void NucDecaySystem::setCutoff(double t) {
 
 void NucDecaySystem::display() const {
 	printf("---- Nuclear Level System ----\n");
-	unsigned int lnum = 0;
-	for(std::vector<NucLevel>::const_iterator it = levels.begin(); it != levels.end(); it++) {
-		unsigned int n = it-levels.begin();
-		printf("%s %.1f\t[%.3g; %.3g]\t%.3g <<",it->name.c_str(),it->E,levelDecays[n].getCumProb(),lStart.getProb(n),it->hl);
-		for(std::vector<unsigned int>::const_iterator it2 = transIn[n].begin(); it2 != transIn[n].end(); it2++)
-			printf(" %s(%.2g)",transitions[*it2]->from.name.c_str(),transitions[*it2]->Itotal);
-		printf(" >>");
-		for(std::vector<unsigned int>::const_iterator it2 = transOut[n].begin(); it2 != transOut[n].end(); it2++)
-			printf(" %s(%.2g)",transitions[*it2]->to.name.c_str(),transitions[*it2]->Itotal);
-		printf("\n");
-		lnum++;
-	}
-	printf("-- %.2g initial K-shell capture, %.2g Auger K probability --\n",AM.pInitCapt,AM.pAuger);
+	displayLevels();
+	displayAtoms();
+	displayTransitions();
+	printf("------------------------------\n");
 }
 
 void NucDecaySystem::displayLevels() const {
@@ -276,9 +297,18 @@ void NucDecaySystem::displayLevels() const {
 
 void NucDecaySystem::displayTransitions() const {
 	printf("---- Transitions ----\n");
-	for(std::vector<TransitionBase*>::const_iterator it = transitions.begin(); it != transitions.end(); it++)
-		(*it)->display();
+	for(unsigned int i = 0; i<transitions.size(); i++) {
+		printf("(%i) ",i);
+		transitions[i]->display();
+	}
 }
+
+void NucDecaySystem::displayAtoms() const {
+	printf("---- Atoms ----\n");
+	for(std::map<unsigned int, DecayAtom*>::const_iterator it = atoms.begin(); it != atoms.end(); it++)
+		it->second->display();
+}
+
 
 unsigned int NucDecaySystem::levIndex(const std::string& s) const {
 	std::map<std::string,unsigned int>::const_iterator n = levelIndex.find(s);
@@ -297,16 +327,9 @@ void NucDecaySystem::genDecayChain(std::vector<NucDecayEvent>& v, unsigned int n
 	
 	TransitionBase* T = transitions[transOut[n][levelDecays[n].select()]];
 	T->run(v);
-	
 	unsigned int nAugerK = T->nVacant(0);
-	while(nAugerK--) {
-		if(gRandom->Uniform(0,1) > AM.pAuger) continue;
-		const BindingEnergyTable& BT = BEL.getBindingTable(T->to.Z);
-		NucDecayEvent evt;
-		evt.d = D_ELECTRON;
-		evt.E = BT.getSubshellBinding(0,0) - BT.getSubshellBinding(1,0) - BT.getSubshellBinding(1,1);
-		v.push_back(evt);
-	}
+	while(nAugerK--)
+		getAtom(T->to.Z)->genAuger(v);
 	
 	genDecayChain(v,T->to.n);
 }

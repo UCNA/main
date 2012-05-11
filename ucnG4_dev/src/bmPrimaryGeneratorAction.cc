@@ -59,7 +59,6 @@ using namespace CLHEP;
 //for beta spectrum
 TF1* funcBetaSpectrum = NULL;
 TF1* funcHeavyBeta = NULL;
-TF2* funcNeutronBeta = NULL;
 
 double rand_outof_list(const double* line, const double* weight, const int npoints, int& selected) {
 	// build cumulative list
@@ -81,7 +80,6 @@ void RandomizeMomentum(G4ThreeVector& mom) {
 	mom.set(cos(phi)*sintheta,sin(phi)*sintheta,costheta);
 }  
 
-
 /// generate a random position in a tube
 void randomTubePosition(const G4ThreeVector centerpos, const G4double radius, const G4double halfz, G4ThreeVector& pos) {
 	G4double x0,y0;
@@ -95,12 +93,11 @@ void randomTubePosition(const G4ThreeVector centerpos, const G4double radius, co
 }
 
 double genericBetaSpectrum(double* x, double *par) {
-	double KE = x[0];	// particle kinetic energy
-	double Q = par[0];	// spectrum endpoint
+	double KE = x[0]; // particle kinetic energy
+	double Q = par[0]; // spectrum endpoint
 	return plainPhaseSpace((KE+m_e)/m_e,(Q+m_e)/m_e);
 }
 
-/// beta decay spectrum from heavy nucleus
 double heavyBetaSpectrum(double* x, double* par) {
 	double KE = x[0];	// beta kinetic energy
 	double Q = par[0];	// spectrum endpoint
@@ -110,41 +107,10 @@ double heavyBetaSpectrum(double* x, double* par) {
 	double W0 = (Q+m_e)/m_e;
 	double R = pow(A,1./3.)*neutron_R0;
 	
-	//G4cout << "HeavyBeta: KE=" << KE << " Q=" << Q << " Z=" << Z << " W=" << W << " W0=" << W0 << " R=" << R << " s=" << plainPhaseSpace(W,W0) << " F0=" << WilkinsonF0(Z,W,R) << G4endl;
-	
 	// TODO: recoil/weak magnetism terms???
 	if(0<KE && KE<Q)
 		return plainPhaseSpace(W,W0)*WilkinsonF0(Z,W,R)*WilkinsonL0(Z,W,R)*(1.+Wilkinson_g(W,W0));
 	return 0;
-}
-
-double asymNeutronBetaSpectrum(double* x, double*) {
-	double e0 = x[0];		// kinetic energy
-	double costh = x[1];	// cos theta
-	
-	double nbe = neutronBetaEp;
-	double beta = sqrt(e0*e0+2*m_e*e0)/(m_e+e0);
-	return genericBetaSpectrum(x,&nbe)*(1+A0_PDG*beta*costh);
-}
-
-void bmPrimaryGeneratorAction::polarizedNeutronBetaDecayGenerator(G4Event* anEvent, bool flipper) {
-	
-	// choose kinetic energy and cos theta
-	double costheta, beta_energy;
-	funcNeutronBeta->GetRandom2(beta_energy,costheta);
-	if(flipper)
-		costheta *= -1.0;
-	
-	// choose transverse momentum components
-	double sintheta=sqrt(1.0-costheta*costheta);
-	double phi=6.28318531*G4UniformRand();
-	G4ThreeVector direction(cos(phi)*sintheta,sin(phi)*sintheta,costheta);
-	
-	// throw event
-	G4cout << "Throwing neutron beta decay with KE = " << beta_energy << "keV, cos(theta)=" << costheta << G4endl;
-	particleGun->SetParticleEnergy(beta_energy*keV);
-	particleGun->SetParticleMomentumDirection(direction);
-	particleGun->GeneratePrimaryVertex(anEvent);
 }
 
 void bmPrimaryGeneratorAction::
@@ -277,195 +243,22 @@ void bmPrimaryGeneratorAction::In114SourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-void bmPrimaryGeneratorAction::Sc46SourceGenerator(G4Event* anEvent) {
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	funcHeavyBeta->FixParameter(0,356.9);
-	funcHeavyBeta->FixParameter(1,46.);
-	funcHeavyBeta->FixParameter(2,22.);
-	electrons.push_back(funcHeavyBeta->GetRandom()*keV);
-	gammas.push_back(889.277*keV);
-	gammas.push_back(1120.545*keV);
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-void bmPrimaryGeneratorAction::Co60SourceGenerator(G4Event* anEvent) {
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	funcHeavyBeta->FixParameter(0,318.2);
-	funcHeavyBeta->FixParameter(1,60.);
-	funcHeavyBeta->FixParameter(2,28.);
-	electrons.push_back(funcHeavyBeta->GetRandom()*keV);
-	gammas.push_back(1173.228*keV);
-	gammas.push_back(1332.492*keV);
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-void bmPrimaryGeneratorAction::Ag110SourceGenerator(G4Event* anEvent) {
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	
-	// 6+ beta decays
-	int selected(-1);
-	const double lineBetas[] =	{83.0,	529.9};
-	const double branchBetas[] ={67.0,	30.2};
-	G4double gunEnergy = rand_outof_list(lineBetas, branchBetas, 2, selected)*keV;
-	
-	funcHeavyBeta->FixParameter(0,gunEnergy);
-	funcHeavyBeta->FixParameter(1,110.);
-	funcHeavyBeta->FixParameter(2,48.);
-	electrons.push_back(funcHeavyBeta->GetRandom()*keV);
-	
-	// 6+ gammas
-	if(G4UniformRand() < 0.943)
-		gammas.push_back(657.76*keV);
-	if(G4UniformRand() < 0.1056)
-		gammas.push_back(677.62*keV);
-	if(G4UniformRand() < 0.1633)
-		gammas.push_back(706.68*keV);
-	if(G4UniformRand() < .2262)
-		gammas.push_back(763.94*keV);
-	if(G4UniformRand() < .727)
-		gammas.push_back(884.68*keV);
-	if(G4UniformRand() < .342)
-		gammas.push_back(937.49*keV);
-	if(G4UniformRand() < .249)
-		gammas.push_back(1384.29*keV);
-	if(G4UniformRand() < .136)
-		gammas.push_back(1505.03*keV);
-	
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-void bmPrimaryGeneratorAction::Xe125_1_2p_SourceGenerator(G4Event* anEvent) {
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	const double lines[] =		{54.968, 188.418,	243.378,	453.80,	846.51,		21.799,	49.780,	155.249,	183.230,	210.209};
-	const double branches[] =	{6.80,	54.0,		30.1,		4.69,	1.11,		24.8,	3.29,	6.264,		0.886,		1.97};
-	double gun_energy = rand_outof_list(lines, branches, 10, selected)*keV;
-	if(selected >= 5)
-		electrons.push_back(gun_energy);
-	else
-		gammas.push_back(gun_energy);
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-void bmPrimaryGeneratorAction::Xe133_11_2m_SourceGenerator(G4Event* anEvent) {
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	const double line233[] =	{233.221,	198.660,	227.768,	232.079,	233.013};
-	const double branch233[] =	{10.,		63.5,		20.68,		4.57,		1.225};
-	double gun_energy = rand_outof_list(line233, branch233, 5, selected)*keV;
-	if(selected)
-		electrons.push_back(gun_energy);
-	else
-		gammas.push_back(gun_energy);
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-void bmPrimaryGeneratorAction::Xe133_3_2p_SourceGenerator(G4Event* anEvent) {
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	
-	// beta decay
-	const double betaep[] =		{346.4,	266.8};
-	const double branchbeta[] =	{99.,	0.81};
-	funcBetaSpectrum->FixParameter(0,rand_outof_list(betaep, branchbeta, 2, selected));
-	electrons.push_back(funcBetaSpectrum->GetRandom()*keV);
-	
-	// gammas and electrons
-	const double eline[] =	{80.997,	45.012,	75.283,	79.780,	80.766,	124.628};
-	const double ebranch[] ={38.0,		55.1,	8.21,	1.69,	0.437,	0.0156};
-	double gun_energy = rand_outof_list(eline, ebranch, 6, selected)*keV;
-	if(selected)
-		electrons.push_back(gun_energy);
-	else
-		gammas.push_back(gun_energy);
-	
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-void bmPrimaryGeneratorAction::Xe135_11_2m_SourceGenerator(G4Event* anEvent) {
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	const double line526[] =	{526.561,	492.000,	521.108,	525.419,	526.353,	526.545};
-	const double branch526[] =	{80.4,		15.34,		2.922,		0.619,		0.1275,		0.01524};
-	double gun_energy = rand_outof_list(line526, branch526, 5, selected)*keV;
-	if(selected)
-		electrons.push_back(gun_energy);
-	else
-		gammas.push_back(gun_energy);
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-void bmPrimaryGeneratorAction::Xe135_3_2p_SourceGenerator(G4Event* anEvent) {
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	
-	// beta decay
-	const double betaep[] =		{103.,	184.,	557.,	757.,	915.};
-	const double branchbeta[] =	{0.123,	0.075,	3.11,	0.59,	96.};
-	funcBetaSpectrum->FixParameter(0,rand_outof_list(betaep, branchbeta, 5, selected));
-	electrons.push_back(funcBetaSpectrum->GetRandom()*keV);
-	
-	// gammas and electrons
-	const double eline[] =	{249.794,	608.185,	213.809,	244.080,	248.577,	249.563};
-	const double ebranch[] ={90.0,		2.90,		5.61,		0.82,		0.169,		0.035};
-	double gun_energy = rand_outof_list(eline, ebranch, 6, selected)*keV;
-	if(selected > 1)
-		electrons.push_back(gun_energy);
-	else
-		gammas.push_back(gun_energy);
-	
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-void bmPrimaryGeneratorAction::Xe137_7_2m_SourceGenerator(G4Event* anEvent) {
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	// beta decay
-	const double betaep[] =		{4173.,	3718.,	3324.,	1323.,	2390.};
-	const double branchbeta[] =	{67.,	31.,	0.65,	0.72,	0.38};
-	funcBetaSpectrum->FixParameter(0,rand_outof_list(betaep, branchbeta, 5, selected));
-	electrons.push_back(funcBetaSpectrum->GetRandom()*keV);
-	if(G4UniformRand() < 0.0037)
-		electrons.push_back(419.505*keV);
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-
-
 
 bmPrimaryGeneratorAction::bmPrimaryGeneratorAction(bmDetectorConstruction* myDC): myDetector(myDC) {
-	//G4int n_particle = 1;
 	particleGun = new G4ParticleGun();
-	
-	//create a messenger for this class
 	gunMessenger = new bmPrimaryGeneratorMessenger(this);
 	
-	// default particle
+	// default to electron
 	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
 	G4ParticleDefinition* particle = particleTable->FindParticle("e-");
-	
-	
 	particleGun->SetParticleDefinition(particle);
 	particleGun->SetParticleTime(0.0*ns);
 	
+	// beta spectra TF1s
 	funcBetaSpectrum = new TF1("funcBetaSpectrum",genericBetaSpectrum,0,3000,1);
 	funcBetaSpectrum->SetNpx(3000);
-	
 	funcHeavyBeta = new TF1("funcHeavyBeta",heavyBetaSpectrum,0,5000,3);
 	funcHeavyBeta->SetNpx(500);
-	
-	funcNeutronBeta = new TF2("funcNeutronBeta",asymNeutronBetaSpectrum,0,800,-1.0,1.0,0);
-	funcNeutronBeta->SetNpx(800);
-	funcNeutronBeta->SetNpy(200);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -559,18 +352,6 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		Cd113mSourceGenerator(anEvent);
 	} else if(gunType=="Cs137") {
 		Cs137SourceGenerator(anEvent);
-	} else if(gunType=="Xe125_1/2+") {
-		Xe125_1_2p_SourceGenerator(anEvent);
-	} else if(gunType=="Xe133_11/2-") {
-		Xe133_11_2m_SourceGenerator(anEvent);
-	} else if(gunType=="Xe133_3/2+") {
-		Xe133_3_2p_SourceGenerator(anEvent);
-	} else if(gunType=="Xe135_11/2-") {
-		Xe135_11_2m_SourceGenerator(anEvent);
-	} else if(gunType=="Xe135_3/2+") {
-		Xe135_3_2p_SourceGenerator(anEvent);
-	} else if(gunType=="Xe137_7/2-") {
-		Xe137_7_2m_SourceGenerator(anEvent);
 	} else if (gunType=="In114" || gunType=="In114E" || gunType=="In114W") {
 		In114SourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {
@@ -611,10 +392,6 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		particleGun->SetParticleMomentumDirection(G4ThreeVector(0,0,1));
 		displayGunStatus();
 		particleGun->GeneratePrimaryVertex(anEvent);
-	} else if (gunType=="neutronBetaOff"){
-		polarizedNeutronBetaDecayGenerator(anEvent,false);
-	} else if (gunType=="neutronBetaOn"){
-		polarizedNeutronBetaDecayGenerator(anEvent,true);
 	} else {
 		G4cout << "********* WARNING: Undefined generator type! No events generated!! **********" << G4endl;
 	}
