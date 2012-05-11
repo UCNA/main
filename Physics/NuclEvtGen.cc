@@ -1,6 +1,7 @@
 #include "NuclEvtGen.hh"
 #include "SMExcept.hh"
 #include "strutils.hh"
+#include "PathUtils.hh"
 #include <cassert>
 #include <stdlib.h>
 #include <algorithm>
@@ -36,6 +37,11 @@ NucLevel::NucLevel(const Stringmap& m): fluxIn(0), fluxOut(0) {
 	hl = m.getDefault("hl",0);
 	if(hl < 0) hl = DBL_MAX;
 	jpi = m.getDefault("jpi","");
+}
+
+void NucLevel::display() const {
+	printf("%s A=%i Z=%i n=%i jpi=%s\t E = %.2f keV\t HL = %.3g s\t Flux in = %.3g, out = %.3g\n",
+		   name.c_str(),A,Z,n,jpi.c_str(),E,hl,fluxIn,fluxOut);
 }
 
 //-----------------------------------------
@@ -166,30 +172,26 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 	}
 	
 	// set up internal conversions
-	printf("Loading internal converions...\n");
 	std::vector<Stringmap> gammatrans = Q.retrieve("gamma");
 	for(std::vector<Stringmap>::iterator it = gammatrans.begin(); it != gammatrans.end(); it++) {
 		ConversionGamma* CG = new ConversionGamma(levels[levIndex(it->getDefault("from",""))],levels[levIndex(it->getDefault("to",""))],*it);
 		CG->BET = &BEL.getBindingTable(CG->to.Z);
-		CG->display();
 		addTransition(CG);
 	}
 	
-	printf("Calculating for Augers...\n");	
+	// Auger K fraction
 	AM.calculate();
 	
-	printf("Loading beta decays...\n");
+	// set up beta decays
 	std::vector<Stringmap> betatrans = Q.retrieve("beta");
 	for(std::vector<Stringmap>::iterator it = betatrans.begin(); it != betatrans.end(); it++) {
 		BetaDecayTrans* BD = new BetaDecayTrans(levels[levIndex(it->getDefault("from",""))],levels[levIndex(it->getDefault("to",""))]);
 		BD->Itotal = it->getDefault("I",0);
 		BD->positron = it->getDefault("positron",0);
-		BD->display();
 		addTransition(BD);
 	}
 	
 	// set up electron captures
-	printf("Loading electron captures...\n");
 	std::vector<Stringmap> ecapts = Q.retrieve("ecapt");
 	for(std::vector<Stringmap>::iterator it = ecapts.begin(); it != ecapts.end(); it++) {
 		NucLevel& Lorig = levels[levIndex(it->getDefault("from",""))];
@@ -201,7 +203,6 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 					if(missingFlux <= 0) continue;
 					ECapture* EC = new ECapture(Lorig,*Ldest);
 					EC->Itotal = missingFlux;
-					EC->display();
 					addTransition(EC);
 					EC->pKCapt = AM.pInitCapt;
 				}
@@ -211,7 +212,6 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 			assert(Ldest.A == Lorig.A && Ldest.Z+1 == Lorig.Z && Ldest.E < Lorig.E);
 			ECapture* EC = new ECapture(Lorig,Ldest);
 			EC->Itotal = it->getDefault("I",0.);
-			EC->display();
 			addTransition(EC);
 			EC->pKCapt = AM.pInitCapt;
 		}
@@ -263,6 +263,18 @@ void NucDecaySystem::display() const {
 	printf("-- %.2g initial K-shell capture, %.2g Auger K probability --\n",AM.pInitCapt,AM.pAuger);
 }
 
+void NucDecaySystem::displayLevels() const {
+	printf("---- Energy Levels ----\n");
+	for(std::vector<NucLevel>::const_iterator it = levels.begin(); it != levels.end(); it++)
+		it->display();
+}
+
+void NucDecaySystem::displayTransitions() const {
+	printf("---- Transitions ----\n");
+	for(std::vector<TransitionBase*>::const_iterator it = transitions.begin(); it != transitions.end(); it++)
+		(*it)->display();
+}
+
 unsigned int NucDecaySystem::levIndex(const std::string& s) const {
 	std::map<std::string,unsigned int>::const_iterator n = levelIndex.find(s);
 	if(n==levelIndex.end()) {
@@ -294,4 +306,22 @@ void NucDecaySystem::genDecayChain(std::vector<NucDecayEvent>& v, unsigned int n
 	genDecayChain(v,T->to.n);
 }
 
+//-----------------------------------------
 
+NucDecayLibrary::NucDecayLibrary(const std::string& datp, double t):
+datpath(datp), tcut(t), BEL(QFile(datpath+"/ElectronBindingEnergy.txt")) {
+}
+
+NucDecaySystem& NucDecayLibrary::getGenerator(const std::string& nm) {
+	std::map<std::string,NucDecaySystem*>::iterator it = NDs.find(nm);
+	if(it != NDs.end()) return *(it->second);
+	std::string fname = datpath+"/"+nm+".txt"; 
+	if(!fileExists(fname)) {
+		SMExcept e("MissingDecayData");
+		e.insert("fname",fname);
+		throw(e);
+	}
+	std::pair<std::map<std::string,NucDecaySystem*>::iterator,bool> ret;
+	ret = NDs.insert(std::pair<std::string,NucDecaySystem*>(nm,new NucDecaySystem(QFile(fname),BEL,tcut)));
+	return *(ret.first->second);
+}

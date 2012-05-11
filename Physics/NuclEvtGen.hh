@@ -37,6 +37,8 @@ class NucLevel {
 public:
 	/// constructor
 	NucLevel(const Stringmap& m);
+	/// print info
+	void display() const;
 	
 	std::string name;	//< name for this level
 	unsigned int A;		//< nucleus A
@@ -182,6 +184,10 @@ public:
 	void setCutoff(double t);
 	/// display transitions summary
 	void display() const;
+	/// display list of levels
+	void displayLevels() const;
+	/// display list of transitions
+	void displayTransitions() const;
 	/// get index for named level
 	unsigned int levIndex(const std::string& s) const;
 	/// generate a chain of decay events starting from level n
@@ -200,6 +206,22 @@ protected:
 	std::vector<TransitionBase*> transitions;			//< transitions, enumerated
 	std::vector< std::vector<unsigned int> > transIn;	//< transitions into each level
 	std::vector< std::vector<unsigned int> > transOut;	//< transitions out of each level
+};
+
+/// manager for loading decay event generators
+class NucDecayLibrary {
+public:
+	/// constructor
+	NucDecayLibrary(const std::string& datp, double t = DBL_MAX);
+	/// get decay generator by name
+	NucDecaySystem& getGenerator(const std::string& nm);
+	
+	std::string datpath;	//< path to data folder
+	double tcut;			//< event generator default cutoff time
+	BindingEnergyLibrary  BEL;	//< electron binding energy info
+
+protected:
+	std::map<std::string,NucDecaySystem*> NDs;	//< loaded decay systems
 };
 
 

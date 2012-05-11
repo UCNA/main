@@ -524,7 +524,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	particleGun->SetParticleDefinition(particle);
 	particleGun->SetParticleTime(0.0*ns);
 	
-	static BindingEnergyLibrary BEL(QFile(getEnvSafe("UCNA_AUX")+"/NuclearDecays/ElectronBindingEnergy.txt"));
+	static NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays/",1e-6);
 	std::vector<NucDecayEvent> evts;
 	
 	// set vertex position for event according to position generator
@@ -551,24 +551,12 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	}
 	particleGun->SetParticlePosition(vertex_position);
 	
-	if(gunType=="Sn113") {
-		static NucDecaySystem Sn113_gen(QFile(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Sn113.txt"),BEL,1e-6);
+	if(gunType=="Sn113" || gunType=="Bi207" || gunType=="Ce139" || gunType=="Cd109") {
+		NucDecaySystem& NDS = NDL.getGenerator(gunType);
 		while(!evts.size())
-			Sn113_gen.genDecayChain(evts);
-	} else if(gunType=="Bi207") {
-		static NucDecaySystem Bi207_gen(QFile(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Bi207.txt"),BEL,1e-6);
-		while(!evts.size())
-			Bi207_gen.genDecayChain(evts);
-	} else if(gunType=="Cd109") {
-		static NucDecaySystem Cd109_gen(QFile(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Cd109.txt"),BEL,1e-6);
-		while(!evts.size())
-			Cd109_gen.genDecayChain(evts);
+			NDS.genDecayChain(evts);
 	} else if(gunType=="Cd113m") {
 		Cd113mSourceGenerator(anEvent);
-	} else if(gunType=="Ce139") {
-		static NucDecaySystem Ce139_gen(QFile(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Ce139.txt"),BEL,1e-6);
-		while(!evts.size())
-			Ce139_gen.genDecayChain(evts);
 	} else if(gunType=="Cs137") {
 		Cs137SourceGenerator(anEvent);
 	} else if(gunType=="Xe125_1/2+") {
