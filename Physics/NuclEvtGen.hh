@@ -120,6 +120,7 @@ protected:
 	std::vector<PSelector> subshells;	//< subshell choices for each shell
 };
 
+/// electron capture transitions
 class ECapture: public TransitionBase {
 public:
 	/// constructor
@@ -180,6 +181,8 @@ class NucDecaySystem {
 public:
 	/// constructor from specification file
 	NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, double t = DBL_MAX);
+	/// destructor
+	~NucDecaySystem();
 	/// set cutoff lifetime for intermediate states
 	void setCutoff(double t);
 	/// display transitions summary
@@ -213,6 +216,8 @@ class NucDecayLibrary {
 public:
 	/// constructor
 	NucDecayLibrary(const std::string& datp, double t = DBL_MAX);
+	/// destructor
+	~NucDecayLibrary();
 	/// get decay generator by name
 	NucDecaySystem& getGenerator(const std::string& nm);
 	

@@ -220,6 +220,11 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 	setCutoff(t);
 }
 
+NucDecaySystem::~NucDecaySystem() {
+	for(std::vector<TransitionBase*>::iterator it = transitions.begin(); it != transitions.end(); it++)
+		delete(*it);
+}
+
 void NucDecaySystem::addTransition(TransitionBase* T) {
 	AM.IshellOpen += T->getPVacant(0)*T->Itotal;
 	transIn[T->to.n].push_back(transitions.size());
@@ -310,6 +315,11 @@ void NucDecaySystem::genDecayChain(std::vector<NucDecayEvent>& v, unsigned int n
 
 NucDecayLibrary::NucDecayLibrary(const std::string& datp, double t):
 datpath(datp), tcut(t), BEL(QFile(datpath+"/ElectronBindingEnergy.txt")) {
+}
+
+NucDecayLibrary::~NucDecayLibrary() {
+	for(std::map<std::string,NucDecaySystem*>::iterator it = NDs.begin(); it != NDs.end(); it++)
+		delete(it->second);
 }
 
 NucDecaySystem& NucDecayLibrary::getGenerator(const std::string& nm) {
