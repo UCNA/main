@@ -195,29 +195,6 @@ throwElectronsAndGammas(const std::vector<G4double>& electrons,
 	}
 }
 
-void bmPrimaryGeneratorAction::Cd109SourceGenerator(G4Event* anEvent) {
-	
-	G4double gunEnergy;
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	
-	// Decay to 109Ag 7/2+:		gamma		CE K		CE L		CE M		CE N
-	const double line88[] =		{88.03,		62.5196,	84.2278,	87.3161,	87.9384};
-	const double branch88[] =	{3.7,		41.7,		44.0,		8.9,		1.6};
-	gunEnergy = rand_outof_list(line88, branch88, 5, selected)*keV;
-	if(!selected)
-		gammas.push_back(gunEnergy);
-	else
-		electrons.push_back(gunEnergy);
-	
-	// Auger K
-	if(G4UniformRand() < 0.208)
-		electrons.push_back(18.5*keV);
-	
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
 // lines based on NuDat 2.6
 void bmPrimaryGeneratorAction::Cd113mSourceGenerator(G4Event* anEvent) {
 	
@@ -583,7 +560,9 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		while(!evts.size())
 			Bi207_gen.genDecayChain(evts);
 	} else if(gunType=="Cd109") {
-		Cd109SourceGenerator(anEvent);
+		static NucDecaySystem Cd109_gen(QFile(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Cd109.txt"),BEL,1e-6);
+		while(!evts.size())
+			Cd109_gen.genDecayChain(evts);
 	} else if(gunType=="Cd113m") {
 		Cd113mSourceGenerator(anEvent);
 	} else if(gunType=="Ce139") {

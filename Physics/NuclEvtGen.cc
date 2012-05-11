@@ -55,8 +55,9 @@ ConversionGamma::ConversionGamma(NucLevel& f, NucLevel& t, const Stringmap& m): 
 			subshells.back().addProb(v[s]);
 	}
 	// assign remaining probability for gamma
-	Itotal = Igamma*(1.0+shells.getCumProb());
-	shells.addProb(1.0-shells.getCumProb());
+	shells.addProb(1.);
+	shells.scale(Igamma);
+	Itotal = shells.getCumProb();
 }
 
 void ConversionGamma::run(std::vector<NucDecayEvent>& v) {

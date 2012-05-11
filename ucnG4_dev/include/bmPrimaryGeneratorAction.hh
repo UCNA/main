@@ -72,10 +72,10 @@ public:
 private:
 	G4ParticleGun* particleGun;
 	bmDetectorConstruction* myDetector;
-	bmPrimaryGeneratorMessenger* gunMessenger;	// messenger of this class
-	G4String gunType;		// event generator gun to use
-	G4String positioner;	// how to position initial events
-	double sourceRadius;	// radius for sealed source generator
+	bmPrimaryGeneratorMessenger* gunMessenger;	//< messenger of this class
+	G4String gunType;		//< event generator gun to use
+	G4String positioner;	//< how to position initial events
+	double sourceRadius;	//< radius for sealed source generator
 	
 	/// polarized neutron beta decay with given flipper state
 	void polarizedNeutronBetaDecayGenerator(G4Event* anEvent, bool flipper);
@@ -90,8 +90,6 @@ private:
 	/// print what the particle gun is set up to do
 	void displayGunStatus();
 	
-	/// Cd109
-	void Cd109SourceGenerator(G4Event* anEvent);
 	/// Cd113 Metastable 11/2-, 14.1year HL
 	void Cd113mSourceGenerator(G4Event* anEvent);
 	/// Cs137, based on NuDat 2.6
