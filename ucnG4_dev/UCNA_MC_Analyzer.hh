@@ -22,6 +22,8 @@ public:
 	Double_t trapMonTime[2];		//< timing for trap monitor hits
 	Double_t thetaIn[2];			//< particle angle entering wirechamber
 	Double_t thetaOut[2];			//< particle angle exiting wirechamber
+	Double_t thetaInDF[2];			//< particle angle entering decay trap foil
+	Double_t thetaOutDF[2];			//< particle angle exiting decay trap foil
 	Double_t kEIn[2];				//< particle energy entering scintillator
 	Double_t kEInTrapMon[2];		//< particle energy entering decay trap monitor volume
 	Double_t kEOut[2];				//< particle energy leaving scintillator

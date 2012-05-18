@@ -12,6 +12,8 @@ void UCNA_MC_Analyzer::setupOutputTree() {
 	anaTree->Branch("tmTime",trapMonTime,"tmTimeE/D:tmTimeW/D");
 	anaTree->Branch("thetaIn",thetaIn,"thetaInE/D:thetaInW/D");
 	anaTree->Branch("thetaOut",thetaOut,"thetaOutE/D:thetaOutW/D");
+	anaTree->Branch("thetaInDF",thetaInDF,"thetaInDFE/D:thetaInDFW/D");
+	anaTree->Branch("thetaOutDF",thetaOutDF,"thetaOutDFE/D:thetaOutDFW/D");
 	anaTree->Branch("kEIn",kEIn,"kEInE/D:kEInW/D");
 	anaTree->Branch("kEOut",kEOut,"kEOutE/D:kEOutW/D");
 	anaTree->Branch("kEInTrapMon",kEInTrapMon,"kEInTrapMonE/D:kEInTrapMonW/D");
@@ -27,7 +29,7 @@ void UCNA_MC_Analyzer::resetAnaEvt() {
 		Edep[s] = EdepQ[s] = 0;
 		fMWPCEnergy[s]=0;
 		hitTime[s]=trapMonTime[s]=FLT_MAX;
-		thetaIn[s]=0;
+		thetaIn[s]=thetaInDF[s]=0;
 		thetaOut[s]=0;
 		kEIn[s]=0;
 		kEInTrapMon[s]=0;
@@ -43,8 +45,11 @@ void UCNA_MC_Analyzer::processTrack() {
 	
 	// detector ID numbers
 	const int ID_scint[2] = {0,8};
+	const int ID_DF[2] = {5,13};
 	const int ID_mwpc[2] = {6,14};
+	const int ID_mwpc_backwin[2] = {3,11};
 	const int ID_mwpc_frontwin[2] = {4,12};
+	
 	const int ID_trapmon[2] = {17,18};
 	// particle ID numbers
 	const int PDG_ELECTRON = 11;
@@ -99,12 +104,19 @@ void UCNA_MC_Analyzer::processTrack() {
 			} 
 			if(detectorID==ID_trapmon[s] && pin_x*pin_y*pin_z) {
 				kEInTrapMon[s] = sqrt(pin_x*pin_x+pin_y*pin_y+pin_z*pin_z+kMe*kMe)-kMe;
-			}						
-			if(detectorID==ID_mwpc_frontwin[s]) {
-				if(pin_x*pin_y*pin_z)
-					thetaIn[s] = acos(fabs(pin_z/sqrt(pin_x*pin_x+pin_y*pin_y+pin_z*pin_z)))*180./TMath::Pi();
-				if(pout_x*pout_y*pout_z)
-					thetaOut[s] = acos(fabs(pout_z/sqrt(pout_x*pout_x+pout_y*pout_y+pout_z*pout_z)))*180./TMath::Pi();	 
+			}		
+			
+			if(detectorID==ID_mwpc_frontwin[s] || detectorID==ID_mwpc_backwin[s] || detectorID==ID_DF[s]) {
+				double thIn = (pin_x*pin_y*pin_z)?acos(fabs(pin_z/sqrt(pin_x*pin_x+pin_y*pin_y+pin_z*pin_z))):0;
+				double thOut = (pout_x*pout_y*pout_z)?acos(fabs(pout_z/sqrt(pout_x*pout_x+pout_y*pout_y+pout_z*pout_z))):0;
+				if(detectorID==ID_mwpc_frontwin[s])
+					thetaIn[s] = thIn;
+				if(detectorID==ID_mwpc_backwin[s])
+					thetaOut[s] = thOut;
+				if(detectorID==ID_DF[s]) {
+					thetaInDF[s] = thIn;
+					thetaOutDF[s] = thOut;
+				}
 			}
 		}
 	}
@@ -127,7 +139,7 @@ void UCNA_MC_Analyzer::processEvent() {
 }
 
 int main(int argc, char** argv) {
-
+	
 	if(argc<3) {
 		cout<<"Syntax: "<<argv[0]<<" <filename containing list of raw root files> <output root file name> [save all evts]"<<endl;
 		exit(1);
@@ -136,6 +148,6 @@ int main(int argc, char** argv) {
 	UCNA_MC_Analyzer UMA(argv[2]);
 	UMA.saveAllEvents = (argc==4);
 	UMA.analyzeFileList(argv[1]);
-
+	
 	return 0;
 }
