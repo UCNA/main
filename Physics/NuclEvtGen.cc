@@ -220,7 +220,7 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 		int Z = it->getDefault("Z",0);
 		if(!Z) {
 			SMExcept e("BadAugerZ");
-			e.add("Z",Z);
+			e.insert("Z",Z);
 			throw(e);
 		}
 		getAtom(Z)->load(*it);	
