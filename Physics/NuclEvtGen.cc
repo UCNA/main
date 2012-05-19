@@ -85,7 +85,9 @@ ConversionGamma::ConversionGamma(NucLevel& f, NucLevel& t, const Stringmap& m): 
 	for(unsigned int i=0; i<nshells; i++) {
 		std::vector<std::string> v = split(m.getDefault(std::string("CE_")+ctos(BindingEnergyTable::shellnames[i]),""),"@");
 		if(!v.size()) break;
-		shells.addProb(atof(v[0].c_str()));
+		float_err shprob(v[0]);
+		shells.addProb(shprob.x);
+		shellUncert.push_back(shprob.err*Igamma);
 		std::vector<double> ss;
 		if(v.size()==1) ss.push_back(1.);
 		else ss = sToDoubles(v[1],":");
@@ -116,6 +118,12 @@ void ConversionGamma::run(std::vector<NucDecayEvent>& v) {
 	v.push_back(evt);
 }
 
+void ConversionGamma::display() const {
+	float_err eavg = averageE();
+	printf("Gamma %.1f, CE %.2f~%.2f (%.2f%%)\t",Egamma,eavg.x,eavg.err,100.*getConversionEffic());
+	TransitionBase::display();
+}
+
 double ConversionGamma::getConversionEffic() const {
 	double ce = 0;
 	for(unsigned int n=0; n<subshells.size(); n++)
@@ -135,7 +143,7 @@ double ConversionGamma::shellAverageE(unsigned int n) const {
 	return e/w;
 }
 
-double ConversionGamma::averageE() const {
+float_err ConversionGamma::averageE() const {
 	double e = 0;
 	double w = 0;
 	for(unsigned int n=0; n<subshells.size(); n++) {
@@ -143,7 +151,13 @@ double ConversionGamma::averageE() const {
 		e += shellAverageE(n)*p;
 		w += p;
 	}
-	return e/w;
+	e /= w;
+	double serr = 0;
+	for(unsigned int n=0; n<subshells.size(); n++) {
+		double u = (shellAverageE(n)-e)*shellUncert[n];
+		serr += u*u;
+	}
+	return float_err(e,sqrt(serr)/w);
 }
 
 //-----------------------------------------
@@ -202,8 +216,15 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 	
 	// set up Augers
 	std::vector<Stringmap> augers = Q.retrieve("AugerK");
-	for(std::vector<Stringmap>::iterator it = augers.begin(); it != augers.end(); it++)
-		getAtom(it->getDefault("Z",0))->load(*it);	
+	for(std::vector<Stringmap>::iterator it = augers.begin(); it != augers.end(); it++) {
+		int Z = it->getDefault("Z",0);
+		if(!Z) {
+			SMExcept e("BadAugerZ");
+			e.add("Z",Z);
+			throw(e);
+		}
+		getAtom(Z)->load(*it);	
+	}
 	
 	// set up beta decays
 	std::vector<Stringmap> betatrans = Q.retrieve("beta");

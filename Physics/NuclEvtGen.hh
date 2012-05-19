@@ -3,6 +3,7 @@
 
 #include "ElectronBindingEnergy.hh"
 #include "BetaSpectrum.hh"
+#include "FloatErr.hh"
 #include <TF1.h>
 #include <vector>
 #include <map>
@@ -120,7 +121,7 @@ public:
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>& v);
 	/// display transition line info
-	virtual void display() const { printf("Gamma %.1f, CE %.1f (%.2f%%)\t",Egamma,averageE(),100.*getConversionEffic()); TransitionBase::display(); }
+	virtual void display() const;
 	/// get total conversion efficiency
 	double getConversionEffic() const;
 	/// get probability of knocking conversion electron from a given shell
@@ -130,7 +131,7 @@ public:
 	/// shell weighted average energy
 	double shellAverageE(unsigned int n) const;
 	/// line weighted average
-	double averageE() const;
+	float_err averageE() const;
 	
 	double Egamma;		//< gamma energy
 	int shell;			//< selected conversion electron shell
@@ -139,6 +140,7 @@ public:
 	
 protected:
 	PSelector shells;					//< conversion electron shells
+	std::vector<float> shellUncert;		//< uncertainty on shell selection probability
 	std::vector<PSelector> subshells;	//< subshell choices for each shell
 };
 
