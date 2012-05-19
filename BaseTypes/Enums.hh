@@ -46,23 +46,6 @@ enum AxisDirection {
 /// iteration to next axis
 inline AxisDirection& operator++(AxisDirection& d) { return d = AxisDirection(d+1); }
 
-/// float value with an error estimate
-struct float_err {
-	float_err(float c=0, float dc=0): x(c), err(dc) {}
-	float x;
-	float err;
-	//const float_err& operator=(const float_err& rhs) { x = rhs.x; err = rhs.err; return *this; }
-};
-
-/// add float_errs assuming independent statistics
-float_err operator+(float_err a, float_err b);
-/// multiply float_err by float
-float_err operator*(float a, float_err b);
-/// statistically weighted sum of n values with errors, useful for combining PMT results
-float_err weightedSum(unsigned int n, const float_err* d);
-/// measure of combined statistical proximity of points d to central value c
-float proximity(unsigned int n, const float_err* d, float_err c);
-
 /// types of UCNA data runs
 enum RunType {
 	UNKNOWN_RUN,	//< unknown/invalid run

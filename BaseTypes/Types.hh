@@ -6,6 +6,7 @@
 #include "Enums.hh"
 #include "QFile.hh"
 #include "strutils.hh"
+#include "FloatErr.hh"
 
 #include <TBranch.h>
 #include <string>
