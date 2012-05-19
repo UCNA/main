@@ -8,7 +8,7 @@
 #include <cassert>
 
 /// hyperbolic sine
-double sinh(double x) throw() { return (exp(x)-exp(-x))*0.5; }
+double my_sinh(double x) { return (exp(x)-exp(-x))*0.5; }
 
 /// inverse hyperbolic tangent
 double atanh(double x) throw() { return 0.5*log((1.+x)/(1.-x)); }
@@ -96,7 +96,7 @@ double WilkinsonComplexGammaApprox(double Z, double W, unsigned int N) {
 	double y1 = a*y;
 	for(unsigned int n=0; n<N; n++)
 		s += log((n*n+y1*y1)/((n+gm)*(n+gm)+y*y));
-	return exp(s + log(M_PI*(N*N+y1*y1)/(y1*sinh(M_PI*y1)))
+	return exp(s + log(M_PI*(N*N+y1*y1)/(y1*my_sinh(M_PI*y1)))
 			   +(1.-gm)*(2.-log(Ngm*Ngm+y*y) + 2.*y/Ngm*atan(y/Ngm)
 						 +1./(Ngm*Ngm+y*y)/(6.*a))
 			   -(2.*N+1.)*log(a));	
