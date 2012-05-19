@@ -113,10 +113,20 @@ QFile::QFile(const std::string& fname, bool readit) {
 	std::string s;
 	while (fin.good()) {
 		std::getline(fin,s);
-		std::vector<std::string> q = split(s,":");
-		if(q.size() != 2)
-			continue;
-		insert(q[0],Stringmap(q[1]));
+		s = strip(s);
+		size_t n = s.find(':');
+		if(n==std::string::npos || s[0]=='#') continue;
+		std::string key = s.substr(0,n);
+		std::string vals = s.substr(n+1);
+		vals=strip(vals);
+		while(vals.size() && vals[vals.size()-1]=='\\') {
+			vals.erase(vals.size()-1);
+			std::getline(fin,s);
+			s = strip(s);
+			vals += '\t';
+			vals += s;
+		}
+		insert(key,Stringmap(vals));
 	}
 	fin.close();
 }

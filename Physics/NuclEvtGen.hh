@@ -198,13 +198,14 @@ public:
 	void displayTransitions() const;
 	/// display list of atoms
 	void displayAtoms() const;
-	/// get index for named level
-	unsigned int levIndex(const std::string& s) const;
 	/// generate a chain of decay events starting from level n
 	void genDecayChain(std::vector<NucDecayEvent>& v, unsigned int n = UINT_MAX);
+	
+protected:
+	/// get index for named level
+	unsigned int levIndex(const std::string& s) const;
 	/// get atom info for given Z
 	DecayAtom* getAtom(unsigned int Z);
-protected:
 	/// add a transition
 	void addTransition(TransitionBase* T);
 	
