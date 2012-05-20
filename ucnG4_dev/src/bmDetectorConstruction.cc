@@ -316,6 +316,13 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			gbmAnalysisManager->SaveSDName(trackerBlockSDname);		
 		}
 		
+		// experimental hall vacuum
+		trackerBlockSDname = "hall_SD";
+		hall_SD = new bmTrackerSD(trackerBlockSDname);
+		SDman->AddNewDetector(hall_SD);
+		experimentalHall_log->SetSensitiveDetector(hall_SD);
+		gbmAnalysisManager->SaveSDName(trackerBlockSDname);	
+		
 		// construct magnetic field
 		cout<<"##### "<<sFieldMapFile<<" #####"<<endl;
 		ConstructField(sFieldMapFile);

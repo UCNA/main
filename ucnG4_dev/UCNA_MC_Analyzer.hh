@@ -1,6 +1,9 @@
 #include "AnalyzerBase.hh"
 #include "Enums.hh"
 
+/// number of sensitive detector regions
+#define N_SD 20
+
 class UCNA_MC_Analyzer: public ucnG4_analyzer {
 public:
 	/// constructor
@@ -16,7 +19,7 @@ public:
 	Double_t ScintPosSigma[2][3];	//< scintillator quenched energy weighted position variance
 	
 	Double_t fMWPCEnergy[2];		//< MWPC deposited energy
-	Double_t EdepSD[19];			//< array for energy deposition in all SDs
+	Double_t EdepSD[N_SD];			//< array for energy deposition in all SDs
 	Double_t EdepAll;				//< total edep in all SDs
 	Double_t hitTime[2];			//< timing info for hits on each side
 	Double_t trapMonTime[2];		//< timing for trap monitor hits

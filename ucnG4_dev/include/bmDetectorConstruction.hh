@@ -90,6 +90,8 @@ private:
 	bmTrackerSD* source_SD;
 	bmTrackerSD* trap_monitor_SD[2];
 	
+	bmTrackerSD* hall_SD;
+	
 	bmTrackerSD* siDet_SD;
 	
 	// UI commands

@@ -17,7 +17,9 @@ void UCNA_MC_Analyzer::setupOutputTree() {
 	anaTree->Branch("kEIn",kEIn,"kEInE/D:kEInW/D");
 	anaTree->Branch("kEOut",kEOut,"kEOutE/D:kEOutW/D");
 	anaTree->Branch("kEInTrapMon",kEInTrapMon,"kEInTrapMonE/D:kEInTrapMonW/D");
-	anaTree->Branch("EdepSD",EdepSD,"EdepSD[19]/D");
+	char tmp[1024];
+	sprintf(tmp,"EdepSD[%i]/D",N_SD);
+	anaTree->Branch("EdepSD",EdepSD,tmp);
 	anaTree->Branch("MWPCPos",MWPCPos,"MWPCPosE[3]/D:MWPCPosW[3]/D");
 	anaTree->Branch("ScintPos",ScintPos,"ScintPosE[3]/D:ScintPosW[3]/D");
 	anaTree->Branch("MWPCPosSigma",MWPCPosSigma,"MWPCPosSigmaE[3]/D:MWPCPosSigmaW[3]/D");
@@ -59,7 +61,7 @@ void UCNA_MC_Analyzer::processTrack() {
 	
 	// total deposited energy in all sensitive volumes
 	EdepAll += trackinfo->Edep;
-	if(detectorID < 19)
+	if(detectorID < N_SD)
 		EdepSD[detectorID] += trackinfo->Edep;
 	
 	for(Side s = EAST; s <= WEST; ++s) {
