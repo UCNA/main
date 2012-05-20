@@ -340,7 +340,6 @@ void bmDetectorConstruction::ConstructField(const TString filename) {
 	static G4bool fieldIsInitialized = false;
 	
 	if(!fieldIsInitialized) {
-		
 		cout<<"##### Constructing Field #####"<<endl;
 		
 		// get magnetic field profile
@@ -350,38 +349,36 @@ void bmDetectorConstruction::ConstructField(const TString filename) {
 		fieldMgr->SetDetectorField(fpMagField);
 		// set up default chord finder
 		fieldMgr->CreateChordFinder(fpMagField);
-		// optional: choose different stepping method
-		if(1) {
-			G4MagIntegratorStepper* pStepper;
-			G4Mag_UsualEqRhs *fEquation = new G4Mag_UsualEqRhs(fpMagField); // equation of motion in magnetic field
-			//pStepper = new G4ClassicalRK4 (fEquation);		// general case for "smooth" EM fields
-			//pStepper = new G4SimpleHeum( fEquation );			// for slightly less smooth EM fields
-			
-			//pStepper = new G4HelixHeum( fEquation );			// for "smooth" pure-B fields
-			//pStepper = new G4HelixImplicitEuler( fEquation );	// for less smooth pure-B fields; appears ~50% faster than above
-			//pStepper = new G4HelixSimpleRunge( fEquation );	// similar speed to above
-			pStepper = new G4HelixExplicitEuler( fEquation );	// about twice as fast as above
-			
-			fieldMgr->GetChordFinder()->GetIntegrationDriver()->RenewStepperAndAdjust(pStepper);
-		}
+		
+		// Select stepper
+		G4MagIntegratorStepper* pStepper;
+		G4Mag_UsualEqRhs* fEquation = new G4Mag_UsualEqRhs(fpMagField); // equation of motion in magnetic field
+		//pStepper = new G4ClassicalRK4 (fEquation);		// general case for "smooth" EM fields
+		//pStepper = new G4SimpleHeum( fEquation );			// for slightly less smooth EM fields
+		//pStepper = new G4HelixHeum( fEquation );			// for "smooth" pure-B fields
+		//pStepper = new G4HelixImplicitEuler( fEquation );	// for less smooth pure-B fields; appears ~50% faster than above
+		//pStepper = new G4HelixSimpleRunge( fEquation );	// similar speed to above
+		pStepper = new G4HelixExplicitEuler( fEquation );	// about twice as fast as above
+		fieldMgr->GetChordFinder()->GetIntegrationDriver()->RenewStepperAndAdjust(pStepper);
+		
 		// set required accuracy for finding intersections
 		fieldMgr->GetChordFinder()->SetDeltaChord(100.0*um);
-		// set integration error limits for small and large steps
+		// set integration relative error limits for small and large steps
 		fieldMgr->SetMinimumEpsilonStep(1e-6);
 		fieldMgr->SetMaximumEpsilonStep(1e-5);
+		// set integration absolute error limit
+		fieldMgr->SetDeltaOneStep(0.1*um);
 		// allow lots of looping
 		G4TransportationManager::GetTransportationManager()->GetPropagatorInField()->SetMaxLoopCount(INT_MAX);
+		
 		fieldIsInitialized = true;
 	}
 }
 
-void bmDetectorConstruction::SetFieldOnOff(G4String aSwitch)
-{
+void bmDetectorConstruction::SetFieldOnOff(G4String aSwitch) {
 	if(aSwitch=="on") {
 		G4cout<<"##### Setting the magnetic field scale to full strength ..."<<G4endl;
 		fpMagField->SetFieldScale(1.0);
-		
-		//do nothing
 	} else if (aSwitch=="off") {
 		G4cout<<"##### Switching off the magnetic field ..."<<G4endl;
 		fpMagField->SetFieldToZero();
