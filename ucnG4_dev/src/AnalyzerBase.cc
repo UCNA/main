@@ -7,7 +7,8 @@ void ucnG4_analyzer::analyzeFileList(const string& flist) {
 	ifstream file;
 	file.open(flist.c_str());
 	string fname;
-	while(file){
+	while(!file.fail() && !file.eof()){
+		fname = "";
 		file >> fname;
 		if(fname.size())
 			analyzeFile(fname);
