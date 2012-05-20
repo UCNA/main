@@ -18,12 +18,14 @@ LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/SMExcept.cc)
 LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/QFile.cc)
 LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/PathUtils.cc)
 LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../BaseTypes/Enums.cc)
+LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../BaseTypes/FloatErr.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh ${PROJECT_SOURCE_DIR}/../Physics/*.hh)
 LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/strutils.hh)
 LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/SMExcept.hh)
 LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/QFile.hh)
 LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/PathUtils.hh)
 LIST(APPEND headers ${PROJECT_SOURCE_DIR}/../BaseTypes/Enums.hh)
+LIST(APPEND headers ${PROJECT_SOURCE_DIR}/../BaseTypes/FloatErr.hh)
 
 #-------------------------------
 # ROOT dependencies

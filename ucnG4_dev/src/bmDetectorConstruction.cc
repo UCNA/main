@@ -332,6 +332,8 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 #include "G4SimpleHeum.hh"
 #include "G4HelixHeum.hh"
 #include "G4HelixImplicitEuler.hh"
+#include "G4HelixExplicitEuler.hh"
+#include "G4HelixSimpleRunge.hh"
 
 void bmDetectorConstruction::ConstructField(const TString filename) {
 	
@@ -353,13 +355,20 @@ void bmDetectorConstruction::ConstructField(const TString filename) {
 			G4MagIntegratorStepper* pStepper;
 			G4Mag_UsualEqRhs *fEquation = new G4Mag_UsualEqRhs(fpMagField); // equation of motion in magnetic field
 			//pStepper = new G4ClassicalRK4 (fEquation);		// general case for "smooth" EM fields
-			//pStepper = new G4SimpleHeum( fEquation );			// for slightly less smooth EM fields 
+			//pStepper = new G4SimpleHeum( fEquation );			// for slightly less smooth EM fields
+			
 			//pStepper = new G4HelixHeum( fEquation );			// for "smooth" pure-B fields
-			pStepper = new G4HelixImplicitEuler( fEquation ); // for less smooth pure-B fields; appears slightly faster than above
+			//pStepper = new G4HelixImplicitEuler( fEquation );	// for less smooth pure-B fields; appears ~50% faster than above
+			//pStepper = new G4HelixSimpleRunge( fEquation );	// similar speed to above
+			pStepper = new G4HelixExplicitEuler( fEquation );	// about twice as fast as above
+			
 			fieldMgr->GetChordFinder()->GetIntegrationDriver()->RenewStepperAndAdjust(pStepper);
 		}
 		// set required accuracy for finding intersections
-		fieldMgr->GetChordFinder()->SetDeltaChord(10.0*um);
+		fieldMgr->GetChordFinder()->SetDeltaChord(100.0*um);
+		// set integration error limits for small and large steps
+		fieldMgr->SetMinimumEpsilonStep(1e-6);
+		fieldMgr->SetMaximumEpsilonStep(1e-5);
 		// allow lots of looping
 		G4TransportationManager::GetTransportationManager()->GetPropagatorInField()->SetMaxLoopCount(INT_MAX);
 		fieldIsInitialized = true;
