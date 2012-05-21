@@ -12,11 +12,11 @@ public:
 	/// get scintillator face position within unit
 	G4double getScintFacePos() const { return 0; }
 	
-	bmScintillatorConstruction scint;
-	bmWirechamberConstruction mwpc;
-	G4LogicalVolume* container_log;
-	G4LogicalVolume* mwpc_entrance_log;
-	G4LogicalVolume* mwpc_exit_log;
+	bmScintillatorConstruction scint;	//< scintillator assembly
+	bmWirechamberConstruction mwpc;		//< wirechamber assembly
+	G4LogicalVolume* container_log;		//< overall positioning container
+	G4LogicalVolume* mwpc_entrance_log;	//< aluminum entrance window to wirechamber
+	G4LogicalVolume* mwpc_exit_log;		//< aluminum exit window from wirechamber
 	
 	/// construct logical container volume
 	void Construct(Side s);

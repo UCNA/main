@@ -2,7 +2,7 @@
 #include "Enums.hh"
 
 /// number of sensitive detector regions
-#define N_SD 20
+#define N_SD 22
 
 class UCNA_MC_Analyzer: public ucnG4_analyzer {
 public:

@@ -20,8 +20,9 @@ public:
 	G4LogicalVolume* container_log;	//< overall gas box
 	G4LogicalVolume* winIn_log;		//< inner window
 	G4LogicalVolume* winOut_log;	//< outer window
+	G4LogicalVolume* kevContainer_log;	//< container for kevlar strings
 	G4LogicalVolume* kevlar_log;	//< kevlar window support strings
-
+	
 	/// construct logical container volume
 	void Construct(Side s);
 	

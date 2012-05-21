@@ -256,6 +256,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			Dscint_SD[s] = new bmTrackerSD(trackerBlockSDname);
 			SDman->AddNewDetector(Dscint_SD[s]);
 			dets[s].scint.Dscint_log->SetSensitiveDetector(Dscint_SD[s]);
+			dets[s].scint.container_log->SetSensitiveDetector(Dscint_SD[s]); // include N2 volume here
 			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
 			trackerBlockSDname = sideSubst("backing_SD%c",s);
@@ -274,7 +275,6 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			winIn_SD[s] = new bmTrackerSD(trackerBlockSDname);
 			SDman->AddNewDetector(winIn_SD[s]);
 			dets[s].mwpc.winIn_log->SetSensitiveDetector(winIn_SD[s]);
-			dets[s].mwpc.kevlar_log->SetSensitiveDetector(winIn_SD[s]);
 			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
 			trackerBlockSDname = sideSubst("trap_win_SD%c",s);
@@ -288,6 +288,10 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			mwpc_SD[s] = new bmTrackerSD(trackerBlockSDname);
 			SDman->AddNewDetector(mwpc_SD[s]);
 			dets[s].mwpc.activeRegion.gas_log->SetSensitiveDetector(mwpc_SD[s]);
+			dets[s].mwpc.activeRegion.cathSeg_log->SetSensitiveDetector(mwpc_SD[s]);
+			dets[s].mwpc.activeRegion.anodeSeg_log->SetSensitiveDetector(mwpc_SD[s]);
+			dets[s].mwpc.activeRegion.cathode_wire_log->SetSensitiveDetector(mwpc_SD[s]);
+			dets[s].mwpc.activeRegion.anode_wire_log->SetSensitiveDetector(mwpc_SD[s]);
 			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
 			trackerBlockSDname = sideSubst("mwpcDead_SD%c",s);
@@ -296,6 +300,12 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			dets[s].mwpc.container_log->SetSensitiveDetector(mwpcDead_SD[s]);
 			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
+			trackerBlockSDname = sideSubst("kevlar_SD%c",s);
+			kevlar_SD[s] = new bmTrackerSD(trackerBlockSDname);
+			SDman->AddNewDetector(kevlar_SD[s]);
+			dets[s].mwpc.kevlar_log->SetSensitiveDetector(kevlar_SD[s]);
+			dets[s].mwpc.kevContainer_log->SetSensitiveDetector(kevlar_SD[s]);
+			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 		}
 		
 		// source holder
@@ -316,11 +326,17 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			gbmAnalysisManager->SaveSDName(trackerBlockSDname);		
 		}
 		
-		// experimental hall vacuum
+		// experimental hall vacuum, decay tube, other inert parts
 		trackerBlockSDname = "hall_SD";
 		hall_SD = new bmTrackerSD(trackerBlockSDname);
 		SDman->AddNewDetector(hall_SD);
 		experimentalHall_log->SetSensitiveDetector(hall_SD);
+		trap.decayTube_log->SetSensitiveDetector(hall_SD);
+		for(Side s = EAST; s <= WEST; ++s ) {
+			dets[s].mwpc_entrance_log->SetSensitiveDetector(hall_SD);
+			dets[s].mwpc_exit_log->SetSensitiveDetector(hall_SD);
+			dets[s].container_log->SetSensitiveDetector(hall_SD);
+		}
 		gbmAnalysisManager->SaveSDName(trackerBlockSDname);	
 		
 		// construct magnetic field
@@ -341,6 +357,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 #include "G4HelixImplicitEuler.hh"
 #include "G4HelixExplicitEuler.hh"
 #include "G4HelixSimpleRunge.hh"
+#include "G4HelixMixedStepper.hh"
 
 void bmDetectorConstruction::ConstructField(const TString filename) {
 	
@@ -365,7 +382,8 @@ void bmDetectorConstruction::ConstructField(const TString filename) {
 		//pStepper = new G4HelixHeum( fEquation );			// for "smooth" pure-B fields
 		//pStepper = new G4HelixImplicitEuler( fEquation );	// for less smooth pure-B fields; appears ~50% faster than above
 		//pStepper = new G4HelixSimpleRunge( fEquation );	// similar speed to above
-		pStepper = new G4HelixExplicitEuler( fEquation );	// about twice as fast as above
+		//pStepper = new G4HelixExplicitEuler( fEquation );	// about twice as fast as above
+		pStepper = new G4HelixMixedStepper(fEquation,6);	// avoids "Stepsize underflow in Stepper" errors
 		fieldMgr->GetChordFinder()->GetIntegrationDriver()->RenewStepperAndAdjust(pStepper);
 		
 		// set required accuracy for finding intersections

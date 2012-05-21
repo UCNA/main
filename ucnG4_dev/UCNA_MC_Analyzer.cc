@@ -40,19 +40,19 @@ void UCNA_MC_Analyzer::resetAnaEvt() {
 			MWPCPos[s][i] = ScintPos[s][i] = MWPCPosSigma[s][i] = ScintPosSigma[s][i] = 0;
 	}
 	EdepAll = 0;
-	for(size_t ii=0; ii<19; ii++) EdepSD[ii] = 0.;
+	for(size_t ii=0; ii<N_SD; ii++) EdepSD[ii] = 0.;
 }
 
 void UCNA_MC_Analyzer::processTrack() {
 	
 	// detector ID numbers
-	const int ID_scint[2] = {0,8};
-	const int ID_DF[2] = {5,13};
-	const int ID_mwpc[2] = {6,14};
-	const int ID_mwpc_backwin[2] = {3,11};
-	const int ID_mwpc_frontwin[2] = {4,12};
+	const int ID_scint[2] = {0,9};
+	const int ID_DF[2] = {5,14};
+	const int ID_mwpc[2] = {6,15};
+	const int ID_mwpc_backwin[2] = {3,12};
+	const int ID_mwpc_frontwin[2] = {4,13};
 	
-	const int ID_trapmon[2] = {17,18};
+	const int ID_trapmon[2] = {19,20};
 	// particle ID numbers
 	const int PDG_ELECTRON = 11;
 	const int PDG_POSITRON = -11;

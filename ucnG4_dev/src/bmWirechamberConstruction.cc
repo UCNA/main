@@ -52,7 +52,6 @@ void bmWirechamberConstruction::Construct(Side s) {
 	G4double maxLength=7.5*cm;
 	G4Tubs* kevContainer_tube = new G4Tubs("kevContainer_tube",0.,mwpc_entrance_R,kevlar_R,0.,2*M_PI);
 	G4Tubs* kevlar_tube = new G4Tubs("kevlar_tube",0,kevlar_R,1*cm,0.,2*M_PI);
-	G4LogicalVolume* kevContainer_log;
 	G4VPhysicalVolume* kevContainer_phys;
 	
 	G4VPVParameterisation* kevlarParam;

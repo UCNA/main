@@ -83,6 +83,7 @@ private:
 	bmTrackerSD* winIn_SD[2];
 	bmTrackerSD* winOut_SD[2];
 	bmTrackerSD* trap_win_SD[2];
+	bmTrackerSD* kevlar_SD[2];
 	
 	bmTrackerSD* mwpc_SD[2];
 	bmTrackerSD* mwpcDead_SD[2];

@@ -44,13 +44,13 @@ void bmWireVolumeConstruction::Construct(Side s) {
 	G4VisAttributes* visAnodeWires = new G4VisAttributes(G4Colour(1,0.3,0,0.8));
 	
 	// anode, cathode segments
-	G4LogicalVolume* cathSeg_log = new G4LogicalVolume(cathodeSegmentBox,fMWPCGas,sideSubst("cathSeg_log%c",s));
+	cathSeg_log = new G4LogicalVolume(cathodeSegmentBox,fMWPCGas,sideSubst("cathSeg_log%c",s));
 	cathSeg_log->SetVisAttributes(G4VisAttributes::Invisible);
-	G4LogicalVolume* anodeSeg_log = new G4LogicalVolume(anodeSegmentBox,fMWPCGas,sideSubst("anodeSeg_log%c",s));
+	anodeSeg_log = new G4LogicalVolume(anodeSegmentBox,fMWPCGas,sideSubst("anodeSeg_log%c",s));
 	anodeSeg_log->SetVisAttributes(G4VisAttributes::Invisible);
-	G4LogicalVolume* cathode_wire_log = new G4LogicalVolume(cathode_tube,fCathodeWireMaterial,sideSubst("cathode_log%c",s));
+	cathode_wire_log = new G4LogicalVolume(cathode_tube,fCathodeWireMaterial,sideSubst("cathode_log%c",s));
 	cathode_wire_log->SetVisAttributes(visCathWires);
-	G4LogicalVolume* anode_wire_log = new G4LogicalVolume(anode_tube,fAnodeWireMaterial,sideSubst("anode_log%c",s));				
+	anode_wire_log = new G4LogicalVolume(anode_tube,fAnodeWireMaterial,sideSubst("anode_log%c",s));				
 	anode_wire_log->SetVisAttributes(visAnodeWires);
 	
 	new G4PVPlacement(NULL,G4ThreeVector(),cathode_wire_log,

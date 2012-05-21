@@ -109,8 +109,8 @@ G4bool bmTrackerSD::ProcessHits(G4Step* aStep,G4TouchableHistory*) {
 		newHit->SetPos(postPos);
 		newHit->SetHitTime(preStep->GetGlobalTime());
 		newHit->SetIncidentMomentum(preStep->GetMomentum());
-		G4VPhysicalVolume* postVolume = postStep->GetPhysicalVolume();
-		newHit->SetVolumeName(postVolume?postVolume->GetName():"Unknown");
+		G4VPhysicalVolume* preVolume = preStep->GetPhysicalVolume();
+		newHit->SetVolumeName(preVolume?preVolume->GetName():"Unknown");
 		newHit->SetVertex(aTrack->GetVertexPosition());
 		newHit->SetCreatorVolumeName(aTrack->GetLogicalVolumeAtVertex()->GetName());
 		newHit->nSecondaries = 0;
