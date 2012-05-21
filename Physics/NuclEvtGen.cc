@@ -119,8 +119,12 @@ void ConversionGamma::run(std::vector<NucDecayEvent>& v) {
 }
 
 void ConversionGamma::display() const {
-	float_err eavg = averageE();
-	printf("Gamma %.1f, CE %.2f~%.2f (%.2f%%)\t",Egamma,eavg.x,eavg.err,100.*getConversionEffic());
+	printf("Gamma %.1f",Egamma);
+	if(subshells.size()) {
+		float_err eavg = averageE();
+		printf(", CE %.2f~%.2f (%.2f%%)\t",eavg.x,eavg.err,100.*getConversionEffic());
+	}
+	printf("\t");
 	TransitionBase::display();
 }
 
@@ -165,8 +169,8 @@ float_err ConversionGamma::averageE() const {
 BetaDecayTrans::BetaDecayTrans(NucLevel& f, NucLevel& t):
 TransitionBase(f,t), betaTF1((f.name+"-"+t.name+"_Beta").c_str(),this,&BetaDecayTrans::evalBeta,0,1,0) {
 	betaTF1.SetNpx(1000);
-	betaTF1.SetRange(0,from.E-to.E-m_e);
-	W0 = (from.E-to.E)/m_e;
+	betaTF1.SetRange(0,from.E-to.E);
+	W0 = (from.E-to.E+m_e)/m_e;
 	R = pow(to.A,1./3.)*neutron_R0;
 	positron = false;
 }
@@ -230,7 +234,7 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 	std::vector<Stringmap> betatrans = Q.retrieve("beta");
 	for(std::vector<Stringmap>::iterator it = betatrans.begin(); it != betatrans.end(); it++) {
 		BetaDecayTrans* BD = new BetaDecayTrans(levels[levIndex(it->getDefault("from",""))],levels[levIndex(it->getDefault("to",""))]);
-		BD->Itotal = it->getDefault("I",0);
+		BD->Itotal = it->getDefault("I",0)/100.0;
 		BD->positron = it->getDefault("positron",0);
 		addTransition(BD);
 	}

@@ -11,10 +11,16 @@ level:	nm = 113.50.0	E = 1036.6		hl = 9.9438e6			jpi = 1/2+
 
 # TODO subshell ratios, errors
 
-gamma:	from = 113.49.1	to = 113.49.0	Igamma = 64.97	CE_K = .444		CE_L = .0862	CE_M = .01750	CE_N = .00316	CE_O = .000194
+gamma:	from = 113.49.1	to = 113.49.0	Igamma = 64.97	\
+	CE_K = .444~.007	CE_L = .0862~.0012	CE_M = .01750~.00025	CE_N = .00316~.00005	CE_O = .000194~.000003
+	
 gamma:	from = 113.49.2	to = 113.49.0	Igamma = 4.0e-6	CE_K = .00730	CE_L = .001089	CE_M = .000214	CE_N = 3.85e-5	CE_O = 2.50e-6
-gamma:	from = 113.49.2	to = 113.49.1	Igamma = 2.11	CE_K = .039		CE_L = .0054	CE_M = .00105	CE_N = 0.00019	CE_O = 1.27e-5
+
+gamma:	from = 113.49.2	to = 113.49.1	Igamma = 2.11	\
+	CE_K = .039~.005	CE_L = .0054~.0011	CE_M = .00105~.00022	CE_N = 0.00019~.00004	CE_O = 1.27e-5~0.14e-5
+
 gamma:	from = 113.49.3	to = 113.49.1	Igamma = 9.7e-4	CE_K = .001130	CE_L = .0001331	CE_M = 2.57e-5	CE_N = 4.69e-6	CE_O = 5.04e-6
+
 gamma:	from = 113.49.3	to = 113.49.2	Igamma = 6.0e-5
 
 ecapt: from = 113.50.0
