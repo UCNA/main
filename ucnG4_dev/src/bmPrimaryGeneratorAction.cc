@@ -37,6 +37,7 @@
 #include "Randomize.hh"
 #include "bmAnalysisManager.hh"
 #include "PathUtils.hh"
+#include "SMExcept.hh"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -276,8 +277,8 @@ void bmPrimaryGeneratorAction::displayGunStatus() {
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
-{	
+void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
+	
 	std::bitset<32> a ( (long) 0);
 	//use the UI fRunNumber in bmAnalysisManager which got set 
 	//in bmRunAction, instead of the GEANT4 default RunID
@@ -306,15 +307,18 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	
 	HepRandom::setTheSeed(myseed);	// random seed for Geant
 	gRandom->SetSeed(myseed);		// random seed for ROOT
+	G4cout<<"run "<<gbmAnalysisManager->GetRunNumber()<<" evt "<<anEvent->GetEventID()<<" seed "<<myseed<<G4endl;
 	
-	G4cout<<"run "<<gbmAnalysisManager->GetRunNumber()<<" "
-	<<"evt "<<anEvent->GetEventID()<<" "
-	<<"seed "<<myseed<<G4endl;
-	
-	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-	G4String particleName;
-	G4ParticleDefinition* particle = particleTable->FindParticle(particleName="e-");
-	particleGun->SetParticleDefinition(particle);
+	if(particleType.size()) {
+		G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+		G4ParticleDefinition* particle = particleTable->FindParticle(particleType);
+		if(!particle) {
+			SMExcept e("UnknownParticle");
+			e.insert("name",particleType);
+			throw(e);
+		}
+		particleGun->SetParticleDefinition(particle);
+	}
 	particleGun->SetParticleTime(0.0*ns);
 	
 	static NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays/",1e-6);

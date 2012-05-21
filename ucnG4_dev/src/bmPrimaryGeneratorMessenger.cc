@@ -47,9 +47,14 @@ bmPrimaryGeneratorMessenger::bmPrimaryGeneratorMessenger(bmPrimaryGeneratorActio
 	
 	gunTypeCmd = new G4UIcmdWithAString("/benchmark/gun/type",this);
 	gunTypeCmd->SetGuidance("Set the generator gun type.");
-	gunTypeCmd->SetGuidance(" Choice : Sn, eGun, eGunRandMomentum");
-	gunTypeCmd->SetDefaultValue("Sn");
+	gunTypeCmd->SetGuidance(" Choices: eGun eGunRandMomentum");
+	gunTypeCmd->SetDefaultValue("eGun");
 	gunTypeCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+	
+	gunPtclCmd = new G4UIcmdWithAString("/benchmark/gun/particle",this);
+	gunPtclCmd->SetGuidance("Set the gun particle thrown.");
+	gunPtclCmd->SetDefaultValue("e-");
+	gunPtclCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 	
 	positionerCmd = new G4UIcmdWithAString("/benchmark/gun/positioner",this);
 	positionerCmd->SetGuidance("Set the generator gun positioner.");
@@ -78,6 +83,8 @@ bmPrimaryGeneratorMessenger::~bmPrimaryGeneratorMessenger()
 void bmPrimaryGeneratorMessenger::SetNewValue(G4UIcommand* command, G4String newValue) { 
 	if( command == gunTypeCmd )
 		bmAction->SetGunType(newValue);
+	if( command == gunPtclCmd )
+		bmAction->SetParticleType(newValue);
 	if( command == positionerCmd )
 		bmAction->SetPositioner(newValue);
 	if( command == sourceRadiusCmd )

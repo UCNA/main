@@ -41,6 +41,7 @@
 /gun/position %(gunpos)s
 # source generator
 /gun/energy %(gunenergy)f keV
+/benchmark/gun/particle %(particle)s
 /benchmark/gun/type %(generator)s
 /benchmark/gun/positioner %(positioner)s
 /benchmark/gun/sourceRadius %(sourceRadius)s

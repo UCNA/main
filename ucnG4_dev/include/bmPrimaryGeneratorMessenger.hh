@@ -57,6 +57,7 @@ private:
     bmPrimaryGeneratorAction* bmAction;
     G4UIdirectory*            gunDir; 
     G4UIcmdWithAString*       gunTypeCmd;
+	G4UIcmdWithAString*       gunPtclCmd;
 	G4UIcmdWithAString*       positionerCmd;
 	G4UIcmdWithADoubleAndUnit* sourceRadiusCmd;
 };

@@ -86,7 +86,8 @@ int main(int argc, char** argv) {
 	G4cout << "Using physics list: " << physlist << G4endl;
 	
 	new G4UnitDefinition("torr","torr","Pressure",atmosphere/760.);
-	G4UnitDefinition::PrintUnitsTable();
+	//G4UnitDefinition::PrintUnitsTable();
+	//G4ParticleTable::GetParticleTable()->DumpTable();
 	
 #ifdef G4VIS_USE
 	// Visualization, if you choose to have it!

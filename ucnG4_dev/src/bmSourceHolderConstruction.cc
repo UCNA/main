@@ -23,6 +23,7 @@ void bmSourceHolderConstruction::SetNewValue(G4UIcommand * command, G4String new
 
 void bmSourceHolderConstruction::Construct() {
 	
+	if(!fWindowThick) fWindowThick = 0.001*um;
 	const G4double fSourceRingRadius = 0.5*inch;
 	const G4double fSourceWindowRadius = fSourceRingRadius-3.*mm;
 	const G4double fSourceRingThickness = 3.2*mm;			// suspiciously close to 1/8 in

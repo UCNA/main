@@ -3,11 +3,13 @@ import os
 import time
 from math import *
 
-class GeantSimManager:
+# killall -9 GeantSimManager.py; killall -9 parallel; killall -9 ucnG4_prod
 
+class GeantSimManager:
+	
 	def __init__(self, simName, vacuum="1.e-5 torr",
-					fmap=None, geometry="C", sourceHolderPos = None, sourceRadius = "1.5 mm"):
-						
+				 fmap=None, geometry="C", sourceHolderPos = None):
+		
 		self.podsh = False				
 		self.settings = {}
 		
@@ -15,7 +17,8 @@ class GeantSimManager:
 		self.settings["geometry"] = geometry
 		self.settings["vacuum"] = vacuum
 		self.settings["sourceholderpos"] = sourceHolderPos
-		self.settings["sourceRadius"] = sourceRadius
+		self.settings["sourceRadius"] = "1.5 mm"
+		self.settings["particle"] = "e-"
 		self.settings["fieldmapcmd"] = "#/detector/fieldmapfile UNUSED"
 		if fmap:
 			self.settings["fieldmapcmd"] = "/detector/fieldmapfile "+fmap
@@ -42,9 +45,9 @@ class GeantSimManager:
 			self.settings["vis_cmd"] += "/vis/scene/add/hits\n"
 			
 			self.settings["vis_cmd"] += "/tracking/verbose 2\n"
-		
-	def set_generator(self,generator,forcePositioner=None):
 	
+	def set_generator(self,generator,forcePositioner=None):
+		
 		self.settings["generator"] = generator
 		self.settings["gunenergy"] = 0
 		
@@ -61,10 +64,12 @@ class GeantSimManager:
 		if self.settings["generator"][:2] in ["Bi","Ce","Sn","Cd","In","Sr","Cs"]:
 			needsHolder = True
 			self.settings["positioner"] = "SourceDrop"
+		if self.settings["generator"][:2] in ["Ce","Cd"]:
+			self.settings["sourceRadius"] = "1.25 mm"
 		if self.settings["generator"] == "In114E":
-			self.settings["gunpos"] = "0 0 4.975 um"
-		if self.settings["generator"] == "In114W":
 			self.settings["gunpos"] = "0 0 -4.975 um"
+		if self.settings["generator"] == "In114W":
+			self.settings["gunpos"] = "0 0 4.975 um"
 		if self.settings["generator"] == "eGun":
 			needsHolder = True
 			self.settings["positioner"] = "Fixed"
@@ -74,7 +79,7 @@ class GeantSimManager:
 			self.settings["positioner"] = "SpectrometerVolumeUniform"
 		if forcePositioner:
 			self.settings["positioner"] = forcePositioner
-				
+		
 		if not self.settings["sourceholderpos"]:	
 			if needsHolder:
 				self.settings["sourceholderpos"] = "0 0	0 m"
@@ -82,8 +87,8 @@ class GeantSimManager:
 				self.settings["sourceholderpos"] = "0 0.5 0 m"
 		
 		self.settings["run_num"] = 0
-		
-		
+	
+	
 	#def throw_lines(self,nLines,eStart,eStop,logSpace):
 	#
 	#	energyLines = [0.5*(eStart+eStop),]
@@ -102,7 +107,7 @@ class GeantSimManager:
 			g4_workdir = "~/geant4/"
 		self.type_dir = self.settings["simName"]+"_%s"%(self.settings["generator"].replace("/","_"))
 		if self.settings["gunenergy"]:
-			type_dir += "_%.1fkeV"%self.settings["gunenergy"]
+			self.type_dir += "_%.1fkeV"%self.settings["gunenergy"]
 		self.g4_out_dir = self.g4_workdir+"/output/%s/"%self.type_dir
 		self.g4_log_dir = self.g4_workdir+"/logs/%s/"%self.type_dir
 		self.g4_macro_dir = self.g4_workdir+"/macros/%s/"%self.type_dir
@@ -119,10 +124,10 @@ class GeantSimManager:
 		if not nruns:
 			nruns = 1
 		oldtime = time.time() - hours_old*3600
-
+		
 		self.set_dirs()
 		parallel_jobfile = "%s/jobs.txt"%self.g4_macro_dir
-
+		
 		os.system("mkdir -p %s"%self.g4_macro_dir)
 		os.system("mkdir -p %s"%self.g4_out_dir)
 		os.system("mkdir -p %s"%self.g4_log_dir)
@@ -133,7 +138,7 @@ class GeantSimManager:
 			ineffic_mul = 4
 		if self.settings["generator"] == "Ce139":
 			ineffic_mul = 2
-	
+		
 		# main simulations
 		os.system("rm -r %s/*"%self.g4_macro_dir)
 		jobsout = None
@@ -173,7 +178,7 @@ class GeantSimManager:
 			subcmds.append("podsh submit --stageout='%s':'%s' %s"%(self.settings["joblog"],self.settings["joblog"],g4_sub_file))
 			
 			if jobsout:
-				jobsout.write(onejob+" > %s\n"%self.settings["joblog"])
+				jobsout.write(onejob+" > %s 2>&1\n"%self.settings["joblog"])
 		
 		if jobsout:
 			jobsout.close()
@@ -194,8 +199,8 @@ class GeantSimManager:
 			else:
 				os.system(onejob)
 			os.system("rm "+parallel_jobfile)
-
-
+	
+	
 	def launch_postanalyzer(self):
 		print "Running post analyzer..."
 		self.set_dirs()
@@ -229,56 +234,57 @@ class GeantSimManager:
 		os.system("nice -n 10 parallel < %s"%resim_jobfile)
 		os.system("rm %s/outlist_*.txt"%self.g4_out_dir)
 		os.system("rm "+resim_jobfile)
-				
-			
-if __name__ == "__main__":
 
+
+if __name__ == "__main__":
+	
 	####################				
 	# neutrons
 	####################
 	
-	# unpolarized beta baseline: 5e7 in 36 clusters
+	# unpolarized beta baseline: 5e7 in 52 clusters
 	if 0:
-		betaSim = GeantSimManager("LivPhys_495")
+		betaSim = GeantSimManager("Test")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
-		betaSim.launch_sims(nEvents=5e7,nClusters=36,hours_old=100*24)
+		betaSim.launch_sims(nEvents=2e4,nClusters=1,hours_old=0)
 		betaSim.launch_postanalyzer()
 	
 	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 52 clusters
-	if 1:
-		betaSim = GeantSimManager("LivPhys_495_MagF_B",vacuum="2.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b_xtra.txt")
+	if 0:
+		betaSim = GeantSimManager("MagF_20101028b",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
-		betaSim.launch_sims(nEvents=1e7,nClusters=52,hours_old=0)
+		betaSim.launch_postanalyzer()
+		betaSim.launch_sims(nEvents=1e7,nClusters=52,hours_old=240)
 		betaSim.launch_postanalyzer()
 	
 	# beta decay in 1e-3torr vacuum: 1e7 in 9 clusters
 	if 0:
-		betaSim = GeantSimManager("LivPhys_495_BadVac",vacuum="2.e-3 torr")
+		betaSim = GeantSimManager("LivPhys_495_BadVac",vacuum="1.e-3 torr")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
 		#betaSim.launch_sims(nEvents=1e7,nClusters=9,hours_old=1000)
 		betaSim.launch_postanalyzer()
-			
-							
+	
+	
 	####################				
 	# calibration sources
 	####################
-					
+	
 	# sources ["Bi207","Sn113","Ce139","Cd109","In114E","In114W","Cd113m"] 1e6 each
 	if 0:
-		for g in ["Bi207"]:
-			sourceSim = GeantSimManager("FixGeom",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+		for g in ["Bi207","Sn113","Ce139","Cd109"]:
+			sourceSim = GeantSimManager("Test",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.set_generator(g)
 			sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
 			sourceSim.launch_postanalyzer()
-
+	
 	####################				
 	# silicon detector
 	####################
-
+	
 	# Silicon detector test
 	if 0:
 		siDet = GeantSimManager("SiDet",geometry="siDet")
@@ -286,10 +292,19 @@ if __name__ == "__main__":
 		siDet.settings["extra_cmds"] += "/sourceholder/windowthickness 1.5 mm\n"
 		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
 		siDet.launch_postanalyzer()
-	
-	
-	# visualization test
-	#launch_simulations(generators = ["eGunRandMomentum"], forcePositioner="SourceDrop",
-	#					nEvents = 99, nClusters=0, folderPrefix = "VisTest",
-	#					nMonoLines=1, eStart=60.0, eStop=60.0, hours_old = 0, resimOnly=False)
-	
+
+	# Alpha particles through foil
+	if 1:
+		for th in range(11):
+			siDet = GeantSimManager("AlphaFoil_%i"%th,geometry="siDet")
+			siDet.set_generator("eGun")
+			siDet.settings["extra_cmds"] += "/sourceholder/windowthickness %i um\n"%th
+			siDet.settings["particle"] = "alpha"
+			siDet.settings["gunenergy"] = 5485.56
+			siDet.launch_sims(nEvents=1e4,nClusters=1,hours_old=0)
+			siDet.launch_postanalyzer()
+
+# visualization test
+#launch_simulations(generators = ["eGunRandMomentum"], forcePositioner="SourceDrop",
+#					nEvents = 99, nClusters=0, folderPrefix = "VisTest",
+#					nMonoLines=1, eStart=60.0, eStop=60.0, hours_old = 0, resimOnly=False)

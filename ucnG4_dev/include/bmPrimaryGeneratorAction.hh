@@ -65,6 +65,7 @@ public:
 	
 	void GeneratePrimaries(G4Event*);
 	void SetGunType(G4String val) { gunType = val; }
+	void SetParticleType(G4String val) { particleType = val; }
 	void SetPositioner(G4String val) { positioner = val; }
 	void SetSourceRadius(double r) { sourceRadius = r; }
 	
@@ -73,6 +74,7 @@ private:
 	bmDetectorConstruction* myDetector;
 	bmPrimaryGeneratorMessenger* gunMessenger;	//< messenger of this class
 	G4String gunType;							//< event generator gun to use
+	G4String particleType;						//< particle type to throw
 	G4String positioner;						//< how to position initial events
 	double sourceRadius;						//< radius for sealed source generator
 	
