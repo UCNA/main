@@ -93,6 +93,14 @@ void randomTubePosition(const G4ThreeVector centerpos, const G4double radius, co
 	pos = centerpos+G4ThreeVector(x0,y0,z0);
 }
 
+/// generate a random position with uniform number in radial bins
+void randomUniformRadialBins(const G4ThreeVector centerpos, const G4double radius, const G4double halfz, G4ThreeVector& pos) {
+	G4double r = G4UniformRand()*radius;
+	G4double theta = 2*PI*G4UniformRand();
+	G4double z0=(2.0*G4UniformRand()-1.0)*halfz;
+	pos = centerpos+G4ThreeVector(r*cos(theta),r*sin(theta),z0);
+}
+
 double genericBetaSpectrum(double* x, double *par) {
 	double KE = x[0]; // particle kinetic energy
 	double Q = par[0]; // spectrum endpoint
@@ -343,12 +351,14 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	} else if(positioner=="SpectrometerVolumeUniform") {
 		// uniform fill of (visible) spectrometer volume, for Xe
 		randomTubePosition(G4ThreeVector(0,0,0), 7.5*cm, 2.17*m, vertex_position);
+	} else if(positioner=="UniformRadialGasFill") {
+		randomUniformRadialBins(G4ThreeVector(0,0,0),8.0*cm, 2.1*m, vertex_position);
 	} else {
 		G4cout << "********* WARNING: Undefined positioner type! Defaulting to 'Fixed'! **********" << G4endl;
 	}
 	particleGun->SetParticlePosition(vertex_position);
 	
-	if(gunType=="Sn113" || gunType=="Bi207" || gunType=="Ce139" || gunType=="Cd109") {
+	if(gunType=="Sn113" || gunType=="Bi207" || gunType=="Ce139" || gunType=="Cd109" || gunType=="Xe135_3-2+") {
 		NucDecaySystem& NDS = NDL.getGenerator(gunType);
 		while(!evts.size())
 			NDS.genDecayChain(evts);

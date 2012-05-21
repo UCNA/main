@@ -76,7 +76,7 @@ class GeantSimManager:
 			self.settings["gunpos"] = "0 0 -1.0 m"
 			self.settings["magf"] = "off"
 		if self.settings["generator"][:2] == "Xe":
-			self.settings["positioner"] = "SpectrometerVolumeUniform"
+			self.settings["positioner"] = "UniformRadialGasFill"
 		if forcePositioner:
 			self.settings["positioner"] = forcePositioner
 		
@@ -255,7 +255,6 @@ if __name__ == "__main__":
 		betaSim = GeantSimManager("MagF_20101028b",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
-		betaSim.launch_postanalyzer()
 		betaSim.launch_sims(nEvents=1e7,nClusters=52,hours_old=240)
 		betaSim.launch_postanalyzer()
 	
@@ -281,6 +280,19 @@ if __name__ == "__main__":
 			sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
 			sourceSim.launch_postanalyzer()
 	
+
+	####################				
+	# Xenon
+	####################
+	if 1:
+		for g in ["Xe135_3-2+"]:
+			sourceSim = GeantSimManager("Xe",vacuum="1.e-3 torr")
+			sourceSim.settings["physlist"]="livermore"
+			sourceSim.set_generator(g)
+			sourceSim.launch_sims(nEvents=5e6,nClusters=9,hours_old=0)
+			sourceSim.launch_postanalyzer()
+
+	
 	####################				
 	# silicon detector
 	####################
@@ -294,7 +306,7 @@ if __name__ == "__main__":
 		siDet.launch_postanalyzer()
 
 	# Alpha particles through foil
-	if 1:
+	if 0:
 		for th in range(11):
 			siDet = GeantSimManager("AlphaFoil_%i"%th,geometry="siDet")
 			siDet.set_generator("eGun")

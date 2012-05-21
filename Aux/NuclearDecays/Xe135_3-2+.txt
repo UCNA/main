@@ -39,3 +39,5 @@ gamma:	from = 135.55.5	to = 135.55.0	Igamma = .0041
 gamma:	from = 135.55.5	to = 135.55.1	Igamma = .070
 gamma:	from = 135.55.5	to = 135.55.2	Igamma = .0450
 gamma:	from = 135.55.5	to = 135.55.3	Igamma = .0036
+
+AugerK:	Z = 55	ka1 = 2.63	ka2 = 1.44	kb3 = .249	kb1 = .480	kb2 = .149	Iauger = 0.597
