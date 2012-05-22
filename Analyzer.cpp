@@ -15,6 +15,7 @@
 #include "ReSource.hh"
 #include "G4toPMT.hh"
 #include "LEDScans.hh"
+#include "NuclEvtGen.hh"
 
 std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
 	char tmp[1024];
@@ -122,15 +123,15 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octn = streamInteractor::popInt(stack);
 	const std::string outputDir="OctetAsym_Offic";
 	
-	const std::string simOutputDir=outputDir+"_Sim_MagF";
+	const std::string simOutputDir=outputDir+"_Sim_MagF_2";
 	
-	std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_MagF_neutronBetaUnpol/analyzed_";
+	std::string simFile="/home/mmendenhall/geant4/output/MagF_20101028b_neutronBetaUnpol/analyzed_";
 	//std::string simFile = "/home/mmendenhall/geant4/output/LivPhys_495_BadVac_neutronBetaUnpol/analyzed_";
 	//std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_";
 	
-	unsigned int nTot = 32;
+	unsigned int nTot = 10;
 	unsigned int stride = 7;
-		
+	
 	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
 	if(octn==1000) {
@@ -179,6 +180,46 @@ void mi_sourcelog(std::deque<std::string>&, std::stack<std::string>&) { uploadRu
 
 void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrectionsFile(getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection/SpectrumCorrection.txt"); }
 
+void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
+	
+	std::string isot = "Xe137_7-2-";
+	double emax = 4200;
+	int nbins = 500;
+	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
+	NDL.BEL.display();
+	NucDecaySystem& NDS = NDL.getGenerator(isot);
+	//NDS.scale(1/1.86);
+	NDS.display();
+	
+	OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
+	TH1F* hSpec = OMTest.registeredTH1F("hSpec",isot+" Spectrum",nbins,0,emax);
+	std::vector<NucDecayEvent> v;
+	for(unsigned int i=0; i<1e7; i++) {
+		v.clear();
+		NDS.genDecayChain(v);
+		for(std::vector<NucDecayEvent>::iterator it = v.begin(); it < v.end(); it++)
+			if(it->d == D_ELECTRON)
+				hSpec->Fill(it->E);
+	}
+	OMTest.defaultCanvas->SetLogy(false);
+	hSpec->Draw();
+	OMTest.printCanvas(isot+"_SimSpectrum");
+	return;
+	
+	//spectrumGenTest();
+	
+	
+	/*
+	 OutputManager OMLS("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorr");
+	 LEDScanScanner LSS;
+	 std::vector<RunNum> bruns = selectRuns(16193, 16216, "beta");
+	 //std::vector<RunNum> bruns = selectRuns(16097, 16216, "beta");
+	 LSS.addRuns(bruns);
+	 PMT_LED_Correlations(OMLS,LSS);
+	 exit(0);	
+	 */
+}
+
 void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	gStyle->SetPalette(1);
@@ -188,21 +229,9 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	defaultCanvas.SetFillColor(0);
 	defaultCanvas.SetCanvasSize(300,300);
 	
-	//spectrumGenTest();
-	//exit(0);
-	
-	/*
-	OutputManager OMLS("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorr");
-	LEDScanScanner LSS;
-	std::vector<RunNum> bruns = selectRuns(16193, 16216, "beta");
-	//std::vector<RunNum> bruns = selectRuns(16097, 16216, "beta");
-	LSS.addRuns(bruns);
-	PMT_LED_Correlations(OMLS,LSS);
-	exit(0);	
-	*/
-	
 	inputRequester exitMenu("Exit Menu",&menutils_Exit);
 	inputRequester peek("Show stack",&menutils_PrintStack);
+	inputRequester doMisc("Misc",&mi_misc);
 	
 	// selection utilities
 	NameSelector selectRuntype("Run Type");
@@ -282,6 +311,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OM.addChoice(&evis2etrue,"ev");
 	OM.addChoice(&radcor,"rc");
 	OM.addChoice(&anawc,"wc");
+	OM.addChoice(&doMisc,"msc");
 	OM.addChoice(&exitMenu,"x");
 	OM.addSynonym("x","exit");
 	OM.addSynonym("x","quit");

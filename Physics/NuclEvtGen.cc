@@ -308,7 +308,7 @@ void NucDecaySystem::setCutoff(double t) {
 			levelDecays[n].addProb(transitions[transOut[n][t]]->Itotal);
 		
 		double pStart = (n+1==levels.size());
-		if(levels[n].hl > tcut && transOut[n].size())
+		if(!pStart && levels[n].hl > tcut && transOut[n].size())
 			for(unsigned int t = 0; t < transIn[n].size(); t++)
 				pStart += transitions[transIn[n][t]]->Itotal;
 		lStart.addProb(pStart);
