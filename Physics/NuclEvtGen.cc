@@ -47,7 +47,10 @@ void NucLevel::display() const {
 //-----------------------------------------
 
 DecayAtom::DecayAtom(BindingEnergyTable const* B): BET(B), Iauger(0), Ikxr(0), ICEK(0), IMissing(0), pAuger(0) {
-	Eauger = BET->getSubshellBinding(0,0) - BET->getSubshellBinding(1,0) - BET->getSubshellBinding(1,1);
+	if(BET->getZ()>2)
+		Eauger = BET->getSubshellBinding(0,0) - BET->getSubshellBinding(1,0) - BET->getSubshellBinding(1,1);
+	else
+		Eauger = 0;
 }
 
 void DecayAtom::load(const Stringmap& m) {
@@ -62,7 +65,7 @@ void DecayAtom::load(const Stringmap& m) {
 	IMissing = Iauger+Ikxr-ICEK;
 	if(!Iauger) IMissing = pAuger = 0;	
 }
-	
+
 void DecayAtom::genAuger(std::vector<NucDecayEvent>& v) {
 	if(gRandom->Uniform(0,1) > pAuger) return;
 	NucDecayEvent evt;
@@ -269,7 +272,7 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 			addTransition(EC);
 		}
 	}
-
+	
 	setCutoff(t);
 }
 

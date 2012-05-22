@@ -18,7 +18,7 @@ SHELL = /bin/sh
 CC = cc
 CXX = g++
 
-CXXFLAGS = -O3 -m32 -Wall `root-config --cflags` \
+CXXFLAGS = -O3 -Wall `root-config --cflags` \
 	-I. -IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics
 LDFLAGS = `root-config --libs` -lSpectrum 
 

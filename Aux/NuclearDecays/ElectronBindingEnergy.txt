@@ -2,6 +2,8 @@
 # Electron binding energies
 # Data from Bearden, Burr, Rev. Mod. Phys. 39 No.1 125-147 (1967)
 
+binding:	Z = 1	name = H	K = 13.59811
+
 binding:	Z = 47	name = Ag	K = 25514.0	L1 = 3805.8	L2 = 3523.7	L3 = 3351.1	M1 = 717.5	M2 = 602.4	M3 = 571.4	M4 = 372.8	M5 = 366.7	\
 			N1 = 95.2	N2 = 62.6	N3 = 55.9	N4 = 3.3	N5 = 3.3
 			
