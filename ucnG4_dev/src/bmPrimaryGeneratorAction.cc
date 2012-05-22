@@ -352,13 +352,14 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		// uniform fill of (visible) spectrometer volume, for Xe
 		randomTubePosition(G4ThreeVector(0,0,0), 7.5*cm, 2.17*m, vertex_position);
 	} else if(positioner=="UniformRadialGasFill") {
-		randomUniformRadialBins(G4ThreeVector(0,0,0),8.0*cm, 2.1*m, vertex_position);
+		randomUniformRadialBins(G4ThreeVector(0,0,0),7.5*cm, 2.1*m, vertex_position);
 	} else {
 		G4cout << "********* WARNING: Undefined positioner type! Defaulting to 'Fixed'! **********" << G4endl;
 	}
 	particleGun->SetParticlePosition(vertex_position);
 	
-	if(gunType=="Sn113" || gunType=="Bi207" || gunType=="Ce139" || gunType=="Cd109" || gunType=="Xe135_3-2+") {
+	if(gunType=="Sn113" || gunType=="Bi207" || gunType=="Ce139" || gunType=="Cd109" 
+	   || gunType=="Xe135_3-2+" || gunType=="Xe125_1-2+") {
 		NucDecaySystem& NDS = NDL.getGenerator(gunType);
 		while(!evts.size())
 			NDS.genDecayChain(evts);

@@ -40,6 +40,8 @@ public:
 	NucLevel(const Stringmap& m);
 	/// print info
 	void display() const;
+	/// scale probabilities
+	void scale(double s) { fluxIn *= s; fluxOut *= s; }
 	
 	std::string name;	//< name for this level
 	unsigned int A;		//< nucleus A
@@ -101,6 +103,9 @@ public:
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>&) { }
 	
+	/// scale probability
+	virtual void scale(double s) { Itotal *= s; }
+	
 	/// get probability of removing an electron from a given shell
 	virtual double getPVacant(unsigned int) const { return 0; }
 	/// how many of given electron type were knocked out
@@ -132,6 +137,8 @@ public:
 	double shellAverageE(unsigned int n) const;
 	/// line weighted average
 	float_err averageE() const;
+	/// scale probability
+	virtual void scale(double s);
 	
 	double Egamma;		//< gamma energy
 	int shell;			//< selected conversion electron shell
@@ -202,6 +209,8 @@ public:
 	void displayAtoms() const;
 	/// generate a chain of decay events starting from level n
 	void genDecayChain(std::vector<NucDecayEvent>& v, unsigned int n = UINT_MAX);
+	/// rescale all probabilities
+	void scale(double s);
 	
 protected:
 	/// get index for named level

@@ -119,10 +119,11 @@ void ConversionGamma::run(std::vector<NucDecayEvent>& v) {
 }
 
 void ConversionGamma::display() const {
-	printf("Gamma %.1f",Egamma);
+	double ceff = 100.*getConversionEffic();
+	printf("Gamma %.1f (%.3g%%)",Egamma,(100.-ceff)*Itotal);
 	if(subshells.size()) {
 		float_err eavg = averageE();
-		printf(", CE %.2f~%.2f (%.2f%%)\t",eavg.x,eavg.err,100.*getConversionEffic());
+		printf(", CE %.2f~%.2f (%.3g%%)",eavg.x,eavg.err,ceff*Itotal);
 	}
 	printf("\t");
 	TransitionBase::display();
@@ -162,6 +163,12 @@ float_err ConversionGamma::averageE() const {
 		serr += u*u;
 	}
 	return float_err(e,sqrt(serr)/w);
+}
+
+void ConversionGamma::scale(double s) {
+	TransitionBase::scale(s);
+	Igamma /= s;
+	shells.scale(s);
 }
 
 //-----------------------------------------
@@ -359,6 +366,16 @@ void NucDecaySystem::genDecayChain(std::vector<NucDecayEvent>& v, unsigned int n
 		getAtom(T->to.Z)->genAuger(v);
 	
 	genDecayChain(v,T->to.n);
+}
+
+void NucDecaySystem::scale(double s) {
+	lStart.scale(s);
+	for(unsigned int i = 0; i<transitions.size(); i++)
+		transitions[i]->scale(s);
+	for(unsigned int i = 0; i<levels.size(); i++) {
+		levels[i].scale(s);
+		levelDecays[i].scale(s);
+	}
 }
 
 //-----------------------------------------
