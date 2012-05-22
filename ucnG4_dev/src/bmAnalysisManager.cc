@@ -20,13 +20,13 @@
 #include "G4SDManager.hh"
 #include "G4EventManager.hh"
 #include "Randomize.hh"
+#include "SMExcept.hh"
 
 #include "bmAnalysisManager.hh"
 
-
-//STL vectors
 #include <vector>
 #include <string>
+#include <cassert>
 
 using namespace CLHEP;
 using namespace std;
@@ -54,9 +54,9 @@ void bmAnalysisManager::OpenFile(const G4String filename) {
 	fROOTOutputFile= new TFile(filename.c_str(), "RECREATE", "Geant4 benchmark simulation output file");  
 	
 	if (fROOTOutputFile == 0) {
-		G4cerr << "Could not open ROOT output file "
-		<< filename << G4endl;
-		return;
+		SMExcept e("CannotOpenOutputFile");
+		e.insert("filename",filename);
+		throw(e);
     }
 	CreateTrees();
 }
@@ -84,6 +84,12 @@ void bmAnalysisManager::StoreHitCollectionIDs() {
 	detectorIDs.clear();
 	for(size_t ii=0;ii<fSDNames.size();ii++){
 		int id = SDman->GetCollectionID(fSDNames[ii]+"/trackerCollection");
+		if(id<0) {
+			SMExcept e("BadCollectionID");
+			e.insert("id",id);
+			e.insert("name",fSDNames[ii]+"/trackerCollection");
+			throw(e);
+		}
 		detectorIDs.push_back(id);
 		G4cout<<fSDNames[ii]<<" : Id = "<<id<<G4endl;
 	} 

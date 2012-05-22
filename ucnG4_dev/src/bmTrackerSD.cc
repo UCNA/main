@@ -46,14 +46,14 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 bmTrackerSD::bmTrackerSD(G4String name): G4VSensitiveDetector(name) {
-	G4String HCname;
-	collectionName.insert(HCname="trackerCollection");
+	collectionName.insert("trackerCollection");
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void bmTrackerSD::Initialize(G4HCofThisEvent* HCE) {
 	// make a new hits collection and register it for this event
+	assert(collectionName.size());
 	trackerCollection = new bmTrackerHitsCollection(SensitiveDetectorName,collectionName[0]); 
 	G4int HCID = G4SDManager::GetSDMpointer()->GetCollectionID(trackerCollection); 
 	HCE->AddHitsCollection(HCID, trackerCollection); 

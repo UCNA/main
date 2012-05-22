@@ -127,6 +127,12 @@ void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValu
     }
 }
 
+bmTrackerSD* registerSD(G4String sdName) {
+	bmTrackerSD* sd = new bmTrackerSD(sdName);
+	G4SDManager::GetSDMpointer()->AddNewDetector(sd);
+	gbmAnalysisManager->SaveSDName(sdName);
+	return sd;
+}
 
 G4VPhysicalVolume* bmDetectorConstruction::Construct()
 {  
@@ -142,14 +148,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 	bmUserGasLimits->SetMaxAllowedStep(1*cm);
 	G4UserLimits* bmUserSolidLimits = new G4UserLimits();
 	bmUserSolidLimits->SetMaxAllowedStep(fScintStepLimit);
-	
-	
-	////////////////////////////////////////
-	// sensisitve detectors
-	////////////////////////////////////////	
-	G4SDManager* SDman = G4SDManager::GetSDMpointer();
-	G4String trackerBlockSDname;
-	
+		
 	///////////////////////////////////////
 	//experimental Hall
 	///////////////////////////////////////
@@ -214,11 +213,8 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 		siDet_phys = new G4PVPlacement(NULL,G4ThreeVector(0,0,siDet.fHolderThick*0.5+source.getHolderThick()*0.5),
 									   siDet.container_log,"silicon_detector_phys",experimentalHall_log,false,0);	
 		
-		trackerBlockSDname = "siDet_SD";
-		siDet_SD = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(siDet_SD);
+		siDet_SD = registerSD("siDet_SD");
 		siDet.det_log->SetSensitiveDetector(siDet_SD);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 		
 	} else {
 		
@@ -246,90 +242,57 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 		
 		for(Side s = EAST; s <= WEST; ++s ) {
 			
-			trackerBlockSDname = sideSubst("scint_SD%c",s);
-			scint_SD[s] = new bmTrackerSD(trackerBlockSDname);
-			SDman->AddNewDetector(scint_SD[s]);
+			scint_SD[s] = registerSD(sideSubst("scint_SD%c",s));
 			dets[s].scint.scint_log->SetSensitiveDetector(scint_SD[s]);
-			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
-			trackerBlockSDname = sideSubst("Dscint_SD%c",s);
-			Dscint_SD[s] = new bmTrackerSD(trackerBlockSDname);
-			SDman->AddNewDetector(Dscint_SD[s]);
+			Dscint_SD[s] = registerSD(sideSubst("Dscint_SD%c",s));
 			dets[s].scint.Dscint_log->SetSensitiveDetector(Dscint_SD[s]);
 			dets[s].scint.container_log->SetSensitiveDetector(Dscint_SD[s]); // include N2 volume here
-			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
-			trackerBlockSDname = sideSubst("backing_SD%c",s);
-			backing_SD[s] = new bmTrackerSD(trackerBlockSDname);
-			SDman->AddNewDetector(backing_SD[s]);
+			backing_SD[s] = registerSD(sideSubst("backing_SD%c",s));
 			dets[s].scint.backing_log->SetSensitiveDetector(backing_SD[s]);
-			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
-			trackerBlockSDname = sideSubst("winOut_SD%c",s);
-			winOut_SD[s] = new bmTrackerSD(trackerBlockSDname);
-			SDman->AddNewDetector(winOut_SD[s]);
+			winOut_SD[s] = registerSD(sideSubst("winOut_SD%c",s));
 			dets[s].mwpc.winOut_log->SetSensitiveDetector(winOut_SD[s]);
-			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
-			trackerBlockSDname = sideSubst("winIn_SD%c",s);
-			winIn_SD[s] = new bmTrackerSD(trackerBlockSDname);
-			SDman->AddNewDetector(winIn_SD[s]);
+			winIn_SD[s] = registerSD(sideSubst("winIn_SD%c",s));
 			dets[s].mwpc.winIn_log->SetSensitiveDetector(winIn_SD[s]);
-			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
-			trackerBlockSDname = sideSubst("trap_win_SD%c",s);
-			trap_win_SD[s] = new bmTrackerSD(trackerBlockSDname);
-			SDman->AddNewDetector(trap_win_SD[s]);
+			trap_win_SD[s] = registerSD(sideSubst("trap_win_SD%c",s));
 			trap.mylar_win_log[s]->SetSensitiveDetector(trap_win_SD[s]);
 			trap.be_win_log[s]->SetSensitiveDetector(trap_win_SD[s]);
-			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
-			trackerBlockSDname = sideSubst("mwpc_SD%c",s);
-			mwpc_SD[s] = new bmTrackerSD(trackerBlockSDname);
-			SDman->AddNewDetector(mwpc_SD[s]);
+			mwpc_SD[s] = registerSD(sideSubst("mwpc_SD%c",s));
 			dets[s].mwpc.activeRegion.gas_log->SetSensitiveDetector(mwpc_SD[s]);
-			dets[s].mwpc.activeRegion.cathSeg_log->SetSensitiveDetector(mwpc_SD[s]);
-			dets[s].mwpc.activeRegion.anodeSeg_log->SetSensitiveDetector(mwpc_SD[s]);
-			dets[s].mwpc.activeRegion.cathode_wire_log->SetSensitiveDetector(mwpc_SD[s]);
-			dets[s].mwpc.activeRegion.anode_wire_log->SetSensitiveDetector(mwpc_SD[s]);
-			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
-			trackerBlockSDname = sideSubst("mwpcDead_SD%c",s);
-			mwpcDead_SD[s] = new bmTrackerSD(trackerBlockSDname);
-			SDman->AddNewDetector(mwpcDead_SD[s]);
+			mwpc_planes_SD[s] = registerSD(sideSubst("mwpc_planes_SD%c",s));
+			dets[s].mwpc.activeRegion.cathSeg_log->SetSensitiveDetector(mwpc_planes_SD[s]);
+			dets[s].mwpc.activeRegion.anodeSeg_log->SetSensitiveDetector(mwpc_planes_SD[s]);
+			dets[s].mwpc.activeRegion.cathode_wire_log->SetSensitiveDetector(mwpc_planes_SD[s]);
+			dets[s].mwpc.activeRegion.anode_wire_log->SetSensitiveDetector(mwpc_planes_SD[s]);
+			
+			mwpcDead_SD[s] = registerSD(sideSubst("mwpcDead_SD%c",s));
 			dets[s].mwpc.container_log->SetSensitiveDetector(mwpcDead_SD[s]);
-			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 			
-			trackerBlockSDname = sideSubst("kevlar_SD%c",s);
-			kevlar_SD[s] = new bmTrackerSD(trackerBlockSDname);
-			SDman->AddNewDetector(kevlar_SD[s]);
+			kevlar_SD[s] = registerSD(sideSubst("kevlar_SD%c",s));
 			dets[s].mwpc.kevlar_log->SetSensitiveDetector(kevlar_SD[s]);
 			dets[s].mwpc.kevContainer_log->SetSensitiveDetector(kevlar_SD[s]);
-			gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 		}
 		
 		// source holder
-		trackerBlockSDname = "source_SD";
-		source_SD = new bmTrackerSD( trackerBlockSDname );
-		SDman->AddNewDetector(source_SD);
+		source_SD = registerSD("source_SD");
 		source.window_log->SetSensitiveDetector(source_SD);
 		for(Side s = EAST; s <= WEST; ++s)
 			source.coating_log[s]->SetSensitiveDetector(source_SD);
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);
 		
 		// decay trap monitor volumes
 		for(Side s = EAST; s <= WEST; ++s ) {
-			trackerBlockSDname = sideSubst("trap_monitor_SD%c",s);
-			trap_monitor_SD[s] = new bmTrackerSD(trackerBlockSDname);
-			SDman->AddNewDetector(trap_monitor_SD[s]);
+			trap_monitor_SD[s] = registerSD(sideSubst("trap_monitor_SD%c",s));
 			trap.trap_monitor_log[s]->SetSensitiveDetector(trap_monitor_SD[s]);
-			gbmAnalysisManager->SaveSDName(trackerBlockSDname);		
 		}
 		
 		// experimental hall vacuum, decay tube, other inert parts
-		trackerBlockSDname = "hall_SD";
-		hall_SD = new bmTrackerSD(trackerBlockSDname);
-		SDman->AddNewDetector(hall_SD);
+		hall_SD = registerSD("hall_SD");
 		experimentalHall_log->SetSensitiveDetector(hall_SD);
 		trap.decayTube_log->SetSensitiveDetector(hall_SD);
 		for(Side s = EAST; s <= WEST; ++s ) {
@@ -337,7 +300,6 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			dets[s].mwpc_exit_log->SetSensitiveDetector(hall_SD);
 			dets[s].container_log->SetSensitiveDetector(hall_SD);
 		}
-		gbmAnalysisManager->SaveSDName(trackerBlockSDname);	
 		
 		// construct magnetic field
 		cout<<"##### "<<sFieldMapFile<<" #####"<<endl;

@@ -86,6 +86,7 @@ private:
 	bmTrackerSD* kevlar_SD[2];
 	
 	bmTrackerSD* mwpc_SD[2];
+	bmTrackerSD* mwpc_planes_SD[2];
 	bmTrackerSD* mwpcDead_SD[2];
 	
 	bmTrackerSD* source_SD;

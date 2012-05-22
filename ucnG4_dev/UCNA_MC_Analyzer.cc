@@ -46,13 +46,13 @@ void UCNA_MC_Analyzer::resetAnaEvt() {
 void UCNA_MC_Analyzer::processTrack() {
 	
 	// detector ID numbers
-	const int ID_scint[2] = {0,9};
-	const int ID_DF[2] = {5,14};
-	const int ID_mwpc[2] = {6,15};
-	const int ID_mwpc_backwin[2] = {3,12};
-	const int ID_mwpc_frontwin[2] = {4,13};
+	const int ID_scint[2] = {0,10};
+	const int ID_DF[2] = {5,15};
+	const int ID_mwpc[2] = {6,16};
+	const int ID_mwpc_backwin[2] = {3,13};
+	const int ID_mwpc_frontwin[2] = {4,14};
 	
-	const int ID_trapmon[2] = {19,20};
+	const int ID_trapmon[2] = {21,22};
 	// particle ID numbers
 	const int PDG_ELECTRON = 11;
 	const int PDG_POSITRON = -11;
