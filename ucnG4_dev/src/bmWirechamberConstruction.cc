@@ -1,8 +1,11 @@
 #include "bmWirechamberConstruction.hh"
-#include "G4PVParameterised.hh"
-#include "ucnaWireParameterisation.hh"
+#include "G4PVReplica.hh"
 
 void bmWirechamberConstruction::Construct(Side s) {
+	
+	///////////////////////////////////////////////////
+	// main volume
+	///////////////////////////////////////////////////
 	
 	// construct active gas volume
 	activeRegion.fMWPCGas = fMWPCGas;
@@ -23,59 +26,62 @@ void bmWirechamberConstruction::Construct(Side s) {
 	container_log = new G4LogicalVolume(mwpcContainer_box, fMWPCGas,sideSubst("mwpcContainer_log%c",s));
 	
 	// MWPC active gas volume placement with wireplane, relative to MWPC container volume
-	mwpc_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,(entranceToCathodes-exitToCathodes)/2),
-								  activeRegion.gas_log,sideSubst("mwpc_phys%c",s),container_log,false,0);
+	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,(entranceToCathodes-exitToCathodes)/2),
+					  activeRegion.gas_log,sideSubst("mwpc_phys%c",s),container_log,false,0);
 	
-	// wirechamber mylar windows
+	///////////////////////////////////////////////////
+	// kevlar strings
+	///////////////////////////////////////////////////
+	
+	// rectangular cross section strings with equal volume to nominal 140um cylinders
+	const G4double kevlar_R=0.07*mm;
+	const G4int NbOfKevWires=28;
+	const G4double kevLength=15.*cm;
+	const G4double kevlar_spacing=5.*mm;
+	const G4double kev_AR = 16.;						// aspect ratio, width:depth
+	const G4double kev_area = PI*kevlar_R*kevlar_R;		// total cross section area
+	const G4double kev_eff_w = sqrt(kev_area*kev_AR);	// effective width
+	const G4double kev_eff_t = sqrt(kev_area/kev_AR);	// effective thickness
+	
+	const G4double kevlarPosZ = -mwpcContainer_halfZ+kev_eff_t/2.;
+	
+	G4Box* kevContainer_box = new G4Box("kevContainer_box",NbOfKevWires*kevlar_spacing/2.,kevLength/2.,kev_eff_t/2.);
+	G4Box* kevSeg_box = new G4Box("kevSeg_box",kevlar_spacing/2.,kevLength/2.,kev_eff_t/2);
+	G4Box* kevStrip_box = new G4Box("kevStrip_box",kev_eff_w/2.,kevLength/2.,kev_eff_t/2.);
+	
+	kevContainer_log = new G4LogicalVolume(kevContainer_box,Vacuum,sideSubst("kevContainer_log%c",s));
+	kevSeg_log = new G4LogicalVolume(kevSeg_box,Vacuum,"kevSeg_log");
+	kevStrip_log = new G4LogicalVolume(kevStrip_box,Kevlar,"kevStrip_log");
+	
+	G4VisAttributes* visKevlar = new G4VisAttributes(G4Colour(1,1.0,0,1.0));
+	kevStrip_log->SetVisAttributes(visKevlar);
+	
+	// place components and replicate array
+	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,kevlarPosZ),
+					  kevContainer_log,sideSubst("kevContainer_phys%c",s),container_log,false,0);
+	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,0.),
+					  kevStrip_log,"kevStrip_phys",kevSeg_log,false,0);	
+	new G4PVReplica(sideSubst("kevlar_plane_%c",s),
+					kevSeg_log,
+					kevContainer_log,
+					kXAxis,
+					NbOfKevWires,
+					kevlar_spacing);
+
+	///////////////////////////////////////////////////
+	// mylar windows
+	///////////////////////////////////////////////////
+	
 	G4Tubs* winInner_tube = new G4Tubs("winInner_tube",0.,mwpc_entrance_R,fWindowThick/2,0.,2*M_PI);  
 	G4Tubs* winOuter_tube = new G4Tubs("winOuter_tube",0.,mwpc_exit_R,fWindowThick/2,0.,2*M_PI); 
 	G4VisAttributes* visWindow = new G4VisAttributes(G4Colour(0,1.0,0,1));
 	winIn_log = new G4LogicalVolume(winInner_tube,Mylar,sideSubst("winIn_log%c",s));
 	winIn_log->SetVisAttributes(visWindow);
-	winIn_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,-mwpcContainer_halfZ+fWindowThick/2),winIn_log,sideSubst("winIn%c",s),
-								   container_log,false,0);
+	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,-mwpcContainer_halfZ+kev_eff_t+fWindowThick/2),winIn_log,sideSubst("winIn%c",s),
+					  container_log,false,0);
 	winOut_log = new G4LogicalVolume(winOuter_tube,Mylar,sideSubst("winOut_log%c",s));
 	winOut_log->SetVisAttributes(visWindow);
-	winOut_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,mwpcContainer_halfZ-fWindowThick/2),winOut_log,sideSubst("winOut%c",s),
-									container_log,false,0);
+	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,mwpcContainer_halfZ-fWindowThick/2),winOut_log,sideSubst("winOut%c",s),
+					  container_log,false,0);
 	
-	
-	///////////////////////////////////////////////////
-	//kevlar wires:
-	///////////////////////////////////////////////////
-	
-	const G4double kevlar_R=0.07*mm;
-	const G4int NbOfKevWires=28;
-	const G4double kevlar_spacing=5.*mm;
-	const G4double kevlarPosZ = -mwpcContainer_halfZ+fWindowThick+3*kevlar_R;
-	G4double firstPos=0.-13.5*kevlar_spacing;
-	G4double maxLength=7.5*cm;
-	G4Tubs* kevContainer_tube = new G4Tubs("kevContainer_tube",0.,mwpc_entrance_R,kevlar_R,0.,2*M_PI);
-	G4Tubs* kevlar_tube = new G4Tubs("kevlar_tube",0,kevlar_R,1*cm,0.,2*M_PI);
-	G4VPhysicalVolume* kevContainer_phys;
-	
-	G4VPVParameterisation* kevlarParam;
-	G4VisAttributes* visKevlar = new G4VisAttributes(G4Colour(1,1.0,0,1.0));
-	
-	kevContainer_log = new G4LogicalVolume(kevContainer_tube,Vacuum,sideSubst("kevContainer_log%c",s));
-	kevContainer_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,kevlarPosZ),
-										  kevContainer_log,sideSubst("kevContainer_phys%c",s),container_log,false,0);
-	
-	kevlar_log = new G4LogicalVolume(kevlar_tube,Kevlar,sideSubst("kevlar_log%c",s));
-	kevlar_log->SetVisAttributes(visKevlar);
-	
-	kevlarParam = new ucnaWireParameterisation(NbOfKevWires,	// Number of Wires 
-											   0.0,				// Z position
-											   firstPos,		// first position On X
-											   kevlar_spacing,	// spacing of centers
-											   kevlar_R,		// tube Radius
-											   maxLength,		// Disk Radius
-											   1);				// placement along X
-	
-	kevlar_phys = new G4PVParameterised(sideSubst("kevlar%c",s),	// their name
-										kevlar_log,					// their logical volume
-										kevContainer_phys,			// Mother  volume
-										kXAxis,						// Are placed along this axis 
-										NbOfKevWires,				// Number of wires
-										kevlarParam);				// The parametrisation
 }

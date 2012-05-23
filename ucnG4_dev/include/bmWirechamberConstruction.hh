@@ -17,21 +17,20 @@ public:
 	G4double mwpc_exit_R;			//< exit window radius
 	G4Material* fMWPCGas;			//< MWPC fill gas
 	bmWireVolumeConstruction activeRegion;	//< active gas region with wireplanes
+	
 	G4LogicalVolume* container_log;	//< overall gas box
 	G4LogicalVolume* winIn_log;		//< inner window
 	G4LogicalVolume* winOut_log;	//< outer window
-	G4LogicalVolume* kevContainer_log;	//< container for kevlar strings
-	G4LogicalVolume* kevlar_log;	//< kevlar window support strings
+		
+	G4LogicalVolume* kevContainer_log;	//< container volume for kevlar strip array
+	G4LogicalVolume* kevSeg_log;		//< one segment of kevlar strip array
+	G4LogicalVolume* kevStrip_log;		//< kevlar strip in one segment
 	
 	/// construct logical container volume
 	void Construct(Side s);
 	
 protected:
 	G4double mwpcContainer_halfZ;	//< half-width of wirechamber
-	G4VPhysicalVolume* mwpc_phys;	//< placed active region
-	G4VPhysicalVolume* winIn_phys;	//< placed inner window
-	G4VPhysicalVolume* winOut_phys;	//< placed outer window
-	G4VPhysicalVolume* kevlar_phys;	//< placed kevlar strings
 };
 
 #endif

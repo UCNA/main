@@ -236,7 +236,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			dets[s].mwpc.container_log->SetUserLimits(bmUserGasLimits);
 			dets[s].mwpc.winIn_log->SetUserLimits(bmUserSolidLimits);
 			dets[s].mwpc.winOut_log->SetUserLimits(bmUserSolidLimits);
-			dets[s].mwpc.kevlar_log->SetUserLimits(bmUserSolidLimits);
+			dets[s].mwpc.kevStrip_log->SetUserLimits(bmUserSolidLimits);
 			dets[s].scint.container_log->SetUserLimits(bmUserSolidLimits);
 		}
 		
@@ -275,8 +275,8 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			dets[s].mwpc.container_log->SetSensitiveDetector(mwpcDead_SD[s]);
 			
 			kevlar_SD[s] = registerSD(sideSubst("kevlar_SD%c",s));
-			dets[s].mwpc.kevlar_log->SetSensitiveDetector(kevlar_SD[s]);
-			dets[s].mwpc.kevContainer_log->SetSensitiveDetector(kevlar_SD[s]);
+			dets[s].mwpc.kevStrip_log->SetSensitiveDetector(kevlar_SD[s]);
+			
 		}
 		
 		// source holder
