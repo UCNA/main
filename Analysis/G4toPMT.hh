@@ -6,6 +6,34 @@
 #include <string>
 #include <TRandom3.h>
 
+class Sim2PMT;
+
+/// base class for setting simulated data position
+class SimPositioner {
+public:
+	/// constructor
+	SimPositioner() { offPos[X_DIRECTION] = offPos[Y_DIRECTION] = 0; }
+	/// destructor
+	virtual ~SimPositioner() {}
+	/// calculate offset based on primary position
+	virtual void calcOffset(const Sim2PMT& S) {}
+	
+	double offPos[2];		//< position offset to apply
+};
+
+/// set positions for source droplet
+class SourcedropPositioner: public SimPositioner {
+public:
+	/// constructor
+	SourcedropPositioner(double x, double y, double r): SimPositioner(), x0(x), y0(y), r0(r) {}
+	/// calculate offset based on primary position
+	virtual void calcOffset(const Sim2PMT& S);
+	
+	double x0;	//< x position center
+	double y0;	//< y position center
+	double r0;	//< spot radius
+};
+
 
 /// generic class for converting simulation data to standard form
 class Sim2PMT: public ProcessedDataScanner {
@@ -42,11 +70,9 @@ public:
 	virtual void classifyEvent();
 	/// calculate spectrum re-weighting factor
 	virtual void calcReweight();
-	
-	/// Set position offset (for, e.g., source simulated at center)
-	void setOffset(double dx, double dy);
-				   
+					   
 	PMTGenerator PGen[2];		//< PMT simulator for each side
+	SimPositioner* SP;			//< optional postion modifier
 	bool reSimulate;			//< whether to re-simulate energy or use "raw" values
 	bool fakeClip;				//< whether to fake clipping on wirechamber entrance edge
 	double eQ[2];				//< Scintillator quenched energy
@@ -71,8 +97,6 @@ protected:
 	
 	AFPState afp;				//< AFP state for data
 	bool passesScint[2];		//< whether simulation passed scintillator cut
-	
-	double offPos[2];			//< offset to apply to all positions
 };
 
 

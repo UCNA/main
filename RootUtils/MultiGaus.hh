@@ -24,7 +24,7 @@ public:
 	~MultiGaus();	
 	
 	/// add correlated peak
-	void addCorrelated(unsigned int n, double relCenter, double relHeight, double relWidth);
+	void addCorrelated(unsigned int n, double relCenter, double relHeight, double relWidth = 0);
 	/// fill initial values array
 	void setParameter(unsigned int n, double p);	
 	/// get fit parameter

@@ -65,7 +65,7 @@ void MultiGaus::addCorrelated(unsigned int n, double relCenter, double relHeight
 	corrPeak p;
 	p.mainPeak = n;
 	p.relCenter = relCenter;
-	p.relWidth = relWidth;
+	p.relWidth = relWidth?relWidth:sqrt(relCenter);
 	p.relHeight = relHeight;
 	corrPeaks.push_back(p);
 }

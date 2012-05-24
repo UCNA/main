@@ -7,6 +7,7 @@
 #include "PathUtils.hh"
 #include "SourceDBSQL.hh"
 #include "CalDBSQL.hh"
+#include "SMExcept.hh"
 #include <TSpectrum.h>
 #include <TSpectrum2.h>
 #include <utility>
@@ -15,10 +16,11 @@
 ReSourcer::ReSourcer(OutputManager* O, const Source& s, PMTCalibrator* P):
 OM(O), mySource(s), PCal(P), dbgplots(false), simMode(false),
 nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
-		
+	
 	// source-dependent ranges
 	if(mySource.t == "Bi207") {
 		pkMin = 200;
+		nSigma = 1.5;
 		addCorrFit(400,475);
 		addCorrFit(900,1100);
 	} else if(mySource.t == "Sn113") {
@@ -149,6 +151,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 			if(searchsigma < 4)
 				searchsigma = 4;		
 			
+			OM->defaultCanvas->SetLogy(false);
 			std::string fitPlotName = "";
 			if(dbgplots)
 				fitPlotName = OM->plotPath+"/"+mySource.name()+"/Fit_Spectrum_"+(t==nBetaTubes?"Combined":itos(t))+".pdf";
@@ -187,6 +190,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 			continue;
 		
 		// individual tube plots, convert peaks back to PMT ADC values
+		OM->defaultCanvas->SetLogy(true);
 		if(!simMode)
 			hTubesRaw[t]->Draw();
 		for(unsigned int i=0; i<tubePeaks[t].size(); i++) {
@@ -271,14 +275,17 @@ void reSource(RunNum rn) {
 	P->addRun(rn);
 	
 	if(!P->getnFiles()) {
-		printf("Processed run %i not found! Aborting!\n",rn);
+		SMExcept e("MissingProcessedRun");
+		e.insert("runnum",rn);
 		delete(P);
-		return;
+		throw(e);
 	}
 	if(P->totalTime.t[BOTH] < 1.0) { //TODO
-		printf("Run %i is too short (%f s). Aborting.\n",rn,P->totalTime.t[BOTH]);
+		SMExcept e("RunTooShort");
+		e.insert("runnum",rn);
+		e.insert("runtime",P->totalTime.t[BOTH]);
 		delete(P);
-		return;
+		throw(e);
 	}	
 	
 	// set up output paths
@@ -366,6 +373,8 @@ void reSource(RunNum rn) {
 		Sim2PMT* g2p = NULL;
 		std::string g4dat = "/home/mmendenhall/geant4/output/FixGeom_";
 		printf("Loading source simulation data...\n");
+		if(simSource.t=="Bi207" || simSource.t=="Ce139" || simSource.t=="Sn113")
+			g4dat = "/home/mmendenhall/geant4/output/PosLine_";
 		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
 		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
 			g2p = new G4toPMT();
@@ -389,7 +398,9 @@ void reSource(RunNum rn) {
 		
 		printf("Preparing to simulate source data...\n");
 		
-		g2p->setOffset(simSource.x, simSource.y);
+		SourcedropPositioner SDP(simSource.x, simSource.y,
+								 (simSource.t=="Ce139" || simSource.t=="Cd109")?1.25:1.5);
+		g2p->SP = &SDP;
 		g2p->setCalibrator(PCal);
 		g2p->fakeClip = true;
 		
@@ -435,14 +446,16 @@ void reSource(RunNum rn) {
 				TM.printCanvas(outName);
 			}
 			
-			TM.defaultCanvas->SetLogy(false);
-			for(unsigned int t2=0; t2<nBetaTubes; t2++) {
-				if(t==t2 || t==nBetaTubes) continue;
-				RS.pPMTCorr[t][t2]->SetLineColor(4);
-				RS.pPMTCorr[t][t2]->Draw();
-				it->second.pPMTCorr[t][t2]->SetLineColor(2);
-				it->second.pPMTCorr[t][t2]->Draw("Same");
-				TM.printCanvas(it->second.mySource.name()+"/PMTCorr/"+itos(t)+"_v_"+itos(t2));
+			if(0) {
+				TM.defaultCanvas->SetLogy(false);
+				for(unsigned int t2=0; t2<nBetaTubes; t2++) {
+					if(t==t2 || t==nBetaTubes) continue;
+					RS.pPMTCorr[t][t2]->SetLineColor(4);
+					RS.pPMTCorr[t][t2]->Draw();
+					it->second.pPMTCorr[t][t2]->SetLineColor(2);
+					it->second.pPMTCorr[t][t2]->Draw("Same");
+					TM.printCanvas(it->second.mySource.name()+"/PMTCorr/"+itos(t)+"_v_"+itos(t2));
+				}
 			}
 		}
 		

@@ -341,7 +341,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		vertex_position = position_saved;
 	} else if(positioner=="SourceDrop") {
 		// nominally 3mm disc around pre-set position for calibration sources
-		randomTubePosition(position_saved, sourceRadius, 0*um, vertex_position);  
+		randomTubePosition(position_saved, sourceRadius, 0*um, vertex_position); 
 	} else if(positioner=="DecayTrapUniform") {
 		// uniform fill of decay trap volume
 		randomTubePosition(G4ThreeVector(0,0,0), 7.5*cm, 1.5*m, vertex_position);

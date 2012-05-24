@@ -6,21 +6,34 @@
 
 TRandom3 mc_rnd_source;	
 
+
+//--------------------------------------------------------------
+
+
+void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
+	while(true) {
+		offPos[X_DIRECTION] = mc_rnd_source.Uniform(-1.,1.);
+		offPos[Y_DIRECTION] = mc_rnd_source.Uniform(-1.,1.);
+		if(offPos[X_DIRECTION]*offPos[X_DIRECTION]+offPos[Y_DIRECTION]*offPos[Y_DIRECTION]<=1.) break;
+	}
+	offPos[X_DIRECTION] *= r0;
+	offPos[Y_DIRECTION] *= r0;
+	offPos[X_DIRECTION] += x0-S.primPos[X_DIRECTION];
+	offPos[Y_DIRECTION] += y0-S.primPos[Y_DIRECTION];
+}
+
+
+//--------------------------------------------------------------
+
+
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
 reSimulate(true), fakeClip(false), nSimmed(0), nCounted(0), mwpcAccidentalProb(4.3e-4), afp(AFP_OTHER) {
-	offPos[X_DIRECTION] = offPos[Y_DIRECTION] = 0.;
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		mwpcThresh[s] = 0.02;
 	}
 	totalTime = BlindTime(1.0);
 	fPID = PID_BETA;	// only simulating beta events
-}
-
-void Sim2PMT::setOffset(double dx, double dy) {
-	printf("Set simulation position offset to (%.2f,%.2f)\n",dx,dy);
-	offPos[X_DIRECTION]=dx;
-	offPos[Y_DIRECTION]=dy;
 }
 
 Stringmap Sim2PMT::evtInfo() {
@@ -34,7 +47,7 @@ Stringmap Sim2PMT::evtInfo() {
 void Sim2PMT::calcReweight() {
 	physicsWeight = 1.0;
 	if(afp==AFP_ON||afp==AFP_OFF)
-		physicsWeight *= (1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_OFF?1:-1)))*spectrumCorrectionFactor(ePrim);
+		physicsWeight *= (1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_ON?1:-1)))*spectrumCorrectionFactor(ePrim);
 	if(fakeClip) {
 		const double R = 70.*sqrt(0.6); // wirechamber entrance window radius, projected back to decay trap
 		// event origin distance from edge
@@ -76,13 +89,17 @@ void Sim2PMT::reverseCalibrate() {
 	runClock = mc_rnd_source.Uniform(0.,ActiveCal->totalTime);
 	
 	// apply position offsets; set wires position
+	if(SP) SP->calcOffset(*this);
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 		for(Side s = EAST; s <= WEST; ++s) {
-			scintPos[s][d] += offPos[d];
-			mwpcPos[s][d] += offPos[d];
+			if(SP) {
+				scintPos[s][d] += SP->offPos[d];
+				mwpcPos[s][d] += SP->offPos[d];
+			}
 			wires[s][d].center = mwpcPos[s][d];
 		}
-		primPos[d] += offPos[d];
+		if(SP)
+			primPos[d] += SP->offPos[d];
 	}
 	
 	// simulate event on both sides
@@ -184,11 +201,12 @@ void G4toPMT::doUnits() {
 	// wirechamber position projection plus empirical window-diameter-matching fudge factor
 	const double wcPosConversion = 10.0*sqrt(0.6)*(51.96/52.8);
 	for(unsigned int i=0; i<3; i++)
-		primPos[i] *= 10.0;
+		primPos[i] *= 1000.0;
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
-			mwpcPos[s][d] *= wcPosConversion;
-			scintPos[s][d] *= wcPosConversion;
+			int flip = (d==X_DIRECTION && s==EAST)?-1:1;
+			mwpcPos[s][d] *= wcPosConversion*flip;
+			scintPos[s][d] *= wcPosConversion*flip;
 		}
 	}
 	costheta=cos(costheta);

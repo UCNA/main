@@ -35,9 +35,9 @@ void bmWirechamberConstruction::Construct(Side s) {
 	
 	// rectangular cross section strings with equal volume to nominal 140um cylinders
 	const G4double kevlar_R=0.07*mm;
-	const G4int NbOfKevWires=28;
-	const G4double kevLength=15.*cm;
 	const G4double kevlar_spacing=5.*mm;
+	const G4int NbOfKevWires=32;
+	const G4double kevLength=15.*cm;
 	const G4double kev_AR = 16.;						// aspect ratio, width:depth
 	const G4double kev_area = PI*kevlar_R*kevlar_R;		// total cross section area
 	const G4double kev_eff_w = sqrt(kev_area*kev_AR);	// effective width
