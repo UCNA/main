@@ -125,12 +125,12 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	
 	const std::string simOutputDir=outputDir+"_Sim_MagF_2";
 	
-	std::string simFile="/home/mmendenhall/geant4/output/MagF_20101028b_neutronBetaUnpol/analyzed_";
+	std::string simFile="/home/mmendenhall/geant4/output/WideKev_neutronBetaUnpol/analyzed_";
 	//std::string simFile = "/home/mmendenhall/geant4/output/LivPhys_495_BadVac_neutronBetaUnpol/analyzed_";
 	//std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_";
 	
-	unsigned int nTot = 10;
-	unsigned int stride = 7;
+	unsigned int nTot = 27;
+	unsigned int stride = 11;
 	
 	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
@@ -182,14 +182,13 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrect
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
-	std::string isot = "Xe137_7-2-";
-	double emax = 4200;
-	int nbins = 500;
+	std::string isot = "Bi207";
+	double emax = 1200;
+	int nbins = 300;
 	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
 	NDL.BEL.display();
 	NucDecaySystem& NDS = NDL.getGenerator(isot);
-	//NDS.scale(1/1.86);
-	NDS.display();
+	NDS.display(true);
 	
 	OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
 	TH1F* hSpec = OMTest.registeredTH1F("hSpec",isot+" Spectrum",nbins,0,emax);

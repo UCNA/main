@@ -39,7 +39,7 @@ NucLevel::NucLevel(const Stringmap& m): fluxIn(0), fluxOut(0) {
 	jpi = m.getDefault("jpi","");
 }
 
-void NucLevel::display() const {
+void NucLevel::display(bool verbose) const {
 	printf("[%i] A=%i Z=%i jpi=%s\t E = %.2f keV\t HL = %.3g s\t Flux in = %.3g, out = %.3g\n",
 		   n,A,Z,jpi.c_str(),E,hl,fluxIn,fluxOut);
 }
@@ -74,7 +74,7 @@ void DecayAtom::genAuger(std::vector<NucDecayEvent>& v) {
 	v.push_back(evt);
 }
 
-void DecayAtom::display() const {
+void DecayAtom::display(bool verbose) const {
 	printf("%s %i: pAuger = %.3f, Eauger = %.2f, initCapt = %.3f\n",BET->getName().c_str(),BET->getZ(),pAuger,Eauger,IMissing);
 }
 
@@ -121,7 +121,7 @@ void ConversionGamma::run(std::vector<NucDecayEvent>& v) {
 	v.push_back(evt);
 }
 
-void ConversionGamma::display() const {
+void ConversionGamma::display(bool verbose) const {
 	double ceff = 100.*getConversionEffic();
 	printf("Gamma %.1f (%.3g%%)",Egamma,(100.-ceff)*Itotal);
 	if(subshells.size()) {
@@ -129,7 +129,21 @@ void ConversionGamma::display() const {
 		printf(", CE %.2f~%.2f (%.3g%%)",eavg.x,eavg.err,ceff*Itotal);
 	}
 	printf("\t");
-	TransitionBase::display();
+	TransitionBase::display(verbose);
+	if(verbose) {
+		for(unsigned int n=0; n<subshells.size(); n++) {
+			printf("\t[%c] %.2fkeV\t%.3g%%\t%.3g%%\t",
+				   BindingEnergyTable::shellnames[n],shellAverageE(n),
+				   100.*shells.getProb(n),100.0*shells.getProb(n)*Itotal);
+			if(subshells[n].getN()>1) {
+				for(unsigned int i=0; i<subshells[n].getN(); i++) {
+					if(i) printf(":");
+					printf("%.3g",subshells[n].getProb(i));
+				}
+			}
+			printf("\n");
+		}
+	}
 }
 
 double ConversionGamma::getConversionEffic() const {
@@ -318,32 +332,32 @@ void NucDecaySystem::setCutoff(double t) {
 	}
 }
 
-void NucDecaySystem::display() const {
+void NucDecaySystem::display(bool verbose) const {
 	printf("---- Nuclear Level System ----\n");
-	displayLevels();
-	displayAtoms();
-	displayTransitions();
+	displayLevels(verbose);
+	displayAtoms(verbose);
+	displayTransitions(verbose);
 	printf("------------------------------\n");
 }
 
-void NucDecaySystem::displayLevels() const {
+void NucDecaySystem::displayLevels(bool verbose) const {
 	printf("---- Energy Levels ----\n");
 	for(std::vector<NucLevel>::const_iterator it = levels.begin(); it != levels.end(); it++)
-		it->display();
+		it->display(verbose);
 }
 
-void NucDecaySystem::displayTransitions() const {
+void NucDecaySystem::displayTransitions(bool verbose) const {
 	printf("---- Transitions ----\n");
 	for(unsigned int i = 0; i<transitions.size(); i++) {
 		printf("(%i) ",i);
-		transitions[i]->display();
+		transitions[i]->display(verbose);
 	}
 }
 
-void NucDecaySystem::displayAtoms() const {
+void NucDecaySystem::displayAtoms(bool verbose) const {
 	printf("---- Atoms ----\n");
 	for(std::map<unsigned int, DecayAtom*>::const_iterator it = atoms.begin(); it != atoms.end(); it++)
-		it->second->display();
+		it->second->display(verbose);
 }
 
 

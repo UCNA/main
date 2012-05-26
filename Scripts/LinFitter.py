@@ -152,7 +152,7 @@ class LinearFitter:
 		self.coeffs = c
 	
 	# latex printable form
-	def toLatex(self,varname='x'):
+	def toLatex(self,varname='x',cfmt=".4g"):
 		s = ""
 		for (n,f) in enumerate(self.terms):
 		
@@ -170,9 +170,9 @@ class LinearFitter:
 				s += "-"+coeffstr
 				continue
 				
-			fmt = "%+.4g"
+			fmt = "%+"+cfmt
 			if n==0:
-				fmt = "%.4g"
+				fmt = "%"+cfmt
 			if coeffstr == "1":
 				coeffstr = ""
 			else:

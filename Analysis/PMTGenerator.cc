@@ -8,7 +8,7 @@
 TRandom3 PMTGenerator::sim_rnd_source;
 
 PMTGenerator::PMTGenerator(Side s, float xx, float yy):
-x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), dgain(16.0), pedcorr(0.2), crosstalk(0.015), xscatter(0.), mySide(s) { }
+x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), dgain(16.0), pedcorr(0.2), crosstalk(0.010), xscatter(0.), mySide(s) { }
 
 void PMTGenerator::setCalibrator(PMTCalibrator* P) { 
 	assert(P);

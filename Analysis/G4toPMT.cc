@@ -197,11 +197,13 @@ void PenelopeToPMT::setReadpoints() {
 	Tch->SetBranchAddress("W",&fCostheta);
 }
 
+//-------------------------------------------
+
 void G4toPMT::doUnits() {
+	for(unsigned int i=0; i<4; i++)
+		primPos[i] *= 1000.0;	// convert m to mm
 	// wirechamber position projection plus empirical window-diameter-matching fudge factor
 	const double wcPosConversion = 10.0*sqrt(0.6)*(51.96/52.8);
-	for(unsigned int i=0; i<3; i++)
-		primPos[i] *= 1000.0;
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
 			int flip = (d==X_DIRECTION && s==EAST)?-1:1;
@@ -211,6 +213,8 @@ void G4toPMT::doUnits() {
 	}
 	costheta=cos(costheta);
 }
+
+//-------------------------------------------
 
 void PenelopeToPMT::doUnits() {
 	const double wcPosConversion = 10.0;

@@ -489,18 +489,19 @@ class MC_Comparator:
 		
 if __name__=="__main__":
 	
-	if 0:
-		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated")
+	if 1:
+		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2")
 		MCC.backscatter_fractions()
 		MCC.plot_endpoints()
 		
-		#conn=open_connection()
-		conn=None
+		conn=open_connection()
+		#conn=None
 		MCC.endpoint_gain_tweak(conn)
 		
-		exit(0)
-		
+
+	
 	for i in range(3):
+		pass
 		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
-		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF",2-i)
+		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
 	

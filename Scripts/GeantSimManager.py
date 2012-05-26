@@ -18,6 +18,7 @@ class GeantSimManager:
 		self.settings["vacuum"] = vacuum
 		self.settings["sourceholderpos"] = sourceHolderPos
 		self.settings["sourceRadius"] = "1.5 mm"
+		self.settings["sourceScan"] = 0.
 		self.settings["particle"] = "e-"
 		self.settings["fieldmapcmd"] = "#/detector/fieldmapfile UNUSED"
 		if fmap:
@@ -53,7 +54,7 @@ class GeantSimManager:
 		
 		# whether to construct the source holder and use source positioning
 		self.settings["positioner"] = "DecayTrapFiducial" # DecayTrapUniform
-		self.settings["gunpos"] = "0 0 0 m"
+		self.settings["gunpos_mm"] = [0.,0.,0.]
 		self.settings["magf"] = "on"
 		if self.settings["generator"] in ["In114E","In114W"]:
 			self.settings["makeinfoil"] = "y"
@@ -67,13 +68,13 @@ class GeantSimManager:
 		if self.settings["generator"][:2] in ["Ce","Cd"]:
 			self.settings["sourceRadius"] = "1.25 mm"
 		if self.settings["generator"] == "In114E":
-			self.settings["gunpos"] = "0 0 -4.975 um"
+			self.settings["gunpos_mm"] = [0.,0.,-.004975]
 		if self.settings["generator"] == "In114W":
-			self.settings["gunpos"] = "0 0 4.975 um"
+			self.settings["gunpos_mm"] = [0.,0.,.004975]
 		if self.settings["generator"] == "eGun":
 			needsHolder = True
 			self.settings["positioner"] = "Fixed"
-			self.settings["gunpos"] = "0 0 -1.0 m"
+			self.settings["gunpos_mm"] = [0.,0.,-1000]
 			self.settings["magf"] = "off"
 		if self.settings["generator"][:2] == "Xe":
 			self.settings["positioner"] = "UniformRadialGasFill"
@@ -116,11 +117,13 @@ class GeantSimManager:
 	def launch_sims(self,nEvents,nClusters=6,hours_old=0):
 		
 		nruns = 0
+		nperclust = 0
 		if self.podsh:
-			nruns = 8*nClusters
+			nperclust = 8
 		else:
 			import multiprocessing
-			nruns = multiprocessing.cpu_count()*nClusters	# number of simulation files to produce (generated in parallel)
+			nperclust = multiprocessing.cpu_count()	# number of simulation files to produce (generated in parallel)
+		nruns = nperclust*nClusters
 		if not nruns:
 			nruns = 1
 		oldtime = time.time() - hours_old*3600
@@ -156,6 +159,14 @@ class GeantSimManager:
 			self.settings["nevt"]=(ineffic_mul*nEvents)/nruns
 			self.settings["joblog"] = "%s/gen_macro_%i.txt"%(self.g4_log_dir,self.settings["run_num"])
 			g4_sub_file = "%s/geantjob_%i.sub"%(self.g4_macro_dir,self.settings["run_num"])
+			
+			# source position scan
+			if self.settings["sourceScan"]:
+				xpos = (((rn%nperclust)*nClusters+(rn/nperclust))/float(nruns-1)-0.5)*self.settings["sourceScan"]
+				self.settings["gunpos_mm"][0] = xpos;
+				if self.settings["sourceholderpos"] != "0 0.5 0 m":
+					self.settings["sourceholderpos"] = "%g 0 0 mm"%xpos
+			self.settings["gunpos"] = "%g %g %g mm"%tuple(self.settings["gunpos_mm"])
 			
 			# estimate wall time
 			twall = int((60.0 + 0.2*self.settings["nevt"])/60)
@@ -201,7 +212,7 @@ class GeantSimManager:
 			os.system("rm "+parallel_jobfile)
 	
 	
-	def launch_postanalyzer(self):
+	def launch_postanalyzer(self,nMin=0,nMax=100000):
 		print "Running post analyzer..."
 		self.set_dirs()
 		resim_jobfile = "%s/resim_jobs.txt"%self.g4_macro_dir
@@ -225,7 +236,8 @@ class GeantSimManager:
 			if self.settings["generator"] in ["neutronBetaUnpol","eGunRandMomentum","eGun"]:
 				allpts = " y"
 			analyzer_bin = self.g4_bindir+"/"+self.settings["analyzer"]
-			jobsout.write("%s %s %s/analyzed_%i.root%s\n"%(analyzer_bin,outlist_name,self.g4_out_dir,nanalyzed,allpts))
+			if nMin <= nanalyzed <= nMax:
+				jobsout.write("%s %s %s/analyzed_%i.root%s\n"%(analyzer_bin,outlist_name,self.g4_out_dir,nanalyzed,allpts))
 			nanalyzed += 1
 		jobsout.close()
 		print "\n----- %s ------"%resim_jobfile
@@ -251,21 +263,12 @@ if __name__ == "__main__":
 		betaSim.launch_postanalyzer()
 	
 	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 52 clusters
-	if 0:
-		betaSim = GeantSimManager("MagF_20101028b",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+	if 1:
+		betaSim = GeantSimManager("WideKev",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
-		betaSim.launch_sims(nEvents=1e7,nClusters=52,hours_old=240)
-		betaSim.launch_postanalyzer()
-	
-	# beta decay in 1e-3torr vacuum: 1e7 in 9 clusters
-	if 0:
-		betaSim = GeantSimManager("LivPhys_495_BadVac",vacuum="1.e-3 torr")
-		betaSim.settings["physlist"]="livermore"
-		betaSim.set_generator("neutronBetaUnpol")
-		#betaSim.launch_sims(nEvents=1e7,nClusters=9,hours_old=1000)
-		betaSim.launch_postanalyzer()
-	
+		betaSim.launch_sims(nEvents=1e7,nClusters=52,hours_old=1000)
+		betaSim.launch_postanalyzer(16)
 	
 	####################				
 	# calibration sources
@@ -274,22 +277,23 @@ if __name__ == "__main__":
 	# sources ["Bi207","Sn113","Ce139","Cd109","In114E","In114W","Cd113m"] 1e6 each
 	if 0:
 		for g in ["Bi207","Sn113","Ce139","Cd109"]:
-			sourceSim = GeantSimManager("Test",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+			sourceSim = GeantSimManager("PosLine",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.settings["physlist"]="livermore"
+			sourceSim.settings["sourceScan"]=80.
 			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
+			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
 			sourceSim.launch_postanalyzer()
 	
 
 	####################				
-	# Xenon
+	# Xenon ["Xe135_3-2+","Xe125_1-2+"]
 	####################
-	if 1:
-		for g in ["Xe135_3-2+"]:
-			sourceSim = GeantSimManager("Xe",vacuum="1.e-3 torr")
+	if 0:
+		for g in ["Xe135_3-2+","Xe125_1-2+"]:
+			sourceSim = GeantSimManager("WideKev",vacuum="1.e-3 torr")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=5e6,nClusters=9,hours_old=0)
+			sourceSim.launch_sims(nEvents=3e7,nClusters=18,hours_old=1000)
 			sourceSim.launch_postanalyzer()
 
 	

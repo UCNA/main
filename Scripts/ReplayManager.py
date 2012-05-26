@@ -4,10 +4,10 @@ import time
 from EncalDB import *
 from optparse import OptionParser	
 	
-def processOctets(sim=False):
+def processOctets(sim,omin):
 	pcmd = "cd ..; ./UCNAnalyzer pr oct %i x x\n"
 	freplaylist = open("oct_replaylist.txt","w")
-	for r in range(60):
+	for r in range(60)[omin:]:
 		if sim:
 			freplaylist.write(pcmd%(-r-1));
 		else:
@@ -89,10 +89,10 @@ if __name__ == "__main__":
 		exit(0)
 		
 	if options.octs:
-		processOctets(False)
+		processOctets(False,options.rmin)
 		
 	if options.simocts:
-		processOctets(True)
+		processOctets(True,options.rmin)
 		
 	if options.sources:
 		processSources(options.rmin,options.rmax)

@@ -12,8 +12,6 @@ public:
 	float_err(const std::string& s);
 	/// converto to a string
 	std::string toString() const;
-	/// return value as a float
-	operator float() const { return x; }
 	
 	float x;	//< central value
 	float err;	//< error

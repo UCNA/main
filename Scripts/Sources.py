@@ -46,7 +46,7 @@ def get_run_sources(conn,rn):
 	
 def get_source_lines(conn,src):
 	"""Get source peaks measured for source."""
-	conn.execute("SELECT side,tube,peak_num,peak_data,adc,dadc,adcwidth,erecon,derecon,ereconwidth,eta,gms,nPE FROM sourcepeaks WHERE source_id = %i"%src.sID)
+	conn.execute("SELECT side,tube,peak_num,peak_data,adc,dadc,adcwidth,erecon,derecon,ereconwidth,dereconwidth,eta,gms,nPE FROM sourcepeaks WHERE source_id = %i"%src.sID)
 	slines = []
 	for r in conn.fetchall():
 		sline = SourceLine()
@@ -61,9 +61,10 @@ def get_source_lines(conn,src):
 		sline.erecon = r[7]
 		sline.derecon = r[8]
 		sline.enwidth = r[9]
-		sline.eta = r[10]
-		sline.gms = r[11]
-		sline.nPE = r[12]
+		sline.denwidth = r[10]
+		sline.eta = r[11]
+		sline.gms = r[12]
+		sline.nPE = r[13]
 		sline.uid = (sline.src.sID,sline.side,sline.tube,sline.type)
 		slines.append(sline)
 	return slines
@@ -144,7 +145,7 @@ class SourceDatDirectory:
 		return self.getQFile(rn).dat.get(key,[])
 	def getSourceRates(self,rn):
 		if rn not in self.sourcerates:
-			self.sourcerates[rn] = [SourceRate(r) for r in self.getKey("rate")]
+			self.sourcerates[rn] = [SourceRate(r) for r in self.getKey(rn,"rate")]
 			for rt in self.sourcerates[rn]:
 				rt.run = rn
 		return self.sourcerates[rn]
@@ -299,13 +300,16 @@ class LinearityCurve:
 		# plot
 		combodat = []
 		for k in pks.keys():
-			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.sim.enwidth,q) for q in pks[k]]
+			#		  0         1            2        3                                          4     5         6          7
+			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.denwidth,q.sim.enwidth,q) for q in pks[k]]
 			combodat += gdat
 			self.gEn.plot(graph.data.points(gdat,x=2,y=3,title=peakNames[k]), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRes.plot(graph.data.points(gdat,x=2,y=4,title=None), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=3,size=5,title=None), [ varCircle(symbolattrs=[cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=2,title=None), [ graph.style.line([style.linestyle.dashed,cP[k]]),])
-			self.gWidth.plot(graph.data.points(gdat,x=7,y=6,title=peakNames[k]), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
+			self.gWidth.plot(graph.data.points(gdat,x=8,y=6,dy=7,title=peakNames[k]),
+							 [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),
+							  graph.style.errorbar(errorbarattrs=[cP[k]])])
 			
 		self.gEn.plot(graph.data.function("y(x)=x",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
 		self.gEn.text(11,1.5,"%s Reconstructed Energy"%self.side)
@@ -315,14 +319,14 @@ class LinearityCurve:
 		######
 		# Fit widths
 		######
-		combodat = [g for g in combodat if 1/1.25 < g[5]/g[6] < 1.25 and g[-1].src.radius() <= 45.]
+		combodat = [g for g in combodat if 1/1.25 < g[5]/g[7] < 1.25 and g[-1].src.radius() <= 45.]
 		self.LFwid = LinearFitter(terms=[polyterm(1)])
-		self.LFwid.fit(combodat,cols=(6,5))
-		wxmax = max([g[6] for g in combodat])
+		self.LFwid.fit(combodat,cols=(7,5))
+		wxmax = max([g[7] for g in combodat])
 		for g in combodat:
-			if not 1/1.2 < g[5]/self.LFwid(g[6]) < 1.2:
+			if not 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2:
 				print "--> Check width",g[-1].src.run,g[-1].uid
-		self.LFwid.fit([g for g in combodat if 1/1.2 < g[5]/self.LFwid(g[6]) < 1.2],cols=(6,5))
+		self.LFwid.fit([g for g in combodat if 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2],cols=(7,5))
 		self.gWidth.plot(graph.data.points(self.LFwid.fitcurve(0,wxmax),x=1,y=2,title="$y=%.3f \\cdot x$"%self.LFwid.coeffs[0]),
 			[graph.style.line(lineattrs=[style.linestyle.dashed,rgb.red]),])
 				
@@ -418,11 +422,11 @@ def plotBackscatters(conn,rlist):
 						parter=graph.axis.parter.linear(tickdists=tckdist),
 						texter = graph.axis.texter.rational(),
 						painter=graph.axis.painter.regular(labeldist=0.1,labeldirection=graph.axis.painter.rotatetext(135)))
-	gRuns=graph.graphxy(width=30,height=15,
+	gRuns=graph.graphxy(width=40,height=20,
 		x2=runaxis,
 		y=graph.axis.lin(title="Backscatter Fraction",min=0,max=6.0),
 		key = graph.key.key(pos="tl"))
-	setTexrunner(self.gRuns)
+	setTexrunner(gRuns)
 	
 	# plot
 	ssymbs = {'E':symbol.circle,'W':symbol.triangle}
@@ -450,8 +454,8 @@ cal_2010 = [
 			(	14383,	14394,	14390,	14383,	14507,		212,	215,		63	),	# 2 Oct. 15-21 week
 			(	14516,	14530,	14524,	14513,	14667,		268,	271,		63	),	# 3 Oct. 22-24 weekend
 			(	14736,	14746,	14743,	14688,	14994,		330,	333,		63	),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
-			(	15645,	15662,	15653,	15084,	15915,		437,	440,		65	),	# 5 Nov. 22-29 Thanksgiving Week
-			(	15916,	15939,	15931,	15916,	100000,		553,	555,		65	)	# 6 Post-Thanksgiving
+			(	15645,	15662,	15653,	15084,	15915,		437,	440,		67	),	# 5 Nov. 22-29 Thanksgiving Week
+			(	15916,	15939,	15931,	15916,	100000,		553,	555,		67	)	# 6 Post-Thanksgiving
 			]
 			
 cal_2011 = [
@@ -485,7 +489,7 @@ if __name__=="__main__":
 	conn = open_connection() # connection to calibrations DB
 	replace = True	# whether to replace previous calibration data
 	
-	for c in cal_2010[4:5]:
+	for c in cal_2010[-1:]:
 	
 		# make new calibrations set
 		ecid = None
@@ -495,6 +499,9 @@ if __name__=="__main__":
 		# gather source data from calibration runs
 		rlist = range(c[0],c[1]+1)
 		slines = gather_peakdat(conn,rlist)
+		
+	#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
+	#	continue
 		
 		# fit linearity curves for each PMT
 		for (sn,s) in enumerate(["East","West"]):
@@ -512,6 +519,3 @@ if __name__=="__main__":
 				LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
 				LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
 				
-		# plot backscatters
-		# plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
-		

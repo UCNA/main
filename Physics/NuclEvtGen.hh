@@ -39,7 +39,7 @@ public:
 	/// constructor
 	NucLevel(const Stringmap& m);
 	/// print info
-	void display() const;
+	void display(bool verbose = false) const;
 	/// scale probabilities
 	void scale(double s) { fluxIn *= s; fluxOut *= s; }
 	
@@ -79,7 +79,7 @@ public:
 	/// generate Auger K probabilistically
 	void genAuger(std::vector<NucDecayEvent>& v);
 	/// display info
-	void display() const;
+	void display(bool verbose = false) const;
 	
 	BindingEnergyTable const* BET;	//< binding energy table
 	double Eauger;		//< Auger K energy
@@ -98,7 +98,7 @@ public:
 	/// destructor
 	virtual ~TransitionBase() {}
 	/// display transition line info
-	virtual void display() const { printf("[%i]->[%i] %.3g\n",from.n,to.n,Itotal); }
+	virtual void display(bool verbose = false) const { printf("[%i]->[%i] %.3g\n",from.n,to.n,Itotal); }
 	
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>&) { }
@@ -126,7 +126,7 @@ public:
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>& v);
 	/// display transition line info
-	virtual void display() const;
+	virtual void display(bool verbose = false) const;
 	/// get total conversion efficiency
 	double getConversionEffic() const;
 	/// get probability of knocking conversion electron from a given shell
@@ -159,7 +159,7 @@ public:
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>&);
 	/// display transition line info
-	virtual void display() const { printf("Ecapture "); TransitionBase::display(); }
+	virtual void display(bool verbose = false) const { printf("Ecapture "); TransitionBase::display(verbose); }
 	/// get probability of removing an electron from a given shell
 	virtual double getPVacant(unsigned int n) const { return n==0?toAtom->IMissing:0; }
 	/// get whether said electron was knocked out
@@ -176,7 +176,7 @@ public:
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>& v);
 	/// display transition line info
-	virtual void display() const { printf("Beta(%.1f) ",(W0-1)*m_e); TransitionBase::display(); }
+	virtual void display(bool verbose = false) const { printf("Beta(%.1f) ",(W0-1)*m_e); TransitionBase::display(verbose); }
 	
 	bool positron;		//< whether this is positron decay
 	
@@ -200,13 +200,13 @@ public:
 	/// set cutoff lifetime for intermediate states
 	void setCutoff(double t);
 	/// display transitions summary
-	void display() const;
+	void display(bool verbose = false) const;
 	/// display list of levels
-	void displayLevels() const;
+	void displayLevels(bool verbose = false) const;
 	/// display list of transitions
-	void displayTransitions() const;
+	void displayTransitions(bool verbose = false) const;
 	/// display list of atoms
-	void displayAtoms() const;
+	void displayAtoms(bool verbose = false) const;
 	/// generate a chain of decay events starting from level n
 	void genDecayChain(std::vector<NucDecayEvent>& v, unsigned int n = UINT_MAX);
 	/// rescale all probabilities
