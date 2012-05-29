@@ -98,7 +98,7 @@ public:
 	/// destructor
 	virtual ~TransitionBase() {}
 	/// display transition line info
-	virtual void display(bool verbose = false) const { printf("[%i]->[%i] %.3g\n",from.n,to.n,Itotal); }
+	virtual void display(bool verbose = false) const;
 	
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>&) { }

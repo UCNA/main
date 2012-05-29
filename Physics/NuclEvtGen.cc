@@ -39,7 +39,7 @@ NucLevel::NucLevel(const Stringmap& m): fluxIn(0), fluxOut(0) {
 	jpi = m.getDefault("jpi","");
 }
 
-void NucLevel::display(bool verbose) const {
+void NucLevel::display(bool) const {
 	printf("[%i] A=%i Z=%i jpi=%s\t E = %.2f keV\t HL = %.3g s\t Flux in = %.3g, out = %.3g\n",
 		   n,A,Z,jpi.c_str(),E,hl,fluxIn,fluxOut);
 }
@@ -74,8 +74,15 @@ void DecayAtom::genAuger(std::vector<NucDecayEvent>& v) {
 	v.push_back(evt);
 }
 
-void DecayAtom::display(bool verbose) const {
-	printf("%s %i: pAuger = %.3f, Eauger = %.2f, initCapt = %.3f\n",BET->getName().c_str(),BET->getZ(),pAuger,Eauger,IMissing);
+void DecayAtom::display(bool) const {
+	printf("%s %i: pAuger = %.3f, Eauger = %.2f, initCapt = %.3f\n",
+		   BET->getName().c_str(),BET->getZ(),pAuger,Eauger,IMissing);
+}
+
+//-----------------------------------------
+
+void TransitionBase::display(bool) const {
+	printf("[%i]->[%i] %.3g\n",from.n,to.n,Itotal);
 }
 
 //-----------------------------------------
