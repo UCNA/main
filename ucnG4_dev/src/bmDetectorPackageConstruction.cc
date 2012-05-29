@@ -17,6 +17,7 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 								   scint.container_log,sideSubst("N2_vol_phys%c",s),container_log,false,0);
 	mwpc_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,mwpc_pos),
 								  mwpc.container_log,sideSubst("mwpcContainer%c",s),container_log,false,0);
+	mwpc.myTranslation[2] += mwpc_pos;
 	
 	// aluminum entrance, exit windows around container
 	const G4double mwpc_entrance_thickness = 2.0*inch;

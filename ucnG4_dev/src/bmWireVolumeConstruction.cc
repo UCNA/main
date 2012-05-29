@@ -3,11 +3,6 @@
 
 void bmWireVolumeConstruction::Construct(Side s) {
 	
-	const G4double anode_R = 5*um;					//< anode wire radius
-	const G4double cathode_R = 25*um;				//< cathode wire radius
-	const G4double spacing = 2.54*mm;				//< wire spacing
-	const G4int NbOfWires = 64;						//< number of wires
-	const G4double planeSpacing = 1*cm;				//< spacing between wireplanes
 	G4Material* fCathodeWireMaterial = Al;			//< cathode wire material
 	G4Material* fAnodeWireMaterial = Wu;			//< anode wire material
 

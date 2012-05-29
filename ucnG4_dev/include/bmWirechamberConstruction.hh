@@ -1,15 +1,19 @@
 #ifndef bmWirechamberConstruction_HH
 #define bmWirechamberConstruction_HH 1
 
+#include "G4ElectroMagneticField.hh"
+#include "G4MagneticField.hh"
+#include "G4RotationMatrix.hh"
+
 #include "bmDetectorConstructionUtils.hh"
 #include "bmWireVolumeConstruction.hh"
 
 /// class for constructing entire wirechamber
-class bmWirechamberConstruction: public MaterialUser {
+class bmWirechamberConstruction: public MaterialUser, G4ElectroMagneticField {
 public:
 	/// constructor
 	bmWirechamberConstruction(): fWindowThick(6*um), mwpc_entrance_R(7.0*cm), mwpc_exit_R(7.5*cm),
-	fMWPCGas(WCPentane), entranceToCathodes(5.0*mm), exitToCathodes(5.0*mm) {}
+	fMWPCGas(WCPentane), entranceToCathodes(5.0*mm), exitToCathodes(5.0*mm), myBField(NULL), E0(0) {}
 	
 	/// get constructed width
 	G4double GetWidth() const { return 2*mwpcContainer_halfZ; }
@@ -34,8 +38,26 @@ public:
 	/// construct logical container volume
 	void Construct(Side s);
 	
+	/// electromagnetic field
+	virtual void  GetFieldValue(const G4double Point[4], G4double* Bfield) const;
+	/// whether the field changes particle energy
+	virtual G4bool DoesFieldChangeEnergy() const { return E0>0; }
+	/// set up tracking in field
+	void ConstructField();
+	/// set anode voltage
+	void setPotential(G4double Vanode);
+	
+	G4MagneticField* myBField;		//< Magnetic field pointer
+	G4RotationMatrix* myRotation;	//< rotation from global frame to local coordinates
+	G4ThreeVector myTranslation;	//< translation from global coordinates to center of anode plane	
+	
 protected:
 	G4double mwpcContainer_halfZ;	//< half-width of wirechamber
+	G4double E0;					//< field scaling constant
+	double d;						//< spacing between anode wires
+	double L;						//< spacing between planes
+	double r;						//< anode wire radius
+	
 };
 
 #endif

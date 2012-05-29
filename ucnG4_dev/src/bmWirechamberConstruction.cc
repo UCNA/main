@@ -1,5 +1,10 @@
 #include "bmWirechamberConstruction.hh"
 #include "G4PVReplica.hh"
+#include "G4FieldManager.hh"
+#include "G4ChordFinder.hh"
+#include "G4EqMagElectricField.hh"
+#include "G4ClassicalRK4.hh"
+#include <math.h>
 
 void bmWirechamberConstruction::Construct(Side s) {
 	
@@ -19,8 +24,13 @@ void bmWirechamberConstruction::Construct(Side s) {
 	container_log = new G4LogicalVolume(mwpcContainer_box, fMWPCGas,sideSubst("mwpcContainer_log%c",s));
 	
 	// MWPC active gas volume placement with wireplane, relative to MWPC container volume
-	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,(entranceToCathodes-exitToCathodes)/2),
+	myTranslation = G4ThreeVector(0.,0.,(entranceToCathodes-exitToCathodes)/2);
+	new G4PVPlacement(NULL,myTranslation,
 					  activeRegion.gas_log,sideSubst("mwpc_phys%c",s),container_log,false,0);
+	
+	d = activeRegion.spacing;
+	L = activeRegion.planeSpacing;
+	r = activeRegion.anode_R;
 	
 	///////////////////////////////////////////////////
 	// kevlar strings
@@ -77,4 +87,60 @@ void bmWirechamberConstruction::Construct(Side s) {
 	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,mwpcContainer_halfZ-fWindowThick/2),winOut_log,sideSubst("winOut%c",s),
 					  container_log,false,0);
 	
+}
+
+void bmWirechamberConstruction::GetFieldValue(const G4double Point[4], G4double* Bfield) const {
+	// set magnetic field
+	if(myBField) myBField->GetFieldValue(Point,Bfield);
+	else Bfield[0]=Bfield[1]=Bfield[2]=0;
+	if(!E0) { Bfield[3]=Bfield[4]=Bfield[5]=0; return; }
+	
+	// local position
+	G4ThreeVector localPos = G4ThreeVector(Point[0],Point[1],Point[2])-myTranslation;
+	if(myRotation) localPos = (*myRotation)(localPos);
+
+	// electric field components
+	G4ThreeVector E(0,0,0);	
+	double l = localPos[2];
+	if(fabs(l)<L) {
+		double a = localPos[0]/d;
+		a = (a-floor(a)-0.5)*d;
+		if(a*a+l*l > r*r) {
+			double denom = cosh(2*M_PI*l/d)-cos(2*M_PI*a/d);
+			E[2] = E0*sinh(2*M_PI*l/d)/denom;
+			E[0] = E0*sin(2*M_PI*a/d)/denom;
+		}
+	}
+	
+	// return to global coordinates
+	if(myRotation) E = myRotation->inverse()(E);
+	for(unsigned int i=0; i<3; i++) Bfield[3+i] = E[i];
+}
+
+void bmWirechamberConstruction::setPotential(G4double Vanode) {
+	E0 = M_PI*Vanode/d/log(sinh(M_PI*L/d)/sinh(M_PI*r/d));
+	G4cout << "Wirechamber voltage set to " << Vanode/volt <<" V => E0 = " << E0/(volt/cm) << " V/cm" << G4endl;
+}
+
+void bmWirechamberConstruction::ConstructField() {
+	G4cout << "Setting up wirechamber electromagnetic field...";
+	
+	// local field manager just for this volume and all daughters
+	G4FieldManager* localFieldMgr = new G4FieldManager(this);
+	container_log->SetFieldManager(localFieldMgr,true);
+	
+	// equation of motion, stepper for field
+	G4EqMagElectricField* pEquation = new G4EqMagElectricField(this);
+	G4ClassicalRK4* pStepper = new G4ClassicalRK4(pEquation,8);
+	G4MagInt_Driver* pIntgrDriver = new G4MagInt_Driver(0.01*um,pStepper,pStepper->GetNumberOfVariables());
+	G4ChordFinder* pChordFinder = new G4ChordFinder(pIntgrDriver);
+	localFieldMgr->SetChordFinder(pChordFinder);
+	
+	// accuracy settings
+	localFieldMgr->GetChordFinder()->SetDeltaChord(10*um);
+	localFieldMgr->SetMinimumEpsilonStep(1e-6);
+	localFieldMgr->SetMaximumEpsilonStep(1e-5);
+	localFieldMgr->SetDeltaOneStep(0.1*um);
+	
+	G4cout << " Done." << G4endl;
 }

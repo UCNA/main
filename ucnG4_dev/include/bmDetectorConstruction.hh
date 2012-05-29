@@ -60,10 +60,6 @@ public:
 	/// UI interface
 	virtual void SetNewValue(G4UIcommand * command,G4String newValue);
 	
-private:
-	/// construct detector (Electro-)Magnetic Field
-	void ConstructField(const TString filename);  
-	
 	// world volume
 	G4LogicalVolume* experimentalHall_log;	
 	G4VPhysicalVolume* experimentalHall_phys;
@@ -75,6 +71,10 @@ private:
 	G4VPhysicalVolume* detPackage_phys[2];
 	bmSiliconDetectorConstruction siDet;
 	G4VPhysicalVolume* siDet_phys;
+	
+private:
+	/// construct detector (Electro-)Magnetic Field
+	void ConstructField(const TString filename);  
 	
 	// sensitive volumes
 	bmTrackerSD* scint_SD[2];

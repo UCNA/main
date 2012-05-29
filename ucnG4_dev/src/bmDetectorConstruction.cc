@@ -141,8 +141,8 @@ bmTrackerSD* registerSD(G4String sdName) {
 	return sd;
 }
 
-G4VPhysicalVolume* bmDetectorConstruction::Construct()
-{  
+G4VPhysicalVolume* bmDetectorConstruction::Construct() {
+	
 	//------------------------------------------------------ materials
 	setVacuumPressure(fVacuumPressure);
 	
@@ -235,13 +235,18 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			dets[s].mwpc.exitToCathodes += fMWPCBowing/2.;
 			
 			dets[s].Construct(s);
-			G4RotationMatrix* sideFlip = NULL;
-			if(s==EAST) {
-				sideFlip=new G4RotationMatrix();
+			G4RotationMatrix* sideFlip = new G4RotationMatrix();
+			if(s==EAST)
 				sideFlip->rotateY(M_PI*rad);
-			}
-			detPackage_phys[s] = new G4PVPlacement(sideFlip,G4ThreeVector(0.,0.,ssign(s)*(2.2*m-dets[s].getScintFacePos())),
+			G4ThreeVector sideTrans = G4ThreeVector(0.,0.,ssign(s)*(2.2*m-dets[s].getScintFacePos()));
+			
+			detPackage_phys[s] = new G4PVPlacement(sideFlip,sideTrans,
 												   dets[s].container_log,sideSubst("detPackage_phys%c",s),experimentalHall_log,false,0);
+			
+			dets[s].mwpc.myRotation = sideFlip;
+			dets[s].mwpc.myTranslation = (*sideFlip)(dets[s].mwpc.myTranslation);
+			dets[s].mwpc.myTranslation += sideTrans;
+			dets[s].mwpc.setPotential(2700*volt);
 			
 			trap.trap_win_log[s]->SetUserLimits(bmUserSolidLimits);
 			dets[s].mwpc.container_log->SetUserLimits(bmUserGasLimits);
@@ -370,6 +375,11 @@ void bmDetectorConstruction::ConstructField(const TString filename) {
 		G4TransportationManager::GetTransportationManager()->GetPropagatorInField()->SetMaxLoopCount(INT_MAX);
 		
 		fieldIsInitialized = true;
+		
+		for(Side s = EAST; s <= WEST; ++s) {
+			dets[s].mwpc.myBField = fpMagField;
+			dets[s].mwpc.ConstructField();
+		}
 	}
 }
 

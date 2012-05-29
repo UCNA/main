@@ -7,7 +7,7 @@
 class bmWireVolumeConstruction: public MaterialUser {
 public:
 	/// constructor
-	bmWireVolumeConstruction() { }
+	bmWireVolumeConstruction(): anode_R(5*um), cathode_R(25*um), spacing(2.54*mm), NbOfWires(64), planeSpacing(1*cm) { }
 	
 	/// get width
 	G4double GetWidth() const { return 2*cm; }
@@ -22,8 +22,11 @@ public:
 	/// construct logical container volume
 	void Construct(Side s);
 	
-protected:
-	
+	const G4double anode_R;				//< anode wire radius
+	const G4double cathode_R;			//< cathode wire radius
+	const G4double spacing;				//< wire spacing
+	const G4int NbOfWires;				//< number of wires
+	const G4double planeSpacing;		//< spacing between wireplanes
 };
 	
 #endif
