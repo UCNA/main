@@ -263,7 +263,7 @@ if __name__ == "__main__":
 		betaSim.launch_postanalyzer()
 	
 	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 52 clusters
-	if 1:
+	if 0:
 		betaSim = GeantSimManager("WideKev",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
@@ -284,6 +284,16 @@ if __name__ == "__main__":
 			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
 			sourceSim.launch_postanalyzer()
 	
+	if 1:
+		for g in ["Sn113"]:
+			sourceSim = GeantSimManager("Bowing",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+			sourceSim.settings["physlist"]="livermore"
+			sourceSim.settings["sourceScan"]=80.
+			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 10 mm\n"
+			sourceSim.set_generator(g)
+			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
+			sourceSim.launch_postanalyzer()
+
 
 	####################				
 	# Xenon ["Xe135_3-2+","Xe125_1-2+"]

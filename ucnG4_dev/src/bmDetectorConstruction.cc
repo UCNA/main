@@ -47,6 +47,8 @@
 #include "bmTrackerSD.hh"
 #include "bmField.hh"
 
+#include "SMExcept.hh"
+
 #include <cassert>
 
 bmDetectorConstruction::bmDetectorConstruction() {
@@ -54,21 +56,23 @@ bmDetectorConstruction::bmDetectorConstruction() {
 	fDetectorDir = new G4UIdirectory("/detector/");
 	fDetectorDir->SetGuidance("/detector control");
 	
-	fDetectorGeometry = new G4UIcommand("/detector/geometry",this);
+	fDetectorGeometry = new G4UIcmdWithAString("/detector/geometry",this);
 	fDetectorGeometry->SetGuidance("Set the geometry of the detector");
-	fDetectorGeometry->SetParameter( new G4UIparameter("geometry",'s',true) );
+	fDetectorGeometry->AvailableForStates(G4State_PreInit);
 	
-	fFieldCmd = new G4UIcommand("/detector/field",this);
+	fFieldCmd = new G4UIcmdWithAString("/detector/field",this);
 	fFieldCmd->SetGuidance("Set B field switch");
-	fFieldCmd->SetParameter( new G4UIparameter("field",'s',true) );
 	
-	fFieldMapFileCmd = new G4UIcommand("/detector/fieldmapfile",this);
+	fFieldMapFileCmd = new G4UIcmdWithAString("/detector/fieldmapfile",this);
 	fFieldMapFileCmd->SetGuidance("Set B field map file");
-	fFieldMapFileCmd->SetParameter( new G4UIparameter("fieldmapfile",'s',true) );  
 	
 	fVacuumLevelCmd = new G4UIcmdWithADoubleAndUnit("/detector/vacuum",this);
 	fVacuumLevelCmd->SetGuidance("Set SCS vacuum pressure");
-	fVacuumLevelCmd->SetParameter( new G4UIparameter("vacuum",'f',true) ); 
+	
+	fMWPCBowingCmd = new G4UIcmdWithADoubleAndUnit("/detector/MWPCBowing",this);
+	fMWPCBowingCmd->SetGuidance("Set extra wirechamber width from bowing");
+	fMWPCBowingCmd->SetDefaultValue(0.);
+	fMWPCBowingCmd->AvailableForStates(G4State_PreInit);
 	
 	fSourceHolderPosCmd = new G4UIcmdWith3VectorAndUnit("/detector/sourceholderpos",this);
 	fSourceHolderPosCmd->SetGuidance("position of the source holder");
@@ -119,6 +123,9 @@ void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValu
 	} else if (command == fInFoilCmd) {
 		makeInFoil = fInFoilCmd->GetNewBoolValue(newValue);
 		G4cout << "Setting In source foil construction to " << makeInFoil << G4endl;
+	} else if(command == fMWPCBowingCmd) {
+		fMWPCBowing = fMWPCBowingCmd->GetNewDoubleValue(newValue);
+		G4cout << "Adding " << fMWPCBowing/mm << "mm bowing to MWPC volume" << G4endl;
 	} else if (command == fScintStepLimitCmd) {
 		fScintStepLimit = fScintStepLimitCmd->GetNewDoubleValue(newValue);
 		G4cout << "Setting step limit in solids to " << fScintStepLimit/mm << "mm" << G4endl;
@@ -178,7 +185,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 	///////////////////////////////////////
 	// geometry-dependent settings
 	///////////////////////////////////////
-	G4cout<<"Using geometry "<<sGeometry<<" ..."<<G4endl;
+	G4cout<<"Using geometry '"<<sGeometry<<"' ..."<<G4endl;
 	if(sGeometry=="A"){
 		// thick MWPC windows
 		dets[EAST].mwpc.fWindowThick=dets[WEST].mwpc.fWindowThick=25*um;
@@ -199,8 +206,9 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 	} else if(sGeometry=="siDet") {
 		
 	} else {
-		G4cout<<"Unknown geometry!!"<<G4endl;
-		assert(false);
+		SMExcept e("UnknownGeometry");
+		e.insert("name",sGeometry);
+		throw(e);
 	}
 	
 	if(sGeometry=="siDet") {
@@ -223,6 +231,9 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 		////////////////////////////////////////	
 		trap.Construct(experimentalHall_log);
 		for(Side s = EAST; s <= WEST; ++s) {
+			dets[s].mwpc.entranceToCathodes += fMWPCBowing/2.;
+			dets[s].mwpc.exitToCathodes += fMWPCBowing/2.;
+			
 			dets[s].Construct(s);
 			G4RotationMatrix* sideFlip = NULL;
 			if(s==EAST) {
@@ -264,10 +275,10 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct()
 			
 			mwpc_SD[s] = registerSD(sideSubst("mwpc_SD%c",s));
 			dets[s].mwpc.activeRegion.gas_log->SetSensitiveDetector(mwpc_SD[s]);
+			dets[s].mwpc.activeRegion.anodeSeg_log->SetSensitiveDetector(mwpc_SD[s]);
+			dets[s].mwpc.activeRegion.cathSeg_log->SetSensitiveDetector(mwpc_SD[s]);
 			
 			mwpc_planes_SD[s] = registerSD(sideSubst("mwpc_planes_SD%c",s));
-			dets[s].mwpc.activeRegion.cathSeg_log->SetSensitiveDetector(mwpc_planes_SD[s]);
-			dets[s].mwpc.activeRegion.anodeSeg_log->SetSensitiveDetector(mwpc_planes_SD[s]);
 			dets[s].mwpc.activeRegion.cathode_wire_log->SetSensitiveDetector(mwpc_planes_SD[s]);
 			dets[s].mwpc.activeRegion.anode_wire_log->SetSensitiveDetector(mwpc_planes_SD[s]);
 			

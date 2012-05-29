@@ -40,6 +40,7 @@
 #include "G4UIcmdWithADouble.hh"
 #include "G4UIcmdWith3VectorAndUnit.hh"
 #include "G4UIcmdWithABool.hh"
+#include "G4UIcmdWithAString.hh"
 #include "Rtypes.h"
 #include <TString.h>
 #include "bmTrackerSD.hh"
@@ -99,13 +100,13 @@ private:
 	// UI commands
 	G4UIdirectory* fDetectorDir;					//< UI Directory for detector-related commands
 	
-	G4UIcommand* fDetectorGeometry;					//< which detector geometry to construct
+	G4UIcmdWithAString* fDetectorGeometry;			//< which detector geometry to construct
 	G4String sGeometry;
 	
-	G4UIcommand* fFieldCmd;							//< whether to turn on/off the magnetic field
+	G4UIcmdWithAString* fFieldCmd;					//< whether to turn on/off the magnetic field
 	G4String fieldSwitch;
 	
-	G4UIcommand* fFieldMapFileCmd;					//< which field map to use
+	G4UIcmdWithAString* fFieldMapFileCmd;			//< which field map to use
 	TString sFieldMapFile;	
 	
 	G4UIcmdWith3VectorAndUnit* fSourceHolderPosCmd;	//< source holder position
@@ -119,6 +120,9 @@ private:
 	
 	G4UIcmdWithADoubleAndUnit* fScintStepLimitCmd;	//< step size limiter in scintillator
 	Float_t fScintStepLimit;
+	
+	G4UIcmdWithADoubleAndUnit* fMWPCBowingCmd;		//< additional width of MWPC due to window bowing
+	Float_t fMWPCBowing;
 	
 	G4UIcmdWithADouble* fMatterScaleCmd[2];			//< matter interaction scaling factor
 	G4double fMatterScale[2];

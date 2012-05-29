@@ -8,7 +8,9 @@
 class bmWirechamberConstruction: public MaterialUser {
 public:
 	/// constructor
-	bmWirechamberConstruction(): fWindowThick(6*um), fMWPCGas(WCPentane) {}
+	bmWirechamberConstruction(): fWindowThick(6*um), mwpc_entrance_R(7.0*cm), mwpc_exit_R(7.5*cm),
+	fMWPCGas(WCPentane), entranceToCathodes(5.0*mm), exitToCathodes(5.0*mm) {}
+	
 	/// get constructed width
 	G4double GetWidth() const { return 2*mwpcContainer_halfZ; }
 	
@@ -16,6 +18,9 @@ public:
 	G4double mwpc_entrance_R;		//< entrance window radius
 	G4double mwpc_exit_R;			//< exit window radius
 	G4Material* fMWPCGas;			//< MWPC fill gas
+	G4double entranceToCathodes;	//< entrance-window-to-cathode distance
+	G4double exitToCathodes;		//< exit-window-to-cathode distance
+	
 	bmWireVolumeConstruction activeRegion;	//< active gas region with wireplanes
 	
 	G4LogicalVolume* container_log;	//< overall gas box

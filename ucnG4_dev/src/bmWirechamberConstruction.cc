@@ -11,14 +11,7 @@ void bmWirechamberConstruction::Construct(Side s) {
 	activeRegion.fMWPCGas = fMWPCGas;
 	activeRegion.Construct(s);
 	
-	//assume 8 mm between front window and front cathode, 20 mm between cathodes,
-	//5 mm from back cath to back window, 2 mm N2 volume.
-	//see Junhua's thesis
-	const G4double entranceToCathodes = 5.0*mm;		// entrance-window-to-cathode distance
-	const G4double exitToCathodes = 5.0*mm;			// exit-window-to-cathode distance
 	mwpcContainer_halfZ = 0.5*(entranceToCathodes+exitToCathodes+activeRegion.GetWidth());
-	mwpc_entrance_R = 7.0*cm;						// entrance window radius to MWPC, windowed by Kevlar holder
-	mwpc_exit_R = 7.5*cm;							// exit window radius to MWPC
 	const G4double mwpc_volume_width=8.0*inch;		// MWPC gas box width
 	
 	// container volume for all MWPC
