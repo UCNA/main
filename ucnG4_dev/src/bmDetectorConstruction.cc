@@ -83,6 +83,12 @@ bmDetectorConstruction::bmDetectorConstruction() {
 	fInFoilCmd->SetGuidance("Set true to build In source foil instead of usual sealed sources");
 	fInFoilCmd->SetDefaultValue(false);
 	
+	fCrinkleAngleCmd = new G4UIcmdWithADouble("/detector/foilcrinkle",this);
+	fCrinkleAngleCmd->SetGuidance("Decay trap foil crinkle angle");
+	fCrinkleAngleCmd->SetDefaultValue(0.);
+	fCrinkleAngleCmd->AvailableForStates(G4State_PreInit);
+	fCrinkleAngle = 0.;
+
 	for(Side s = EAST; s <= WEST; ++s) {
 		fMatterScaleCmd[s] = new G4UIcmdWithADouble(sideSubst("/detector/matterscale%c",s).c_str(),this);
 		fMatterScaleCmd[s]->SetGuidance("Matter interaction scaling factor");
@@ -129,6 +135,9 @@ void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValu
 	} else if (command == fScintStepLimitCmd) {
 		fScintStepLimit = fScintStepLimitCmd->GetNewDoubleValue(newValue);
 		G4cout << "Setting step limit in solids to " << fScintStepLimit/mm << "mm" << G4endl;
+	} else if (command == fCrinkleAngleCmd) {
+		fCrinkleAngle = fCrinkleAngleCmd->GetNewDoubleValue(newValue);
+		G4cout << "Setting decay trap foil crinkle angle to " << fCrinkleAngle << G4endl;
 	}else {
 		G4cerr << "Unknown command:" << command->GetCommandName() << " passed to bmDetectorConstruction::SetNewValue\n";
     }
@@ -228,8 +237,8 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 		
 		////////////////////////////////////////
 		// beta decay setup components
-		////////////////////////////////////////	
-		trap.Construct(experimentalHall_log);
+		////////////////////////////////////////
+		trap.Construct(experimentalHall_log, fCrinkleAngle);
 		for(Side s = EAST; s <= WEST; ++s) {
 			dets[s].mwpc.entranceToCathodes += fMWPCBowing/2.;
 			dets[s].mwpc.exitToCathodes += fMWPCBowing/2.;
@@ -277,6 +286,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 			trap_win_SD[s] = registerSD(sideSubst("trap_win_SD%c",s));
 			trap.mylar_win_log[s]->SetSensitiveDetector(trap_win_SD[s]);
 			trap.be_win_log[s]->SetSensitiveDetector(trap_win_SD[s]);
+			trap.wigglefoils[s].SetSensitiveDetector(trap_win_SD[s]);
 			
 			mwpc_SD[s] = registerSD(sideSubst("mwpc_SD%c",s));
 			dets[s].mwpc.activeRegion.gas_log->SetSensitiveDetector(mwpc_SD[s]);

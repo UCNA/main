@@ -41,7 +41,7 @@ public:
 	/// electromagnetic field
 	virtual void  GetFieldValue(const G4double Point[4], G4double* Bfield) const;
 	/// whether the field changes particle energy
-	virtual G4bool DoesFieldChangeEnergy() const { return E0>0; }
+	virtual G4bool DoesFieldChangeEnergy() const { return E0 != 0; }
 	/// set up tracking in field
 	void ConstructField();
 	/// set anode voltage

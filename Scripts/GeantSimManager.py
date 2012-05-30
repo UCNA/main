@@ -28,25 +28,28 @@ class GeantSimManager:
 		self.settings["extra_cmds"] = ""
 		
 		self.settings["vis_cmd"] = ""
-		if False: #nEvents <= 100:
-			#self.settings["vis_cmd"] = "/vis/open HepRepFile\n"
-			self.settings["vis_cmd"] = "/vis/open OGLSX\n"
-			self.settings["vis_cmd"] += "/vis/viewer/set/viewpointThetaPhi 90 0\n"
-			self.settings["vis_cmd"] += "/vis/viewer/panTo 2.2 0\n"
-			self.settings["vis_cmd"] += "/vis/viewer/zoom 10\n"
-			self.settings["vis_cmd"] += "/vis/viewer/set/viewpointThetaPhi 10 20\n"
-			self.settings["vis_cmd"] += "/vis/drawVolume\n"
-			self.settings["vis_cmd"] += "/vis/viewer/flush\n"
-			self.settings["vis_cmd"] += "/vis/modeling/trajectories/create/drawByCharge myTrackVis\n"
-			self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawStepPts true\n"
-			self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawAuxPts true\n"
-			self.settings["vis_cmd"] += "/vis/modeling/trajectories/select myTrackVis\n"
-			self.settings["vis_cmd"] += "/vis/scene/add/trajectories\n"
-			#self.settings["vis_cmd"] += "/vis/scene/add/trajectories rich\n"
-			self.settings["vis_cmd"] += "/vis/scene/add/hits\n"
-			
-			self.settings["vis_cmd"] += "/tracking/verbose 2\n"
-	
+				
+	def enable_vis(self):
+		
+		self.settings["vis_cmd"] = "/vis/open HepRepFile\n"
+		#self.settings["vis_cmd"] = "/vis/open OGLSX\n"
+		self.settings["vis_cmd"] += "/vis/viewer/set/viewpointThetaPhi 90 0\n"
+		self.settings["vis_cmd"] += "/vis/viewer/panTo 2.2 0\n"
+		self.settings["vis_cmd"] += "/vis/viewer/zoom 10\n"
+		self.settings["vis_cmd"] += "/vis/viewer/set/viewpointThetaPhi 10 20\n"
+		self.settings["vis_cmd"] += "/vis/drawVolume\n"
+		self.settings["vis_cmd"] += "/vis/viewer/flush\n"
+		self.settings["vis_cmd"] += "/vis/modeling/trajectories/create/drawByCharge myTrackVis\n"
+		self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawStepPts true\n"
+		self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawAuxPts true\n"
+		self.settings["vis_cmd"] += "/vis/modeling/trajectories/select myTrackVis\n"
+		self.settings["vis_cmd"] += "/vis/scene/add/trajectories\n"
+		#self.settings["vis_cmd"] += "/vis/scene/add/trajectories rich\n"
+		self.settings["vis_cmd"] += "/vis/scene/add/hits\n"
+		
+		#self.settings["vis_cmd"] += "/tracking/verbose 2\n"
+
+
 	def set_generator(self,generator,forcePositioner=None):
 		
 		self.settings["generator"] = generator
@@ -285,12 +288,13 @@ if __name__ == "__main__":
 			sourceSim.launch_postanalyzer()
 	
 	if 1:
-		for g in ["Sn113"]:
-			sourceSim = GeantSimManager("Bowing",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+		for g in ["Bi207","Sn113","Ce139"]:
+			sourceSim = GeantSimManager("CrinkleFoil",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.settings["sourceScan"]=80.
-			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 10 mm\n"
+			sourceSim.settings["extra_cmds"] += "/detector/foilcrinkle 0.785\n"
 			sourceSim.set_generator(g)
+			#sourceSim.enable_vis()
 			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
 			sourceSim.launch_postanalyzer()
 

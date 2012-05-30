@@ -124,6 +124,9 @@ private:
 	G4UIcmdWithADoubleAndUnit* fMWPCBowingCmd;		//< additional width of MWPC due to window bowing
 	Float_t fMWPCBowing;
 	
+	G4UIcmdWithADouble* fCrinkleAngleCmd;			//< decay trap foil crinkle angle
+	Float_t fCrinkleAngle;
+	
 	G4UIcmdWithADouble* fMatterScaleCmd[2];			//< matter interaction scaling factor
 	G4double fMatterScale[2];
 	

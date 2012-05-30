@@ -125,9 +125,9 @@ void bmWirechamberConstruction::setPotential(G4double Vanode) {
 void bmWirechamberConstruction::ConstructField() {
 	G4cout << "Setting up wirechamber electromagnetic field...";
 	
-	// local field manager just for this volume and all daughters
-	G4FieldManager* localFieldMgr = new G4FieldManager(this);
-	container_log->SetFieldManager(localFieldMgr,true);
+	// local field manager
+	G4FieldManager* localFieldMgr = new G4FieldManager();
+	localFieldMgr->SetDetectorField(this);
 	
 	// equation of motion, stepper for field
 	G4EqMagElectricField* pEquation = new G4EqMagElectricField(this);
@@ -141,6 +141,9 @@ void bmWirechamberConstruction::ConstructField() {
 	localFieldMgr->SetMinimumEpsilonStep(1e-6);
 	localFieldMgr->SetMaximumEpsilonStep(1e-5);
 	localFieldMgr->SetDeltaOneStep(0.1*um);
+	
+	// apply field manager to wirechamber and all daughter volumes
+	container_log->SetFieldManager(localFieldMgr,true);
 	
 	G4cout << " Done." << G4endl;
 }

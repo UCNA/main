@@ -2,6 +2,8 @@
 #define bmDecayTrapConstruction_HH 1
 
 #include "bmDetectorConstructionUtils.hh"
+#include "G4LogicalVolume.hh"
+#include "WiggleSheet.hh"
 
 /// gas-filled region containing anode, cathode planes
 class bmDecayTrapConstruction: public MaterialUser {
@@ -16,19 +18,16 @@ public:
 	G4Material* fWindowMat;		//< decay tube window material
 	G4Material* fCoatingMat;	//< decay tube coating material
 
-	G4LogicalVolume* decayTube_log;
-	G4VPhysicalVolume* decayTube_phys;
-	G4LogicalVolume* trap_win_log[2];
-	G4VPhysicalVolume* trap_win_phys[2];
-	G4LogicalVolume* mylar_win_log[2];
-	G4VPhysicalVolume* mylar_win_phys[2];	
-	G4LogicalVolume* be_win_log[2];
-	G4VPhysicalVolume* be_win_phys[2];	
-	G4LogicalVolume* trap_monitor_log[2];
-	G4VPhysicalVolume* trap_monitor_phys[2];
+	G4LogicalVolume* decayTube_log;			//< decay trap tube
+	G4LogicalVolume* trap_win_log[2];		//< trap window volume
+	G4LogicalVolume* mylar_win_log[2];		//< mylar layer of window
+	G4LogicalVolume* be_win_log[2];			//< berillium layer of window
+	G4LogicalVolume* trap_monitor_log[2];	//< extra event monitoring region
+	
+	WiggleSheet wigglefoils[2];				//< optional replacement crinkly endcap foils
 	
 	/// construct in given world volume
-	void Construct(G4LogicalVolume* world);
+	void Construct(G4LogicalVolume* world, double crinkleAngle = 0);
 };
 
 #endif
