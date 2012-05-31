@@ -105,7 +105,7 @@ void PositionBinner::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 void PositionBinner::calculateResults() {
 	
 	assert(runCounts.counts.size());
-	PMTCalibrator PCal(runCounts.counts.begin()->first,CalDBSQL::getCDB());
+	PMTCalibrator PCal(runCounts.counts.begin()->first);
 	printf("\n\n---- Using Calibrator: ----\n");
 	PCal.printSummary();
 	
@@ -272,7 +272,7 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 	if(forceResim || !fileExists(prevFile+".root")) {
 		PositionBinner PBM(&OM1,singleName,PB.sects.r,PB.sects.n);
 		SectPosGen SPG(PB.sects);
-		PMTCalibrator PCal(r,CalDBSQL::getCDB());
+		PMTCalibrator PCal(r);
 		for(Side s = EAST; s <= WEST; ++s) {
 			TH1toPMT t2p(PB.energySpectrum[s].h[GV_OPEN],&SPG);
 			t2p.setCalibrator(PCal);

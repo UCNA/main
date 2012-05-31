@@ -3,6 +3,7 @@
 
 #include "Types.hh"
 #include "CalDB.hh"
+#include "CalDBSQL.hh"
 #include "GainStabilizer.hh"
 #include "EvisConverter.hh"
 #include "WirechamberCalibrator.hh"
@@ -100,7 +101,7 @@ protected:
 class PMTCalibrator: public LinearityCorrector, public PedestalCorrector, public EvisConverter, public WirechamberCalibrator {
 public:
 	/// Constructor, for specified run number
-	PMTCalibrator(RunNum rn, CalDB* cdb);
+	PMTCalibrator(RunNum rn, CalDB* cdb = CalDBSQL::getCDB());
 	/// Destructor
 	~PMTCalibrator();
 	/// resolution deltaLight for given light seen in tube

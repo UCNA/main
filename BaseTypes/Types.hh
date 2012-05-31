@@ -17,8 +17,6 @@
 #include <TMath.h>
 #include <map>
 
-/// Whether a point falls inside an ellipse
-inline bool pointIsInEllipse(float x, float y, float wx, float wy) { return x*x/(wx*wx) + y*y/(wy*wy) < 1.0; }
 /// interpolate fractional bin positions from a TAxis (needed to interpret TSpectrum positions)
 double binterpolate(const TAxis* ax, double binloc);
 

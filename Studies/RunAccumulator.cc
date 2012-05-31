@@ -312,7 +312,7 @@ void RunAccumulator::simForRun(Sim2PMT& simData, RunNum rn, unsigned int nToSim,
 	if(RI.gvState != GV_OPEN) return;
 	assert(RI.afpState <= AFP_OTHER);
 	
-	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
+	PMTCalibrator PCal(rn);
 	simData.setCalibrator(PCal);
 	simData.setAFP(RI.afpState);
 	loadSimData(simData,nToSim,countAll);

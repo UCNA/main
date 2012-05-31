@@ -261,7 +261,7 @@ int main(int argc, char *argv[]) {
 	// PMT Calibrator loads run-specific energy calibrations info for selected run (14111)
 	// and uses default Calibrations DB connection to most up-to-date though possibly unstable "mpm_debug"
 	RunNum run_number = 14111;
-	PMTCalibrator PCal(run_number, CalDBSQL::getCDB());
+	PMTCalibrator PCal(run_number);
 	
 	// Energy simulators for both sides using same PMT Calibrator
 	/*

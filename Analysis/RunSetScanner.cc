@@ -75,7 +75,7 @@ bool RunSetScanner::addRun(RunNum r) {
 		RunInfo R = CalDBSQL::getCDB()->getRunInfo(r);
 		if(R.afpState <= AFP_ON) nAFP[R.afpState] += nnEvents.back();
 		if(withCals)
-			PCals.insert(std::make_pair(r,new PMTCalibrator(r,CalDBSQL::getCDB())));
+			PCals.insert(std::make_pair(r,new PMTCalibrator(r)));
 		BlindTime b = CalDBSQL::getCDB()->fiducialTime(r);
 		if(!b.t[BOTH])
 			printf("**** WARNING: Run %i has zero fiducial time!\n",r);

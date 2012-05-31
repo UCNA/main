@@ -9,6 +9,16 @@ TRandom3 mc_rnd_source;
 
 //--------------------------------------------------------------
 
+void SimPositioner::applyOffset(Sim2PMT& S) {
+	calcOffset(S);
+	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+		for(Side s = EAST; s <= WEST; ++s) {
+			S.scintPos[s][d] += offPos[d];
+			S.mwpcPos[s][d] += offPos[d];
+		}
+		S.primPos[d] += offPos[d];
+	}
+}
 
 void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
 	while(true) {
@@ -21,7 +31,6 @@ void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
 	offPos[X_DIRECTION] += x0-S.primPos[X_DIRECTION];
 	offPos[Y_DIRECTION] += y0-S.primPos[Y_DIRECTION];
 }
-
 
 //--------------------------------------------------------------
 
@@ -89,18 +98,10 @@ void Sim2PMT::reverseCalibrate() {
 	runClock = mc_rnd_source.Uniform(0.,ActiveCal->totalTime);
 	
 	// apply position offsets; set wires position
-	if(SP) SP->calcOffset(*this);
-	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
-		for(Side s = EAST; s <= WEST; ++s) {
-			if(SP) {
-				scintPos[s][d] += SP->offPos[d];
-				mwpcPos[s][d] += SP->offPos[d];
-			}
+	if(SP) SP->applyOffset(*this);
+	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
+		for(Side s = EAST; s <= WEST; ++s)
 			wires[s][d].center = mwpcPos[s][d];
-		}
-		if(SP)
-			primPos[d] += SP->offPos[d];
-	}
 	
 	// simulate event on both sides
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -243,6 +244,66 @@ void G4toPMT_SideSwap::doUnits() {
 		std::swap(scintPos[EAST][d],scintPos[WEST][d]);
 	}
 	G4toPMT::doUnits();
+}
+
+//-------------------------------------------
+
+G4SegmentMultiplier::G4SegmentMultiplier(const SectorCutter& S):
+G4toPMT(), SimPositioner(), SC(S), nrots(0), rcurrent(0) {
+	SP = this;
+	for(unsigned int i=0; i<SC.n; i++) {
+		double th = 2*M_PI/SC.ndivs[i];
+		vc.push_back(cos(th));
+		vs.push_back(sin(th));
+	}
+}
+
+void G4SegmentMultiplier::calcReweight() {
+	G4toPMT::calcReweight();
+	physicsWeight *= primRadius()*SC.ndivs[SC.n-1]/(SC.r*SC.ndivs[rcurrent]);
+}
+
+void G4SegmentMultiplier::startScan(bool startRandom) {
+	nrots = 0;
+	G4toPMT::startScan(startRandom);
+}
+
+bool G4SegmentMultiplier::nextPoint() {
+	if(!nrots) {
+		morePts = ProcessedDataScanner::nextPoint();
+		reverseCalibrate();
+		rcurrent = SC.getRing(SC.sector(primPos[X_DIRECTION],primPos[Y_DIRECTION]));
+		rcurrent = rcurrent<SC.n?rcurrent:SC.n-1;
+		nrots = SC.ndivs[rcurrent]-1;
+		calcReweight();
+		nSimmed++;
+		nCounted+=simEvtCounts();
+	} else {
+		reverseCalibrate();
+		nrots--;
+		nSimmed++;
+		nCounted+=simEvtCounts();
+	}
+	return morePts || nrots;
+}
+
+void G4SegmentMultiplier::rotpt(double& x0, double& y0) {
+	double x = x0*vc[rcurrent]-y0*vs[rcurrent];
+	y0 = x0*vs[rcurrent]+y0*vc[rcurrent];
+	x0 = x;
+}
+
+void G4SegmentMultiplier::applyOffset(Sim2PMT& S) {
+	if(!nrots) return;
+	for(Side s = EAST; s <= WEST; ++s) {
+		rotpt(S.scintPos[s][X_DIRECTION],S.scintPos[s][Y_DIRECTION]);
+		rotpt(S.mwpcPos[s][X_DIRECTION],S.mwpcPos[s][Y_DIRECTION]);
+	}
+	rotpt(S.primPos[X_DIRECTION],S.primPos[Y_DIRECTION]);
+}
+
+void G4SegmentMultiplier::doUnits() {
+	if(!nrots) G4toPMT::doUnits();
 }
 
 //-------------------------------------------

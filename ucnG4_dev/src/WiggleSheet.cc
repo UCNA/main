@@ -33,7 +33,7 @@ void WiggleSheet::Construct() {
 	if(!containerMat) throw(SMExcept("ContainerMaterialUnspecified"));
 	
 	G4Box* container_box = new G4Box("container_box",cmax,(nseg*period/2+ttotal)/2.,length/2.);
-	container_log = new G4LogicalVolume(container_box, containerMat, "container_log");
+	container_log = new G4LogicalVolume(container_box, containerMat, "wigglesheet_container_log");
 	
 	// construct logical volumes
 	double rout = rmax;

@@ -290,7 +290,7 @@ void reSource(RunNum rn) {
 	
 	// set up output paths
 	std::string outPath = getEnvSafe("UCNA_ANA_PLOTS")+"/LivermoreSources/";
-	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
+	PMTCalibrator PCal(rn);
 	RunInfo RI = CalDBSQL::getCDB()->getRunInfo(rn);
 	OutputManager TM("Run_"+itos(RI.runNum), outPath+replace(RI.groupName,' ','_')+"/"+itos(rn)+"_"+RI.roleName+"/");
 	
@@ -374,7 +374,7 @@ void reSource(RunNum rn) {
 		std::string g4dat = "/home/mmendenhall/geant4/output/FixGeom_";
 		printf("Loading source simulation data...\n");
 		if(simSource.t=="Bi207" || simSource.t=="Ce139" || simSource.t=="Sn113")
-			g4dat = "/home/mmendenhall/geant4/output/PosLine_";
+			g4dat = "/home/mmendenhall/geant4/output/EField_";
 		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
 		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
 			g2p = new G4toPMT();

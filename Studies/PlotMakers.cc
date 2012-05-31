@@ -19,7 +19,7 @@
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
 	QFile fout(foutPath+"/GMS_Plot.txt",false);
 	for(unsigned int i=0; i<runs.size(); i++) {
-		PMTCalibrator LC(runs[i],CalDBSQL::getCDB());
+		PMTCalibrator LC(runs[i]);
 		Stringmap m = LC.calSummary();
 		printf("----- %i -----\n",runs[i]);
 		m.display();
@@ -36,7 +36,7 @@ void dumpPosmap(std::string basepath, unsigned int pnum) {
 	if(pnum < 5000) {
 		PCor = CalDBSQL::getCDB()->getPositioningCorrectorByID(pnum);
 	} else {
-		PCal = new PMTCalibrator(pnum,CalDBSQL::getCDB());
+		PCal = new PMTCalibrator(pnum);
 		PCor = CalDBSQL::getCDB()->getPositioningCorrector(pnum);
 	}
 	

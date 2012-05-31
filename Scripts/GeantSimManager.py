@@ -289,10 +289,10 @@ if __name__ == "__main__":
 	
 	if 1:
 		for g in ["Bi207","Sn113","Ce139"]:
-			sourceSim = GeantSimManager("CrinkleFoil",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+			sourceSim = GeantSimManager("DeepCrinkle",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.settings["sourceScan"]=80.
-			sourceSim.settings["extra_cmds"] += "/detector/foilcrinkle 0.785\n"
+			sourceSim.settings["extra_cmds"] += "/detector/foilcrinkle 1.5708\n"
 			sourceSim.set_generator(g)
 			#sourceSim.enable_vis()
 			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)

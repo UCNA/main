@@ -78,7 +78,7 @@ void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	RunNum rn = streamInteractor::popInt(stack);
-	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
+	PMTCalibrator PCal(rn);
 	OutputManager OM("NPE",getEnvSafe("UCNA_ANA_PLOTS")+"/nPE/Run_"+itos(rn));
 	PosPlotter PP(&OM);
 	PP.npePlot(&PCal);
@@ -129,8 +129,8 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	//std::string simFile = "/home/mmendenhall/geant4/output/LivPhys_495_BadVac_neutronBetaUnpol/analyzed_";
 	//std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_";
 	
-	unsigned int nTot = 27;
-	unsigned int stride = 11;
+	unsigned int nTot = 52;
+	unsigned int stride = 7;
 	
 	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
@@ -166,10 +166,10 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 }
 
 void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
-	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/Livermore/");
+	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/WideKev/");
 	G4toPMT g2p;
-	g2p.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
-	PMTCalibrator PCal(16000,CalDBSQL::getCDB());
+	g2p.addFile("/home/mmendenhall/geant4/output/WideKev_neutronBetaUnpol/analyzed_*.root");
+	PMTCalibrator PCal(16000);
 	g2p.setCalibrator(PCal);
 	SimSpectrumInfo(g2p,OM);
 	OM.setWriteRoot(true);
@@ -182,6 +182,38 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrect
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
+	OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
+	
+	SectorCutter SC(4,50);
+	G4SegmentMultiplier GSM(SC);
+	GSM.addFile("/home/mmendenhall/geant4/output/WideKev_Xe135_3-2+/analyzed_0.root");
+	PMTCalibrator PCal(16000);
+	GSM.setCalibrator(PCal);
+	TH1F* hr = OMTest.registeredTH1F("hr","Event Radius",100,0,60);
+	TH1F* hr2 = OMTest.registeredTH1F("hr2","Event Radius Squared",100,0,60*60);
+	TH1F* hXe = OMTest.registeredTH1F("hXe","Xenon Spectrum",400,0,1200);
+	TH2F* hPos = OMTest.registeredTH2F("hPos","Positions",200,-60,60,200,-60,60);
+	GSM.startScan();
+	while(GSM.nextPoint()) {
+		Side s = GSM.fSide;
+		if(GSM.fType == TYPE_0_EVENT && (s==EAST || s==WEST) && GSM.fPID == PID_BETA) {
+			hPos->Fill(GSM.wires[s][X_DIRECTION].center,GSM.wires[s][Y_DIRECTION].center,GSM.physicsWeight);
+			hr->Fill(GSM.radius(s),GSM.physicsWeight);
+			hr2->Fill(GSM.radius2(s),GSM.physicsWeight);
+			hXe->Fill(GSM.getEtrue(),GSM.physicsWeight);
+		}
+	}
+	hr2->Draw();
+	OMTest.printCanvas("RadiusSquared");
+	hr->Draw();
+	OMTest.printCanvas("Radius");
+	hXe->Draw();
+	OMTest.printCanvas("XeSpec");
+	hPos->Draw("Col");
+	drawSectors(SC,6);
+	OMTest.printCanvas("XePos");
+	return;
+	
 	std::string isot = "Bi207";
 	double emax = 1200;
 	int nbins = 300;
@@ -190,7 +222,6 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	NucDecaySystem& NDS = NDL.getGenerator(isot);
 	NDS.display(true);
 	
-	OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
 	TH1F* hSpec = OMTest.registeredTH1F("hSpec",isot+" Spectrum",nbins,0,emax);
 	std::vector<NucDecayEvent> v;
 	for(unsigned int i=0; i<1e7; i++) {

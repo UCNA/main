@@ -150,10 +150,16 @@ void AsymmetryAnalyzer::calculateResults() {
 	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	hInstAsym = (TH1F*)calculateSR("Total_Instrumental_Asym",qTotalSpectrum[EAST],qTotalSpectrum[WEST],true,true);
 	hSuperSum = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
-	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp)
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp) {
+		hTpAsym[tp] = (TH1F*)calculateSR(std::string("Asymmetry_Type_")+itos(tp),
+										 qEnergySpectra[EAST][nBetaTubes][tp],
+										 qEnergySpectra[WEST][nBetaTubes][tp]);
+		hTpAsym[tp]->SetMinimum(-0.10);
+		hTpAsym[tp]->SetMaximum(0.0);
 		hEvtSS[tp] = (TH1F*)calculateSuperSum(std::string("SuperSum_Type_")+itos(tp),
 											  qEnergySpectra[EAST][nBetaTubes][tp],
 											  qEnergySpectra[WEST][nBetaTubes][tp]);
+	}
 	// perform data fits
 	fitAsym(200,675,1,true);	// match Robby's analysis
 	fitAsym(50,800,7);
@@ -211,6 +217,11 @@ void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
 		hEvtSS[tp]->SetMarkerStyle(1);
 		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
 		printCanvas(std::string("DataComparison/SuperSum_Type_")+itos(tp));
+		
+		dat.hTpAsym[tp]->SetMarkerStyle(1);
+		hTpAsym[tp]->SetMarkerStyle(1);
+		drawHistoPair(dat.hTpAsym[tp],hTpAsym[tp]);
+		printCanvas(std::string("DataComparison/Asymmetry_Type_")+itos(tp));
 	}
 	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {

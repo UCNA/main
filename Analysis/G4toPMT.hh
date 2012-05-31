@@ -15,6 +15,10 @@ public:
 	SimPositioner() { offPos[X_DIRECTION] = offPos[Y_DIRECTION] = 0; }
 	/// destructor
 	virtual ~SimPositioner() {}
+	/// apply position offset to event
+	virtual void applyOffset(Sim2PMT& S);
+	
+protected:	
 	/// calculate offset based on primary position
 	virtual void calcOffset(const Sim2PMT& S) {}
 	
@@ -57,6 +61,8 @@ public:
 	
 	/// get true energy
 	virtual float getEtrue();
+	/// primary event radius
+	virtual float primRadius() const { return sqrt(pow(primPos[X_DIRECTION],2)+pow(primPos[Y_DIRECTION],2)); }
 	
 	/// check whether this is simulated data
 	virtual bool isSimulated() const { return true; }
@@ -144,6 +150,31 @@ protected:
 	virtual void setReadpoints();
 };
 
+/// multiply Geant4 data to fill all segments of SectionCutter
+class G4SegmentMultiplier: public G4toPMT, SimPositioner {
+public:
+	/// constructor
+	G4SegmentMultiplier(const SectorCutter& S);
+	/// start scan
+	virtual void startScan(bool startRandom = false);
+	/// overrides G4toPMT::nextPoint to re-use points
+	virtual bool nextPoint();
+	/// unit conversions, only done once per rotation sequence
+	virtual void doUnits();
+	/// calculate spectrum re-weighting factor
+	virtual void calcReweight();
+	/// apply rotational offset
+	virtual void applyOffset(Sim2PMT& S);
+protected:
+	/// rotate a point
+	void rotpt(double& x0, double& y0);
+	
+	SectorCutter SC;			//< SectorCutter to determine event multiplication
+	unsigned int nrots;			//< number of remaining point rotations
+	unsigned int rcurrent;		//< current radial ring
+	std::vector<double> vc,vs;	//< pre-calculated rotation matrix cosines, sines for each ring
+	bool morePts;				//< whether the data still has more points to come
+};
 
 /// mixes several simulations
 class MixSim: public Sim2PMT {

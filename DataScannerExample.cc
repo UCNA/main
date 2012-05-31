@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
 	
 	// PMT Calibrator loads run-specific energy calibrations info for selected run (14111)
 	RunNum rn = 14111;
-	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
+	PMTCalibrator PCal(rn);
 	// set the data scanner to use this calibrator
 	G2P.setCalibrator(PCal);
 	

@@ -244,7 +244,7 @@ void spectrumGenTest() {
 	G4toPMT G2P;
 	G2P.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_1.root");
 	RunNum rn = 14077;
-	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
+	PMTCalibrator PCal(rn);
 	G2P.setCalibrator(PCal);
 	
 	unsigned int nToSim = 1000000;
