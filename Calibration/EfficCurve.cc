@@ -1,6 +1,24 @@
 #include "EfficCurve.hh"
 #include "Types.hh"
 
+Double_t poiscdf(const Double_t *x, const Double_t *par) {
+	float w0 = par[2]*par[2];
+	float x0 = (x[0]-par[0])/par[1]*par[2] + w0 + 1.0/3.0 - 0.015/w0;
+	if(x0<0)
+		return 0;
+	return (1.0-TMath::Gamma(x0,w0))*par[3];
+}
+
+Double_t fancyfish(const Double_t *x, const Double_t *par) {
+	float adc50 = par[0];						// ADC at 50% efficiency
+	float w = par[1];							// width of efficiency transition
+	float n50 = par[2]*adc50/w;					// "number of photoelectrons" at 50% efficiency
+	float n0 = n50+sqrt(n50)*(x[0]-adc50)/w;	// "number of photoelectrons" at current point
+	if(n0 < 0)
+		return 0;
+	return TMath::Gamma(n50+1/3-0.015/n50,n0)*par[3];
+}
+
 void EfficCurve::genEffic(TH1F* hAll, TH1F* hTrig, bool adcChan) {
 	
 	float xmin = hAll->GetXaxis()->GetXmin();

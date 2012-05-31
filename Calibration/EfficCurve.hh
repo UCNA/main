@@ -22,5 +22,9 @@ public:
 	TGraphAsymmErrors* gEffic;	//< full curve as TGraph
 };
 
+/// CDF for poisson function (for trigger efficiency fits)
+Double_t poiscdf(const Double_t *x, const Double_t *par);
+/// Fancier trigger efficiency model
+Double_t fancyfish(const Double_t *x, const Double_t *par);
 
 #endif
