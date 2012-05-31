@@ -93,6 +93,7 @@ public:
 	AFPState currentAFP;			//< current state of AFP during data scanning
 	GVState currentGV;				//< current foreground/background status during data scanning
 	bool needsSubtraction;			//< whether background subtraction is pending
+	bool isSimulated;				//< flag for whether this is based on simulated data
 	
 	TagCounter<RunNum> runCounts;	//< type-0 event counts by run, for re-simulation
 	

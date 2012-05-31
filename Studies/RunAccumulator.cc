@@ -71,7 +71,7 @@ fgbgPair RunAccumulator::cloneFGBGPair(const fgbgPair& p, const std::string& new
 }
 
 RunAccumulator::RunAccumulator(OutputManager* pnt, const std::string& nm, const std::string& inflName):
-SegmentSaver(pnt,nm,inflName), needsSubtraction(false) {
+SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false) {
 	
 	// initialize blind time to 0
 	zeroCounters();
@@ -279,6 +279,7 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 }
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
+	isSimulated = true;
 	currentGV = GV_OPEN;
 	currentAFP = simData.getAFP();
 	printf("Loading %i events of simulated data (AFP=%i)...\n",nToSim,currentAFP);

@@ -1,7 +1,7 @@
 #include "EndpointStudy.hh"
 #include "CalDBSQL.hh"
 #include "MultiGaus.hh"
-#include "TH1toPMT.hh"
+#include "G4toPMT.hh"
 #include "KurieFitter.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "GraphicsUtils.hh"
@@ -125,18 +125,22 @@ void PositionBinner::calculateResults() {
 				//----------------------
 				// Low peak fit
 				//----------------------
-				gausFit.SetLineColor(2+t);
-				if(!iterGaus(hSpec,&gausFit,3,hSpec->GetBinCenter(hSpec->GetMaximumBin()),100,1.0)) {
-					sectDat[s][t][m].low_peak = float_err(gausFit.GetParameter(1),gausFit.GetParError(1));
-					sectDat[s][t][m].low_peak_width = float_err(gausFit.GetParameter(2),gausFit.GetParError(2));
-				} else {
-					sectDat[s][t][m].low_peak = sectDat[s][t][m].low_peak_width = 0;
+				double epGuess = 915.;
+				if(!isSimulated) {
+					gausFit.SetLineColor(2+t);
+					if(!iterGaus(hSpec,&gausFit,3,hSpec->GetBinCenter(hSpec->GetMaximumBin()),100,1.0)) {
+						sectDat[s][t][m].low_peak = float_err(gausFit.GetParameter(1),gausFit.GetParError(1));
+						sectDat[s][t][m].low_peak_width = float_err(gausFit.GetParameter(2),gausFit.GetParError(2));
+						epGuess = 6.5*sectDat[s][t][m].low_peak.x;
+					} else {
+						sectDat[s][t][m].low_peak = sectDat[s][t][m].low_peak_width = 0;
+					}
 				}
 				
 				//----------------------
 				// 915keV endpoint fit
 				//----------------------
-				sectDat[s][t][m].xe_ep = kurieIterator(hSpec,6.5*sectDat[s][t][m].low_peak.x,NULL,915.,400,800);
+				sectDat[s][t][m].xe_ep = kurieIterator(hSpec,epGuess,NULL,915.,400,800);
 				
 				qOut.insert("sectDat",sd2sm(sectDat[s][t][m]));
 			}
@@ -151,11 +155,10 @@ void PositionBinner::compareMCtoData(RunAccumulator& OAdata) {
 	
 	// overall energy spectrum
 	for(Side s=EAST; s<=WEST; ++s) {
-		energySpectrum[s].h[GV_OPEN]->Scale(PB->energySpectrum[s].h[GV_OPEN]->GetMaximum()/energySpectrum[s].h[GV_OPEN]->GetMaximum());
-		energySpectrum[s].h[GV_OPEN]->SetLineColor(4);
-		energySpectrum[s].h[GV_OPEN]->Draw();
-		PB->energySpectrum[s].h[GV_OPEN]->SetLineColor(2);
-		PB->energySpectrum[s].h[GV_OPEN]->Draw("Same");
+		int b0 = PB->energySpectrum[s].h[GV_OPEN]->FindBin(400);
+		int b1 = PB->energySpectrum[s].h[GV_OPEN]->FindBin(800);
+		energySpectrum[s].h[GV_OPEN]->Scale(PB->energySpectrum[s].h[GV_OPEN]->Integral(b0,b1)/energySpectrum[s].h[GV_OPEN]->Integral(b0,b1));
+		drawHistoPair(PB->energySpectrum[s].h[GV_OPEN],energySpectrum[s].h[GV_OPEN]);
 		printCanvas(sideSubst("Comparison/hEnergy_%c",s));		
 	}
 	
@@ -255,38 +258,23 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	PB.setWriteRoot(true);	
 }
 
-double avgSmear(PMTCalibrator& PCal, Side s, SectorCutter& sects) {
-	double sm = 0;
-	double e0 = 500.0;
-	float x,y;
-	for(unsigned int m=0; m<sects.nSectors(); m++) {
-		sects.sectorCenter(m,x,y);
-		sm+=PCal.nPE(s,nBetaTubes,e0,x,y)/e0;
-	}
-	return sm/sects.nSectors();
-}
-
 std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB, float simFactor, bool forceResim=false) {
 	std::string singleName = std::string("Xenon_")+itos(r)+"_"+itos(PB.sects.n)+"_"+dtos(PB.sects.r);
 	std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
 	if(forceResim || !fileExists(prevFile+".root")) {
 		PositionBinner PBM(&OM1,singleName,PB.sects.r,PB.sects.n);
-		SectPosGen SPG(PB.sects);
 		PMTCalibrator PCal(r);
-		for(Side s = EAST; s <= WEST; ++s) {
-			TH1toPMT t2p(PB.energySpectrum[s].h[GV_OPEN],&SPG);
-			t2p.setCalibrator(PCal);
-			t2p.setAFP(AFP_OTHER);
-			t2p.PGen[s].presmear = avgSmear(PCal,s,PB.sects);
-			printf("Setting pre-smearing to %g PE/keV...\n",t2p.PGen[s].presmear);
-			t2p.genside = s;
-			for(unsigned int m=0; m<PB.sects.nSectors(); m++) {
-				printf("Simulating sector %c%i...\n",sideNames(s),m);
-				SPG.m = m;
-				t2p.nToSim=simFactor*0.5*PB.runCounts[r]*SPG.sects.sectorArea(m)/SPG.sects.totalArea();
-				PBM.loadSimData(t2p,t2p.nToSim);
-			}
-		}
+		G4SegmentMultiplier GSM(PB.sects);
+		GSM.setCalibrator(PCal);
+		
+		std::string simFile = "/home/mmendenhall/geant4/output/WideKev_Xe135_3-2+/analyzed_";
+		unsigned int nTot = 18;
+		unsigned int stride = 5;
+		for(unsigned int i=0; i<stride; i++)
+			GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
+
+		unsigned int nToSim=simFactor*PB.runCounts[r];
+		PBM.loadSimData(GSM,nToSim);
 		PBM.write();
 		PBM.setWriteRoot(true);
 	}
@@ -314,6 +302,7 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle) {
 	
 	// reload data
 	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1), PB.sects.r, PB.sects.n);
+	PBM.isSimulated = true;
 	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
 		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;
 		PositionBinner PBM1(&OM1, *it, 0, 0, prevFile);
