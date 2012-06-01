@@ -1,6 +1,7 @@
 #include "EndpointStudy.hh"
 #include "CalDBSQL.hh"
 #include "MultiGaus.hh"
+#include "LinHistCombo.hh"
 #include "G4toPMT.hh"
 #include "KurieFitter.hh"
 #include "PostOfficialAnalyzer.hh"
@@ -126,15 +127,13 @@ void PositionBinner::calculateResults() {
 				// Low peak fit
 				//----------------------
 				double epGuess = 915.;
-				if(!isSimulated) {
-					gausFit.SetLineColor(2+t);
-					if(!iterGaus(hSpec,&gausFit,3,hSpec->GetBinCenter(hSpec->GetMaximumBin()),100,1.0)) {
-						sectDat[s][t][m].low_peak = float_err(gausFit.GetParameter(1),gausFit.GetParError(1));
-						sectDat[s][t][m].low_peak_width = float_err(gausFit.GetParameter(2),gausFit.GetParError(2));
-						epGuess = 6.5*sectDat[s][t][m].low_peak.x;
-					} else {
-						sectDat[s][t][m].low_peak = sectDat[s][t][m].low_peak_width = 0;
-					}
+				gausFit.SetLineColor(2+t);
+				if(!iterGaus(hSpec,&gausFit,3,hSpec->GetBinCenter(hSpec->GetMaximumBin()),100,1.0)) {
+					sectDat[s][t][m].low_peak = float_err(gausFit.GetParameter(1),gausFit.GetParError(1));
+					sectDat[s][t][m].low_peak_width = float_err(gausFit.GetParameter(2),gausFit.GetParError(2));
+					if(!isSimulated) epGuess = 6.5*sectDat[s][t][m].low_peak.x;
+				} else {
+					sectDat[s][t][m].low_peak = sectDat[s][t][m].low_peak_width = 0;
 				}
 				
 				//----------------------
@@ -262,19 +261,56 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 	std::string singleName = std::string("Xenon_")+itos(r)+"_"+itos(PB.sects.n)+"_"+dtos(PB.sects.r);
 	std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
 	if(forceResim || !fileExists(prevFile+".root")) {
-		PositionBinner PBM(&OM1,singleName,PB.sects.r,PB.sects.n);
 		PMTCalibrator PCal(r);
-		G4SegmentMultiplier GSM(PB.sects);
-		GSM.setCalibrator(PCal);
+		PositionBinner PBM(&OM1,singleName,PB.sects.r,PB.sects.n);
+		PositionBinner PBM2(&OM1,singleName+"_LowPk",PB.sects.r,PB.sects.n);
 		
-		std::string simFile = "/home/mmendenhall/geant4/output/WideKev_Xe135_3-2+/analyzed_";
-		unsigned int nTot = 18;
-		unsigned int stride = 5;
-		for(unsigned int i=0; i<stride; i++)
-			GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
-
 		unsigned int nToSim=simFactor*PB.runCounts[r];
-		PBM.loadSimData(GSM,nToSim);
+		printf("Data counts West: %f; to sim = %i\n",PB.energySpectrum[WEST].h[GV_OPEN]->Integral(),nToSim);
+		
+		// endpoint Xe135 sim
+		{
+			G4SegmentMultiplier GSM(PB.sects);
+			GSM.setCalibrator(PCal);
+			std::string simFile = "/home/mmendenhall/geant4/output/WideKev_Xe135_3-2+/analyzed_";
+			unsigned int nTot = 18;
+			unsigned int stride = 5;
+			for(unsigned int i=0; i<stride; i++)
+				GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
+			PBM.loadSimData(GSM,nToSim/2);
+			printf("Sim counts for Xe135 West: %f\n",PBM.energySpectrum[WEST].h[GV_OPEN]->Integral());
+		}
+		
+		// low peak Xe125 sim
+		{
+			G4SegmentMultiplier GSM(PB.sects);
+			GSM.setCalibrator(PCal);
+			std::string simFile = "/home/mmendenhall/geant4/output/WideKev_Xe125_1-2+/analyzed_";
+			unsigned int nTot = 16;
+			unsigned int stride = 7;
+			for(unsigned int i=0; i<stride; i++)
+				GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
+			PBM2.loadSimData(GSM,nToSim/2);
+			printf("Sim counts for Xe125 West: %f\n",PBM2.energySpectrum[WEST].h[GV_OPEN]->Integral());
+		}
+		
+		// determine spectrum composition
+		LinHistCombo LHC;
+		LHC.addTerm(PBM.energySpectrum[WEST].h[GV_OPEN]);
+		LHC.addTerm(PBM2.energySpectrum[WEST].h[GV_OPEN]);
+		LHC.Fit(PB.energySpectrum[WEST].h[GV_OPEN],0,1000);
+		Stringmap m;
+		for(unsigned int i=0; i<LHC.coeffs.size(); i++) {
+			m.insert(std::string("term_")+itos(i),LHC.coeffs[i]);
+			m.insert(std::string("dterm_")+itos(i),LHC.dcoeffs[i]);
+		}
+		m.display();
+		PBM.qOut.insert("spectrumComp",m);
+		
+		PBM.scaleData(LHC.coeffs[0]);
+		PBM2.scaleData(LHC.coeffs[1]);
+		PBM.addSegment(PBM2);
+		
 		PBM.write();
 		PBM.setWriteRoot(true);
 	}
@@ -284,21 +320,25 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle) {
 	
 	// read in comparison data
-	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/");
+	std::string basePath = getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/";
+	OutputManager OM("NameUnused",basePath);
 	std::string readname = std::string("Xenon_")+itos(r0)+"-"+itos(r1);
-	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), 0, 0, OM.basePath+"/"+readname+"/"+readname);
-	
+	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), 0, 0, basePath+"/"+readname+"/"+readname);
+
 	// MC data for each run
-	printf("Simulating for position map %i-%i (%g,%i)\n",r0,r1,PB.sects.r, PB.sects.n);
-	OutputManager OM1("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/SingleRunsSim/");
+	printf("Simulating for position map %i-%i\n",r0,r1);
+	OutputManager OM1("NameUnused",basePath+"/SingleRunsSim/");
 	float simFactor = 4.0;
 	if(rsingle) {
-		simulate_one_xenon(rsingle,OM1,PB,simFactor,true);
+		std::string singleName = std::string("Xenon_")+itos(rsingle)+"_"+itos(PB.sects.n)+"_"+dtos(PB.sects.r);
+		PositionBinner PB1(&OM, singleName, 0, 0, basePath+"/SingleRuns/"+singleName+"/"+singleName);
+		simulate_one_xenon(rsingle,OM1,PB1,simFactor,true);
 		return;
 	}
 	std::vector<std::string> snames;
 	for(std::map<RunNum,double>::const_iterator rit = PB.runCounts.counts.begin(); rit != PB.runCounts.counts.end(); rit++)
 		snames.push_back(simulate_one_xenon(rit->first,OM1,PB,simFactor));
+	
 	
 	// reload data
 	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1), PB.sects.r, PB.sects.n);
