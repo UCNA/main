@@ -35,7 +35,7 @@ VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Stud
 
 Physics = BetaSpectrum.o ElectronBindingEnergy.o NuclEvtGen.o
 
-Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o SectorCutter.o \
+Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o SectorCutter.o LinHistCombo.o \
 	Enums.o Types.o FloatErr.o SMExcept.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o RData.o
 
 Calibration = PositionResponse.o PMTGenerator.o WirechamberReconstruction.o \
