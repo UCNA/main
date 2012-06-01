@@ -173,7 +173,7 @@ void QFile::commit(std::string outname) const {
 	fout.close();
 }
 
-std::vector<std::string> QFile::retrieve(const std::string& k1, const std::string& k2) {
+std::vector<std::string> QFile::retrieve(const std::string& k1, const std::string& k2) const {
 	std::vector<std::string> v1;
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.lower_bound(k1); it != dat.upper_bound(k1); it++) {
 		std::vector<std::string> v2 = it->second.retrieve(k2);
@@ -183,7 +183,7 @@ std::vector<std::string> QFile::retrieve(const std::string& k1, const std::strin
 	return v1;
 }
 
-std::vector<double> QFile::retrieveDouble(const std::string& k1, const std::string& k2) {
+std::vector<double> QFile::retrieveDouble(const std::string& k1, const std::string& k2) const {
 	std::vector<double> v1;
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.lower_bound(k1); it != dat.upper_bound(k1); it++) {
 		std::vector<double> v2 = it->second.retrieveDouble(k2);
@@ -193,7 +193,7 @@ std::vector<double> QFile::retrieveDouble(const std::string& k1, const std::stri
 	return v1;
 }
 
-std::string QFile::getDefault(const std::string& k1, const std::string& k2, const std::string& d) {
+std::string QFile::getDefault(const std::string& k1, const std::string& k2, const std::string& d) const {
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.lower_bound(k1); it != dat.upper_bound(k1); it++) {
 		std::vector<std::string> v2 = it->second.retrieve(k2);
 		if(v2.size())
@@ -202,7 +202,7 @@ std::string QFile::getDefault(const std::string& k1, const std::string& k2, cons
 	return d;
 }
 
-double QFile::getDefault(const std::string& k1, const std::string& k2, double d) {
+double QFile::getDefault(const std::string& k1, const std::string& k2, double d) const {
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.lower_bound(k1); it != dat.upper_bound(k1); it++) {
 		std::vector<double> v2 = it->second.retrieveDouble(k2);
 		if(v2.size())

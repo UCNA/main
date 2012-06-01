@@ -98,13 +98,13 @@ public:
 	/// retrieve first value for key
 	Stringmap getFirst(const std::string& s, const Stringmap& dflt = Stringmap()) const;
 	/// retrieve all sub-key values
-	std::vector<std::string> retrieve(const std::string& k1, const std::string& k2);
+	std::vector<std::string> retrieve(const std::string& k1, const std::string& k2) const;
 	/// retreive sub-key with default
-	std::string getDefault(const std::string& k1, const std::string& k2, const std::string& d);
+	std::string getDefault(const std::string& k1, const std::string& k2, const std::string& d) const;
 	/// retrieve sub-key as double with default
-	double getDefault(const std::string& k1, const std::string& k2, double d);
+	double getDefault(const std::string& k1, const std::string& k2, double d) const;
 	/// retrieve all sub-key values as doubles
-	std::vector<double> retrieveDouble(const std::string& k1, const std::string& k2);	
+	std::vector<double> retrieveDouble(const std::string& k1, const std::string& k2) const;	
 	/// return number of elements
 	unsigned int size() const { return dat.size(); }
 	/// transfer all data for given key from other QFile

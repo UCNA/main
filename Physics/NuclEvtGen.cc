@@ -248,8 +248,20 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 		ConversionGamma* CG = new ConversionGamma(levels[levIndex(it->getDefault("from",""))],levels[levIndex(it->getDefault("to",""))],*it);
 		addTransition(CG);
 	}
+	if(Q.getDefault("norm","gamma","") == "groundstate") {
+		double gsflux = 0;
+		for(std::vector<NucLevel>::iterator levit = levels.begin(); levit != levels.end(); levit++)
+			if(!levit->fluxOut)
+				gsflux += levit->fluxIn;
+		for(std::vector<TransitionBase*>::iterator transit = transitions.begin(); transit != transitions.end(); transit++)
+			(*transit)->scale(1./gsflux);
+		for(std::vector<NucLevel>::iterator levit = levels.begin(); levit != levels.end(); levit++)
+			levit->scale(1./gsflux);
+	}
 	
 	// set up Augers
+	for(std::vector<TransitionBase*>::iterator transit = transitions.begin(); transit != transitions.end(); transit++)
+		(*transit)->toAtom->ICEK += (*transit)->getPVacant(0)*(*transit)->Itotal;
 	std::vector<Stringmap> augers = Q.retrieve("AugerK");
 	for(std::vector<Stringmap>::iterator it = augers.begin(); it != augers.end(); it++) {
 		int Z = it->getDefault("Z",0);
@@ -314,7 +326,6 @@ DecayAtom* NucDecaySystem::getAtom(unsigned int Z) {
 
 void NucDecaySystem::addTransition(TransitionBase* T) {
 	T->toAtom = getAtom(T->to.Z);
-	T->toAtom->ICEK += T->getPVacant(0)*T->Itotal;
 	transIn[T->to.n].push_back(transitions.size());
 	transOut[T->from.n].push_back(transitions.size());
 	levelDecays[T->from.n].addProb(T->Itotal);

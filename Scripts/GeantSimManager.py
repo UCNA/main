@@ -287,7 +287,7 @@ if __name__ == "__main__":
 			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
 			sourceSim.launch_postanalyzer()
 	
-	if 1:
+	if 0:
 		for g in ["Bi207","Sn113","Ce139"]:
 			sourceSim = GeantSimManager("DeepCrinkle",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.settings["physlist"]="livermore"
@@ -300,14 +300,14 @@ if __name__ == "__main__":
 
 
 	####################				
-	# Xenon ["Xe135_3-2+","Xe125_1-2+"]
+	# Xenon ["Xe135_3-2+","Xe125_1-2+","Xe133_3-2+"], 3e7 for main and 3e6 for secondary
 	####################
-	if 0:
-		for g in ["Xe135_3-2+","Xe125_1-2+"]:
+	if 1:
+		for g in ["Xe133_3-2+"]:
 			sourceSim = GeantSimManager("WideKev",vacuum="1.e-3 torr")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=3e7,nClusters=18,hours_old=1000)
+			sourceSim.launch_sims(nEvents=3e6,nClusters=18,hours_old=0)
 			sourceSim.launch_postanalyzer()
 
 	

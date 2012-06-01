@@ -359,7 +359,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	particleGun->SetParticlePosition(vertex_position);
 	
 	if(gunType=="Sn113" || gunType=="Bi207" || gunType=="Ce139" || gunType=="Cd109" 
-	   || gunType=="Xe135_3-2+" || gunType=="Xe125_1-2+") {
+	   || gunType=="Xe135_3-2+" || gunType=="Xe125_1-2+" || gunType=="Xe133_3-2+") {
 		NucDecaySystem& NDS = NDL.getGenerator(gunType);
 		while(!evts.size())
 			NDS.genDecayChain(evts);
