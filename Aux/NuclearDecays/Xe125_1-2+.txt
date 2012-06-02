@@ -64,4 +64,6 @@ gamma:	from = 125.53.13	to = 125.53.0	Igamma = 0.0020
 
 ecapt: from = 125.54.6
 
+norm:	gamma = groundstate
+
 AugerK:	Z = 53	ka1 = 55.0	ka2 = 29.9	kb3 = 5.12	kb1 = 9.9	kb2 = 2.93	Iauger = 24.4

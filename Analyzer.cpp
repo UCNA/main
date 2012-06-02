@@ -1,5 +1,6 @@
 #include <exception>
 #include <TStyle.h>
+#include <TROOT.h>
 #include <iostream>
 
 #include "ControlMenu.hh"
@@ -182,63 +183,13 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrect
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
+	compareXenonSpectra();
+	return;
+	
 	OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
-	
-	SectorCutter SC(4,50);
-	G4SegmentMultiplier GSM(SC);
-	GSM.addFile("/home/mmendenhall/geant4/output/WideKev_Xe135_3-2+/analyzed_0.root");
-	PMTCalibrator PCal(16000);
-	GSM.setCalibrator(PCal);
-	TH1F* hr = OMTest.registeredTH1F("hr","Event Radius",100,0,60);
-	TH1F* hr2 = OMTest.registeredTH1F("hr2","Event Radius Squared",100,0,60*60);
-	TH1F* hXe = OMTest.registeredTH1F("hXe","Xenon Spectrum",400,0,1200);
-	TH2F* hPos = OMTest.registeredTH2F("hPos","Positions",200,-60,60,200,-60,60);
-	GSM.startScan();
-	while(GSM.nextPoint()) {
-		Side s = GSM.fSide;
-		if(GSM.fType == TYPE_0_EVENT && (s==EAST || s==WEST) && GSM.fPID == PID_BETA) {
-			hPos->Fill(GSM.wires[s][X_DIRECTION].center,GSM.wires[s][Y_DIRECTION].center,GSM.physicsWeight);
-			hr->Fill(GSM.radius(s),GSM.physicsWeight);
-			hr2->Fill(GSM.radius2(s),GSM.physicsWeight);
-			hXe->Fill(GSM.getEtrue(),GSM.physicsWeight);
-		}
-	}
-	hr2->Draw();
-	OMTest.printCanvas("RadiusSquared");
-	hr->Draw();
-	OMTest.printCanvas("Radius");
-	hXe->Draw();
-	OMTest.printCanvas("XeSpec");
-	hPos->Draw("Col");
-	drawSectors(SC,6);
-	OMTest.printCanvas("XePos");
-	return;
-	
-	std::string isot = "Bi207";
-	double emax = 1200;
-	int nbins = 300;
-	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
-	NDL.BEL.display();
-	NucDecaySystem& NDS = NDL.getGenerator(isot);
-	NDS.display(true);
-	
-	TH1F* hSpec = OMTest.registeredTH1F("hSpec",isot+" Spectrum",nbins,0,emax);
-	std::vector<NucDecayEvent> v;
-	for(unsigned int i=0; i<1e7; i++) {
-		v.clear();
-		NDS.genDecayChain(v);
-		for(std::vector<NucDecayEvent>::iterator it = v.begin(); it < v.end(); it++)
-			if(it->d == D_ELECTRON)
-				hSpec->Fill(it->E);
-	}
-	OMTest.defaultCanvas->SetLogy(false);
-	hSpec->Draw();
-	OMTest.printCanvas(isot+"_SimSpectrum");
-	return;
-	
+
 	//spectrumGenTest();
-	
-	
+		
 	/*
 	 OutputManager OMLS("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorr");
 	 LEDScanScanner LSS;
@@ -252,6 +203,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 
 void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
+	gROOT->SetStyle("Plain");
 	gStyle->SetPalette(1);
 	gStyle->SetNumberContours(255);
 	gStyle->SetOptStat("e");	

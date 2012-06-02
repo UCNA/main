@@ -14,6 +14,7 @@
 #include "KurieFitter.hh"
 #include "G4toPMT.hh"
 #include "BetaSpectrum.hh"
+#include "NuclEvtGen.hh"
 #include <TColor.h>
 
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
@@ -319,4 +320,62 @@ void PosPlotter::etaPlot(PositioningCorrector* P, double axisRange) {
 			OM->printCanvas(sideSubst("Posmap_%c_",s)+itos(t));
 		}
 	}
+}
+
+//-------------------------------------------------------------//
+
+void compareXenonSpectra() {
+	
+	std::string isotlist[] = {"Xe125_1-2+","Xe127_1-2+","Xe129_11-2-","Xe131_11-2-","Xe133_3-2+",
+		"Xe133_11-2-","Xe135_3-2+","Xe135_11-2-","Xe137_7-2-"};
+	
+	std::vector<std::string> isots(isotlist,isotlist+8);
+	
+	OutputManager OM("XeIsots",getEnvSafe("UCNA_ANA_PLOTS")+"/test/XeIsots");
+	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
+	NDL.BEL.display();
+	
+	PMTCalibrator PCal(16000);
+	gStyle->SetOptStat("");
+	
+	for(unsigned int n=0; n<isots.size(); n++) {
+		
+		printf("\n\n---------------------- %s ---------------------------\n",isots[n].c_str());
+		double emax = 1000;
+		int nbins = 1000;
+		NucDecaySystem& NDS = NDL.getGenerator(isots[n]);
+		NDS.display(true);
+		
+		TH1F* hSpec = OM.registeredTH1F("hSpec",isots[n]+" Spectrum",nbins,0,emax);
+		std::vector<NucDecayEvent> v;
+		for(unsigned int i=0; i<1e7; i++) {
+			v.clear();
+			NDS.genDecayChain(v);
+			for(std::vector<NucDecayEvent>::iterator it = v.begin(); it < v.end(); it++)
+				if(it->d == D_ELECTRON)
+					hSpec->Fill(it->E);
+		}
+		OM.defaultCanvas->SetLogy(true);
+		hSpec->Draw();
+		OM.printCanvas(isots[n]+"_GenSpectrum");
+		
+		std::string g4dat = "/home/mmendenhall/geant4/output/WideKev_";
+		G4toPMT g2p;
+		g2p.addFile(g4dat + isots[n] + "/analyzed_*.root");
+		if(!g2p.getnFiles()) continue;
+		g2p.setCalibrator(PCal);
+		TH1F* hSim = OM.registeredTH1F("hSim",isots[n]+" Simulated",240,0,1200);
+		hSim->GetXaxis()->SetTitle("Energy [keV]");
+		g2p.startScan();
+		while(g2p.nextPoint() && g2p.nCounted < 1.e6)
+			if(g2p.fPID == PID_BETA)
+				hSim->Fill(g2p.getEtrue());
+		hSim->Scale(1.0/hSim->GetMaximum());
+		hSim->Draw();
+		OM.defaultCanvas->SetLogy(false);
+		OM.printCanvas(isots[n]+"_SimSpectrum");
+	}
+	
+	OM.setWriteRoot(true);
+	OM.write();
 }

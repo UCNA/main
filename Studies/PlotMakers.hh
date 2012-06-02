@@ -49,4 +49,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM);
 /// generate a file with spectrum correction factors
 void makeCorrectionsFile(const std::string& fout);
 
+/// Various Xenon spectra
+void compareXenonSpectra();
+
 #endif
