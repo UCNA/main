@@ -437,3 +437,15 @@ NucDecaySystem& NucDecayLibrary::getGenerator(const std::string& nm) {
 	ret = NDs.insert(std::pair<std::string,NucDecaySystem*>(nm,new NucDecaySystem(QFile(fname),BEL,tcut)));
 	return *(ret.first->second);
 }
+
+bool NucDecayLibrary::hasGenerator(const std::string& nm) {
+	if(cantdothis.count(nm)) return false;
+	try {
+		getGenerator(nm);
+		return true;
+	} catch(...) {
+		cantdothis.insert(nm);
+	}
+	return false;
+}
+

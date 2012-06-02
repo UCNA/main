@@ -7,6 +7,7 @@
 #include <TF1.h>
 #include <vector>
 #include <map>
+#include <set>
 #include <climits>
 #include <float.h>
 #include <stdio.h>
@@ -239,6 +240,8 @@ public:
 	NucDecayLibrary(const std::string& datp, double t = DBL_MAX);
 	/// destructor
 	~NucDecayLibrary();
+	/// check if generator is available
+	bool hasGenerator(const std::string& nm);
 	/// get decay generator by name
 	NucDecaySystem& getGenerator(const std::string& nm);
 	
@@ -248,6 +251,7 @@ public:
 
 protected:
 	std::map<std::string,NucDecaySystem*> NDs;	//< loaded decay systems
+	std::set<std::string> cantdothis;			//< list of decay systems that can't be loaded
 };
 
 
