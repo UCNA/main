@@ -184,41 +184,6 @@ void bmPrimaryGeneratorAction::Cd113mSourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-void bmPrimaryGeneratorAction::Cs137SourceGenerator(G4Event* anEvent) {
-	
-	G4double gunEnergy;
-	
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	
-	if(G4UniformRand() < 0.50) {
-		// Beta decay Cs137->Ba137
-		const double lineBeta[] =	{513.97,	1175.63};
-		const double branchBeta[] =	{94.70,		5.30};
-		gunEnergy = rand_outof_list(lineBeta, branchBeta, 2, selected);
-		funcHeavyBeta->FixParameter(0,gunEnergy);
-		funcHeavyBeta->FixParameter(1,137.);
-		funcHeavyBeta->FixParameter(2,56.);
-		electrons.push_back(funcHeavyBeta->GetRandom()*keV);
-	} else {
-		// long delay (~2.5min) between 513keV beta and internal Ba137 transitions
-		// so treat these as independent events
-		if(G4UniformRand() > 0.0530) {
-			// 662keV line:				gamma		CE K		CE L		CE M		CE N
-			const double line662[] =	{661.657,	624.216,	665.668,	660.364,	661.404};
-			const double branch662[] =	{85.10,		7.79,		1.402,		0.300,		0.0646};
-			gunEnergy = rand_outof_list(line662, branch662, 5, selected)*keV;
-			if(selected)
-				electrons.push_back(gunEnergy);
-			else
-				gammas.push_back(gunEnergy);
-		}
-	}
-	
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
 void bmPrimaryGeneratorAction::In114SourceGenerator(G4Event* anEvent) {
 	
 	G4double gunEnergy;
@@ -358,14 +323,8 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	}
 	particleGun->SetParticlePosition(vertex_position);
 	
-	if(NDL.hasGenerator(gunType)) {
-		NucDecaySystem& NDS = NDL.getGenerator(gunType);
-		while(!evts.size())
-			NDS.genDecayChain(evts);
-	} else if(gunType=="Cd113m") {
+	if(gunType=="Cd113m") {
 		Cd113mSourceGenerator(anEvent);
-	} else if(gunType=="Cs137") {
-		Cs137SourceGenerator(anEvent);
 	} else if (gunType=="In114" || gunType=="In114E" || gunType=="In114W") {
 		In114SourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {
@@ -406,6 +365,10 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		particleGun->SetParticleMomentumDirection(G4ThreeVector(0,0,1));
 		displayGunStatus();
 		particleGun->GeneratePrimaryVertex(anEvent);
+	} else if(NDL.hasGenerator(gunType)) {
+		NucDecaySystem& NDS = NDL.getGenerator(gunType);
+		while(!evts.size())
+			NDS.genDecayChain(evts);
 	} else {
 		G4cout << "********* WARNING: Undefined generator type! No events generated!! **********" << G4endl;
 	}

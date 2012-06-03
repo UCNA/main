@@ -11,10 +11,10 @@
 Stringmap::Stringmap(const std::string& s) {
 	std::vector<std::string> pairs = split(s,"\t");
 	for(std::vector<std::string>::const_iterator it = pairs.begin(); it!=pairs.end(); it++) {
-		std::vector<std::string> keyval = split(*it," =");
+		std::vector<std::string> keyval = split(*it,"=");
 		if(keyval.size() != 2)
 			continue;
-		dat.insert(std::make_pair(keyval[0],keyval[1]));
+		dat.insert(std::make_pair(strip(keyval[0]),strip(keyval[1])));
 	}
 }
 

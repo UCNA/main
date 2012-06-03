@@ -90,8 +90,6 @@ private:
 	
 	/// Cd113 Metastable 11/2-, 14.1year HL
 	void Cd113mSourceGenerator(G4Event* anEvent);
-	/// Cs137, based on NuDat 2.6
-	void Cs137SourceGenerator(G4Event* anEvent);
 	/// In114, based on NuDat 2.6
 	void In114SourceGenerator(G4Event* anEvent);
 };

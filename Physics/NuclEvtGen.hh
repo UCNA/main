@@ -213,6 +213,9 @@ public:
 	/// rescale all probabilities
 	void scale(double s);
 	
+	/// LaTeX name for generator
+	std::string fancyname;
+	
 protected:
 	/// get index for named level
 	unsigned int levIndex(const std::string& s) const;

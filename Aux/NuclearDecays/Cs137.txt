@@ -1,0 +1,20 @@
+####
+# Cs137 decay
+# decay scheme from Browne, Tuli, Nuclear Data Sheets 108, 2213 (2007)
+####
+
+# Ba137 levels
+level:	nm = 137.56.0	E = 0			hl = -1			jpi = 3/2+
+level:	nm = 137.56.1	E = 283.50		hl = 0			jpi = 1/2+
+level:	nm = 137.56.2	E = 661.659		hl = 153.12		jpi = 11/2-
+
+level:	nm = 137.55.0	E = 1175.63		hl = 9.492e8	jpi = 7/2+
+
+beta:	from = 137.55.0	to = 137.56.2	I = 94.7
+beta:	from = 137.55.0	to = 137.56.1	I = .00058
+beta:	from = 137.55.0	to = 137.56.0	I = 5.3
+
+gamma:	from = 137.56.1		to = 137.56.0	Igamma = 0.00058	
+gamma:	from = 137.56.2		to = 137.56.0	Igamma = 85.1	CE_K = 0.0915~.0013	CE_L = 0.01648~.00023	CE_M = 0.00352~.00005	CE_N = 0.000759~.000011	CE_O = 0.0001205~.0000017
+
+AugerK:	Z = 56	ka2 = 1.99	ka1 = 3.64	kb3 = 0.348	kb1 = 0.672	kb2 = 0.213	Iauger = 0.78

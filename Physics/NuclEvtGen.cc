@@ -227,6 +227,9 @@ void ECapture::run(std::vector<NucDecayEvent>&) { isKCapt = gRandom->Uniform(0,1
 bool sortLevels(const NucLevel& a, const NucLevel& b) { return (a.E < b.E); }
 
 NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, double t): BEL(B) {
+	
+	fancyname = Q.getDefault("fileinfo","fancyname","");
+	
 	// load levels data
 	std::vector<Stringmap> levs = Q.retrieve("level");
 	for(std::vector<Stringmap>::iterator it = levs.begin(); it != levs.end(); it++) {
