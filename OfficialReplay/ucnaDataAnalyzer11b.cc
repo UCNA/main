@@ -12,8 +12,9 @@
 RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
 
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
-TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false), rn(R), PCal(R,CDB), CDBout(NULL),
-deltaT(0), totalTime(0), ignore_beam_out(false), nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
+TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false),
+rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), ignore_beam_out(false),
+nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	if(R>16300 && !CDB->isValid(R)) {
 		printf("*** Bogus calibration for new runs! ***\n");
 		PCal = PMTCalibrator(16000,CDB);
@@ -116,7 +117,7 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 		prevPassedCuts = prevPassedGVRate = true;
 		totalTime = deltaT = 0;
 	}
-	fAbsTimeEnd = r_AbsTime;
+	if(r_AbsTime>fAbsTimeEnd) fAbsTimeEnd = r_AbsTime;
 	
 	// convert microseconds to seconds
 	fTimeScaler = 1.e-6 * r_Clk;
@@ -490,8 +491,11 @@ void ucnaDataAnalyzer11b::replaySummary() {
 			int(rn),tNow.AsSQLString(),totalTime.t[EAST],totalTime.t[WEST],totalTime.t[BOTH],wallTime,int(nFailedEvnb),int(nFailedBkhf));
 	CDBout->execute();
 	TDatime tStart(fAbsTimeStart);
+	std::string sts(tStart.AsSQLString());
 	TDatime tEnd(fAbsTimeEnd);
-	sprintf(CDBout->query,"UPDATE run SET start_time='%s', end_time='%s' WHERE run_number=%i",tStart.AsSQLString(),tEnd.AsSQLString(),int(rn));
+	std::string ste(tEnd.AsSQLString());
+	sprintf(CDBout->query,"UPDATE run SET start_time='%s', end_time='%s' WHERE run_number=%i",sts.c_str(),ste.c_str(),int(rn));
+	printf("%s\n",CDBout->query);
 	CDBout->execute();
 }
 
