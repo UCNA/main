@@ -28,15 +28,20 @@ public:
 	/// process a data point into position histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	
-	/// fit enpoints in each sector
+	/// overall spectrum info
 	virtual void calculateResults();
+	/// fit enpoints in each sector
+	void fitSectors();
+	/// fit peak and endpoint for energy spectrum
+	void fitSpectrum(TH1* hSpec,SectorDat& sd);
 	/// make output plots
 	virtual void makePlots();
 	/// virtual routine for MC/Data comparison plots/calculations
 	virtual void compareMCtoData(RunAccumulator& OAdata);
 	
-	fgbgPair energySpectrum[2];							//< combined energy spectrum, each side
+	fgbgPair energySpectrum;							//< total energy spectrum
 	fgbgPair hitPos[2];									//< hit positions on each side
+	TH1F* hTuben[2][nBetaTubes];						//< type 0 PMT energy for gain matching
 	std::vector<SectorDat> sectDat[2][nBetaTubes];		//< processed data for each sector
 	SectorCutter sects;									//< sector cutter
 	

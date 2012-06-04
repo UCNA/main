@@ -58,11 +58,11 @@ RunAccumulator(pnt,nm,infl), sects(nr,r) {
 	qOut.insert("SectorCutter",ms);
 	
 	// set up histograms, data
+	energySpectrum = registerFGBGPair("hEnergy","Combined Energy",200,-100,1200,AFP_OTHER);
+	energySpectrum.h[GV_OPEN]->SetLineColor(2);
 	TH2F hPositionsTemplate("hPostions","Event Positions",200,-65,65,200,-65,65);
 	for(Side s = EAST; s <= WEST; ++s) {
 		hitPos[s] = registerFGBGPair(hPositionsTemplate,AFP_OTHER,s);
-		energySpectrum[s] = registerFGBGPair("hEnergy","Combined Energy",200,-100,1200,AFP_OTHER,s);
-		energySpectrum[s].h[GV_OPEN]->SetLineColor(2+2*s);
 		for(unsigned int m=0; m<sects.nSectors(); m++) {
 			sectAnode[s].push_back(registerFGBGPair(std::string("hAnode_Sector_")+itos(m),std::string("Sector ")+itos(m)+" Anode",200,0,4000,AFP_OTHER,s));
 			for(unsigned int t=0; t<nBetaTubes; t++) {
@@ -97,54 +97,74 @@ void PositionBinner::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	if(m>=sects.nSectors()) return;
 	for(unsigned int t=0; t<nBetaTubes; t++)
 		sectEnergy[s][t][m].h[currentGV]->Fill(PDS.scints[s].tuben[t].x,weight);
-	if(PDS.radius2(s) <= 25*25)
-		energySpectrum[s].h[currentGV]->Fill(PDS.scints[s].energy.x,weight);
+	if(PDS.radius2(s) <= 45*45)
+		energySpectrum.h[currentGV]->Fill(PDS.getEtrue(),weight);
 	if(PDS.getEtrue() > 225)
 		sectAnode[s][m].h[currentGV]->Fill(PDS.mwpcs[s].anode,weight);
 }
 
-void PositionBinner::calculateResults() {
+void PositionBinner::fitSpectrum(TH1* hSpec,SectorDat& sd) {
 	
+	hSpec->SetLineColor(2+sd.t);
+	
+	//----------------------
+	// Low peak fit
+	//----------------------
+	double epGuess = 915.;
+	TF1 gausFit("gasufit","gaus",0,500);
+	gausFit.SetLineColor(2+sd.t);
+	if(!iterGaus(hSpec,&gausFit,3,hSpec->GetBinCenter(hSpec->GetMaximumBin()),100,1.0)) {
+		sd.low_peak = float_err(gausFit.GetParameter(1),gausFit.GetParError(1));
+		sd.low_peak_width = float_err(gausFit.GetParameter(2),gausFit.GetParError(2));
+		if(!isSimulated) epGuess = 6.5*sd.low_peak.x;
+	} else {
+		sd.low_peak = sd.low_peak_width = 0;
+	}
+	
+	//----------------------
+	// 915keV endpoint fit
+	//----------------------
+	sd.xe_ep = kurieIterator(hSpec,epGuess,NULL,915.,400,800);
+}
+
+void PositionBinner::fitSectors() {
 	assert(runCounts.counts.size());
 	PMTCalibrator PCal(runCounts.counts.begin()->first);
 	printf("\n\n---- Using Calibrator: ----\n");
 	PCal.printSummary();
-	
-	TF1 gausFit("gasufit","gaus",0,500);
-	
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			for(unsigned int m=0; m<sects.nSectors(); m++) {
-				
-				TH1* hSpec = sectEnergy[s][t][m].h[GV_OPEN];
-				hSpec->SetLineColor(2+t);
 				float x,y;
 				sects.sectorCenter(m,x,y);
-				float eta = PCal.eta(s,t,x,y);
-				sectDat[s][t][m].eta = eta;
-				
-				//----------------------
-				// Low peak fit
-				//----------------------
-				double epGuess = 915.;
-				gausFit.SetLineColor(2+t);
-				if(!iterGaus(hSpec,&gausFit,3,hSpec->GetBinCenter(hSpec->GetMaximumBin()),100,1.0)) {
-					sectDat[s][t][m].low_peak = float_err(gausFit.GetParameter(1),gausFit.GetParError(1));
-					sectDat[s][t][m].low_peak_width = float_err(gausFit.GetParameter(2),gausFit.GetParError(2));
-					if(!isSimulated) epGuess = 6.5*sectDat[s][t][m].low_peak.x;
-				} else {
-					sectDat[s][t][m].low_peak = sectDat[s][t][m].low_peak_width = 0;
-				}
-				
-				//----------------------
-				// 915keV endpoint fit
-				//----------------------
-				sectDat[s][t][m].xe_ep = kurieIterator(hSpec,epGuess,NULL,915.,400,800);
-				
+				sectDat[s][t][m].eta = PCal.eta(s,t,x,y);
+				TH1* hSpec = sectEnergy[s][t][m].h[GV_OPEN];
+				fitSpectrum(hSpec,sectDat[s][t][m]);
 				qOut.insert("sectDat",sd2sm(sectDat[s][t][m]));
 			}
 		}
 	}	
+}
+
+void PositionBinner::calculateResults() {
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(unsigned int t=0; t<nBetaTubes; t++) {
+			hTuben[s][t] = (TH1F*)addObject(sectEnergy[s][t][0].h[GV_OPEN]->Clone((sideSubst("hTuben_%c",s)+itos(t)).c_str()));
+			hTuben[s][t]->Reset();
+			for(unsigned int m=0; m<sects.nSectors(); m++) {
+				if(sects.sectorCenterRadius(m) < 45.)
+					hTuben[s][t]->Add(sectEnergy[s][t][m].h[GV_OPEN]);
+			}
+			SectorDat sd;
+			sd.s = s;
+			sd.t = t;
+			sd.m = 0;
+			sd.eta = 1.;
+			fitSpectrum(hTuben[s][t],sd);
+			qOut.insert("tuben",sd2sm(sd));
+		}
+	}
+	
 }
 
 void PositionBinner::compareMCtoData(RunAccumulator& OAdata) {
@@ -153,13 +173,11 @@ void PositionBinner::compareMCtoData(RunAccumulator& OAdata) {
 	defaultCanvas->cd();
 	
 	// overall energy spectrum
-	for(Side s=EAST; s<=WEST; ++s) {
-		int b0 = PB->energySpectrum[s].h[GV_OPEN]->FindBin(400);
-		int b1 = PB->energySpectrum[s].h[GV_OPEN]->FindBin(800);
-		energySpectrum[s].h[GV_OPEN]->Scale(PB->energySpectrum[s].h[GV_OPEN]->Integral(b0,b1)/energySpectrum[s].h[GV_OPEN]->Integral(b0,b1));
-		drawHistoPair(PB->energySpectrum[s].h[GV_OPEN],energySpectrum[s].h[GV_OPEN]);
-		printCanvas(sideSubst("Comparison/hEnergy_%c",s));		
-	}
+	int b0 = PB->energySpectrum.h[GV_OPEN]->FindBin(400);
+	int b1 = PB->energySpectrum.h[GV_OPEN]->FindBin(800);
+	energySpectrum.h[GV_OPEN]->Scale(PB->energySpectrum.h[GV_OPEN]->Integral(b0,b1)/energySpectrum.h[GV_OPEN]->Integral(b0,b1));
+	drawHistoPair(PB->energySpectrum.h[GV_OPEN],energySpectrum.h[GV_OPEN]);
+	printCanvas("Comparison/hEnergy");		
 	
 	// upload posmap
 	std::string pmapname = itos(PB->runCounts.counts.begin()->first)+"-"+itos(PB->runCounts.counts.rbegin()->first)+"/"+itos(time(NULL));
@@ -193,17 +211,23 @@ void PositionBinner::makePlots() {
 	
 	// overall energy spectrum
 	defaultCanvas->cd();
-	hToPlot.push_back(energySpectrum[EAST].h[GV_OPEN]);
-	hToPlot.push_back(energySpectrum[WEST].h[GV_OPEN]);
-	drawSimulHistos(hToPlot);
+	energySpectrum.h[GV_OPEN]->Draw();
 	printCanvas("hEnergy");
-		
+	
 	for(Side s = EAST; s <= WEST; ++s) {
 		// positions
 		hitPos[s].h[GV_OPEN]->Draw("COL");
 		drawSectors(sects,6);
 		labelSectors(sects,6);
 		printCanvas(sideSubst("hPos_%c",s));
+		
+		// tube energy
+		hToPlot.clear();
+		for(unsigned int t=0; t<nBetaTubes; t++)
+			hToPlot.push_back(hTuben[s][t]);
+		drawSimulHistos(hToPlot);
+		printCanvas(sideSubst("hTuben_%c",s));
+		
 		// energy in each sector
 		for(unsigned int m=0; m<sects.nSectors(); m++) {
 			hToPlot.clear();
@@ -234,6 +258,8 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 			PostOfficialAnalyzer POA(true);
 			POA.addRun(r);
 			PB1.loadProcessedData(AFP_OTHER, GV_OPEN, POA);
+			PB1.calculateResults();
+			POA.writeCalInfo(PB1.qOut,"runcal");
 			PB1.write();
 			PB1.setWriteRoot(true);
 		}
@@ -252,6 +278,7 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	
 	// finish and output
 	PB.calculateResults();
+	PB.fitSectors();
 	PB.makePlots();
 	PB.write();
 	PB.setWriteRoot(true);	
@@ -263,54 +290,58 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 	if(forceResim || !fileExists(prevFile+".root")) {
 		PMTCalibrator PCal(r);
 		PositionBinner PBM(&OM1,singleName,PB.sects.r,PB.sects.n);
-		PositionBinner PBM2(&OM1,singleName+"_LowPk",PB.sects.r,PB.sects.n);
+		PBM.totalTime[AFP_OTHER][GV_OPEN] += PB.totalTime[AFP_OTHER][GV_OPEN];
+		PBM.runTimes += PB.runTimes;
 		
 		unsigned int nToSim=simFactor*PB.runCounts[r];
-		printf("Data counts West: %f; to sim = %i\n",PB.energySpectrum[WEST].h[GV_OPEN]->Integral(),nToSim);
+		printf("Data counts West: %f; to sim = %i\n",PB.energySpectrum.h[GV_OPEN]->Integral(),nToSim);
 		
-		// endpoint Xe135 sim
-		{
-			G4SegmentMultiplier GSM(PB.sects);
+		// simulate for each isotope
+		std::vector<PositionBinner*> PBMi;
+		std::vector<std::string> isots;
+		LinHistCombo LHC;
+		isots.push_back("Xe125_1-2+");
+		isots.push_back("Xe129_11-2-");
+		isots.push_back("Xe131_11-2-");
+		isots.push_back("Xe133_3-2+");
+		isots.push_back("Xe133_11-2-");
+		isots.push_back("Xe135_3-2+");
+		
+		for(unsigned int n=0; n<isots.size(); n++) {
+			printf("Simulating for component %s...\n",isots[n].c_str());
+			PBMi.push_back(new PositionBinner(&OM1,singleName+"_"+isots[n],PB.sects.r,PB.sects.n));
+			//G4SegmentMultiplier GSM(PB.sects);
+			G4SegmentMultiplier GSM(SectorCutter(4,52.));
 			GSM.setCalibrator(PCal);
-			std::string simFile = "/home/mmendenhall/geant4/output/WideKev_Xe135_3-2+/analyzed_";
+			std::string simFile = "/home/mmendenhall/geant4/output/WideKev_"+isots[n]+"/analyzed_";
 			unsigned int nTot = 18;
 			unsigned int stride = 5;
 			for(unsigned int i=0; i<stride; i++)
 				GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
-			PBM.loadSimData(GSM,nToSim/2);
-			printf("Sim counts for Xe135 West: %f\n",PBM.energySpectrum[WEST].h[GV_OPEN]->Integral());
+			PBMi.back()->loadSimData(GSM, nToSim*(isots[n]=="Xe135_3-2+"?0.5:0.25));
+			LHC.addTerm(PBMi.back()->energySpectrum.h[GV_OPEN]);
+			printf("Done.\n");
 		}
 		
-		// low peak Xe125 sim
-		{
-			G4SegmentMultiplier GSM(PB.sects);
-			GSM.setCalibrator(PCal);
-			std::string simFile = "/home/mmendenhall/geant4/output/WideKev_Xe125_1-2+/analyzed_";
-			unsigned int nTot = 16;
-			unsigned int stride = 7;
-			for(unsigned int i=0; i<stride; i++)
-				GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
-			PBM2.loadSimData(GSM,nToSim/2);
-			printf("Sim counts for Xe125 West: %f\n",PBM2.energySpectrum[WEST].h[GV_OPEN]->Integral());
-		}
-		
-		// determine spectrum composition
-		LinHistCombo LHC;
-		LHC.addTerm(PBM.energySpectrum[WEST].h[GV_OPEN]);
-		LHC.addTerm(PBM2.energySpectrum[WEST].h[GV_OPEN]);
-		LHC.Fit(PB.energySpectrum[WEST].h[GV_OPEN],0,1000);
-		Stringmap m;
+		// determine spectrum composition and accumulate segments
+		LHC.Fit(PB.energySpectrum.h[GV_OPEN],100,1000);
+		std::vector<double> counts;
 		for(unsigned int i=0; i<LHC.coeffs.size(); i++) {
-			m.insert(std::string("term_")+itos(i),LHC.coeffs[i]);
-			m.insert(std::string("dterm_")+itos(i),LHC.dcoeffs[i]);
+			PBMi[i]->scaleData(LHC.coeffs[i]);
+			counts.push_back(PBMi[i]->energySpectrum.h[GV_OPEN]->Integral());
+			PBM.addSegment(*PBMi[i]);
+			delete(PBMi[i]);
 		}
+		Stringmap m;
+		m.insert("nTerms",LHC.coeffs.size());
+		m.insert("terms",vtos(LHC.coeffs));
+		m.insert("errs",vtos(LHC.dcoeffs));
+		m.insert("isots",join(isots,","));
+		m.insert("counts",vtos(counts));
 		m.display();
 		PBM.qOut.insert("spectrumComp",m);
-		
-		PBM.scaleData(LHC.coeffs[0]);
-		PBM2.scaleData(LHC.coeffs[1]);
-		PBM.addSegment(PBM2);
-		
+		PBM.qOut.insert("runcal",PCal.calSummary());
+		PBM.calculateResults();
 		PBM.write();
 		PBM.setWriteRoot(true);
 	}
@@ -324,7 +355,7 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle) {
 	OutputManager OM("NameUnused",basePath);
 	std::string readname = std::string("Xenon_")+itos(r0)+"-"+itos(r1);
 	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), 0, 0, basePath+"/"+readname+"/"+readname);
-
+	
 	// MC data for each run
 	printf("Simulating for position map %i-%i\n",r0,r1);
 	OutputManager OM1("NameUnused",basePath+"/SingleRunsSim/");
@@ -351,6 +382,7 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle) {
 	
 	// finish and output
 	PBM.calculateResults();
+	PBM.fitSectors();
 	PBM.makePlots();
 	PBM.compareMCtoData(PB);
 	PBM.write();

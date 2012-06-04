@@ -5,6 +5,8 @@
 #include "EnergyCalibrator.hh"
 #include "Source.hh"
 #include "G4toPMT.hh"
+#include "NuclEvtGen.hh"
+#include "OutputManager.hh"
 #include <vector>
 #include <string>
 
@@ -49,7 +51,13 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM);
 /// generate a file with spectrum correction factors
 void makeCorrectionsFile(const std::string& fout);
 
+/// make plots for simulated source spectrum
+void showSimSpectrum(const std::string& nm, OutputManager& OM, NucDecayLibrary& NDL, PMTCalibrator& PCal);
+	
 /// Various Xenon spectra
 void compareXenonSpectra();
+
+/// Decompose xenon spectrum for given run number
+void decomposeXenon(RunNum rn, bool includeFast = false);
 
 #endif

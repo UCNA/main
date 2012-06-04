@@ -3,6 +3,8 @@
 # decay scheme from Katakura, Nuclear Data Sheets 112, 589 (2010)
 ####
 
+fileinfo:	fancyname = $^{125}$Xe $1/2^+$
+
 level:	nm = 125.53.0	E = 0			hl = 5.1329e6		jpi = 5/2+
 level:	nm = 125.53.1	E = 113.544		hl = .610e-9		jpi = 7/2+
 level:	nm = 125.53.2	E = 188.416		hl = .344e-9		jpi = 3/2+

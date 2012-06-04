@@ -3,6 +3,8 @@
 # decay scheme from Hashizume, Nuclear Data Sheets 112, 1718 (2011)
 ####
 
+fileinfo:	fancyname = $^{127}$Xe $1/2^+$
+
 # 127I levels
 level:	nm = 127.53.0	E = 0			hl = -1				jpi = 5/2+
 level:	nm = 127.53.1	E = 57.609		hl = 1.86e-9		jpi = 7/2+

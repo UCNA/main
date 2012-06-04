@@ -183,11 +183,20 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrect
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
+	decomposeXenon(15991,true);
+	//decomposeXenon(14282,false);
+	//decomposeXenon(14347,false);
+	//decomposeXenon(17224,false);
+	return;
+	
 	compareXenonSpectra();
 	return;
 	
 	OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
-
+	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
+	PMTCalibrator PCal(16000);
+	showSimSpectrum("Cs137",OMTest,NDL,PCal);
+	
 	//spectrumGenTest();
 		
 	/*

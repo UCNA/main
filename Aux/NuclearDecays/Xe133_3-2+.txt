@@ -3,6 +3,8 @@
 # decay scheme from Khazov, Rodionov, Kondev,  Nuclear Data Sheets 112, 933 (2011)
 ####
 
+fileinfo:	fancyname = $^{133}$Xe $3/2^+$
+
 # 133Cs levels
 level:	nm = 133.55.0	E = 0			hl = -1			jpi = 7/2+
 level:	nm = 133.55.1	E = 80.9779		hl = 6.283e-9	jpi = 5/2+

@@ -14,7 +14,8 @@
 #include "KurieFitter.hh"
 #include "G4toPMT.hh"
 #include "BetaSpectrum.hh"
-#include "NuclEvtGen.hh"
+#include "LinHistCombo.hh"
+#include "PostOfficialAnalyzer.hh"
 #include <TColor.h>
 
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
@@ -324,12 +325,51 @@ void PosPlotter::etaPlot(PositioningCorrector* P, double axisRange) {
 
 //-------------------------------------------------------------//
 
+void showSimSpectrum(const std::string& nm, OutputManager& OM, NucDecayLibrary& NDL, PMTCalibrator& PCal) {
+	double emax = 1000;
+	int nbins = 1000;
+	NucDecaySystem& NDS = NDL.getGenerator(nm);
+	NDS.display(true);
+	
+	TH1F* hSpec = OM.registeredTH1F("hSpec","",nbins,0,emax);
+	std::vector<NucDecayEvent> v;
+	for(unsigned int i=0; i<1e7; i++) {
+		v.clear();
+		NDS.genDecayChain(v);
+		for(std::vector<NucDecayEvent>::iterator it = v.begin(); it < v.end(); it++)
+			if(it->d == D_ELECTRON)
+				hSpec->Fill(it->E);
+	}
+	OM.defaultCanvas->SetLogy(true);
+	hSpec->Draw();
+	OM.printCanvas(nm+"_GenSpectrum");
+	
+	std::string g4dat = "/home/mmendenhall/geant4/output/WideKev_";
+	G4toPMT g2p;
+	g2p.addFile(g4dat + nm + "/analyzed_*.root");
+	
+	if(!g2p.getnFiles()) return;
+	
+	g2p.setCalibrator(PCal);
+	TH1F* hSim = OM.registeredTH1F("hSim","",240,0,1200);
+	hSim->GetXaxis()->SetTitle("Energy [keV]");
+	g2p.startScan();
+	while(g2p.nextPoint() && g2p.nCounted < 1.e6)
+		if(g2p.fPID == PID_BETA)
+			hSim->Fill(g2p.getEtrue());
+	hSim->Scale(1.0/hSim->GetMaximum());
+	hSim->Draw();
+	OM.defaultCanvas->SetLogy(false);
+	OM.printCanvas(nm+"_SimSpectrum");
+}
+
 void compareXenonSpectra() {
 	
-	std::string isotlist[] = {"Xe125_1-2+","Xe127_1-2+","Xe129_11-2-","Xe131_11-2-","Xe133_3-2+",
-		"Xe133_11-2-","Xe135_3-2+","Xe135_11-2-","Xe137_7-2-"};
-	
-	std::vector<std::string> isots(isotlist,isotlist+8);
+	std::string isotlist[] = {
+		"Xe125_1-2+",	"Xe127_1-2+",	"Xe129_11-2-",
+		"Xe131_11-2-",	"Xe133_3-2+",	"Xe133_11-2-",
+		"Xe135_3-2+",	"Xe135_11-2-",	"Xe137_7-2-"};
+	std::vector<std::string> isots(isotlist+1,isotlist+2);
 	
 	OutputManager OM("XeIsots",getEnvSafe("UCNA_ANA_PLOTS")+"/test/XeIsots");
 	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
@@ -339,43 +379,109 @@ void compareXenonSpectra() {
 	gStyle->SetOptStat("");
 	
 	for(unsigned int n=0; n<isots.size(); n++) {
-		
 		printf("\n\n---------------------- %s ---------------------------\n",isots[n].c_str());
-		double emax = 1000;
-		int nbins = 1000;
-		NucDecaySystem& NDS = NDL.getGenerator(isots[n]);
-		NDS.display(true);
-		
-		TH1F* hSpec = OM.registeredTH1F("hSpec",isots[n]+" Spectrum",nbins,0,emax);
-		std::vector<NucDecayEvent> v;
-		for(unsigned int i=0; i<1e7; i++) {
-			v.clear();
-			NDS.genDecayChain(v);
-			for(std::vector<NucDecayEvent>::iterator it = v.begin(); it < v.end(); it++)
-				if(it->d == D_ELECTRON)
-					hSpec->Fill(it->E);
-		}
-		OM.defaultCanvas->SetLogy(true);
-		hSpec->Draw();
-		OM.printCanvas(isots[n]+"_GenSpectrum");
-		
-		std::string g4dat = "/home/mmendenhall/geant4/output/WideKev_";
-		G4toPMT g2p;
-		g2p.addFile(g4dat + isots[n] + "/analyzed_*.root");
-		if(!g2p.getnFiles()) continue;
-		g2p.setCalibrator(PCal);
-		TH1F* hSim = OM.registeredTH1F("hSim",isots[n]+" Simulated",240,0,1200);
-		hSim->GetXaxis()->SetTitle("Energy [keV]");
-		g2p.startScan();
-		while(g2p.nextPoint() && g2p.nCounted < 1.e6)
-			if(g2p.fPID == PID_BETA)
-				hSim->Fill(g2p.getEtrue());
-		hSim->Scale(1.0/hSim->GetMaximum());
-		hSim->Draw();
-		OM.defaultCanvas->SetLogy(false);
-		OM.printCanvas(isots[n]+"_SimSpectrum");
+		showSimSpectrum(isots[n],OM,NDL,PCal);
 	}
 	
 	OM.setWriteRoot(true);
 	OM.write();
+}
+
+void decomposeXenon(RunNum rn, bool includeFast) {
+	
+	gStyle->SetOptStat("");
+	
+	OutputManager OM("XeDecomp_"+itos(rn),getEnvSafe("UCNA_ANA_PLOTS")+"/test/XeDecomp");
+	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
+	
+	std::vector<std::string> isots;
+	isots.push_back("Xe125_1-2+");
+	//isots.push_back("Xe127_1-2+");	// unlikely 36d HL, rare parent
+	isots.push_back("Xe129_11-2-");
+	isots.push_back("Xe131_11-2-");
+	isots.push_back("Xe133_3-2+");
+	isots.push_back("Xe133_11-2-");
+	isots.push_back("Xe135_3-2+");
+	if(includeFast) {
+		isots.push_back("Xe135_11-2-");
+		isots.push_back("Xe137_7-2-");
+	}
+	
+	double emax = 1200;
+	int nbins = 240;
+	double fidrad = 50.;
+	
+	// fill true energy spectrum
+	TH1F* hSpec = OM.registeredTH1F("hSpec","Data Spectrum",nbins,0,emax);
+	hSpec->Sumw2();
+	hSpec->SetLineColor(2);
+	PostOfficialAnalyzer POA(true);
+	POA.addRun(rn);
+	POA.startScan();
+	while(POA.nextPoint()) {
+		Side s = POA.fSide;
+		if(POA.fPID == PID_BETA && POA.fType <= TYPE_III_EVENT && (s==EAST || s==WEST) && POA.radius(s)<fidrad)
+			hSpec->Fill(POA.getEtrue());
+	}
+	
+	SectorCutter SC(5,fidrad);
+	
+	// simulate each isotope
+	std::vector<TH1F*> hIsot;
+	LinHistCombo LHC;
+	for(unsigned int i=0; i<isots.size(); i++) {
+		std::string g4dat = "/home/mmendenhall/geant4/output/WideKev_";
+		G4SegmentMultiplier g2p(SC);
+		g2p.addFile(g4dat + isots[i] + "/analyzed_*.root");
+		assert(g2p.getnFiles());
+		g2p.setCalibrator(*POA.ActiveCal);
+		TH1F* hSim = OM.registeredTH1F(isots[i]+"_Sim","",nbins,0,emax);
+		hSim->GetXaxis()->SetTitle("Energy [keV]");
+		g2p.startScan(hSpec->GetEntries());
+		double simFactor = (isots[i]=="Xe135_3-2+")?0.75:0.25;
+		while(hSim->GetEntries() < simFactor*hSpec->GetEntries()) {
+			g2p.nextPoint();
+			Side s = g2p.fSide;
+			if(g2p.fPID == PID_BETA && g2p.fType <= TYPE_III_EVENT && (s==EAST || s==WEST) && g2p.radius(s)<50.)
+				hSim->Fill(g2p.getEtrue());
+		}
+		hIsot.push_back((TH1F*)hSim->Clone());
+		LHC.addTerm(hSim);
+	}
+	
+	
+	// fit composition
+	double w = hSpec->GetBinWidth(1);
+	hSpec->Scale(w/hSpec->Integral());
+	LHC.getFitter()->SetLineColor(4);
+	LHC.getFitter()->SetLineWidth(1);
+	LHC.getFitter()->SetNpx(nbins);
+	LHC.forceNonNegative();
+	LHC.Fit(hSpec,75,emax);
+	TH1F* hSim = OM.registeredTH1F("hSim","Simulated Spectrum",nbins,0,emax);
+	Stringmap m;
+	m.insert("run",rn);
+	m.insert("counts",hSpec->GetEntries());
+	for(unsigned int i=0; i<isots.size(); i++) {
+		hIsot[i]->Scale(LHC.coeffs[i]);
+		hIsot[i]->SetLineStyle(3);
+		hSim->Add(hIsot[i]);
+		m.insert("name_"+itos(i),isots[i]);
+		m.insert("prop_"+itos(i),hIsot[i]->Integral()/w);
+		m.insert("err_"+itos(i),LHC.dcoeffs[i]/LHC.coeffs[i]);
+	}
+	m.display();
+	OM.qOut.insert("xedecomp",m);
+	
+	// draw
+	hSpec->SetMinimum(0);
+	hSpec->SetTitle("Xenon spectrum decomposition");
+	hSpec->GetXaxis()->SetTitle("Energy [keV]");
+	hSpec->Draw();
+	for(unsigned int i=0; i<isots.size(); i++)
+		hIsot[i]->Draw("Same");
+	OM.printCanvas("XeDecomp_"+itos(rn));
+	
+	OM.write();
+	//OM.setWriteRoot(true);
 }

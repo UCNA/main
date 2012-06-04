@@ -65,6 +65,13 @@ void SectorCutter::sectorCenter(unsigned int s, float& x, float& y) const {
 	y = rc*sin(phc);
 }
 
+float SectorCutter::sectorCenterRadius(unsigned int s) const {
+	if(s>=nSectors()||!s) return 0;
+	float r0,r1,ph0,ph1;
+	sectorBounds(s,r0,r1,ph0,ph1);
+	return 0.5*(r0+r1);
+}
+
 float SectorCutter::sectorArea(unsigned int s) const {
 	if(s>=nSectors()) return 0;
 	unsigned int rng = getRing(s);

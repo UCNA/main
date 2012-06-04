@@ -19,7 +19,9 @@ public:
 	/// get boundaries of given sector, radius and angle
 	void sectorBounds(unsigned int s, float& r0, float& r1, float& ph0, float& ph1) const;
 	/// get coordinates for the center of the given sector
-	void sectorCenter(unsigned int s, float& x, float& y) const;	
+	void sectorCenter(unsigned int s, float& x, float& y) const;
+	/// get radius of sector center
+	float sectorCenterRadius(unsigned int s) const;
 	/// get uniform random position within sector
 	void randPos(unsigned int s, float& x, float& y) const;
 	/// get area of specified sector

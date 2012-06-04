@@ -3,6 +3,8 @@
 # decay scheme from Browne, Tuli, Nuclear Data Sheets 108, 2201 (2007)
 ####
 
+fileinfo:	fancyname = $^{137}$Xe $7/2^-$
+
 # 137Cs levels
 level:	nm = 137.55.0	E = 0			hl = 9.486e8			jpi = 7/2+
 level:	nm = 137.55.1	E = 455.490		hl = 0					jpi = 5/2+

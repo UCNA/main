@@ -3,6 +3,8 @@
 # decay scheme from Tendow, Nuclear Data Sheets 77, 631 (1996)
 ####
 
+fileinfo:	fancyname = $^{129}$Xe* $11/2^-$
+
 level:	nm = 129.54.0	E = 0		hl = -1			jpi = 1/2+
 level:	nm = 129.54.1	E = 39.578	hl = 0.97e-9	jpi = 3/2+
 level:	nm = 129.54.2	E = 236.14	hl = 7.67e5		jpi = 11/2-

@@ -10,16 +10,21 @@
 class LinHistCombo {
 public:
 	/// constructor
-	LinHistCombo(): myFit(NULL) {}
+	LinHistCombo(): interpolate(true), myFit(NULL) {}
 	/// destructor
 	~LinHistCombo() { if(myFit) delete(myFit); }
 	/// add a fit term
 	void addTerm(TH1* h) { terms.push_back(h); }
+	/// get fitter
+	TF1* getFitter();
 	/// fit histogram with linear combination of terms
 	int Fit(TH1* h, double xmin, double xmax, const std::string& fitopt = "QR");
+	/// require coefficients to be non-negative
+	void forceNonNegative();
 	
 	std::vector<double> coeffs;		//< fit coefficients
 	std::vector<double> dcoeffs;	//< fit coefficient errors
+	bool interpolate;				//< whether to interpolate between bins
 	
 	/// fit evaluation
 	double Evaluate(double* x, double* p);
