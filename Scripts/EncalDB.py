@@ -82,6 +82,11 @@ def getRunStartTime(conn,rn):
 	conn.execute("SELECT UNIX_TIMESTAMP(start_time) FROM run WHERE run_number = %i"%rn)
 	return conn.fetchone()[0]
 
+# get end time for run
+def getRunEndTime(conn,rn):
+	conn.execute("SELECT UNIX_TIMESTAMP(end_time) FROM run WHERE run_number = %i"%rn)
+	return conn.fetchone()[0]
+
 # get list of all GMS runs
 def getGMSruns(conn):
 	conn.execute("SELECT gms_run FROM energy_calibration WHERE 1 ORDER BY gms_run ASC")

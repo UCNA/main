@@ -198,7 +198,7 @@ class TransformedFitter:
 			self.LF.fit([(self.xtrans(x[cols[0]]),self.ytrans(x[cols[1]])) for x in xydat])
 		else:
 			self.LF.fit([(self.xtrans(x[cols[0]]),self.ytrans(x[cols[1]]),x[cols[2]]) for x in xydat],cols=(0,1,2))
-	
+		self.coeffs = self.LF.coeffs
 	
 	# evaluate at x
 	def __call__(self,x):
