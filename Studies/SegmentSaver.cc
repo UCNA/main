@@ -7,14 +7,14 @@ TH1* SegmentSaver::registerSavedHist(const std::string& hname, const std::string
 	assert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
 	TH1* h;
 	if(fIn) {
-		TObject* o = fIn->Get(hname.c_str());
-		if(!o) {
+		fIn->GetObject(hname.c_str(),h);
+		if(!h) {
 			SMExcept e("fileStructureMismatch");
 			e.insert("fileName",inflname);
 			e.insert("objectName",hname);
 			throw(e);
 		}
-		h = (TH1*)addObject(o->Clone(hname.c_str()));		
+		addObject(h);
 	} else
 		h = registeredTH1F(hname,title,nbins,xmin,xmax);
 	saveHists.insert(std::make_pair(hname,h));
@@ -25,14 +25,14 @@ TH1* SegmentSaver::registerSavedHist(const std::string& hname, const TH1& hTempl
 	assert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
 	TH1* h;
 	if(fIn) {
-		TObject* o = fIn->Get(hname.c_str());
-		if(!o) {
+		fIn->GetObject(hname.c_str(),h);
+		if(!h) {
 			SMExcept e("fileStructureMismatch");
 			e.insert("fileName",inflname);
 			e.insert("objectName",hname);
 			throw(e);
 		}
-		h = (TH1*)addObject(o->Clone(hname.c_str()));
+		addObject(h);
 	} else {
 		h = (TH1*)addObject(hTemplate.Clone(hname.c_str()));
 		h->Reset();
