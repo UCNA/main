@@ -44,6 +44,7 @@ public:
 	TH1F* hTuben[2][nBetaTubes];						//< type 0 PMT energy for gain matching
 	std::vector<SectorDat> sectDat[2][nBetaTubes];		//< processed data for each sector
 	SectorCutter sects;									//< sector cutter
+	bool sectorPlots;									//< whether to make plots for each sector
 	
 protected:
 	std::vector<fgbgPair> sectEnergy[2][nBetaTubes];	//< visible light histograms by position, PMT
@@ -54,6 +55,6 @@ protected:
 void process_xenon(RunNum r0, RunNum r1, unsigned int nrings);
 
 /// compare xenon to simulation
-void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle=0);
+void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle=0, unsigned int nRings =12);
  
 #endif

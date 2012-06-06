@@ -40,7 +40,7 @@ Stringmap sd2sm(const SectorDat& sd) {
 }
 
 PositionBinner::PositionBinner(OutputManager* pnt, const std::string& nm, float r, unsigned int nr, const std::string& infl):
-RunAccumulator(pnt,nm,infl), sects(nr,r) {
+RunAccumulator(pnt,nm,infl), sects(nr,r), sectorPlots(false) {
 	
 	// load sector cutter
 	if(fIn) {
@@ -60,7 +60,7 @@ RunAccumulator(pnt,nm,infl), sects(nr,r) {
 	// set up histograms, data
 	energySpectrum = registerFGBGPair("hEnergy","Combined Energy",200,-100,1200,AFP_OTHER);
 	energySpectrum.h[GV_OPEN]->SetLineColor(2);
-	TH2F hPositionsTemplate("hPostions","Event Positions",200,-65,65,200,-65,65);
+	TH2F hPositionsTemplate("hPostions","Event Positions",200,-60,60,200,-60,60);
 	for(Side s = EAST; s <= WEST; ++s) {
 		hitPos[s] = registerFGBGPair(hPositionsTemplate,AFP_OTHER,s);
 		for(unsigned int m=0; m<sects.nSectors(); m++) {
@@ -116,7 +116,7 @@ void PositionBinner::fitSpectrum(TH1* hSpec,SectorDat& sd) {
 	if(!iterGaus(hSpec,&gausFit,3,hSpec->GetBinCenter(hSpec->GetMaximumBin()),100,1.0)) {
 		sd.low_peak = float_err(gausFit.GetParameter(1),gausFit.GetParError(1));
 		sd.low_peak_width = float_err(gausFit.GetParameter(2),gausFit.GetParError(2));
-		if(!isSimulated) epGuess = 6.5*sd.low_peak.x;
+		epGuess = 6.6*sd.low_peak.x;
 	} else {
 		sd.low_peak = sd.low_peak_width = 0;
 	}
@@ -124,7 +124,7 @@ void PositionBinner::fitSpectrum(TH1* hSpec,SectorDat& sd) {
 	//----------------------
 	// 915keV endpoint fit
 	//----------------------
-	sd.xe_ep = kurieIterator(hSpec,epGuess,NULL,915.,400,800);
+	sd.xe_ep = kurieIterator(hSpec,epGuess,NULL,915.,450,750);
 }
 
 void PositionBinner::fitSectors() {
@@ -218,7 +218,7 @@ void PositionBinner::makePlots() {
 		// positions
 		hitPos[s].h[GV_OPEN]->Draw("COL");
 		drawSectors(sects,6);
-		labelSectors(sects,6);
+		//labelSectors(sects,6);
 		printCanvas(sideSubst("hPos_%c",s));
 		
 		// tube energy
@@ -229,14 +229,16 @@ void PositionBinner::makePlots() {
 		printCanvas(sideSubst("hTuben_%c",s));
 		
 		// energy in each sector
-		for(unsigned int m=0; m<sects.nSectors(); m++) {
-			hToPlot.clear();
-			for(unsigned int t=0; t<nBetaTubes; t++)
-				hToPlot.push_back(sectEnergy[s][t][m].h[GV_OPEN]);
-			drawSimulHistos(hToPlot);
-			for(unsigned int t=0; t<nBetaTubes; t++)
-				drawVLine(sectDat[s][t][m].xe_ep.x, defaultCanvas, 2+t);
-			printCanvas(sideSubst("SectorEnergy/h_%c_",s)+itos(m));
+		if(sectorPlots) {
+			for(unsigned int m=0; m<sects.nSectors(); m++) {
+				hToPlot.clear();
+				for(unsigned int t=0; t<nBetaTubes; t++)
+					hToPlot.push_back(sectEnergy[s][t][m].h[GV_OPEN]);
+				drawSimulHistos(hToPlot);
+				for(unsigned int t=0; t<nBetaTubes; t++)
+					drawVLine(sectDat[s][t][m].xe_ep.x, defaultCanvas, 2+t);
+				printCanvas(sideSubst("SectorEnergy/h_%c_",s)+itos(m));
+			}
 		}
 	}
 }
@@ -244,7 +246,7 @@ void PositionBinner::makePlots() {
 
 void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {	
 	
-	double fidRadius = 52;
+	double fidRadius = 50;
 	
 	// scan data from each run
 	std::vector<std::string> snames;
@@ -269,7 +271,7 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	
 	// reload data
 	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/");
-	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), fidRadius, nrings);	
+	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1)+"_"+itos(nrings), fidRadius, nrings);	
 	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
 		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;
 		PositionBinner PB1(&OM1, *it, 0, 0, prevFile);
@@ -315,16 +317,16 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 			GSM.setCalibrator(PCal);
 			std::string simFile = "/home/mmendenhall/geant4/output/WideKev_"+isots[n]+"/analyzed_";
 			unsigned int nTot = 18;
-			unsigned int stride = 5;
+			unsigned int stride = 7;
 			for(unsigned int i=0; i<stride; i++)
 				GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
-			PBMi.back()->loadSimData(GSM, nToSim*(isots[n]=="Xe135_3-2+"?0.5:0.25));
+			PBMi.back()->loadSimData(GSM, nToSim*(isots[n]=="Xe135_3-2+"?1.5:0.25));
 			LHC.addTerm(PBMi.back()->energySpectrum.h[GV_OPEN]);
 			printf("Done.\n");
 		}
 		
 		// determine spectrum composition and accumulate segments
-		LHC.Fit(PB.energySpectrum.h[GV_OPEN],100,1000);
+		LHC.Fit(PB.energySpectrum.h[GV_OPEN],50,1000);
 		std::vector<double> counts;
 		for(unsigned int i=0; i<LHC.coeffs.size(); i++) {
 			PBMi[i]->scaleData(LHC.coeffs[i]);
@@ -348,12 +350,12 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 	return singleName;
 }
 
-void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle) {
+void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle, unsigned int nRings) {
 	
 	// read in comparison data
 	std::string basePath = getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/";
 	OutputManager OM("NameUnused",basePath);
-	std::string readname = std::string("Xenon_")+itos(r0)+"-"+itos(r1);
+	std::string readname = std::string("Xenon_")+itos(r0)+"-"+itos(r1)+"_"+itos(nRings);
 	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), 0, 0, basePath+"/"+readname+"/"+readname);
 	
 	// MC data for each run
@@ -372,7 +374,7 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle) {
 	
 	
 	// reload data
-	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1), PB.sects.r, PB.sects.n);
+	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1)+"_"+itos(nRings), PB.sects.r, PB.sects.n);
 	PBM.isSimulated = true;
 	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
 		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;

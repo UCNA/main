@@ -2,11 +2,19 @@
 
 from Asymmetries import *
 
+class SectorCutter(KVMap):
+	def __init__(self,m=KVMap()):
+		self.dat = m.dat
+		self.loadFloats(["nRings","nSectors","radius"])
+		self.nRings = int(self.nRings)
+		self.nSectors = int (self.nSectors)
+
 class XeFit(KVMap):
 	def __init__(self,m=KVMap()):
 		self.dat = m.dat
-		self.loadFloats(["xe_hi","d_xe_hi","xe_lo","d_xe_lo","tube"])
+		self.loadFloats(["xe_hi","d_xe_hi","xe_lo","d_xe_lo","xe_lo_w","d_xe_lo_w","tube","m","eta"])
 		self.tube = int(self.tube)
+		self.m = int(self.m)
 		self.loadStrings(["side"])
 
 class XeDecomp(KVMap):
@@ -21,9 +29,17 @@ class XeDecomp(KVMap):
 class XeFile(QFile):
 	def __init__(self,fname):
 		QFile.__init__(self,fname)
-		self.fits = {}
-		for m in [XeFit(m) for m in self.dat.get("tuben",())]:
-			self.fits[(m.side,m.tube)] = m
+		
+		self.sects = SectorCutter(self.getFirst("SectorCutter"))
+		
+		self.tuben = {}
+		for m in [XeFit(m) for m in self.dat.get("tuben",[])]:
+			self.tuben[(m.side,m.tube)] = m
+		
+		self.sectdat = {}
+		for m in [XeFit(m) for m in self.dat.get("sectDat",[])]:
+			self.sectdat[(m.side,m.tube,m.m)] = m
+				
 		self.runcals = dict([(r.run,r) for r in [runCal(m) for m in self.dat.get("runcal",[])]])
 		scomps = self.dat.get("spectrumComp",[])
 		if scomps:
@@ -44,8 +60,8 @@ def XeGainTweak(rn,conn):
 	print "----------",rn,"----------"
 	for s in ["East","West"]:
 		for t in range(4):
-			ldat = xdat.fits[(s[0],t)].xe_hi
-			lsim = xsim.fits[(s[0],t)].xe_hi
+			ldat = xdat.tuben[(s[0],t)].xe_hi
+			lsim = xsim.tuben[(s[0],t)].xe_hi
 			oldtweak = xdat.runcals[rn].getGMSTweak(s[0],t)
 			print "\t",s,t,ldat,"->",lsim,"\t Err =",100.0*(lsim-ldat)/lsim,"\tOld =",100.*(oldtweak-1)
 			if(conn):
@@ -104,14 +120,92 @@ def XeTimeEvolution(rmin,rmax):
 					graph.style.errorbar(errorbarattrs=[icols[k],])])
 		gIA.plot(graph.data.points(LF.fitcurve(0,30),x=1,y=2,title=None),[graph.style.line([icols[k],])])
 	gIA.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/test/XeDecomp/DecompHistory_%i-%i.pdf"%(rmin,rmax))
-							
+
+
+def ep_v_eta(fname):
+	
+	basepath = os.environ["UCNA_ANA_PLOTS"]+"/PositionMaps/"+fname+"/"
+	xdat = XeFile(basepath+"/"+fname+".txt")
+				  
+	gEp=graph.graphxy(width=20,height=10,
+					  x=graph.axis.lin(title="eta",min=0,max=2.5),
+					  y=graph.axis.lin(title="Endpoint",min=800,max=1000),
+					  key = graph.key.key(pos="tr"))
+	setTexrunner(gEp)
+	
+	gHvL=graph.graphxy(width=20,height=20,
+					  x=graph.axis.lin(title="Low Peak",min=0),
+					  y=graph.axis.lin(title="Endpoint",min=0),
+					  key = graph.key.key(pos="tl"))
+	setTexrunner(gHvL)
+
+	
+	tcols = rainbow(4)
+	ssymbs = {"E":symbol.circle,"W":symbol.triangle}
+	for s in ["E","W"]:
+		for t in range(4):
+			print s,t
+			gdat = [xdat.sectdat[(s,t,m)] for m in range(xdat.sects.nSectors)]
+			#        0      1        2          3              4         
+			gdat = [(g.eta, g.xe_hi, g.d_xe_hi, g.xe_lo*g.eta, g.xe_hi*g.eta) for g in gdat]
+			gEp.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
+					 [graph.style.symbol(ssymbs[s],size=0.2,symbolattrs=[tcols[t],]),
+					  graph.style.errorbar(errorbarattrs=[tcols[t],])])
+			gHvL.plot(graph.data.points(gdat,x=4,y=5,title=None),
+					[graph.style.symbol(ssymbs[s],size=0.2,symbolattrs=[tcols[t],])])
+			LF = LinearFitter(terms = [polyterm(0),polyterm(1)])
+			LF.fit(gdat,cols=(3,4))
+			gHvL.plot(graph.data.points(LF.fitcurve(0,250),x=1,y=2,title=s+" %i: $%s$"%(t,LF.toLatex())),
+					 [graph.style.line(lineattrs=[tcols[t],])])
+
+	gEp.writetofile(basepath+"/Ep_v_Eta.pdf")
+	gHvL.writetofile(basepath+"/Hi_v_Lo_Raw.pdf")
+
+
+def data_v_sim(rmin,rmax,nrings):
+	
+	basepath = os.environ["UCNA_ANA_PLOTS"]+"/PositionMaps/"
+	#rname = "%i-%i_%i"%(rmin,rmax,nrings)
+	rname = "%i-%i"%(rmin,rmax)
+	xdat = XeFile(basepath+"/Xenon_"+rname+"/Xenon_"+rname+".txt")
+	xsim = XeFile(basepath+"/SimXe_"+rname+"/SimXe_"+rname+".txt")
+
+	gHvL=graph.graphxy(width=20,height=20,
+					   x=graph.axis.lin(title="$\eta$ from low peak",min=0,max=2.5),
+					   y=graph.axis.lin(title="$\eta$ from endpoint",min=0,max=2.5),
+					   key = graph.key.key(pos="tl"))
+	setTexrunner(gHvL)
+
+	tcols = rainbow(4)
+	ssymbs = {"E":symbol.circle,"W":symbol.triangle}
+	for s in ["E","W"]:
+		for t in range(4):
+			print s,t
+			gdat = [ (xdat.sectdat[(s,t,m)],xsim.sectdat[(s,t,m)]) for m in range(xdat.sects.nSectors)]
+			gdat = [ (g[0].eta*g[0].xe_lo/g[1].xe_lo,g[0].eta*g[0].xe_hi/g[1].xe_hi) for g in gdat ]
+			gHvL.plot(graph.data.points(gdat,x=1,y=2,title=None),
+					  [graph.style.symbol(ssymbs[s],size=0.2,symbolattrs=[tcols[t],])])
+			LF = LinearFitter(terms = [polyterm(0),polyterm(1)])
+			LF.fit(gdat,cols=(0,1))
+			gHvL.plot(graph.data.points(LF.fitcurve(0,2.5),x=1,y=2,title=s+" %i: $%s$"%(t,LF.toLatex())),
+					  [graph.style.line(lineattrs=[tcols[t],])])
+	
+	gHvL.writetofile(basepath+"/Xenon_"+rname+"/Hi_v_Lo.pdf")
+
 if __name__ == "__main__":
 	
-	XeTimeEvolution(14283,14333)
+	#XeTimeEvolution(14283,14333)
+	#exit(0)
+	
+	data_v_sim(14282,14347,12)
 	exit(0)
 	
-	conn = open_connection()
-	#conn = None
+	ep_v_eta("Xenon_14282-14347")
+	ep_v_eta("SimXe_14282-14347")
+	exit(0)
+	
+	#conn = open_connection()
+	conn = None
 	for rn in range(14282,14347+1):
 		XeGainTweak(rn,conn)
 
