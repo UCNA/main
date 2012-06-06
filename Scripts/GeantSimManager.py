@@ -280,9 +280,10 @@ if __name__ == "__main__":
 	# sources ["Bi207","Sn113","Ce139","Cd109","In114E","In114W","Cd113m"] 1e6 each
 	if 0:
 		for g in ["Bi207","Sn113","Ce139","Cd109"]:
-			sourceSim = GeantSimManager("PosLine",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+			sourceSim = GeantSimManager("9.5uFoil",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.settings["sourceScan"]=80.
+			sourceSim.settings["extra_cmds"] += "/detector/sourcefoilthick 9.5 um\n"
 			sourceSim.set_generator(g)
 			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
 			sourceSim.launch_postanalyzer()
@@ -300,14 +301,16 @@ if __name__ == "__main__":
 
 
 	####################				
-	# Xenon ["Xe135_3-2+","Xe125_1-2+","Xe133_3-2+"], 3e7 for main and 3e6 for secondary
+	# Xenon [	"Xe135_3-2+","Xe133_3-2+",
+	#			"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
+	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
 	####################
 	if 1:
-		for g in ["Xe133_3-2+"]:
+		for g in ["Xe137_7-2-","Xe133_3-2+"]:
 			sourceSim = GeantSimManager("WideKev",vacuum="1.e-3 torr")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=3e6,nClusters=18,hours_old=0)
+			sourceSim.launch_sims(nEvents=3e6,nClusters=18,hours_old=24)
 			sourceSim.launch_postanalyzer()
 
 	

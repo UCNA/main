@@ -83,6 +83,12 @@ bmDetectorConstruction::bmDetectorConstruction() {
 	fInFoilCmd->SetGuidance("Set true to build In source foil instead of usual sealed sources");
 	fInFoilCmd->SetDefaultValue(false);
 	
+	fSourceFoilThickCmd = new G4UIcmdWithADoubleAndUnit("/detector/sourcefoilthick",this);
+	fSourceFoilThickCmd->SetGuidance("Set source foil full thickness");
+	fSourceFoilThick = 7.2*um;
+	fSourceFoilThickCmd->SetDefaultValue(fSourceFoilThick);
+	fSourceFoilThickCmd->AvailableForStates(G4State_PreInit);
+	
 	fCrinkleAngleCmd = new G4UIcmdWithADouble("/detector/foilcrinkle",this);
 	fCrinkleAngleCmd->SetGuidance("Decay trap foil crinkle angle");
 	fCrinkleAngleCmd->SetDefaultValue(0.);
@@ -129,6 +135,8 @@ void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValu
 	} else if (command == fInFoilCmd) {
 		makeInFoil = fInFoilCmd->GetNewBoolValue(newValue);
 		G4cout << "Setting In source foil construction to " << makeInFoil << G4endl;
+	} else if(command == fSourceFoilThickCmd) {
+		fSourceFoilThick = fSourceFoilThickCmd->GetNewDoubleValue(newValue);
 	} else if(command == fMWPCBowingCmd) {
 		fMWPCBowing = fMWPCBowingCmd->GetNewDoubleValue(newValue);
 		G4cout << "Adding " << fMWPCBowing/mm << "mm bowing to MWPC volume" << G4endl;
@@ -181,6 +189,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 	///////////////////////////////////////
 	// source holder
 	///////////////////////////////////////
+	source.fWindowThick = fSourceFoilThick/2.;
 	if(makeInFoil) {
 		G4cout << "Constructing In source foil" << G4endl;
 		source.fWindowMat = source.Al;

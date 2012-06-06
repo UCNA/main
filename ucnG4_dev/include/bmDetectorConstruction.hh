@@ -124,6 +124,9 @@ private:
 	G4UIcmdWithADoubleAndUnit* fMWPCBowingCmd;		//< additional width of MWPC due to window bowing
 	Float_t fMWPCBowing;
 	
+	G4UIcmdWithADoubleAndUnit* fSourceFoilThickCmd;	//< source foil full thickness
+	Float_t fSourceFoilThick;
+
 	G4UIcmdWithADouble* fCrinkleAngleCmd;			//< decay trap foil crinkle angle
 	Float_t fCrinkleAngle;
 	
