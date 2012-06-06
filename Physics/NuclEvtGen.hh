@@ -177,7 +177,7 @@ public:
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>& v);
 	/// display transition line info
-	virtual void display(bool verbose = false) const { printf("Beta(%.1f) ",(W0-1)*m_e); TransitionBase::display(verbose); }
+	virtual void display(bool verbose = false) const { printf("Beta(%.1f) ",from.E-to.E); TransitionBase::display(verbose); }
 	
 	bool positron;		//< whether this is positron decay
 	
@@ -186,9 +186,6 @@ protected:
 	double evalBeta(double* x, double*);
 	/// TF1 for beta spectrum
 	TF1 betaTF1;
-	
-	double R;			//< estimated nucleus radius
-	double W0;			//< endpoint, "natural" units
 };
 
 /// Decay system

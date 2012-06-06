@@ -176,28 +176,44 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	}
 }
 
-void makeCorrectionsFile(const std::string& fout) {
+void makeCorrectionsFile(int A, int Z, double Endpt) {
+	
+	std::string fout = getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection/SpectrumCorrection_";
+	fout += itos(A)+"_"+itos(Z)+"_"+dtos(Endpt)+".txt";
+	
+	double R = pow(A,1./3.)*neutron_R0;
+	double W0 = (Endpt+m_e)/m_e;
+	double M0 = fabs(Z)*proton_M0+(A-fabs(Z))*neutron_M0;
+	
 	QFile Q;
-	double Z = 1.;
-	for(double e = 0.5; e < 800; e+=1.) {
+	Stringmap sm;
+	sm.insert("A",A);
+	sm.insert("Z",Z);
+	sm.insert("endpt",Endpt);
+	sm.insert("W0",W0);
+	sm.insert("R",R);
+	sm.insert("M0",M0);
+	Q.insert("decayInfo",sm);
+	
+	for(double e = 0.5; e < Endpt; e+=1.) {
 		Stringmap m;
 		double W = e/m_e+1.;
 		m.insert("energy",e);
 		m.insert("W",W);
-		m.insert("F0m1",WilkinsonF0(Z,W)-1.0);
-		m.insert("L0m1",WilkinsonL0(Z,W)-1.0);
-		m.insert("RVm1",WilkinsonRV(W)-1.0);
-		m.insert("RAm1",WilkinsonRA(W)-1.0);
+		m.insert("F0m1",WilkinsonF0(Z,W,R)-1.0);
+		m.insert("L0m1",WilkinsonL0(Z,W,R)-1.0);
+		m.insert("RVm1",WilkinsonRV(W,W0,M0)-1.0);
+		m.insert("RAm1",WilkinsonRA(W,W0,M0)-1.0);
 		m.insert("BiRWM",Bilenkii_1958_11(W));
-		m.insert("VCm1",WilkinsonVC(Z,W)-1.0);
-		m.insert("ACm1",WilkinsonAC(Z,W)-1.0);
-		m.insert("Qm1",WilkinsonQ(Z,W)-1.0);
-		m.insert("g",Wilkinson_g(W));
-		m.insert("hmg",shann_h_minus_g(W));
+		m.insert("VCm1",WilkinsonVC(Z,W,W0,R)-1.0);
+		m.insert("ACm1",WilkinsonAC(Z,W,W0,R)-1.0);
+		m.insert("Qm1",WilkinsonQ(Z,W,W0,M0)-1.0);
+		m.insert("g",Wilkinson_g(W,W0));
+		m.insert("hmg",shann_h_minus_g(W,W0));
 		m.insert("RWM",WilkinsonACorrection(W));
-		m.insert("S0",plainPhaseSpace(W));
-		m.insert("S",correctedBetaSpectrum(e));
-		m.insert("dSm1",spectrumCorrectionFactor(e)-1.0);
+		m.insert("S0",plainPhaseSpace(W,W0));
+		m.insert("S",correctedBetaSpectrum(e,A,Z,Endpt));
+		m.insert("dSm1",spectrumCorrectionFactor(e,A,Z,Endpt)-1.0);
 		m.insert("A0",plainAsymmetry(e,0.5));
 		m.insert("A",correctedAsymmetry(e,0.5));
 		m.insert("dAm1",asymmetryCorrectionFactor(e)-1);
@@ -261,7 +277,7 @@ void PosPlotter::npePlot(PMTCalibrator* PCal) {
 			
 			interpogrid->Draw("COL Z");
 			//drawSectors(Sects,6);
-			OM->printCanvas(sideSubst("nPE_%c",s)+itos(t),".eps");			
+			OM->printCanvas(sideSubst("nPE_%c",s)+itos(t));			
 		}
 	}
 }
@@ -369,7 +385,7 @@ void compareXenonSpectra() {
 		"Xe125_1-2+",	"Xe127_1-2+",	"Xe129_11-2-",
 		"Xe131_11-2-",	"Xe133_3-2+",	"Xe133_11-2-",
 		"Xe135_3-2+",	"Xe135_11-2-",	"Xe137_7-2-"};
-	std::vector<std::string> isots(isotlist+1,isotlist+2);
+	std::vector<std::string> isots(isotlist,isotlist+9);
 	
 	OutputManager OM("XeIsots",getEnvSafe("UCNA_ANA_PLOTS")+"/test/XeIsots");
 	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);

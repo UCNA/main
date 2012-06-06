@@ -87,7 +87,7 @@ double WilkinsonF_PowerSeries(double Z, double W, double R) {
 }
 
 /// approximation to |Gamma(gm+iaZW/p)|^2, as per [3] eq. 1
-double WilkinsonComplexGammaApprox(double Z, double W, unsigned int N) {
+double WilkinsonGammaMagSquaredApprox(double Z, double W, unsigned int N) {
 	double s = 0;
 	double gm = WilkinsonGamma(Z);
 	double y = alpha*Z*W/sqrt(W*W-1);
@@ -102,12 +102,13 @@ double WilkinsonComplexGammaApprox(double Z, double W, unsigned int N) {
 			   -(2.*N+1.)*log(a));	
 }
 
+// F0 = 2/(1+WilkinsonGamma) * F
 double WilkinsonF0(double Z, double W, double R, unsigned int N) {
 	if(W<=1) return 0;
 	double gm = WilkinsonGamma(Z);
 	double GMi = 1./TMath::Gamma(2*gm+1);
 	double p = sqrt(W*W-1.);
-	double F0 = 4.*pow(2.*p*R,2.*gm-2.)*GMi*GMi*exp(M_PI*Z*alpha*W/p)*WilkinsonComplexGammaApprox(Z,W,N);
+	double F0 = 4.*pow(2.*p*R,2.*gm-2.)*GMi*GMi*exp(M_PI*Z*alpha*W/p)*WilkinsonGammaMagSquaredApprox(Z,W,N);
 	return F0<1e3?F0:0;
 }
 
@@ -205,7 +206,7 @@ double WilkinsonL0(double Z, double W, double R) {
 				 +aminus1Z[Z]*R/W+sumCoeffs(aiZ[Z],W*R)
 				 +0.41*(R-0.0164)*pow(alpha*Z,4.5) );
 	
-	return L0>0?L0:0;
+	return L0==L0?L0:0;
 }
 
 double WilkinsonVC(double Z, double W, double W0, double R) {
@@ -262,8 +263,33 @@ double Wilkinson_g(double W,double W0) {
 				+4./beta*SpenceL(2.*beta/(1.+beta))
 				+athb/beta*(2.*(1.+beta*beta)+(W0-W)*(W0-W)/(6.*W*W)-4.*athb)
 				)*alpha/2./M_PI+pow((W0-W),2*alpha/M_PI*(athb/beta-1.))-1.;
-	return g>0?g:0;
+	return g==g?g:0;
 }
+
+
+double spectrumCorrectionFactor(double KE,int A, int Z, double ep) {
+	double W = (KE+m_e)/m_e;
+	double W0 = (ep+m_e)/m_e;
+	double R = pow(A,1./3.)*neutron_R0;
+	double M0 = fabs(Z)*proton_M0+(A-fabs(Z))*neutron_M0;
+	double c = WilkinsonF0(Z,W,R);
+	c *= WilkinsonL0(Z,W,R);
+	c *= (1.+Wilkinson_g(W,W0));
+	c *= (1.+Bilenkii_1958_11(W));
+	c *= WilkinsonQ(Z,W,W0,M0);
+	return c;
+}
+
+double correctedBetaSpectrum(double KE, int A, int Z, double ep) {
+	double W = (KE+m_e)/m_e;
+	double W0 = (ep+m_e)/m_e;
+	return plainPhaseSpace(W,W0)*spectrumCorrectionFactor(KE,A,Z,ep);
+}
+
+
+
+
+
 
 double shann_h_minus_g(double W, double W0) {
 	if(W>=W0 || W<=1)

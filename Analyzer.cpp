@@ -53,10 +53,11 @@ void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) 
 }
 
 void mi_EndpointStudySim(std::deque<std::string>&, std::stack<std::string>& stack) {
+	unsigned int nRings = streamInteractor::popInt(stack);
 	RunNum rsingle = streamInteractor::popInt(stack);
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
-	simulate_xenon(r0,r1,rsingle);
+	simulate_xenon(r0,r1,rsingle,nRings);
 }
 
 void mi_WirechamberStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -179,15 +180,20 @@ void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
 
 void mi_sourcelog(std::deque<std::string>&, std::stack<std::string>&) { uploadRunSources(); }
 
-void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrectionsFile(getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection/SpectrumCorrection.txt"); }
+void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
+	float Ep = streamInteractor::popFloat(stack);
+	int Z = streamInteractor::popInt(stack);
+	int A = streamInteractor::popInt(stack);
+	makeCorrectionsFile(A,Z,Ep);
+}
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
-	decomposeXenon(15991,true);
+	//decomposeXenon(15991,true);
 	//decomposeXenon(14282,false);
 	//decomposeXenon(14347,false);
 	//decomposeXenon(17224,false);
-	return;
+	//return;
 	
 	compareXenonSpectra();
 	return;
@@ -244,6 +250,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	pm_posmap_sim.addArg("Start Run");
 	pm_posmap_sim.addArg("End Run");
 	pm_posmap_sim.addArg("Single Run","0");
+	pm_posmap_sim.addArg("n Rings","12");
 	inputRequester posmapLister("List Posmaps",&mi_listPosmaps);
 	inputRequester posmapPlot("Plot Position Map",&mi_PosmapPlot);
 	posmapPlot.addArg("Posmap ID");
@@ -287,6 +294,9 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	inputRequester evis2etrue("Caluculate eVis->eTrue curves",&mi_evis2etrue);
 	// radiative corrections
 	inputRequester radcor("Make radiative corrections table",&mi_radcor);
+	radcor.addArg("A","1");
+	radcor.addArg("Z","1");
+	radcor.addArg("Endpoint",dtos(neutronBetaEp));
 	// wirechamber calibration
 	inputRequester anawc("Gather wirechamber calibration data",&mi_WirechamberStudy);
 	anawc.addArg("Start Run");

@@ -7,6 +7,7 @@
 #include "G4toPMT.hh"
 #include "NuclEvtGen.hh"
 #include "OutputManager.hh"
+#include "BetaSpectrum.hh"
 #include <vector>
 #include <string>
 
@@ -49,7 +50,7 @@ void dumpPosmap(std::string basepath, unsigned int pnum);
 void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM);
 
 /// generate a file with spectrum correction factors
-void makeCorrectionsFile(const std::string& fout);
+void makeCorrectionsFile(int A = 1, int Z = 1, double Endpt = neutronBetaEp);
 
 /// make plots for simulated source spectrum
 void showSimSpectrum(const std::string& nm, OutputManager& OM, NucDecayLibrary& NDL, PMTCalibrator& PCal);

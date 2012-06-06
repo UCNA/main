@@ -13,12 +13,14 @@
 const double neutronBetaEp = 782.347;	//< neutron beta decay endpoint, keV
 const double m_e = 511.00;				//< electron mass, keV/c^2
 const double m_p = 938272.046;			//< proton mass, keV/c^2
+const double m_n = m_p-m_e-neutronBetaEp;	//< neutron mass, keV/c^2
 const double alpha = 1./137.036;		//< fine structure constant
 const double lambda = fabs(-1.2694);	//< +/-0.0028, PDG 2010 value, Wilkinson sign convention
 const double A0_PDG = -0.1173;			//< +/-0.0013, PDG 2010 value
 const double beta_W0 = (neutronBetaEp+m_e)/m_e;	//< beta spectrum endpoint, ``natural'' units
 const double neutron_R0 = 0.0025896*1.2;		//< neutron and proton radius approximation in ``natural'' units
 const double proton_M0 = m_p/m_e;				//< proton mass, ``natural'' units
+const double neutron_M0 = m_n/m_e;				//< neutron mass, ``natural'' units
 
 // NOTE: functions of W are using Wilkinson's ``natural'' units for energy, W=(KE+m_e)/m_e
 
@@ -59,9 +61,9 @@ double Sirlin_g(double E,double E0,double m=m_e);
 double Wilkinson_g(double W,double W0=beta_W0);
 
 /// combined spectrum correction factor
-inline double spectrumCorrectionFactor(double KE) { double W = (KE+m_e)/m_e; return WilkinsonF0(1.,W)*WilkinsonL0(1.,W)*(1.+Wilkinson_g(W))*(1.+Bilenkii_1958_11(W)); }
+double spectrumCorrectionFactor(double KE,int A = 1, int Z = 1, double ep = neutronBetaEp);
 /// corrected beta spectrum
-inline double correctedBetaSpectrum(double KE) { double W = (KE+m_e)/m_e; return plainPhaseSpace(W)*spectrumCorrectionFactor(KE); }
+double correctedBetaSpectrum(double KE, int A = 1, int Z = 1, double ep = neutronBetaEp);
 
 //-------------- A corrections ------------------
 

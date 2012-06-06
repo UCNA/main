@@ -201,8 +201,6 @@ BetaDecayTrans::BetaDecayTrans(NucLevel& f, NucLevel& t):
 TransitionBase(f,t), betaTF1((f.name+"-"+t.name+"_Beta").c_str(),this,&BetaDecayTrans::evalBeta,0,1,0) {
 	betaTF1.SetNpx(1000);
 	betaTF1.SetRange(0,from.E-to.E);
-	W0 = (from.E-to.E+m_e)/m_e;
-	R = pow(to.A,1./3.)*neutron_R0;
 	positron = false;
 }
 
@@ -214,8 +212,7 @@ void BetaDecayTrans::run(std::vector<NucDecayEvent>& v) {
 }
 
 double BetaDecayTrans::evalBeta(double* x, double*) {
-	double W = (x[0]+m_e)/m_e;
-	return 1<W && W<W0 ? plainPhaseSpace(W,W0)*WilkinsonF0(to.Z*(positron?-1:1),W,R)*WilkinsonL0(to.Z,W,R)*(1.+Wilkinson_g(W,W0)) : 0;
+	return correctedBetaSpectrum(x[0],to.A,to.Z*(positron?-1:1),from.E-to.E);
 }
 
 //-----------------------------------------
