@@ -13,33 +13,38 @@ class spectrumCorrs(KVMap):
 		
 def plotWilkinsonCorrs(fin,outpath):
 
-	os.system("mkdir -p %s"%outpath)
-	os.system("cd ..; ./UCNAnalyzer rc x");
+	#os.system("mkdir -p %s"%outpath)
+	#os.system("cd ..; ./UCNAnalyzer rc x");
 	
-	corrs = [spectrumCorrs(m) for m in QFile(fin).dat["spectrumPoint"]]
+	Q = QFile(fin)
+	A = Q.getItemF("decayInfo","A")
+	Z = Q.getItemF("decayInfo","Z")
+	ep = Q.getItemF("decayInfo","endpt")
+	corrs = [spectrumCorrs(m) for m in Q.dat["spectrumPoint"]]
 		
 	##############
 	# individual spectrum shape corrections
 	##############
 	
 	gWC=graph.graphxy(width=24,height=10,
-			x=graph.axis.lin(title="Energy [keV]",min=0,max=1000),
-			y=graph.axis.log(title="Spectrum Correction",min=5e-6,max=0.5),
+			x=graph.axis.lin(title="Energy [keV]",min=0,max=ep*1.25),
+			#y=graph.axis.log(title="Spectrum Correction",min=5e-6,max=0.5),
+			y=graph.axis.log(title="Spectrum Correction",min=5e-6),
 			key = graph.key.key(pos="mr"))
 	setTexrunner(gWC)
 
 	gdat = [ [	c.energy,		# 0
 				c.F0m1,			# 1
-				c.L0m1,			# 2
+				abs(c.L0m1),	# 2
 				-c.Qm1,			# 3
 				c.RVm1,			# 4
 				c.RAm1,			# 5
 				abs(c.BiRWM),	# 6
 				-c.VCm1,		# 7
 				-c.ACm1,		# 8
-				c.g,			# 9
+				abs(c.g),		# 9
 				0.000401,		# 10
-				0.0004*(1+0.2*sin(c.energy/30)) ] for c in corrs if c.energy<783]
+				0.0004*(1+0.2*sin(c.energy/30)) ] for c in corrs]
 				
 	gWC.plot(graph.data.points(gdat,x=1,y=2,title="$F_0-1$"),[graph.style.line([style.linewidth.Thick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=10,title="$g$"),[graph.style.line([rgb.green,style.linestyle.dashdotted,style.linewidth.THick])])
@@ -55,7 +60,30 @@ def plotWilkinsonCorrs(fin,outpath):
 	gWC.plot(graph.data.points(gdat,x=1,y=9,title="$1-{^AC}$"),[graph.style.line([rgb.blue,style.linestyle.dotted,style.linewidth.Thick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=4,title="$L_0-1$"),[graph.style.line([style.linestyle.dashed,style.linewidth.Thick])])
 	
-	gWC.writetofile(outpath+"/WilkinsonCorrs.pdf")
+	gWC.writetofile(outpath+"/WilkinsonCorrs_%i_%i_%f.pdf"%(A,Z,ep))
+	
+	###############
+	# spectrum shapes
+	###############
+	
+	gSpec=graph.graphxy(width=10,height=8,
+						x=graph.axis.lin(title="Energy [keV]",min=0,max=ep),
+						y=graph.axis.lin(title="Decay Rate",min=0),
+						key = graph.key.key(pos="tr"))
+	setTexrunner(gSpec)
+	gdat = [[c.energy,c.S0,c.S] for c in corrs]
+	gdat.sort()
+	snorm = sum([g[1] for g in gdat])/sum([g[2] for g in gdat])
+	gdat = [g+[g[2]*snorm,] for g in gdat]
+	if 1/1.2 < snorm < 1.2:
+		gSpec.plot(graph.data.points(gdat,x=1,y=3,title="Corrected"),[graph.style.line([style.linestyle.dashed,rgb.blue,style.linewidth.Thick])])
+		gSpec.plot(graph.data.points(gdat,x=1,y=4,title="Normalized"),[graph.style.line([rgb.red,style.linewidth.Thick])])
+	else:
+		gSpec.plot(graph.data.points(gdat,x=1,y=4,title="Corrected"),[graph.style.line([style.linestyle.dashed,rgb.blue,style.linewidth.Thick])])
+	gSpec.plot(graph.data.points(gdat,x=1,y=2,title="Plain"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
+	gSpec.writetofile(outpath+"/BetaSpectrum_%i_%i_%f.pdf"%(A,Z,ep))
+
+	return
 	
 	##############
 	# total spectrum shape corrections
@@ -71,25 +99,6 @@ def plotWilkinsonCorrs(fin,outpath):
 	gWCTot.plot(graph.data.points(gdat,x=1,y=2,title=None),[graph.style.line([style.linewidth.Thick])])
 	gWCTot.writetofile(outpath+"/WilkinsonCorrsTot.pdf")
 	
-	###############
-	# spectrum shapes
-	###############
-
-	gSpec=graph.graphxy(width=10,height=8,
-			x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
-			y=graph.axis.lin(title="Decay Rate",min=0),
-			key = graph.key.key(pos="tr"))
-	setTexrunner(gSpec)
-	gdat = [[c.energy,c.S0,c.S] for c in corrs if c.energy<783]
-	gdat.sort()
-	n = len(gdat)/2
-	snorm = gdat[n][1]/gdat[n][2]
-	gdat = [g+[g[2]*snorm,] for g in gdat]
-	gSpec.plot(graph.data.points(gdat,x=1,y=3,title="Corrected"),[graph.style.line([style.linestyle.dashed,rgb.blue,style.linewidth.Thick])])
-	gSpec.plot(graph.data.points(gdat,x=1,y=4,title="Normalized"),[graph.style.line([rgb.red,style.linewidth.Thick])])
-	gSpec.plot(graph.data.points(gdat,x=1,y=2,title="Plain"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
-	gSpec.writetofile(outpath+"/BetaSpectrum.pdf")
-
 	################
 	# Asymmetry corrections
 	################
@@ -147,5 +156,7 @@ def plotWilkinsonCorrs(fin,outpath):
 		
 	
 if __name__ == "__main__":
-	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection.txt",os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
-	
+	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection.txt",
+	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_137_55_4173.txt",
+					   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")

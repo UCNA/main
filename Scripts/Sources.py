@@ -456,11 +456,11 @@ def plotBackscatters(conn,rlist):
 # calibration definitions:
 #				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
 cal_2010 = [
-			(	13883,	13894,	13890,	13879,	13964,		94,		97,			75	),	# 0 first usable? data + little Xe
-			(	14104,	14116,	14111,	14077,	14380,		144,	147,		75	),	# 1	Columbus Day weekend + big Xe	
-			(	14383,	14394,	14390,	14383,	14507,		212,	215,		75	),	# 2 Oct. 15-21 week
-			(	14516,	14530,	14524,	14513,	14667,		268,	271,		75	),	# 3 Oct. 22-24 weekend
-			(	14736,	14746,	14743,	14688,	14994,		330,	333,		75	),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
+			(	13883,	13894,	13890,	13879,	13964,		94,		97,			85	),	# 0 first usable? data + little Xe
+			(	14104,	14116,	14111,	14077,	14380,		144,	147,		85	),	# 1	Columbus Day weekend + big Xe	
+			(	14383,	14394,	14390,	14383,	14507,		212,	215,		85	),	# 2 Oct. 15-21 week
+			(	14516,	14530,	14524,	14513,	14667,		268,	271,		85	),	# 3 Oct. 22-24 weekend
+			(	14736,	14746,	14743,	14688,	14994,		330,	333,		85	),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
 			(	15645,	15662,	15653,	15084,	15915,		437,	440,		77	),	# 5 Nov. 22-29 Thanksgiving Week
 			(	15916,	15939,	15931,	15916,	100000,		553,	555,		77	)	# 6 Post-Thanksgiving
 			]
@@ -496,7 +496,7 @@ if __name__=="__main__":
 	conn = open_connection() # connection to calibrations DB
 	replace = True	# whether to replace previous calibration data
 	
-	for c in cal_2010:
+	for c in cal_2010[:5]:
 	
 		if True:
 			# make new calibrations set
