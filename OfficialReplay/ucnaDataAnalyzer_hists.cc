@@ -67,7 +67,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 		hSideRate[s][0]->GetXaxis()->SetTitle("Time [s]");
 		
 		hHitPos[s] = registeredTH2F(sideSubst("HitPos_%c",s),sideSubst("%s Beta Hits Positions",s),400,-65,65,400,-65,65);
-		for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			hHitsProfile[s][d] = registeredTH1F(sideSubst("HitPos_%c",s)+(d==X_DIRECTION?"x":"y"),
 												std::string(d==X_DIRECTION?"x":"y")+" Hit Positions",200,-65,65);
 			hHitsProfile[s][d]->SetLineColor(2+2*s);
@@ -157,7 +157,7 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 			hAnode[s][1]->Fill(fMWPC_anode[s].val);
 			if(fPID==PID_BETA && fSide==s) {
 				hHitPos[s]->Fill(wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center);
-				for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++)
+				for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 					hHitsProfile[s][d]->Fill(wirePos[s][d].center);
 			}
 		}
@@ -285,7 +285,7 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	
 	// 1-D hit positions
 	defaultCanvas->SetLogy(false);
-	for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
+	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 		hToPlot.clear();
 		for(Side s = EAST; s <= WEST; ++s)
 			hToPlot.push_back(hHitsProfile[s][d]);

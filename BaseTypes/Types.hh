@@ -17,6 +17,19 @@
 #include <TMath.h>
 #include <map>
 
+/// class to prevent unintended copying of sub-classes
+class NoCopy {
+protected:
+	/// constructor
+	NoCopy() {}
+	~NoCopy() {}
+private:
+	/// copy constructor is private
+	NoCopy(const NoCopy&);
+	/// copy operator is private
+	const NoCopy& operator=(const NoCopy&);
+};
+
 /// interpolate fractional bin positions from a TAxis (needed to interpret TSpectrum positions)
 double binterpolate(const TAxis* ax, double binloc);
 

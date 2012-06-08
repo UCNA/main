@@ -6,7 +6,6 @@
 
 #include "RunSetScanner.hh"
 #include "EnergyCalibrator.hh"
-#include "WirechamberReconstruction.hh"
 
 #include "QFile.hh"
 #include "PMTGenerator.hh"

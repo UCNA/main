@@ -20,8 +20,8 @@ LIBS          = $(ROOTLIBS) $(ROOTGLIBS) -lSpectrum
 LIBS         += -lstdc++ -lz
 
 RECON_OBJS   = EnergyCalibrator.o CalDBSQL.o Source.o SourceDBSQL.o GainStabilizer.o SQL_Utils.o PositionResponse.o EfficCurve.o EvisConverter.o \
-				WirechamberReconstruction.o strutils.o QFile.o SMExcept.o RData.o OutputManager.o PathUtils.o Enums.o Types.o GraphUtils.o \
-				TChainScanner.o ManualInfo.o GraphicsUtils.o RollingWindow.o WirechamberCalibrator.o MultiGaus.o SpectrumPeak.o SectorCutter.o
+				CathSegCalibrator.o WirechamberCalibrator.o strutils.o QFile.o SMExcept.o RData.o OutputManager.o PathUtils.o Enums.o Types.o GraphUtils.o \
+				TChainScanner.o ManualInfo.o GraphicsUtils.o RollingWindow.o MultiGaus.o SpectrumPeak.o SectorCutter.o
 
 ANA_OBJS	= ucnaDataAnalyzer_hists.o ucnaDataAnalyzer_tree.o ucnaDataAnalyzer_peds.o
 

@@ -186,7 +186,11 @@ PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) 
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			pmtEffic[s][t] = CDB->getTrigeff(myRun,s,t);
-			clipThreshold[s][t] = 4000-1.1*getPedestal(sensorNames[s][t],0);
+			clipThreshold[s][t] = 4000;
+			if(checkPedestals(sensorNames[s][t]))
+				clipThreshold[s][t] -= 1.1*getPedestal(sensorNames[s][t],0);
+			else
+				clipThreshold[s][t] -= 500;
 		}
 	}
 	printSummary();
@@ -372,7 +376,7 @@ void PMTCalibrator::printSummary() {
 		}		
 		printf("\t  photoelectrons at 50%% PMT trigger threshold\n");
 	}
-	printWirecalSummary();
+	WirechamberCalibrator::printSummary();
 	printf("----------------------------------------------\n\n");
 }
 

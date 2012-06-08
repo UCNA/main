@@ -455,6 +455,39 @@ TGraph* CalDBSQL::getEvisConversion(RunNum rn, Side s, EventType tp) {
 	return getGraph(gid);
 }
 
+std::vector<CathSegCalibrator*> CalDBSQL::getCathSegCalibrators(RunNum rn, Side s, AxisDirection d) {
+	std::vector<CathSegCalibrator*> v;
+	sprintf(query,"SELECT cathcal_set_id FROM cathcal_set WHERE side = %s AND plane = '%s' \
+			AND start_run <= %i AND %i <= end_run ORDER BY end_run - start_run LIMIT 1",dbSideName(s),(d==X_DIRECTION?"X":"Y"),rn,rn);
+	TSQLRow* r = getFirst();
+	if(!r)
+		return v;
+	int ccsid = fieldAsInt(r,0);
+	delete(r);
+	sprintf(query,"SELECT cathseg_id,position,sensor_name,norm FROM cathseg_cal WHERE cathcal_set_id = %i ORDER BY position",ccsid);
+	Query();
+	std::vector<int> csids;
+	while((r = res->Next())) {
+		v.push_back(new CathSegCalibrator());
+		csids.push_back(fieldAsInt(r,0));
+		v.back()->pos = fieldAsFloat(r,1);
+		v.back()->channel = fieldAsString(r,2);
+		v.back()->norm = fieldAsFloat(r,3);
+		delete(r);
+	}
+	for(unsigned int i=0; i<v.size(); i++) {
+		sprintf(query,"SELECT graph_id FROM cathshape_graphs WHERE cathseg_id = %i ORDER BY graph_id",csids[i]);
+		std::vector<int> gids;
+		while((r = res->Next())) {
+			gids.push_back(fieldAsInt(r,0));
+			delete(r);
+		}
+		for(unsigned int n=0; n<gids.size(); n++)
+			v[i]->pcoeffs.push_back(getGraph(gids[n]));
+	}
+	return v;
+}
+
 TGraphErrors* CalDBSQL::getGraph(unsigned int gid) {
 	std::vector<float> gdata[4];
 	sprintf(query,"SELECT x_value,x_error,y_value,y_error FROM graph_points WHERE graph_id = %i ORDER BY x_value ASC",gid);

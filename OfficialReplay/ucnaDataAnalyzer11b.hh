@@ -7,7 +7,6 @@
 #include "Types.hh"
 #include "EnergyCalibrator.hh"
 #include "CalDBSQL.hh"
-#include "WirechamberReconstruction.hh"
 #include "ManualInfo.hh"
 #include "RollingWindow.hh"
 
@@ -131,7 +130,6 @@ protected:
 	RunNum rn;									//< run number for file being processed
 	PMTCalibrator PCal;							//< PMT Calibrator for this run
 	CalDBSQL* CDBout;							//< output database connection
-	std::vector<Float_t> kWirePositions[2][2];	//< wire positions on each [side][xplane]
 	std::vector<std::string> cathNames[2][2];	//< cathode sensor names on each [side][xplane]
 	Float_t fAbsTimeStart;						//< absolute start time of run
 	Float_t fAbsTimeEnd;						//< absolute end time of run
@@ -156,7 +154,7 @@ protected:
 	CutVariable fScint_tdc[2][nBetaTubes+1];//< TDC readout for each PMT and side
 	ScintEvent sevt[2];						//< scintillator event, for reconstructing energy
 	CutVariable fMWPC_anode[2];				//< anode ADC
-	Float_t fMWPC_caths[2][2][kMWPCWires];	//< cathodes on [side][xplane][wire]
+	std::vector<float> fMWPC_caths[2][2];	//< cathodes on [side][xplane][wire]
 	CutVariable fBacking_tdc[2];			//< muon backing veto TDC
 	Float_t fBacking_adc[2];				//< muon backing veto ADC
 	CutVariable fDrift_tac[2];				//< muon veto drift tubes TAC

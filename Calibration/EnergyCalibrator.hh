@@ -137,7 +137,7 @@ public:
 	/// convert all 4 tubes ped-subtracted ADC to energy estimates and return QADC-sum averaged energy (ignores individual tube resolutions)
 	void summedEnergy(Side s, float x, float y, ScintEvent& evt, float time) const;		
 	/// print summary of energy calibrations
-	void printSummary();
+	virtual void printSummary();
 	/// stringmap energy calibrations summary
 	Stringmap calSummary() const;
 	/// get clipping threshold for a PMT

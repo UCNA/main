@@ -345,7 +345,7 @@ bool MixSim::nextPoint() {
 		led_pd[s] = currentSim->led_pd[s];
 		mwpcs[s] = currentSim->mwpcs[s];
 		mwpcEnergy[s] = currentSim->mwpcEnergy[s];
-		for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++)
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 			wires[s][d] = currentSim->wires[s][d];
 	}
 	runClock = currentSim->runClock;

@@ -40,7 +40,7 @@ def replay_sources(rmin,rmax,doXe=False):
 	rlist = getRunType(open_connection(),"SourceCalib",rmin,rmax)
 	if doXe:
 		rlist = getRunType(open_connection(),"Xenon",rmin,rmax)
-	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i forceped\n"
+	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i\n"
 			
 	freplaylist = open("officialreplaylist_sources.txt","w")
 	

@@ -40,12 +40,13 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 	// Wirechambers	
 	const int anode_pdc_nums[] = {30,34};
 	for(Side s = EAST; s<=WEST; ++s) {
-		for(int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
-			std::vector<unsigned int> padcNums = getPadcNumbers(rn,s,AxisDirection(d));
-			kWirePositions[s][d] = calcWirePositions(rn,s,AxisDirection(d));
-			cathNames[s][d] = getCathodeNames(rn,s,AxisDirection(d));
-			for(std::vector<unsigned int>::iterator it = padcNums.begin(); it != padcNums.end(); it++)
-				SetBranchAddress(std::string(s==EAST?"Pdc":"Padc")+itos(*it),&r_MWPC_caths[s][d][it-padcNums.begin()]);
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+			cathNames[s][d].clear();
+			std::vector<std::string> cchans = PCal.getCathChans(s,d);
+			for(unsigned int i=0; i<cchans.size(); i++) {
+				SetBranchAddress(cchans[i],&r_MWPC_caths[s][d][i]);
+				cathNames[s][d].push_back(std::string("MWPC")+(s==EAST?"E":"W")+(d==X_DIRECTION?"x":"y")+itos(i+1));
+			}
 		}
 		SetBranchAddress(std::string("Pdc")+itos(anode_pdc_nums[s]),&r_MWPC_anode[s]);
 	}
@@ -89,11 +90,11 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			TPhys->Branch((sideSubst("TDC%c",s)+itos(t+1)).c_str(),&fScint_tdc[s][t].val,(sideSubst("TDC%c",s)+itos(t+1)+"/F").c_str());
 		
-		for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			TPhys->Branch((d==X_DIRECTION?sideSubst("x%cmpm",s):sideSubst("y%cmpm",s)).c_str(),
-						  &wirePos[s][d],"center/F:width/F:maxValue/F:cathSum/F:maxWire/i:nClipped/i:mult/i:err/I");
+						  &wirePos[s][d],"center/F:width/F:maxValue/F:cathSum/F:maxWire/i:nClipped/i:mult/i:err/I:rawCenter/F");
 			std::string cathname = sideSubst("Cathodes_%c",s)+(d==X_DIRECTION?"x":"y");
-			TPhys->Branch(cathname.c_str(),fMWPC_caths[s][d],(cathname+"["+itos(kMWPCWires)+"]/F").c_str());
+			TPhys->Branch(cathname.c_str(),&fMWPC_caths[s][d][0],(cathname+"["+itos(kMWPCWires)+"]/F").c_str());
 		}
 		
 		TPhys->Branch(sideSubst("Scint%c",s).c_str(),&sevt[s],

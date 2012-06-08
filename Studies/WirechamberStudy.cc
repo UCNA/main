@@ -1,6 +1,5 @@
 
 #include "WirechamberStudy.hh"
-#include "WirechamberReconstruction.hh"
 #include "CalDBSQL.hh"
 #include "MultiGaus.hh"
 #include "PostOfficialAnalyzer.hh"
@@ -103,7 +102,8 @@ RunAccumulator(pnt,nm,infl), eMax(1000), nEnergyBins(40), sects(nr,r) {
 	// set up cathode histograms, data
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
-			cathPos[s][d] = calcWirePositions(16000,s,AxisDirection(d));
+			assert(false);
+			//cathPos[s][d] = calcWirePositions(16000,s,AxisDirection(d));
 			for(unsigned int i=0; i<cathPos[s][d].size(); i++) {
 				TH2F hCathodeTemplate((sideSubst("hCath_%c",s)+(d==X_DIRECTION?"x_":"y_")+itos(i)).c_str(),"Normalized Cathode",100,-20,20,100,-0.5,5);
 				cathHists[s][d].push_back(registerFGBGPair(hCathodeTemplate,AFP_OTHER,s));

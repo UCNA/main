@@ -39,8 +39,8 @@ Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils
 		SectorCutter.o LinHistCombo.o Enums.o Types.o FloatErr.o SMExcept.o Octet.o SpectrumPeak.o Source.o \
 		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o RData.o
 
-Calibration = PositionResponse.o PMTGenerator.o WirechamberReconstruction.o \
-	EnergyCalibrator.o WirechamberCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
+Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberCalibrator.o \
+	EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
 	
 Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o G4toPMT.o TH1toPMT.o \
 	KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o 

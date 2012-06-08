@@ -120,3 +120,18 @@ def getTrigeffParams(conn, rn, s, t):
 		s = {'E':"East",'W':"West"}[s]
 	conn.execute("SELECT params_graph FROM mpm_trigeff WHERE run_number = %i AND side = '%s' AND quadrant = %i"%(rn,s,t))
 	return getGraph(conn,conn.fetchone()[0])
+
+# delete run monitor by ID
+def deleteRunMonitor(conn,rmid):
+	print "Deleting run monitor",rmid
+	conn.execute("SELECT center_graph_id,width_graph_id FROM run_monitors WHERE monitor_id = %i"%rmid)
+	for r in conn.fetchall():
+		delete_graph(conn,r[0])
+		delete_graph(conn,r[1])
+	conn.execute("DELETE FROM run_monitors WHERE monitor_id = %i"%rmid)
+
+# delete all run monitors in range
+def deleteRunMonitors(conn,rmin,rmax,mtype='pedestal'):
+	conn.execute("SELECT monitor_id FROM run_monitors WHERE %i <= run_number AND run_number <= %i and monitor_type = '%s'"%(rmin,rmax,mtype))
+	for r in conn.fetchall():
+		deleteRunMonitor(conn,r[0])

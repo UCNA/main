@@ -15,12 +15,11 @@ ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
 TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false),
 rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), ignore_beam_out(false),
 nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
-	if(R>16300 && !CDB->isValid(R)) {
-		printf("*** Bogus calibration for new runs! ***\n");
-		PCal = PMTCalibrator(16000,CDB);
-	}
 	plotPath = bp+"/figures/run_"+itos(R)+"/";
 	dataPath = bp+"/data/";
+	for(Side s = EAST; s <= WEST; ++s)
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
+			fMWPC_caths[s][d].resize(kMWPCWires);
 }
 
 void ucnaDataAnalyzer11b::analyze() {
@@ -194,11 +193,11 @@ bool ucnaDataAnalyzer11b::passesBeamCuts() {
 
 void ucnaDataAnalyzer11b::reconstructPosition() {
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
-			float cathPeds[kMWPCWires];
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+			std::vector<float> cathPeds;
 			for(unsigned int c=0; c<cathNames[s][d].size(); c++)
-				cathPeds[c] = PCal.getPedestal(cathNames[s][d][c],fTimeScaler.t[BOTH]);
-			wirePos[s][d] = mpmGaussianPositioner(kWirePositions[s][d], fMWPC_caths[s][d], cathPeds);
+				cathPeds.push_back(PCal.getPedestal(cathNames[s][d][c],fTimeScaler.t[BOTH]));
+			wirePos[s][d] = PCal.calcHitPos(s,d,fMWPC_caths[s][d],cathPeds);
 		}
 		fMWPC_anode[s].val -= PCal.getPedestal(sideSubst("MWPC%cAnode",s),fTimeScaler.t[BOTH]);
 		fCathSum[s].val = wirePos[s][X_DIRECTION].cathodeSum + wirePos[s][Y_DIRECTION].cathodeSum;
@@ -215,12 +214,17 @@ void ucnaDataAnalyzer11b::reconstructVisibleEnergy() {
 		// get calibrated energy from the 4 tubes combined; also, wirechamber energy deposition estimate
 		if(passedMWPC(s)) {
 			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler.t[BOTH]);
-			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,fTimeScaler.t[BOTH]);
+			// second pass with tweaked positions
+			for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
+				PCal.tweakPosition(s,d,wirePos[s][d],sevt[s].energy.x);
+			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler.t[BOTH]);
+			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,wirePos[s][X_DIRECTION].center,
+											wirePos[s][Y_DIRECTION].center,fTimeScaler.t[BOTH]);
 		} else {
 			PCal.calibrateEnergy(s,0,0,sevt[s],fTimeScaler.t[BOTH]);
 			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,0,0,fTimeScaler.t[BOTH]);
 		}
-	}	
+	}
 }
 
 void ucnaDataAnalyzer11b::checkMuonVetos() {

@@ -308,6 +308,12 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 		isots.push_back("Xe133_3-2+");
 		isots.push_back("Xe133_11-2-");
 		isots.push_back("Xe135_3-2+");
+		if(15991 <= r && r <= 16010)
+			isots.push_back("Xe135_11-2-");
+		int b1 = PB.energySpectrum.h[GV_OPEN]->FindBin(1075);
+		int b2 = PB.energySpectrum.h[GV_OPEN]->FindBin(1175);
+		if(PB.energySpectrum.h[GV_OPEN]->Integral(b1,b2) > 100)
+			isots.push_back("Xe137_7-2-");
 		
 		for(unsigned int n=0; n<isots.size(); n++) {
 			printf("Simulating for component %s...\n",isots[n].c_str());

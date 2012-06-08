@@ -74,6 +74,8 @@ public:
 	EfficCurve* getTrigeff(RunNum rn, Side s, unsigned int t) { return NULL; /*TODO*/ }
 	/// Evis to Etrue conversion
 	TGraph* getEvisConversion(RunNum rn, Side s, EventType tp) { return NULL; /*TODO*/ }
+	/// get list of cathode segment calibrators (caller is responsible for deletion)
+	virtual std::vector<CathSegCalibrator*> getCathSegCalibrators(RunNum rn, Side s, AxisDirection d) { return std::vector<CathSegCalibrator*>(); /*TODO*/ }	
 	
 	/// run start time
 	int startTime(RunNum rn, int t0 = 0) { return t0; }
