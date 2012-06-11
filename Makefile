@@ -53,31 +53,31 @@ all:
 	make UCNAnalyzer
 
 UCNAnalyzer: Analyzer.cpp $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) Analyzer.cpp $(objects) -o UCNAnalyzer
+	$(CXX) $(CXXFLAGS) Analyzer.cpp $(objects) -o UCNAnalyzer $(LDFLAGS)
 
 CalibratorExample: CalibratorExample.cpp $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) CalibratorExample.cpp $(objects) -o CalibratorExample
+	$(CXX) $(CXXFLAGS) $(LDFLAGS)  $(objects) -o CalibratorExample
 
 DataScannerExample: DataScannerExample.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) DataScannerExample.cc $(objects) -o DataScannerExample
+	$(CXX) $(CXXFLAGS) DataScannerExample.cc $(objects) -o DataScannerExample $(LDFLAGS)
 
 OctetAnalyzerExample: OctetAnalyzerExample.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/OctetAnalyzerExample.cc $(objects) -o OctetAnalyzerExample
+	$(CXX) $(CXXFLAGS) Studies/OctetAnalyzerExample.cc $(objects) -o OctetAnalyzerExample $(LDFLAGS)
 	
 ExtractFierzTerm: ExtractFierzTerm.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) ExtractFierzTerm.cc $(objects) -o ExtractFierzTerm
+	$(CXX) $(CXXFLAGS) ExtractFierzTerm.cc $(objects) -o ExtractFierzTerm $(LDFLAGS)
 
 ExtractCorrectBetaSpectrum: ExtractCorrectBetaSpectrum.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) ExtractCorrectBetaSpectrum.cc $(objects) -o ExtractCorrectBetaSpectrum
+	$(CXX) $(CXXFLAGS) ExtractCorrectBetaSpectrum.cc $(objects) -o ExtractCorrectBetaSpectrum $(LDFLAGS)
 
 MWPC_Efficiency_Sim: MWPC_Efficiency_Sim.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/MWPC_Efficiency_Sim.cc $(objects) -o MWPC_Efficiency_Sim
+	$(CXX) $(CXXFLAGS) Studies/MWPC_Efficiency_Sim.cc $(objects) -o MWPC_Efficiency_Sim $(LDFLAGS)
 	
 QCalc: FPNCalc.cc $(Utils)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) IOUtils/FPNCalc.cc $(objects) -o QCalc
+	$(CXX) $(CXXFLAGS) IOUtils/FPNCalc.cc $(objects) -o QCalc $(LDFLAGS)
 	
 FierzOctetAnalyzer: FierzOctetAnalyzer.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/FierzOctetAnalyzer.cc $(objects) -o FierzOctetAnalyzer
+	$(CXX) $(CXXFLAGS) Studies/FierzOctetAnalyzer.cc $(objects) -o FierzOctetAnalyzer $(LDFLAGS)
 	
 #
 # documentation via Doxygen
