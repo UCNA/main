@@ -409,6 +409,11 @@ void deleteArray(float** a, unsigned int nx) {
 }
 
 void ucnaDataAnalyzer11b::locateSourcePositions() {
+	
+	if(!CDBout) {
+		printf("Skipping source location without DB write permission.\n");
+		return;
+	}
 		
 	for(Side s = EAST; s <= WEST; ++s) {
 		
@@ -490,8 +495,7 @@ void ucnaDataAnalyzer11b::locateSourcePositions() {
 			delete(py);
 			
 			it->display();
-			if(CDBout)
-				SourceDBSQL::getSourceDBSQL()->addSource(*it);
+			SourceDBSQL::getSourceDBSQL()->addSource(*it);
 		}
 		
 		deleteArray(historray,nbins);
