@@ -2,6 +2,7 @@
 #include "SMExcept.hh"
 #include <cmath>
 #include <cassert>
+#include <algorithm>
 
 #define kUndefinedPosition 666
 
@@ -11,15 +12,21 @@ WirechamberCalibrator::WirechamberCalibrator(RunNum rn, CalDB* cdb): anodeP(cdb-
 		anodeGainCorr[s]=cdb->getAnodeGain(rn,s);
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			cathsegs[s][d] = cdb->getCathSegCalibrators(rn,s,d);
-			if(!cathsegs[s][d].size()) {
+			if(cathsegs[s][d].size() <= 1) {
 				SMExcept e("missingCathodeCalibrators");
 				e.insert("run",rn);
 				e.insert("side",sideWords(s));
 				e.insert("plane",d==X_DIRECTION?"X":"Y");
 				throw(e);
 			}
-			for(std::vector<CathSegCalibrator*>::const_iterator it = cathsegs[s][d].begin(); it != cathsegs[s][d].end(); it++)
-				wirePos[s][d].push_back((*it)->pos);
+			domains[s][d].push_back(0);
+			for(unsigned int i=0; i<cathsegs[s][d].size(); i++) {
+				wirePos[s][d].push_back(cathsegs[s][d][i]->pos);
+				if(i)
+					domains[s][d].push_back(0.5*(wirePos[s][d][i]+wirePos[s][d][i-1]));
+			}
+			domains[s][d][0] = 2*wirePos[s][d][0]-domains[s][d][1];
+			domains[s][d].push_back(2*wirePos[s][d].back()-domains[s][d].back());
 		}
 	}
 }
@@ -41,8 +48,12 @@ float WirechamberCalibrator::calibrateAnode(float adc, Side s, float x, float y,
 	return adc*wirechamberGainCorr(s,t)/anodeP->eval(s,nBetaTubes,x,y,false);
 }
 
-void WirechamberCalibrator::tweakPosition(Side s, AxisDirection d, wireHit& h, double E) {
+void WirechamberCalibrator::tweakPosition(Side s, AxisDirection d, wireHit& h, double E) const {
 	if(h.rawCenter == kUndefinedPosition) return;
+	unsigned int n;
+	float c;
+	toLocal(s,d,h.rawCenter,n,c);
+	h.center = fromLocal(s,d,n,cathsegs[s][d][n]->adjustPos(c,E));
 }
 
 std::vector<std::string> WirechamberCalibrator::getCathChans(Side s, AxisDirection d) const {
@@ -60,7 +71,19 @@ void WirechamberCalibrator::printSummary() {
 	printf("Anode:\t\tcE=%.2f\tcW=%.2f\n",wirechamberGainCorr(EAST,0),wirechamberGainCorr(WEST,0));
 }
 
-wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d, std::vector<float>& wireValues, std::vector<float>& wirePeds) {
+void WirechamberCalibrator::toLocal(Side s, AxisDirection d, float x, unsigned int& n, float& c) const {
+	if(x<=domains[s][d][0]) n=0;
+	else if(x>=domains[s][d].back()) n = wirePos[s][d].size()-1;
+	else n = std::upper_bound(domains[s][d].begin(),domains[s][d].end(),x)-domains[s][d].begin()-1;
+	c = (x-domains[s][d][n])/(domains[s][d][n+1]-domains[s][d][n])-0.5;
+}
+
+float WirechamberCalibrator::fromLocal(Side s, AxisDirection d, unsigned int n, float c) const {
+	assert(n>=0 && n<=wirePos[s][d].size()-1);
+	return domains[s][d][n]*(0.5-c)+domains[s][d][n+1]*(0.5+c);
+}
+
+wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d, std::vector<float>& wireValues, std::vector<float>& wirePeds) const {
 	
 	assert(s<=WEST && d<=Y_DIRECTION);
 	const unsigned int nWires = wirePos[s][d].size();

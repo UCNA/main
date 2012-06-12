@@ -13,7 +13,7 @@ public:
 	CathSegCalibrator(): norm(1.0) {}
 	/// destructor
 	~CathSegCalibrator();
-	/// adjust position for event with given energy; assumes x0 in [-0.5,0.5]
+	/// adjust position for event with given energy; assumes x0 in local coordinates [-0.5,0.5]
 	double adjustPos(double x0, double E) const;
 	
 	double pos;						//< position
@@ -21,6 +21,5 @@ public:
 	double norm;					//< signal normalization for positioning
 	std::vector<TGraph*> pcoeffs;	//< positioning correction coefficients
 };
-
 
 #endif

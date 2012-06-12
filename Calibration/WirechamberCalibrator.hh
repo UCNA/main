@@ -8,6 +8,9 @@
 #include "CathSegCalibrator.hh"
 #include <vector>
 
+/// maximum number of MWPC cathode wires per plane (actual number may be less if some dead)
+#define kMaxCathodes 16
+
 /// enumeration for various types of wirechamber reconstruction errors
 enum reconstructionErrors {
 	WIRES_GOOD		= 0,	//< perfectly good wirechamber events
@@ -48,10 +51,13 @@ public:
 	float wirechamberGainCorr(Side s, float t) const;
 	
 	/// calculate hit position from wire values array
-	wireHit calcHitPos(Side s, AxisDirection d, std::vector<float>& wireValues, std::vector<float>& wirePeds);
+	wireHit calcHitPos(Side s, AxisDirection d, std::vector<float>& wireValues, std::vector<float>& wirePeds) const;
 
 	/// fine-tweak hit position once energy is known
-	void tweakPosition(Side s, AxisDirection d, wireHit& h, double E);
+	void tweakPosition(Side s, AxisDirection d, wireHit& h, double E) const;
+	
+	/// get number of cathodes
+	unsigned int getNCaths(Side s, AxisDirection d) const { return cathsegs[s][d].size(); }
 	
 	/// get list of cathode sensor names
 	std::vector<std::string> getCathChans(Side s, AxisDirection d) const;
@@ -59,11 +65,17 @@ public:
 	/// display summary info
 	virtual void printSummary();
 	
+	/// convert to local normalized position
+	void toLocal(Side s, AxisDirection d, float x, unsigned int& n, float& c) const;
+	/// convert back from local normalized position
+	float fromLocal(Side s, AxisDirection d, unsigned int n, float c) const;
+	
 protected:
 	PositioningCorrector* anodeP;					//< anode calibration maps
 	float anodeGainCorr[2];							//< anode correction factor for each side
 	std::vector<CathSegCalibrator*> cathsegs[2][2];	//< cathode segments for each [side][plane]
 	std::vector<double> wirePos[2][2];				//< cathode wire positions on each plane
+	std::vector<double> domains[2][2];				//< dividing lines between ``domains'' of each wire
 };
 
 
