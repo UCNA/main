@@ -10,7 +10,6 @@
 #include "ManualInfo.hh"
 #include "RollingWindow.hh"
 
-const size_t kMWPCWires = 16;	//< maximum number of MWPC wires (may be less if some dead)
 const size_t kNumModules = 5;	//< number of DAQ modules for internal event header checks
 const size_t kNumUCNMons = 4;	//< number of UCN monitors
 
@@ -116,7 +115,7 @@ protected:
 	Float_t r_MonADC[kNumUCNMons];				//< UCN monitor ADCs
 	Float_t r_PMTADC[2][nBetaTubes];			//< PMT ADCs
 	Float_t r_PMTTDC[2][nBetaTubes+1];			//< PMT TDCs
-	Float_t r_MWPC_caths[2][2][kMWPCWires];		//< cathodes on [side][xplane][wire]
+	Float_t r_MWPC_caths[2][2][kMaxCathodes];		//< cathodes on [side][xplane][wire]
 	Float_t r_MWPC_anode[2];					//< MWPC anode on each side
 	Float_t r_Backing_TDC[2];					//< Backing Veto TDC
 	Float_t r_Drift_TAC[2];						//< Drift tubes TAC

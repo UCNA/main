@@ -19,7 +19,7 @@ nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevP
 	dataPath = bp+"/data/";
 	for(Side s = EAST; s <= WEST; ++s)
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
-			fMWPC_caths[s][d].resize(kMWPCWires);
+			fMWPC_caths[s][d].resize(kMaxCathodes);
 }
 
 void ucnaDataAnalyzer11b::analyze() {
@@ -98,7 +98,7 @@ void ucnaDataAnalyzer11b::convertReadin() {
 		for(unsigned int t=0; t<=nBetaTubes; t++)
 			fScint_tdc[s][t].val = r_PMTTDC[s][t];
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) 
-			for(unsigned int c=0; c<kMWPCWires; c++)
+			for(unsigned int c=0; c<kMaxCathodes; c++)
 				fMWPC_caths[s][d][c] = r_MWPC_caths[s][d][c];
 		fMWPC_anode[s].val = r_MWPC_anode[s];
 		for(unsigned int t=0; t<nBetaTubes; t++)

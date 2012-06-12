@@ -31,7 +31,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	std::vector<float> pmtPeds[2][nBetaTubes];
 	std::vector<float> pmtTimes[2];
 	std::vector<float> anodePeds[2];
-	std::vector<float> cathPeds[2][2][kMWPCWires];
+	std::vector<float> cathPeds[2][2][kMaxCathodes];
 	std::vector<float> mwpcTimes[2];
 	startScan();
 	while (nextPoint()) {
@@ -46,7 +46,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 			if(isLED() || (isPulserTrigger() && !nFiring(s)) || isUCNMon()) {
 				mwpcTimes[s].push_back(fTimeScaler.t[BOTH]);
 				for(AxisDirection p = X_DIRECTION; p <= Y_DIRECTION; ++p)
-					for(unsigned int c=0; c<kMWPCWires; c++)
+					for(unsigned int c=0; c<kMaxCathodes; c++)
 						cathPeds[s][p][c].push_back(fMWPC_caths[s][p][c]);
 				anodePeds[s].push_back(fMWPC_anode[s].val);
 			}

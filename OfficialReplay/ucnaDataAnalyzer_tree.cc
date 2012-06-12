@@ -94,7 +94,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 			TPhys->Branch((d==X_DIRECTION?sideSubst("x%cmpm",s):sideSubst("y%cmpm",s)).c_str(),
 						  &wirePos[s][d],"center/F:width/F:maxValue/F:cathSum/F:maxWire/i:nClipped/i:mult/i:err/I:rawCenter/F");
 			std::string cathname = sideSubst("Cathodes_%c",s)+(d==X_DIRECTION?"x":"y");
-			TPhys->Branch(cathname.c_str(),&fMWPC_caths[s][d][0],(cathname+"["+itos(kMWPCWires)+"]/F").c_str());
+			TPhys->Branch(cathname.c_str(),&fMWPC_caths[s][d][0],(cathname+"["+itos(kMaxCathodes)+"]/F").c_str());
 		}
 		
 		TPhys->Branch(sideSubst("Scint%c",s).c_str(),&sevt[s],

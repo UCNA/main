@@ -3,6 +3,7 @@
 
 #include "SectorCutter.hh"
 #include "RunAccumulator.hh"
+#include "WirechamberCalibrator.hh"
 
 /// Struct for anode calibration data
 struct AnodeSeg {
@@ -56,6 +57,7 @@ public:
 	std::vector<fgbgPair> cathHists[2][2];					//< normalized cathode histograms for each side,plane,cathode
 	std::vector<TH1D*> cathSlices[2][2][2];					//< cathode histogram slice [side][direction][center/width]
 	std::vector<CathodeSeg> cathDat[2][2];					//< processed cathode data
+	fgbgPair cathHitDist[2][2][kMaxCathodes];				//< position distribution around each cathode
 	SectorCutter sects;										//< sector cutter
 };
 

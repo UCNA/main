@@ -7,14 +7,13 @@
 #include <TF1.h>
 #include <map>
 #include "PathUtils.hh"
+#include "Types.hh"
 
 /// class for retrieving calibration data from DB
-class CalDBSQL: public SQLHelper, public CalDB {
+class CalDBSQL: public SQLHelper, public CalDB, private NoCopy {
 public:
 	/// destructor
 	~CalDBSQL();
-	/// forbid copying
-	CalDBSQL& operator=(CalDBSQL&) { assert(false); return *this; }
 	
 	/// check if valid data available for run
 	bool isValid(RunNum rn) { return getCalSetInfo(rn,"ecal_id"); }

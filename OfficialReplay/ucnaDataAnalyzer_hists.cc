@@ -490,7 +490,8 @@ void ucnaDataAnalyzer11b::locateSourcePositions() {
 			delete(py);
 			
 			it->display();
-			SourceDBSQL::getSourceDBSQL()->addSource(*it);
+			if(CDBout)
+				SourceDBSQL::getSourceDBSQL()->addSource(*it);
 		}
 		
 		deleteArray(historray,nbins);
