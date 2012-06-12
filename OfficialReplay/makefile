@@ -10,7 +10,7 @@ ROOTCFLAGS    = $(shell root-config --cflags)
 VPATH = ./:../IOUtils/:../RootUtils/:../BaseTypes/:../Detectors/:../MathUtils/:../Calibration/:../Analysis/:Studies/
 
 CXX           = g++ 
-CXXFLAGS      = -O3 -m32 -Wall -fPIC
+CXXFLAGS      = -O3 -Wall -fPIC
 LD            = g++
 SOFLAGS       = -shared
 INCLUDEPATH   = -I./ -I../IOUtils -I../RootUtils -I../BaseTypes -I../Detectors -I../MathUtils -I../Calibration -I../Analysis -I../Studies
