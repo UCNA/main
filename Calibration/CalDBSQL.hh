@@ -148,8 +148,6 @@ protected:
 	virtual float getTubecalData(RunNum rn, Side s, unsigned int t, const char* field);
 	/// get tube calibrations table (int) entry
 	virtual int getTubecalInt(RunNum rn, Side s, unsigned int t, const char* field);
-	/// database names for the sides
-	const char* dbSideName(Side s) const;
 	/// get graph by ID number
 	TGraphErrors* getGraph(unsigned int gid);	
 	/// get graph for run time range

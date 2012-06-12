@@ -24,6 +24,11 @@ std::string typeWords(EventType tp) {
 	return twd[tp];
 }
 
+const char* dbSideName(Side s) {
+	assert(s<=BADSIDE);
+	const char* swd[] = {"'East'","'West'","'Both'","'None'","'BadSide'"};
+	return swd[s];
+}
 
 std::string sideSubst(const std::string& instr, Side s) {
 	std::vector<std::string> segs = split(instr,"%");

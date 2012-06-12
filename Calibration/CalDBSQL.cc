@@ -272,15 +272,6 @@ int CalDBSQL::getTubecalInt(RunNum rn, Side s, unsigned int t, const char* field
 	return x;
 }
 
-
-const char* CalDBSQL::dbSideName(Side s) const {
-	if(s==EAST)
-		return "'East'";
-	if(s==WEST)
-		return "'West'";
-	return "NULL";
-}
-
 int CalDBSQL::startTime(RunNum rn, int t0) {
 	sprintf(query,"SELECT UNIX_TIMESTAMP(start_time)-%i FROM run WHERE run_number = %u",t0,rn);
 	TSQLRow* row = getFirst();

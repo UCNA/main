@@ -27,6 +27,8 @@ typedef unsigned int RunNum;
 char sideNames(Side s);
 /// get full word for side names
 const char* sideWords(Side s);
+/// get database enum side names (in single quotes)
+const char* dbSideName(Side s);
 /// substitute side names into string expression
 std::string sideSubst(const std::string& instr, Side s);
 
