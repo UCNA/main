@@ -134,6 +134,8 @@ enum AnalysisChoice {
 	ANCHOICE_F,
 	ANCHOICE_G
 };
+/// choice name letter
+char choiceLetter(AnalysisChoice a);
 
 /// enumeration for Jianglai particle ID
 enum PID {

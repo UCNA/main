@@ -225,6 +225,43 @@ CREATE TABLE sourcepeaks (
 	INDEX(sourcepeak_id), INDEX(source_id)
 );
 
+
+
+############################
+# Analysis comparison tables
+#
+
+CREATE DATABASE IF NOT EXISTS analysis_results;
+use analysis_results;
+
+# generic specification of cuts
+CREATE TABLE cut_spec (
+	cut_spec_id SERIAL,		# unique ID for cut
+	energy_min DOUBLE,		# minimum energy
+	energy_max DOUBLE,		# maximum energy
+	radius DOUBLE,			# event radius
+	positioning ENUM('plain','rotated'),	# what type of positining scheme is used
+	INDEX(cut_spec_id)
+);
+
+# generic analysis results
+CREATE TABLE analysis_results (
+	analsysis_results_id SERIAL,			# unique ID for this result
+	author ENUM('MPM','RWP','BZ'),			# person generating result
+	date DATETIME,							# result generation date
+	type ENUM('Asymmetry','Counts'),		# type of result
+	source ENUM('Data','G4','Pen'),			# data or MC source
+	start_run INT UNSIGNED,					# run range start for result
+	end_run INT UNSIGNED,					# run range end for result
+	event_type SET('0','I','II','III'),		# event type used for result
+	ana_coice ENUM('A','B','C','D','E','F','G','H'),	# ``analysis choice''
+	side ENUM('East','West','Both'),		# event side of result
+	value DOUBLE,							# result value
+	err DOUBLE,								# result uncertainty
+	cut_spec_id INT UNSIGNED,				# ID for cut specification
+	INDEX(author), INDEX(type,event_type), INDEX(start_run,end_run), INDEX(date), INDEX(cut_spec_id)
+);
+
 # permissions
 GRANT SELECT ON * to ucn;
 GRANT SELECT, INSERT, DELETE, UPDATE ON * TO ucnwrite;

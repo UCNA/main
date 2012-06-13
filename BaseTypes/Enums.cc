@@ -85,4 +85,9 @@ std::string geomName(RunGeometry g) {
 	return "OTHER";
 }
 
+char choiceLetter(AnalysisChoice a) {
+	return (ANCHOICE_A <= a)?'A'+(a-ANCHOICE_A):'0';
+}
+
+
 
