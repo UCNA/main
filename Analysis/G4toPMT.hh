@@ -2,18 +2,26 @@
 #define G4TOPMT_HH 1
 
 #include "Sim2PMT.hh"
+#define N_SD 24
 
 /// converts Geant 4 simulation results to PMT spectra
 class G4toPMT: public Sim2PMT {
 public:
 	/// constructor
-	G4toPMT(): Sim2PMT("anaTree") { }
+	G4toPMT(bool ext = false): Sim2PMT("anaTree"), extended(ext) { }
 	/// unit conversions
 	virtual void doUnits();
 		
 protected:
 	/// set read points for input tree
 	virtual void setReadpoints();
+	
+	bool extended;			//< whether to read in additional variables
+	double eDepSD[N_SD];	//< energy deposition array
+	double thetaInSD[N_SD];	//< entrance angle array
+	double thetaOutSD[N_SD];//< exit angle array
+	double keInSD[N_SD];	//< entrance energy array
+	double keOutSD[N_SD];	//< exit energy array
 };
 
 /// For consistency checks, swaps E/W sides on Geant4 sim data

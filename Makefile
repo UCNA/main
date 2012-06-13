@@ -79,6 +79,9 @@ QCalc: FPNCalc.cc $(Utils)
 FierzOctetAnalyzer: FierzOctetAnalyzer.cc $(objects)
 	$(CXX) $(CXXFLAGS) Studies/FierzOctetAnalyzer.cc $(objects) -o FierzOctetAnalyzer $(LDFLAGS)
 	
+MC_Comparisons: Studies/MC_Comparisons.cc $(objects)
+	$(CXX) $(CXXFLAGS) Studies/MC_Comparisons.cc $(objects) -o MC_Comparisons $(LDFLAGS)
+
 #
 # documentation via Doxygen
 #

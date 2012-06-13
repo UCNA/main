@@ -20,16 +20,13 @@ public:
 	
 	Double_t fMWPCEnergy[2];		//< MWPC deposited energy
 	Double_t EdepSD[N_SD];			//< array for energy deposition in all SDs
+	Double_t thetaInSD[N_SD];		//< entrance angle in each sensitive detector
+	Double_t thetaOutSD[N_SD];		//< exit angle for each sensitive detector
+	Double_t keInSD[N_SD];			//< kinetic energy entering each sensitive detector
+	Double_t keOutSD[N_SD];			//< kinetic energy exiting each sensitive detector
 	Double_t EdepAll;				//< total edep in all SDs
 	Double_t hitTime[2];			//< timing info for hits on each side
 	Double_t trapMonTime[2];		//< timing for trap monitor hits
-	Double_t thetaIn[2];			//< particle angle entering wirechamber
-	Double_t thetaOut[2];			//< particle angle exiting wirechamber
-	Double_t thetaInDF[2];			//< particle angle entering decay trap foil
-	Double_t thetaOutDF[2];			//< particle angle exiting decay trap foil
-	Double_t kEIn[2];				//< particle energy entering scintillator
-	Double_t kEInTrapMon[2];		//< particle energy entering decay trap monitor volume
-	Double_t kEOut[2];				//< particle energy leaving scintillator
 	
 protected:
 	

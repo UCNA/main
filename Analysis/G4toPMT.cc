@@ -16,6 +16,14 @@ void G4toPMT::setReadpoints() {
 		Tch->SetBranchAddress("primPos",primPos);
 	else
 		primPos[0] = primPos[1] = primPos[2] = primPos[3] = 0;
+	
+	if(extended) {
+		Tch->SetBranchAddress("EdepSD",eDepSD);
+		Tch->SetBranchAddress("thetaInSD",thetaInSD);
+		Tch->SetBranchAddress("thetaOutSD",thetaOutSD);
+		Tch->SetBranchAddress("keInSD",keInSD);
+		Tch->SetBranchAddress("keOutSD",keOutSD);
+	}
 }
 
 void G4toPMT::doUnits() {
@@ -28,6 +36,36 @@ void G4toPMT::doUnits() {
 			int flip = (d==X_DIRECTION && s==EAST)?-1:1;
 			mwpcPos[s][d] *= wcPosConversion*flip;
 			scintPos[s][d] *= wcPosConversion*flip;
+		}
+		
+		if(extended) {
+			const int ID_scint[2] = {0,10};
+			const int ID_dscint[2] = {1,11};
+			const int ID_DF[2] = {5,15};
+			const int ID_WinIn[2] = {3,13};
+			const int ID_WinOut[2] = {4,14};
+			//const int ID_mwpc[2] = {6,16};
+			const int ID_wires[2] = {7,27};
+			const int ID_deadmwpc[2] = {8,18};
+			const int ID_kevlar[2] = {9,19};
+			
+			edepDeadScint[s] = eDepSD[ID_dscint[s]];
+			edepWinOut[s]= eDepSD[ID_WinIn[s]];
+			edepWinIn[s] = eDepSD[ID_WinOut[s]];
+			edepFoils[s] = eDepSD[ID_DF[s]];
+			edepWires[s] = eDepSD[ID_wires[s]];
+			edepDeadMWPC[s] = eDepSD[ID_deadmwpc[s]];
+			edepKevlar[s] = eDepSD[ID_kevlar[s]];
+
+			cosThetaInFoils[s] = cos(thetaInSD[ID_DF[s]]);
+			cosThetaInScint[s] = cos(thetaInSD[ID_scint[s]]);
+			cosThetaInWinIn[s] = cos(thetaInSD[ID_WinIn[s]]);
+			cosThetaInWinOut[s] = cos(thetaInSD[ID_WinOut[s]]);
+			
+			cosThetaOutFoils[s] = cos(thetaOutSD[ID_DF[s]]);
+			cosThetaOutScint[s] = cos(thetaOutSD[ID_scint[s]]);
+			cosThetaOutWinIn[s] = cos(thetaOutSD[ID_WinIn[s]]);
+			cosThetaOutWinOut[s] = cos(thetaOutSD[ID_WinOut[s]]);
 		}
 	}
 	costheta=cos(costheta);

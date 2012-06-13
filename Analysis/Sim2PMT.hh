@@ -105,7 +105,7 @@ public:
 	double cosThetaInScint[2];
 	
 	double cosThetaOutFoils[2];
-	double cosThetOutWinOut[2];
+	double cosThetaOutWinOut[2];
 	double cosThetaOutWinIn[2];
 	double cosThetaOutScint[2];
 	
