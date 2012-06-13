@@ -12,6 +12,9 @@
 /// description of an analysis cut
 class AnaCutSpec {
 public:
+	/// constructor
+	AnaCutSpec(): csid(0), postp(AnaCutSpec::POS_PLAIN) {}
+	
 	unsigned int csid;	//< ID number
 	double emin;		//< minimum energy
 	double emax;		//< maximum energy
@@ -26,7 +29,7 @@ public:
 class AnaResult {
 public:
 	/// constructor
-	AnaResult(const std::string& auth = "");
+	AnaResult(const std::string& auth);
 	/// return as Stringmap
 	Stringmap toStringmap() const;
 	/// string representation of types set for DB
@@ -78,7 +81,7 @@ public:
 	
 protected:
 	/// constructor (use AnalysisDB::getADB() if you need access to DB)
-	AnalysisDB(const std::string& dbAddress = getEnvSafe("UCNADBADDRESS"),
+	AnalysisDB(const std::string& dbAddress = getEnvSafe("UCNAANARESDBADDRESS"),
 			   const std::string& dbUser =  getEnvSafe("UCNADBUSER"),
 			   const std::string& dbPass = getEnvSafe("UCNADBPASS"),
 			   unsigned int port = atoi(getEnvSafe("UCNADBPORT","3306").c_str())

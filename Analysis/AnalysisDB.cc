@@ -1,7 +1,8 @@
 #include "AnalysisDB.hh"
 #include <time.h>
 
-AnaResult::AnaResult(const std::string& auth): author(auth), timestamp(time(NULL)) { }
+AnaResult::AnaResult(const std::string& auth): arid(0), author(auth),
+timestamp(time(NULL)), startRun(0), endRun(0), s(BOTH), value(0), err(0), csid(0) { }
 
 Stringmap AnaResult::toStringmap() const {
 	Stringmap m;
@@ -38,7 +39,8 @@ unsigned int AnalysisDB::uploadCutSpec(AnaCutSpec& c) {
 	sprintf(query,"INSERT INTO cut_spec(energy_min,energy_max,radius,positioning) VALUES (%f,%f,%f,'%s')",
 			c.emin,c.emax,c.radius,c.postp == AnaCutSpec::POS_PLAIN?"plain":"rotated");
 	execute();
-	return getInsertID();
+	c.csid = getInsertID();
+	return c.csid;
 }
 
 unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
@@ -57,7 +59,8 @@ unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
 			r.err,
 			r.csid);
 	execute();
-	return getInsertID();
+	r.arid = getInsertID();
+	return r.arid;
 }
 
 void AnalysisDB::deleteAnaResult(unsigned int arid) {
