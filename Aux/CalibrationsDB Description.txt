@@ -254,7 +254,7 @@ CREATE TABLE analysis_results (
 	start_run INT UNSIGNED,					# run range start for result
 	end_run INT UNSIGNED,					# run range end for result
 	event_type SET('0','I','II','III'),		# event type used for result
-	ana_coice ENUM('A','B','C','D','E','F','G','H'),	# ``analysis choice''
+	ana_choice ENUM('A','B','C','D','E','F','G','H'),	# ``analysis choice''
 	side ENUM('East','West','Both'),		# event side of result
 	value DOUBLE,							# result value
 	err DOUBLE,								# result uncertainty

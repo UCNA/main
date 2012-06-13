@@ -2,6 +2,7 @@
 #define ASYMMETRYANALYZER_HH 1
 
 #include "OctetAnalyzer.hh"
+#include "AnalysisDB.hh"
 
 /// primary octet data analysis class
 class AsymmetryAnalyzer: public OctetAnalyzer {
@@ -25,6 +26,9 @@ public:
 	virtual std::string estimatorHistoLocation() const { return AsymmetryAnalyzer::processedLocation; }
 	static std::string processedLocation;	//< set location here for already-processed files
 	
+	/// get base AnaResult to fill in
+	AnaResult getResultBase() const;
+	
 	TH1F* hAsym;					//< asymmetry
 	TH1F* hTpAsym[TYPE_III_EVENT];	//< asymmetry by event type
 	TH1F* hInstAsym;				//< instrumental asymmetry
@@ -37,7 +41,7 @@ protected:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	
 	/// fit asymmetry over given range
-	void fitAsym(float fmin, float fmax, unsigned int color, bool avg = false);
+	void fitAsym(float fmin, float fmax, unsigned int color, AnaResult& AR, bool avg = false);
 	/// fit instrumental asymmetry over given range
 	void fitInstAsym(float fmin=200, float fmax=600, unsigned int color = 2);
 	/// various beta spectrum endpoint fits

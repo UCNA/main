@@ -53,7 +53,16 @@ void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 		hPositions[s][PDS.fType]->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 }
 
-void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, bool avg) {
+AnaResult AsymmetryAnalyzer::getResultBase() const {
+	AnaResult AR;
+	AR.datp = isSimulated?AnaResult::G4_DATA:AnaResult::REAL_DATA;
+	AR.startRun = runCounts.counts.begin()->first;
+	AR.endRun = runCounts.counts.rbegin()->first;
+	AR.anach = anChoice;
+	return AR;
+}
+
+void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, AnaResult& AR, bool avg) {
 	Stringmap m;
 	TF1* fitter = avg?&averagerFit:&asymmetryFit;
 	fitter->SetParameter(0,A0_PDG);
@@ -68,6 +77,20 @@ void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, bool
 	m.insert("anChoice",itos(anChoice));
 	m.insert("method",avg?"average":"fit");
 	qOut.insert("asymmetry",m);
+	
+	// record results to analysis DB
+	if(AR.etypes.size()) {
+		AnalysisDB* ADB = AnalysisDB::getADB();
+		AR.anatp = AnaResult::ANA_ASYM;
+		AR.value = fitter->GetParameter(0);
+		AR.err = fitter->GetParError(0);
+		AnaCutSpec c;
+		c.emin = fmin;
+		c.emax = fmax;
+		//c.radius = fiducialR;
+		AR.csid = ADB->uploadCutSpec(c);
+		ADB->uploadAnaResult(AR);
+	}
 }
 
 void AsymmetryAnalyzer::fitInstAsym(float fmin, float fmax, unsigned int color) {
@@ -135,16 +158,24 @@ void AsymmetryAnalyzer::anodeCalFits() {
 void AsymmetryAnalyzer::calculateResults() {
 	// build total spectra based on analysis choice
 	quadHists qTotalSpectrum[2];
+	AnaResult ARtot = getResultBase();	
 	for(Side s = EAST; s <= WEST; ++s) {
 		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents", "All Events Energy");
 		if(!(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C || anChoice == ANCHOICE_D))
 			qTotalSpectrum[s] *= 0;	// analysis choices without Type 0 events
-		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C)
+		else ARtot.etypes.insert(TYPE_0_EVENT);
+		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C) {
 			qTotalSpectrum[s] += qEnergySpectra[s][nBetaTubes][TYPE_I_EVENT];
-		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C)
+			ARtot.etypes.insert(TYPE_I_EVENT);
+		}
+		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C) {
 			qTotalSpectrum[s] += qEnergySpectra[s][nBetaTubes][TYPE_II_EVENT];
-		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C)
+			ARtot.etypes.insert(TYPE_II_EVENT);
+		}
+		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C) {
 			qTotalSpectrum[s] += qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
+			ARtot.etypes.insert(TYPE_III_EVENT);
+		}
 	}
 	// calculate SR and SS
 	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
@@ -160,10 +191,18 @@ void AsymmetryAnalyzer::calculateResults() {
 											  qEnergySpectra[EAST][nBetaTubes][tp],
 											  qEnergySpectra[WEST][nBetaTubes][tp]);
 	}
+	// delete old fit results 
+	AnalysisDB* ADB = AnalysisDB::getADB();
+	ARtot.anatp = AnaResult::ANA_ASYM;
+	std::vector<AnaResult> oldr = ADB->findMatching(ARtot);
+	for(unsigned int i=0; i<oldr.size(); i++)
+		ADB->deleteAnaResult(oldr[i].arid);
+	
 	// perform data fits
-	fitAsym(200,675,1,true);	// match Robby's analysis
-	fitAsym(50,800,7);
-	fitAsym(225,675,6);
+	AnaResult ARnull;
+	fitAsym(200,675,1,ARnull,true);	// match Robby's analysis
+	fitAsym(50,800,7,ARtot);
+	fitAsym(225,675,6,ARtot);
 	fitInstAsym();
 	endpointFits();
 	anodeCalFits();

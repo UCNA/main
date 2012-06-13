@@ -1,5 +1,4 @@
 #include "AnalysisDB.hh"
-#include <time.h>
 
 AnaResult::AnaResult(const std::string& auth): arid(0), author(auth),
 timestamp(time(NULL)), startRun(0), endRun(0), s(BOTH), value(0), err(0), csid(0) { }
@@ -7,7 +6,7 @@ timestamp(time(NULL)), startRun(0), endRun(0), s(BOTH), value(0), err(0), csid(0
 Stringmap AnaResult::toStringmap() const {
 	Stringmap m;
 	m.insert("author",author);
-	m.insert("timestamp",timestamp);
+	m.insert("timestamp",itos(timestamp));
 	m.insert("startRun",startRun);
 	m.insert("endRun",endRun);
 	m.insert("evtps",typeSetString());
@@ -15,6 +14,8 @@ Stringmap AnaResult::toStringmap() const {
 	m.insert("value",value);
 	m.insert("err",err);
 	m.insert("csid",csid);
+	m.insert("type",anatp==AnaResult::ANA_ASYM?"Asymmetry":"Counts");
+	m.insert("source",datp==AnaResult::REAL_DATA?"Data":datp==AnaResult::G4_DATA?"G4":"Pen");
 	return m;
 }
 
@@ -44,10 +45,12 @@ unsigned int AnalysisDB::uploadCutSpec(AnaCutSpec& c) {
 }
 
 unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
+	printf("Uploading analysis result:\n");
+	r.toStringmap().display();
 	sprintf(query,"INSERT INTO analysis_results(author,date,type,source,start_run,end_run,event_type,ana_choice,side,value,err,cut_spec_id) \
-			VALUES ('%s',%i,'%s','%s',%i,%i,'%s','%c',%s,%f,%f,%i)",
+			VALUES ('%s',FROM_UNIXTIME(%u),'%s','%s',%i,%i,'%s','%c',%s,%f,%f,%u)",
 			r.author.c_str(),
-			r.timestamp,
+			(unsigned int)r.timestamp,
 			r.anatp==AnaResult::ANA_ASYM?"Asymmetry":"Counts",
 			r.datp==AnaResult::REAL_DATA?"Data":r.datp==AnaResult::G4_DATA?"G4":"Pen",
 			r.startRun,
@@ -64,8 +67,9 @@ unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
 }
 
 void AnalysisDB::deleteAnaResult(unsigned int arid) {
+	printf("Deleting analysis result %i\n",arid);
 	sprintf(query,"SELECT cut_spec_id FROM analysis_results WHERE analsysis_results_id = %i",arid);
-	execute();
+	Query();
 	TSQLRow* r = getFirst();
 	if(!r) return;
 	int csid = fieldAsInt(r); 
@@ -75,7 +79,8 @@ void AnalysisDB::deleteAnaResult(unsigned int arid) {
 	execute();
 	
 	sprintf(query,"SELECT COUNT(*) FROM analysis_results WHERE cut_spec_id = %i",csid);
-	execute();
+	Query();
+	r = getFirst();
 	assert(r);
 	if(!fieldAsInt(r))
 		deleteCutSpec(csid);
@@ -83,6 +88,7 @@ void AnalysisDB::deleteAnaResult(unsigned int arid) {
 }
 
 void AnalysisDB::deleteCutSpec(unsigned int csid) {
+	printf("Deleting CutSpec %i\n",csid);
 	sprintf(query,"DELETE FROM cut_spec WHERE cut_spec_id = %i",csid);
 	execute();
 }
@@ -98,6 +104,7 @@ AnaResult AnalysisDB::getAnaResult(unsigned int arid) {
 		throw(e);
 	}
 	AnaResult a(fieldAsString(r,0));
+	a.arid = arid;
 	a.timestamp = fieldAsInt(r,1);
 	a.anatp = fieldAsString(r,2)=="Asymmetry"?AnaResult::ANA_ASYM:AnaResult::ANA_COUNTS;
 	a.datp = fieldAsString(r,3)=="Data"?AnaResult::REAL_DATA:fieldAsString(r,4)=="G4"?AnaResult::G4_DATA:AnaResult::PEN_DATA;
@@ -143,7 +150,7 @@ std::vector<AnaResult> AnalysisDB::findMatching(const AnaResult& A) {
 	if(A.endRun)
 		qry += " AND end_run = "+itos(A.endRun);
 	sprintf(query,"%s",qry.c_str());
-	execute();
+	Query();
 	std::vector<unsigned int> arids;
 	while(TSQLRow* r = res->Next()) {
 		arids.push_back(fieldAsInt(r,0));

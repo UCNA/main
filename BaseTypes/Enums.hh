@@ -126,13 +126,13 @@ unsigned int pmtHardwareNum(Side s, unsigned int quadrant);
 /// enumeration for Jianglai asymmetry analysis choices
 enum AnalysisChoice {
 	ANCHOICE_NONE=0,
-	ANCHOICE_A,		//< Assign 0, I, II+III (unseparated) to primary trigger side
-	ANCHOICE_B,		//< Only use 0, I
-	ANCHOICE_C,		//< Separate II/III with 4keV MWPC cut
-	ANCHOICE_D,		//< Only use 0
-	ANCHOICE_E,		//< Separate II/III with likelihood
-	ANCHOICE_F,
-	ANCHOICE_G
+	ANCHOICE_A=1,	//< Assign 0, I, II+III (unseparated) to primary trigger side
+	ANCHOICE_B=2,	//< Only use 0, I
+	ANCHOICE_C=3,	//< Separate II/III with 4keV MWPC cut
+	ANCHOICE_D=4,	//< Only use 0
+	ANCHOICE_E=5,	//< Separate II/III with likelihood
+	ANCHOICE_F=6,
+	ANCHOICE_G=7
 };
 /// choice name letter
 char choiceLetter(AnalysisChoice a);

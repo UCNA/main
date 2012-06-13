@@ -8,6 +8,7 @@
 #include "SMExcept.hh"
 #include <string>
 #include <set>
+#include <time.h>
 
 /// description of an analysis cut
 class AnaCutSpec {
@@ -29,7 +30,7 @@ public:
 class AnaResult {
 public:
 	/// constructor
-	AnaResult(const std::string& auth);
+	AnaResult(const std::string& auth = getEnvSafe("UCNA_ANA_AUTHOR"));
 	/// return as Stringmap
 	Stringmap toStringmap() const;
 	/// string representation of types set for DB
@@ -37,7 +38,7 @@ public:
 	
 	unsigned int arid;		//< analysis result ID number in database
 	std::string	author;		//< author of analysis result
-	int timestamp;			//< timestamp of analysis result
+	time_t timestamp;		//< timestamp of analysis result
 	enum AnaType {
 		ANA_ASYM,			//< asymmetry analysis
 		ANA_COUNTS			//< counts analysis
