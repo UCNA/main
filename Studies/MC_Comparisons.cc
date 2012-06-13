@@ -13,6 +13,7 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2) {
 	
 	std::vector<TH1F*> hEvis[TYPE_II_EVENT+1];
 	std::vector<TH1F*> hCTScint;
+	std::vector<TH1F*> hCTMWPC;
 	std::vector<double> t0norm;
 	
 	for(unsigned int i=0; i<sps.size(); i++) {
@@ -24,7 +25,8 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2) {
 												 "Type "+itos(t)+" Energy Spectrum",
 												 100,0,1000));
 		}
-		hCTScint.push_back(OM.registeredTH1F("hCTScint_"+itos(i),"Cos Theta entering scintillator",100,0.,1.0));
+		hCTScint.push_back(OM.registeredTH1F("hCTScint_"+itos(i),"cos(theta) entering scintillator",100,0.,1.0));
+		hCTMWPC.push_back(OM.registeredTH1F("hCTMWPC_"+itos(i),"cos(theta) entering MWPC",100,0.,1.0));
 		
 		// book histograms
 		SP->startScan();
@@ -32,8 +34,10 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2) {
 			if(SP->fPID != PID_BETA) continue;
 			if(SP->fType <= TYPE_II_EVENT)
 				hEvis[SP->fType].back()->Fill(SP->getEnergy(),SP->physicsWeight);
-			if(SP->fSide <= WEST)
+			if(SP->fSide <= WEST) {
 				hCTScint.back()->Fill(SP->cosThetaInScint[SP->fSide],SP->physicsWeight);
+				hCTMWPC.back()->Fill(SP->cosThetaInWinIn[SP->fSide],SP->physicsWeight);
+			}
 		}
 		
 		t0norm.push_back(hEvis[TYPE_0_EVENT].back()->Integral());
@@ -46,22 +50,26 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2) {
 	std::vector<TH1*> hToPlot;
 	OM.defaultCanvas->cd();
 	
+	gStyle->SetOptStat("emr");
 	for(EventType t=TYPE_0_EVENT; t <= TYPE_II_EVENT; ++t) {
 		hToPlot.clear();
 		for(unsigned int i=0; i<sps.size(); i++) {
-			hEvis[t][i]->SetLineColor(2+2*i);
-			hEvis[t][i]->Scale(1.0/t0norm[0]);
-			hToPlot.push_back(hEvis[t][i]);
 			Stringmap m;
 			m.insert("type",t);
 			m.insert("sim",i);
 			m.insert("mean",hEvis[t][i]->GetMean());
 			m.insert("rms",hEvis[t][i]->GetRMS());
+			m.insert("counts",hEvis[t][i]->Integral());
+			m.insert("tp0frac",hEvis[t][i]->Integral()/t0norm[0]);
+			hEvis[t][i]->SetLineColor(2+2*i);
+			hEvis[t][i]->Scale(1.0/t0norm[0]);
+			hToPlot.push_back(hEvis[t][i]);
 			OM.qOut.insert("evis",m);
 		}
 		drawSimulHistos(hToPlot);
 		OM.printCanvas("Evis_Type_"+itos(t));
 	}
+	gStyle->SetOptStat("");
 	
 	hToPlot.clear();
 	for(unsigned int i=0; i<sps.size(); i++) {
@@ -71,6 +79,15 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2) {
 	}
 	drawSimulHistos(hToPlot);
 	OM.printCanvas("Scint_Costheta");
+	
+	hToPlot.clear();
+	for(unsigned int i=0; i<sps.size(); i++) {
+		hCTMWPC[i]->SetLineColor(2+2*i);
+		hCTMWPC[i]->Scale(1.0/t0norm[0]);
+		hToPlot.push_back(hCTMWPC[i]);
+	}
+	drawSimulHistos(hToPlot);
+	OM.printCanvas("MWPC_In_Costheta");
 }
 
 int main(int argc, char *argv[]) {
@@ -87,8 +104,12 @@ int main(int argc, char *argv[]) {
 		G4toPMT g2p(true);
 		g2p.addFile("/home/mmendenhall/geant4/output/IsotLine_eGunRandMomentum_"+itos(l)+".0keV/analyzed_*");
 		g2p.setCalibrator(PCal);
+		g2p.addFile("");
 		
-		mc_compare_plots(OM,g2p,g2p);
+		PenelopeToPMT p2p;
+		p2p.setCalibrator(PCal);
+		
+		mc_compare_plots(OM,g2p,p2p);
 		OM.write();
 		OM.setWriteRoot(true);
 	}

@@ -6,10 +6,11 @@
 
 //---------------------------------------
 
-char sideNames(Side s) {
+char sideNames(Side s, bool clower) {
 	assert(s<BADSIDE);
 	const char snm[] = {'E','W','B','N'};
-	return snm[s];
+	const char snml[] = {'e','w','b','n'};
+	return clower?snml[s]:snm[s];
 }
 
 const char* sideWords(Side s) {
@@ -30,13 +31,13 @@ const char* dbSideName(Side s) {
 	return swd[s];
 }
 
-std::string sideSubst(const std::string& instr, Side s) {
+std::string sideSubst(const std::string& instr, Side s, bool clower) {
 	std::vector<std::string> segs = split(instr,"%");
 	if(!segs.size()) return "";
 	std::string sout = (instr[0]=='%')?"":segs[0];
 	for(unsigned int i=(instr[0]!='%'); i<segs.size(); i++) {
 		if(!segs[i].size()) continue;
-		if(segs[i][0]=='c') sout += ctos(sideNames(s));
+		if(segs[i][0]=='c') sout += ctos(sideNames(s,clower));
 		else if(segs[i][0]=='s') sout += sideWords(s);
 		else sout += ctos(segs[i][0]);
 		sout += segs[i].substr(1,segs[i].size());

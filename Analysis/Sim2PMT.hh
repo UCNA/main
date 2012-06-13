@@ -81,6 +81,7 @@ public:
 	SimPositioner* SP;			//< optional postion modifier
 	bool reSimulate;			//< whether to re-simulate energy or use "raw" values
 	bool fakeClip;				//< whether to fake clipping on wirechamber entrance edge
+	
 	double eQ[2];				//< Scintillator quenched energy [keV]
 	double eDep[2];				//< Scintillator deposited energy [keV[
 	double eW[2];				//< Wirechamber active volume deposited energy [keV]
@@ -91,23 +92,23 @@ public:
 	double costheta;			//< primary event cos pitch angle
 	double ePrim;				//< primary event energy
 	
-	double edepFoils[2];		//< energy deposition [keV]
-	double edepWinOut[2];
-	double edepWinIn[2];
-	double edepDeadMWPC[2];
-	double edepKevlar[2];
-	double edepWires[2];
-	double edepDeadScint[2];
+	double edepFoils[2];		//< energy deposition [keV] in decay trap foils
+	double edepWinOut[2];		//< energy deposition [keV] in outer wirechamber window
+	double edepWinIn[2];		//< energy deposition [keV] in inner wirechamber window
+	double edepDeadMWPC[2];		//< energy deposition [keV] in MWPC dead volume
+	double edepKevlar[2];		//< energy deposition [keV] in kevlar strings
+	double edepWires[2];		//< energy deposition [keV] in wire planes
+	double edepDeadScint[2];	//< energy deposition [keV] in dead scintillator
 	
-	double cosThetaInFoils[2];
-	double cosThetaInWinOut[2];
-	double cosThetaInWinIn[2];
-	double cosThetaInScint[2];
+	double cosThetaInFoils[2];	//< entrance angle cosine to decay trap foils
+	double cosThetaInWinOut[2];	//< entrance angle cosine to outer wirechamber window
+	double cosThetaInWinIn[2];	//< entrance angle cosine to inner wirechamber window
+	double cosThetaInScint[2];	//< entrance angle cosine to scintillator
 	
-	double cosThetaOutFoils[2];
-	double cosThetaOutWinOut[2];
-	double cosThetaOutWinIn[2];
-	double cosThetaOutScint[2];
+	double cosThetaOutFoils[2];	//< exit angle cosine from decay trap foils
+	double cosThetaOutWinOut[2];//< exit angle cosine from outer wirechamber windo
+	double cosThetaOutWinIn[2];	//< exit angle cosine from inner wirechamber window
+	double cosThetaOutScint[2];	//< exit angle cosine from scintillator
 	
 	unsigned int nSimmed;		//< number of events simulated since scan start
 	double nCounted;			//< physics-weighted number of counted events

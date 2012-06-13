@@ -24,13 +24,13 @@ inline Side& operator++(Side& s) { return s = Side(s+1); }
 /// run number type
 typedef unsigned int RunNum;
 /// get letter for side names
-char sideNames(Side s);
+char sideNames(Side s, bool clower = false);
 /// get full word for side names
 const char* sideWords(Side s);
 /// get database enum side names (in single quotes)
 const char* dbSideName(Side s);
 /// substitute side names into string expression
-std::string sideSubst(const std::string& instr, Side s);
+std::string sideSubst(const std::string& instr, Side s, bool clower = false);
 
 /// opposite side to given side
 Side otherSide(Side s);
