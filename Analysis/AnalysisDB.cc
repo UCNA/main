@@ -38,7 +38,7 @@ std::string AnaResult::typeSetString() const {
 
 AnalysisDB* AnalysisDB::getADB() {
 	static AnalysisDB* ADB = NULL;
-	if(!ADB) ADB = new AnalysisDB(getEnvSafe("UCNADBADDRESS"),getEnvSafe("UCNADBUSER"),getEnvSafe("UCNADBPASS"));
+	if(!ADB) ADB = new AnalysisDB();
 	return ADB;
 }
 
