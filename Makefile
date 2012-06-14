@@ -50,10 +50,14 @@ Studies = PlotMakers.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o Asymmetry
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
 all:
+	make libUCNA.a
 	make UCNAnalyzer
-
-UCNAnalyzer: Analyzer.cpp $(objects)
-	$(CXX) $(CXXFLAGS) Analyzer.cpp $(objects) -o UCNAnalyzer $(LDFLAGS)
+	
+UCNAnalyzer: Analyzer.cpp libUCNA.a
+	$(CXX) $(CXXFLAGS) Analyzer.cpp -o UCNAnalyzer -L./ -lUCNA $(LDFLAGS)
+	
+libUCNA.a: $(objects)
+	ar rs libUCNA.a $(objects)
 
 CalibratorExample: CalibratorExample.cpp $(objects)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS)  $(objects) -o CalibratorExample
