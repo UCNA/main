@@ -53,6 +53,7 @@ public:
 	std::set<EventType> etypes;	//< event types considered
 	AnalysisChoice anach;	//< ``analysis choice'' used
 	Side s;					//< side for result
+	AFPState afp;			//< AFP state for result
 	double value;			//< value of result
 	double err;				//< uncertainty on result
 	unsigned int csid;		//< cut specification ID

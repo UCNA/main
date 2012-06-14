@@ -53,6 +53,22 @@ unsigned int pmtHardwareNum(Side s, unsigned int quadrant) {
 	return s==EAST?(quadrant+2)%4+1 : s==WEST?quadrant+1 : 0;
 }
 
+Side strToSide(const std::string& s) {
+	return s=="East"?EAST:s=="West"?WEST:s=="Both"?BOTH:s=="None"?NOSIDE:BADSIDE;
+}
+
+//---------------------------------------
+
+std::string afpWords(AFPState afp) {
+	if(afp>AFP_ON2OFF) afp = AFP_OTHER;
+	const char* awd[] = {"On","Off","Other","On2Off","Off2On"};
+	return awd[afp];
+}
+
+AFPState strToAfp(const std::string& s) {
+	return s=="On"?AFP_ON:s=="Off"?AFP_OFF:s=="On2Off"?AFP_ON2OFF:s=="Off2On"?AFP_OFF2ON:AFP_OTHER;
+}
+
 //---------------------------------------
 
 RunGeometry whichGeometry(RunNum rn) {

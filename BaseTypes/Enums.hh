@@ -29,6 +29,8 @@ char sideNames(Side s, bool clower = false);
 const char* sideWords(Side s);
 /// get database enum side names (in single quotes)
 const char* dbSideName(Side s);
+/// convert string back to side
+Side strToSide(const std::string& s);
 /// substitute side names into string expression
 std::string sideSubst(const std::string& instr, Side s, bool clower = false);
 
@@ -87,6 +89,10 @@ enum AFPState {
 };
 
 inline AFPState& operator++(AFPState& a) { return a = AFPState(a+1); }
+/// string for AFP state
+std::string afpWords(AFPState afp);
+/// convert string back to AFPState
+AFPState strToAfp(const std::string& s);
 
 /// state of gate valve during a run
 enum GVState {

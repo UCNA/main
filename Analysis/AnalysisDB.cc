@@ -1,7 +1,7 @@
 #include "AnalysisDB.hh"
 
-AnaResult::AnaResult(const std::string& auth): arid(0), author(auth),
-timestamp(time(NULL)), startRun(0), endRun(0), s(BOTH), value(0), err(0), csid(0) { }
+AnaResult::AnaResult(const std::string& auth): arid(0), author(auth), timestamp(time(NULL)),
+startRun(0), endRun(0), s(BOTH), afp(AFP_OTHER), value(0), err(0), csid(0) { }
 
 Stringmap AnaResult::toStringmap() const {
 	Stringmap m;
@@ -11,6 +11,7 @@ Stringmap AnaResult::toStringmap() const {
 	m.insert("endRun",endRun);
 	m.insert("evtps",typeSetString());
 	m.insert("side",sideWords(s));
+	m.insert("afp",afpWords(afp));
 	m.insert("value",value);
 	m.insert("err",err);
 	m.insert("csid",csid);
@@ -47,8 +48,8 @@ unsigned int AnalysisDB::uploadCutSpec(AnaCutSpec& c) {
 unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
 	printf("Uploading analysis result:\n");
 	r.toStringmap().display();
-	sprintf(query,"INSERT INTO analysis_results(author,date,type,source,start_run,end_run,event_type,ana_choice,side,value,err,cut_spec_id) \
-			VALUES ('%s',FROM_UNIXTIME(%u),'%s','%s',%i,%i,'%s','%c',%s,%f,%f,%u)",
+	sprintf(query,"INSERT INTO analysis_results(author,date,type,source,start_run,end_run,event_type,ana_choice,side,afp,value,err,cut_spec_id) \
+			VALUES ('%s',FROM_UNIXTIME(%u),'%s','%s',%i,%i,'%s','%c',%s,'%s',%f,%f,%u)",
 			r.author.c_str(),
 			(unsigned int)r.timestamp,
 			r.anatp==AnaResult::ANA_ASYM?"Asymmetry":"Counts",
@@ -58,6 +59,7 @@ unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
 			r.typeSetString().c_str(),
 			choiceLetter(r.anach),
 			dbSideName(r.s),
+			afpWords(r.afp).c_str(),
 			r.value,
 			r.err,
 			r.csid);
@@ -94,8 +96,8 @@ void AnalysisDB::deleteCutSpec(unsigned int csid) {
 }
 
 AnaResult AnalysisDB::getAnaResult(unsigned int arid) {
-	//                    0      1    2    3      4         5       6          7          8    9     10  11
-	sprintf(query,"SELECT author,date,type,source,start_run,end_run,event_type,ana_choice,side,value,err,cut_spec_id \
+	//                    0      1    2    3      4         5       6          7          8    9   10    11  12
+	sprintf(query,"SELECT author,date,type,source,start_run,end_run,event_type,ana_choice,side,afp,value,err,cut_spec_id \
 			FROM analysis_results WHERE analsysis_results_id = %i",arid);
 	TSQLRow* r = getFirst();
 	if(!r) {
@@ -114,10 +116,11 @@ AnaResult AnalysisDB::getAnaResult(unsigned int arid) {
 	for(std::vector<std::string>::iterator it = tps.begin(); it != tps.end(); it++)
 		a.etypes.insert((*it)=="0"?TYPE_0_EVENT:EventType(TYPE_0_EVENT+it->size()));
 	a.anach = AnalysisChoice(fieldAsString(r,7)[0]-'A'+1);
-	a.s = fieldAsString(r,8)=="East"?EAST:WEST;
-	a.value = fieldAsFloat(r,9);
-	a.err = fieldAsFloat(r,10);
-	a.csid = fieldAsInt(r,11);
+	a.s = strToSide(fieldAsString(r,8));
+	a.afp = strToAfp(fieldAsString(r,9));
+	a.value = fieldAsFloat(r,10);
+	a.err = fieldAsFloat(r,11);
+	a.csid = fieldAsInt(r,12);
 	delete(r);
 	return a;
 }
@@ -144,6 +147,7 @@ std::vector<AnaResult> AnalysisDB::findMatching(const AnaResult& A) {
 	qry += " AND type = "; qry += (A.anatp==AnaResult::ANA_ASYM?"'Asymmetry'":"'Counts'");
 	qry += " AND ana_choice = '"+ctos(choiceLetter(A.anach))+"'";
 	qry += " AND side = "; qry += dbSideName(A.s);
+	qry += " AND afp = '"; qry += afpWords(A.afp)+"'";
 	qry += " AND event_type = '"+A.typeSetString()+"'";
 	if(A.startRun)
 		qry += " AND start_run = "+itos(A.startRun);

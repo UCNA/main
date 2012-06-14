@@ -155,6 +155,12 @@ void AsymmetryAnalyzer::anodeCalFits() {
 	}	
 }
 
+double integralError(const TH1* h, int b0, int b1) {
+	double e = 0;
+	for(int b = b0; b <= b1; b++) e += pow(h->GetBinError(b),2);
+	return sqrt(e);
+}
+
 void AsymmetryAnalyzer::calculateResults() {
 	// build total spectra based on analysis choice
 	quadHists qTotalSpectrum[2];
@@ -207,6 +213,37 @@ void AsymmetryAnalyzer::calculateResults() {
 	endpointFits();
 	anodeCalFits();
 	makeRatesSummary();
+	
+	// event count results
+	ARtot.anatp = AnaResult::ANA_COUNTS;
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
+				ARtot.s = s;
+				ARtot.afp = afp;
+				ARtot.etypes.clear();
+				ARtot.etypes.insert(tp);
+				
+				// delete old
+				oldr = ADB->findMatching(ARtot);
+				for(unsigned int i=0; i<oldr.size(); i++)
+					ADB->deleteAnaResult(oldr[i].arid);
+				
+				AnaCutSpec c;
+				c.emin = 225;
+				c.emax = 675;
+				//c.radius = fiducialR;
+				TH1* h = (TH1F*)qEnergySpectra[s][nBetaTubes][tp].fgbg[afp].h[GV_OPEN];
+				int b0 = h->FindBin(c.emin);
+				int b1 = h->FindBin(c.emax);
+				
+				ARtot.value = h->Integral(b0,b1);
+				ARtot.err = integralError(h,b0,b1);
+				ARtot.csid = ADB->uploadCutSpec(c);
+				ADB->uploadAnaResult(ARtot);
+			}
+		}
+	}
 }
 
 void AsymmetryAnalyzer::makePlots() {
