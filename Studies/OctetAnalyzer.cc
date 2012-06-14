@@ -281,7 +281,12 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 			nCloned++;
 			if(!it->first || !it->second) continue;
 			RunInfo RI = CalDBSQL::getCDB()->getRunInfo(it->first);
-			if(RI.gvState != GV_OPEN) continue;	// no simulation for background runs
+			// no simulation for background runs
+			if(RI.gvState != GV_OPEN) {
+				runCounts.add(it->first,0);
+				runTimes.add(it->first,0);
+				continue;
+			}
 			assert(RI.afpState <= AFP_ON);	// are you really trying to clone non-beta-octet runs here??
 			// estimate background count share for this run (and reduce simulation by this amount)
 			double bgEst = origOA->getTotalCounts(RI.afpState,GV_CLOSED)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,GV_CLOSED).t[BOTH];
@@ -326,6 +331,7 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 	makePlots();
 	origOA->calculateResults();
 	compareMCtoData(*origOA);
+	uploadAnaResults();
 	write();
 	setWriteRoot(true);
 	
@@ -393,6 +399,7 @@ unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, do
 	if(OA.needsSubtraction)
 		OA.bgSubtractAll();
 	OA.calculateResults();
+	OA.uploadAnaResults();
 	OA.makePlots();
 	OA.write();
 	OA.setWriteRoot(true);

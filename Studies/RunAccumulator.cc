@@ -121,6 +121,7 @@ void RunAccumulator::addSegment(const SegmentSaver& S) {
 	SegmentSaver::addSegment(S);
 	// recast
 	const RunAccumulator& RA = (const RunAccumulator&)S;
+	if(RA.isSimulated) isSimulated = true;
 	// add times, counts
 	for(AFPState afp = AFP_OFF; afp <= AFP_OTHER; ++afp) {
 		for(unsigned int fg = 0; fg <= 1; fg++) {

@@ -21,6 +21,8 @@ public:
 	virtual void calculateResults();
 	/// output plot generation
 	virtual void makePlots();
+	/// upload results to analysis results DB
+	virtual void uploadAnaResults();
 	
 	/// location of already-processed data (after first run) for errorbar estimation
 	virtual std::string estimatorHistoLocation() const { return AsymmetryAnalyzer::processedLocation; }
@@ -41,13 +43,16 @@ protected:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	
 	/// fit asymmetry over given range
-	void fitAsym(float fmin, float fmax, unsigned int color, AnaResult& AR, bool avg = false);
+	void fitAsym(float fmin, float fmax, unsigned int color, AnaResult AR, bool avg = false);
 	/// fit instrumental asymmetry over given range
 	void fitInstAsym(float fmin=200, float fmax=600, unsigned int color = 2);
 	/// various beta spectrum endpoint fits
 	void endpointFits();
 	/// anode calibration fits
 	void anodeCalFits();
+	
+	std::vector<AnaResult> asymFits;	//< list of asymmetry fits available for upload
+	std::vector<AnaCutSpec> asymCuts;	//< list of cut specifications for asymmetry fits
 	
 	static TF1 asymmetryFit;		//< fit function for asymmetry
 	static TF1 averagerFit;			//< pol0 line fit for averaging

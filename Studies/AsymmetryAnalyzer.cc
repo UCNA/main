@@ -62,7 +62,7 @@ AnaResult AsymmetryAnalyzer::getResultBase() const {
 	return AR;
 }
 
-void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, AnaResult& AR, bool avg) {
+void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, AnaResult AR, bool avg) {
 	Stringmap m;
 	TF1* fitter = avg?&averagerFit:&asymmetryFit;
 	fitter->SetParameter(0,A0_PDG);
@@ -78,19 +78,16 @@ void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, AnaR
 	m.insert("method",avg?"average":"fit");
 	qOut.insert("asymmetry",m);
 	
-	// record results to analysis DB
-	if(AR.etypes.size()) {
-		AnalysisDB* ADB = AnalysisDB::getADB();
-		AR.anatp = AnaResult::ANA_ASYM;
-		AR.value = fitter->GetParameter(0);
-		AR.err = fitter->GetParError(0);
-		AnaCutSpec c;
-		c.emin = fmin;
-		c.emax = fmax;
-		//c.radius = fiducialR;
-		AR.csid = ADB->uploadCutSpec(c);
-		ADB->uploadAnaResult(AR);
-	}
+	// save results
+	AR.anatp = AnaResult::ANA_ASYM;
+	AR.value = fitter->GetParameter(0);
+	AR.err = fitter->GetParError(0);
+	AnaCutSpec c;
+	c.emin = fmin;
+	c.emax = fmax;
+	//c.radius = fiducialR;
+	asymFits.push_back(AR);
+	asymCuts.push_back(c);
 }
 
 void AsymmetryAnalyzer::fitInstAsym(float fmin, float fmax, unsigned int color) {
@@ -164,7 +161,7 @@ double integralError(const TH1* h, int b0, int b1) {
 void AsymmetryAnalyzer::calculateResults() {
 	// build total spectra based on analysis choice
 	quadHists qTotalSpectrum[2];
-	AnaResult ARtot = getResultBase();	
+	AnaResult ARtot = getResultBase();
 	for(Side s = EAST; s <= WEST; ++s) {
 		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents", "All Events Energy");
 		if(!(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C || anChoice == ANCHOICE_D))
@@ -197,24 +194,36 @@ void AsymmetryAnalyzer::calculateResults() {
 											  qEnergySpectra[EAST][nBetaTubes][tp],
 											  qEnergySpectra[WEST][nBetaTubes][tp]);
 	}
-	// delete old fit results 
-	AnalysisDB* ADB = AnalysisDB::getADB();
-	ARtot.anatp = AnaResult::ANA_ASYM;
-	std::vector<AnaResult> oldr = ADB->findMatching(ARtot);
-	for(unsigned int i=0; i<oldr.size(); i++)
-		ADB->deleteAnaResult(oldr[i].arid);
-	
+		
 	// perform data fits
-	AnaResult ARnull;
-	fitAsym(200,675,1,ARnull,true);	// match Robby's analysis
+	fitAsym(200,675,1,ARtot,true);	// match Robby's analysis
+	asymFits.pop_back(); asymCuts.pop_back();
 	fitAsym(50,800,7,ARtot);
 	fitAsym(225,675,6,ARtot);
 	fitInstAsym();
 	endpointFits();
 	anodeCalFits();
 	makeRatesSummary();
+}
+
+void AsymmetryAnalyzer::uploadAnaResults() {
 	
+	AnalysisDB* ADB = AnalysisDB::getADB();
+
+	// delete old fit results 
+	for(unsigned int n=0; n<asymFits.size(); n++) {
+		std::vector<AnaResult> oldr = ADB->findMatching(asymFits[n]);
+		for(unsigned int i=0; i<oldr.size(); i++)
+			ADB->deleteAnaResult(oldr[i].arid);
+	}
+	// upload new fit results
+	for(unsigned int n=0; n<asymFits.size(); n++) {
+		asymFits[n].csid = ADB->uploadCutSpec(asymCuts[n]);
+		ADB->uploadAnaResult(asymFits[n]);
+	}
+
 	// event count results
+	AnaResult ARtot = getResultBase();
 	ARtot.anatp = AnaResult::ANA_COUNTS;
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
@@ -225,7 +234,7 @@ void AsymmetryAnalyzer::calculateResults() {
 				ARtot.etypes.insert(tp);
 				
 				// delete old
-				oldr = ADB->findMatching(ARtot);
+				std::vector<AnaResult> oldr = ADB->findMatching(ARtot);
 				for(unsigned int i=0; i<oldr.size(); i++)
 					ADB->deleteAnaResult(oldr[i].arid);
 				

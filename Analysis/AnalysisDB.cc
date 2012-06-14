@@ -3,6 +3,11 @@
 AnaResult::AnaResult(const std::string& auth): arid(0), author(auth), timestamp(time(NULL)),
 startRun(0), endRun(0), s(BOTH), afp(AFP_OTHER), value(0), err(0), csid(0) { }
 
+std::string AnaResult::atypeWord(AnaType t) { return t==ANA_ASYM?"Asymmetry":"Counts"; }
+std::string AnaResult::dsourceWord(DataSource d) { return d==REAL_DATA?"Data":d==G4_DATA?"G4":"Pen"; }
+AnaResult::AnaType AnaResult::strToAtype(const std::string& str) { return str=="Asymmetry"?ANA_ASYM:ANA_COUNTS; }
+AnaResult::DataSource AnaResult::strToDsource(const std::string& str) { return str=="Data"?REAL_DATA:str=="G4"?G4_DATA:PEN_DATA; }
+
 Stringmap AnaResult::toStringmap() const {
 	Stringmap m;
 	m.insert("author",author);
@@ -52,8 +57,8 @@ unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
 			VALUES ('%s',FROM_UNIXTIME(%u),'%s','%s',%i,%i,'%s','%c',%s,'%s',%f,%f,%u)",
 			r.author.c_str(),
 			(unsigned int)r.timestamp,
-			r.anatp==AnaResult::ANA_ASYM?"Asymmetry":"Counts",
-			r.datp==AnaResult::REAL_DATA?"Data":r.datp==AnaResult::G4_DATA?"G4":"Pen",
+			AnaResult::atypeWord(r.anatp).c_str(),
+			AnaResult::dsourceWord(r.datp).c_str(),
 			r.startRun,
 			r.endRun,
 			r.typeSetString().c_str(),
@@ -108,8 +113,8 @@ AnaResult AnalysisDB::getAnaResult(unsigned int arid) {
 	AnaResult a(fieldAsString(r,0));
 	a.arid = arid;
 	a.timestamp = fieldAsInt(r,1);
-	a.anatp = fieldAsString(r,2)=="Asymmetry"?AnaResult::ANA_ASYM:AnaResult::ANA_COUNTS;
-	a.datp = fieldAsString(r,3)=="Data"?AnaResult::REAL_DATA:fieldAsString(r,4)=="G4"?AnaResult::G4_DATA:AnaResult::PEN_DATA;
+	a.anatp = AnaResult::strToAtype(fieldAsString(r,2));
+	a.datp = AnaResult::strToDsource(fieldAsString(r,3));
 	a.startRun = fieldAsInt(r,4);
 	a.endRun = fieldAsInt(r,5);
 	std::vector<std::string> tps = split(fieldAsString(r,6));
@@ -144,7 +149,8 @@ AnaCutSpec AnalysisDB::getCutSpec(unsigned int csid) {
 
 std::vector<AnaResult> AnalysisDB::findMatching(const AnaResult& A) {
 	std::string qry = "SELECT analsysis_results_id FROM analysis_results WHERE author = '"+A.author+"'";
-	qry += " AND type = "; qry += (A.anatp==AnaResult::ANA_ASYM?"'Asymmetry'":"'Counts'");
+	qry += " AND type = '"+AnaResult::atypeWord(A.anatp)+"'";
+	qry += " AND source = '"+AnaResult::dsourceWord(A.datp)+"'";
 	qry += " AND ana_choice = '"+ctos(choiceLetter(A.anach))+"'";
 	qry += " AND side = "; qry += dbSideName(A.s);
 	qry += " AND afp = '"; qry += afpWords(A.afp)+"'";

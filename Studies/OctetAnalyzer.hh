@@ -68,6 +68,8 @@ public:
 	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll = false);
 	/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs
 	unsigned int simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor = 1., double replaceIfOlder = 0.);
+	/// upload results to analysis results DB
+	virtual void uploadAnaResults() {}
 	
 	// ---- some utility routines for common analysis/output operations ---- //
 	

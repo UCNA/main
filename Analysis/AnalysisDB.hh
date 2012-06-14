@@ -57,6 +57,15 @@ public:
 	double value;			//< value of result
 	double err;				//< uncertainty on result
 	unsigned int csid;		//< cut specification ID
+	
+	/// words for analysis type
+	static std::string atypeWord(AnaType t);
+	/// analysis type from word
+	static AnaType strToAtype(const std::string& str);
+	/// words for data source
+	static std::string dsourceWord(DataSource d);
+	/// data type from word
+	static DataSource strToDsource(const std::string& str);
 };
 
 /// DB interface for sharing analysis results
