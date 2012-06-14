@@ -20,7 +20,7 @@ void PenelopeToPMT::setReadpoints() {
 		Tch->SetBranchAddress(sideSubst("Em%c1",s,true).c_str(),&fedepWinIn[s]);
 		Tch->SetBranchAddress(sideSubst("Em%c2",s,true).c_str(),&fedepWinOut[s]);
 		
-		for(AxisDirection d=X_DIRECTION; d<=X_DIRECTION; ++d)
+		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
 			Tch->SetBranchAddress((sideSubst("%cpos",s,true)+(d==X_DIRECTION?"x":"y")).c_str(),&fMWPCpos[s][d]);
 		
 		Tch->SetBranchAddress(sideSubst("Efl%c",s,true).c_str(),&fedepFoils[s]);

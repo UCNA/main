@@ -71,10 +71,10 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
 			m.insert("mean",hEvis[t][i]->GetMean());
 			m.insert("rms",hEvis[t][i]->GetRMS());
 			m.insert("counts",hEvis[t][i]->Integral());
+			m.insert("normcounts",hEvis[t][i]->Integral()*t0norm[i]);
 			hEvis[t][i]->SetLineColor(2+2*i);
 			hEvis[t][i]->Scale(t0norm[i]/hEvis[t][i]->GetBinWidth(1));
 			hToPlot.push_back(hEvis[t][i]);
-			m.insert("normcounts",hEvis[t][i]->Integral());
 			OM.qOut.insert("evis",m);
 		}
 		drawSimulHistos(hToPlot);
@@ -88,10 +88,10 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
 			m.insert("mean",hEquench[t][i]->GetMean());
 			m.insert("rms",hEquench[t][i]->GetRMS());
 			m.insert("counts",hEquench[t][i]->Integral());
+			m.insert("normcounts",hEquench[t][i]->Integral()*t0norm[i]);
 			hEquench[t][i]->SetLineColor(2+2*i);
 			hEquench[t][i]->Scale(t0norm[i]/hEquench[t][i]->GetBinWidth(1));
 			hToPlot.push_back(hEquench[t][i]);
-			m.insert("normcounts",hEquench[t][i]->Integral());
 			OM.qOut.insert("equench",m);
 		}
 		drawSimulHistos(hToPlot);
@@ -124,10 +124,16 @@ int main(int argc, char *argv[]) {
 	gStyle->SetNumberContours(255);
 	gStyle->SetOptStat("");
 	
-	for(int l = 100; l <1000; l *= 2) {
+	// list of simulated energies
+	int enlist[] = {100,150,200,300,400,600,800};
+	
+	for(int i = 0; i < 7; i++) {
+		int l = enlist[i];
+		
 		OutputManager OM("MC_Compare",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MC_Compare/"+itos(l)+"_keV");
 		Stringmap mcdat;
 		mcdat.insert("energy",l);
+		mcdat.insert("n_MC",2);
 		
 		PMTCalibrator PCal(15925);
 		
@@ -135,12 +141,14 @@ int main(int argc, char *argv[]) {
 		std::string fname = "/home/mmendenhall/geant4/output/IsotLine_eGunRandMomentum_"+itos(l)+".0keV/analyzed_*";
 		mcdat.insert("MC_1",fname);
 		g2p.addFile(fname);
+		if(!g2p.getnFiles()) continue;
 		g2p.setCalibrator(PCal);
 		
 		PenelopeToPMT p2p;
-		fname = "/home/ucna/penelope_output/iso_line_sources/event_"+itos(l/50-1)+" _0.root";
+		fname = "/home/ucna/penelope_output/iso_line_sources/event_"+itos(l/50-1)+" _*.root";
 		mcdat.insert("MC_2",fname);
 		p2p.addFile(fname);
+		if(!p2p.getnFiles()) continue;
 		p2p.setCalibrator(PCal);
 		
 		mc_compare_plots(OM,g2p,p2p,2*l);
