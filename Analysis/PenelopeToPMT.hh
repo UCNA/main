@@ -13,6 +13,7 @@ public:
 	
 	float fEprim;				//< float version for primary energy
 	float fEdep[2];				//< float version for scintillator energy
+	float fEquench[2];			//< float version for quenched energy
 	float fEW[2];				//< float version of wirechamber energy
 	float fMWPCpos[2][2];		//< float version of MWPC position
 	float fEWd[2];				//< float version of MWPC dead gas energy

@@ -42,8 +42,8 @@ void G4toPMT::doUnits() {
 			const int ID_scint[2] = {0,10};
 			const int ID_dscint[2] = {1,11};
 			const int ID_DF[2] = {5,15};
-			const int ID_WinIn[2] = {3,13};
-			const int ID_WinOut[2] = {4,14};
+			const int ID_WinOut[2] = {3,13};
+			const int ID_WinIn[2] = {4,14};
 			//const int ID_mwpc[2] = {6,16};
 			const int ID_wires[2] = {7,27};
 			const int ID_deadmwpc[2] = {8,18};
