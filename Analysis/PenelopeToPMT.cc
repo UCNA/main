@@ -29,6 +29,17 @@ void PenelopeToPMT::setReadpoints() {
 	
 	for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d)
 		Tch->SetBranchAddress(d==X_DIRECTION?"X":d==Y_DIRECTION?"Y":"Z",&fPrimPos[d]);
+
+
+        Tch->SetBranchAddress("W1",&fcosThetaInFoils[EAST]);
+        Tch->SetBranchAddress("W3",&fcosThetaInWinOut[EAST]);
+        Tch->SetBranchAddress("W4",&fcosThetaInWinIn[EAST]);
+        Tch->SetBranchAddress("W6",&fcosThetaInScint[EAST]);
+
+        Tch->SetBranchAddress("W7",&fcosThetaOutFoils[EAST]);
+        Tch->SetBranchAddress("W9",&fcosThetaOutWinOut[EAST]);
+        Tch->SetBranchAddress("W10",&fcosThetaOutWinIn[EAST]);
+        Tch->SetBranchAddress("W12",&fcosThetaOutScint[EAST]);  
 		
 	Tch->SetBranchAddress("E",&fEprim);
 	Tch->SetBranchAddress("W",&fCostheta);
@@ -58,17 +69,15 @@ void PenelopeToPMT::doUnits() {
 		edepWinOut[s] = fedepWinOut[s]*0.001;
 		edepWinIn[s]  = fedepWinIn[s]*0.001;
 		edepDeadScint[s] = fedepDeadScint[s]*0.001;
-		/*
-		 need to get these in the simulation code
-		 double cosThetaInFoils[2];
-		 double cosThetaInWinOut[2];
-		 double cosThetaInWinIn[2];
-		 double cosThetaInScint[2];
-		 
-		 double cosThetaOutFoils[2];
-		 double cosThetOutWinOut[2];
-		 double cosThetaOutWinIn[2];
-		 double cosThetaOutScint[2];
-		 */
+		
+	        cosThetaInFoils[s] = fcosThetaInFoils[s];
+		cosThetaInWinOut[s] = fcosThetaInWinOut[s];
+		cosThetaInWinIn[s] = fcosThetaInWinIn[s];
+		cosThetaInScint[s] = fcosThetaInScint[s];
+
+                cosThetaOutFoils[s] = fcosThetaOutFoils[s];
+                cosThetaOutWinOut[s] = fcosThetaOutWinOut[s];
+                cosThetaOutWinIn[s] = fcosThetaOutWinIn[s];
+                cosThetaOutScint[s] = fcosThetaOutScint[s]; 
 	}
 }

@@ -34,7 +34,7 @@ public:
 	float fcosThetaInScint[2];
 	
 	float fcosThetaOutFoils[2];             
-	float fcosThetOutWinOut[2];     
+	float fcosThetaOutWinOut[2];     
 	float fcosThetaOutWinIn[2];
 	float fcosThetaOutScint[2];
 	
