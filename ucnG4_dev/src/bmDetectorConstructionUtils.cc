@@ -10,6 +10,7 @@ G4Material* MaterialUser::Vacuum = NULL;
 G4Material* MaterialUser::Brass = NULL;
 G4Material* MaterialUser::Kevlar = NULL;
 G4Material* MaterialUser::Mylar = NULL;
+G4Material* MaterialUser::Polyethylene = NULL;
 G4Material* MaterialUser::WCPentane = NULL;
 G4Material* MaterialUser::WCNitrogen = NULL;
 G4Material* MaterialUser::Sci = NULL;
@@ -51,6 +52,10 @@ MaterialUser::MaterialUser() {
 	Mylar->AddElement(G4Element::GetElement("C"),5);
 	Mylar->AddElement(G4Element::GetElement("H"),4);
 	Mylar->AddElement(G4Element::GetElement("O"),2);
+	
+	Polyethylene = new G4Material("Polyethylene",0.95*g/cm3,2);
+	Polyethylene->AddElement(G4Element::GetElement("C"),2);
+	Polyethylene->AddElement(G4Element::GetElement("H"),4);
 	
 	//Wirechamber fill: pentane @ 100torr
 	WCPentane = new G4Material("Pentane",0.388*mg/cm3,2,kStateGas,298*kelvin,100*torr);

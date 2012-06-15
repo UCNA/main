@@ -334,6 +334,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 			dets[s].mwpc_entrance_log->SetSensitiveDetector(hall_SD);
 			dets[s].mwpc_exit_log->SetSensitiveDetector(hall_SD);
 			dets[s].container_log->SetSensitiveDetector(hall_SD);
+			trap.collimator_log[s]->SetSensitiveDetector(hall_SD);
 		}
 		
 		// construct magnetic field

@@ -9,12 +9,15 @@
 class bmDecayTrapConstruction: public MaterialUser {
 public:
 	/// constructor
-	bmDecayTrapConstruction(): fWindowThick(0.7*um), fCoatingThick(0.3*um),
-	fTubeMat(Cu), fWindowMat(Mylar), fCoatingMat(Be) { }
+	bmDecayTrapConstruction(): fWindowThick(0.7*um), fCoatingThick(0.3*um), fIRtrap(2.45*inch), fIRcollimator(2.3*inch),
+	fTubeMat(Cu), fCollimatorMat(Polyethylene), fWindowMat(Mylar), fCoatingMat(Be) { }
 	
 	G4double fWindowThick;		//< window thickness
 	G4double fCoatingThick;		//< window Be coating thickness
+	G4double fIRtrap;			//< decay trap IR
+	G4double fIRcollimator;		//< collimator IR
 	G4Material* fTubeMat;		//< decay tube material
+	G4Material* fCollimatorMat;	//< collimator material
 	G4Material* fWindowMat;		//< decay tube window material
 	G4Material* fCoatingMat;	//< decay tube coating material
 
@@ -23,6 +26,7 @@ public:
 	G4LogicalVolume* mylar_win_log[2];		//< mylar layer of window
 	G4LogicalVolume* be_win_log[2];			//< berillium layer of window
 	G4LogicalVolume* trap_monitor_log[2];	//< extra event monitoring region
+	G4LogicalVolume* collimator_log[2];		//< collimator
 	
 	WiggleSheet wigglefoils[2];				//< optional replacement crinkly endcap foils
 	

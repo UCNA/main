@@ -29,19 +29,20 @@ public:
 	
 	//static G4UnitDefinition torr_def;
 	
-	static G4Material* Be;			//< Beryllium for trap windows
-	static G4Material* Al;			//< Aluminum 
-	static G4Material* Si;			//< Silicon
-	static G4Material* Cu;			//< Copper for decay trap
-	static G4Material* Wu;			//< Tungsten for anode wires
+	static G4Material* Be;				//< Beryllium for trap windows
+	static G4Material* Al;				//< Aluminum 
+	static G4Material* Si;				//< Silicon
+	static G4Material* Cu;				//< Copper for decay trap
+	static G4Material* Wu;				//< Tungsten for anode wires
 	
-	static G4Material* Vacuum;		//< our slightly crappy vacuum
-	static G4Material* Brass;		//< brass for source holder
-	static G4Material* Kevlar;		//< kevlar for wirechamber window support strings
-	static G4Material* Mylar;		//< mylar for windows
-	static G4Material* WCPentane;	//< Wirechamber fill: (neo)pentane @ 100torr
-	static G4Material* WCNitrogen;	//< Wirechamber fill: Nitrogen @ 100torr
-	static G4Material* Sci;			//< scintillator material
+	static G4Material* Vacuum;			//< our slightly crappy vacuum
+	static G4Material* Brass;			//< brass for source holder
+	static G4Material* Kevlar;			//< kevlar for wirechamber window support strings
+	static G4Material* Mylar;			//< mylar for windows
+	static G4Material* Polyethylene;	//< poly for collimator
+	static G4Material* WCPentane;		//< Wirechamber fill: (neo)pentane @ 100torr
+	static G4Material* WCNitrogen;		//< Wirechamber fill: Nitrogen @ 100torr
+	static G4Material* Sci;				//< scintillator material
 };
 
 
