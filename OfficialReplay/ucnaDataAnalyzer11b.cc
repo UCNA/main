@@ -525,11 +525,22 @@ void ucnaDataAnalyzer11b::quickAnalyzerSummary() const {
 	printf("----------------------------------------------------\n\n");
 }
 
+void printHelp(const char* argname) {
+	printf("Syntax: %s <run number(s)> [options...]\n",argname);
+	printf("\t<run number(s)>: <number> || <number>-<number>\n");
+	printf("\toptions:\n");
+	printf("\t\tcutbeam: cut out beam pulses and when GV rate too low (use this for beta/background runs!)\n");
+	printf("\t\tnodbout: do not access Calibrations DB for writing\n");
+	printf("\t\tnoroot: skip saving output .root file (plots/summary only)\n");
+	printf("\t\tledtree: produce separate TTree with only LED events\n");
+	printf("\t\tforceped: force recalculation of pedestals\n");
+}
+
 int main(int argc, char** argv) {
 	
 	// check correct arguments
 	if(argc<2) {
-		printf("Syntax: %s <run number> [options...]\n",argv[0]);
+		printHelp(argv[0]);
 		exit(1);
 	}
 	
@@ -560,8 +571,10 @@ int main(int argc, char** argv) {
 			ledtree = true;
 		else if(arg=="forceped")
 			forceped = true;
-		else 
-			assert(false);
+		else {
+			printHelp(argv[0]);
+			exit(1);
+		}
 	}
 	
 	gStyle->SetPalette(1);
