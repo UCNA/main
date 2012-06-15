@@ -12,20 +12,11 @@ project(ucnG4_prod)
 # Locate sources and headers for this project
 # NB: headers are included so they will show up in IDEs
 #
-file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc  ${PROJECT_SOURCE_DIR}/../Physics/*.cc)
-LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/strutils.cc)
-LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/SMExcept.cc)
-LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/QFile.cc)
-LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/PathUtils.cc)
-LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../BaseTypes/Enums.cc)
-LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../BaseTypes/FloatErr.cc)
-file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh ${PROJECT_SOURCE_DIR}/../Physics/*.hh)
-LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/strutils.hh)
-LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/SMExcept.hh)
-LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/QFile.hh)
-LIST(APPEND sources ${PROJECT_SOURCE_DIR}/../IOUtils/PathUtils.hh)
-LIST(APPEND headers ${PROJECT_SOURCE_DIR}/../BaseTypes/Enums.hh)
-LIST(APPEND headers ${PROJECT_SOURCE_DIR}/../BaseTypes/FloatErr.hh)
+file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
+file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/../Physics ${PROJECT_SOURCE_DIR}/../IOUtils ${PROJECT_SOURCE_DIR}/../BaseTypes)
+link_directories(${PROJECT_SOURCE_DIR}/..)
 
 #-------------------------------
 # ROOT dependencies
@@ -45,12 +36,11 @@ set(ucnG4_prod_LINKDEF ${PROJECT_SOURCE_DIR}/ucnG4_prod_LinkDef.h)
 set(ucnG4_prod_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ucnG4_prodDict.cxx) 
 MESSAGE("Generating dictionary ${ucnG4_prod_DICTIONARY}")
 set(DICTFILES "${PROJECT_SOURCE_DIR}/include/bmMCEvent.hh;${PROJECT_SOURCE_DIR}/include/bmTrackInfo.hh;${PROJECT_SOURCE_DIR}/include/bmPrimaryInfo.hh")
-ROOT_GENERATE_DICTIONARY("${DICTFILES}" "${ucnG4_prod_LINKDEF}" "${ucnG4_prod_DICTIONARY}" "${ROOT_INCLUDE_DIR};${PROJECT_SOURCE_DIR}/include/;${PROJECT_SOURCE_DIR}/../Physics/")
+ROOT_GENERATE_DICTIONARY("${DICTFILES}" "${ucnG4_prod_LINKDEF}" "${ucnG4_prod_DICTIONARY}" "")
 LIST(APPEND sources ${ucnG4_prod_DICTIONARY})
 MESSAGE(sources = ${sources})
 
 ############### build the library #####################
-#add_library(ucnG4_prod_rootlibs SHARED ${sources})
 add_library(ucnG4_prod_rootlibs SHARED ${DICTFILES} ${ucnG4_prod_DICTIONARY})
 target_link_libraries(ucnG4_prod_rootlibs ${ROOT_LIBRARIES})
 SET(ucnG4_prod_MAJOR_VERSION 0)
@@ -84,17 +74,25 @@ endif()
 # Setup include directory for this project
 #
 include(${Geant4_USE_FILE})
-include_directories(${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/../Physics/ ${PROJECT_SOURCE_DIR}/../BaseTypes/ ${PROJECT_SOURCE_DIR}/../IOUtils/)
 
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4 libraries
 #
+add_custom_target(
+	extern_lib
+	COMMAND make
+	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/..
+)
 add_executable(ucnG4_prod ucnG4_prod.cc ${sources} ${headers})
-target_link_libraries(ucnG4_prod ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
+target_link_libraries(ucnG4_prod ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a)
 add_executable(UCNA_MC_Analyzer UCNA_MC_Analyzer.cc ${sources} ${headers})
-target_link_libraries(UCNA_MC_Analyzer ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
+target_link_libraries(UCNA_MC_Analyzer ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a)
 add_executable(SiDet_Analyzer SiDet_Analyzer.cc ${sources} ${headers})
-target_link_libraries(SiDet_Analyzer ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
+target_link_libraries(SiDet_Analyzer ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a)
+
+add_dependencies(ucnG4_prod extern_lib)
+add_dependencies(UCNA_MC_Analyzer extern_lib)
+add_dependencies(SiDet_Analyzer extern_lib)
 
 #----------------------------------------------------------------------------
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX

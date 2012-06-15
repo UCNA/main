@@ -18,9 +18,9 @@ SHELL = /bin/sh
 CC = cc
 CXX = g++
 
-CXXFLAGS = -O3 -Wall `root-config --cflags` \
-	-I. -IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics
-LDFLAGS = `root-config --libs` -lSpectrum 
+CXXFLAGS = -O3 -Wall `root-config --cflags` -I. \
+	-IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics
+LDFLAGS = `root-config --libs` -lSpectrum  -L. -lUCNA
 
 ifdef PROFILER_COMPILE
 	CXXFLAGS += -pg
@@ -40,51 +40,50 @@ Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils
 		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o RData.o
 
 Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberCalibrator.o \
-	EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
+		EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
 	
 Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT.o G4toPMT.o \
-	PenelopeToPMT.o TH1toPMT.o KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o AnalysisDB.o
+		PenelopeToPMT.o TH1toPMT.o KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o AnalysisDB.o
 
 Studies = PlotMakers.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o WirechamberStudy.o LEDScans.o
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
 all:
-	make libUCNA.a
 	make UCNAnalyzer
-	
-UCNAnalyzer: Analyzer.cpp libUCNA.a
-	$(CXX) $(CXXFLAGS) Analyzer.cpp -o UCNAnalyzer -L./ -lUCNA $(LDFLAGS)
 	
 libUCNA.a: $(objects)
 	ar rs libUCNA.a $(objects)
-
-CalibratorExample: CalibratorExample.cpp $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS)  $(objects) -o CalibratorExample
-
-DataScannerExample: DataScannerExample.cc $(objects)
-	$(CXX) $(CXXFLAGS) DataScannerExample.cc $(objects) -o DataScannerExample $(LDFLAGS)
-
-OctetAnalyzerExample: OctetAnalyzerExample.cc $(objects)
-	$(CXX) $(CXXFLAGS) Studies/OctetAnalyzerExample.cc $(objects) -o OctetAnalyzerExample $(LDFLAGS)
 	
-ExtractFierzTerm: ExtractFierzTerm.cc $(objects)
-	$(CXX) $(CXXFLAGS) ExtractFierzTerm.cc $(objects) -o ExtractFierzTerm $(LDFLAGS)
+UCNAnalyzer: Analyzer.cpp libUCNA.a
+	$(CXX) $(CXXFLAGS) Analyzer.cpp -o UCNAnalyzer -L./ -lUCNA $(LDFLAGS)
 
-ExtractCorrectBetaSpectrum: ExtractCorrectBetaSpectrum.cc $(objects)
-	$(CXX) $(CXXFLAGS) ExtractCorrectBetaSpectrum.cc $(objects) -o ExtractCorrectBetaSpectrum $(LDFLAGS)
+CalibratorExample: CalibratorExample.cpp libUCNA.a
+	$(CXX) $(CXXFLAGS) CalibratorExample.cpp  -o CalibratorExample $(LDFLAGS)
 
-MWPC_Efficiency_Sim: MWPC_Efficiency_Sim.cc $(objects)
-	$(CXX) $(CXXFLAGS) Studies/MWPC_Efficiency_Sim.cc $(objects) -o MWPC_Efficiency_Sim $(LDFLAGS)
+DataScannerExample: DataScannerExample.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) DataScannerExample.cc -o DataScannerExample $(LDFLAGS)
+
+OctetAnalyzerExample: OctetAnalyzerExample.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Studies/OctetAnalyzerExample.cc -o OctetAnalyzerExample $(LDFLAGS)
 	
-QCalc: FPNCalc.cc $(Utils)
-	$(CXX) $(CXXFLAGS) IOUtils/FPNCalc.cc $(objects) -o QCalc $(LDFLAGS)
+ExtractFierzTerm: ExtractFierzTerm.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) ExtractFierzTerm.cc -o ExtractFierzTerm $(LDFLAGS)
+
+ExtractCorrectBetaSpectrum: ExtractCorrectBetaSpectrum.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) ExtractCorrectBetaSpectrum.cc -o ExtractCorrectBetaSpectrum $(LDFLAGS)
+
+MWPC_Efficiency_Sim: MWPC_Efficiency_Sim.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Studies/MWPC_Efficiency_Sim.cc -o MWPC_Efficiency_Sim $(LDFLAGS)
 	
-FierzOctetAnalyzer: FierzOctetAnalyzer.cc $(objects)
-	$(CXX) $(CXXFLAGS) Studies/FierzOctetAnalyzer.cc $(objects) -o FierzOctetAnalyzer $(LDFLAGS)
+QCalc: FPNCalc.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) IOUtils/FPNCalc.cc -o QCalc $(LDFLAGS)
 	
-MC_Comparisons: Studies/MC_Comparisons.cc $(objects)
-	$(CXX) $(CXXFLAGS) Studies/MC_Comparisons.cc $(objects) -o MC_Comparisons $(LDFLAGS)
+FierzOctetAnalyzer: FierzOctetAnalyzer.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Studies/FierzOctetAnalyzer.cc -o FierzOctetAnalyzer $(LDFLAGS)
+	
+MC_Comparisons: Studies/MC_Comparisons.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Studies/MC_Comparisons.cc -o MC_Comparisons $(LDFLAGS)
 
 #
 # documentation via Doxygen
@@ -102,7 +101,8 @@ latex/ : Doxyfile
 #
 .PHONY: clean
 clean:
-	-rm -f UCNAnalyzer OctetAnalyzerExample DataScannerExample CalibratorExample ExtractFierzTerm Analyzer MWPC_Efficiency_Sim
+	-rm -f libUCNA.a UCNAnalyzer OctetAnalyzerExample DataScannerExample CalibratorExample
+	-rm -f ExtractFierzTerm Analyzer MWPC_Efficiency_Sim
 	-rm -f *.o
 	-rm -rf *.dSYM
 	-rm -rf latex/
