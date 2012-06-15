@@ -58,37 +58,37 @@ libUCNA.a: $(objects)
 	ar rs libUCNA.a $(objects)
 	
 UCNAnalyzer: Analyzer.cpp libUCNA.a
-	$(CXX) $(CXXFLAGS) Analyzer.cpp -o UCNAnalyzer $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) Analyzer.cpp $(LDFLAGS) -o UCNAnalyzer
 
 ExtractFierzTerm: ExtractFierzTerm.cc libUCNA.a
-	$(CXX) $(CXXFLAGS) ExtractFierzTerm.cc -o ExtractFierzTerm $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) ExtractFierzTerm.cc $(LDFLAGS) -o ExtractFierzTerm
 	
 examples: $(ExampleObjs)
 
 
 CalibratorExample: CalibratorExample.cpp libUCNA.a
-	$(CXX) $(CXXFLAGS) Examples/CalibratorExample.cpp  -o CalibratorExample $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) Examples/CalibratorExample.cpp $(LDFLAGS) -o CalibratorExample
 
 DataScannerExample: DataScannerExample.cc libUCNA.a
-	$(CXX) $(CXXFLAGS) Examples/DataScannerExample.cc -o DataScannerExample $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) Examples/DataScannerExample.cc $(LDFLAGS) -o DataScannerExample
 
 OctetAnalyzerExample: OctetAnalyzerExample.cc libUCNA.a
-	$(CXX) $(CXXFLAGS) Examples/OctetAnalyzerExample.cc -o OctetAnalyzerExample $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) Examples/OctetAnalyzerExample.cc $(LDFLAGS) -o OctetAnalyzerExample
 
 ExtractCorrectBetaSpectrum: ExtractCorrectBetaSpectrum.cc libUCNA.a
-	$(CXX) $(CXXFLAGS) Examples/ExtractCorrectBetaSpectrum.cc -o ExtractCorrectBetaSpectrum $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) Examples/ExtractCorrectBetaSpectrum.cc $(LDFLAGS) -o ExtractCorrectBetaSpectrum
 
 MWPC_Efficiency_Sim: MWPC_Efficiency_Sim.cc libUCNA.a
-	$(CXX) $(CXXFLAGS) Examples/MWPC_Efficiency_Sim.cc -o MWPC_Efficiency_Sim $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) Examples/MWPC_Efficiency_Sim.cc $(LDFLAGS) -o MWPC_Efficiency_Sim
 	
 QCalc: FPNCalc.cc libUCNA.a
-	$(CXX) $(CXXFLAGS) Examples/FPNCalc.cc -o QCalc $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) Examples/FPNCalc.cc $(LDFLAGS) -o QCalc
 	
 FierzOctetAnalyzer: FierzOctetAnalyzer.cc libUCNA.a
-	$(CXX) $(CXXFLAGS) Examples/FierzOctetAnalyzer.cc -o FierzOctetAnalyzer $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) Examples/FierzOctetAnalyzer.cc $(LDFLAGS) -o FierzOctetAnalyzer
 	
 MC_Comparisons: MC_Comparisons.cc libUCNA.a
-	$(CXX) $(CXXFLAGS) Examples/MC_Comparisons.cc -o MC_Comparisons $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) Examples/MC_Comparisons.cc $(LDFLAGS) -o MC_Comparisons
 
 ucnG4:
 	mkdir -p g4build/
