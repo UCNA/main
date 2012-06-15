@@ -90,6 +90,9 @@ FierzOctetAnalyzer: FierzOctetAnalyzer.cc libUCNA.a
 MC_Comparisons: MC_Comparisons.cc libUCNA.a
 	$(CXX) $(CXXFLAGS) Examples/MC_Comparisons.cc -o MC_Comparisons $(LDFLAGS)
 
+ucnG4:
+	mkdir -p g4build/
+	cd g4build; cmake -DGeant4_DIR=~/geant4.9.5/geant4.9.5-install/lib/Geant4-9.5.0/ ../ucnG4_dev/; make
 
 #
 # documentation via Doxygen
