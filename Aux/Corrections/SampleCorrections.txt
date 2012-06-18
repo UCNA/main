@@ -1,4 +1,14 @@
 # Sample corrections file
+#
+# E_lo, E_hi gives energy range in keV, reconstructed true energy, for each bin (10keV bins preferable).
+#
+# Corrections c_i(E) defined as adjustments necessary to A_meas(E) to match "ideal" A_0 beta(E) /2 form:
+#     (1+c_1(E))*(1+c_2(E))* ... *(1+c_n(E))*A_meas(E) = A_0 beta(E)/2
+#
+# Negative error permissible, indicating partial cancellation depending on analysis energy window.
+#
+# Unless otherwise indicated, errors assumed to add with correlation 1 across energy bins and correlation 0 to other errors
+#
 #E_lo	E_hi	correction	error
 0	10	0.000000	0.000000
 10	20	0.000100	0.000033

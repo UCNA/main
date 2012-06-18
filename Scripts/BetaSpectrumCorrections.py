@@ -4,6 +4,9 @@ from PyxUtils import *
 from QFile import *
 from math import *
 import os
+import sys
+sys.path.append("Corrections")
+from EnergyErrors import *
 
 class spectrumCorrs(KVMap):
 	def __init__(self,m):
@@ -152,11 +155,8 @@ def plotWilkinsonCorrs(fin,outpath):
 	gT.plot(graph.data.points([(c.energy,tensorCoeff(c.energy)) for c in corrs],x=1,y=2,title=None),[graph.style.line([style.linewidth.Thick])])
 	gT.writetofile(outpath+"/GardnerTensor.pdf")
 		
-		
-		
-	
-if __name__ == "__main__":
-	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection.txt",
-	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
-	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_137_55_4173.txt",
+if __name__ == "__main__":						  
+	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
 					   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_137_55_4173.txt",
+	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")

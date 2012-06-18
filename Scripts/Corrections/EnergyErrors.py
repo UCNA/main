@@ -15,7 +15,7 @@ def writeUncertaintyTable(fout,dat):
 	"""Write uncertainties table to file in correct format"""
 	fout.write("#E_lo\tE_hi\tcorrection\tuncertainty\n")
 	for d in dat:
-		fout.write("%i\t%i\t%f\t%f\n"%d)
+		fout.write("%i\t%i\t%f\t%f\n"%tuple(d))
 
 def neutronBeta(KE, m = 511.):
 	return sqrt(KE**2+2*m*KE)/(m+KE)
