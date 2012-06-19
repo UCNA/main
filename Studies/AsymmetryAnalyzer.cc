@@ -19,7 +19,7 @@ AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, 
 	for(Side s = EAST; s <= WEST; ++s) {
 		qAnodeCal[s] = registerCoreHist("AnodeCal","Anode Calibration Events",50, 0, 8, s, &hAnodeCal[s]);
 		
-		for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
+		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
 				qEnergySpectra[s][p][t] = registerCoreHist(std::string("hEnergy_")+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
 														   std::string("Type ")+itos(t)+" Events Energy",
@@ -284,45 +284,3 @@ void AsymmetryAnalyzer::makePlots() {
 		}
 	}
 }
-
-void AsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
-	// re-cast to correct type
-	AsymmetryAnalyzer& dat = (AsymmetryAnalyzer&)OAdata;
-	
-	hAsym->SetLineColor(4);
-	dat.hAsym->SetLineColor(2);
-	hAsym->Draw("HIST E1");
-	dat.hAsym->Draw("SAME HIST E1");
-	printCanvas("DataComparison/Asymmetry");
-	
-	drawHistoPair(dat.hSuperSum,hSuperSum);
-	printCanvas("DataComparison/SuperSum");
-	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp) {
-		dat.hEvtSS[tp]->SetMarkerStyle(1);
-		hEvtSS[tp]->SetMarkerStyle(1);
-		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
-		printCanvas(std::string("DataComparison/SuperSum_Type_")+itos(tp));
-		
-		dat.hTpAsym[tp]->SetMarkerStyle(1);
-		hTpAsym[tp]->SetMarkerStyle(1);
-		drawHistoPair(dat.hTpAsym[tp],hTpAsym[tp]);
-		printCanvas(std::string("DataComparison/Asymmetry_Type_")+itos(tp));
-	}
-	
-	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
-		std::vector<TH1*> hToPlot;
-		for(Side s = EAST; s <= WEST; ++s) {		
-			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
-				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(22+4*afp);
-				hToPlot.push_back(qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]);
-				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
-				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(20+4*afp);
-				hToPlot.push_back(dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]);
-			}
-		}
-		drawSimulHistos(hToPlot,"HIST P");
-		printCanvas(std::string("DataComparison/Type_")+itos(t));
-	}
-}
-

@@ -14,9 +14,6 @@ public:
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
 									   const std::string& inflname) { return new AsymmetryAnalyzer(this,nm,inflname); }
 	
-	/// MC/data comparison
-	void compareMCtoData(RunAccumulator& OAdata);
-	
 	/// calculate super-ratio asymmetry from anode spectra
 	virtual void calculateResults();
 	/// output plot generation
@@ -37,6 +34,10 @@ public:
 	TH1F* hSuperSum;				//< super-sum spectrum
 	TH1F* hEvtSS[TYPE_III_EVENT];	//< super-sum for each event type
 	
+	quadHists qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
+	quadHists qPositions[2][TYPE_III_EVENT+1];					//< event positions quad hists for [side][type]
+	quadHists qAnodeCal[2];										//< anode calibration spectrum (Type 0, Erecon>225)
+
 protected:
 	
 	/// fill from scan data point
@@ -58,11 +59,8 @@ protected:
 	static TF1 averagerFit;			//< pol0 line fit for averaging
 	static AnalysisChoice anChoice;	//< asymmetry analysis choice
 	
-	quadHists qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
 	TH1F* hEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];		//< energy spectra write point for [side][tube][event type]
-	quadHists qPositions[2][TYPE_III_EVENT+1];		//< event positions quad hists for [side][type]
 	TH2F* hPositions[2][TYPE_III_EVENT+1];			//< event positions write point for [side][type]
-	quadHists qAnodeCal[2];							//< anode calibration spectrum (Type 0, Erecon>225)
 	TH1F* hAnodeCal[2];								//< anode cal write point
 };
 

@@ -208,6 +208,7 @@ void OctetAnalyzer::drawQuadSides(quadHists& qhE, quadHists& qhW, bool combineAF
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			qhE.fgbg[afp].h[fg]->SetLineColor(2);
 			qhW.fgbg[afp].h[fg]->SetLineColor(4);
+			if(!qhE.fgbg[afp].h[fg]->Integral() && !qhW.fgbg[afp].h[fg]->Integral()) continue;
 			hToPlot.push_back(qhE.fgbg[afp].h[fg]);
 			hToPlot.push_back(qhW.fgbg[afp].h[fg]);
 			if(!combineAFP) {
@@ -219,7 +220,7 @@ void OctetAnalyzer::drawQuadSides(quadHists& qhE, quadHists& qhW, bool combineAF
 				qhW.fgbg[afp].h[fg]->SetLineStyle(1+2*afp);
 			}
 		}
-		if(combineAFP) {
+		if(combineAFP && hToPlot.size()) {
 			drawSimulHistos(hToPlot,opt,qhE.title+(fg?"":" Background"));
 			printCanvas(subfolder+"/"+qhE.name+(fg?"":"_BG"));
 			hToPlot.clear();
@@ -230,7 +231,7 @@ void OctetAnalyzer::drawQuadSides(quadHists& qhE, quadHists& qhW, bool combineAF
 
 unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor, double replaceIfOlder) {
 	
-	printf("\n------ Cloning asymmetry data in '%s'\n------                        to '%s'...\n",basedata.c_str(),basePath.c_str());
+	printf("\n------ Cloning data in '%s'\n------                        to '%s'...\n",basedata.c_str(),basePath.c_str());
 	int nCloned = 0;
 	
 	// check if simulation is already up-to-date
@@ -246,7 +247,9 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 	// load original data for comparison
 	std::vector<std::string> datpath = split(strip(basedata,"/"),"/");
 	assert(datpath.size()>0);
+	isSimulated = false;
 	OctetAnalyzer* origOA = (OctetAnalyzer*)makeAnalyzer("nameUnused",basedata+"/"+datpath.back());
+	isSimulated = true;
 	// copy over octet information
 	qOut.erase("Octet");
 	qOut.transfer(origOA->qOut,"Octet");
