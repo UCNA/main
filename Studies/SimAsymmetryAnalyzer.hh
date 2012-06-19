@@ -19,6 +19,7 @@ public:
 	virtual void makePlots();
 	
 	quadHists qBCT[2][TYPE_IV_EVENT+1];	//< average beta cos theta TProfiles by [side][event type]
+	quadHists qMissedSpectrum;			//< energy spectrum of missed events
 	
 protected:
 	
@@ -26,6 +27,7 @@ protected:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 
 	TProfile* pBCT[2][TYPE_IV_EVENT+1];	//< fill point for beta cos theta profile
+	TH1F* hMissedSpectrum;				//< fill point for missed spectrum
 };
 
 #endif

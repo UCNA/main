@@ -144,6 +144,10 @@ void RunAccumulator::scaleData(double s) {
 	runCounts.scale(s);
 }
 
+bool RunAccumulator::hasFGBGPair(const std::string& qname) const {
+	return fgbgHists.count(qname);
+}
+
 fgbgPair& RunAccumulator::getFGBGPair(const std::string& qname) {
 	std::map<std::string,fgbgPair>::iterator it = fgbgHists.find(qname);
 	assert(it != fgbgHists.end());
@@ -192,9 +196,9 @@ void RunAccumulator::bgSubtractAll() {
 }
 
 void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor, bool addFluctCounts) {
-	assert(isEquivalent(RefOA));
 	printf("Adding background fluctuations to simulation...\n");
 	for(std::map<std::string,fgbgPair>::iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
+		if(!RefOA.hasFGBGPair(it->first)) continue;
 		fgbgPair qhRef = RefOA.getFGBGPair(it->first);
 		double bgRatio = RefOA.getTotalTime(it->second.afp,true).t[it->second.mySide]/RefOA.getTotalTime(it->second.afp,false).t[it->second.mySide];
 		for(unsigned int i=0; i<totalBins(it->second.h[0]); i++) {

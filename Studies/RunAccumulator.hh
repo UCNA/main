@@ -57,6 +57,8 @@ public:
 							  unsigned int nbins, float xmin, float xmax, AFPState a = AFP_OTHER, Side s = BOTH);
 	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
 	fgbgPair registerFGBGPair(const TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH);
+	/// check whether this has the named FGBGPair
+	bool hasFGBGPair(const std::string& qname) const;
 	/// get fgbg histogram by name
 	fgbgPair& getFGBGPair(const std::string& qname);
 	/// get fgbg histogram by name, const version

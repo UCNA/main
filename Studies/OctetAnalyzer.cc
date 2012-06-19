@@ -32,10 +32,13 @@ void quadHists::operator*=(double c) {
 		fgbg[afp] *= c;
 }
 
-void quadHists::setDrawMinimum(double y) {
+void quadHists::setDrawRange(double y, bool maximum) {
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		for(unsigned int fg = 0; fg <= 1; fg++)
-			fgbg[afp].h[fg]->SetMinimum(y);
+			if(maximum)
+				fgbg[afp].h[fg]->SetMaximum(y);
+			else
+				fgbg[afp].h[fg]->SetMinimum(y);
 }
 
 void quadHists::setAxisTitle(AxisDirection d, const std::string& ttl) {

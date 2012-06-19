@@ -6,6 +6,7 @@
 SimAsymmetryAnalyzer::SimAsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname):
 AsymmetryAnalyzer(pnt,nm,inflname) {
 	isSimulated = true;
+	qMissedSpectrum = registerCoreHist("MissedSpectrum","Missing Events Energy Spectrum",100, 0, 1000, BOTH, &hMissedSpectrum);
 	for(Side s = EAST; s <= WEST; ++s) {		
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			TProfile* pBCTTemplate = new TProfile(("pBcT_Type_"+itos(t)).c_str(),
@@ -13,7 +14,9 @@ AsymmetryAnalyzer(pnt,nm,inflname) {
 												  100,0,1000);
 			qBCT[s][t] = registerCoreHist(*pBCTTemplate,s,(TH1**)&pBCT[s][t]);
 			qBCT[s][t].setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
-			qBCT[s][t].setAxisTitle(Y_DIRECTION,"#langle #beta #cos #theta #rangle");
+			qBCT[s][t].setAxisTitle(Y_DIRECTION,"<#beta cos #theta>");
+			qBCT[s][t].setDrawRange(-1.0,false);
+			qBCT[s][t].setDrawRange(1.0,true);
 			delete(pBCTTemplate);
 		}
 	}
@@ -23,17 +26,22 @@ void SimAsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weigh
 	AsymmetryAnalyzer::fillCoreHists(PDS, weight);
 	assert(PDS.isSimulated());
 	Sim2PMT& S2P = (Sim2PMT&)PDS;
+	if(S2P.fType == TYPE_IV_EVENT && S2P.primRadius() < S2P.fiducialRadius) {
+		hMissedSpectrum->Fill(S2P.ePrim,weight);
+		pBCT[S2P.costheta<0?EAST:WEST][S2P.fType]->Fill(S2P.ePrim,beta(S2P.ePrim)*S2P.costheta,weight);
+	}
 	Side s = S2P.fSide;
 	if(!(s==EAST || s==WEST)) return;
 	if(S2P.fPID != PID_BETA) return;
-	if(S2P.passesPositionCut(s) && S2P.fType <= TYPE_IV_EVENT)
-		pBCT[s][S2P.fType]->Fill(S2P.getEtrue(),beta(S2P.ePrim)*S2P.costheta);
+	if(S2P.passesPositionCut(s) && S2P.fType <= TYPE_III_EVENT)
+		pBCT[s][S2P.fType]->Fill(S2P.getEtrue(),beta(S2P.ePrim)*S2P.costheta,weight);
 }
 
 void SimAsymmetryAnalyzer::makePlots() {
 	AsymmetryAnalyzer::makePlots();	
+	drawQuad(qMissedSpectrum,"Energy/");
 	for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t)
-		drawQuadSides(qBCT[EAST][t],qBCT[WEST][t],false,"BetaCosTheta");
+		drawQuadSides(qBCT[EAST][t],qBCT[WEST][t],false,"BetaCosTheta/");
 }
 
 SegmentSaver* SimAsymmetryAnalyzer::makeAnalyzer(const std::string& nm,const std::string& inflname) {

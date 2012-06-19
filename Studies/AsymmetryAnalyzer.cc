@@ -278,7 +278,7 @@ void AsymmetryAnalyzer::makePlots() {
 	if(depth <= 0) {
 		for(Side s = EAST; s <= WEST; ++s) {
 			for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
-				qPositions[s][t].setDrawMinimum(0);
+				qPositions[s][t].setDrawRange(0,false);
 				drawQuad(qPositions[s][t],"Positions","COL");
 			}
 		}

@@ -30,7 +30,7 @@ public:
 	/// check if another quadHists is equivalent (same size histograms)
 	bool isEquivalent(const quadHists& qh) const;
 	/// set draw range minimum for all histograms
-	void setDrawMinimum(double y);
+	void setDrawRange(double y, bool maximum);
 	/// set axis title
 	void setAxisTitle(AxisDirection d, const std::string& ttl);
 	/// naming convention for each histogram
