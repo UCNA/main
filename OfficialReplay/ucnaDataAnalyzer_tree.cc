@@ -23,15 +23,15 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 	// ucn monitors
 	const int ucn_mon_adc_nums[kNumUCNMons] = {38,39,310,311};
 	for(unsigned int n=0; n<kNumUCNMons; n++)
-		SetBranchAddress(std::string("Pdc")+itos(ucn_mon_adc_nums[n]),&r_MonADC[n]);
+		SetBranchAddress("Pdc"+itos(ucn_mon_adc_nums[n]),&r_MonADC[n]);
 	
 	// PMTs and TDCs, in quadrant order (+x towards SCS, +y up, +z from East to West)
 	const int pmt_adc_nums[] = {2,3,0,1,4,5,6,7};
 	const int pmt_tdc_nums[] = {2,3,0,1,8,9,14,11};
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
-			SetBranchAddress(std::string("Qadc")+itos(pmt_adc_nums[t+4*s]),&r_PMTADC[s][t]);
-			SetBranchAddress(std::string("Tdc0")+itos(pmt_tdc_nums[t+4*s]),&r_PMTTDC[s][t]);
+			SetBranchAddress("Qadc"+itos(pmt_adc_nums[t+4*s]),&r_PMTADC[s][t]);
+			SetBranchAddress("Tdc0"+itos(pmt_tdc_nums[t+4*s]),&r_PMTTDC[s][t]);
 		}
 	}
 	SetBranchAddress("Tdc016",&r_PMTTDC[EAST][nBetaTubes]);		// E 2of4 TDC
@@ -45,10 +45,10 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 			std::vector<std::string> cchans = PCal.getCathChans(s,d);
 			for(unsigned int i=0; i<cchans.size(); i++) {
 				SetBranchAddress(cchans[i],&r_MWPC_caths[s][d][i]);
-				cathNames[s][d].push_back(std::string("MWPC")+(s==EAST?"E":"W")+(d==X_DIRECTION?"x":"y")+itos(i+1));
+				cathNames[s][d].push_back(sideSubst("MWPC%c",s)+(d==X_DIRECTION?"x":"y")+itos(i+1));
 			}
 		}
-		SetBranchAddress(std::string("Pdc")+itos(anode_pdc_nums[s]),&r_MWPC_anode[s]);
+		SetBranchAddress("Pdc"+itos(anode_pdc_nums[s]),&r_MWPC_anode[s]);
 	}
 	
 	// muon vetos
@@ -56,17 +56,17 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 	const int back_adc_nums[] = {8,10};
 	const int drift_tac_nums[] = {313,315};
 	for(Side s = EAST; s<=WEST; ++s) {
-		SetBranchAddress(std::string("Tdc0")+itos(back_tdc_nums[s]),&r_Backing_TDC[s]);
-		SetBranchAddress(std::string("Pdc")+itos(drift_tac_nums[s]),&r_Drift_TAC[s]);
-		SetBranchAddress(std::string("Qadc")+itos(back_adc_nums[s]),&r_Backing_ADC[s]);
+		SetBranchAddress("Tdc0"+itos(back_tdc_nums[s]),&r_Backing_TDC[s]);
+		SetBranchAddress("Pdc"+itos(drift_tac_nums[s]),&r_Drift_TAC[s]);
+		SetBranchAddress("Qadc"+itos(back_adc_nums[s]),&r_Backing_ADC[s]);
 	}
 	SetBranchAddress("Tdc019",&r_Top_TDC[EAST]);
 	SetBranchAddress("Qadc9",&r_Top_ADC[EAST]);
 	
 	// header checks
 	for(size_t i=0; i<kNumModules; i++) {
-		SetBranchAddress(std::string("Evnb")+itos(i),&r_Evnb[i]);
-		SetBranchAddress(std::string("Bkhf")+itos(i),&r_Bkhf[i]);
+		SetBranchAddress("Evnb"+itos(i),&r_Evnb[i]);
+		SetBranchAddress("Bkhf"+itos(i),&r_Bkhf[i]);
 	}
 	
 	

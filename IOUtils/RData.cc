@@ -14,18 +14,18 @@ std::string RData::toString(bool displaymode, const std::string& pfx) {
 	
 	std::string closelist = "]";
  	std::string dictfirst = "{";
-	std::string dictnext = std::string(",\n")+pfx;
+	std::string dictnext = ",\n"+pfx;
 	std::string closedict = "}";
 	std::string qt = "\"";
 	std::string listfirst = ": [";
-	std::string listnext = std::string(",\n\t")+pfx;
+	std::string listnext = ",\n\t"+pfx;
 	std::string ppfx = "\t";
 	if(displaymode) {
 		qt = "";
 		dictfirst = pfx+"+";
 		dictnext = pfx+"|";
 		closedict = closelist = "";
-		listfirst = std::string("\n");
+		listfirst = "\n";
 		listnext = "";
 		ppfx = "|\t";
 	}

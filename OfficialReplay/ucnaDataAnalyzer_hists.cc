@@ -47,7 +47,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 		
 		for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
 			if(t==TYPE_III_EVENT) continue;	// not separated out at this stage
-			hEtrue[s][t] = registeredTH1F(sideSubst("hErecon_%c_",s)+itos(t),std::string("Reconstructed Energy, Type ")+itos(t),200,0,1500);
+			hEtrue[s][t] = registeredTH1F(sideSubst("hErecon_%c_",s)+itos(t),"Reconstructed Energy, Type "+itos(t),200,0,1500);
 			hEtrue[s][t]->SetLineColor(2+2*s);
 			hEtrue[s][t]->GetXaxis()->SetTitle("Erecon [keV]");
 		}
@@ -92,16 +92,16 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 	}
 	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_III_EVENT; t++) {
-		hTypeRate[t] = registeredTH1F(std::string("hTypeRate_")+itos(t),std::string("Type ")+itos(t)+" Event Rate",nTimeBins,-tpad,wallTime+tpad);
+		hTypeRate[t] = registeredTH1F("hTypeRate_"+itos(t),"Type "+itos(t)+" Event Rate",nTimeBins,-tpad,wallTime+tpad);
 		hTypeRate[t]->SetLineColor(5+t);
 		hTypeRate[t]->GetXaxis()->SetTitle("Time [s]");
 	}
 	
 	for(unsigned int n=0; n<kNumUCNMons; n++) {
-		hMonADC[n] = registeredTH1F(std::string("UCN_Mon_")+itos(n+1)+"_ADC",std::string("UCN Mon ")+itos(n+1)+" ADC",200,0,4000);
+		hMonADC[n] = registeredTH1F("UCN_Mon_"+itos(n+1)+"_ADC","UCN Mon "+itos(n+1)+" ADC",200,0,4000);
 		hMonADC[n]->SetLineColor(n+1);
 		hMonADC[n]->GetXaxis()->SetTitle("ADC Channels");
-		hMonRate[n] = registeredTH1F(std::string("UCN_Mon_")+itos(n+1)+"_Rate",std::string("UCN Mon ")+itos(n+1)+" Rate",nTimeBins,-tpad,wallTime+tpad);
+		hMonRate[n] = registeredTH1F("UCN_Mon_"+itos(n+1)+"_Rate","UCN Mon "+itos(n+1)+" Rate",nTimeBins,-tpad,wallTime+tpad);
 		hMonRate[n]->SetLineColor(n+1);
 		hMonRate[n]->GetXaxis()->SetTitle("Time [s]");
 	}
@@ -290,7 +290,7 @@ void ucnaDataAnalyzer11b::plotHistos() {
 		for(Side s = EAST; s <= WEST; ++s)
 			hToPlot.push_back(hHitsProfile[s][d]);
 		drawSimulHistos(hToPlot);
-		printCanvas(std::string("Wirechamber/HitPos_")+(d==X_DIRECTION?"x":"y"));
+		printCanvas("Wirechamber/HitPos_"+std::string(d==X_DIRECTION?"x":"y"));
 	}
 	defaultCanvas->SetLogy(true);
 	
@@ -327,7 +327,7 @@ void ucnaDataAnalyzer11b::plotHistos() {
 		hToPlot.push_back(hMonRate[n]);
 		hMonADC[n]->Draw();
 		drawCutRange(fMonADC[n].R,4);
-		printCanvas(std::string("UCN_Mon/Mon_")+itos(n)+"_ADC");
+		printCanvas("UCN_Mon/Mon_"+itos(n)+"_ADC");
 	}
 	drawSimulHistos(hToPlot);
 	printCanvas("UCN_Mon/Mon_Rates");
@@ -377,7 +377,7 @@ void ucnaDataAnalyzer11b::plotHistos() {
 		for(Side s = EAST; s <= WEST; ++s)
 			hToPlot.push_back(hEtrue[s][t]);
 		drawSimulHistos(hToPlot);
-		printCanvas(std::string("PMTs/Erecon_Type_")+itos(t));
+		printCanvas("PMTs/Erecon_Type_"+itos(t));
 	}
 	// energy by PMT
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -488,9 +488,9 @@ void ucnaDataAnalyzer11b::locateSourcePositions() {
 			it->wy = g1.GetParameter(2);
 			
 			px->Draw();
-			printCanvas(std::string("Wirechamber/Source_")+it->name()+"_x");
+			printCanvas("Wirechamber/Source_"+it->name()+"_x");
 			py->Draw();
-			printCanvas(std::string("Wirechamber/Source_")+it->name()+"_y");
+			printCanvas("Wirechamber/Source_"+it->name()+"_y");
 			delete(px);
 			delete(py);
 			

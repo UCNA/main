@@ -56,12 +56,12 @@ void SimAsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
 		dat.hEvtSS[tp]->SetMarkerStyle(1);
 		hEvtSS[tp]->SetMarkerStyle(1);
 		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
-		printCanvas(std::string("DataComparison/SuperSum_Type_")+itos(tp));
+		printCanvas("DataComparison/SuperSum_Type_"+itos(tp));
 		
 		dat.hTpAsym[tp]->SetMarkerStyle(1);
 		hTpAsym[tp]->SetMarkerStyle(1);
 		drawHistoPair(dat.hTpAsym[tp],hTpAsym[tp]);
-		printCanvas(std::string("DataComparison/Asymmetry_Type_")+itos(tp));
+		printCanvas("DataComparison/Asymmetry_Type_"+itos(tp));
 	}
 	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
@@ -77,7 +77,7 @@ void SimAsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
 			}
 		}
 		drawSimulHistos(hToPlot,"HIST P");
-		printCanvas(std::string("DataComparison/Type_")+itos(t));
+		printCanvas("DataComparison/Type_"+itos(t));
 	}
 }
 

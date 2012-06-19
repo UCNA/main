@@ -37,7 +37,7 @@ void EfficCurve::genEffic(TH1F* hAll, TH1F* hTrig, bool adcChan) {
 		hAll->Draw();
 		hTrig->SetLineColor(2);
 		hTrig->Draw("Same");
-		printCanvas(std::string("Trigger_Effic_Input"));
+		printCanvas("Trigger_Effic_Input");
 		defaultCanvas->SetLogy(false);
 	}
 	
@@ -78,9 +78,6 @@ void EfficCurve::genEffic(TH1F* hAll, TH1F* hTrig, bool adcChan) {
 	
 	printf("Poisson CDF Fit: h = %.4f(%.4f), x0 = %.1f(%.1f), dx = %.1f(%.1f), n = %.2f [adjust %.2f(%.2f)]\n",
 		   trigef.x, trigef.err, trigc.x, trigc.err, trigw.x, trigw.err, trign, trign_adj.x, trign_adj.err);
-	
-	//forParent.insert(std::string("trig_effic_")+itos(t),vtos(efficfit.GetParameters(),efficfit.GetParameters()+4));
-	//forParent.insert(std::string("trig_effic_err_")+itos(t),vtos(efficfit.GetParErrors(),efficfit.GetParErrors()+4));
 	
 	// draw fit plot
 	if(defaultCanvas) {

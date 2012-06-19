@@ -28,7 +28,7 @@ void PostOfficialAnalyzer::setReadpoints() {
 		
 		// wirechamber planes
 		for(int p=X_DIRECTION; p<=Y_DIRECTION; p++) {
-			Tch->SetBranchAddress((std::string(p==X_DIRECTION?"x":"y")+sideSubst("%cmpm",s)).c_str(),&wires[s][p]);
+			Tch->SetBranchAddress(((p==X_DIRECTION?"x":"y")+sideSubst("%cmpm",s)).c_str(),&wires[s][p]);
 			Tch->SetBranchAddress((sideSubst("Cathodes_%c",s)+(p==X_DIRECTION?"x":"y")).c_str(),cathodes[s][p]);
 		}
 		

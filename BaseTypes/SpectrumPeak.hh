@@ -52,7 +52,7 @@ public:
 	Float_t energy() const;
 	
 	/// printable name for a given peak
-	const char* name() const;
+	std::string name() const;
 	
 	float_err center;		//< peak location, raw pedestal-subtracted ADC
 	float_err width;		//< peak width, raw ADC counts

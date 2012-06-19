@@ -21,14 +21,14 @@ AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, 
 		
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
-				qEnergySpectra[s][p][t] = registerCoreHist(std::string("hEnergy_")+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
-														   std::string("Type ")+itos(t)+" Events Energy",
+				qEnergySpectra[s][p][t] = registerCoreHist("hEnergy_"+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
+														   "Type "+itos(t)+" Events Energy",
 														   100, 0, 1000, s, &hEnergySpectra[s][p][t]);
 				qEnergySpectra[s][p][t].setAxisTitle(X_DIRECTION,"Energy [keV]");
 			}
 			if(t>TYPE_III_EVENT) continue;
-			TH2F* hPositionsTemplate = new TH2F((std::string("hPos_Type_")+itos(t)).c_str(),
-												(std::string("Type ")+itos(t)+" Positions").c_str(),
+			TH2F* hPositionsTemplate = new TH2F(("hPos_Type_"+itos(t)).c_str(),
+												("Type "+itos(t)+" Positions").c_str(),
 												200,-65,65,200,-65,65);
 			qPositions[s][t] = registerCoreHist(*hPositionsTemplate,s,(TH1**)&hPositions[s][t]);
 			qPositions[s][t].setAxisTitle(X_DIRECTION,"x Position [mm]");
@@ -185,12 +185,12 @@ void AsymmetryAnalyzer::calculateResults() {
 	hInstAsym = (TH1F*)calculateSR("Total_Instrumental_Asym",qTotalSpectrum[EAST],qTotalSpectrum[WEST],true,true);
 	hSuperSum = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp) {
-		hTpAsym[tp] = (TH1F*)calculateSR(std::string("Asymmetry_Type_")+itos(tp),
+		hTpAsym[tp] = (TH1F*)calculateSR("Asymmetry_Type_"+itos(tp),
 										 qEnergySpectra[EAST][nBetaTubes][tp],
 										 qEnergySpectra[WEST][nBetaTubes][tp]);
 		hTpAsym[tp]->SetMinimum(-0.10);
 		hTpAsym[tp]->SetMaximum(0.0);
-		hEvtSS[tp] = (TH1F*)calculateSuperSum(std::string("SuperSum_Type_")+itos(tp),
+		hEvtSS[tp] = (TH1F*)calculateSuperSum("SuperSum_Type_"+itos(tp),
 											  qEnergySpectra[EAST][nBetaTubes][tp],
 											  qEnergySpectra[WEST][nBetaTubes][tp]);
 	}

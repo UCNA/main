@@ -15,7 +15,7 @@ void runSimulation() {
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/MWPC_Effic_Sim/");
 	std::vector<AsymmetryAnalyzer*> AAs;
 	for(unsigned int i=0; i<nThreshBins; i++) {
-		AAs.push_back(new AsymmetryAnalyzer(&OM,std::string("Threshold_")+itos(i)));
+		AAs.push_back(new AsymmetryAnalyzer(&OM,"Threshold_"+itos(i)));
 		AAs.back()->currentGV = GV_OPEN;
 	}
 	
@@ -64,7 +64,7 @@ void processSimulation() {
 	OutputManager OM("MWPC_Effic_Compare",getEnvSafe("UCNA_ANA_PLOTS")+"/MWPC_Effic_Sim/");
 	std::vector<AsymmetryAnalyzer*> AAs;
 	for(unsigned int i=0; i<nThreshBins; i++) {
-		std::string tname = std::string("Threshold_")+itos(i);
+		std::string tname = "Threshold_"+itos(i);
 		AAs.push_back(new AsymmetryAnalyzer(&OM,tname,OM.basePath+'/'+tname+'/'+tname));
 		AAs.back()->currentGV = GV_OPEN;
 	}
@@ -73,7 +73,7 @@ void processSimulation() {
 	std::vector<TH1*> hDeltaSpectrum;
 	for(unsigned int i=0; i<nThreshBins; i++) {
 		AAs[i]->calculateResults();
-		hDeltaAsym.push_back((TH1*)AAs[i]->hAsym->Clone((std::string("hAsym_")+itos(i)).c_str()));
+		hDeltaAsym.push_back((TH1*)AAs[i]->hAsym->Clone(("hAsym_"+itos(i)).c_str()));
 		hDeltaAsym.back()->Add(AAs[0]->hAsym,-1.0);
 		hDeltaAsym.back()->Divide(AAs[0]->hAsym);
 		hDeltaAsym.back()->SetLineColor( (i%6)+1 );
@@ -83,7 +83,7 @@ void processSimulation() {
 		hDeltaAsym.back()->SetTitle("Asymmetry % Change");
 		hDeltaAsym.back()->GetXaxis()->SetTitle("Energy [keV]");
 		
-		hDeltaSpectrum.push_back((TH1*)AAs[i]->hSuperSum->Clone((std::string("hSS_")+itos(i)).c_str()));
+		hDeltaSpectrum.push_back((TH1*)AAs[i]->hSuperSum->Clone(("hSS_"+itos(i)).c_str()));
 		hDeltaSpectrum.back()->Add(AAs[0]->hSuperSum,-1.0);
 		hDeltaSpectrum.back()->Divide(AAs[0]->hSuperSum);
 		hDeltaSpectrum.back()->Scale(-100.0);

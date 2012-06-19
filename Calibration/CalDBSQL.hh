@@ -48,19 +48,6 @@ public:
 	/// get pedestal widths for named sensor
 	virtual TGraph* getPedwidths(RunNum rn, const std::string& sensorName) { return getRunMonitor(rn,sensorName,"pedestal",false); }
 	
-	/*
-	/// get LED peak for named sensor
-	virtual TGraph* getLED(RunNum rn, const std::string& sensorName) { return getRunMonitor(rn,sensorName,"GMS_peak"); }
-	/// get Co60 data for named sensor
-	virtual TGraph* getCo60(RunNum rn, Side s, unsigned int peakNum) {
-		if(rn >= 12229 && s==WEST)
-			s=EAST;
-		return getContinuousMonitor(std::string("ADCRef")+sideNames(s)+"Co60", std::string("Co60_Peak_")+itos(peakNum+1), rn, true);
-	}
-	/// get muon peak history for given sensor
-	virtual TGraph* getMuonPeak(RunNum rn, const std::string& sensorName) { return getContinuousMonitor(sensorName, "Muon_Peak", rn, true); }
-	*/
-	
 	/// get kurie endpoint calibration energy for given run, side, PMT
 	virtual float getKurieEnergy(RunNum rn, Side s, unsigned int t);
 	/// get kurie endpoint calibration energy for given run, side, PMT

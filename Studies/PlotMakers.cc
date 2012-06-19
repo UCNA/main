@@ -95,8 +95,8 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	TProfile* inputTotal = (TProfile*)OM.addObject(new TProfile("inputTotal","Input Visible Energy Total",nsegs,0,emax));
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_II_EVENT; t++) {
-			inputEnergy[s][t][false] = (TProfile*)OM.addObject(new TProfile((std::string("inputEvis_%c",s)+itos(t)).c_str(),"Input Visible Energy",nsegs,0,emax));
-			inputEnergy[s][t][true] = (TProfile*)OM.addObject(new TProfile((std::string("inputEtrue_%c",s)+itos(t)).c_str(),"Input True Energy",nsegs,0,emax));
+			inputEnergy[s][t][false] = (TProfile*)OM.addObject(new TProfile((sideSubst("inputEvis_%c",s)+itos(t)).c_str(),"Input Visible Energy",nsegs,0,emax));
+			inputEnergy[s][t][true] = (TProfile*)OM.addObject(new TProfile((sideSubst("inputEtrue_%c",s)+itos(t)).c_str(),"Input True Energy",nsegs,0,emax));
 			for(unsigned int i=0; i<nsegs; i++) {
 				hEnergy[s][t][false].push_back(OM.registeredTH1F(sideSubst("hEvis_%c",s)+itos(t)+"_"+itos(i),"Visible Energy",nbins,0,emax));
 				hEnergy[s][t][true].push_back(OM.registeredTH1F(sideSubst("hEtrue_%c",s)+itos(t)+"_"+itos(i),"True Energy",nbins,0,emax));

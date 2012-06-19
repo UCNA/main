@@ -5,7 +5,7 @@
 inputRequester::inputRequester(std::string d, void (*f)(std::deque<std::string>&,std::stack<std::string>&), unsigned int n):
 namedInteractor(d), myFunc(f) {
 	for(unsigned int i=0; i<n; i++)
-		addArg(std::string("Option ")+itos(i+1),"",NULL);
+		addArg("Option "+itos(i+1),"",NULL);
 }
 
 void inputRequester::doIt(std::deque<std::string>& args, std::stack<std::string>& stack) {

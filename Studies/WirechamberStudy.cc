@@ -89,7 +89,7 @@ RunAccumulator(pnt,nm,infl), eMax(1000), nEnergyBins(40), sects(nr,r) {
 			anodeDat[s].push_back(std::vector<AnodeSeg>());
 			anodeSpectra[s].push_back(std::vector<fgbgPair>());
 			for(unsigned int e=0; e<nEnergyBins; e++) {
-				anodeSpectra[s][m].push_back(registerFGBGPair(std::string("hAn_Sect_")+itos(m)+"_Bin_"+itos(e),"Anode ADC Spectrum",
+				anodeSpectra[s][m].push_back(registerFGBGPair("hAn_Sect_"+itos(m)+"_Bin_"+itos(e),"Anode ADC Spectrum",
 															  100,0,2000,AFP_OTHER,s));
 				anodeDat[s][m].push_back(AnodeSeg());
 				anodeDat[s][m].back().s=s;
@@ -177,8 +177,8 @@ std::vector<TH1D*> replaceFitSlicesY(TH2* h, TF1* f1=NULL) {
 	//Create one histogram for each function parameter
 	const TArrayD* bins = h->GetXaxis()->GetXbins();
 	for (Int_t ipar=0; ipar<=npar; ipar++) {
-		std::string name = std::string(h->GetName())+"_"+itos(ipar);
-		std::string title = std::string("Fit parameter ")+itos(ipar);
+		std::string name = h->GetName()+("_"+itos(ipar));
+		std::string title = "Fit parameter "+itos(ipar);
 		delete gDirectory->FindObject(name.c_str());
 		if (bins->fN == 0) {
 			hlist.push_back(new TH1D(name.c_str(), title.c_str(), nbins, h->GetXaxis()->GetXmin(),  h->GetXaxis()->GetXmax()));
@@ -303,7 +303,7 @@ void runWirechamberAnalyzer(RunNum r0, RunNum r1, unsigned int nrings) {
 	std::vector<std::string> snames;
 	OutputManager OM1("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/WirechamberMaps/SingleRuns/");
 	for(RunNum r = r0; r <= r1; r++) {
-		std::string singleName = std::string("WC_")+itos(r)+"_"+itos(nrings)+"_"+dtos(fidRadius);
+		std::string singleName = "WC_"+itos(r)+"_"+itos(nrings)+"_"+dtos(fidRadius);
 		std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
 		snames.push_back(singleName);
 		if(r0==r1 || !fileExists(prevFile+".root")) {
@@ -320,7 +320,7 @@ void runWirechamberAnalyzer(RunNum r0, RunNum r1, unsigned int nrings) {
 	
 	// reload data
 	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/WirechamberMaps/");
-	WirechamberAnalyzer WA(&OM, std::string("WC_")+itos(r0)+"-"+itos(r1), fidRadius, nrings);	
+	WirechamberAnalyzer WA(&OM, "WC_"+itos(r0)+"-"+itos(r1), fidRadius, nrings);	
 	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
 		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;
 		WirechamberAnalyzer WA1(&OM1, *it, 0, 0, prevFile);

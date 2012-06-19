@@ -56,7 +56,7 @@ Stringmap TagCounter<T>::toStringmap() {
 	for(typename std::map<T,double>::const_iterator it = counts.begin(); it != counts.end(); it++) {
 		std::ostringstream s;
 		s << (*it).first;
-		m.insert(std::string(s.str()),dtos(it->second));
+		m.insert(s.str(),dtos(it->second));
 	}
 	return m;
 }

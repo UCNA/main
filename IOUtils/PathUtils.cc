@@ -34,7 +34,7 @@ void makePath(std::string p, bool forFile) {
 	for(unsigned int i=0; i<pathels.size(); i++) {
 		thepath += pathels[i] + "/";
 		if(!dirExists(thepath)) {
-			std::string cmd = std::string("mkdir -p '")+thepath+"'";
+			std::string cmd = "mkdir -p '"+thepath+"'";
 			int err = system(cmd.c_str());
 			if(err || !dirExists(thepath)) {
 				SMExcept e("badPath");

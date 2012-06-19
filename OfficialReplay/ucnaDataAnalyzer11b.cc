@@ -12,7 +12,7 @@
 RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
 
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
-TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false),
+TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false),
 rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), ignore_beam_out(false),
 nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	plotPath = bp+"/figures/run_"+itos(R)+"/";

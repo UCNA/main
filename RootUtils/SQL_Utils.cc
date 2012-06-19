@@ -10,7 +10,7 @@ SQLHelper::SQLHelper(const std::string& dbnm,
 					 unsigned int port,
 					 unsigned int ntries): db(NULL), res(NULL), dbName(dbnm) {
 	
-	std::string dbAddressFull = std::string("mysql://")+dbAddress+":"+itos(port)+"/"+dbnm;
+	std::string dbAddressFull = "mysql://"+dbAddress+":"+itos(port)+"/"+dbnm;
 	
 	while(!db) {
 		ntries--;

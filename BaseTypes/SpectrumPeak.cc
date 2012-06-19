@@ -27,7 +27,7 @@ Float_t SpectrumPeak::energy() const {
 	return 0;
 }
 
-const char* SpectrumPeak::name() const {
+std::string SpectrumPeak::name() const {
 	
 	if(type==UNKNOWN_PEAK)
 		return "Unknown";
@@ -71,7 +71,10 @@ const char* SpectrumPeak::name() const {
 	return "UnnamedPeak";
 }
 
-void SpectrumPeak::print() const { printf("[%s] ADC %f [%f] Energy %f [%f]",name(),center.x,width.x,energyCenter.x,energyWidth.x); }
+void SpectrumPeak::print() const { 
+	printf("[%s] ADC %f [%f] Energy %f [%f]",
+		   name().c_str(),center.x,width.x,energyCenter.x,energyWidth.x);
+}
 
 Stringmap SpectrumPeak::toStringmap() const {
 	Stringmap m;

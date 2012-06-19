@@ -8,7 +8,7 @@ unsigned int LinHistCombo::nFitters = 0;
 
 TF1* LinHistCombo::getFitter() {
 	if(myFit && myFit->GetNpar() != (int)terms.size()) { delete(myFit); myFit = NULL; }
-	if(!myFit) myFit = new TF1((std::string("fCombo")+itos(nFitters++)).c_str(),
+	if(!myFit) myFit = new TF1(("fCombo"+itos(nFitters++)).c_str(),
 							   this,&LinHistCombo::Evaluate,0,1,terms.size());
 	return myFit;
 }

@@ -64,10 +64,10 @@ RunAccumulator(pnt,nm,infl), sects(nr,r), sectorPlots(false) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		hitPos[s] = registerFGBGPair(hPositionsTemplate,AFP_OTHER,s);
 		for(unsigned int m=0; m<sects.nSectors(); m++) {
-			sectAnode[s].push_back(registerFGBGPair(std::string("hAnode_Sector_")+itos(m),std::string("Sector ")+itos(m)+" Anode",200,0,4000,AFP_OTHER,s));
+			sectAnode[s].push_back(registerFGBGPair("hAnode_Sector_"+itos(m),"Sector "+itos(m)+" Anode",200,0,4000,AFP_OTHER,s));
 			for(unsigned int t=0; t<nBetaTubes; t++) {
-				sectEnergy[s][t].push_back(registerFGBGPair(std::string("hTuben_")+itos(t)+"_Sector_"+itos(m),
-															std::string("Sector ")+itos(m)+" Tube "+itos(t)+" Energy",200,-100,2000,AFP_OTHER,s));
+				sectEnergy[s][t].push_back(registerFGBGPair("hTuben_"+itos(t)+"_Sector_"+itos(m),
+															"Sector "+itos(m)+" Tube "+itos(t)+" Energy",200,-100,2000,AFP_OTHER,s));
 				SectorDat sd;
 				sd.s = s;
 				sd.t = t;
@@ -182,8 +182,8 @@ void PositionBinner::compareMCtoData(RunAccumulator& OAdata) {
 	// upload posmap
 	std::string pmapname = itos(PB->runCounts.counts.begin()->first)+"-"+itos(PB->runCounts.counts.rbegin()->first)+"/"+itos(time(NULL));
 	CalDBSQL* CDBout = CalDBSQL::getCDB(false);
-	unsigned int pmid_ep = CDBout->newPosmap(std::string("Xe Endpoint ")+pmapname,sects.n,sects.r);
-	unsigned int pmid_lp = CDBout->newPosmap(std::string("Xe Low Peak ")+pmapname,sects.n,sects.r);
+	unsigned int pmid_ep = CDBout->newPosmap("Xe Endpoint "+pmapname,sects.n,sects.r);
+	unsigned int pmid_lp = CDBout->newPosmap("Xe Low Peak "+pmapname,sects.n,sects.r);
 	float x,y;
 	for(unsigned int m=0; m<sects.nSectors(); m++) {
 		sects.sectorCenter(m,x,y);
@@ -252,7 +252,7 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	std::vector<std::string> snames;
 	OutputManager OM1("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/SingleRuns/");
 	for(RunNum r = r0; r <= r1; r++) {
-		std::string singleName = std::string("Xenon_")+itos(r)+"_"+itos(nrings)+"_"+dtos(fidRadius);
+		std::string singleName = "Xenon_"+itos(r)+"_"+itos(nrings)+"_"+dtos(fidRadius);
 		std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
 		snames.push_back(singleName);
 		if(r0==r1 || !fileExists(prevFile+".root")) {
@@ -271,7 +271,7 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	
 	// reload data
 	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/");
-	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1)+"_"+itos(nrings), fidRadius, nrings);	
+	PositionBinner PB(&OM, "Xenon_"+itos(r0)+"-"+itos(r1)+"_"+itos(nrings), fidRadius, nrings);	
 	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
 		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;
 		PositionBinner PB1(&OM1, *it, 0, 0, prevFile);
@@ -287,7 +287,7 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 }
 
 std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB, float simFactor, bool forceResim=false) {
-	std::string singleName = std::string("Xenon_")+itos(r)+"_"+itos(PB.sects.n)+"_"+dtos(PB.sects.r);
+	std::string singleName = "Xenon_"+itos(r)+"_"+itos(PB.sects.n)+"_"+dtos(PB.sects.r);
 	std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
 	if(forceResim || !fileExists(prevFile+".root")) {
 		PMTCalibrator PCal(r);
@@ -361,15 +361,15 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle, unsigned int nRings) {
 	// read in comparison data
 	std::string basePath = getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/";
 	OutputManager OM("NameUnused",basePath);
-	std::string readname = std::string("Xenon_")+itos(r0)+"-"+itos(r1)+"_"+itos(nRings);
-	PositionBinner PB(&OM, std::string("Xenon_")+itos(r0)+"-"+itos(r1), 0, 0, basePath+"/"+readname+"/"+readname);
+	std::string readname = "Xenon_"+itos(r0)+"-"+itos(r1)+"_"+itos(nRings);
+	PositionBinner PB(&OM, "Xenon_"+itos(r0)+"-"+itos(r1), 0, 0, basePath+"/"+readname+"/"+readname);
 	
 	// MC data for each run
 	printf("Simulating for position map %i-%i\n",r0,r1);
 	OutputManager OM1("NameUnused",basePath+"/SingleRunsSim/");
 	float simFactor = 4.0;
 	if(rsingle) {
-		std::string singleName = std::string("Xenon_")+itos(rsingle)+"_"+itos(PB.sects.n)+"_"+dtos(PB.sects.r);
+		std::string singleName = "Xenon_"+itos(rsingle)+"_"+itos(PB.sects.n)+"_"+dtos(PB.sects.r);
 		PositionBinner PB1(&OM, singleName, 0, 0, basePath+"/SingleRuns/"+singleName+"/"+singleName);
 		simulate_one_xenon(rsingle,OM1,PB1,simFactor,true);
 		return;
@@ -380,7 +380,7 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle, unsigned int nRings) {
 	
 	
 	// reload data
-	PositionBinner PBM(&OM, std::string("SimXe_")+itos(r0)+"-"+itos(r1)+"_"+itos(nRings), PB.sects.r, PB.sects.n);
+	PositionBinner PBM(&OM, "SimXe_"+itos(r0)+"-"+itos(r1)+"_"+itos(nRings), PB.sects.r, PB.sects.n);
 	PBM.isSimulated = true;
 	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
 		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;

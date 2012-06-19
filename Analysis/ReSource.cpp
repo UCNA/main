@@ -67,7 +67,7 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 			OM->addObject(pPMTCorr[t][t2]);
 		}
 	}	
-	for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
+	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 		hitPos[d] = OM->registeredTH1F(s.name()+"_hits_profile_"+itos(d),"Hit Positions",300,-10,10);
 		hitPos[d]->SetLineColor(2+2*d);
 	}
@@ -180,7 +180,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 				for(unsigned int i=0; i<tubePeaks[t].size(); i++) {
 					printf("-------- %c%i --------\n",sideNames(mySource.mySide),t);
 					tubePeaks[t][i].toStringmap().display();
-					OM->qOut.insert(std::string("Main_")+tubePeaks[t][i].name()+"_peak_"+itos(t),tubePeaks[t][i].toStringmap());
+					OM->qOut.insert("Main_"+tubePeaks[t][i].name()+"_peak_"+itos(t),tubePeaks[t][i].toStringmap());
 					SourceDBSQL::getSourceDBSQL()->addPeak(tubePeaks[t][i]);
 				}
 			}
@@ -206,7 +206,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 				drawVLine((tubePeaks[t][i].center.x-tubePeaks[t][i].width.x)*tubePeaks[t][i].gms, OM->defaultCanvas,4);
 				drawVLine((tubePeaks[t][i].center.x+tubePeaks[t][i].width.x)*tubePeaks[t][i].gms, OM->defaultCanvas,4);				
 			}
-			std::string qoutname = std::string("Main_")+tubePeaks[t][i].name()+"_peak_"+itos(t);
+			std::string qoutname = "Main_"+tubePeaks[t][i].name()+"_peak_"+itos(t);
 			printf("-------- %c%i %s --------\n",sideNames(mySource.mySide),t,qoutname.c_str());
 			tubePeaks[t][i].toStringmap().display();
 			OM->qOut.insert(qoutname,tubePeaks[t][i].toStringmap());
@@ -228,13 +228,13 @@ void ReSourcer::findSourcePeaks(float runtime) {
 					hToPlot.push_back(hTubes[t][tp]);
 			}
 			drawSimulHistos(hToPlot);
-			OM->printCanvas(mySource.name()+"/Spectrum_Combined"+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp))+(simMode?"_Sim":""));
+			OM->printCanvas(mySource.name()+"/Spectrum_Combined"+(tp==TYPE_0_EVENT?"":"_type_"+itos(tp))+(simMode?"_Sim":""));
 		}
 	}
 	
 	OM->defaultCanvas->SetLogy(false);
 	std::vector<TH1*> hToPlot;
-	for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++)
+	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 		hToPlot.push_back(hitPos[d]);
 	drawSimulHistos(hToPlot);
 	OM->printCanvas(mySource.name()+"/Hit_Positions"+(simMode?"_Sim":""));
@@ -301,7 +301,7 @@ void reSource(RunNum rn) {
 		sources.insert(std::make_pair(it->sID,ReSourcer(&TM,*it,&PCal)));
 		Stringmap m = it->toStringmap();
 		for(unsigned int t=0; t<nBetaTubes; t++)
-			m.insert(std::string("eta_")+itos(t),PCal.eta(it->mySide,t,it->x,it->y));
+			m.insert("eta_"+itos(t),PCal.eta(it->mySide,t,it->x,it->y));
 		TM.qOut.insert("Source",m);
 	}
 	
@@ -312,7 +312,7 @@ void reSource(RunNum rn) {
 			m.insert("gms0_"+itos(t),PCal.getGMS0(s,t));
 			m.insert("gmsRel_"+itos(t),PCal.gmsFactor(s,t,0)/PCal.getGMS0(s,t));
 		}
-		TM.qOut.insert(std::string("BetaSc")+sideNames(s),m);
+		TM.qOut.insert("BetaSc"+sideNames(s),m);
 	}
 	
 	printf("Expecting %i sources...\n",(int)sources.size());
@@ -435,14 +435,14 @@ void reSource(RunNum rn) {
 				hToPlot.push_back(it->second.hTubes[t][tp]);
 				TM.defaultCanvas->SetLogy(true);
 				drawSimulHistos(hToPlot);
-				TM.printCanvas(it->second.mySource.name()+"/Spectrum_Comparison_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp)));
+				TM.printCanvas(it->second.mySource.name()+"/Spectrum_Comparison_"+itos(t)+(tp==TYPE_0_EVENT?"":"_type_"+itos(tp)));
 				
 				// same, linear scale
 				TM.defaultCanvas->SetLogy(false);
 				RS.hTubes[t][tp]->SetMinimum(0);
 				it->second.hTubes[t][tp]->SetMinimum(0);
 				drawSimulHistos(hToPlot);
-				std::string outName = it->second.mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp));
+				std::string outName = it->second.mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":"_type_"+itos(tp));
 				TM.printCanvas(outName);
 			}
 			
