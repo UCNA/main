@@ -2,7 +2,12 @@
 #define GRAPHUTILS_HH 1
 
 #include "QFile.hh"
+#include "Enums.hh"
+#include <TF1.h>
 #include <TH1.h>
+#include <TH1D.h>
+#include <TH2F.h>
+#include <TH3.h>
 #include <TGraph.h>
 #include <TGraphErrors.h>
 #include <TCanvas.h>
@@ -50,5 +55,15 @@ double invCDF(TH1* h, double p);
 
 /// check histogram for NaNs
 void fixNaNs(TH1* h);
+
+/// replacement for missing TH2::FitSlicesY in older version of ROOT
+std::vector<TH1D*> replaceFitSlicesY(TH2* h, TF1* f1=NULL);
+	
+/// slice a TH3 into a stack of TH2Fs
+std::vector<TH2F*> sliceTH3(const TH3& h3);
+
+/// slice a TH2 into a stack of TH1Fs
+std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d);
+
 
 #endif

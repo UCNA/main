@@ -45,9 +45,9 @@ public:
 	/// create a new instance of this object (cloning self settings) for given directory
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) = 0;
 	/// virtual routine for generating output plots
-	virtual void makePlots() = 0;
+	virtual void makePlots() {}
 	/// virtual routine for generating calculated hists
-	virtual void calculateResults() = 0;
+	virtual void calculateResults() {}
 	
 protected:
 	

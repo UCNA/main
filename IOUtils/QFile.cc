@@ -27,6 +27,10 @@ void Stringmap::insert(const std::string& s, const std::string& v) {
 	dat.insert(std::make_pair(s,v));
 }
 
+void Stringmap::insert(const std::string& s, double d) {
+	insert(s,dtos(d));
+}
+
 void Stringmap::erase(const std::string& s) { dat.erase(s); }
 
 std::vector<std::string> Stringmap::retrieve(const std::string& s) const {
@@ -75,10 +79,6 @@ std::vector<double> Stringmap::retrieveDouble(const std::string& k) const {
 		v.push_back(d);
 	}
 	return v;
-}
-
-void Stringmap::insert(const std::string& s, double d) {
-	insert(s,dtos(d));
 }
 
 void Stringmap::mergeInto(Stringmap& S) const {

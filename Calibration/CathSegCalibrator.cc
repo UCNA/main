@@ -3,9 +3,14 @@
 
 double CathSegCalibrator::adjustPos(double x0, double E) const {
 	double x = x0;
-	E = E>50?(E<1000?E:1000):50;
-	for(unsigned int i=0; i<pcoeffs.size(); i++)
-		x += (i+1)*pcoeffs[i]->Eval(E)*cos(M_PI*x0);
+	E = E>25?(E<1000?E:1000):25;
+	for(unsigned int i=0; i<pcoeffs.size(); i++) {
+		unsigned int n = 1+i/2;
+		if(i%2)
+			x += pcoeffs[i]->Eval(E)*sin(2*M_PI*n*x0)/(2*M_PI*n);
+		else
+			x += pcoeffs[i]->Eval(E)*(cos(2*M_PI*n*x0)+1)/(2*M_PI*n);
+	}
 	return x;
 }
 

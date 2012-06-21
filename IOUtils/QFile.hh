@@ -19,6 +19,8 @@ public:
 	
 	/// insert key/(string)value pair
 	void insert(const std::string& s, const std::string& v);
+	/// insert key/(double)value
+	void insert(const std::string& s, double d);
 	/// retrieve key values
 	std::vector<std::string> retrieve(const std::string& s) const;	
 	/// get first key value (string) or default
@@ -32,8 +34,6 @@ public:
 	double getDefault(const std::string& s, double d) const;
 	/// retrieve key values as doubles
 	std::vector<double> retrieveDouble(const std::string& s) const;
-	/// insert key/(double)value
-	void insert(const std::string& s, double d);
 	/// remove a key
 	void erase(const std::string& s);
 	

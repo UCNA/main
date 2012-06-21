@@ -7,7 +7,6 @@
 #include "PathUtils.hh"
 #include "GraphicsUtils.hh"
 #include "PositionResponse.hh"
-#include "WirechamberStudy.hh"
 #include "AsymmetryAnalyzer.hh"
 #include "SimAsymmetryAnalyzer.hh"
 #include "EndpointStudy.hh"
@@ -59,13 +58,6 @@ void mi_EndpointStudySim(std::deque<std::string>&, std::stack<std::string>& stac
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
 	simulate_xenon(r0,r1,rsingle,nRings);
-}
-
-void mi_WirechamberStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
-	unsigned int nr = streamInteractor::popInt(stack);
-	RunNum r1 = streamInteractor::popInt(stack);
-	RunNum r0 = streamInteractor::popInt(stack);
-	runWirechamberAnalyzer(r0,r1,nr);
 }
 
 void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -190,6 +182,9 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
+	processWirechamberCal(14282,14347,20);
+	return;
+	
 	//decomposeXenon(15991,true);
 	//decomposeXenon(14282,false);
 	//decomposeXenon(14347,false);
@@ -298,11 +293,6 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	radcor.addArg("A","1");
 	radcor.addArg("Z","1");
 	radcor.addArg("Endpoint",dtos(neutronBetaEp));
-	// wirechamber calibration
-	inputRequester anawc("Gather wirechamber calibration data",&mi_WirechamberStudy);
-	anawc.addArg("Start Run");
-	anawc.addArg("End Run");
-	anawc.addArg("n Rings","6");
 	
 	// main menu
 	OptionsMenu OM("Analyzer Main Menu");
@@ -312,7 +302,6 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OM.addChoice(&uploadSources,"us");
 	OM.addChoice(&evis2etrue,"ev");
 	OM.addChoice(&radcor,"rc");
-	OM.addChoice(&anawc,"wc");
 	OM.addChoice(&doMisc,"msc");
 	OM.addChoice(&exitMenu,"x");
 	OM.addSynonym("x","exit");

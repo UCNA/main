@@ -3,6 +3,40 @@
 
 #include "SectorCutter.hh"
 #include "RunAccumulator.hh"
+#include "WirechamberCalibrator.hh"
+
+
+/// Struct for cathode calibration data
+struct CathodeSeg {
+	Side s;					//< side
+	AxisDirection d;		//< plane measuring direction
+	unsigned int i;			//< cathode number
+	float_err height;		//< normalized height
+	float_err width;		//< width
+	float_err center;		//< measured center
+	float pos;				//< cathode position
+};
+
+/// wirechamber position/calibration analysis
+class WirechamberAnalyzer: public RunAccumulator {
+public:
+	/// constructor
+	WirechamberAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& infl="");
+	
+	/// cloning generator: just return another of the same subclass (with any settings you want to preserve)
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
+									   const std::string& inflname) { return new WirechamberAnalyzer(this,nm,inflname); }
+	
+	/// process a data point into position histograms
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
+	/// make output plots
+	virtual void makePlots();
+	
+	fgbgPair hitPos[2];							//< hit positions on each side
+	fgbgPair hitPosRaw[2];						//< uncorrected hit positions on each side
+	fgbgPair cathHitpos[2][2][kMaxCathodes];	//< raw position distribution around each cathode by energy
+	fgbgPair cathNorm[2][2][kMaxCathodes];		//< cathode normalization histograms
+};
 
 /// data collected for each sector
 struct SectorDat {
@@ -16,7 +50,7 @@ struct SectorDat {
 };
 
 /// class for position-segmented analysis
-class PositionBinner: public RunAccumulator {
+class PositionBinner: public WirechamberAnalyzer {
 public:
 	/// constructor
 	PositionBinner(OutputManager* pnt, const std::string& nm, float r, unsigned int nr, const std::string& infl="");
@@ -40,7 +74,6 @@ public:
 	virtual void compareMCtoData(RunAccumulator& OAdata);
 	
 	fgbgPair energySpectrum;							//< total energy spectrum
-	fgbgPair hitPos[2];									//< hit positions on each side
 	TH1F* hTuben[2][nBetaTubes];						//< type 0 PMT energy for gain matching
 	std::vector<SectorDat> sectDat[2][nBetaTubes];		//< processed data for each sector
 	SectorCutter sects;									//< sector cutter
@@ -56,5 +89,10 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings);
 
 /// compare xenon to simulation
 void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle=0, unsigned int nRings =12);
- 
+
+/// process wirechamber calibraiton data
+void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsim);
+/// process wirechamber calibraiton data specified by run range, nrings
+void processWirechamberCal(RunNum r0, RunNum r1, unsigned int nrings);
+
 #endif

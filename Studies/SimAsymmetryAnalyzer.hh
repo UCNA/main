@@ -3,7 +3,7 @@
 
 #include "AsymmetryAnalyzer.hh"
 
-/// primary octet data analysis class
+/// Octet data analysis with extra plots for simulated runs
 class SimAsymmetryAnalyzer: public AsymmetryAnalyzer {
 public:
 	/// constructor

@@ -43,10 +43,10 @@ Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberC
 		EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
 	
 Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT.o G4toPMT.o \
-		PenelopeToPMT.o TH1toPMT.o KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o AnalysisDB.o
+		PenelopeToPMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
 
 Studies = PlotMakers.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o \
-	SimAsymmetryAnalyzer.o WirechamberStudy.o LEDScans.o
+	EndpointStudy.o SimAsymmetryAnalyzer.o LEDScans.o
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
