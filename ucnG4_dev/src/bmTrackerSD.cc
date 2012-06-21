@@ -40,6 +40,8 @@
 #include "G4LossTableManager.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4Gamma.hh"
+#include "SMExcept.hh"
+#include "strutils.hh"
 #include <cmath>
 #include <cassert>
 
@@ -144,7 +146,14 @@ G4bool bmTrackerSD::ProcessHits(G4Step* aStep,G4TouchableHistory*) {
 		if(sTrack->GetVolume() != aTrack->GetVolume())
 			continue;
 		const G4double eOrig = myTrack->second->originEnergy>0?myTrack->second->originEnergy:Ec;
-		assert(originEnergy.find(sTrack)==originEnergy.end());
+		if(originEnergy.find(sTrack) != originEnergy.end()) {
+			SMExcept e("duplicateSecondary");
+			e.insert("eOrig",eOrig);
+			e.insert("pID",myTrack->second->GetPID());
+			e.insert("nSec",myTrack->second->nSecondaries++);
+			e.insert("eOrig_old",originEnergy.find(sTrack)->second);
+			throw(e);
+		}
 		originEnergy.insert(std::pair<const G4Track*,double>(sTrack,eOrig));
 	}
 	

@@ -22,6 +22,8 @@ void UCNA_MC_Analyzer::setupOutputTree() {
 	anaTree->Branch("keInSD",keInSD,tmp);
 	sprintf(tmp,"keOutSD[%i]/D",N_SD);
 	anaTree->Branch("keOutSD",keOutSD,tmp);
+	sprintf(tmp,"hitCountSD[%i]/I",N_SD);
+	anaTree->Branch("hitCountSD",hitCountSD,tmp);
 	
 	anaTree->Branch("MWPCPos",MWPCPos,"MWPCPosE[3]/D:MWPCPosW[3]/D");
 	anaTree->Branch("ScintPos",ScintPos,"ScintPosE[3]/D:ScintPosW[3]/D");
@@ -34,11 +36,14 @@ void UCNA_MC_Analyzer::resetAnaEvt() {
 		Edep[s] = EdepQ[s] = 0;
 		fMWPCEnergy[s]=0;
 		hitTime[s]=trapMonTime[s]=FLT_MAX;
-		for(unsigned int i=0; i<3; i++)
-			MWPCPos[s][i] = ScintPos[s][i] = MWPCPosSigma[s][i] = ScintPosSigma[s][i] = 0;
+		for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d)
+			MWPCPos[s][d] = ScintPos[s][d] = MWPCPosSigma[s][d] = ScintPosSigma[s][d] = 0;
 	}
 	EdepAll = 0;
-	for(size_t ii=0; ii<N_SD; ii++) keInSD[ii] = keOutSD[ii] = thetaInSD[ii] = thetaOutSD[ii] = EdepSD[ii] = 0.;
+	for(size_t ii=0; ii<N_SD; ii++) {
+		hitCountSD[ii] = keInSD[ii] = keOutSD[ii] = thetaInSD[ii] = thetaOutSD[ii] = EdepSD[ii] = 0.;
+		hitTimeSD[ii]=FLT_MAX;
+	}
 }
 
 void UCNA_MC_Analyzer::processTrack() {
@@ -58,7 +63,10 @@ void UCNA_MC_Analyzer::processTrack() {
 	EdepAll += trackinfo->Edep;
 	if(detectorID < N_SD) {
 		EdepSD[detectorID] += trackinfo->Edep;
-		if(trackID==1 && pID==PDG_ELECTRON) {
+		if(trackinfo->isEntering && pID==PDG_ELECTRON)
+			hitCountSD[detectorID]++;
+		if(pID==PDG_ELECTRON && trackinfo->hitTime<hitTimeSD[detectorID]) {
+			hitTimeSD[detectorID] = trackinfo->hitTime;
 			double pin_x = trackinfo->pIn[0];
 			double pin_y = trackinfo->pIn[1];
 			double pin_z = trackinfo->pIn[2];
@@ -84,8 +92,10 @@ void UCNA_MC_Analyzer::processTrack() {
 		if(detectorID==ID_scint[s]) {
 			Edep[s] += trackinfo->Edep;
 			EdepQ[s] += trackinfo->EdepQuenched;
-			for(unsigned int j=0; j<3; j++) ScintPos[s][j] += trackinfo->edepPos[j];
-			for(unsigned int j=0; j<3; j++) ScintPosSigma[s][j] += trackinfo->edepPos2[j];
+			for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
+				ScintPos[s][d] += trackinfo->edepPos[d];
+				ScintPosSigma[s][d] += trackinfo->edepPos2[d];
+			}
 			//earliest hit time with possibly detectable (not really) Edep; hitTime[EAST,WEST] have been initialized to FLT_MAX
 			if(trackinfo->Edep>5.0 && trackinfo->hitTime<hitTime[s]) 
 				hitTime[s] = trackinfo->hitTime;
@@ -100,8 +110,10 @@ void UCNA_MC_Analyzer::processTrack() {
 		// wirechamber deposited energy and position
 		if(detectorID==ID_mwpc[s]) {
 			fMWPCEnergy[s] += trackinfo->Edep;
-			for(unsigned int j=0; j<3; j++) MWPCPos[s][j] += trackinfo->edepPos[j];
-			for(unsigned int j=0; j<3; j++) MWPCPosSigma[s][j] += trackinfo->edepPos2[j];
+			for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
+				MWPCPos[s][d] += trackinfo->edepPos[d];
+				MWPCPosSigma[s][d] += trackinfo->edepPos2[d];
+			}
 		}
 	}
 }
@@ -109,14 +121,14 @@ void UCNA_MC_Analyzer::processTrack() {
 void UCNA_MC_Analyzer::processEvent() {
 	// normalize position variables
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(int i = 0; i < 3; i++) {
+		for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
 			if(EdepQ[s]>0) {
-				ScintPos[s][i] /= Edep[s];
-				ScintPosSigma[s][i] = sqrt(ScintPosSigma[s][i]/EdepQ[s]-ScintPos[s][i]*ScintPos[s][i]);
+				ScintPos[s][d] /= Edep[s];
+				ScintPosSigma[s][d] = sqrt(ScintPosSigma[s][d]/EdepQ[s]-ScintPos[s][d]*ScintPos[s][d]);
 			}
 			if(fMWPCEnergy[s] > 0) {
-				MWPCPos[s][i] /= fMWPCEnergy[s];
-				MWPCPosSigma[s][i] = sqrt(MWPCPosSigma[s][i]/fMWPCEnergy[s]-MWPCPos[s][i]*MWPCPos[s][i]);
+				MWPCPos[s][d] /= fMWPCEnergy[s];
+				MWPCPosSigma[s][d] = sqrt(MWPCPosSigma[s][d]/fMWPCEnergy[s]-MWPCPos[s][d]*MWPCPos[s][d]);
 			}
 		}
 	}

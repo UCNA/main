@@ -309,7 +309,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		randomTubePosition(position_saved, sourceRadius, 0*um, vertex_position); 
 	} else if(positioner=="DecayTrapUniform") {
 		// uniform fill of decay trap volume
-		randomTubePosition(G4ThreeVector(0,0,0), 7.5*cm, 1.5*m, vertex_position);
+		randomTubePosition(G4ThreeVector(0,0,0), 62.2*mm, 1.5*m, vertex_position);
 	} else if(positioner=="DecayTrapFiducial") {
 		// uniform fill of 5.5cm radius volume from which events reach detectors
 		randomTubePosition(G4ThreeVector(0,0,0), 5.5*cm, 1.5*m, vertex_position);
@@ -317,7 +317,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		// uniform fill of (visible) spectrometer volume, for Xe
 		randomTubePosition(G4ThreeVector(0,0,0), 7.5*cm, 2.17*m, vertex_position);
 	} else if(positioner=="UniformRadialGasFill") {
-		randomUniformRadialBins(G4ThreeVector(0,0,0),7.5*cm, 2.1*m, vertex_position);
+		randomUniformRadialBins(G4ThreeVector(0,0,0),7.5*cm, 2.15*m, vertex_position);
 	} else {
 		G4cout << "********* WARNING: Undefined positioner type! Defaulting to 'Fixed'! **********" << G4endl;
 	}
