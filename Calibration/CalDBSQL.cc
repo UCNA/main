@@ -468,6 +468,7 @@ std::vector<CathSegCalibrator*> CalDBSQL::getCathSegCalibrators(RunNum rn, Side 
 	}
 	for(unsigned int i=0; i<v.size(); i++) {
 		sprintf(query,"SELECT graph_id FROM cathshape_graphs WHERE cathseg_id = %i ORDER BY graph_id",csids[i]);
+		Query();
 		std::vector<int> gids;
 		while((r = res->Next())) {
 			gids.push_back(fieldAsInt(r,0));

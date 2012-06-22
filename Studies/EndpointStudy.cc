@@ -78,8 +78,8 @@ Stringmap sd2sm(const SectorDat& sd) {
 
 WirechamberAnalyzer::WirechamberAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& infl):
 RunAccumulator(pnt,nm,infl) {
-	TH2F hPositionsTemplate("hPostions","Event Positions",200,-60,60,200,-60,60);
-	TH2F hPositionsRawTemplate("hPostionsRaw","Event Raw Positions",200,-60,60,200,-60,60);
+	TH2F hPositionsTemplate("hPositions","Event Positions",200,-60,60,200,-60,60);
+	TH2F hPositionsRawTemplate("hPositionsRaw","Event Raw Positions",200,-60,60,200,-60,60);
 	for(Side s = EAST; s <= WEST; ++s) {
 		hitPos[s] = registerFGBGPair(hPositionsTemplate,AFP_OTHER,s);
 		hitPosRaw[s] = registerFGBGPair(hPositionsRawTemplate,AFP_OTHER,s);
@@ -111,6 +111,7 @@ void WirechamberAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight
 		assert(n<kMaxCathodes);
 		((TH2F*)cathHitpos[s][d][n].h[currentGV])->Fill(c,PDS.scints[s].energy.x,weight);
 		PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].center,n,c);	
+		if(PDS.mwpcs[s].anode > 1000) continue;	// avoid most massively clipped events
 		assert(n<kMaxCathodes);
 		((TH2F*)cathNorm[s][d][n].h[currentGV])->Fill(c,PDS.cathodes[s][d][n]/PDS.mwpcs[s].anode,weight);
 	}
@@ -503,7 +504,7 @@ void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsi
 	TF1 fCathCenter("fCathCenter","gaus",-0.5,0.5);
 	fCathCenter.SetLineColor(2);
 	
-	const unsigned int nterms = 4;
+	const unsigned int nterms = 3;
 	std::string fser = "[0]";
 	for(unsigned int n=1; n<nterms; n++)
 		fser += " + ["+itos(2*n-1)+"]*sin(2*pi*"+itos(n)+"*x) + ["+itos(2*n)+"]*cos(2*pi*"+itos(n)+"*x)";
@@ -559,6 +560,7 @@ void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsi
 					fFourier.SetParameter(0,1.0);
 					for(unsigned int n=1; n<=2*nterms; n++)
 						fFourier.SetParameter(n,0.);
+					fFourier.FixParameter(3,0.);
 					fFourier.SetLineColor(eb);
 					hEnDat[eb]->Fit(&fFourier,"QR");
 					hEnDat[eb]->SetMinimum(0);

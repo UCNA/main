@@ -66,9 +66,18 @@ std::vector<std::string> WirechamberCalibrator::getCathChans(Side s, AxisDirecti
 
 void WirechamberCalibrator::printSummary() {
 	printf("Wirechamber Calibrator for %i,%i, %i,%i cathodes\n",
-		   (int)cathsegs[EAST][X_DIRECTION].size(),(int)cathsegs[WEST][Y_DIRECTION].size(),
-		   (int)cathsegs[EAST][X_DIRECTION].size(),(int)cathsegs[WEST][Y_DIRECTION].size());
+		   (int)cathsegs[EAST][X_DIRECTION].size(),(int)cathsegs[EAST][Y_DIRECTION].size(),
+		   (int)cathsegs[WEST][X_DIRECTION].size(),(int)cathsegs[WEST][Y_DIRECTION].size());
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+			printf("%s-%s ",sideWords(s),d==X_DIRECTION?"x":"y");
+			for(unsigned int i=0; i<cathsegs[s][d].size(); i++)
+				printf("[%.2f,%i]",cathsegs[s][d][i]->norm,(int)cathsegs[s][d][i]->pcoeffs.size());
+			printf("\n");
+		}
+	}
 	printf("Anode:\t\tcE=%.2f\tcW=%.2f\n",wirechamberGainCorr(EAST,0),wirechamberGainCorr(WEST,0));
+	
 }
 
 void WirechamberCalibrator::toLocal(Side s, AxisDirection d, float x, unsigned int& n, float& c) const {
@@ -83,11 +92,17 @@ float WirechamberCalibrator::fromLocal(Side s, AxisDirection d, unsigned int n, 
 	return domains[s][d][n]*(0.5-c)+domains[s][d][n+1]*(0.5+c);
 }
 
-wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d, std::vector<float>& wireValues, std::vector<float>& wirePeds) const {
+float WirechamberCalibrator::getCathNorm(Side s, AxisDirection d, unsigned int c) const {
+	assert(s<=WEST && d<=Y_DIRECTION && c<cathsegs[s][d].size());
+	return cathsegs[s][d][c]->norm;
+}
+
+wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
+										  std::vector<float>& wireValues, std::vector<float>& wirePeds) const {
 	
 	assert(s<=WEST && d<=Y_DIRECTION);
 	const unsigned int nWires = wirePos[s][d].size();
-	assert(wireValues.size()>=nWires && wirePeds.size()>=nWires);
+	assert(wireValues.size()>=nWires);
 	float x1,x2,x3,y1,y2,y3;
 	const double sigma0 = 0.75;	//< typical event width in sire spacings
 	
@@ -110,26 +125,28 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d, std::vector<f
 		// values above 3950 count as "clipped"
 		bool isClipped = wireValues[c] > 3950;
 		// pedestal subtract wire readout
-		wireValues[c] -= wirePeds[c];
+		if(wirePeds.size()>=nWires)
+			wireValues[c] -= wirePeds[c];
 		// cathode normalization
-		wireValues[c] *= cathsegs[s][d][c]->norm;
+		float cnm = cathsegs[s][d][c]->norm;
 		if(isClipped) {
+			wireValues[c] = 100000;
 			h.nClipped++;
 		} else {
 			// record in usable wires
 			xs.push_back(wirePos[s][d][c]);
-			ys.push_back(wireValues[c]);
+			ys.push_back(wireValues[c]*cnm);
 		}
 		// values above 70 count towards multiplicity
 		if(wireValues[c]>70)
 			h.multiplicity++;
-		h.cathodeSum += wireValues[c];
+		h.cathodeSum += wireValues[c]*cnm;
 		// check if this is the maximum value found so far
-		if(wireValues[c] >= h.maxValue && !isClipped) {
+		if(wireValues[c]*cnm >= h.maxValue && !isClipped) {
 			// if wires are tied for max value, randomly choose which is labeled as maxWire
-			if(wireValues[c] == h.maxValue && rand()%2)
+			if(wireValues[c]*cnm == h.maxValue && rand()%2)
 				continue;
-			h.maxValue = wireValues[c];
+			h.maxValue = wireValues[c]*cnm;
 			h.maxWire = c;
 			maxn = xs.size()-1;
 		}

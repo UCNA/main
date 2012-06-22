@@ -62,6 +62,9 @@ public:
 	/// get list of cathode sensor names
 	std::vector<std::string> getCathChans(Side s, AxisDirection d) const;
 	
+	/// get normalization for given cathode
+	float getCathNorm(Side s, AxisDirection d, unsigned int c) const;
+	
 	/// display summary info
 	virtual void printSummary();
 	
