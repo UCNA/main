@@ -181,7 +181,6 @@ def merge_runlogs(mylog,autolog):
 def fillRunsDB(runs,rmin=0,rmax=100000):
 
 		conn = open_connection()
-		#conn.execute("DELETE FROM run WHERE 1")
 		
 		for rn in runs:
 			if not rmin <= rn <= rmax:
@@ -193,35 +192,39 @@ def fillRunsDB(runs,rmin=0,rmax=100000):
 			rdata = {}
 			rdata["run_number"]=R.runNum
 			rdata["slow_run_number"]=R.slowdaq
-			rdata["asym_oct"]=R.runType
-			rdata["run_type"]=R.run_class
-			rdata["gate_valve"]=R.gate_valve
-			rdata["flipper"]=R.flipper
+			rdata["asym_oct"]="'%s'"%R.runType
+			rdata["run_type"]="'%s'"%R.run_class
+			rdata["gate_valve"]="'%s'"%R.gate_valve
+			rdata["flipper"]="'%s'"%R.flipper
 			rdata["scs_field"]=R.scs
-			rdata["led_e_vol"]=R.ledv[0]
-			rdata["led_w_vol"]=R.ledv[1]
-			rdata["comments"]=R.comments
-			rdata["title"]=R.title
-			rdata["geometry"]="D"
-			rdata["start_time"]=time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(R.startTime))
-			rdata["end_time"]=time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(R.endTime))
+			rdata["comments"]="'%s'"%R.comments
+			rdata["title"]="'%s'"%R.title
+			rdata["geometry"]="'%s'"%"D"
+			rdata["start_time"]=time.strftime("'%Y-%m-%d %H:%M:%S'",time.localtime(R.startTime))
+			rdata["end_time"]=time.strftime("'%Y-%m-%d %H:%M:%S'",time.localtime(R.endTime))
 			
-			cmd = "DELETE FROM run WHERE run_number=%i"%rn
+			cmd = "SELECT COUNT(*) FROM run WHERE run_number=%i"%rn
+			conn.execute(cmd)
+	
+			if conn.fetchone()[0]:
+				cmd = "UPDATE run SET"
+				for k in rdata.keys():
+					cmd += " %s=%s,"%(k,str(rdata[k]).strip())
+				cmd = cmd[:-1]+" WHERE run_number = %i"%R.runNum				
+			else:
+				cmd = "INSERT INTO run ("
+				fields = rdata.keys()
+				for f in fields:
+					cmd += f+","
+				cmd = cmd[:-1]+")\n\tVALUES ("
+				for f in fields:
+					cmd += "'%s',"%str(rdata[f]).strip()
+				cmd = cmd[:-1]+")"
+				
 			print cmd
 			conn.execute (cmd)
-			
-			cmd = "INSERT INTO run ("
-			fields = rdata.keys()
-			for f in fields:
-				cmd += f+","
-			cmd = cmd[:-1]+")\n\tVALUES ("
-			for f in fields:
-				cmd += "'%s',"%str(rdata[f]).strip()
-			cmd = cmd[:-1]+")"
-			
-			print cmd
-			conn.execute (cmd)
-		
+
+				
 def fillRunGroups():
 	conn = open_connection()
 	conn.execute("DELETE FROM run_group WHERE 1")
@@ -235,9 +238,9 @@ def fillRunGroups():
 		conn.execute("INSERT INTO run_group(start_run,end_run,name) VALUES (%i,%i,'%s')"%(cycs[c][0],cycs[c][-1],c))
 	
 if __name__=="__main__":   
-	al = load_runlog("/data/ucnadata/midfiles/runlog.txt")
+	al = load_runlog("/data/ucnadata/midfiles_2010/runlog.txt")
 	ml = load_mylog()
 	runs = merge_runlogs(ml,al)
-	fillRunsDB(runs,rmin=16400,rmax=100000)
+	fillRunsDB(runs,rmin=13500,rmax=16300)
 	fillRunGroups()
 	
