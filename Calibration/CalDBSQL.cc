@@ -394,8 +394,11 @@ RunInfo CalDBSQL::getRunInfo(RunNum r) {
 }
 
 
-std::vector<RunNum> CalDBSQL::findRuns(const char* whereConditions) {
-	sprintf(query,"SELECT run_number FROM run WHERE %s",whereConditions);
+std::vector<RunNum> CalDBSQL::findRuns(const std::string& whereConditions, RunNum r0, RunNum r1) {
+	std::string qrstr = "SELECT run_number FROM run WHERE run_number >= "+itos(r0)+" AND run_number <= "+itos(r1);
+	if(whereConditions.size()) qrstr += " AND " + whereConditions;
+	qrstr += " ORDER BY run_number ASC";
+	sprintf(query,"%s",qrstr.c_str());
 	Query();
 	std::vector<RunNum> v;
 	if(!res)

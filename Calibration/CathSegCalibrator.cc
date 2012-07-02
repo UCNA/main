@@ -3,7 +3,7 @@
 
 double CathSegCalibrator::adjustPos(double x0, double E) const {
 	double x = x0;
-	E = E>0?(E<800?E:800):0;
+	E = E>0?(E<1000?E:1000):0;
 	for(unsigned int i=0; i<pcoeffs.size(); i++) {
 		unsigned int n = 1+(i/2);
 		if(i%2)

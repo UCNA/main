@@ -63,7 +63,9 @@ std::vector<TH1D*> replaceFitSlicesY(TH2* h, TF1* f1=NULL);
 std::vector<TH2F*> sliceTH3(const TH3& h3);
 
 /// slice a TH2 into a stack of TH1Fs
-std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d);
+std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d, bool includeOverflow = false);
 
+/// split a list of counts into approximately equal segments
+std::vector<unsigned int> equipartition(const std::vector<float>& elems, unsigned int n);
 
 #endif

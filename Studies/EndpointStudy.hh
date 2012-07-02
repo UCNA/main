@@ -14,6 +14,8 @@ struct CathodeSeg {
 	float_err height;		//< normalized height
 	float_err width;		//< width
 	float_err center;		//< measured center
+	float_err max;			//< maximum normalized value
+	float fill_frac;		//< proportion of expected events
 	float pos;				//< cathode position
 };
 
@@ -53,11 +55,11 @@ struct SectorDat {
 class PositionBinner: public WirechamberAnalyzer {
 public:
 	/// constructor
-	PositionBinner(OutputManager* pnt, const std::string& nm, float r, unsigned int nr, const std::string& infl="");
+	PositionBinner(OutputManager* pnt, const std::string& nm, unsigned int nr, const std::string& infl="");
 	
 	/// cloning generator: just return another of the same subclass (with any settings you want to preserve)
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
-									   const std::string& inflname) { return new PositionBinner(this,nm,sects.r,sects.n,inflname); }
+									   const std::string& inflname) { return new PositionBinner(this,nm,sects.n,inflname); }
 	
 	/// process a data point into position histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
@@ -79,6 +81,8 @@ public:
 	SectorCutter sects;									//< sector cutter
 	bool sectorPlots;									//< whether to make plots for each sector
 	
+	static double fidRadius;							//< analysis fiducial radius
+	
 protected:
 	std::vector<fgbgPair> sectEnergy[2][nBetaTubes];	//< visible light histograms by position, PMT
 	std::vector<fgbgPair> sectAnode[2];					//< anode histograms by position
@@ -87,8 +91,12 @@ protected:
 /// process xenon runs
 void process_xenon(RunNum r0, RunNum r1, unsigned int nrings);
 
-/// compare xenon to simulation
+/// generate xenon simulation runs
 void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle=0, unsigned int nRings =12);
+
+/// comparison between data, simulated Xenon to produce position map
+void xenon_posmap(RunNum r0, RunNum r1, unsigned int nRings);
+
 
 /// process wirechamber calibraiton data
 void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsim);

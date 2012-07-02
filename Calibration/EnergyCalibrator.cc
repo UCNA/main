@@ -381,7 +381,8 @@ void PMTCalibrator::printSummary() {
 }
 
 Stringmap PMTCalibrator::calSummary() const { 
-	Stringmap m = GS?GS->gmsSummary():Stringmap();
+	Stringmap m = wirecalSummary();
+	if(GS) m += GS->gmsSummary();
 	m.insert("run",itos(myRun));
 	m.insert("tstart",itos(CDB->startTime(myRun)));
 	m.insert("tend",itos(CDB->endTime(myRun)));

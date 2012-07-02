@@ -35,6 +35,8 @@ public:
 	/// get info about current event
 	virtual Stringmap evtInfo();
 	
+	bool redoPositions;			//< whether to re-calibrate positions
+
 	ScintEvent scints[2];		//< readout point for scintillator data
 	Float_t led_pd[2];			//< readout point for reference photodiode
 	wireHit wires[2][2];		//< readout point for wirechamber data [side][plane]

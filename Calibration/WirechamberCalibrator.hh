@@ -68,6 +68,9 @@ public:
 	/// display summary info
 	virtual void printSummary();
 	
+	/// summary data about wirechamber calibration
+	Stringmap wirecalSummary() const;
+	
 	/// convert to local normalized position
 	void toLocal(Side s, AxisDirection d, float x, unsigned int& n, float& c) const;
 	/// convert back from local normalized position

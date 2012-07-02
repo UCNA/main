@@ -21,6 +21,8 @@ Stringmap cathseg2sm(const CathodeSeg& c) {
 	m.insert("side",sideSubst("%c",c.s));
 	m.insert("plane",c.d==X_DIRECTION?"x":"y");
 	m.insert("i",c.i);
+	m.insert("max",c.max.x);
+	m.insert("d_max",c.max.err);
 	m.insert("height",c.height.x);
 	m.insert("d_height",c.height.err);
 	m.insert("width",c.width.x);
@@ -28,6 +30,7 @@ Stringmap cathseg2sm(const CathodeSeg& c) {
 	m.insert("center",c.center.x);
 	m.insert("d_center",c.center.x);
 	m.insert("position",c.pos);
+	m.insert("fill_frac",c.fill_frac);
 	return m;
 }
 
@@ -79,14 +82,18 @@ Stringmap sd2sm(const SectorDat& sd) {
 WirechamberAnalyzer::WirechamberAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& infl):
 RunAccumulator(pnt,nm,infl) {
 	TH2F hPositionsTemplate("hPositions","Event Positions",200,-60,60,200,-60,60);
+	hPositionsTemplate.GetXaxis()->SetTitle("x position [mm]");
+	hPositionsTemplate.GetYaxis()->SetTitle("y position [mm]");
 	TH2F hPositionsRawTemplate("hPositionsRaw","Event Raw Positions",200,-60,60,200,-60,60);
+	hPositionsRawTemplate.GetXaxis()->SetTitle("x position [mm]");
+	hPositionsRawTemplate.GetYaxis()->SetTitle("y position [mm]");
 	for(Side s = EAST; s <= WEST; ++s) {
 		hitPos[s] = registerFGBGPair(hPositionsTemplate,AFP_OTHER,s);
 		hitPosRaw[s] = registerFGBGPair(hPositionsRawTemplate,AFP_OTHER,s);
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(unsigned int c=0; c < kMaxCathodes; c++) {
 				TH2F hCathHitposTemplate((std::string("hCathHitpos_")+(d==X_DIRECTION?"x_":"y_")+itos(c)).c_str(),
-										 "Cathode Hit Positions",51,-0.5,0.5,20,0,800);
+										 "Cathode Hit Positions",64,-0.5,0.5,1000,0,1000);
 				TH2F hCathNormTemplate((std::string("hCathNorm_")+(d==X_DIRECTION?"x_":"y_")+itos(c)).c_str(),
 									   "Normalized Cathode",51,-0.5,0.5,100,0,5);
 				
@@ -131,9 +138,10 @@ void WirechamberAnalyzer::makePlots() {
 
 //-----------------------------------------------
 
+double PositionBinner::fidRadius = 50.;
 
-PositionBinner::PositionBinner(OutputManager* pnt, const std::string& nm, float r, unsigned int nr, const std::string& infl):
-WirechamberAnalyzer(pnt,nm,infl), sects(nr,r), sectorPlots(false) {
+PositionBinner::PositionBinner(OutputManager* pnt, const std::string& nm, unsigned int nr, const std::string& infl):
+WirechamberAnalyzer(pnt,nm,infl), sects(nr,PositionBinner::fidRadius), sectorPlots(false) {
 	
 	// load sector cutter
 	if(fIn) {
@@ -330,21 +338,24 @@ void PositionBinner::makePlots() {
 }
 
 
+//-----------------------------------------------
+
+
 void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {	
-	
-	double fidRadius = 50;
-	
+		
 	// scan data from each run
 	std::vector<std::string> snames;
 	OutputManager OM1("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/SingleRuns/");
-	for(RunNum r = r0; r <= r1; r++) {
-		std::string singleName = "Xenon_"+itos(r)+"_"+itos(nrings)+"_"+dtos(fidRadius);
+	std::vector<RunNum> rlist = CalDBSQL::getCDB()->findRuns("run_type = 'Xenon'",r0,r1);
+	for(std::vector<RunNum>::iterator rit = rlist.begin(); rit != rlist.end(); rit++) {
+		std::string singleName = "Xenon_"+itos(*rit)+"_"+itos(nrings)+"_"+dtos(PositionBinner::fidRadius);
 		std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
 		snames.push_back(singleName);
 		if(r0==r1 || !fileExists(prevFile+".root")) {
-			PositionBinner PB1(&OM1, singleName, fidRadius, nrings);
+			PositionBinner PB1(&OM1, singleName, nrings);
 			PostOfficialAnalyzer POA(true);
-			POA.addRun(r);
+			POA.redoPositions = true;
+			POA.addRun(*rit);
 			PB1.loadProcessedData(AFP_OTHER, GV_OPEN, POA);
 			PB1.calculateResults();
 			POA.writeCalInfo(PB1.qOut,"runcal");
@@ -357,10 +368,10 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	
 	// reload data
 	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/");
-	PositionBinner PB(&OM, "Xenon_"+itos(r0)+"-"+itos(r1)+"_"+itos(nrings), fidRadius, nrings);	
+	PositionBinner PB(&OM, "Xenon_"+itos(r0)+"-"+itos(r1)+"_"+itos(nrings), nrings);	
 	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
 		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;
-		PositionBinner PB1(&OM1, *it, 0, 0, prevFile);
+		PositionBinner PB1(&OM1, *it, 0, prevFile);
 		PB.addSegment(PB1);
 	}
 	
@@ -388,7 +399,7 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 	std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
 	if(forceResim || !fileExists(prevFile+".root")) {
 		PMTCalibrator PCal(r);
-		PositionBinner PBM(&OM1,singleName,PB.sects.r,PB.sects.n);
+		PositionBinner PBM(&OM1,singleName,PB.sects.n);
 		PBM.totalTime[AFP_OTHER][GV_OPEN] += PB.totalTime[AFP_OTHER][GV_OPEN];
 		PBM.runTimes += PB.runTimes;
 		
@@ -405,7 +416,7 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 		isots.push_back("Xe133_3-2+");
 		isots.push_back("Xe133_11-2-");
 		isots.push_back("Xe135_3-2+");
-		if(15991 <= r && r <= 16010)
+		if((14264 <= r && r <= 14273) || (15991 <= r && r <= 16010))
 			isots.push_back("Xe135_11-2-");
 		int b1 = PB.energySpectrum.h[GV_OPEN]->FindBin(1075);
 		int b2 = PB.energySpectrum.h[GV_OPEN]->FindBin(1175);
@@ -417,7 +428,7 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 		
 		for(unsigned int n=0; n<isots.size(); n++) {
 			printf("Simulating for component %s...\n",isots[p[n]].c_str());
-			PBMi.push_back(new PositionBinner(&OM1,singleName+"_"+isots[p[n]],PB.sects.r,PB.sects.n));
+			PBMi.push_back(new PositionBinner(&OM1,singleName+"_"+isots[p[n]],PB.sects.n));
 			//G4SegmentMultiplier GSM(PB.sects);
 			G4SegmentMultiplier GSM(SectorCutter(4,52.));
 			GSM.setCalibrator(PCal);
@@ -456,35 +467,53 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 	return singleName;
 }
 
-void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle, unsigned int nRings) {
-	
-	// read in comparison data
+void xenon_posmap(RunNum r0, RunNum r1, unsigned int nRings) {
 	std::string basePath = getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/";
 	OutputManager OM("NameUnused",basePath);
-	std::string readname = "Xenon_"+itos(r0)+"-"+itos(r1)+"_"+itos(nRings);
-	PositionBinner PB(&OM, "Xenon_"+itos(r0)+"-"+itos(r1), 0, 0, basePath+"/"+readname+"/"+readname);
+	std::string readname = itos(r0)+"-"+itos(r1)+"_"+itos(nRings);
+	
+	// read in data
+	PositionBinner PBdat(&OM, "Xenon_"+readname, 0,
+						 basePath+"/Xenon_"+readname+"/Xenon_"+readname);
+	
+	// read in simulation
+	PositionBinner PBsim(&OM, "SimXe_"+readname, 0,
+						 basePath+"/SimXe_"+readname+"/SimXe_"+readname);
+	
+	// data comparison / posmap generation
+	PBsim.compareMCtoData(PBdat);
+}
+
+void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle, unsigned int nRings) {
+	
+	std::string basePath = getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/";
+	OutputManager OM("NameUnused",basePath);
+	std::string readname = itos(r0)+"-"+itos(r1)+"_"+itos(nRings);
+	printf("Simulating for position map %i-%i\n",r0,r1);
 	
 	// MC data for each run
-	printf("Simulating for position map %i-%i\n",r0,r1);
 	OutputManager OM1("NameUnused",basePath+"/SingleRunsSim/");
 	float simFactor = 4.0;
 	if(rsingle) {
-		std::string singleName = "Xenon_"+itos(rsingle)+"_"+itos(PB.sects.n)+"_"+dtos(PB.sects.r);
-		PositionBinner PB1(&OM, singleName, 0, 0, basePath+"/SingleRuns/"+singleName+"/"+singleName);
+		if(!CalDBSQL::getCDB()->findRuns("run_type = 'Xenon'",rsingle,rsingle).size()) return;
+		std::string singleName = "Xenon_"+itos(rsingle)+"_"+itos(nRings)+"_"+dtos(PositionBinner::fidRadius);
+		PositionBinner PB1(&OM, singleName, 0, basePath+"/SingleRuns/"+singleName+"/"+singleName);
 		simulate_one_xenon(rsingle,OM1,PB1,simFactor,true);
 		return;
 	}
+	
+	// read in comparison data
+	PositionBinner PB(&OM, "Xenon_"+readname, 0, basePath+"/Xenon_"+readname+"/Xenon_"+readname);
 	std::vector<std::string> snames;
 	for(std::map<RunNum,double>::const_iterator rit = PB.runCounts.counts.begin(); rit != PB.runCounts.counts.end(); rit++)
 		snames.push_back(simulate_one_xenon(rit->first,OM1,PB,simFactor));
 	
-	
-	// reload data
-	PositionBinner PBM(&OM, "SimXe_"+itos(r0)+"-"+itos(r1)+"_"+itos(nRings), PB.sects.r, PB.sects.n);
+	// merge simulated data
+	PositionBinner PBM(&OM, "SimXe_"+readname, PB.sects.n);
 	PBM.isSimulated = true;
 	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
 		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;
-		PositionBinner PBM1(&OM1, *it, 0, 0, prevFile);
+		PositionBinner PBM1(&OM1, *it, 0, prevFile);
 		PBM.addSegment(PBM1);
 	}
 	
@@ -497,10 +526,15 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle, unsigned int nRings) {
 	PBM.setWriteRoot(true);
 }
 
+
+//-----------------------------------------------
+
+
 void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsim) {
 	RunNum r1 = WCdat.runCounts.counts.begin()->first;
 	RunNum r2 = WCdat.runCounts.counts.rbegin()->first;
 	OutputManager OM("MWPCCal",getEnvSafe("UCNA_ANA_PLOTS")+"/WirechamberCal/"+itos(r1)+"-"+itos(r2)+"/");
+	OM.qOut.transfer(WCdat.qOut,"runcal");
 	TF1 fCathCenter("fCathCenter","gaus",-0.5,0.5);
 	fCathCenter.SetLineColor(2);
 	
@@ -517,6 +551,7 @@ void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsi
 				////////////////////
 				// cathode normalization plots
 				////////////////////
+				
 				TH2* hCathNorm =  (TH2*)WCdat.cathNorm[s][d][c].h[GV_OPEN];
 				std::vector<TH1D*> slicefits = replaceFitSlicesY(hCathNorm);
 				for(std::vector<TH1D*>::iterator it = slicefits.begin(); it != slicefits.end(); it++) {
@@ -531,26 +566,60 @@ void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsi
 				cs.height = float_err(fCathCenter.GetParameter(0),fCathCenter.GetParError(0));
 				cs.center = float_err(fCathCenter.GetParameter(1),fCathCenter.GetParError(1));
 				cs.width = float_err(fCathCenter.GetParameter(2),fCathCenter.GetParError(2));
-				OM.qOut.insert("cathseg",cathseg2sm(cs));
+				int bm = slicefits[1]->GetMaximumBin();
+				cs.max = float_err(slicefits[1]->GetBinContent(bm),slicefits[1]->GetBinError(bm));
 				hCathNorm->Draw("Col");
 				slicefits[1]->Draw("Same");
 				OM.printCanvas(sideSubst("Cathodes/Center_%c",s)+(d==X_DIRECTION?"x":"y")+itos(c));
-
+				
 				
 				////////////////////
 				// cathode positioning distributions by energy
 				////////////////////
+				
 				TH2* hCathHitposDat =  (TH2*)WCdat.cathHitpos[s][d][c].h[GV_OPEN];
 				TH2* hCathHitposSim =  (TH2*)WCsim.cathHitpos[s][d][c].h[GV_OPEN];
-				hCathHitposDat->Divide(hCathHitposSim);
+				
+				// cathode event fractions
+				double nDat = hCathHitposDat->Integral();
+				double nSim = hCathHitposSim->Integral();
+				cs.fill_frac = nDat/nSim;
+				OM.qOut.insert("cathseg",cathseg2sm(cs));
+				
+				// determine energy re-binning
+				std::vector<TH1F*> hEnDats = sliceTH2(*hCathHitposDat,Y_DIRECTION);
+				std::vector<TH1F*> hEnSims = sliceTH2(*hCathHitposSim,Y_DIRECTION);
+				std::vector<float> enCounts;
+				for(unsigned int i=0; i<hEnDats.size(); i++)
+					enCounts.push_back(hEnDats[i]->Integral());
+				std::vector<unsigned int> part = equipartition(enCounts, 80);
+				
+				// fit each energy range
 				std::vector<TH1*> hToPlot;
-				std::vector<TH1F*> hEnDat = sliceTH2(*hCathHitposDat,Y_DIRECTION);
-				for(int eb = 1; eb <= hCathHitposDat->GetNbinsY(); eb++) {
-					OM.addObject(hEnDat[eb]);
-					fixNaNs(hEnDat[eb]);
-					hEnDat[eb]->Scale(1.0/(hEnDat[eb]->Integral()*hEnDat[eb]->GetBinWidth(1)));
-					hEnDat[eb]->SetLineColor(eb);
+				for(unsigned int i = 0; i < part.size()-1; i++) {
+					// accumulate over energy range
+					TH1F* hEnDat = hEnDats[part[i]];
+					TH1F* hEnSim = hEnSims[part[i]];
+					float eavg = hEnDat->Integral()*hCathHitposDat->GetYaxis()->GetBinCenter(part[i]+1);
+					for(unsigned int j=part[i]+1; j<part[i+1]; j++) {
+						hEnDat->Add(hEnDats[j]);
+						hEnSim->Add(hEnSims[j]);
+						eavg += hEnDats[j]->Integral()*hCathHitposDat->GetYaxis()->GetBinCenter(j+1);
+						delete(hEnDats[j]);
+						delete(hEnSims[j]);
+					}
+					eavg /= hEnDat->Integral();
+					//printf("Accumulating %u-%u (%.1fkeV) of %i\n",part[i],part[i+1],eavg,(int)hEnDats.size());
+					//hEnDat->Rebin();
+					//hEnSim->Rebin();
+					hEnSim->Scale(hEnDat->Integral()/hEnSim->Integral());
+					hEnDat->Divide(hEnSim);
+					fixNaNs(hEnDat);
+					hEnDat->SetLineColor(i+1);
+					OM.addObject(hEnDat);
+					OM.addObject(hEnSim);
 					
+					// fourier components fit
 					if(c==1)
 						fFourier.SetRange(-0.1,0.5);
 					else if(c==kMaxCathodes-2)
@@ -561,12 +630,13 @@ void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsi
 					for(unsigned int n=1; n<=2*nterms; n++)
 						fFourier.SetParameter(n,0.);
 					fFourier.FixParameter(3,0.);
-					fFourier.SetLineColor(eb);
-					hEnDat[eb]->Fit(&fFourier,"QR");
-					hEnDat[eb]->SetMinimum(0);
-					hEnDat[eb]->SetMaximum(1.5);
-					hToPlot.push_back(hEnDat[eb]);
+					fFourier.SetLineColor(i+1);
+					hEnDat->Fit(&fFourier,"QR");
+					hEnDat->SetMinimum(0);
+					hEnDat->SetMaximum(1.5);
+					hToPlot.push_back(hEnDat);
 					
+					// record results
 					std::vector<double> terms;
 					std::vector<double> dterms;
 					double c0 = fFourier.GetParameter(0);
@@ -578,9 +648,12 @@ void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsi
 					ff.insert("side",sideSubst("%c",s));
 					ff.insert("plane",d==X_DIRECTION?"x":"y");
 					ff.insert("cathode",c);
-					ff.insert("energy",hCathHitposDat->GetYaxis()->GetBinCenter(eb));
+					ff.insert("elo",hCathHitposDat->GetYaxis()->GetBinLowEdge(part[i]+1));
+					ff.insert("ehi",hCathHitposDat->GetYaxis()->GetBinUpEdge(part[i+1]));
+					ff.insert("eavg",eavg);
 					ff.insert("terms",vtos(terms));
 					ff.insert("dterms",vtos(dterms));
+					//ff.display();
 					OM.qOut.insert("hitdist",ff);
 				}
 				drawSimulHistos(hToPlot);

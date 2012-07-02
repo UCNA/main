@@ -83,7 +83,7 @@ public:
 	/// get RunInfo for given run
 	RunInfo getRunInfo(RunNum r);
 	/// get a list of run numbers matching the given conditions
-	std::vector<RunNum> findRuns(const char* whereConditions);
+	std::vector<RunNum> findRuns(const std::string& whereConditions, RunNum r0, RunNum r1);
 	
 	/// get name
 	virtual std::string getName() const { return getDBName(); }

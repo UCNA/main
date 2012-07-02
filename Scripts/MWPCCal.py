@@ -16,14 +16,22 @@ class wireSpec:
 class cathseg(KVMap):
 	def __init__(self,m=KVMap()):
 		self.dat = m.dat
-		self.loadFloats(["center","d_center","height","d_height","width","d_width","i","position"])
+		self.loadFloats(["center","d_center","height","d_height","width","d_width","i","position","max","d_max","fill_frac"])
 		self.i = int(self.i)
 		self.loadStrings(["side","plane"])
+	def __eval__(self,x):
+		return self.height*exp(-(x-self.center)**2/(2*self.width**2))
+	def deriv(self,x):
+		return -self(x)*x/self.width**2
+	def expansionFactor(self,x0,x1):
+		return exp(-(x0**2-x1**2)/(2*self.width**2))
+	def renorm(self):
+		return self.expansionFactor(0.5,0.5/self.fill_frac)
 
 class hitdist(KVMap):
 	def __init__(self,m=KVMap()):
 		self.dat = m.dat
-		self.loadFloats(["cathode","energy"])
+		self.loadFloats(["cathode","ehi","elo","eavg"])
 		self.cathode = int(self.cathode)
 		self.loadStrings(["side","plane"])
 		self.terms = [float(x) for x in self.getFirst("terms","").split(",")]
@@ -40,6 +48,10 @@ class CathFile(QFile):
 		for m in self.dat.get("hitdist",[]):
 			h = hitdist(m)
 			self.hitdists.setdefault((h.side,h.plane,h.cathode),[]).append(h)
+		self.cnorms = {}
+		for s in ["E","W"]:
+			for d in ["x","y"]:
+				self.cnorms[(s,d)] = [float(x) for x in self.getItem("runcal","cnorm_"+s+d).split(",")]
 		
 						  
 ###############
@@ -96,25 +108,32 @@ def getWires(rn,s,d):
 	wireSpacing = 4*2.54*sqrt(0.6)
 	#								0    1    2    3    4    5    6    7    8    9    10   11   12   13   14   15
 	padc_nums = {
-					("East","X"): ( 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231 ),
-					("East","Y"): ( 20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  210, 211, 212, 213, 214, 215 ),
-					("West","X"): ( 31,  30,  29,  28,  27,  26,  25,  24,  23,  22,  21,  20,  19,  18,  17,  16 ),
-					("West","Y"): ( 0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15 ) }
+					("East","X"): ( 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216 ),
+					("East","Y"): ( 215, 214, 213, 212, 211, 210, 29,  28,  27,  26,  25,  24,  23,  22,  21,  20  ),
+					("West","X"): ( 16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31  ),
+					("West","Y"): ( 15,  14,  13,  12,  11,  10,  9,   8,   7,   6,   5,   4,   3,   2,   1,   0 ) }
 	wires = []
 	for i in range(nWires):
-		pos = (nWires*0.5-0.5-i)*wireSpacing
+		pos = (-nWires*0.5+0.5+i)*wireSpacing
 		nm = "Pdc%i"%padc_nums[(s,d)][i]
 		if s=="West":
 			nm = "Padc%i"%padc_nums[(s,d)][i]
 		wires.append(wireSpec(pos,nm,i))
 	return wires
 
+
+###############
+# cathode calibrations
+###############
+
 def gen_cathcal_set(conn,r0,r1,cr0,cr1):
 	"""Plain cathcal set with no shape corrections"""
 	
 	basepath = os.environ["UCNA_ANA_PLOTS"]+"/WirechamberCal/%i-%i"%(cr0,cr1)
-	corrcurves = PlotCathShapes(basepath)
 	cathnorms = PlotCathNorm(basepath)
+	corrcurves = PlotCathShapes(basepath)
+	
+	#return
 	
 	for ccsid in find_cathcal_sets(conn,r0,r1):
 		delete_cathcal_set(conn,ccsid)
@@ -146,13 +165,13 @@ def PlotCathShapes(basepath):
 	
 	for k in caths:
 		print k
-		gdat = [ [h.energy,]+h.terms[1:]+h.dterms[1:] for h in CF.hitdists[k]]
+		gdat = [ [h.eavg,]+h.terms[1:]+h.dterms[1:]+[h,] for h in CF.hitdists[k]]
 		gdat.sort()
 		nterms = (len(gdat[0])-1)/2
 		tcols = rainbow(nterms)
 						  
 		gHitDist=graph.graphxy(width=15,height=10,
-						x=graph.axis.lin(title="Scintillator Visible Energy [keV]",min=0,max=800),
+						x=graph.axis.lin(title="Scintillator Visible Energy [keV]",min=0,max=1000),
 						y=graph.axis.lin(title="%s%s-%i Distortion Coeffiecient"%k,min=-0.2,max=0.2),
 						key = graph.key.key(pos="bc",columns=3))
 		setTexrunner(gHitDist)
@@ -160,13 +179,19 @@ def PlotCathShapes(basepath):
 		corrcurves[k] = []
 		for n in range(nterms):
 			tdat = [(g[0],0,g[n+1],g[nterms+n+1]) for g in gdat]
-			corrcurves[k].append(tdat)
+			# intermediate points
+			zdat = [(gdat[0][-1].elo,0,tdat[0][2],0),tdat[0]]
+			for i in range(len(tdat))[:-1]:
+				zdat += [(gdat[i][-1].ehi,0,0.5*(tdat[i][2]+tdat[i+1][2]),0),tdat[i+1]]
+			zdat += [(gdat[-1][-1].ehi,0,tdat[-1][2],0)]
+			corrcurves[k].append(zdat)
 			gtitle = "$\\sin(%i\\pi x)$"%(2*(n/2+1))
 			if n%2:
 				gtitle = "$\\cos(%i\\pi x)$"%(2*(n/2+1))
-			gHitDist.plot(graph.data.points(tdat,x=1,y=3,dy=4,title=gtitle),
-					 [graph.style.line(lineattrs=lstyles[n/2]+lwidths[n%2]+lcols[n%2]),
-					  graph.style.errorbar(errorbarattrs=lcols[n%2])])
+			gHitDist.plot(graph.data.points(tdat,x=1,y=3,dy=4,title=None),
+						  [graph.style.errorbar(errorbarattrs=lcols[n%2])])
+			gHitDist.plot(graph.data.points(zdat,x=1,y=3,dy=4,title=gtitle),
+						  [graph.style.line(lineattrs=lstyles[n/2]+lwidths[n%2]+lcols[n%2])])
 		try:
 			gHitDist.writetofile(basepath+"/HitDist_%s%s_%i.pdf"%k)
 		except:
@@ -179,7 +204,7 @@ def PlotCathShapes(basepath):
 		for d in ['x','y']:
 						
 			gAvgDist=graph.graphxy(width=15,height=10,
-								   x=graph.axis.lin(title="Scintillator Visible Energy [keV]",min=0,max=800),
+								   x=graph.axis.lin(title="Scintillator Visible Energy [keV]",min=0,max=1000),
 								   y=graph.axis.lin(title="%s%s Average Coefficient"%(s,d),min=-0.2,max=0.2),
 								   key = graph.key.key(pos="bc",columns=nterms/2))
 			setTexrunner(gAvgDist)
@@ -191,8 +216,8 @@ def PlotCathShapes(basepath):
 				for ne in range(len(corrcurves[(s,d,8)][nt])):
 					e = corrcurves[(s,d,8)][0][ne][0]
 					(mu,sg) = musigma([corrcurves[(s,d,i)][nt][ne][2] for i in range(16)[2:14]])
-					avgcurves[(s,d)][-1].append([e,0,mu,sg])
-				cavg[(s,d)].append(musigma([g[2] for g in avgcurves[(s,d)][-1]])[0])			
+					avgcurves[(s,d)][-1].append([e,0,mu,sg*(ne%2)])
+				cavg[(s,d)].append(musigma([g[2] for g in avgcurves[(s,d)][-1]])[0])
 				gtitle = "$\\sin(%i\\pi x)$"%(2*(nt/2+1))
 				if nt%2:
 					gtitle = "$\\cos(%i\\pi x)$"%(2*(nt/2+1))
@@ -226,9 +251,16 @@ def PlotCathNorm(basepath):
 	gCNorm=graph.graphxy(width=15,height=10,
 						   x=graph.axis.lin(title="cathode number",min=0,max=15,
 											parter=graph.axis.parter.linear(tickdists=[5,1])),
-						   y=graph.axis.lin(title="max normalized signal",min=0,max=4),
+						   y=graph.axis.lin(title="normalization factor",min=0.8,max=1.2),
 						   key = graph.key.key(pos="bc",columns=2))
 	setTexrunner(gCNorm)
+	
+	gFill=graph.graphxy(width=15,height=10,
+						 x=graph.axis.lin(title="cathode number",min=0,max=15,
+										  parter=graph.axis.parter.linear(tickdists=[5,1])),
+						 y=graph.axis.lin(title="fill fraction",min=0.75,max=1.25),
+						 key = graph.key.key(pos="bc",columns=2))
+	setTexrunner(gFill)
 	
 	lstyles = {"x":[],"y":[style.linestyle.dashed]}
 	lcols = {"E":[rgb.red],"W":[rgb.blue]}
@@ -236,23 +268,35 @@ def PlotCathNorm(basepath):
 	
 	for s in ["E","W"]:
 		for d in ["x","y"]:
+			print "-----------",s,d,"------------"
 			gdat = [ CF.cathsegs[k] for k in caths if k[0]==s and k[1]==d ]
-			gdat = [ (g.i,g.height,g.d_height) for g in gdat ]
+			gdat = [ (g.i,g.renorm()*CF.cnorms[(s,d)][g.i],g.fill_frac,g) for g in gdat ]
 			gdat.sort()
 			gdat = gdat[1:-1]
-			gtitle = "%s%s"%(s,d)
-			gCNorm.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=gtitle),
-			  [graph.style.line(lineattrs=lstyles[d]+lcols[s]),
-			   graph.style.symbol(ssymbs[s],symbolattrs=lcols[s]),
-			   graph.style.errorbar(errorbarattrs=lcols[s])])
-			
 			gnorm = sum([g[1] for g in gdat])/len(gdat)
 			for g in gdat:
-				cathnorms[(s,d,g[0])] = gnorm/g[1]
-			cathnorms[(s,d,0)]=cathnorms[(s,d,1)]
-			cathnorms[(s,d,15)]=cathnorms[(s,d,14)]
-						
+				print s,d,g[0],g[1],g[-1].fill_frac,g[-1].renorm(),g[-1].width
+			gdat = [ (g[0],g[1]/gnorm,g[2]) for g in gdat ]
+			gtitle = "%s%s"%(s,d)
+			gCNorm.plot(graph.data.points(gdat,x=1,y=2,title=gtitle),
+			  [graph.style.line(lineattrs=lstyles[d]+lcols[s]),
+			   graph.style.symbol(ssymbs[s],symbolattrs=lcols[s])])
+			gFill.plot(graph.data.points(gdat,x=1,y=3,title=gtitle),
+						[graph.style.line(lineattrs=lstyles[d]+lcols[s]),
+						 graph.style.symbol(ssymbs[s],symbolattrs=lcols[s])])
+			
+			for g in gdat:
+				cathnorms[(s,d,g[0])] = g[1]
+			#cathnorms[(s,d,0)]=cathnorms[(s,d,1)]
+			#cathnorms[(s,d,15)]=cathnorms[(s,d,14)]
+			cathnorms[(s,d,0)] = 0.85
+			cathnorms[(s,d,15)] = 0.85
+	
+	cathnorms[("W","x",1)] = 0.9
+	cathnorms[("E","x",14)] = 0.9
+				
 	gCNorm.writetofile(basepath+"/CathNorm.pdf")
+	gFill.writetofile(basepath+"/CathFill.pdf")
 	return cathnorms
 		
 

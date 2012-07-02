@@ -66,11 +66,14 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 		hSideRate[s][0]->SetLineColor(1+2*s);
 		hSideRate[s][0]->GetXaxis()->SetTitle("Time [s]");
 		
-		hHitPos[s] = registeredTH2F(sideSubst("HitPos_%c",s),sideSubst("%s Beta Hits Positions",s),400,-65,65,400,-65,65);
+		hHitPos[s] = registeredTH2F(sideSubst("HitPos_%c",s),sideSubst("%s Hit Positions",s),400,-65,65,400,-65,65);
+		hHitPos[s]->GetXaxis()->SetTitle("x position [mm]");
+		hHitPos[s]->GetYaxis()->SetTitle("y position [mm]");
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			hHitsProfile[s][d] = registeredTH1F(sideSubst("HitPos_%c",s)+(d==X_DIRECTION?"x":"y"),
 												std::string(d==X_DIRECTION?"x":"y")+" Hit Positions",200,-65,65);
 			hHitsProfile[s][d]->SetLineColor(2+2*s);
+			hHitsProfile[s][d]->GetXaxis()->SetTitle((std::string(d==X_DIRECTION?"x":"y")+" position [mm]").c_str());
 		}
 		
 		// trigger efficiency, pulser spectrum

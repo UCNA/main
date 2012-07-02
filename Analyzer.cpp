@@ -19,30 +19,26 @@
 #include "NuclEvtGen.hh"
 
 std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
-	char tmp[1024];
 	if(typeSelect=="ref") {
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'SourceCalib' ORDER BY run_number ASC",r0,r1);
-		std::vector<RunNum> sruns = CalDBSQL::getCDB()->findRuns(tmp);
+		std::vector<RunNum> sruns = CalDBSQL::getCDB()->findRuns("run_type = 'SourceCalib'",r0,r1);
 		std::vector<RunNum> rruns;
 		for(std::vector<RunNum>::iterator it = sruns.begin(); it != sruns.end(); it++)
 			if(CalDBSQL::getCDB()->getGMSRun(*it) == *it)
 				rruns.push_back(*it);
 		return rruns;
 	} else if(typeSelect=="all")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i ORDER BY run_number ASC",r0,r1);
+		return CalDBSQL::getCDB()->findRuns("",r0,r1);
 	else if(typeSelect=="asym")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'Asymmetry' ORDER BY run_number ASC",r0,r1);
+		return CalDBSQL::getCDB()->findRuns("run_type = 'Asymmetry'",r0,r1);
 	else if(typeSelect=="LED")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'LEDCalib' ORDER BY run_number ASC",r0,r1);
+		return CalDBSQL::getCDB()->findRuns("run_type = 'LEDCalib'",r0,r1);
 	else if(typeSelect=="source")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'SourceCalib' ORDER BY run_number ASC",r0,r1);
+		return CalDBSQL::getCDB()->findRuns("run_type = 'SourceCalib'",r0,r1);
 	else if(typeSelect=="beta")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'Asymmetry' AND gate_valve = 'Open' ORDER BY run_number ASC",r0,r1);
+		return CalDBSQL::getCDB()->findRuns("run_type = 'Asymmetry' AND gate_valve = 'Open'",r0,r1);
 	else if(typeSelect=="bg")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'Asymmetry' AND gate_valve = 'Closed' ORDER BY run_number ASC",r0,r1);
-	else
-		sprintf(tmp,"0 = 1");
-	return CalDBSQL::getCDB()->findRuns(tmp);
+		return CalDBSQL::getCDB()->findRuns("run_type = 'Asymmetry' AND gate_valve = 'Closed'",r0,r1);
+	return CalDBSQL::getCDB()->findRuns("0 = 1",r0,r1);
 }
 
 void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -58,6 +54,13 @@ void mi_EndpointStudySim(std::deque<std::string>&, std::stack<std::string>& stac
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
 	simulate_xenon(r0,r1,rsingle,nRings);
+}
+
+void mi_EndpointStudyReSim(std::deque<std::string>&, std::stack<std::string>& stack) {
+	unsigned int nRings = streamInteractor::popInt(stack);
+	RunNum r1 = streamInteractor::popInt(stack);
+	RunNum r0 = streamInteractor::popInt(stack);
+	xenon_posmap(r0,r1,nRings);
 }
 
 void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -247,6 +250,10 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	pm_posmap_sim.addArg("End Run");
 	pm_posmap_sim.addArg("Single Run","0");
 	pm_posmap_sim.addArg("n Rings","12");
+	inputRequester pm_posmap_resim("Reupload Position Map",&mi_EndpointStudyReSim);
+	pm_posmap_resim.addArg("Start Run");
+	pm_posmap_resim.addArg("End Run");
+	pm_posmap_resim.addArg("n Rings","12");
 	inputRequester posmapLister("List Posmaps",&mi_listPosmaps);
 	inputRequester posmapPlot("Plot Position Map",&mi_PosmapPlot);
 	posmapPlot.addArg("Posmap ID");
@@ -259,6 +266,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OptionsMenu PMapR("Position Map Routines");
 	PMapR.addChoice(&pm_posmap,"gen");
 	PMapR.addChoice(&pm_posmap_sim,"sim");
+	PMapR.addChoice(&pm_posmap_resim,"rup");
 	PMapR.addChoice(&posmapLister,"ls");
 	PMapR.addChoice(&posmapPlot,"plot");
 	PMapR.addChoice(&posmapDumper,"dump");

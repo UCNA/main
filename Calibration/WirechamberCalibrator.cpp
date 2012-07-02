@@ -72,7 +72,7 @@ void WirechamberCalibrator::printSummary() {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			printf("%s-%s ",sideWords(s),d==X_DIRECTION?"x":"y");
 			for(unsigned int i=0; i<cathsegs[s][d].size(); i++)
-				printf("[%.2f,%i]",cathsegs[s][d][i]->norm,(int)cathsegs[s][d][i]->pcoeffs.size());
+				printf("[%+.1f,%i]",(cathsegs[s][d][i]->norm-1)*100,(int)cathsegs[s][d][i]->pcoeffs.size());
 			printf("\n");
 		}
 	}
@@ -95,6 +95,20 @@ float WirechamberCalibrator::fromLocal(Side s, AxisDirection d, unsigned int n, 
 float WirechamberCalibrator::getCathNorm(Side s, AxisDirection d, unsigned int c) const {
 	assert(s<=WEST && d<=Y_DIRECTION && c<cathsegs[s][d].size());
 	return cathsegs[s][d][c]->norm;
+}
+
+Stringmap WirechamberCalibrator::wirecalSummary() const {
+	Stringmap m;
+	for(Side s = EAST; s <= WEST; ++s) {
+		m.insert(sideSubst("anodegain_%c",s),anodeGainCorr[s]);
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+			std::string pname = sideSubst("%c",s)+(d==X_DIRECTION?"x":"y");
+			std::vector<double> cnorm;
+			for(unsigned int c = 0; c < cathsegs[s][d].size(); c++) cnorm.push_back(cathsegs[s][d][c]->norm);
+			m.insert("cnorm_"+pname,vtos(cnorm));
+		}
+	}
+	return m;
 }
 
 wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,

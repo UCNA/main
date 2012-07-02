@@ -331,7 +331,7 @@ std::vector<TH2F*> sliceTH3(const TH3& h3) {
 	return h2s;
 }
 
-std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d) {
+std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d, bool includeOverflow) {
 	assert(d==X_DIRECTION || d==Y_DIRECTION);
 	std::vector<TH1F*> h1s;
 	const unsigned int nx = h2.GetNbinsX();
@@ -341,6 +341,7 @@ std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d) {
 	const unsigned int nn = d==X_DIRECTION?ny:nx;
 	
 	for(unsigned int z = 0; z <= nz+1; z++) {
+		if(!includeOverflow && (z==0 || z==nz+1)) continue;
 		TH1F* h1 = new TH1F((std::string(h2.GetName())+"_"+itos(z)).c_str(),
 							h2.GetTitle(),
 							nx,
@@ -360,4 +361,20 @@ std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d) {
 		h1s.push_back(h1);
 	}
 	return h1s;	
+}
+
+std::vector<unsigned int> equipartition(const std::vector<float>& elems, unsigned int n) {
+	std::vector<float> cumlist;
+	for(unsigned int i=0; i<elems.size(); i++)
+		cumlist.push_back(i?cumlist[i-1]+elems[i]:elems[i]);
+	
+	std::vector<unsigned int> part;
+	part.push_back(0);
+	for(unsigned int i=1; i<n; i++) {
+		double x0 = cumlist.back()*float(i)/float(n);
+		unsigned int p = (unsigned int)(std::upper_bound(cumlist.begin(),cumlist.end(),x0)-cumlist.begin()-1);
+		if(p != part.back()) part.push_back(p);
+	}
+	part.push_back(elems.size());
+	return part;
 }
