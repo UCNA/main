@@ -65,4 +65,7 @@ void decomposeXenon(RunNum rn, bool includeFast = false);
 /// Run-to-run gain fluctuations error
 void gainfluctsTable(double delta, const std::string& datset = "OctetAsym_Offic");
 
+/// Run-to-run pedestal shifts error
+void pedShiftsTable(double delta, const std::string& datset = "OctetAsym_Offic");
+
 #endif

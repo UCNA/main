@@ -15,6 +15,7 @@ def PlotCorrections():
 	
 	clist = {"Linearity":"EnergyLinearityUncertainty_2010.txt",
 			"Gain Flucts":"GainFlucts.txt",
+			"Ped Shifts":"PedShifts.txt",
 			"Recoil Order":"RecoilOrder.txt",
 			"Radiative":"Radiative_h-g.txt"}
 	cxns = dict([(k,CorrFile(baseCorrPath+clist[k])) for k in clist])

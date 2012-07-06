@@ -185,7 +185,11 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
-	processWirechamberCal(14282,14347,20);
+	gainfluctsTable(0.000125);
+	pedShiftsTable(0.015);
+	return;
+	
+	processWirechamberCal(14264,16077,20);
 	return;
 	
 	//decomposeXenon(15991,true);
