@@ -16,6 +16,7 @@
 #include "BetaSpectrum.hh"
 #include "LinHistCombo.hh"
 #include "PostOfficialAnalyzer.hh"
+#include "AsymmetryAnalyzer.hh"
 #include <TColor.h>
 
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
@@ -500,4 +501,40 @@ void decomposeXenon(RunNum rn, bool includeFast) {
 	
 	OM.write();
 	//OM.setWriteRoot(true);
+}
+
+//-------------------------------------------------------------//
+
+void gainfluctsTable(double delta, const std::string& datset) {
+	// load spectrum data
+	OutputManager OM("nameUnused",getEnvSafe("UCNA_ANA_PLOTS"));
+	AsymmetryAnalyzer Adat(&OM, "nameUnused", getEnvSafe("UCNA_ANA_PLOTS")+"/"+datset+"/"+datset);
+	Adat.calculateResults();
+	
+	TGraphErrors* S[2][2];
+	for(Side s = EAST; s <= WEST; ++s)
+		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
+			S[s][afp] = TH1toTGraph(*Adat.qTotalSpectrum[s].fgbg[afp].h[GV_OPEN]);
+	
+	// write uncertainty file
+	FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/GainFlucts.txt").c_str(),"w");
+	fprintf(f,"# Run-to-run gain fluctuations uncertainsty for anticorrelated delta = %g\n",delta);
+	fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
+	for(unsigned int b=0; b<800; b+=10) {
+		double e = b+5.;
+		double R = (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e) / 
+					(S[EAST][AFP_ON]->Eval(e)*S[WEST][AFP_OFF]->Eval(e)));
+		double Rp = (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e*(1-delta)) / 
+					 (S[EAST][AFP_ON]->Eval(e*(1+delta))*S[WEST][AFP_OFF]->Eval(e)));
+		double A = (1-sqrt(R))/(1+sqrt(R));
+		double Ap = (1-sqrt(Rp))/(1+sqrt(Rp));
+		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,0.,(A-Ap)/A);
+	}
+	fclose(f);
+	
+	// cleanup
+	for(Side s = EAST; s <= WEST; ++s)
+		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
+			delete S[s][afp];
+	
 }

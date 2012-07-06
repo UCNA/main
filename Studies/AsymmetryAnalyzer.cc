@@ -160,7 +160,6 @@ double integralError(const TH1* h, int b0, int b1) {
 
 void AsymmetryAnalyzer::calculateResults() {
 	// build total spectra based on analysis choice
-	quadHists qTotalSpectrum[2];
 	AnaResult ARtot = getResultBase();
 	for(Side s = EAST; s <= WEST; ++s) {
 		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents", "All Events Energy");

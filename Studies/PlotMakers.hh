@@ -61,4 +61,8 @@ void compareXenonSpectra();
 /// Decompose xenon spectrum for given run number
 void decomposeXenon(RunNum rn, bool includeFast = false);
 
+
+/// Run-to-run gain fluctuations error
+void gainfluctsTable(double delta, const std::string& datset = "OctetAsym_Offic");
+
 #endif

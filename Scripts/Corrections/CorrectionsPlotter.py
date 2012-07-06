@@ -13,7 +13,10 @@ baseCorrPath = "../../Aux/Corrections/"
 
 def PlotCorrections():
 	
-	clist = {"Linearity":"EnergyLinearityUncertainty_2010.txt"}
+	clist = {"Linearity":"EnergyLinearityUncertainty_2010.txt",
+			"Gain Flucts":"GainFlucts.txt",
+			"Recoil Order":"RecoilOrder.txt",
+			"Radiative":"Radiative_h-g.txt"}
 	cxns = dict([(k,CorrFile(baseCorrPath+clist[k])) for k in clist])
 	
 	gCx=graph.graphxy(width=20,height=12,
@@ -24,7 +27,7 @@ def PlotCorrections():
 
 	cxcols = rainbowDict(cxns)
 	for cx in cxns:
-		gdat = [ [0.5*(d[0]+d[1]),100*d[2],100*d[3]] for d in cxns[cx].dat]
+		gdat = [ [0.5*(d[0]+d[1]),100*d[2],abs(100*d[3])] for d in cxns[cx].dat]
 		gCx.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=cx),
 				[graph.style.symbol(symbol.circle,size=0.1,symbolattrs=[cxcols[cx]]),
 				graph.style.errorbar(errorbarattrs=[cxcols[cx]])])
