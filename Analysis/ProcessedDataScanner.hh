@@ -48,6 +48,7 @@ public:
 	PID fPID;					//< analysis particle ID
 	EventType fType;			//< analysis event type
 	Side fSide;					//< analysis event side
+	UInt_t fTaggedBack[2];		//< whether event was tagged by the muon backing veto on each side
 	double physicsWeight;		//< event spectrum re-weighting factor
 	
 	AnalysisChoice anChoice;	//< which analysis choice to use in identifying event types

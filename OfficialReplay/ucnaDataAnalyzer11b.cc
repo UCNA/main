@@ -37,6 +37,7 @@ void ucnaDataAnalyzer11b::analyze() {
 	printf("Done.\n");
 	
 	processBiPulser();
+	muonVetoAccidentals();
 	calcTrigEffic();
 	tallyRunTime();
 	locateSourcePositions();

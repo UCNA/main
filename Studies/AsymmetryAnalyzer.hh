@@ -2,10 +2,11 @@
 #define ASYMMETRYANALYZER_HH 1
 
 #include "OctetAnalyzer.hh"
+#include "MuonAnalyzer.hh"
 #include "AnalysisDB.hh"
 
 /// primary octet data analysis class
-class AsymmetryAnalyzer: public OctetAnalyzer {
+class AsymmetryAnalyzer: public MuonAnalyzer {
 public:
 	/// constructor
 	AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname = "");
@@ -35,7 +36,6 @@ public:
 	TH1F* hEvtSS[TYPE_III_EVENT];	//< super-sum for each event type
 	
 	quadHists qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
-	quadHists qMuonSpectra[2][2];								//< muon-veto event energy for [side][subtracted]
 	quadHists qPositions[2][TYPE_III_EVENT+1];					//< event positions quad hists for [side][type]
 	quadHists qAnodeCal[2];										//< anode calibration spectrum (Type 0, Erecon>225)
 	
@@ -63,7 +63,6 @@ protected:
 	static AnalysisChoice anChoice;	//< asymmetry analysis choice
 	
 	TH1F* hEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];		//< energy spectra write point for [side][tube][event type]
-	TH1F* hMuonSpectra[2][2];									//< muon spectra write point for [side][subtracted]
 	TH2F* hPositions[2][TYPE_III_EVENT+1];			//< event positions write point for [side][type]
 	TH1F* hAnodeCal[2];								//< anode cal write point
 };

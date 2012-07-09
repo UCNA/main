@@ -40,6 +40,8 @@ public:
 	/// check if this is equivalent layout to another SegmentSaver
 	virtual bool isEquivalent(const SegmentSaver& S) const;
 	
+	bool ignoreMissingHistos;	//< whether to quietly ignore missing histograms in input file
+	
 	// ----- Subclass me! ----- //
 	
 	/// create a new instance of this object (cloning self settings) for given directory
@@ -50,6 +52,9 @@ public:
 	virtual void calculateResults() {}
 	
 protected:
+	
+	/// attempt to load histogram from input file
+	TH1* tryLoad(const std::string& hname);
 	
 	std::map<std::string,TH1*> saveHists;		//< saved histograms
 	TFile* fIn;									//< input file to read in histograms from

@@ -43,6 +43,7 @@ SP(NULL), reSimulate(true), fakeClip(false), nSimmed(0), nCounted(0), mwpcAccide
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 			for(unsigned int c = 0; c < kMaxCathodes; c++)
 				cathodes[s][d][c] = 0;
+		fTaggedBack[s] = false;
 	}
 	totalTime = BlindTime(1.0);
 	fPID = PID_BETA;	// only simulating beta events

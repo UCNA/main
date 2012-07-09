@@ -3,19 +3,29 @@
 #include "PathUtils.hh"
 #include "SMExcept.hh"
 
-TH1* SegmentSaver::registerSavedHist(const std::string& hname, const std::string& title,unsigned int nbins, float xmin, float xmax) {
-	assert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
-	TH1* h;
-	if(fIn) {
-		fIn->GetObject(hname.c_str(),h);
-		if(!h) {
+TH1* SegmentSaver::tryLoad(const std::string& hname) {
+	if(!fIn) return NULL;
+	TH1* h = NULL;
+	fIn->GetObject(hname.c_str(),h);
+	if(!h) {
+		if(ignoreMissingHistos) {
+			printf("Warning: missing histogram '%s' in '%s'\n",hname.c_str(),inflname.c_str());
+		} else {
 			SMExcept e("fileStructureMismatch");
 			e.insert("fileName",inflname);
 			e.insert("objectName",hname);
 			throw(e);
 		}
+	} else {
 		addObject(h);
-	} else
+	}
+	return h;
+}
+
+TH1* SegmentSaver::registerSavedHist(const std::string& hname, const std::string& title,unsigned int nbins, float xmin, float xmax) {
+	assert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
+	TH1* h = tryLoad(hname);
+	if(!h)
 		h = registeredTH1F(hname,title,nbins,xmin,xmax);
 	saveHists.insert(std::make_pair(hname,h));
 	return h;
@@ -23,17 +33,8 @@ TH1* SegmentSaver::registerSavedHist(const std::string& hname, const std::string
 
 TH1* SegmentSaver::registerSavedHist(const std::string& hname, const TH1& hTemplate) {
 	assert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
-	TH1* h;
-	if(fIn) {
-		fIn->GetObject(hname.c_str(),h);
-		if(!h) {
-			SMExcept e("fileStructureMismatch");
-			e.insert("fileName",inflname);
-			e.insert("objectName",hname);
-			throw(e);
-		}
-		addObject(h);
-	} else {
+	TH1* h = tryLoad(hname);
+	if(!h) {
 		h = (TH1*)addObject(hTemplate.Clone(hname.c_str()));
 		h->Reset();
 	}
@@ -42,7 +43,7 @@ TH1* SegmentSaver::registerSavedHist(const std::string& hname, const TH1& hTempl
 }
 
 SegmentSaver::SegmentSaver(OutputManager* pnt, const std::string& nm, const std::string& inflName):
-OutputManager(nm,pnt), inflname(inflName), inflAge(0) {		
+OutputManager(nm,pnt), ignoreMissingHistos(false), inflname(inflName), inflAge(0) {		
 	// open file to load existing data
 	fIn = (inflname.size())?(new TFile((inflname+".root").c_str(),"READ")):NULL;
 	assert(!fIn || !fIn->IsZombie());

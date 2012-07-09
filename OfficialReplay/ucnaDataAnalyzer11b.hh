@@ -226,6 +226,8 @@ protected:
 	void calcTrigEffic();
 	/// Bi pulser gain stabilizer
 	void processBiPulser();
+	/// estimate muon veto accidentals rates
+	void muonVetoAccidentals();
 	/// tally total run time
 	void tallyRunTime();
 	/// output replay summary info, optionally into AnalysisDB

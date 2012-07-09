@@ -39,5 +39,8 @@ void PostOfficialAnalyzer::setReadpoints() {
 		Tch->SetBranchAddress(sideSubst("Anode%c",s).c_str(),&mwpcs[s].anode);
 		Tch->SetBranchAddress(sideSubst("CathSum%c",s).c_str(),&mwpcs[s].cathodeSum);
 		Tch->SetBranchAddress(sideSubst("EMWPC_%c",s).c_str(),&mwpcEnergy[s]);
+		
+		/// muon tags
+		Tch->SetBranchAddress(sideSubst("TaggedBack%c",s).c_str(),&fTaggedBack[s]);
 	}
 }

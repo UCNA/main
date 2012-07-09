@@ -15,13 +15,9 @@ TF1 AsymmetryAnalyzer::asymmetryFit = TF1("asymFit",&asymmetryFitFunc,0,neutronB
 TF1 AsymmetryAnalyzer::averagerFit = TF1("averagerFir","pol0",0,neutronBetaEp);
 AnalysisChoice  AsymmetryAnalyzer::anChoice = ANCHOICE_A;
 
-AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname): OctetAnalyzer(pnt,nm,inflname) {
+AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname): MuonAnalyzer(pnt,nm,inflname) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		qAnodeCal[s] = registerCoreHist("AnodeCal","Anode Calibration Events",50, 0, 8, s, &hAnodeCal[s]);
-		qMuonSpectra[s][false] = registerCoreHist("hMuonNoSub", "Tagged Muon Events Energy",150, 0, 1500, s, &hMuonSpectra[s][false]);
-		qMuonSpectra[s][false].setSubtraction(false);
-		qMuonSpectra[s][true] = registerCoreHist("hMuonSpectrum", "Tagged Muon Events Energy",150, 0, 1500, s, &hMuonSpectra[s][true]);
-		
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
 				qEnergySpectra[s][p][t] = registerCoreHist("hEnergy_"+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
@@ -42,12 +38,9 @@ AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, 
 }
 
 void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+	MuonAnalyzer::fillCoreHists(PDS,weight);
 	Side s = PDS.fSide;
 	if(!(s==EAST || s==WEST)) return;
-	if(PDS.fPID == PID_MUON && PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT) {
-		hMuonSpectra[s][false]->Fill(PDS.getEtrue(),weight); 
-		hMuonSpectra[s][true]->Fill(PDS.getEtrue(),weight); 
-	}
 	if(PDS.fPID != PID_BETA) return;
 	if(PDS.passesPositionCut(s) && PDS.fType == TYPE_0_EVENT && PDS.getEtrue()>225)
 		hAnodeCal[s]->Fill(PDS.mwpcEnergy[s]/PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock.t[BOTH]),weight);
@@ -262,6 +255,8 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 }
 
 void AsymmetryAnalyzer::makePlots() {
+	MuonAnalyzer::makePlots();
+	
 	hAsym->SetMinimum(-0.10);
 	hAsym->SetMaximum(0.0);
 	hAsym->Draw();
@@ -276,9 +271,6 @@ void AsymmetryAnalyzer::makePlots() {
 	printCanvas("SuperSum");
 	
 	drawQuadSides(qAnodeCal[EAST], qAnodeCal[WEST], true, "AnodeCal");
-	
-	drawQuadSides(qMuonSpectra[EAST][true], qMuonSpectra[WEST][true], true, "MuonSpectra");
-	drawQuadSides(qMuonSpectra[EAST][false], qMuonSpectra[WEST][false], true, "MuonSpectra");
 	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++)
 		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][t], qEnergySpectra[WEST][nBetaTubes][t], true, "Energy");

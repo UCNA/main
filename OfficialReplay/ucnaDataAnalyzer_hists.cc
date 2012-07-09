@@ -392,6 +392,29 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	}
 }
 
+void ucnaDataAnalyzer11b::muonVetoAccidentals() {
+	for(Side s = EAST; s <= WEST; ++s) {
+		int b0 = hDriftTAC[s]->FindBin(300);
+		int b1 = hDriftTAC[s]->FindBin(fDrift_tac[s].R.start);
+		int b2 = hDriftTAC[s]->FindBin(fDrift_tac[s].R.end);
+		int b3 = hDriftTAC[s]->FindBin(s==EAST?4000:2900);
+		double nBg = hDriftTAC[s]->Integral(b0,b1)+hDriftTAC[s]->Integral(b2,b3);
+		double tBg = (hDriftTAC[s]->GetBinLowEdge(b1+1) - hDriftTAC[s]->GetBinLowEdge(b0)
+					  + hDriftTAC[s]->GetBinLowEdge(b3+1) - hDriftTAC[s]->GetBinLowEdge(b2));
+		double tCut = hDriftTAC[s]->GetBinLowEdge(b2) - hDriftTAC[s]->GetBinLowEdge(b1+1);
+		double nAcc = nBg*tCut/tBg;
+		double nVetod = hDriftTAC[s]->Integral(b1+1,b2-1);
+		double bgTot = hDriftTAC[s]->Integral()-nVetod+nAcc;
+		Stringmap m;
+		m.insert("side",sideSubst("%c",s));
+		m.insert("bgRate",nBg/tBg);
+		m.insert("tCut",tCut);
+		m.insert("nAcc",nAcc);
+		m.insert("nVeto",nVetod-nAcc);
+		m.insert("accFrac",nAcc/bgTot);
+		qOut.insert("driftTAC_accidentals",m);
+	}
+}
 
 // comparison to sort sources by x position in descending order
 bool sortSourceXPos(Source a, Source b) { return a.x < b.x; }

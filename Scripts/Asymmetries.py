@@ -165,6 +165,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 	gdat = []
 	iadat = []
 	bgRateDat = {'E':{'0':[],'1':[]},'W':{'0':[],'1':[]}}
+	muRateDat = {'E':{'0':[],'1':[]},'W':{'0':[],'1':[]}}
 	kdat = {'E':{'0':[],'1':[]},'W':{'0':[],'1':[]}}
 	kepDelta = {'E':[],'W':[],'C':[]}
 	n=0
@@ -192,6 +193,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 					kdat[s][afp].append([n,k.ep,k.dep]+[af.getKurie(s,afp,"0",t) for t in range(4)])
 					if not 782 < k.ep < 810:
 						print "*** Funny Endpoint",k.ep,k.side,k.afp,"in",af.fname
+				
 				rt = af.getRate(s,afp,'0',"hEnergy_Type_0_%s_%s"%(s,afpNames[afp]))
 				if rt:
 					if not 0.15 < rt.rate < 0.35:
@@ -202,6 +204,15 @@ def plot_octet_asymmetries(basedir,depth=0):
 					bgRateDat[s][afp].append([n,rt.rate,rt.dRate()])
 				else:
 					print "*** Can't find rate for",n,s,afp
+				
+				murt = af.getRate(s,afp,'1',"hMuonNoSub_%s_%s"%(s,afpNames[afp]))
+				if murt:
+					if not 0.5 < murt.rate < 1.0:
+						print "*** Funny muons",murt.rate,murt.side,murt.afp,"in",af.fname
+					muRateDat[s][afp].append([n,murt.rate,murt.dRate()])
+				else:
+					print "*** Can't find muon rate for",n,s,afp
+
 		kepDelta['C'].append([n,0.5*(kepDelta['E'][-1][1]-kepDelta['W'][-1][1]),0.5*addQuad(kepDelta['E'][-1][2],kepDelta['W'][-1][2])])
 		n+=1
 	print
@@ -223,6 +234,11 @@ def plot_octet_asymmetries(basedir,depth=0):
 				key = graph.key.key(pos="bl"))
 	setTexrunner(gBgRate)
 
+	gMuRate=graph.graphxy(width=25,height=8,
+						  x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
+						  y=graph.axis.lin(title="Muon Rate [Hz]"),
+						  key = graph.key.key(pos="bl"))
+	setTexrunner(gMuRate)
 		
 	gdEp=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
@@ -279,7 +295,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 	gIA.writetofile(basedir+"/OctetInstAsym_%i.pdf"%depth)
 
 	##############
-	# endpoint, background plots
+	# endpoint, background, muons plots
 	##############
 	sideCols = {'E':rgb.red,'W':rgb.blue,'C':rgb(0.,0.7,0.)}
 	afpSymbs = {'0':symbol.circle,'1':symbol.triangle}
@@ -312,17 +328,24 @@ def plot_octet_asymmetries(basedir,depth=0):
 				gtitle = s+" Side, AFP=%s: $%.4f$Hz $\\chi^2/\\nu = %.1f/%i$"%(afp,LF.coeffs[0],chi2,ndf)
 				if stats:	
 					gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
-				gBgRate.plot(graph.data.points(bgRateDat[s][afp],x=1,y=2,dy=3,
-								title=gtitle),
+				gBgRate.plot(graph.data.points(bgRateDat[s][afp],x=1,y=2,dy=3,title=gtitle),
 							[graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=[sideCols[s],]),
 							graph.style.errorbar(errorbarattrs=[sideCols[s],])])
 				gBgRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line([sideCols[s],])])
 
+		if s in muRateDat:
+			for afp in muRateDat[s]:
+				if len(muRateDat[s][afp])<2:
+					continue;
+				gMuRate.plot(graph.data.points(muRateDat[s][afp],x=1,y=2,dy=3,title=None),
+							 [graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=[sideCols[s],]),
+							  graph.style.errorbar(errorbarattrs=[sideCols[s],])])
+								 #gMuRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line([sideCols[s],])])
+					 
 	gdEp.writetofile(basedir+"/Octet_dEP_%i.pdf"%depth)
 	gBgRate.writetofile(basedir+"/Octet_BgRate_%i.pdf"%depth)
+	gMuRate.writetofile(basedir+"/Octet_MuRate_%i.pdf"%depth)
 	
-	
-		
 			
 					
 def get_gain_tweak(conn,rn,s,t):
@@ -373,7 +396,7 @@ class MC_Comparator:
 					kdat = 0.5*(self.datAsyms[rns].getKurie(s[0],'0',"0",t).ep+self.datAsyms[rns].getKurie(s[0],'1',"0",t).ep)
 					ksim = 0.5*(self.simAsyms[rns].getKurie(s[0],'0',"0",t).ep+self.simAsyms[rns].getKurie(s[0],'1',"0",t).ep)
 					oldtweak = self.datAsyms[rns].getGMSTweak(s[0],t)
-					gdat.setdefault((s,t),[]).append((n,kdat,ksim,oldtweak))
+					gdat.setdefault((s,t),[]).append([n,kdat,ksim,oldtweak])
 					print "\t%s %i:\t%f\t%f\t%f\tOld: %f"%(s,t,kdat,ksim,ksim/kdat,oldtweak)
 					if conn:
 						delete_gain_tweak(conn,rns[0],s,t)
@@ -393,6 +416,13 @@ class MC_Comparator:
 				key = graph.key.key(pos="tl"))
 			setTexrunner(gTwk)
 			
+			gTwkOct=graph.graphxy(width=25,height=8,
+								  x=graph.axis.lin(title=unitNames[self.depth],min=0,max=len(self.rungrps)-1),
+								  y=graph.axis.lin(title="\\% Gain Tweak"),
+								  key = None) #graph.key.key(pos="tl"))
+			setTexrunner(gTwkOct)
+
+			
 			for t in range(4):
 				LF = LinearFitter(terms=[polyterm(0)])
 				LFsim = LinearFitter(terms=[polyterm(0)])
@@ -402,16 +432,20 @@ class MC_Comparator:
 				gtitle = "%s %i: $\\mu=%.1f$, $\\sigma=%.1f$; $\\mu_{\\rm sim}=%.1f$"%(s,t,LF.coeffs[0],err,LFsim.coeffs[0])
 				gEp.plot(graph.data.points(gdat[(s,t)],x=1,y=2,title=gtitle),[graph.style.symbol(symbol.circle,symbolattrs=[tcols[t],])])
 				gEp.plot(graph.data.points(gdat[(s,t)],x=1,y=3,title=None),[graph.style.line([tcols[t]])])
-		
-				hTweak = histogram(40,-4.,4.);
+				
+				hTweak = histogram(40,-4.,4.)
 				for g in gdat[(s,t)]:
-					hTweak.fill(100*(g[2]/g[1]*g[3]-1.),1.0,False)
+					g.append(100*(g[2]/g[1]*g[3]-1.))
+					hTweak.fill(g[-1],1.0,False)
+				
 				gtitle = "%s %i: $\\mu=%+.2f$\\%%, $\\sigma=%.2f$"%(s,t,hTweak.avg(),hTweak.rms())
 				gTwk.plot(graph.data.points(hTweak.lineData(),x=1,y=2,title=gtitle),[graph.style.line([tcols[t]])])
-				
+				gTwkOct.plot(graph.data.points(gdat[(s,t)],x=1,y=5,title=gtitle),[graph.style.symbol(symbol.circle,symbolattrs=[tcols[t],])])
+							
 			gEp.writetofile(self.basedir+"/TubeEp_%s_%i.pdf"%(s,self.depth))
-			gTwk.writetofile(self.basedir+"/TubeEp_%s_%i_Tweak.pdf"%(s,self.depth))
-		
+			#gTwk.writetofile(self.basedir+"/TubeEp_%s_%i_Tweak.pdf"%(s,self.depth))
+			gTwkOct.writetofile(self.basedir+"/TubeEp_%s_%i_Tweak.pdf"%(s,self.depth))
+	
 	def plot_endpoints(self):
 		"""Compare data and MC spectrum endpoints"""
 		gEp=graph.graphxy(width=25,height=8,
@@ -489,7 +523,7 @@ class MC_Comparator:
 		
 if __name__=="__main__":
 	
-	if 1:
+	if 0:
 		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2")
 		MCC.backscatter_fractions()
 		MCC.plot_endpoints()
@@ -497,11 +531,11 @@ if __name__=="__main__":
 		conn=open_connection()
 		#conn=None
 		MCC.endpoint_gain_tweak(conn)
-		
+		exit(0)
 
 	
 	for i in range(3):
 		pass
-		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
-		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
+		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
+#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
 	
