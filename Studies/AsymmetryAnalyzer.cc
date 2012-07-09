@@ -18,12 +18,15 @@ AnalysisChoice  AsymmetryAnalyzer::anChoice = ANCHOICE_A;
 AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname): OctetAnalyzer(pnt,nm,inflname) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		qAnodeCal[s] = registerCoreHist("AnodeCal","Anode Calibration Events",50, 0, 8, s, &hAnodeCal[s]);
+		qMuonSpectra[s][false] = registerCoreHist("hMuonNoSub", "Tagged Muon Events Energy",150, 0, 1500, s, &hMuonSpectra[s][false]);
+		qMuonSpectra[s][false].setSubtraction(false);
+		qMuonSpectra[s][true] = registerCoreHist("hMuonSpectrum", "Tagged Muon Events Energy",150, 0, 1500, s, &hMuonSpectra[s][true]);
 		
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
 				qEnergySpectra[s][p][t] = registerCoreHist("hEnergy_"+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
 														   "Type "+itos(t)+" Events Energy",
-														   100, 0, 1000, s, &hEnergySpectra[s][p][t]);
+														   120, 0, 1200, s, &hEnergySpectra[s][p][t]);
 				qEnergySpectra[s][p][t].setAxisTitle(X_DIRECTION,"Energy [keV]");
 			}
 			if(t>TYPE_III_EVENT) continue;
@@ -41,6 +44,10 @@ AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, 
 void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	Side s = PDS.fSide;
 	if(!(s==EAST || s==WEST)) return;
+	if(PDS.fPID == PID_MUON && PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT) {
+		hMuonSpectra[s][false]->Fill(PDS.getEtrue(),weight); 
+		hMuonSpectra[s][true]->Fill(PDS.getEtrue(),weight); 
+	}
 	if(PDS.fPID != PID_BETA) return;
 	if(PDS.passesPositionCut(s) && PDS.fType == TYPE_0_EVENT && PDS.getEtrue()>225)
 		hAnodeCal[s]->Fill(PDS.mwpcEnergy[s]/PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock.t[BOTH]),weight);
@@ -112,7 +119,7 @@ void AsymmetryAnalyzer::endpointFits() {
 	for(Side s = EAST; s <= WEST; ++s) {		
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			for(unsigned int t=0; t<=nBetaTubes; t++) {
-				float_err ep = kurieIterator((TH1F*)qEnergySpectra[s][t][TYPE_0_EVENT].fgbg[afp].h[1],
+				float_err ep = kurieIterator((TH1F*)qEnergySpectra[s][t][TYPE_0_EVENT].fgbg[afp]->h[1],
 											 800., NULL, neutronBetaEp, fitStart, fitEnd);
 				Stringmap m;
 				m.insert("fitStart",fitStart);
@@ -123,7 +130,7 @@ void AsymmetryAnalyzer::endpointFits() {
 				m.insert("type",TYPE_0_EVENT);
 				m.insert("endpoint",ep.x);
 				m.insert("dendpoint",ep.err);
-				m.insert("counts",qEnergySpectra[s][t][TYPE_0_EVENT].fgbg[afp].h[1]->Integral());
+				m.insert("counts",qEnergySpectra[s][t][TYPE_0_EVENT].fgbg[afp]->h[1]->Integral());
 				m.display("--- ");
 				qOut.insert("kurieFit",m);
 			}
@@ -136,7 +143,7 @@ void AsymmetryAnalyzer::anodeCalFits() {
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			TF1 fLandau("landauFit","landau",0,15);
 			fLandau.SetLineColor(2+2*s);
-			int fiterr = qAnodeCal[s].fgbg[afp].h[1]->Fit(&fLandau,"Q");
+			int fiterr = qAnodeCal[s].fgbg[afp]->h[1]->Fit(&fLandau,"Q");
 			Stringmap m;
 			m.insert("afp",afp);
 			m.insert("side",ctos(sideNames(s)));
@@ -241,7 +248,7 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 				c.emin = 225;
 				c.emax = 675;
 				//c.radius = fiducialR;
-				TH1* h = (TH1F*)qEnergySpectra[s][nBetaTubes][tp].fgbg[afp].h[GV_OPEN];
+				TH1* h = (TH1F*)qEnergySpectra[s][nBetaTubes][tp].fgbg[afp]->h[GV_OPEN];
 				int b0 = h->FindBin(c.emin);
 				int b1 = h->FindBin(c.emax);
 				
@@ -269,6 +276,9 @@ void AsymmetryAnalyzer::makePlots() {
 	printCanvas("SuperSum");
 	
 	drawQuadSides(qAnodeCal[EAST], qAnodeCal[WEST], true, "AnodeCal");
+	
+	drawQuadSides(qMuonSpectra[EAST][true], qMuonSpectra[WEST][true], true, "MuonSpectra");
+	drawQuadSides(qMuonSpectra[EAST][false], qMuonSpectra[WEST][false], true, "MuonSpectra");
 	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++)
 		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][t], qEnergySpectra[WEST][nBetaTubes][t], true, "Energy");

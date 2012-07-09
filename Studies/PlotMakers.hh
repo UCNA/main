@@ -68,4 +68,7 @@ void gainfluctsTable(double delta, const std::string& datset = "OctetAsym_Offic"
 /// Run-to-run pedestal shifts error
 void pedShiftsTable(double delta, const std::string& datset = "OctetAsym_Offic");
 
+/// Muon veto efficiency change error
+void muonVetoEfficTable(double delta, const std::string& datset = "OctetAsym_Offic");
+
 #endif

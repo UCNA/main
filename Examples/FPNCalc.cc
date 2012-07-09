@@ -125,7 +125,7 @@ void RPNCalc() {
 	
 	std::deque<std::string> d;
 	std::stack<std::string> s;
-	while(!d.size() || !startsWith(d.front(),NameSelector::exit_control) && !startsWith(d.front(),NameSelector::barf_control)) {
+	while(!d.size() || (!startsWith(d.front(),NameSelector::exit_control) && !startsWith(d.front(),NameSelector::barf_control))) {
 		CalcMain.doIt(d,s);
 		menutils_PrintStack(d,s);
 		printf("\n");

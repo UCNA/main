@@ -43,7 +43,7 @@ public:
 	TH1F* hFullEnergySS;					//< super-sum of anode data
 	
 	PMTGenerator PGen;						//< event simulator for threshold extraction
-	fgbgPair pTriggerThreshold[2][2];		//< trigger threshold extraction histograms for each [side][all/trig]
+	fgbgPair* pTriggerThreshold[2][2];		//< trigger threshold extraction histograms for each [side][all/trig]
 	TGraphAsymmErrors* gTrigCurve[2];		//< extracted trigger efficiency curve
 };
 

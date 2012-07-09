@@ -98,11 +98,11 @@ RunAccumulator(pnt,nm,infl) {
 									   "Normalized Cathode",51,-0.5,0.5,100,0,5);
 				
 				cathHitpos[s][d][c] = registerFGBGPair(hCathHitposTemplate,AFP_OTHER,s);
-				cathHitpos[s][d][c].setAxisTitle(X_DIRECTION,"Normalized Raw Position");
-				cathHitpos[s][d][c].setAxisTitle(Y_DIRECTION,"Energy [keV]");
+				cathHitpos[s][d][c]->setAxisTitle(X_DIRECTION,"Normalized Raw Position");
+				cathHitpos[s][d][c]->setAxisTitle(Y_DIRECTION,"Energy [keV]");
 				cathNorm[s][d][c] = registerFGBGPair(hCathNormTemplate,AFP_OTHER,s);
-				cathNorm[s][d][c].setAxisTitle(X_DIRECTION,"Normalized Position");
-				cathNorm[s][d][c].setAxisTitle(Y_DIRECTION,"Normalized Cathode");
+				cathNorm[s][d][c]->setAxisTitle(X_DIRECTION,"Normalized Position");
+				cathNorm[s][d][c]->setAxisTitle(Y_DIRECTION,"Normalized Cathode");
 			}
 		}
 	}
@@ -116,22 +116,31 @@ void WirechamberAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight
 		float c;
 		PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].rawCenter,n,c);	
 		assert(n<kMaxCathodes);
-		((TH2F*)cathHitpos[s][d][n].h[currentGV])->Fill(c,PDS.scints[s].energy.x,weight);
+		((TH2F*)cathHitpos[s][d][n]->h[currentGV])->Fill(c,PDS.scints[s].energy.x,weight);
 		PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].center,n,c);	
 		if(PDS.mwpcs[s].anode > 1000) continue;	// avoid most massively clipped events
 		assert(n<kMaxCathodes);
-		((TH2F*)cathNorm[s][d][n].h[currentGV])->Fill(c,PDS.cathodes[s][d][n]/PDS.mwpcs[s].anode,weight);
+		((TH2F*)cathNorm[s][d][n]->h[currentGV])->Fill(c,PDS.cathodes[s][d][n]/PDS.mwpcs[s].anode,weight);
 	}
-	((TH2F*)(hitPos[s].h[currentGV]))->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
-	((TH2F*)(hitPosRaw[s].h[currentGV]))->Fill(PDS.wires[s][X_DIRECTION].rawCenter,PDS.wires[s][Y_DIRECTION].rawCenter,weight);
+	((TH2F*)(hitPos[s]->h[currentGV]))->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
+	((TH2F*)(hitPosRaw[s]->h[currentGV]))->Fill(PDS.wires[s][X_DIRECTION].rawCenter,PDS.wires[s][Y_DIRECTION].rawCenter,weight);
 }
 
 void WirechamberAnalyzer::makePlots() {
 	for(Side s = EAST; s <= WEST; ++s) {
-		hitPos[s].h[GV_OPEN]->Draw("COL");
+		TH2F* hPos = (TH2F*)hitPos[s]->h[GV_OPEN]->Clone();
+		hPos->Scale(10*M_PI*52*52/(hPos->GetXaxis()->GetBinWidth(1)*hPos->GetYaxis()->GetBinWidth(1)*hPos->Integral()));
+		hPos->SetMaximum(14);
+		hPos->Draw("COL Z");
 		printCanvas(sideSubst("hPos_%c",s));
-		hitPosRaw[s].h[GV_OPEN]->Draw("COL");
+		delete hPos;
+		
+		TH2F* hRaw = (TH2F*)hitPosRaw[s]->h[GV_OPEN]->Clone();
+		hRaw->Scale(10*M_PI*52*52/(hRaw->GetXaxis()->GetBinWidth(1)*hRaw->GetYaxis()->GetBinWidth(1)*hRaw->Integral()));
+		hRaw->SetMaximum(14);
+		hRaw->Draw("COL Z");
 		printCanvas(sideSubst("hPosRaw_%c",s));
+		delete hRaw;
 	}
 }
 
@@ -160,7 +169,7 @@ WirechamberAnalyzer(pnt,nm,infl), sects(nr,PositionBinner::fidRadius), sectorPlo
 	
 	// set up histograms, data
 	energySpectrum = registerFGBGPair("hEnergy","Combined Energy",200,-100,1200,AFP_OTHER);
-	energySpectrum.h[GV_OPEN]->SetLineColor(2);
+	energySpectrum->h[GV_OPEN]->SetLineColor(2);
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int m=0; m<sects.nSectors(); m++) {
 			sectAnode[s].push_back(registerFGBGPair("hAnode_Sector_"+itos(m),"Sector "+itos(m)+" Anode",200,0,4000,AFP_OTHER,s));
@@ -195,11 +204,11 @@ void PositionBinner::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	unsigned int m = sects.sector(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center);
 	if(m>=sects.nSectors()) return;
 	for(unsigned int t=0; t<nBetaTubes; t++)
-		sectEnergy[s][t][m].h[currentGV]->Fill(PDS.scints[s].tuben[t].x,weight);
+		sectEnergy[s][t][m]->h[currentGV]->Fill(PDS.scints[s].tuben[t].x,weight);
 	if(PDS.radius2(s) <= 45*45)
-		energySpectrum.h[currentGV]->Fill(PDS.getEtrue(),weight);
+		energySpectrum->h[currentGV]->Fill(PDS.getEtrue(),weight);
 	if(PDS.getEtrue() > 225)
-		sectAnode[s][m].h[currentGV]->Fill(PDS.mwpcs[s].anode,weight);
+		sectAnode[s][m]->h[currentGV]->Fill(PDS.mwpcs[s].anode,weight);
 }
 
 void PositionBinner::fitSpectrum(TH1* hSpec,SectorDat& sd) {
@@ -237,7 +246,7 @@ void PositionBinner::fitSectors() {
 				float x,y;
 				sects.sectorCenter(m,x,y);
 				sectDat[s][t][m].eta = PCal.eta(s,t,x,y);
-				TH1* hSpec = sectEnergy[s][t][m].h[GV_OPEN];
+				TH1* hSpec = sectEnergy[s][t][m]->h[GV_OPEN];
 				fitSpectrum(hSpec,sectDat[s][t][m]);
 				qOut.insert("sectDat",sd2sm(sectDat[s][t][m]));
 			}
@@ -249,11 +258,11 @@ void PositionBinner::calculateResults() {
 	WirechamberAnalyzer::calculateResults();
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
-			hTuben[s][t] = (TH1F*)addObject(sectEnergy[s][t][0].h[GV_OPEN]->Clone((sideSubst("hTuben_%c",s)+itos(t)).c_str()));
+			hTuben[s][t] = (TH1F*)addObject(sectEnergy[s][t][0]->h[GV_OPEN]->Clone((sideSubst("hTuben_%c",s)+itos(t)).c_str()));
 			hTuben[s][t]->Reset();
 			for(unsigned int m=0; m<sects.nSectors(); m++) {
 				if(sects.sectorCenterRadius(m) < 45.)
-					hTuben[s][t]->Add(sectEnergy[s][t][m].h[GV_OPEN]);
+					hTuben[s][t]->Add(sectEnergy[s][t][m]->h[GV_OPEN]);
 			}
 			SectorDat sd;
 			sd.s = s;
@@ -273,10 +282,10 @@ void PositionBinner::compareMCtoData(RunAccumulator& OAdata) {
 	defaultCanvas->cd();
 	
 	// overall energy spectrum
-	int b0 = PB->energySpectrum.h[GV_OPEN]->FindBin(400);
-	int b1 = PB->energySpectrum.h[GV_OPEN]->FindBin(800);
-	energySpectrum.h[GV_OPEN]->Scale(PB->energySpectrum.h[GV_OPEN]->Integral(b0,b1)/energySpectrum.h[GV_OPEN]->Integral(b0,b1));
-	drawHistoPair(PB->energySpectrum.h[GV_OPEN],energySpectrum.h[GV_OPEN]);
+	int b0 = PB->energySpectrum->h[GV_OPEN]->FindBin(400);
+	int b1 = PB->energySpectrum->h[GV_OPEN]->FindBin(800);
+	energySpectrum->h[GV_OPEN]->Scale(PB->energySpectrum->h[GV_OPEN]->Integral(b0,b1)/energySpectrum->h[GV_OPEN]->Integral(b0,b1));
+	drawHistoPair(PB->energySpectrum->h[GV_OPEN],energySpectrum->h[GV_OPEN]);
 	printCanvas("Comparison/hEnergy");		
 	
 	// upload posmap
@@ -311,7 +320,7 @@ void PositionBinner::makePlots() {
 	
 	// overall energy spectrum
 	defaultCanvas->cd();
-	energySpectrum.h[GV_OPEN]->Draw();
+	energySpectrum->h[GV_OPEN]->Draw();
 	printCanvas("hEnergy");
 	
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -327,7 +336,7 @@ void PositionBinner::makePlots() {
 			for(unsigned int m=0; m<sects.nSectors(); m++) {
 				hToPlot.clear();
 				for(unsigned int t=0; t<nBetaTubes; t++)
-					hToPlot.push_back(sectEnergy[s][t][m].h[GV_OPEN]);
+					hToPlot.push_back(sectEnergy[s][t][m]->h[GV_OPEN]);
 				drawSimulHistos(hToPlot);
 				for(unsigned int t=0; t<nBetaTubes; t++)
 					drawVLine(sectDat[s][t][m].xe_ep.x, defaultCanvas, 2+t);
@@ -404,7 +413,7 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 		PBM.runTimes += PB.runTimes;
 		
 		unsigned int nToSim=simFactor*PB.runCounts[r];
-		printf("Data counts West: %f; to sim = %i\n",PB.energySpectrum.h[GV_OPEN]->Integral(),nToSim);
+		printf("Data counts West: %f; to sim = %i\n",PB.energySpectrum->h[GV_OPEN]->Integral(),nToSim);
 		
 		// simulate for each isotope
 		std::vector<PositionBinner*> PBMi;
@@ -418,9 +427,9 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 		isots.push_back("Xe135_3-2+");
 		if((14264 <= r && r <= 14273) || (15991 <= r && r <= 16010))
 			isots.push_back("Xe135_11-2-");
-		int b1 = PB.energySpectrum.h[GV_OPEN]->FindBin(1075);
-		int b2 = PB.energySpectrum.h[GV_OPEN]->FindBin(1175);
-		if(PB.energySpectrum.h[GV_OPEN]->Integral(b1,b2) > 100)
+		int b1 = PB.energySpectrum->h[GV_OPEN]->FindBin(1075);
+		int b2 = PB.energySpectrum->h[GV_OPEN]->FindBin(1175);
+		if(PB.energySpectrum->h[GV_OPEN]->Integral(b1,b2) > 100)
 			isots.push_back("Xe137_7-2-");
 		
 		srand(time(NULL));
@@ -438,16 +447,16 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, PositionBinner& PB,
 			for(unsigned int i=0; i<stride; i++)
 				GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
 			PBMi.back()->loadSimData(GSM, nToSim*(isots[p[n]]=="Xe135_3-2+"?1.5:0.25));
-			LHC.addTerm(PBMi.back()->energySpectrum.h[GV_OPEN]);
+			LHC.addTerm(PBMi.back()->energySpectrum->h[GV_OPEN]);
 			printf("Done.\n");
 		}
 		
 		// determine spectrum composition and accumulate segments
-		LHC.Fit(PB.energySpectrum.h[GV_OPEN],50,1000);
+		LHC.Fit(PB.energySpectrum->h[GV_OPEN],50,1000);
 		std::vector<double> counts;
 		for(unsigned int i=0; i<LHC.coeffs.size(); i++) {
 			PBMi[i]->scaleData(LHC.coeffs[i]);
-			counts.push_back(PBMi[i]->energySpectrum.h[GV_OPEN]->Integral());
+			counts.push_back(PBMi[i]->energySpectrum->h[GV_OPEN]->Integral());
 			PBM.addSegment(*PBMi[i]);
 			delete(PBMi[i]);
 		}
@@ -552,7 +561,7 @@ void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsi
 				// cathode normalization plots
 				////////////////////
 				
-				TH2* hCathNorm =  (TH2*)WCdat.cathNorm[s][d][c].h[GV_OPEN];
+				TH2* hCathNorm =  (TH2*)WCdat.cathNorm[s][d][c]->h[GV_OPEN];
 				std::vector<TH1D*> slicefits = replaceFitSlicesY(hCathNorm);
 				for(std::vector<TH1D*>::iterator it = slicefits.begin(); it != slicefits.end(); it++) {
 					(*it)->SetDirectory(0);
@@ -577,8 +586,8 @@ void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsi
 				// cathode positioning distributions by energy
 				////////////////////
 				
-				TH2* hCathHitposDat =  (TH2*)WCdat.cathHitpos[s][d][c].h[GV_OPEN];
-				TH2* hCathHitposSim =  (TH2*)WCsim.cathHitpos[s][d][c].h[GV_OPEN];
+				TH2* hCathHitposDat =  (TH2*)WCdat.cathHitpos[s][d][c]->h[GV_OPEN];
+				TH2* hCathHitposSim =  (TH2*)WCsim.cathHitpos[s][d][c]->h[GV_OPEN];
 				
 				// cathode event fractions
 				double nDat = hCathHitposDat->Integral();

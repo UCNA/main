@@ -30,8 +30,8 @@ void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 			PGen.setPosition(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center);
 			double evis = PGen.generate(fierz_rnd_src.Uniform(350)).energy.x;
 			double etrue = PDS.ActiveCal->Etrue(s,TYPE_0_EVENT,s==EAST?evis:0,s==WEST?evis:0);
-			pTriggerThreshold[s][0].h[GV_OPEN]->Fill(etrue);
-			pTriggerThreshold[s][1].h[GV_OPEN]->Fill(etrue,PGen.triggered());
+			pTriggerThreshold[s][0]->h[GV_OPEN]->Fill(etrue);
+			pTriggerThreshold[s][1]->h[GV_OPEN]->Fill(etrue,PGen.triggered());
 		}
 	}
 }
@@ -45,9 +45,9 @@ void FierzOctetAnalyzer::calculateResults() {
 	hFullEnergySS = (TH1F*)calculateSuperSum("Full_Energy_SuperSum", qFullEnergySpectrum[EAST], qFullEnergySpectrum[WEST]);
 	// Calculate trigger efficiency fraction
 	for(Side s = EAST; s <= WEST; ++s) {
-		gTrigCurve[s] = (TGraphAsymmErrors*)addObject(new TGraphAsymmErrors(pTriggerThreshold[s][0].h[GV_OPEN]->GetNbinsX()));
+		gTrigCurve[s] = (TGraphAsymmErrors*)addObject(new TGraphAsymmErrors(pTriggerThreshold[s][0]->h[GV_OPEN]->GetNbinsX()));
 		gTrigCurve[s]->SetName(sideSubst("gTrigCurve_%c",s).c_str());
-		gTrigCurve[s]->BayesDivide(pTriggerThreshold[s][1].h[GV_OPEN],pTriggerThreshold[s][0].h[GV_OPEN],"w");
+		gTrigCurve[s]->BayesDivide(pTriggerThreshold[s][1]->h[GV_OPEN],pTriggerThreshold[s][0]->h[GV_OPEN],"w");
 	}
 }
 
@@ -65,10 +65,10 @@ void FierzOctetAnalyzer::makePlots() {
 	
 	// draw the trigger efficiency curves in their own subfolder
 	for(Side s = EAST; s <= WEST; ++s) {
-		pTriggerThreshold[s][0].h[GV_OPEN]->SetLineColor(4);
-		pTriggerThreshold[s][0].h[GV_OPEN]->Draw();
-		pTriggerThreshold[s][1].h[GV_OPEN]->SetLineColor(2);
-		pTriggerThreshold[s][1].h[GV_OPEN]->Draw("Same");
+		pTriggerThreshold[s][0]->h[GV_OPEN]->SetLineColor(4);
+		pTriggerThreshold[s][0]->h[GV_OPEN]->Draw();
+		pTriggerThreshold[s][1]->h[GV_OPEN]->SetLineColor(2);
+		pTriggerThreshold[s][1]->h[GV_OPEN]->Draw("Same");
 		printCanvas(sideSubst("TrigEff/Input_%c",s));
 
 		gTrigCurve[s]->SetMinimum(-0.10);

@@ -19,7 +19,7 @@ public:
 	std::string title;	//< histogram base title
 	Side mySide;		//< side for these histograms (for blind time rates)
 	TH1** fillPoint;	//< location of currently active histogram
-	fgbgPair fgbg[2];	//< background-subtracted pair for each flipper state
+	fgbgPair* fgbg[2];	//< background-subtracted pair for each flipper state
 	
 	/// add another quadHists
 	void operator+=(const quadHists& p);
@@ -29,12 +29,14 @@ public:
 	void setFillPoint(AFPState afp, GVState gv);
 	/// check if another quadHists is equivalent (same size histograms)
 	bool isEquivalent(const quadHists& qh) const;
+	/// set background subtraction option
+	void setSubtraction(bool b);
 	/// set draw range minimum for all histograms
 	void setDrawRange(double y, bool maximum);
 	/// set axis title
 	void setAxisTitle(AxisDirection d, const std::string& ttl);
 	/// naming convention for each histogram
-	std::string getHistoName(AFPState afp, bool fg) const { return fgbg[afp].getHistoName(fg); }
+	std::string getHistoName(AFPState afp, bool fg) const { return fgbg[afp]->getHistoName(fg); }
 	/// get (side-mangled) name
 	std::string getName() const { return name+((mySide==EAST||mySide==WEST)?(mySide==EAST?"_E":"_W"):""); }
 };

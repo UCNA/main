@@ -10,7 +10,7 @@
 #include <TRandom3.h>
 
 /// background-subtracting histograms pair
-class fgbgPair {
+class fgbgPair: private NoCopy {
 public:
 	/// constructor
 	fgbgPair(const std::string& nm="", const std::string& ttl="", AFPState a = AFP_OTHER, Side s = BOTH);
@@ -37,6 +37,7 @@ public:
 	TH1* h[2];				//< background, foreground pair
 	AFPState afp;			//< AFP state for data (determines which time to use for BG subtraction)
 	Side mySide;			//< side for data
+	bool doSubtraction;		//< whether to do background subtraction
 	bool isSubtracted;		//< whether this pair is already background-subtracted
 };
 
@@ -44,6 +45,8 @@ class RunAccumulator: public SegmentSaver {
 public:
 	/// constructor
 	RunAccumulator(OutputManager* pnt, const std::string& nm = "RunAccumulator", const std::string& inflName = "");
+	/// destructor
+	virtual ~RunAccumulator();
 	
 	/// add histograms from another RunAccumulator of the same type
 	virtual void addSegment(const SegmentSaver& S);
@@ -53,10 +56,10 @@ public:
 	virtual void scaleData(double s);
 	
 	/// create or load a FG/BG TH1F* set
-	fgbgPair registerFGBGPair(const std::string& hname, const std::string& title,
+	fgbgPair* registerFGBGPair(const std::string& hname, const std::string& title,
 							  unsigned int nbins, float xmin, float xmax, AFPState a = AFP_OTHER, Side s = BOTH);
 	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
-	fgbgPair registerFGBGPair(const TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH);
+	fgbgPair* registerFGBGPair(const TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH);
 	/// check whether this has the named FGBGPair
 	bool hasFGBGPair(const std::string& qname) const;
 	/// get fgbg histogram by name
@@ -64,7 +67,7 @@ public:
 	/// get fgbg histogram by name, const version
 	const fgbgPair& getFGBGPair(const std::string& qname) const;
 	/// make a new (unregistered) fgbgPair copy
-	fgbgPair cloneFGBGPair(const fgbgPair& p, const std::string& newName, const std::string& newTitle);
+	fgbgPair* cloneFGBGPair(const fgbgPair& p, const std::string& newName, const std::string& newTitle);
 
 	/// get total run time for given state
 	BlindTime getTotalTime(AFPState afp, bool fg) const { return totalTime[afp][fg]; }
@@ -109,7 +112,7 @@ public:
 	/// location of errorbar estimates for low-rate histograms
 	virtual std::string estimatorHistoLocation() const { return ""; }
 	
-	std::map<std::string,fgbgPair> fgbgHists;	//< background-subtractable quantities
+	std::map<std::string,fgbgPair*> fgbgHists;	//< background-subtractable quantities
 	float totalCounts[AFP_OTHER+1][2];			//< total type-0 event counts by [flipper][fg/bg], for re-simulation
 	BlindTime totalTime[AFP_OTHER+1][2]; 		//< total time for [flipper][fg/bg]
 	TagCounter<RunNum> runTimes;				//< time spent on each run

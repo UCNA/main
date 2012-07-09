@@ -34,10 +34,10 @@ public:
 	/// make output plots
 	virtual void makePlots();
 	
-	fgbgPair hitPos[2];							//< hit positions on each side
-	fgbgPair hitPosRaw[2];						//< uncorrected hit positions on each side
-	fgbgPair cathHitpos[2][2][kMaxCathodes];	//< raw position distribution around each cathode by energy
-	fgbgPair cathNorm[2][2][kMaxCathodes];		//< cathode normalization histograms
+	fgbgPair* hitPos[2];						//< hit positions on each side
+	fgbgPair* hitPosRaw[2];						//< uncorrected hit positions on each side
+	fgbgPair* cathHitpos[2][2][kMaxCathodes];	//< raw position distribution around each cathode by energy
+	fgbgPair* cathNorm[2][2][kMaxCathodes];		//< cathode normalization histograms
 };
 
 /// data collected for each sector
@@ -75,7 +75,7 @@ public:
 	/// virtual routine for MC/Data comparison plots/calculations
 	virtual void compareMCtoData(RunAccumulator& OAdata);
 	
-	fgbgPair energySpectrum;							//< total energy spectrum
+	fgbgPair* energySpectrum;							//< total energy spectrum
 	TH1F* hTuben[2][nBetaTubes];						//< type 0 PMT energy for gain matching
 	std::vector<SectorDat> sectDat[2][nBetaTubes];		//< processed data for each sector
 	SectorCutter sects;									//< sector cutter
@@ -84,8 +84,8 @@ public:
 	static double fidRadius;							//< analysis fiducial radius
 	
 protected:
-	std::vector<fgbgPair> sectEnergy[2][nBetaTubes];	//< visible light histograms by position, PMT
-	std::vector<fgbgPair> sectAnode[2];					//< anode histograms by position
+	std::vector<fgbgPair*> sectEnergy[2][nBetaTubes];	//< visible light histograms by position, PMT
+	std::vector<fgbgPair*> sectAnode[2];				//< anode histograms by position
 };
 
 /// process xenon runs

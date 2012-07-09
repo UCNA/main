@@ -76,12 +76,12 @@ void SimAsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
 		std::vector<TH1*> hToPlot;
 		for(Side s = EAST; s <= WEST; ++s) {		
 			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
-				qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(22+4*afp);
-				hToPlot.push_back(qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]);
-				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerColor(2+2*s);
-				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]->SetMarkerStyle(20+4*afp);
-				hToPlot.push_back(dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp].h[true]);
+				qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]->SetMarkerColor(2+2*s);
+				qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]->SetMarkerStyle(22+4*afp);
+				hToPlot.push_back(qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]);
+				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]->SetMarkerColor(2+2*s);
+				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]->SetMarkerStyle(20+4*afp);
+				hToPlot.push_back(dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]);
 			}
 		}
 		drawSimulHistos(hToPlot,"HIST P");
