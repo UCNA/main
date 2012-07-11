@@ -18,7 +18,7 @@ public:
 	std::string name;	//< histogram base name
 	std::string title;	//< histogram base title
 	Side mySide;		//< side for these histograms (for blind time rates)
-	TH1** fillPoint;	//< location of currently active histogram
+	TH1* fillPoint;		//< pointer to currently active fill histogram
 	fgbgPair* fgbg[2];	//< background-subtracted pair for each flipper state
 	
 	/// add another quadHists
@@ -51,10 +51,9 @@ public:
 	
 	/// create or load a FG/BG,OFF/ON histogram set
 	quadHists registerCoreHist(const std::string& hname, const std::string& title,
-							   unsigned int nbins, float xmin, float xmax,
-							   Side s = BOTH, TH1F** fillPoint = NULL);
+							   unsigned int nbins, float xmin, float xmax, Side s = BOTH);
 	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
-	quadHists registerCoreHist(const TH1& hTemplate, Side s = BOTH, TH1** fillPoint = NULL);
+	quadHists registerCoreHist(const TH1& hTemplate, Side s = BOTH);
 	/// clone (and register) a quadHists
 	quadHists cloneQuadHist(const quadHists& qh, const std::string& newName, const std::string& newTitle);
 	/// get core histogram by name

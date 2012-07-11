@@ -5,14 +5,14 @@
 OctetAnalyzerExample::OctetAnalyzerExample(OutputManager* pnt, const std::string& nm, const std::string& inflname): OctetAnalyzer(pnt,nm,inflname) {
 	// set up histograms of interest
 	for(Side s = EAST; s <= WEST; ++s)
-		qAnodeSpectrum[s] = registerCoreHist("hAnode", "Wirechamber Energy", 100, 0, 20, s, &hAnodeSpectrum[s]);
+		qAnodeSpectrum[s] = registerCoreHist("hAnode", "Wirechamber Energy", 100, 0, 20, s);
 }
 
 void OctetAnalyzerExample::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	// fill wirechamber spectrum for Type 0 beta events on each side
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
-		hAnodeSpectrum[PDS.fSide]->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
+		qAnodeSpectrum[PDS.fSide].fillPoint->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
 }
 
 void OctetAnalyzerExample::calculateResults() {

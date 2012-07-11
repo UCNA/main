@@ -38,8 +38,8 @@ public:
 	quadHists qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
 	quadHists qPositions[2][TYPE_III_EVENT+1];					//< event positions quad hists for [side][type]
 	quadHists qAnodeCal[2];										//< anode calibration spectrum (Type 0, Erecon>225)
-	
 	quadHists qTotalSpectrum[2];								//< total spectrum based on analysis choice
+	quadHists qBGDecay[2];										//< 5min E vs. time plot to see decaying BG components
 	
 protected:
 	
@@ -52,6 +52,8 @@ protected:
 	void fitInstAsym(float fmin=200, float fmax=600, unsigned int color = 2);
 	/// various beta spectrum endpoint fits
 	void endpointFits();
+	/// fit beyond-endpoint background subtraction
+	void bgSubtrFits();
 	/// anode calibration fits
 	void anodeCalFits();
 	
@@ -61,10 +63,6 @@ protected:
 	static TF1 asymmetryFit;		//< fit function for asymmetry
 	static TF1 averagerFit;			//< pol0 line fit for averaging
 	static AnalysisChoice anChoice;	//< asymmetry analysis choice
-	
-	TH1F* hEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];		//< energy spectra write point for [side][tube][event type]
-	TH2F* hPositions[2][TYPE_III_EVENT+1];			//< event positions write point for [side][type]
-	TH1F* hAnodeCal[2];								//< anode cal write point
 };
 
 #endif

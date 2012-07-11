@@ -8,10 +8,9 @@
 #include "Types.hh"
 
 void quadHists::setFillPoint(AFPState afp, GVState gv) {
-	if(!fillPoint) return;
 	assert(gv==GV_CLOSED || gv==GV_OPEN);
 	assert(afp==AFP_OFF||afp==AFP_ON);
-	*fillPoint = fgbg[afp]->h[gv];
+	fillPoint = fgbg[afp]->h[gv];
 }
 
 bool quadHists::isEquivalent(const quadHists& qh) const {
@@ -57,21 +56,18 @@ void quadHists::setSubtraction(bool b) {
 
 
 quadHists OctetAnalyzer::registerCoreHist(const std::string& hname, const std::string& title,
-										  unsigned int nbins, float xmin, float xmax,
-										  Side s, TH1F** fillPoint) {
+										  unsigned int nbins, float xmin, float xmax, Side s) {
 	quadHists qh(hname,title,s);
 	assert(coreHists.find(qh.getName())==coreHists.end());	// don't duplicate names!
-	qh.fillPoint = (TH1**)fillPoint;
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		qh.fgbg[afp] = registerFGBGPair(hname,title,nbins,xmin,xmax,afp,s);
 	coreHists.insert(std::make_pair(qh.getName(),qh));
 	return qh;
 }
 
-quadHists OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s, TH1** fillPoint) {
+quadHists OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s) {
 	quadHists qh(hTemplate.GetName(),hTemplate.GetTitle(),s);
 	assert(coreHists.find(qh.getName())==coreHists.end());	// don't duplicate names!
-	qh.fillPoint = fillPoint;
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		qh.fgbg[afp] = registerFGBGPair(hTemplate,AFPState(afp),s);
 	coreHists.insert(std::make_pair(qh.getName(),qh));

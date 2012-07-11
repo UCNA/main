@@ -10,7 +10,7 @@ TRandom3 fierz_rnd_src;
 FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, const string& inflname): OctetAnalyzer(pnt,nm,inflname) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		// energy histograms
-		qFullEnergySpectrum[s] = registerCoreHist("hFullEnergy", "Full Energy", 100, 0, 1000, s, &hFullEnergySpectrum[s]);
+		qFullEnergySpectrum[s] = registerCoreHist("hFullEnergy", "Full Energy", 100, 0, 1000, s);
 		// trigger threshold counts
 		pTriggerThreshold[s][0] = registerFGBGPair("hTriggerAll", "Trigger threshold, all events",150,0,300,AFP_OTHER,s);
 		pTriggerThreshold[s][1] = registerFGBGPair("hTriggerTrig", "Trigger threshold, triggered events",150,0,300,AFP_OTHER,s);
@@ -22,7 +22,7 @@ void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 	if(!(s==EAST || s==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA) {
 		// fill events spectrum with Etrue on both sides
-		hFullEnergySpectrum[s]->Fill(PDS.getEtrue(), weight);
+		qFullEnergySpectrum[s].fillPoint->Fill(PDS.getEtrue(), weight);
 		// trigger threshold extraction histograms
 		if(currentGV==GV_OPEN) {
 			if(PGen.getCalibrator() != PDS.ActiveCal) PGen.setCalibrator(PDS.ActiveCal);
