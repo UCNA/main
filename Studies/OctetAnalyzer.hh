@@ -10,7 +10,7 @@
 #include <map>
 
 /// histograms for [flipper][fg/bg]
-class quadHists {
+class quadHists: private NoCopy {
 public:
 	/// constructor
 	quadHists(const std::string& nm="", const std::string& ttl="", Side s = BOTH): name(nm), title(ttl), mySide(s), fillPoint(NULL) {}
@@ -47,19 +47,19 @@ public:
 	/// constructor, optionally with input filename
 	OctetAnalyzer(OutputManager* pnt, const std::string& nm = "OctetAnalyzer", const std::string& inflName = "");
 	/// destructor
-	virtual ~OctetAnalyzer() {}
+	virtual ~OctetAnalyzer();
 	
 	/// create or load a FG/BG,OFF/ON histogram set
-	quadHists registerCoreHist(const std::string& hname, const std::string& title,
+	quadHists* registerCoreHist(const std::string& hname, const std::string& title,
 							   unsigned int nbins, float xmin, float xmax, Side s = BOTH);
 	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
-	quadHists registerCoreHist(const TH1& hTemplate, Side s = BOTH);
+	quadHists* registerCoreHist(const TH1& hTemplate, Side s = BOTH);
 	/// clone (and register) a quadHists
-	quadHists cloneQuadHist(const quadHists& qh, const std::string& newName, const std::string& newTitle);
+	quadHists* cloneQuadHist(const quadHists* qh, const std::string& newName, const std::string& newTitle);
 	/// get core histogram by name
-	quadHists& getCoreHist(const std::string& qname);
+	quadHists* getCoreHist(const std::string& qname);
 	/// get core histogram by name, const version
-	const quadHists& getCoreHist(const std::string& qname) const;
+	const quadHists* getCoreHist(const std::string& qname) const;
 	/// set all quadHists fill points
 	void setFillPoints(AFPState afp, GVState gv);
 	
@@ -75,20 +75,20 @@ public:
 	// ---- some utility routines for common analysis/output operations ---- //
 	
 	/// calculate (blinded) super-ratio from quadHists for each side (optionally asymmetry of background and/or instrumental)
-	TH1* calculateSR(const std::string& hname, const quadHists& qEast, const quadHists& qWest, bool fg=true, bool instr=false);
+	TH1* calculateSR(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg=true, bool instr=false);
 	/// calculate super-sum from quadHists for each side (optionally super-sum of background)
-	TH1* calculateSuperSum(const std::string& hname, const quadHists& qEast, const quadHists& qWest, bool fg=true);
+	TH1* calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg=true);
 	/// draw whole quadHists of histograms
-	void drawQuad(quadHists& qh, const std::string& subfolder = ".", const char* opt = "");
+	void drawQuad(quadHists* qh, const std::string& subfolder = ".", const char* opt = "");
 	/// draw East/West pair of quadHists together, optionally also drawing AFP states together
-	void drawQuadSides(quadHists& qhE, quadHists& qhW, bool combineAFP = false,  const std::string& subfolder = ".", const std::string& opt = "");
+	void drawQuadSides(quadHists* qhE, quadHists* qhW, bool combineAFP = false,  const std::string& subfolder = ".", const std::string& opt = "");
 	
 	int depth;				//< octet division depth
 	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
 	
 private:
 	
-	std::map<std::string,quadHists> coreHists;	//< core histograms for merging, BG subtraction
+	std::map<std::string,quadHists*> coreHists;	//< core histograms for merging, BG subtraction
 };
 
 /// process one pulse-pair worth of data

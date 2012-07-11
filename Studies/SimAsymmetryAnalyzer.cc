@@ -14,10 +14,10 @@ AsymmetryAnalyzer(pnt,nm,inflname) {
 								  ("Type "+itos(t)+" Beta Cos Theta").c_str(),
 								  nEnergyBins,0,energyMax);
 			qBCT[s][t] = registerCoreHist(pBCTTemplate,s);
-			qBCT[s][t].setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
-			qBCT[s][t].setAxisTitle(Y_DIRECTION,"<#beta cos #theta>");
-			qBCT[s][t].setDrawRange(-1.0,false);
-			qBCT[s][t].setDrawRange(1.0,true);
+			qBCT[s][t]->setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
+			qBCT[s][t]->setAxisTitle(Y_DIRECTION,"<#beta cos #theta>");
+			qBCT[s][t]->setDrawRange(-1.0,false);
+			qBCT[s][t]->setDrawRange(1.0,true);
 			
 			qWrongSide[s][t] = registerCoreHist("hWrongSide_"+itos(t),"Wrong-side ID events",
 												nEnergyBins, 0, energyMax, s);
@@ -31,14 +31,14 @@ void SimAsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weigh
 	assert(PDS.isSimulated());
 	Sim2PMT& S2P = (Sim2PMT&)PDS;
 	if(S2P.fType == TYPE_IV_EVENT && S2P.primRadius() < S2P.fiducialRadius) {
-		qMissedSpectrum.fillPoint->Fill(S2P.ePrim,weight);
-		((TProfile*)qBCT[S2P.costheta<0?EAST:WEST][S2P.fType].fillPoint)->Fill(S2P.ePrim,beta(S2P.ePrim)*S2P.costheta,weight);
+		qMissedSpectrum->fillPoint->Fill(S2P.ePrim,weight);
+		((TProfile*)qBCT[S2P.costheta<0?EAST:WEST][S2P.fType]->fillPoint)->Fill(S2P.ePrim,beta(S2P.ePrim)*S2P.costheta,weight);
 	}
 	Side s = S2P.fSide;
 	if(!(s==EAST || s==WEST)) return;
 	if(S2P.fPID != PID_BETA) return;
 	if(S2P.passesPositionCut(s) && S2P.fType <= TYPE_III_EVENT)
-		((TProfile*)qBCT[s][S2P.fType].fillPoint)->Fill(S2P.getEtrue(),beta(S2P.ePrim)*S2P.costheta,weight);
+		((TProfile*)qBCT[s][S2P.fType]->fillPoint)->Fill(S2P.getEtrue(),beta(S2P.ePrim)*S2P.costheta,weight);
 }
 
 void SimAsymmetryAnalyzer::makePlots() {
@@ -80,12 +80,12 @@ void SimAsymmetryAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
 		std::vector<TH1*> hToPlot;
 		for(Side s = EAST; s <= WEST; ++s) {		
 			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-				qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]->SetMarkerColor(2+2*s);
-				qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]->SetMarkerStyle(22+4*afp);
-				hToPlot.push_back(qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]);
-				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]->SetMarkerColor(2+2*s);
-				dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]->SetMarkerStyle(20+4*afp);
-				hToPlot.push_back(dat.qEnergySpectra[s][nBetaTubes][t].fgbg[afp]->h[GV_OPEN]);
+				qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerColor(2+2*s);
+				qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerStyle(22+4*afp);
+				hToPlot.push_back(qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]);
+				dat.qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerColor(2+2*s);
+				dat.qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerStyle(20+4*afp);
+				hToPlot.push_back(dat.qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]);
 			}
 		}
 		drawSimulHistos(hToPlot,"HIST P");

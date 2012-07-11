@@ -11,6 +11,7 @@ void quadHists::setFillPoint(AFPState afp, GVState gv) {
 	assert(gv==GV_CLOSED || gv==GV_OPEN);
 	assert(afp==AFP_OFF||afp==AFP_ON);
 	fillPoint = fgbg[afp]->h[gv];
+	assert(fillPoint);
 }
 
 bool quadHists::isEquivalent(const quadHists& qh) const {
@@ -53,31 +54,36 @@ void quadHists::setSubtraction(bool b) {
 
 /* --------------------------------------------------- */
 
+OctetAnalyzer::~OctetAnalyzer() {
+	for(std::map<std::string,quadHists*>::iterator it = coreHists.begin(); it != coreHists.end(); it++)
+		delete it->second;
+}
 
-
-quadHists OctetAnalyzer::registerCoreHist(const std::string& hname, const std::string& title,
+quadHists* OctetAnalyzer::registerCoreHist(const std::string& hname, const std::string& title,
 										  unsigned int nbins, float xmin, float xmax, Side s) {
-	quadHists qh(hname,title,s);
-	assert(coreHists.find(qh.getName())==coreHists.end());	// don't duplicate names!
+	quadHists* qh = new quadHists(hname,title,s);
+	assert(coreHists.find(qh->getName())==coreHists.end());	// don't duplicate names!
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
-		qh.fgbg[afp] = registerFGBGPair(hname,title,nbins,xmin,xmax,afp,s);
-	coreHists.insert(std::make_pair(qh.getName(),qh));
+		qh->fgbg[afp] = registerFGBGPair(hname,title,nbins,xmin,xmax,afp,s);
+	coreHists.insert(std::make_pair(qh->getName(),qh));
 	return qh;
 }
 
-quadHists OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s) {
-	quadHists qh(hTemplate.GetName(),hTemplate.GetTitle(),s);
-	assert(coreHists.find(qh.getName())==coreHists.end());	// don't duplicate names!
+quadHists* OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s) {
+	quadHists* qh = new quadHists(hTemplate.GetName(),hTemplate.GetTitle(),s);
+	assert(coreHists.find(qh->getName())==coreHists.end());	// don't duplicate names!
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
-		qh.fgbg[afp] = registerFGBGPair(hTemplate,AFPState(afp),s);
-	coreHists.insert(std::make_pair(qh.getName(),qh));
+		qh->fgbg[afp] = registerFGBGPair(hTemplate,AFPState(afp),s);
+	coreHists.insert(std::make_pair(qh->getName(),qh));
 	return qh;
 }
 
-quadHists OctetAnalyzer::cloneQuadHist(const quadHists& qh, const std::string& newName, const std::string& newTitle) {
-	quadHists qnew(newName,newTitle,qh.mySide);
+quadHists* OctetAnalyzer::cloneQuadHist(const quadHists* qh, const std::string& newName, const std::string& newTitle) {
+	assert(qh);
+	quadHists* qnew = new quadHists(newName,newTitle,qh->mySide);
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
-		qnew.fgbg[afp] = cloneFGBGPair(*qh.fgbg[afp],newName,newTitle);
+		qnew->fgbg[afp] = cloneFGBGPair(*qh->fgbg[afp],newName,newTitle);
+	coreHists.insert(std::make_pair(qnew->getName(),qnew));
 	return qnew;
 }
 
@@ -85,18 +91,18 @@ OctetAnalyzer::OctetAnalyzer(OutputManager* pnt, const std::string& nm, const st
 RunAccumulator(pnt,nm,inflName), depth(-1), simPerfectAsym(false) { }
 
 void OctetAnalyzer::setFillPoints(AFPState afp, GVState gv) {
-	for(std::map<std::string,quadHists>::iterator it = coreHists.begin(); it != coreHists.end(); it++)
-		it->second.setFillPoint(afp,gv);
+	for(std::map<std::string,quadHists*>::iterator it = coreHists.begin(); it != coreHists.end(); it++)
+		it->second->setFillPoint(afp,gv);
 }
 
-quadHists& OctetAnalyzer::getCoreHist(const std::string& qname) {
-	std::map<std::string,quadHists>::iterator it = coreHists.find(qname);
+quadHists* OctetAnalyzer::getCoreHist(const std::string& qname) {
+	std::map<std::string,quadHists*>::iterator it = coreHists.find(qname);
 	assert(it != coreHists.end());
 	return it->second;
 }
 
-const quadHists& OctetAnalyzer::getCoreHist(const std::string& qname) const {
-	std::map<std::string,quadHists>::const_iterator it = coreHists.find(qname);
+const quadHists* OctetAnalyzer::getCoreHist(const std::string& qname) const {
+	std::map<std::string,quadHists*>::const_iterator it = coreHists.find(qname);
 	assert(it != coreHists.end());
 	return it->second;
 }
@@ -115,21 +121,22 @@ void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool coun
 	RunAccumulator::loadSimData(simData,nToSim,countAll);
 }
 
-TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists& qEast, const quadHists& qWest, bool fg, bool instr) {
+TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg, bool instr) {
+	assert(qEast && qWest);
 	// first calculate R = E+W-/E-W+
-	TH1* hR = (TH1*)qEast.fgbg[AFP_ON]->h[fg]->Clone("SR_intermediate_R");
+	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[fg]->Clone("SR_intermediate_R");
 	if(instr) {
-		hR->Multiply(qEast.fgbg[AFP_OFF]->h[fg]);
+		hR->Multiply(qEast->fgbg[AFP_OFF]->h[fg]);
 	} else {
-		hR->Multiply(qWest.fgbg[AFP_OFF]->h[fg]);
+		hR->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
 		hR->Scale(1.0/(totalTime[AFP_ON][fg].t[EAST]*totalTime[AFP_OFF][fg].t[WEST]));
 	}
 	
-	TH1* hAsym = (TH1*)qWest.fgbg[AFP_ON]->h[fg]->Clone(hname.c_str());
+	TH1* hAsym = (TH1*)qWest->fgbg[AFP_ON]->h[fg]->Clone(hname.c_str());
 	if(instr) {
-		hAsym->Multiply(qWest.fgbg[AFP_OFF]->h[fg]);
+		hAsym->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
 	} else {
-		hAsym->Multiply(qEast.fgbg[AFP_OFF]->h[fg]);
+		hAsym->Multiply(qEast->fgbg[AFP_OFF]->h[fg]);
 		hAsym->Scale(1.0/(totalTime[AFP_OFF][fg].t[EAST]*totalTime[AFP_ON][fg].t[WEST]));
 	}
 	
@@ -150,8 +157,8 @@ TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists& qEast
 	
 	hAsym->SetLineColor(1);
 	hAsym->SetLineStyle(1);
-	hAsym->SetTitle((qEast.title+" Asymmetry").c_str());
-	hAsym->GetXaxis()->SetTitle(qEast.fgbg[AFP_ON]->h[fg]->GetXaxis()->GetTitle());
+	hAsym->SetTitle((qEast->title+" Asymmetry").c_str());
+	hAsym->GetXaxis()->SetTitle(qEast->fgbg[AFP_ON]->h[fg]->GetXaxis()->GetTitle());
 	
 	delete(hR);
 	return (TH1*)addObject(hAsym);
@@ -172,13 +179,14 @@ void sqrtHist(TH1* h) {
 	}
 }
 
-TH1* OctetAnalyzer::calculateSuperSum(const std::string& hname, const quadHists& qEast, const quadHists& qWest, bool fg) {
-	TH1* hR = (TH1*)qEast.fgbg[AFP_ON]->h[fg]->Clone("SuperSum_intermediate");
-	hR->Multiply(qWest.fgbg[AFP_OFF]->h[fg]);
+TH1* OctetAnalyzer::calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg) {
+	assert(qEast && qWest);
+	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[fg]->Clone("SuperSum_intermediate");
+	hR->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
 	hR->Scale(1.0/(totalTime[AFP_ON][fg].t[EAST]*totalTime[AFP_OFF][fg].t[WEST]));
 	
-	TH1* hSS = (TH1*)qEast.fgbg[AFP_OFF]->h[fg]->Clone(hname.c_str());
-	hSS->Multiply(qWest.fgbg[AFP_ON]->h[fg]);
+	TH1* hSS = (TH1*)qEast->fgbg[AFP_OFF]->h[fg]->Clone(hname.c_str());
+	hSS->Multiply(qWest->fgbg[AFP_ON]->h[fg]);
 	hSS->Scale(1.0/(totalTime[AFP_OFF][fg].t[EAST]*totalTime[AFP_ON][fg].t[WEST]));
 	
 	sqrtHist(hR);
@@ -186,48 +194,50 @@ TH1* OctetAnalyzer::calculateSuperSum(const std::string& hname, const quadHists&
 	hSS->Add(hR);
 	hSS->Scale(0.5);
 	
-	hSS->SetTitle((qEast.title+" SuperSum").c_str());
+	hSS->SetTitle((qEast->title+" SuperSum").c_str());
 	hSS->SetLineColor(1);
 	hSS->SetLineStyle(1);
-	hSS->GetXaxis()->SetTitle(qEast.fgbg[AFP_ON]->h[fg]->GetXaxis()->GetTitle());
+	hSS->GetXaxis()->SetTitle(qEast->fgbg[AFP_ON]->h[fg]->GetXaxis()->GetTitle());
 	
 	delete(hR);
 	return (TH1*)addObject(hSS);
 }
 
-void OctetAnalyzer::drawQuad(quadHists& qh, const std::string& subfolder, const char* opt) {
+void OctetAnalyzer::drawQuad(quadHists* qh, const std::string& subfolder, const char* opt) {
+	assert(qh);
 	defaultCanvas->cd();
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
-			if(!qh.fgbg[afp]->h[gv]->Integral()) continue; // automatically skip empty histograms
-			qh.fgbg[afp]->h[gv]->Draw(opt);
-			printCanvas(subfolder+"/"+qh.getHistoName(AFPState(afp),gv));
+			if(!qh->fgbg[afp]->h[gv]->Integral()) continue; // automatically skip empty histograms
+			qh->fgbg[afp]->h[gv]->Draw(opt);
+			printCanvas(subfolder+"/"+qh->getHistoName(AFPState(afp),gv));
 		}
 	}
 }
 
-void OctetAnalyzer::drawQuadSides(quadHists& qhE, quadHists& qhW, bool combineAFP, const std::string& subfolder, const std::string& opt) {
+void OctetAnalyzer::drawQuadSides(quadHists* qhE, quadHists* qhW, bool combineAFP, const std::string& subfolder, const std::string& opt) {
+	assert(qhE && qhW);
 	defaultCanvas->cd();
 	std::vector<TH1*> hToPlot;
 	for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-			qhE.fgbg[afp]->h[gv]->SetLineColor(2);
-			qhW.fgbg[afp]->h[gv]->SetLineColor(4);
-			if(!qhE.fgbg[afp]->h[gv]->Integral() && !qhW.fgbg[afp]->h[gv]->Integral()) continue;
-			hToPlot.push_back(qhE.fgbg[afp]->h[gv]);
-			hToPlot.push_back(qhW.fgbg[afp]->h[gv]);
+			qhE->fgbg[afp]->h[gv]->SetLineColor(2);
+			qhW->fgbg[afp]->h[gv]->SetLineColor(4);
+			if(!qhE->fgbg[afp]->h[gv]->Integral() && !qhW->fgbg[afp]->h[gv]->Integral()) continue;
+			hToPlot.push_back(qhE->fgbg[afp]->h[gv]);
+			hToPlot.push_back(qhW->fgbg[afp]->h[gv]);
 			if(!combineAFP) {
 				drawSimulHistos(hToPlot,opt);
-				printCanvas(subfolder+"/"+qhE.name+(afp?"_On":"_Off")+(gv?"":"_BG"));
+				printCanvas(subfolder+"/"+qhE->name+(afp?"_On":"_Off")+(gv?"":"_BG"));
 				hToPlot.clear();
 			} else {
-				qhE.fgbg[afp]->h[gv]->SetLineStyle(1+2*afp);
-				qhW.fgbg[afp]->h[gv]->SetLineStyle(1+2*afp);
+				qhE->fgbg[afp]->h[gv]->SetLineStyle(1+2*afp);
+				qhW->fgbg[afp]->h[gv]->SetLineStyle(1+2*afp);
 			}
 		}
 		if(combineAFP && hToPlot.size()) {
-			drawSimulHistos(hToPlot,opt,qhE.title+(gv?"":" Background"));
-			printCanvas(subfolder+"/"+qhE.name+(gv?"":"_BG"));
+			drawSimulHistos(hToPlot,opt,qhE->title+(gv?"":" Background"));
+			printCanvas(subfolder+"/"+qhE->name+(gv?"":"_BG"));
 			hToPlot.clear();
 		}
 	}

@@ -41,7 +41,7 @@ public:
 	bool isSubtracted;		//< whether this pair is already background-subtracted
 };
 
-class RunAccumulator: public SegmentSaver {
+class RunAccumulator: public SegmentSaver, private NoCopy {
 public:
 	/// constructor
 	RunAccumulator(OutputManager* pnt, const std::string& nm = "RunAccumulator", const std::string& inflName = "");

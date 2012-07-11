@@ -22,22 +22,22 @@ MuonAnalyzer(pnt,nm,inflname) {
 		qAnodeCal[s] = registerCoreHist("AnodeCal","Anode Calibration Events",50, 0, 8, s);
 		TH2F hBGDecayTemplate("hBGDecay","energy vs time",60,0,300,80,0,2000);
 		qBGDecay[s] = registerCoreHist(hBGDecayTemplate,s);
-		qBGDecay[s].setAxisTitle(X_DIRECTION,"time [s]");
-		qBGDecay[s].setAxisTitle(Y_DIRECTION,"energy [keV]");
+		qBGDecay[s]->setAxisTitle(X_DIRECTION,"time [s]");
+		qBGDecay[s]->setAxisTitle(Y_DIRECTION,"energy [keV]");
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
 				qEnergySpectra[s][p][t] = registerCoreHist("hEnergy_"+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
 														   "Type "+itos(t)+" Events Energy",
 														   nEnergyBins, 0, energyMax, s);
-				qEnergySpectra[s][p][t].setAxisTitle(X_DIRECTION,"Energy [keV]");
+				qEnergySpectra[s][p][t]->setAxisTitle(X_DIRECTION,"Energy [keV]");
 			}
 			if(t>TYPE_III_EVENT) continue;
 			TH2F hPositionsTemplate(("hPos_Type_"+itos(t)).c_str(),
 									("Type "+itos(t)+" Positions").c_str(),
 									200,-65,65,200,-65,65);
 			qPositions[s][t] = registerCoreHist(hPositionsTemplate,s);
-			qPositions[s][t].setAxisTitle(X_DIRECTION,"x Position [mm]");
-			qPositions[s][t].setAxisTitle(Y_DIRECTION,"y Position [mm]");
+			qPositions[s][t]->setAxisTitle(X_DIRECTION,"x Position [mm]");
+			qPositions[s][t]->setAxisTitle(Y_DIRECTION,"y Position [mm]");
 		}
 	}
 }
@@ -48,15 +48,15 @@ void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 	if(!(s==EAST || s==WEST)) return;
 	if(PDS.fPID != PID_BETA) return;
 	if(PDS.passesPositionCut(s) && PDS.fType == TYPE_0_EVENT && PDS.getEtrue()>225)
-		qAnodeCal[s].fillPoint->Fill(PDS.mwpcEnergy[s]/PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock.t[s]),weight);
+		qAnodeCal[s]->fillPoint->Fill(PDS.mwpcEnergy[s]/PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock.t[s]),weight);
 	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_IV_EVENT) {
-		qEnergySpectra[s][nBetaTubes][PDS.fType].fillPoint->Fill(PDS.getEtrue(),weight);
-		((TH2*)qBGDecay[s].fillPoint)->Fill(PDS.runClock.t[s],PDS.getEtrue(),weight);
+		qEnergySpectra[s][nBetaTubes][PDS.fType]->fillPoint->Fill(PDS.getEtrue(),weight);
+		((TH2F*)qBGDecay[s]->fillPoint)->Fill(PDS.runClock.t[s],PDS.getEtrue(),weight);
 		for(unsigned int t=0; t<nBetaTubes; t++)
-			qEnergySpectra[s][t][PDS.fType].fillPoint->Fill(PDS.scints[s].tuben[t].x,weight);
+			qEnergySpectra[s][t][PDS.fType]->fillPoint->Fill(PDS.scints[s].tuben[t].x,weight);
 	}
 	if(PDS.fType <= TYPE_III_EVENT)
-		((TH2*)qPositions[s][PDS.fType].fillPoint)->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
+		((TH2F*)qPositions[s][PDS.fType]->fillPoint)->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 }
 
 AnaResult AsymmetryAnalyzer::getResultBase() const {
@@ -118,7 +118,7 @@ void AsymmetryAnalyzer::endpointFits() {
 	for(Side s = EAST; s <= WEST; ++s) {		
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			for(unsigned int t=0; t<=nBetaTubes; t++) {
-				float_err ep = kurieIterator((TH1F*)qEnergySpectra[s][t][TYPE_0_EVENT].fgbg[afp]->h[1],
+				float_err ep = kurieIterator((TH1F*)qEnergySpectra[s][t][TYPE_0_EVENT]->fgbg[afp]->h[1],
 											 800., NULL, neutronBetaEp, fitStart, fitEnd);
 				Stringmap m;
 				m.insert("fitStart",fitStart);
@@ -129,7 +129,7 @@ void AsymmetryAnalyzer::endpointFits() {
 				m.insert("type",TYPE_0_EVENT);
 				m.insert("endpoint",ep.x);
 				m.insert("dendpoint",ep.err);
-				m.insert("counts",qEnergySpectra[s][t][TYPE_0_EVENT].fgbg[afp]->h[1]->Integral());
+				m.insert("counts",qEnergySpectra[s][t][TYPE_0_EVENT]->fgbg[afp]->h[1]->Integral());
 				m.display("--- ");
 				qOut.insert("kurieFit",m);
 			}
@@ -145,7 +145,7 @@ void AsymmetryAnalyzer::bgSubtrFits() {
 		fBG.SetLineColor(2+2*s);
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
-				qEnergySpectra[s][nBetaTubes][tp].fgbg[afp]->h[GV_OPEN]->Fit(&fBG,"QR+");
+				qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[GV_OPEN]->Fit(&fBG,"QR+");
 				Stringmap m;
 				m.insert("side",sideSubst("%c",s));
 				m.insert("afp",afpWords(afp));
@@ -165,7 +165,7 @@ void AsymmetryAnalyzer::anodeCalFits() {
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			TF1 fLandau("landauFit","landau",0,15);
 			fLandau.SetLineColor(2+2*s);
-			int fiterr = qAnodeCal[s].fgbg[afp]->h[1]->Fit(&fLandau,"Q");
+			int fiterr = qAnodeCal[s]->fgbg[afp]->h[1]->Fit(&fLandau,"Q");
 			Stringmap m;
 			m.insert("afp",afpWords(afp));
 			m.insert("side",ctos(sideNames(s)));
@@ -196,18 +196,18 @@ void AsymmetryAnalyzer::calculateResults() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents", "All Events Energy");
 		if(!(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C || anChoice == ANCHOICE_D))
-			qTotalSpectrum[s] *= 0;	// analysis choices without Type 0 events
+			*qTotalSpectrum[s] *= 0;	// analysis choices without Type 0 events
 		else ARtot.etypes.insert(TYPE_0_EVENT);
 		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C) {
-			qTotalSpectrum[s] += qEnergySpectra[s][nBetaTubes][TYPE_I_EVENT];
+			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_I_EVENT];
 			ARtot.etypes.insert(TYPE_I_EVENT);
 		}
 		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C) {
-			qTotalSpectrum[s] += qEnergySpectra[s][nBetaTubes][TYPE_II_EVENT];
+			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_II_EVENT];
 			ARtot.etypes.insert(TYPE_II_EVENT);
 		}
 		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C) {
-			qTotalSpectrum[s] += qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
+			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
 			ARtot.etypes.insert(TYPE_III_EVENT);
 		}
 	}
@@ -274,7 +274,7 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 				c.emin = 225;
 				c.emax = 675;
 				//c.radius = fiducialR;
-				TH1* h = (TH1F*)qEnergySpectra[s][nBetaTubes][tp].fgbg[afp]->h[GV_OPEN];
+				TH1* h = (TH1F*)qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[GV_OPEN];
 				int b0 = h->FindBin(c.emin);
 				int b1 = h->FindBin(c.emax);
 				
@@ -312,7 +312,7 @@ void AsymmetryAnalyzer::makePlots() {
 	if(depth <= 0) {
 		for(Side s = EAST; s <= WEST; ++s) {
 			for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
-				qPositions[s][t].setDrawRange(0,false);
+				qPositions[s][t]->setDrawRange(0,false);
 				drawQuad(qPositions[s][t],"Positions","COL");
 			}
 		}

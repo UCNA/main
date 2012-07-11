@@ -12,7 +12,7 @@ void OctetAnalyzerExample::fillCoreHists(ProcessedDataScanner& PDS, double weigh
 	// fill wirechamber spectrum for Type 0 beta events on each side
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
-		qAnodeSpectrum[PDS.fSide].fillPoint->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
+		qAnodeSpectrum[PDS.fSide]->fillPoint->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
 }
 
 void OctetAnalyzerExample::calculateResults() {

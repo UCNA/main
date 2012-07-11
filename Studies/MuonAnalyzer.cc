@@ -8,19 +8,19 @@ OctetAnalyzer(pnt,nm,inflname), nEnergyBins(150), energyMax(1500) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		qMuonSpectra[s][false] = registerCoreHist("hMuonNoSub", "Tagged Muon Events Energy",
 												  nEnergyBins, 0, energyMax, s);
-		qMuonSpectra[s][false].setSubtraction(false);
-		qMuonSpectra[s][false].setAxisTitle(X_DIRECTION,"Energy [keV]");
+		qMuonSpectra[s][false]->setSubtraction(false);
+		qMuonSpectra[s][false]->setAxisTitle(X_DIRECTION,"Energy [keV]");
 		qMuonSpectra[s][true] = registerCoreHist("hMuonSpectrum", "Tagged Muon Events Energy",
 												 nEnergyBins, 0, energyMax, s);
-		qMuonSpectra[s][true].setAxisTitle(X_DIRECTION,"Energy [keV]");
+		qMuonSpectra[s][true]->setAxisTitle(X_DIRECTION,"Energy [keV]");
 		
 		qBackMuons[s][false] = registerCoreHist("hBackMuNoSub", "Tagged Muon Events Energy",
 												nEnergyBins, 0, energyMax, s);
-		qBackMuons[s][false].setSubtraction(false);
-		qBackMuons[s][false].setAxisTitle(X_DIRECTION,"Energy [keV]");
+		qBackMuons[s][false]->setSubtraction(false);
+		qBackMuons[s][false]->setAxisTitle(X_DIRECTION,"Energy [keV]");
 		qBackMuons[s][true] = registerCoreHist("hBackMu", "Tagged Muon Events Energy",
 											   nEnergyBins, 0, energyMax, s);
-		qBackMuons[s][true].setAxisTitle(X_DIRECTION,"Energy [keV]");
+		qBackMuons[s][true]->setAxisTitle(X_DIRECTION,"Energy [keV]");
 
 		TH2F hMuPosTemplate("hMuonPos","Muon event positions",100,-65,65,100,-65,65);
 		TH2F hBackMuPosTemplate("hBackMuPos","Backing veto muon positions",100,-65,65,100,-65,65);
@@ -41,15 +41,15 @@ void MuonAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	if(!(s==EAST || s==WEST)) return;
 	if(!(PDS.fPID == PID_MUON && PDS.fType <= TYPE_III_EVENT)) return;
 	if(PDS.passesPositionCut(s)) {
-		qMuonSpectra[s][false].fillPoint->Fill(PDS.getEtrue(),weight); 
-		qMuonSpectra[s][true].fillPoint->Fill(PDS.getEtrue(),weight); 
+		qMuonSpectra[s][false]->fillPoint->Fill(PDS.getEtrue(),weight); 
+		qMuonSpectra[s][true]->fillPoint->Fill(PDS.getEtrue(),weight); 
 	}
 	((TH2F*)pMuonPos[s]->h[currentGV])->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 	
 	if(!PDS.fTaggedBack[s]) return;
 	if(PDS.passesPositionCut(s)) {
-		qBackMuons[s][false].fillPoint->Fill(PDS.getEtrue(),weight); 
-		qBackMuons[s][true].fillPoint->Fill(PDS.getEtrue(),weight); 
+		qBackMuons[s][false]->fillPoint->Fill(PDS.getEtrue(),weight); 
+		qBackMuons[s][true]->fillPoint->Fill(PDS.getEtrue(),weight); 
 	}
 	((TH2F*)pBackMuPos[s]->h[currentGV])->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 }
@@ -59,7 +59,7 @@ void MuonAnalyzer::calculateResults() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		fLandau.SetLineColor(2+2*s);
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-			qBackMuons[s][false].fgbg[afp]->h[GV_OPEN]->Fit(&fLandau,"QR+");
+			qBackMuons[s][false]->fgbg[afp]->h[GV_OPEN]->Fit(&fLandau,"QR+");
 			Stringmap m;
 			m.insert("side",sideSubst("%c",s));
 			m.insert("afp",afpWords(afp));

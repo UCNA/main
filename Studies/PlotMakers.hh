@@ -8,6 +8,7 @@
 #include "NuclEvtGen.hh"
 #include "OutputManager.hh"
 #include "BetaSpectrum.hh"
+#include "AsymmetryAnalyzer.hh"
 #include <vector>
 #include <string>
 
@@ -61,14 +62,32 @@ void compareXenonSpectra();
 /// Decompose xenon spectrum for given run number
 void decomposeXenon(RunNum rn, bool includeFast = false);
 
-
-/// Run-to-run gain fluctuations error
-void gainfluctsTable(double delta, const std::string& datset = "OctetAsym_Offic");
-
-/// Run-to-run pedestal shifts error
-void pedShiftsTable(double delta, const std::string& datset = "OctetAsym_Offic");
-
-/// Muon veto efficiency change error
-void muonVetoEfficTable(double delta, const std::string& datset = "OctetAsym_Offic");
+/// systematic errors table generator
+class ErrTables {
+public:
+	/// constructor
+	ErrTables(const std::string& datset = "OctetAsym_Offic");	
+	/// destructor
+	~ErrTables();
+	/// experimental super-ratio R
+	double getRexp(double e) const;
+	/// experimental asymmetry at given energy
+	double getAexp(double e) const;
+	/// asymmetry from superratio
+	static double AofR(double R);
+	/// gain fluctuations errors
+	void gainfluctsTable(double delta);
+	/// pedestal fluctuations errors
+	void pedShiftsTable(double delta);
+	/// muon veto efficiency change errors
+	void muonVetoEfficTable(double delta);
+	/// uniform efficiency shifts tables (e.g. deadtime, veto accidentals)
+	void efficShiftTable(double delta);
+	
+protected:
+	OutputManager OM;		//< unused OutputManager
+	AsymmetryAnalyzer Adat;	//< data for error estimation
+	TGraphErrors* S[2][2];	//< observed energy spectra for [side][afp] as TGraphs
+};
 
 #endif

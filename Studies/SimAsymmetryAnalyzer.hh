@@ -18,9 +18,9 @@ public:
 	/// output plot generation
 	virtual void makePlots();
 	
-	quadHists qBCT[2][TYPE_IV_EVENT+1];			//< average beta cos theta TProfiles by [side][event type]
-	quadHists qWrongSide[2][TYPE_IV_EVENT+1];	//< Energy spectra of events ID'd on wrong side by [side][type]
-	quadHists qMissedSpectrum;					//< energy spectrum of missed events
+	quadHists* qBCT[2][TYPE_IV_EVENT+1];		//< average beta cos theta TProfiles by [side][event type]
+	quadHists* qWrongSide[2][TYPE_IV_EVENT+1];	//< Energy spectra of events ID'd on wrong side by [side][type]
+	quadHists* qMissedSpectrum;					//< energy spectrum of missed events
 	
 protected:
 	

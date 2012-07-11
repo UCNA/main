@@ -22,7 +22,7 @@ void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 	if(!(s==EAST || s==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA) {
 		// fill events spectrum with Etrue on both sides
-		qFullEnergySpectrum[s].fillPoint->Fill(PDS.getEtrue(), weight);
+		qFullEnergySpectrum[s]->fillPoint->Fill(PDS.getEtrue(), weight);
 		// trigger threshold extraction histograms
 		if(currentGV==GV_OPEN) {
 			if(PGen.getCalibrator() != PDS.ActiveCal) PGen.setCalibrator(PDS.ActiveCal);

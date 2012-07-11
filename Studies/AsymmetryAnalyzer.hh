@@ -35,11 +35,11 @@ public:
 	TH1F* hSuperSum;				//< super-sum spectrum
 	TH1F* hEvtSS[TYPE_III_EVENT];	//< super-sum for each event type
 	
-	quadHists qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
-	quadHists qPositions[2][TYPE_III_EVENT+1];					//< event positions quad hists for [side][type]
-	quadHists qAnodeCal[2];										//< anode calibration spectrum (Type 0, Erecon>225)
-	quadHists qTotalSpectrum[2];								//< total spectrum based on analysis choice
-	quadHists qBGDecay[2];										//< 5min E vs. time plot to see decaying BG components
+	quadHists* qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
+	quadHists* qPositions[2][TYPE_III_EVENT+1];						//< event positions quad hists for [side][type]
+	quadHists* qAnodeCal[2];										//< anode calibration spectrum (Type 0, Erecon>225)
+	quadHists* qTotalSpectrum[2];									//< total spectrum based on analysis choice
+	quadHists* qBGDecay[2];											//< 5min E vs. time plot to see decaying BG components
 	
 protected:
 	

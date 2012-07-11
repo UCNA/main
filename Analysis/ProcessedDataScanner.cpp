@@ -37,13 +37,16 @@ void ProcessedDataScanner::recalibrateEnergy() {
 				ActiveCal->tweakPosition(s,d,wires[s][d],scints[s].energy.x);
 			}
 		}
-		ActiveCal->calibrateEnergy(s, wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, scints[s], runClock.t[BOTH]);
-		mwpcEnergy[s] = ActiveCal->calibrateAnode(mwpcs[s].anode,s,wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, runClock.t[BOTH]);
+		ActiveCal->calibrateEnergy(s, wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, scints[s], runClock.t[s]);
+		mwpcEnergy[s] = ActiveCal->calibrateAnode(mwpcs[s].anode,s,wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, runClock.t[s]);
 	}
 	calcEventFlags();
 }
 
-bool ProcessedDataScanner::passesPositionCut(Side s) { return radius(s)<fiducialRadius; }
+bool ProcessedDataScanner::passesPositionCut(Side s) {
+	return 45 < radius(s) && radius(s) < 60;
+	return radius(s)<fiducialRadius;
+}
 
 float ProcessedDataScanner::getEtrue() {
 	assert(ActiveCal);
