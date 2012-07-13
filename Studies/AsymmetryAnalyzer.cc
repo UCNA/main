@@ -22,6 +22,8 @@ MuonAnalyzer(pnt,nm,inflname) {
 		qAnodeCal[s] = registerCoreHist("AnodeCal","Anode Calibration Events",50, 0, 8, s);
 		TH2F hBGDecayTemplate("hBGDecay","energy vs time",60,0,300,80,0,2000);
 		qBGDecay[s] = registerCoreHist(hBGDecayTemplate,s);
+		qBGDecay[s]->setSubtraction(false);
+		qBGDecay[s]->setTimeScaling(false);
 		qBGDecay[s]->setAxisTitle(X_DIRECTION,"time [s]");
 		qBGDecay[s]->setAxisTitle(Y_DIRECTION,"energy [keV]");
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
@@ -138,20 +140,33 @@ void AsymmetryAnalyzer::endpointFits() {
 }
 
 void AsymmetryAnalyzer::bgSubtrFits() {
-	double e0 = 900;
+	double e0 = 1000;
 	double e1 = energyMax;
 	TF1 fBG("fBG","pol0",e0,e1);
 	for(Side s = EAST; s <= WEST; ++s) {
 		fBG.SetLineColor(2+2*s);
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
-				qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[GV_OPEN]->Fit(&fBG,"QR+");
+				TH1* hEn = qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[GV_OPEN];
+				TH1* hEnBG = qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[GV_CLOSED];
+				hEn->Fit(&fBG,"QR+");
+				double nBG = hEnBG->Integral(hEnBG->FindBin(e0),hEnBG->GetNbinsX()+1);
+				double xs = hEn->Integral(hEn->FindBin(e0),hEn->GetNbinsX()+1);
+				double fg2bg = totalTime[afp][GV_OPEN].t[BOTH]/totalTime[afp][GV_CLOSED].t[BOTH];
+				double d_xs = sqrt(xs+fg2bg*nBG)+fg2bg*sqrt(nBG);
+				double rscale = 1.0/(totalTime[afp][GV_OPEN].t[BOTH]*hEn->GetBinWidth(1));
 				Stringmap m;
 				m.insert("side",sideSubst("%c",s));
 				m.insert("afp",afpWords(afp));
 				m.insert("type",tp);
 				m.insert("bg",fBG.GetParameter(0));
 				m.insert("d_bg",fBG.GetParError(0));
+				m.insert("nrate",fBG.GetParameter(0)*rscale);
+				m.insert("d_nrate",fBG.GetParError(0)*rscale);
+				m.insert("nBG",nBG);
+				m.insert("xs",xs);
+				m.insert("d_xs",d_xs);
+				m.insert("fg2bg",fg2bg);
 				m.insert("fit_start",e0);
 				m.insert("fit_end",e1);
 				qOut.insert("bg_subtr_fit",m);
@@ -292,11 +307,13 @@ void AsymmetryAnalyzer::makePlots() {
 	
 	hAsym->SetMinimum(-0.10);
 	hAsym->SetMaximum(0.0);
+	hAsym->GetXaxis()->SetRangeUser(0,800);
 	hAsym->Draw();
 	printCanvas("Asymmetry");
 	
 	hInstAsym->SetMinimum(-0.10);
 	hInstAsym->SetMaximum(0.10);
+	hInstAsym->GetXaxis()->SetRangeUser(0,800);
 	hInstAsym->Draw();
 	printCanvas("InstAsym");
 	

@@ -185,8 +185,12 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
-	gainfluctsTable(0.000125);
-	pedShiftsTable(0.015);
+	ErrTables ET;
+	ET.gainfluctsTable(0.000125);
+	ET.pedShiftsTable(0.015);
+	ET.muonVetoEfficTable(0.002);
+	// double Eoff, double Eon, double Woff, double Won
+	ET.NGBGTable(.73e-5,1.25e-5,0.42e-5,0.22e-5,0.27e-5,true);
 	return;
 	
 	processWirechamberCal(14264,16077,20);

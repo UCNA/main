@@ -3,11 +3,11 @@
 TRandom3 RunAccumulator::rnd_source;
 
 fgbgPair::fgbgPair(const std::string& nm, const std::string& ttl, AFPState a, Side s):
-baseName(nm), baseTitle(ttl), afp(a), mySide(s), doSubtraction(true), isSubtracted(false) { }
+baseName(nm), baseTitle(ttl), afp(a), mySide(s), doSubtraction(true), doTimeScale(true), isSubtracted(false) { }
 
 void fgbgPair::bgSubtract(BlindTime tFG, BlindTime tBG) {
 	assert(!isSubtracted); // don't BG subtract twice!
-	double bgScale = tBG.t[mySide]?tFG.t[mySide]/tBG.t[mySide]:1.0;
+	double bgScale = (doTimeScale && tBG.t[BOTH])?tFG.t[BOTH]/tBG.t[BOTH]:1.0;
 	if(doSubtraction)
 		h[GV_OPEN]->Add(h[GV_CLOSED],-bgScale);
 	else

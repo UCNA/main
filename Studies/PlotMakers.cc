@@ -3,6 +3,7 @@
 #include <TProfile.h>
 #include <TGraphErrors.h>
 #include <TStyle.h>
+#include <TRandom.h>
 #include <map>
 #include <cassert>
 #include <vector>
@@ -17,6 +18,9 @@
 #include "LinHistCombo.hh"
 #include "PostOfficialAnalyzer.hh"
 #include <TColor.h>
+
+
+TRandom3 plRndSrc;
 
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
 	QFile fout(foutPath+"/GMS_Plot.txt",false);
@@ -606,3 +610,62 @@ void ErrTables::efficShiftTable(double delta) {
 	}
 	fclose(f);
 }
+
+void scalevars(double Eoff, double Eon, double Woff, double Won, double& Eoff1, double& Eon1, double& Woff1, double& Won1, bool comshift) {
+	if(comshift) {
+		double c = sqrt(Eon*Won/(Eoff*Woff));
+		Eoff1 = (Eon+Eoff)/(1+c);
+		Woff1 = (Won+Woff)/(1+c);
+		Eon1 = c*Eoff1;
+		Won1 = c*Woff1;
+	} else {
+		Eoff1 = Eoff;
+		Eon1 = Eon;
+		Woff1 = Woff;
+		Won1 = Won;
+	}
+}
+
+void ErrTables::NGBGTable(double Eoff, double Eon, double Woff, double Won, double err, bool comshift) {
+	FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/NGBG.txt").c_str(),"w");
+	fprintf(f,"# Uncertainty for neutron-generated backgrounds of Eoff,Eon,Woff,Won = %g,%g,%g,%g Hz/keV\n",Eoff,Eon,Woff,Won);
+	fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
+	double de = 10;
+	double tOn = Adat.totalTime[AFP_ON][GV_OPEN].t[BOTH];
+	double tOff = Adat.totalTime[AFP_OFF][GV_OPEN].t[BOTH];
+	
+	double errscale = 10;
+	err /= errscale;
+	
+	for(unsigned int b=0; b<800; b+=de) {
+		double Eoff1,Eon1,Woff1,Won1;
+		scalevars(Eoff,Eon,Woff,Won,Eoff1,Eon1,Woff1,Won1,comshift);
+		double e = b+5.;
+		double A = getAexp(e);
+		double Rp = ((S[EAST][AFP_OFF]->Eval(e)+de*Eoff1*tOff)*(S[WEST][AFP_ON]->Eval(e)+de*Won1*tOn) / 
+					 ((S[EAST][AFP_ON]->Eval(e)+de*Eon1*tOn)*(S[WEST][AFP_OFF]->Eval(e)+de*Woff1*tOff)));
+		double Ap = AofR(Rp);
+
+		// MC for errors
+		double sx = 0;
+		double sxx = 0;
+		unsigned int n = 500;
+		for(unsigned int i=0; i<n; i++) {
+			scalevars(Eoff+plRndSrc.Gaus(0.,err),Eon+plRndSrc.Gaus(0.,err),
+					  Woff+plRndSrc.Gaus(0.,err),Won+plRndSrc.Gaus(0.,err),
+					  Eoff1,Eon1,Woff1,Won1,comshift);
+			double Rpp = ((S[EAST][AFP_OFF]->Eval(e)+de*Eoff1*tOff)*(S[WEST][AFP_ON]->Eval(e)+de*Won1*tOn) / 
+						 ((S[EAST][AFP_ON]->Eval(e)+de*Eon1*tOn)*(S[WEST][AFP_OFF]->Eval(e)+de*Woff1*tOff)));
+			double App = AofR(Rpp);
+			sx += (A-App)/A;
+			sxx += (A-App)/A*(A-App)/A;
+		}
+		sx /= n;
+		sxx /= n;
+		
+		printf("%i\t%i\t%g\t%g\t%g\n",b,b+10,(A-Ap)/A,sx,errscale*sqrt(sxx-sx*sx));
+		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,(A-Ap)/A,errscale*sqrt(sxx-sx*sx));
+	}
+	fclose(f);
+}
+

@@ -38,6 +38,7 @@ public:
 	AFPState afp;			//< AFP state for data (determines which time to use for BG subtraction)
 	Side mySide;			//< side for data
 	bool doSubtraction;		//< whether to do background subtraction
+	bool doTimeScale;		//< whether to scale the BG by relative time for subtraction
 	bool isSubtracted;		//< whether this pair is already background-subtracted
 };
 

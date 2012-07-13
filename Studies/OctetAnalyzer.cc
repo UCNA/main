@@ -51,6 +51,10 @@ void quadHists::setSubtraction(bool b) {
 		fgbg[afp]->doSubtraction = b;
 }
 
+void quadHists::setTimeScaling(bool b) {
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
+		fgbg[afp]->doTimeScale = b;
+}
 
 /* --------------------------------------------------- */
 

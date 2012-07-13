@@ -83,6 +83,8 @@ public:
 	void muonVetoEfficTable(double delta);
 	/// uniform efficiency shifts tables (e.g. deadtime, veto accidentals)
 	void efficShiftTable(double delta);
+	///constant neutron generated background (in Hz/keV)
+	void NGBGTable(double Eoff, double Eon, double Woff, double Won, double err, bool comshift = false);
 	
 protected:
 	OutputManager OM;		//< unused OutputManager

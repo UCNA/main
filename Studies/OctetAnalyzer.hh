@@ -31,6 +31,8 @@ public:
 	bool isEquivalent(const quadHists& qh) const;
 	/// set background subtraction option
 	void setSubtraction(bool b);
+	/// set time scaling option
+	void setTimeScaling(bool b);
 	/// set draw range minimum for all histograms
 	void setDrawRange(double y, bool maximum);
 	/// set axis title
