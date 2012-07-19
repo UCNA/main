@@ -27,6 +27,7 @@ public:
 	G4LogicalVolume* be_win_log[2];			//< berillium layer of window
 	G4LogicalVolume* trap_monitor_log[2];	//< extra event monitoring region
 	G4LogicalVolume* collimator_log[2];		//< collimator
+	G4LogicalVolume* plug_log;				//< decay trap plug edge discontinuity
 	
 	WiggleSheet wigglefoils[2];				//< optional replacement crinkly endcap foils
 	

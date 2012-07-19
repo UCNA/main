@@ -18,6 +18,16 @@ void bmDecayTrapConstruction::Construct(G4LogicalVolume* world, double crinkleAn
 	new G4PVPlacement(NULL,G4ThreeVector(),decayTube_log,"decayTube",world,false,0);
 	
 	////////////////////////////////////////
+	// "plug"
+	////////////////////////////////////////
+	if(false) {
+		G4Tubs* plug_tube = new G4Tubs("plug_tube",fIRtrap-1*mm, fIRtrap, 2.*cm, -2*cm/fIRtrap, 2*cm/fIRtrap);
+		plug_log = new G4LogicalVolume(plug_tube,Cu,"plug_log");
+		plug_log->SetVisAttributes(new G4VisAttributes(G4Colour(1,1,0,0.5)));
+		new G4PVPlacement(NULL,G4ThreeVector(),plug_log,"plug",world,false,0);
+	}
+	
+	////////////////////////////////////////
 	// Trap windows, collimator, monitors
 	////////////////////////////////////////
 	const G4double thicknessOfTrapWindow = fWindowThick+fCoatingThick;

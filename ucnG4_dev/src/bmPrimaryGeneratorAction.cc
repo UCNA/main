@@ -184,10 +184,10 @@ void bmPrimaryGeneratorAction::throwScintGamma(G4double eGamma,G4Event* anEvent)
 	particleGun->SetParticleEnergy(eGamma);
 	
 	//particleGun->SetParticleMomentumDirection(G4ThreeVector(x,y,ssign(s)*2.2*m)-particleGun->GetParticlePosition());
-	//particleGun->SetParticleMomentumDirection(G4ThreeVector(x,y,ssign(s)*1.5*m)-particleGun->GetParticlePosition());
-	G4ThreeVector direction;
-	RandomizeMomentum(direction);
-	particleGun->SetParticleMomentumDirection(direction);
+	particleGun->SetParticleMomentumDirection(G4ThreeVector(x,y,ssign(s)*1.5*m)-particleGun->GetParticlePosition());
+	//G4ThreeVector direction;
+	//RandomizeMomentum(direction);
+	//particleGun->SetParticleMomentumDirection(direction);
 
 	particleGun->GeneratePrimaryVertex(anEvent);
 }

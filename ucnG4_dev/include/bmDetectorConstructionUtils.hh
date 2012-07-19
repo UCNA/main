@@ -37,6 +37,7 @@ public:
 	
 	static G4Material* Vacuum;			//< our slightly crappy vacuum
 	static G4Material* Brass;			//< brass for source holder
+	static G4Material* SS304;			//< 304 Stainless Steel
 	static G4Material* Kevlar;			//< kevlar for wirechamber window support strings
 	static G4Material* Mylar;			//< mylar for windows
 	static G4Material* Polyethylene;	//< poly for collimator

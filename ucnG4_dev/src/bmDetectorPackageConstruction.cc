@@ -34,4 +34,11 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 	mwpc_exit_log->SetVisAttributes(visMWPCExit);
 	mwpc_exit_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,mwpc_pos+(mwpc.GetWidth()+mwpc_exit_thickness)/2),
 									   mwpc_exit_log,sideSubst("mwpc_exit%c",s),container_log,false,0);	
+	
+	// material behind detector
+	const G4double backstuff_thick = 1.*inch;
+	G4Tubs* backstuff_tube = new G4Tubs(sideSubst("backstuff_tube%c",s),0,detPackageRadius,backstuff_thick*0.5,0.,2*M_PI); 
+	backstuff_log = new G4LogicalVolume(backstuff_tube,SS304,sideSubst("backstuff_log%c",s));
+	backstuff_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,detPackageHalfZ-0.5*backstuff_thick),
+									   backstuff_log,sideSubst("backstuff%c",s),container_log,false,0);
 }
