@@ -68,4 +68,7 @@ std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d, bool includeOverflow
 /// split a list of counts into approximately equal segments
 std::vector<unsigned int> equipartition(const std::vector<float>& elems, unsigned int n);
 
+/// integrate error bars on histogram, adding in quadrature
+double integrateErrors(const TH1* h, int b0 = -1, int b1 = -1);
+
 #endif

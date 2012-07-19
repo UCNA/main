@@ -94,7 +94,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 		}
 	}
 	
-	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_III_EVENT; t++) {
+	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
 		hTypeRate[t] = registeredTH1F("hTypeRate_"+itos(t),"Type "+itos(t)+" Event Rate",nTimeBins,-tpad,wallTime+tpad);
 		hTypeRate[t]->SetLineColor(5+t);
 		hTypeRate[t]->GetXaxis()->SetTitle("Time [s]");
@@ -145,8 +145,11 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 	
 	// already not LED, non-Scint triggers
 	
-	if(fType == TYPE_IV_EVENT && fSide <= WEST && fPID != PID_PULSER)
+	// gamma events
+	if(fType == TYPE_IV_EVENT && fSide <= WEST && fPID != PID_PULSER) {
+		hTypeRate[fType]->Fill(fTimeScaler.t[BOTH]);
 		hEtrue[fSide][fType]->Fill(fEtrue);
+	}
 	
 	for(Side s = EAST; s <= WEST; ++s) {
 		
@@ -339,14 +342,15 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	hToPlot.clear();
 	for(unsigned int t=0; t<=TYPE_II_EVENT; t++)
 		hToPlot.push_back(hTypeRate[t]);
+	hToPlot.push_back(hTypeRate[TYPE_IV_EVENT]);
 	for(Side s = EAST; s <= WEST; ++s) {
 		hToPlot.push_back(hSideRate[s][0]);
 		hToPlot.push_back(hSideRate[s][1]);
 	}
 	for(std::vector<TH1*>::iterator it = hToPlot.begin(); it  != hToPlot.end(); it++) {
 		(*it)->Scale(1.0/(*it)->GetBinWidth(1));
-		(*it)->SetMinimum(0.01);
-		(*it)->SetMaximum(100.0);
+		(*it)->SetMinimum(0.02);
+		(*it)->SetMaximum(200.0);
 	}
 	drawSimulHistos(hToPlot);
 	drawExclusionBlips(4);
@@ -404,13 +408,14 @@ void ucnaDataAnalyzer11b::muonVetoAccidentals() {
 		double tCut = hDriftTAC[s]->GetBinLowEdge(b2) - hDriftTAC[s]->GetBinLowEdge(b1+1);
 		double nAcc = nBg*tCut/tBg;
 		double nVetod = hDriftTAC[s]->Integral(b1+1,b2-1);
-		double bgTot = hDriftTAC[s]->Integral()-nVetod+nAcc;
+		double bgTot = hDriftTAC[s]->Integral()+hDriftTAC[s]->GetBinContent(hDriftTAC[s]->GetNbinsX()+1)-nVetod+nAcc;
 		Stringmap m;
 		m.insert("side",sideSubst("%c",s));
 		m.insert("bgRate",nBg/tBg);
 		m.insert("tCut",tCut);
 		m.insert("nAcc",nAcc);
 		m.insert("nVeto",nVetod-nAcc);
+		m.insert("nBG",bgTot);
 		m.insert("accFrac",nAcc/bgTot);
 		qOut.insert("driftTAC_accidentals",m);
 	}

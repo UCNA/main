@@ -8,6 +8,7 @@ AsymmetryAnalyzer(pnt,nm,inflname) {
 	isSimulated = true;
 	qMissedSpectrum = registerCoreHist("MissedSpectrum","Missing Events Energy Spectrum",
 									   nEnergyBins, 0, energyMax, BOTH);
+	qMissedSpectrum->setAxisTitle(X_DIRECTION,"Energy [keV]");
 	for(Side s = EAST; s <= WEST; ++s) {		
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			TProfile pBCTTemplate(("pBcT_Type_"+itos(t)).c_str(),
@@ -21,7 +22,7 @@ AsymmetryAnalyzer(pnt,nm,inflname) {
 			
 			qWrongSide[s][t] = registerCoreHist("hWrongSide_"+itos(t),"Wrong-side ID events",
 												nEnergyBins, 0, energyMax, s);
-
+			qWrongSide[s][t]->setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
 		}
 	}
 }
@@ -37,8 +38,11 @@ void SimAsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weigh
 	Side s = S2P.fSide;
 	if(!(s==EAST || s==WEST)) return;
 	if(S2P.fPID != PID_BETA) return;
-	if(S2P.passesPositionCut(s) && S2P.fType <= TYPE_III_EVENT)
+	if(S2P.passesPositionCut(s) && S2P.fType <= TYPE_III_EVENT) {
 		((TProfile*)qBCT[s][S2P.fType]->fillPoint)->Fill(S2P.getEtrue(),beta(S2P.ePrim)*S2P.costheta,weight);
+		if( (s==EAST && S2P.costheta > 0) || (s==WEST && S2P.costheta < 0) )
+			qWrongSide[s][S2P.fType]->fillPoint->Fill(S2P.getEtrue(),weight);
+	}
 }
 
 void SimAsymmetryAnalyzer::makePlots() {
@@ -46,6 +50,8 @@ void SimAsymmetryAnalyzer::makePlots() {
 	drawQuad(qMissedSpectrum,"Energy/");
 	for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t)
 		drawQuadSides(qBCT[EAST][t],qBCT[WEST][t],false,"BetaCosTheta/");
+	for(EventType t=TYPE_0_EVENT; t<=TYPE_III_EVENT; ++t)
+		drawQuadSides(qWrongSide[EAST][t],qWrongSide[WEST][t],false,"WrongSide/");
 }
 
 SegmentSaver* SimAsymmetryAnalyzer::makeAnalyzer(const std::string& nm,const std::string& inflname) {

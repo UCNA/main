@@ -48,10 +48,12 @@ void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 	MuonAnalyzer::fillCoreHists(PDS,weight);
 	Side s = PDS.fSide;
 	if(!(s==EAST || s==WEST)) return;
+	if(PDS.fPID == PID_SINGLE && PDS.fType == TYPE_IV_EVENT)
+		qEnergySpectra[s][nBetaTubes][TYPE_IV_EVENT]->fillPoint->Fill(PDS.getEtrue(),weight);
 	if(PDS.fPID != PID_BETA) return;
 	if(PDS.passesPositionCut(s) && PDS.fType == TYPE_0_EVENT && PDS.getEtrue()>225)
 		qAnodeCal[s]->fillPoint->Fill(PDS.mwpcEnergy[s]/PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock.t[s]),weight);
-	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_IV_EVENT) {
+	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT) {
 		qEnergySpectra[s][nBetaTubes][PDS.fType]->fillPoint->Fill(PDS.getEtrue(),weight);
 		((TH2F*)qBGDecay[s]->fillPoint)->Fill(PDS.runClock.t[s],PDS.getEtrue(),weight);
 		for(unsigned int t=0; t<nBetaTubes; t++)
@@ -196,12 +198,6 @@ void AsymmetryAnalyzer::anodeCalFits() {
 	}	
 }
 
-double integralError(const TH1* h, int b0, int b1) {
-	double e = 0;
-	for(int b = b0; b <= b1; b++) e += pow(h->GetBinError(b),2);
-	return sqrt(e);
-}
-
 void AsymmetryAnalyzer::calculateResults() {
 	
 	MuonAnalyzer::calculateResults();
@@ -294,7 +290,7 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 				int b1 = h->FindBin(c.emax);
 				
 				ARtot.value = h->Integral(b0,b1);
-				ARtot.err = integralError(h,b0,b1);
+				ARtot.err = integrateErrors(h,b0,b1);
 				ARtot.csid = ADB->uploadCutSpec(c);
 				ADB->uploadAnaResult(ARtot);
 			}
@@ -324,6 +320,7 @@ void AsymmetryAnalyzer::makePlots() {
 	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++)
 		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][t], qEnergySpectra[WEST][nBetaTubes][t], true, "Energy");
+	drawQuadSides(qEnergySpectra[EAST][nBetaTubes][TYPE_IV_EVENT], qEnergySpectra[WEST][nBetaTubes][TYPE_IV_EVENT], true, "Energy");
 	
 	// positions
 	if(depth <= 0) {

@@ -105,7 +105,7 @@ Stringmap Octet::toStringmap() const {
 	for(std::map< OctetType,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++)
 		s.insert(nameForOctet(it->first),vtos(*(std::vector<int>*)&it->second)); //TODO compiler complains about iffy re-casting
 	s.insert("name",octName());
-	s.insert("afp",itos(octAFPState()));
+	s.insert("afp",afpWords(octAFPState()));
 	s.insert("divlevel",itos(divlevel));
 	return s;
 }

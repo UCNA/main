@@ -124,8 +124,6 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	const std::string simOutputDir=outputDir+"_Sim_MagF_2";
 	
 	std::string simFile="/home/mmendenhall/geant4/output/WideKev_neutronBetaUnpol/analyzed_";
-	//std::string simFile = "/home/mmendenhall/geant4/output/LivPhys_495_BadVac_neutronBetaUnpol/analyzed_";
-	//std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_";
 	
 	unsigned int nTot = 52;
 	unsigned int stride = 7;

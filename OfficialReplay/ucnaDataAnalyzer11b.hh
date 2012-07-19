@@ -265,7 +265,7 @@ protected:
 	TH1F* hTuben[2][nBetaTubes];		//< individual PMT visible energy
 	TH1F* hMonADC[kNumUCNMons];			//< UCN Monitor ADCs
 	TH1F* hMonRate[kNumUCNMons];		//< UCM Monitor rates
-	TH1F* hTypeRate[TYPE_III_EVENT+1];	//< rate of event type for betas
+	TH1F* hTypeRate[TYPE_IV_EVENT+1];	//< rate of event type for betas
 	TH1F* hSideRate[2][2];				//< rate for [side][muon/beta]
 	TH1F* hBkhfFailRate;				//< rate of bad Bkhf events
 	TH1F* hEvnbFailRate;				//< rate of bad Evnb events

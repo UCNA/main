@@ -1,4 +1,5 @@
 #include "RunAccumulator.hh"
+#include "GraphUtils.hh"
 
 TRandom3 RunAccumulator::rnd_source;
 
@@ -232,12 +233,16 @@ void RunAccumulator::makeRatesSummary() {
 		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
 			Stringmap rt;
 			rt.insert("side",ctos(sideNames(it->second->mySide)));
-			rt.insert("afp",itos(it->second->afp));
+			rt.insert("afp",afpWords(it->second->afp));
 			rt.insert("name",it->second->getName());
 			rt.insert("fg",itos(gv));
 			double counts = it->second->h[gv]->Integral();
+			double d_counts = integrateErrors(it->second->h[gv]);
+			double rtime = totalTime[it->second->afp][gv].t[it->second->mySide];
 			rt.insert("counts",counts);
-			rt.insert("rate",counts?counts/totalTime[it->second->afp][gv].t[it->second->mySide]:0);
+			rt.insert("d_counts",d_counts);
+			rt.insert("rate",counts?counts/rtime:0);
+			rt.insert("d_rate",d_counts?d_counts/rtime:0);
 			qOut.insert("rate",rt);
 		}
 	}
@@ -248,11 +253,11 @@ void RunAccumulator::write(std::string outName) {
 	for(AFPState afp = AFP_OFF; afp <= AFP_OTHER; ++afp) {
 		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
 			Stringmap tm = totalTime[afp][gv].toStringmap();
-			tm.insert("afp",itos(afp));
+			tm.insert("afp",afpWords(afp));
 			tm.insert("fg",itos(gv));
 			qOut.insert("totalTime",tm);
 			Stringmap ct;
-			ct.insert("afp",itos(afp));
+			ct.insert("afp",afpWords(afp));
 			ct.insert("fg",itos(gv));
 			ct.insert("counts",totalCounts[afp][gv]);
 			qOut.insert("totalCounts",ct);

@@ -49,7 +49,7 @@ void bmAnalysisManager::OpenFile(const G4String filename) {
 	if(fROOTOutputFile != 0)
 		CloseFile();  
 	
-	G4cout<<"Openning root file "<<filename<<G4endl;
+	G4cout<<"Opening root file "<<filename<<G4endl;
 	
 	fROOTOutputFile= new TFile(filename.c_str(), "RECREATE", "Geant4 benchmark simulation output file");  
 	

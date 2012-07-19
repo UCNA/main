@@ -378,3 +378,11 @@ std::vector<unsigned int> equipartition(const std::vector<float>& elems, unsigne
 	part.push_back(elems.size());
 	return part;
 }
+
+double integrateErrors(const TH1* h, int b0, int b1) {
+	if(b0==-1) b0 = 1;
+	if(b1==-1) b1 = h->GetNbinsX();
+	double err = 0;
+	for(int b = b0; b <= b1; b++) err += pow(h->GetBinError(b),2);
+	return sqrt(err);
+}

@@ -305,7 +305,7 @@ if __name__ == "__main__":
 	#			"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
 	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
 	####################
-	if 1:
+	if 0:
 		for g in ["Xe137_7-2-","Xe133_3-2+"]:
 			sourceSim = GeantSimManager("WideKev",vacuum="1.e-3 torr")
 			sourceSim.settings["physlist"]="livermore"
@@ -336,6 +336,29 @@ if __name__ == "__main__":
 			siDet.settings["gunenergy"] = 5485.56
 			siDet.launch_sims(nEvents=1e4,nClusters=1,hours_old=0)
 			siDet.launch_postanalyzer()
+
+
+	####################				
+	# isotropic line
+	####################
+	if 0:
+		for l in [100,150,200,300,400,600,800]:
+			iline = GeantSimManager("IsotLine")
+			iline.set_generator("eGunRandMomentum")
+			iline.settings["positioner"] = "Fixed"
+			iline.settings["gunenergy"] = l
+			iline.launch_sims(nEvents=1e5,nClusters=9,hours_old=16)
+			iline.launch_postanalyzer()
+		
+	####################				
+	# Cu n capture gammas
+	####################
+	if 1:
+		nCapt = GeantSimManager("GuideCapt")
+		nCapt.set_generator("nCaptCu",forcePositioner="Fixed")
+		nCapt.settings["gunpos_mm"] = [61.,0.,0.]
+		nCapt.launch_sims(nEvents=1e7,nClusters=6,hours_old=0)
+		nCapt.launch_postanalyzer()
 
 # visualization test
 #launch_simulations(generators = ["eGunRandMomentum"], forcePositioner="SourceDrop",

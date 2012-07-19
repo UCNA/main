@@ -77,11 +77,14 @@ private:
 	G4String particleType;						//< particle type to throw
 	G4String positioner;						//< how to position initial events
 	double sourceRadius;						//< radius for sealed source generator
+	G4ThreeVector vertex_position;				//< event vertex position
 	
 	/// throw multiple electrons and gammas in one event
 	void throwElectronsAndGammas(const std::vector<G4double>& electrons,
 								 const std::vector<G4double>& gammas,
 								 G4Event* anEvent);
+	/// throw a gamma towards the scintillator
+	void throwScintGamma(G4double eGamma,G4Event* anEvent);
 	/// throw a cluster of events
 	void throwEvents(const std::vector<NucDecayEvent>& evts, G4Event* anEvent);
 	
@@ -92,6 +95,8 @@ private:
 	void Cd113mSourceGenerator(G4Event* anEvent);
 	/// In114, based on NuDat 2.6
 	void In114SourceGenerator(G4Event* anEvent);
+	/// approximation for neutron capture on Cu gammas
+	void nCaptureCuGammas(G4Event* anEvent);
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

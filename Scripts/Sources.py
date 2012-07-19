@@ -306,15 +306,15 @@ class LinearityCurve:
 		# plot
 		combodat = []
 		for k in pks.keys():
-			#		  0         1            2        3                                          4     5         6          7
-			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.denwidth,q.sim.enwidth,q) for q in pks[k]]
+			#		  0         1            2        3                                          4     5         6          7             8
+			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.denwidth,q.sim.enwidth,q.sim.denwidth,q) for q in pks[k]]
 			gdat = [ g for g in gdat if 0 < g[5] < 1000 and 0 < g[7] < 1000]
 			combodat += gdat
 			self.gEn.plot(graph.data.points(gdat,x=2,y=3,title=peakNames[k]), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRes.plot(graph.data.points(gdat,x=2,y=4,title=None), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=3,size=5,title=None), [ varCircle(symbolattrs=[cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=2,title=None), [ graph.style.line([style.linestyle.dashed,cP[k]]),])
-			self.gWidth.plot(graph.data.points(gdat,x=8,y=6,dy=7,title=peakNames[k]),
+			self.gWidth.plot(graph.data.points(gdat,x=8,y=6,dy=7,dx=9,title=peakNames[k]),
 							 [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),
 							  graph.style.errorbar(errorbarattrs=[cP[k]])])
 			
@@ -456,13 +456,13 @@ def plotBackscatters(conn,rlist):
 # calibration definitions:
 #				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
 cal_2010 = [
-			(	13883,	13894,	13890,	13879,	13964,		94,		97,			85	),	# 0 first usable? data + little Xe
-			(	14104,	14116,	14111,	14077,	14380,		144,	147,		85	),	# 1	Columbus Day weekend + big Xe	
-			(	14383,	14394,	14390,	14383,	14507,		212,	215,		85	),	# 2 Oct. 15-21 week
-			(	14516,	14530,	14524,	14513,	14667,		268,	271,		85	),	# 3 Oct. 22-24 weekend
-			(	14736,	14746,	14743,	14688,	14994,		330,	333,		85	),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
-			(	15645,	15662,	15653,	15084,	15915,		437,	440,		77	),	# 5 Nov. 22-29 Thanksgiving Week
-			(	15916,	15939,	15931,	15916,	100000,		553,	555,		77	)	# 6 Post-Thanksgiving
+			(	13883,	13894,	13890,	13879,	13964,		94,		97,			129 ),	# 0 first usable? data + little Xe
+			(	14104,	14116,	14111,	14077,	14380,		144,	147,		129 ),	# 1	Columbus Day weekend + big Xe	
+			(	14383,	14394,	14390,	14383,	14507,		212,	215,		129 ),	# 2 Oct. 15-21 week
+			(	14516,	14530,	14524,	14513,	14667,		268,	271,		129 ),	# 3 Oct. 22-24 weekend
+			(	14736,	14746,	14743,	14688,	14994,		330,	333,		129 ),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
+			(	15645,	15662,	15653,	15084,	15915,		437,	440,		129	),	# 5 Nov. 22-29 Thanksgiving Week
+			(	15916,	15939,	15931,	15916,	100000,		553,	555,		129	)	# 6 Post-Thanksgiving
 			]
 			
 cal_2011 = [
@@ -496,20 +496,20 @@ if __name__=="__main__":
 	conn = open_connection() # connection to calibrations DB
 	replace = True	# whether to replace previous calibration data
 	
-	for c in cal_2010[:5]:
+	for c in cal_2010:
 	
 		if True:
-			# make new calibrations set
-			ecid = None
-			if len(c)>2:
-				ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
-				
 			# gather source data from calibration runs
 			rlist = range(c[0],c[1]+1)
 			slines = gather_peakdat(conn,rlist)
 			
-		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
-		#	continue
+			#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
+			#continue
+			
+			# make new calibrations set
+			ecid = None
+			if False and len(c)>2:
+				ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
 			
 			# fit linearity curves for each PMT
 			for (sn,s) in enumerate(["East","West"]):

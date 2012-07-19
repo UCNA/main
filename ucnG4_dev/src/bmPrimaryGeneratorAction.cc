@@ -81,14 +81,19 @@ void RandomizeMomentum(G4ThreeVector& mom) {
 	mom.set(cos(phi)*sintheta,sin(phi)*sintheta,costheta);
 }  
 
+/// generate a random position in a disk
+void diskRandom(G4double radius, G4double& x, G4double& y) {
+	while(true) {
+		x = (2.0*G4UniformRand()-1.)*radius;
+		y = (2.0*G4UniformRand()-1.)*radius;
+		if(x*x+y*y<=radius*radius) break;
+	}
+}
+
 /// generate a random position in a tube
 void randomTubePosition(const G4ThreeVector centerpos, const G4double radius, const G4double halfz, G4ThreeVector& pos) {
 	G4double x0,y0;
-	while(true) {
-		x0 = (2.0*G4UniformRand()-1.)*radius;
-		y0 = (2.0*G4UniformRand()-1.)*radius;
-		if(x0*x0+y0*y0<=radius*radius) break;
-	}
+	diskRandom(radius,x0,y0);
 	G4double z0=(2.0*G4UniformRand()-1.0)*halfz;
 	pos = centerpos+G4ThreeVector(x0,y0,z0);
 }
@@ -170,6 +175,23 @@ throwElectronsAndGammas(const std::vector<G4double>& electrons,
 	}
 }
 
+void bmPrimaryGeneratorAction::throwScintGamma(G4double eGamma,G4Event* anEvent) {
+	Side s = G4UniformRand()<0.5?EAST:WEST;
+	G4double x,y;
+	diskRandom(8*cm,x,y);
+	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+	particleGun->SetParticleDefinition(particleTable->FindParticle("gamma"));
+	particleGun->SetParticleEnergy(eGamma);
+	
+	//particleGun->SetParticleMomentumDirection(G4ThreeVector(x,y,ssign(s)*2.2*m)-particleGun->GetParticlePosition());
+	//particleGun->SetParticleMomentumDirection(G4ThreeVector(x,y,ssign(s)*1.5*m)-particleGun->GetParticlePosition());
+	G4ThreeVector direction;
+	RandomizeMomentum(direction);
+	particleGun->SetParticleMomentumDirection(direction);
+
+	particleGun->GeneratePrimaryVertex(anEvent);
+}
+
 // lines based on NuDat 2.6
 void bmPrimaryGeneratorAction::Cd113mSourceGenerator(G4Event* anEvent) {
 	
@@ -215,6 +237,21 @@ void bmPrimaryGeneratorAction::In114SourceGenerator(G4Event* anEvent) {
 	}
 	
 	throwElectronsAndGammas(electrons,gammas,anEvent);
+}
+
+void bmPrimaryGeneratorAction::nCaptureCuGammas(G4Event* anEvent) {
+	int selected(-1);
+	G4double gunEnergy;
+	if(G4UniformRand()<64.83/(64.83+30.84)) {
+		const double Cu63Lines[] = {7916,	278,	7538,	159,	7307,	609,	344};
+		const double Cu63Branch[]= {100,	72.51,	48.9,	45.32,	27.0,	23.56,	17.82};
+		gunEnergy = rand_outof_list(Cu63Lines, Cu63Branch, 7, selected)*keV;
+	} else {
+		const double Cu65Lines[] = {186,	465,	386,	6601,	6680,	89,		5245};
+		const double Cu65Branch[]= {100,	54.39,	46.34,	35.1,	33.6,	26.59,	17.8};
+		gunEnergy = rand_outof_list(Cu65Lines, Cu65Branch, 7, selected)*keV;
+	}
+	throwScintGamma(gunEnergy,anEvent);
 }
 
 
@@ -300,7 +337,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	// set vertex position for event according to position generator
 	// assumed position has been set in /gun/position!
 	static G4ThreeVector position_saved = particleGun->GetParticlePosition();
-	G4ThreeVector vertex_position = position_saved;
+	vertex_position = position_saved;
 	if(positioner=="Fixed") {
 		// fixed position set from macro file
 		vertex_position = position_saved;
@@ -322,9 +359,12 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		G4cout << "********* WARNING: Undefined positioner type! Defaulting to 'Fixed'! **********" << G4endl;
 	}
 	particleGun->SetParticlePosition(vertex_position);
+	G4cout << "Event vertex " << vertex_position/m << G4endl;
 	
 	if(gunType=="Cd113m") {
 		Cd113mSourceGenerator(anEvent);
+	} else if (gunType=="nCaptCu") {
+		nCaptureCuGammas(anEvent);
 	} else if (gunType=="In114" || gunType=="In114E" || gunType=="In114W") {
 		In114SourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {

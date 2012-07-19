@@ -61,7 +61,7 @@ Side strToSide(const std::string& s) {
 
 std::string afpWords(AFPState afp) {
 	if(afp>AFP_ON2OFF) afp = AFP_OTHER;
-	const char* awd[] = {"On","Off","Other","On2Off","Off2On"};
+	const char* awd[] = {"Off","On","Other","Off2On","On2Off"};
 	return awd[afp];
 }
 
