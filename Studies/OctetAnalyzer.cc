@@ -133,7 +133,7 @@ TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists* qEast
 		hR->Multiply(qEast->fgbg[AFP_OFF]->h[fg]);
 	} else {
 		hR->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
-		hR->Scale(1.0/(totalTime[AFP_ON][fg].t[EAST]*totalTime[AFP_OFF][fg].t[WEST]));
+		hR->Scale(1.0/(totalTime[AFP_ON][fg][EAST]*totalTime[AFP_OFF][fg][WEST]));
 	}
 	
 	TH1* hAsym = (TH1*)qWest->fgbg[AFP_ON]->h[fg]->Clone(hname.c_str());
@@ -141,7 +141,7 @@ TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists* qEast
 		hAsym->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
 	} else {
 		hAsym->Multiply(qEast->fgbg[AFP_OFF]->h[fg]);
-		hAsym->Scale(1.0/(totalTime[AFP_OFF][fg].t[EAST]*totalTime[AFP_ON][fg].t[WEST]));
+		hAsym->Scale(1.0/(totalTime[AFP_OFF][fg][EAST]*totalTime[AFP_ON][fg][WEST]));
 	}
 	
 	hR->Divide(hAsym);
@@ -187,11 +187,11 @@ TH1* OctetAnalyzer::calculateSuperSum(const std::string& hname, const quadHists*
 	assert(qEast && qWest);
 	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[fg]->Clone("SuperSum_intermediate");
 	hR->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
-	hR->Scale(1.0/(totalTime[AFP_ON][fg].t[EAST]*totalTime[AFP_OFF][fg].t[WEST]));
+	hR->Scale(1.0/(totalTime[AFP_ON][fg][EAST]*totalTime[AFP_OFF][fg][WEST]));
 	
 	TH1* hSS = (TH1*)qEast->fgbg[AFP_OFF]->h[fg]->Clone(hname.c_str());
 	hSS->Multiply(qWest->fgbg[AFP_ON]->h[fg]);
-	hSS->Scale(1.0/(totalTime[AFP_OFF][fg].t[EAST]*totalTime[AFP_ON][fg].t[WEST]));
+	hSS->Scale(1.0/(totalTime[AFP_OFF][fg][EAST]*totalTime[AFP_ON][fg][WEST]));
 	
 	sqrtHist(hR);
 	sqrtHist(hSS);
@@ -311,7 +311,7 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 			}
 			assert(RI.afpState <= AFP_ON);	// are you really trying to clone non-beta-octet runs here??
 			// estimate background count share for this run (and reduce simulation by this amount)
-			double bgEst = origOA->getTotalCounts(RI.afpState,GV_CLOSED)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,GV_CLOSED).t[BOTH];
+			double bgEst = origOA->getTotalCounts(RI.afpState,GV_CLOSED)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,GV_CLOSED)[BOTH];
 			if(it->second <= bgEst) continue;
 			double nToSim = simfactor*(it->second-bgEst);
 			printf("\t---Simulation cloning for run %i (%i+%i counts)---\n",it->first,int(nToSim),int(simfactor*bgEst));

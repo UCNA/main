@@ -16,6 +16,7 @@
 #include <TFile.h>
 #include <TMath.h>
 #include <map>
+#include <cassert>
 
 /// class to prevent unintended copying of sub-classes
 class NoCopy {
@@ -46,9 +47,13 @@ public:
 	/// convert to Stringmap
 	Stringmap toStringmap() const;
 	/// add another blinded time
-	inline void operator+= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] += bt.t[s]; }
+	inline void operator+= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] += bt[s]; }
 	/// subtract another blinded time
-	inline void operator-= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] -= bt.t[s]; }
+	inline void operator-= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] -= bt[s]; }
+	/// access blinded times for side
+	Float_t& operator[](Side s) { assert(s<=BOTH); return t[s]; }
+	/// const blinded times access
+	Float_t operator[](Side s) const { assert(s<=BOTH); return t[s]; }
 	
 	Float_t t[4];	//< blinded timings for each side
 };

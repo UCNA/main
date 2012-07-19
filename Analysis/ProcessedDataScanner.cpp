@@ -37,8 +37,8 @@ void ProcessedDataScanner::recalibrateEnergy() {
 				ActiveCal->tweakPosition(s,d,wires[s][d],scints[s].energy.x);
 			}
 		}
-		ActiveCal->calibrateEnergy(s, wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, scints[s], runClock.t[s]);
-		mwpcEnergy[s] = ActiveCal->calibrateAnode(mwpcs[s].anode,s,wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, runClock.t[s]);
+		ActiveCal->calibrateEnergy(s, wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, scints[s], runClock[s]);
+		mwpcEnergy[s] = ActiveCal->calibrateAnode(mwpcs[s].anode,s,wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, runClock[s]);
 	}
 	calcEventFlags();
 }

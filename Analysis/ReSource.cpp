@@ -96,7 +96,7 @@ unsigned int ReSourcer::fill(const ProcessedDataScanner& P) {
 			continue;
 		hTubes[t][tp]->Fill(P.scints[s].tuben[t].x,P.physicsWeight);
 		if(PCal && !simMode && tp==TYPE_0_EVENT)
-			hTubesRaw[t]->Fill(P.scints[s].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock.t[BOTH]),P.physicsWeight);
+			hTubesRaw[t]->Fill(P.scints[s].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock[BOTH]),P.physicsWeight);
 	}
 	if(tp==TYPE_0_EVENT)
 		hTubes[nBetaTubes][tp]->Fill(P.scints[s].energy.x,P.physicsWeight);
@@ -280,10 +280,10 @@ void reSource(RunNum rn) {
 		delete(P);
 		throw(e);
 	}
-	if(P->totalTime.t[BOTH] < 1.0) { //TODO
+	if(P->totalTime[BOTH] < 1.0) { //TODO
 		SMExcept e("RunTooShort");
 		e.insert("runnum",rn);
-		e.insert("runtime",P->totalTime.t[BOTH]);
+		e.insert("runtime",P->totalTime[BOTH]);
 		delete(P);
 		throw(e);
 	}	
@@ -365,7 +365,7 @@ void reSource(RunNum rn) {
 		// fit source peaks
 		it->second.dbgplots = PCal.isRefRun() || it->second.mySource.t=="Bi207" || it->second.mySource.t=="Cd109";
 		it->second.simMode = false;
-		it->second.findSourcePeaks(P->totalTime.t[BOTH]);
+		it->second.findSourcePeaks(P->totalTime[BOTH]);
 		it->second.calcPMTcorr();
 		
 		// fit simulated source data with same parameters

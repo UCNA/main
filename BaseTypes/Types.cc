@@ -41,7 +41,7 @@ BlindTime operator-(const BlindTime& a, const BlindTime& b) {
 BlindTime operator*(double x, const BlindTime& a) {
 	BlindTime b = a;
 	for(Side s = EAST; s != BADSIDE; ++s)
-		b.t[s] *= x;
+		b[s] *= x;
 	return b;
 }
 

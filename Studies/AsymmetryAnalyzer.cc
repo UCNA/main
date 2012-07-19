@@ -52,10 +52,10 @@ void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 		qEnergySpectra[s][nBetaTubes][TYPE_IV_EVENT]->fillPoint->Fill(PDS.getEtrue(),weight);
 	if(PDS.fPID != PID_BETA) return;
 	if(PDS.passesPositionCut(s) && PDS.fType == TYPE_0_EVENT && PDS.getEtrue()>225)
-		qAnodeCal[s]->fillPoint->Fill(PDS.mwpcEnergy[s]/PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock.t[s]),weight);
+		qAnodeCal[s]->fillPoint->Fill(PDS.mwpcEnergy[s]/PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock[s]),weight);
 	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT) {
 		qEnergySpectra[s][nBetaTubes][PDS.fType]->fillPoint->Fill(PDS.getEtrue(),weight);
-		((TH2F*)qBGDecay[s]->fillPoint)->Fill(PDS.runClock.t[s],PDS.getEtrue(),weight);
+		((TH2F*)qBGDecay[s]->fillPoint)->Fill(PDS.runClock[s],PDS.getEtrue(),weight);
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			qEnergySpectra[s][t][PDS.fType]->fillPoint->Fill(PDS.scints[s].tuben[t].x,weight);
 	}
@@ -154,9 +154,9 @@ void AsymmetryAnalyzer::bgSubtrFits() {
 				hEn->Fit(&fBG,"QR+");
 				double nBG = hEnBG->Integral(hEnBG->FindBin(e0),hEnBG->GetNbinsX()+1);
 				double xs = hEn->Integral(hEn->FindBin(e0),hEn->GetNbinsX()+1);
-				double fg2bg = totalTime[afp][GV_OPEN].t[BOTH]/totalTime[afp][GV_CLOSED].t[BOTH];
+				double fg2bg = totalTime[afp][GV_OPEN][BOTH]/totalTime[afp][GV_CLOSED][BOTH];
 				double d_xs = sqrt(xs+fg2bg*nBG)+fg2bg*sqrt(nBG);
-				double rscale = 1.0/(totalTime[afp][GV_OPEN].t[BOTH]*hEn->GetBinWidth(1));
+				double rscale = 1.0/(totalTime[afp][GV_OPEN][BOTH]*hEn->GetBinWidth(1));
 				Stringmap m;
 				m.insert("side",sideSubst("%c",s));
 				m.insert("afp",afpWords(afp));

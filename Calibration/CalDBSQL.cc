@@ -298,9 +298,9 @@ BlindTime CalDBSQL::fiducialTime(RunNum rn) {
 	TSQLRow* row = getFirst();
 	if(!row)
 		return 0;
-	b.t[EAST] = fieldAsFloat(row,0);
-	b.t[WEST] = fieldAsFloat(row,1);
-	b.t[BOTH] = fieldAsFloat(row,2);
+	b[EAST] = fieldAsFloat(row,0);
+	b[WEST] = fieldAsFloat(row,1);
+	b[BOTH] = fieldAsFloat(row,2);
 	delete(row);
 	return b;		
 }

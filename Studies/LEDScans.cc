@@ -44,7 +44,7 @@ std::vector<unsigned int> LEDScanScanner::findJumps(float emin, float emax, Side
 		isHi |= scints[s].tuben[0].x >= emax;
 	}
 	printf("Located %i LED scanner jumps in %.1f minutes (~%.1fs intervals)\n",
-		   (int)jumps.size(),totalTime.t[BOTH]/60.,totalTime.t[BOTH]/jumps.size());
+		   (int)jumps.size(),totalTime[BOTH]/60.,totalTime[BOTH]/jumps.size());
 	return jumps;
 }
 

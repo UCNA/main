@@ -5,9 +5,9 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 	// clock, trigger
 	SetBranchAddress("Sis00",&r_Sis00);				// trigger type flags Sis00
 	SetBranchAddress("Number",&r_TriggerNumber);	// trigger number
-	SetBranchAddress("Clk0",&r_Clk.t[EAST]);		// E clock
-	SetBranchAddress("Clk1",&r_Clk.t[WEST]);		// W clock
-	SetBranchAddress("S83028",&r_Clk.t[BOTH]);		// unblinded runclock
+	SetBranchAddress("Clk0",&r_Clk[EAST]);		// E clock
+	SetBranchAddress("Clk1",&r_Clk[WEST]);		// W clock
+	SetBranchAddress("S83028",&r_Clk[BOTH]);		// unblinded runclock
 	SetBranchAddress("S8200",&r_BClk);				// protonClock
 	SetBranchAddress("Delt0",&r_Delt0);				// high resolution delta-t since previous event
 	SetBranchAddress("Time",&r_AbsTime);			// absolute time during run
@@ -83,7 +83,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 	TPhys->Branch("EvtN",&currentEvent,"EvtN/I");
 	
 	for(Side s = EAST; s <= WEST; ++s) {
-		TPhys->Branch(sideSubst("Time%c",s).c_str(),&fTimeScaler.t[s],sideSubst("Time%c/F",s).c_str());
+		TPhys->Branch(sideSubst("Time%c",s).c_str(),&fTimeScaler[s],sideSubst("Time%c/F",s).c_str());
 		TPhys->Branch(sideSubst("Tof%c",s).c_str(),&fBeamclock.val,sideSubst("Tof%c/F",s).c_str());
 		
 		TPhys->Branch(sideSubst("TDC%c",s).c_str(),&fScint_tdc[s][nBetaTubes].val,sideSubst("TDC%c/F",s).c_str());
@@ -132,7 +132,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 		TLED = (TTree*)addObject(new TTree("LED","LED events"));
 		TLED->SetMaxVirtualSize(1000000);
 		TLED->Branch("EvtN",&currentEvent,"EvtN/I");
-		TLED->Branch("Time",&fTimeScaler.t[BOTH],"Time/F");
+		TLED->Branch("Time",&fTimeScaler[BOTH],"Time/F");
 		for(Side s = EAST; s <= WEST; ++s) {
 			TLED->Branch(sideSubst("Scint%c",s).c_str(),&sevt[s],
 						 "q1/F:q2/F:q3/F:q4/F:e1/F:de1/F:e2/F:de2/F:e3/F:de3/F:e4/F:de4/F:energy/F:denergy/F:nPE1/F:nPE2/F:nPE3/F:nPE4/F");

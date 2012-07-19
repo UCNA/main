@@ -116,7 +116,7 @@ void Sim2PMT::reverseCalibrate() {
 		mwpcEnergy[s] = eW[s];
 		// simulate detector energy response, or use un-smeared original data 
 		if(reSimulate) {
-			PGen[s].evtm = runClock.t[BOTH];
+			PGen[s].evtm = runClock[BOTH];
 			PGen[s].setPosition(scintPos[s][X_DIRECTION], scintPos[s][Y_DIRECTION],
 								wires[s][X_DIRECTION].center-scintPos[s][X_DIRECTION], wires[s][Y_DIRECTION].center-scintPos[s][Y_DIRECTION]);
 			scints[s] = PGen[s].generate(eQ[s]);

@@ -8,7 +8,7 @@ baseName(nm), baseTitle(ttl), afp(a), mySide(s), doSubtraction(true), doTimeScal
 
 void fgbgPair::bgSubtract(BlindTime tFG, BlindTime tBG) {
 	assert(!isSubtracted); // don't BG subtract twice!
-	double bgScale = (doTimeScale && tBG.t[BOTH])?tFG.t[BOTH]/tBG.t[BOTH]:1.0;
+	double bgScale = (doTimeScale && tBG[BOTH])?tFG[BOTH]/tBG[BOTH]:1.0;
 	if(doSubtraction)
 		h[GV_OPEN]->Add(h[GV_CLOSED],-bgScale);
 	else
@@ -211,7 +211,7 @@ void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor, 
 	for(std::map<std::string,fgbgPair*>::iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
 		if(!RefOA.hasFGBGPair(it->first)) continue;
 		const fgbgPair& qhRef = RefOA.getFGBGPair(it->first);
-		double bgRatio = RefOA.getTotalTime(it->second->afp,true).t[it->second->mySide]/RefOA.getTotalTime(it->second->afp,false).t[it->second->mySide];
+		double bgRatio = RefOA.getTotalTime(it->second->afp,true)[it->second->mySide]/RefOA.getTotalTime(it->second->afp,false)[it->second->mySide];
 		for(unsigned int i=0; i<totalBins(it->second->h[0]); i++) {
 			double rootn = qhRef.h[0]->GetBinError(i)*sqrt(simfactor);		// root(bg counts) from ref histogram errorbars
 			double n = rootn*rootn;											// background counts from reference histogram
@@ -238,7 +238,7 @@ void RunAccumulator::makeRatesSummary() {
 			rt.insert("fg",itos(gv));
 			double counts = it->second->h[gv]->Integral();
 			double d_counts = integrateErrors(it->second->h[gv]);
-			double rtime = totalTime[it->second->afp][gv].t[it->second->mySide];
+			double rtime = totalTime[it->second->afp][gv][it->second->mySide];
 			rt.insert("counts",counts);
 			rt.insert("d_counts",d_counts);
 			rt.insert("rate",counts?counts/rtime:0);
@@ -338,7 +338,7 @@ void RunAccumulator::simForRun(Sim2PMT& simData, RunNum rn, unsigned int nToSim,
 	simData.setAFP(RI.afpState);
 	loadSimData(simData,nToSim,countAll);
 	
-	double rntime = CalDBSQL::getCDB()->fiducialTime(rn).t[BOTH];
+	double rntime = CalDBSQL::getCDB()->fiducialTime(rn)[BOTH];
 	runTimes.add(rn,rntime);
 	totalTime[RI.afpState][GV_OPEN] += rntime;
 }

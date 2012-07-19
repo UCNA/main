@@ -631,8 +631,8 @@ void ErrTables::NGBGTable(double Eoff, double Eon, double Woff, double Won, doub
 	fprintf(f,"# Uncertainty for neutron-generated backgrounds of Eoff,Eon,Woff,Won = %g,%g,%g,%g Hz/keV\n",Eoff,Eon,Woff,Won);
 	fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
 	double de = 10;
-	double tOn = Adat.totalTime[AFP_ON][GV_OPEN].t[BOTH];
-	double tOff = Adat.totalTime[AFP_OFF][GV_OPEN].t[BOTH];
+	double tOn = Adat.totalTime[AFP_ON][GV_OPEN][BOTH];
+	double tOff = Adat.totalTime[AFP_OFF][GV_OPEN][BOTH];
 	
 	double errscale = 10;
 	err /= errscale;

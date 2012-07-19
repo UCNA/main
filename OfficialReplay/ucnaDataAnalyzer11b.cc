@@ -125,24 +125,24 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 	fDelt0 = 1.e-6 * r_Delt0;
 	
 	// check for overflow condition
-	if(fTimeScaler.t[BOTH] < totalTime.t[BOTH]-deltaT.t[BOTH]-1000.0) {
+	if(fTimeScaler[BOTH] < totalTime[BOTH]-deltaT[BOTH]-1000.0) {
 		printf("\tFixing timing scaler overflow... ");
-		deltaT.t[BOTH] += 4294967296.0*1e-6;
+		deltaT[BOTH] += 4294967296.0*1e-6;
 		for(Side s = EAST; s<=WEST; ++s)
-			deltaT.t[s] = totalTime.t[s];
+			deltaT[s] = totalTime[s];
 	}
 	// add overflow wraparound time
 	fTimeScaler += deltaT;
 	
 	if(isUCNMon(UCN_MON_GV))
-		gvMonChecker.addCount(fTimeScaler.t[BOTH]);
+		gvMonChecker.addCount(fTimeScaler[BOTH]);
 	else
-		gvMonChecker.moveTimeLimit(fTimeScaler.t[BOTH]);
+		gvMonChecker.moveTimeLimit(fTimeScaler[BOTH]);
 	
 	// check global time cuts, add new blips as necessary
 	bool passedGVRate = (gvMonChecker.getCount() == gvMonChecker.nMax) || (prevPassedGVRate && gvMonChecker.getCount() > gvMonChecker.nMax/2.0);
 	prevPassedGVRate = passedGVRate;
-	fPassedGlobal = passesBeamCuts() && (ignore_beam_out || fTimeScaler.t[BOTH]<gvMonChecker.lMax || passedGVRate);
+	fPassedGlobal = passesBeamCuts() && (ignore_beam_out || fTimeScaler[BOTH]<gvMonChecker.lMax || passedGVRate);
 	if(fPassedGlobal != prevPassedCuts) {
 		if(!fPassedGlobal) {
 			Blip b;
@@ -187,7 +187,7 @@ bool ucnaDataAnalyzer11b::passesBeamCuts() {
 		return false;	
 	// remove manually tagged segments
 	for(std::vector< std::pair<double,double> >::const_iterator it = manualCuts.begin(); it != manualCuts.end(); it++)
-		if (it->first <= fTimeScaler.t[BOTH] && fTimeScaler.t[BOTH] <= it->second)
+		if (it->first <= fTimeScaler[BOTH] && fTimeScaler[BOTH] <= it->second)
 			return false;
 	return true;
 }
@@ -197,10 +197,10 @@ void ucnaDataAnalyzer11b::reconstructPosition() {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			std::vector<float> cathPeds;
 			for(unsigned int c=0; c<cathNames[s][d].size(); c++)
-				cathPeds.push_back(PCal.getPedestal(cathNames[s][d][c],fTimeScaler.t[BOTH]));
+				cathPeds.push_back(PCal.getPedestal(cathNames[s][d][c],fTimeScaler[BOTH]));
 			wirePos[s][d] = PCal.calcHitPos(s,d,fMWPC_caths[s][d],cathPeds);
 		}
-		fMWPC_anode[s].val -= PCal.getPedestal(sideSubst("MWPC%cAnode",s),fTimeScaler.t[BOTH]);
+		fMWPC_anode[s].val -= PCal.getPedestal(sideSubst("MWPC%cAnode",s),fTimeScaler[BOTH]);
 		fCathSum[s].val = wirePos[s][X_DIRECTION].cathodeSum + wirePos[s][Y_DIRECTION].cathodeSum;
 		fCathMax[s].val = wirePos[s][X_DIRECTION].maxValue<wirePos[s][Y_DIRECTION].maxValue?wirePos[s][X_DIRECTION].maxValue:wirePos[s][Y_DIRECTION].maxValue;
 		fPassedAnode[s] = fMWPC_anode[s].inRange();
@@ -214,16 +214,16 @@ void ucnaDataAnalyzer11b::reconstructVisibleEnergy() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		// get calibrated energy from the 4 tubes combined; also, wirechamber energy deposition estimate
 		if(passedMWPC(s)) {
-			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler.t[BOTH]);
+			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler[BOTH]);
 			// second pass with tweaked positions
 			for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 				PCal.tweakPosition(s,d,wirePos[s][d],sevt[s].energy.x);
-			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler.t[BOTH]);
+			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler[BOTH]);
 			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,wirePos[s][X_DIRECTION].center,
-											wirePos[s][Y_DIRECTION].center,fTimeScaler.t[BOTH]);
+											wirePos[s][Y_DIRECTION].center,fTimeScaler[BOTH]);
 		} else {
-			PCal.calibrateEnergy(s,0,0,sevt[s],fTimeScaler.t[BOTH]);
-			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,0,0,fTimeScaler.t[BOTH]);
+			PCal.calibrateEnergy(s,0,0,sevt[s],fTimeScaler[BOTH]);
+			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,0,0,fTimeScaler[BOTH]);
 		}
 	}
 }
@@ -374,14 +374,14 @@ bool ucnaDataAnalyzer11b::processEvent() {
 	
 	// Stage II: processing and histograms for all events
 	for(Side s = EAST; s <= WEST; ++s)
-		PCal.pedSubtract(s, sevt[s].adc, fTimeScaler.t[BOTH]);
+		PCal.pedSubtract(s, sevt[s].adc, fTimeScaler[BOTH]);
 	fillEarlyHistograms();
 	
 	// LED tree events
 	if(isLED() && TLED) {
 		reconstructPosition();
 		for(Side s = EAST; s <= WEST; ++s)
-			PCal.calibrateEnergy(s,0.,0.,sevt[s],fTimeScaler.t[BOTH]);
+			PCal.calibrateEnergy(s,0.,0.,sevt[s],fTimeScaler[BOTH]);
 		TLED->Fill();
 	}
 	
@@ -472,17 +472,17 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 
 void ucnaDataAnalyzer11b::tallyRunTime() {
 	// complete potential un-closed blip
-	if(cutBlips.size() && cutBlips.back().end.t[BOTH] == 0)
+	if(cutBlips.size() && cutBlips.back().end[BOTH] == 0)
 		cutBlips.back().end = totalTime;
 	// sum up lost time	
 	BlindTime lostTime;
 	for(std::vector<Blip>::iterator it = cutBlips.begin(); it != cutBlips.end(); it++)
 		lostTime += it->length();
-	wallTime = totalTime.t[BOTH]; // now an informed guess :) 
+	wallTime = totalTime[BOTH]; // now an informed guess :) 
 	totalTime -= lostTime;
 	printf("\nFiducial time tally:\n");
 	printf("Lost %.1fs run time to %i blips, leaving %.1fs. (%g,%g failed Evnb,Bkhf)\n",
-		   lostTime.t[BOTH],(int)cutBlips.size(),totalTime.t[BOTH],nFailedEvnb,nFailedBkhf);
+		   lostTime[BOTH],(int)cutBlips.size(),totalTime[BOTH],nFailedEvnb,nFailedBkhf);
 }
 
 void ucnaDataAnalyzer11b::replaySummary() {
@@ -493,7 +493,7 @@ void ucnaDataAnalyzer11b::replaySummary() {
 	sprintf(CDBout->query,
 			"INSERT INTO analysis(run_number,analysis_time,live_time_e,live_time_w,live_time,total_time,misaligned,tdc_corrupted) \
 			VALUES (%i,'%s',%f,%f,%f,%f,%i,%i)",
-			int(rn),tNow.AsSQLString(),totalTime.t[EAST],totalTime.t[WEST],totalTime.t[BOTH],wallTime,int(nFailedEvnb),int(nFailedBkhf));
+			int(rn),tNow.AsSQLString(),totalTime[EAST],totalTime[WEST],totalTime[BOTH],wallTime,int(nFailedEvnb),int(nFailedBkhf));
 	CDBout->execute();
 	TDatime tStart(fAbsTimeStart);
 	std::string sts(tStart.AsSQLString());

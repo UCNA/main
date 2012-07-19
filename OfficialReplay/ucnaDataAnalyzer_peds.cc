@@ -39,12 +39,12 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 		calibrateTimes();
 		for(Side s = EAST; s <= WEST; ++s) {
 			if(isUCNMon() || iSis00==(s==EAST?2:1)) {
-				pmtTimes[s].push_back(fTimeScaler.t[BOTH]);
+				pmtTimes[s].push_back(fTimeScaler[BOTH]);
 				for(unsigned int t=0; t<nBetaTubes; t++)
 					pmtPeds[s][t].push_back(sevt[s].adc[t]);
 			}
 			if(isLED() || (isPulserTrigger() && !nFiring(s)) || isUCNMon()) {
-				mwpcTimes[s].push_back(fTimeScaler.t[BOTH]);
+				mwpcTimes[s].push_back(fTimeScaler[BOTH]);
 				for(AxisDirection p = X_DIRECTION; p <= Y_DIRECTION; ++p)
 					for(unsigned int c=0; c<kMaxCathodes; c++)
 						cathPeds[s][p][c].push_back(fMWPC_caths[s][p][c]);
@@ -64,7 +64,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	}
 	
 	// re-set for next scan
-	wallTime = totalTime.t[BOTH];
+	wallTime = totalTime[BOTH];
 }
 
 void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const std::vector<float>& vtime,

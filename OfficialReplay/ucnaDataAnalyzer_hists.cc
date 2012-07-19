@@ -125,20 +125,20 @@ void ucnaDataAnalyzer11b::fillEarlyHistograms() {
 	for(unsigned int n=0; n<kNumUCNMons; n++) {
 		if(isUCNMon(n)) {
 			hMonADC[n]->Fill(fMonADC[n].val);
-			hMonRate[n]->Fill(fTimeScaler.t[BOTH]);
+			hMonRate[n]->Fill(fTimeScaler[BOTH]);
 		}
 	}
 	if(isPulserTrigger()) {
-		unsigned int tbin = fTimeScaler.t[BOTH]*hBiPulser[EAST][0].size()/wallTime;
+		unsigned int tbin = fTimeScaler[BOTH]*hBiPulser[EAST][0].size()/wallTime;
 		if(tbin<hBiPulser[EAST][0].size())
 			for(Side s = EAST; s <= WEST; ++s)
 				for(unsigned int t=0; t<nBetaTubes; t++)
 					hBiPulser[s][t][tbin]->Fill(sevt[s].adc[t]);
 	}
 	if(!fEvnbGood)
-		hEvnbFailRate->Fill(fTimeScaler.t[BOTH]);
+		hEvnbFailRate->Fill(fTimeScaler[BOTH]);
 	if(!fBkhfGood)
-		hBkhfFailRate->Fill(fTimeScaler.t[BOTH]);
+		hBkhfFailRate->Fill(fTimeScaler[BOTH]);
 }
 
 void ucnaDataAnalyzer11b::fillHistograms() {
@@ -147,7 +147,7 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 	
 	// gamma events
 	if(fType == TYPE_IV_EVENT && fSide <= WEST && fPID != PID_PULSER) {
-		hTypeRate[fType]->Fill(fTimeScaler.t[BOTH]);
+		hTypeRate[fType]->Fill(fTimeScaler[BOTH]);
 		hEtrue[fSide][fType]->Fill(fEtrue);
 	}
 	
@@ -201,21 +201,21 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 			continue;
 		
 		if(fPID==PID_BETA) {
-			hSideRate[s][1]->Fill(fTimeScaler.t[BOTH]);
+			hSideRate[s][1]->Fill(fTimeScaler[BOTH]);
 			if(fType <= TYPE_II_EVENT && fPassedGlobal)
 				hEtrue[s][fType]->Fill(fEtrue);
 			if(fType == TYPE_0_EVENT && fPassedGlobal)
 				for(unsigned int t=0; t<nBetaTubes; t++)
 					hTuben[s][t]->Fill(sevt[s].tuben[t].x);
 		} else if(fPID==PID_MUON) {
-			hSideRate[s][0]->Fill(fTimeScaler.t[BOTH]);
+			hSideRate[s][0]->Fill(fTimeScaler[BOTH]);
 		}
 	}
 	
 	if(fPID==PID_BETA)
 		hClusterTiming[0]->Fill(log10(fWindow.val*1.e6));
 	if(fPID==PID_BETA && fType<=TYPE_III_EVENT) {
-		hTypeRate[fType]->Fill(fTimeScaler.t[BOTH]);
+		hTypeRate[fType]->Fill(fTimeScaler[BOTH]);
 		if(fPassedGlobal)
 			hClusterTiming[1]->Fill(log10(fWindow.val*1.e6));
 	}
@@ -228,10 +228,10 @@ void ucnaDataAnalyzer11b::drawCutRange(const RangeCut& r, Int_t c) {
 
 void ucnaDataAnalyzer11b::drawExclusionBlips(Int_t c) {
 	for(std::vector<Blip>::const_iterator it = cutBlips.begin(); it != cutBlips.end(); it++)
-		if(it->end.t[BOTH]-it->start.t[BOTH] > 5)
-			drawExcludedRegion(it->start.t[BOTH], it->end.t[BOTH], defaultCanvas,c,3354);
+		if(it->end[BOTH]-it->start[BOTH] > 5)
+			drawExcludedRegion(it->start[BOTH], it->end[BOTH], defaultCanvas,c,3354);
 		else
-			drawExcludedRegion(it->start.t[BOTH], it->end.t[BOTH], defaultCanvas,c,1001);
+			drawExcludedRegion(it->start[BOTH], it->end[BOTH], defaultCanvas,c,1001);
 }
 
 void ucnaDataAnalyzer11b::plotHistos() {

@@ -20,9 +20,9 @@ void PostOfficialAnalyzer::setReadpoints() {
 	Tch->SetBranchAddress("Side",&fSide);
 	Tch->SetBranchAddress("Type",&fType);
 	// clock
-	Tch->SetBranchAddress("TimeE",&runClock.t[EAST]);
-	Tch->SetBranchAddress("TimeW",&runClock.t[WEST]);
-	runClock.t[BOTH]=runClock.t[NOSIDE]=0.0;
+	Tch->SetBranchAddress("TimeE",&runClock[EAST]);
+	Tch->SetBranchAddress("TimeW",&runClock[WEST]);
+	runClock[BOTH]=runClock[NOSIDE]=0.0;
 	
 	for(Side s=EAST; s<=WEST; ++s) {
 		
