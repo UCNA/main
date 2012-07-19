@@ -54,54 +54,51 @@ include(${Geant4_USE_FILE})
 ##############
 # Output paths
 ##############
+
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 
 
 ###############
-# TObject subclasses dictionary & library
+# TObject subclasses dictionary & ucnG4 shared library
 ###############
 
-set(ucnG4_prod_LINKDEF ${PROJECT_SOURCE_DIR}/ucnG4_prod_LinkDef.h)
-set(ucnG4_prod_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ucnG4_prodDict.cxx) 
-MESSAGE("Generating dictionary ${ucnG4_prod_DICTIONARY}")
+set(ucnG4_LINKDEF ${PROJECT_SOURCE_DIR}/ucnG4_LinkDef.h)
+set(ucnG4_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ucnG4_Dict.cxx) 
+MESSAGE("Generating dictionary ${ucnG4_DICTIONARY}")
 set(DICTFILES "${PROJECT_SOURCE_DIR}/include/bmMCEvent.hh;${PROJECT_SOURCE_DIR}/include/bmTrackInfo.hh;${PROJECT_SOURCE_DIR}/include/bmPrimaryInfo.hh")
-ROOT_GENERATE_DICTIONARY("${DICTFILES}" "${ucnG4_prod_LINKDEF}" "${ucnG4_prod_DICTIONARY}" "")
-LIST(APPEND sources ${ucnG4_prod_DICTIONARY})
+ROOT_GENERATE_DICTIONARY("${DICTFILES}" "${ucnG4_LINKDEF}" "${ucnG4_DICTIONARY}" "")
+LIST(APPEND sources ${ucnG4_DICTIONARY})
 
-#add_library(ucnG4_prod_rootlibs SHARED ${DICTFILES} ${ucnG4_prod_DICTIONARY} ${sources} ${headers})
-#add_dependencies(ucnG4_prod_rootlibs extern_lib)
-#target_link_libraries(ucnG4_prod_rootlibs ${ROOT_LIBRARIES} ${Geant4_LIBRARIES} libUCNA.a)
-
-add_library(ucnG4_prod_rootlibs SHARED ${DICTFILES} ${ucnG4_prod_DICTIONARY})
-add_dependencies(ucnG4_prod_rootlibs extern_lib)
-target_link_libraries(ucnG4_prod_rootlibs ${ROOT_LIBRARIES} ${Geant4_LIBRARIES})
-
-SET(ucnG4_prod_LIBRARY_PROPERTIES
-		${ucnG4_prod_LIBRARY_PROPERTIES}
+add_library(ucnG4 SHARED ${sources} ${headers})
+add_dependencies(ucnG4 extern_lib)
+target_link_libraries(ucnG4 ${ROOT_LIBRARIES} ${Geant4_LIBRARIES} UCNA)
+SET(ucnG4_LIBRARY_PROPERTIES
+		${ucnG4_LIBRARY_PROPERTIES}
 		VERSION "0.0"
 		SOVERSION "0"
 		SUFFIX ".so"
 )
-set_target_properties(ucnG4_prod_rootlibs PROPERTIES ${ucnG4_prod_LIBRARY_PROPERTIES})
-install(TARGETS ucnG4_prod_rootlibs DESTINATION ${LIBRARY_OUTPUT_PATH})
+set_target_properties(ucnG4 PROPERTIES ${ucnG4_LIBRARY_PROPERTIES})
+install(TARGETS ucnG4 DESTINATION ${LIBRARY_OUTPUT_PATH})
+link_directories(${LIBRARY_OUTPUT_PATH})
 
 
 #################
-# Executables targets
+# Executables
 #################
 
-add_executable(ucnG4_prod ucnG4_prod.cc ${sources} ${headers})
-target_link_libraries(ucnG4_prod ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a)
-add_dependencies(ucnG4_prod extern_lib ucnG4_prod_rootlibs)
+add_executable(ucnG4_prod ucnG4_prod.cc)
+target_link_libraries(ucnG4_prod ucnG4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a)
+add_dependencies(ucnG4_prod extern_lib ucnG4)
 
-add_executable(UCNA_MC_Analyzer UCNA_MC_Analyzer.cc ${sources} ${headers})
-target_link_libraries(UCNA_MC_Analyzer ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a)
-add_dependencies(UCNA_MC_Analyzer extern_lib ucnG4_prod_rootlibs)
+add_executable(UCNA_MC_Analyzer UCNA_MC_Analyzer.cc)
+target_link_libraries(UCNA_MC_Analyzer ucnG4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a)
+add_dependencies(UCNA_MC_Analyzer extern_lib ucnG4)
 
-add_executable(SiDet_Analyzer SiDet_Analyzer.cc ${sources} ${headers})
-target_link_libraries(SiDet_Analyzer ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a)
-add_dependencies(SiDet_Analyzer extern_lib ucnG4_prod_rootlibs)
+add_executable(SiDet_Analyzer SiDet_Analyzer.cc)
+target_link_libraries(SiDet_Analyzer ucnG4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a)
+add_dependencies(SiDet_Analyzer extern_lib ucnG4)
 
 install(TARGETS ucnG4_prod UCNA_MC_Analyzer SiDet_Analyzer DESTINATION ${EXECUTABLE_OUTPUT_PATH})
 
