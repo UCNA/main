@@ -51,9 +51,9 @@ public:
 	/// subtract another blinded time
 	inline void operator-= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] -= bt[s]; }
 	/// access blinded times for side
-	Float_t& operator[](Side s) { assert(s<=BOTH); return t[s]; }
+	Float_t& operator[](Side s) { assert(s<=NOSIDE); return t[s]; }
 	/// const blinded times access
-	Float_t operator[](Side s) const { assert(s<=BOTH); return t[s]; }
+	Float_t operator[](Side s) const { assert(s<=NOSIDE); return t[s]; }
 	
 	Float_t t[4];	//< blinded timings for each side
 };

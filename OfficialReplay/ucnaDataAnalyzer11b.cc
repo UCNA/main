@@ -127,7 +127,7 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 	// check for overflow condition
 	if(fTimeScaler[BOTH] < totalTime[BOTH]-deltaT[BOTH]-1000.0) {
 		printf("\tFixing timing scaler overflow... ");
-		deltaT[BOTH] += 4294967296.0*1e-6;
+		deltaT[BOTH] += pow(2,32)*1.e-6;
 		for(Side s = EAST; s<=WEST; ++s)
 			deltaT[s] = totalTime[s];
 	}
