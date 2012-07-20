@@ -46,13 +46,13 @@ MaterialUser::MaterialUser() {
 	Wu = new G4Material("Tungsten",74.,183.84*g/mole,19.3*g/cm3);
 	
 	Brass = new G4Material("Brass",8.5*g/cm3,2);
-	Brass->AddElement(G4Element::GetElement("Cu"),massFrac=70);
-	Brass->AddElement(G4Element::GetElement("Zn"),massFrac=30);
+	Brass->AddElement(G4Element::GetElement("Cu"),massFrac=0.70);
+	Brass->AddElement(G4Element::GetElement("Zn"),massFrac=0.30);
 	
 	SS304 = new G4Material("Stainless304",8.03*g/cm3,3); 
-	SS304->AddElement(G4Element::GetElement("Fe"),massFrac=70);
-	SS304->AddElement(G4Element::GetElement("Cr"),massFrac=20);
-	SS304->AddElement(G4Element::GetElement("Ni"),massFrac=10);
+	SS304->AddElement(G4Element::GetElement("Fe"),massFrac=0.70);
+	SS304->AddElement(G4Element::GetElement("Cr"),massFrac=0.20);
+	SS304->AddElement(G4Element::GetElement("Ni"),massFrac=0.10);
 
 	Kevlar = new G4Material("Kevlar",1.44*g/cm3,4);
 	Kevlar->AddElement(G4Element::GetElement("N"),nAtoms=2);

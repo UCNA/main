@@ -254,7 +254,6 @@ void bmPrimaryGeneratorAction::nCaptureCuGammas(G4Event* anEvent) {
 	throwScintGamma(gunEnergy,anEvent);
 }
 
-
 bmPrimaryGeneratorAction::bmPrimaryGeneratorAction(bmDetectorConstruction* myDC): myDetector(myDC) {
 	particleGun = new G4ParticleGun();
 	gunMessenger = new bmPrimaryGeneratorMessenger(this);
@@ -365,6 +364,8 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		Cd113mSourceGenerator(anEvent);
 	} else if (gunType=="nCaptCu") {
 		nCaptureCuGammas(anEvent);
+	} else if(gunType=="nCaptH") {
+		throwScintGamma(2223.25*keV,anEvent);
 	} else if (gunType=="In114" || gunType=="In114E" || gunType=="In114W") {
 		In114SourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {
