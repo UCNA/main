@@ -135,6 +135,7 @@ protected:
 	BlindTime deltaT;							//< time scaler wraparound fix
 	BlindTime totalTime;						//< total running time (accumulated from last event); after scanning, total ``live'' time (less global cuts)
 	Float_t wallTime;							//< initial estimate of run time before actually scanning events; after scanning, total run time
+	unsigned int nLiveTrigs;					//< number of triggers not removed by cuts
 	bool ignore_beam_out;						//< whether to ignore long beam outages (e.g. for a source run)
 	Float_t nFailedEvnb;						//< total Evnb failures
 	Float_t nFailedBkhf;						//< total Bkhf failures

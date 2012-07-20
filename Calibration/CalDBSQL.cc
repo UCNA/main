@@ -294,12 +294,14 @@ int CalDBSQL::endTime(RunNum rn, int t0) {
 
 BlindTime CalDBSQL::fiducialTime(RunNum rn) {
 	BlindTime b = 0;
-	sprintf(query,"SELECT live_time_e,live_time_w,live_time,total_time-live_time FROM analysis WHERE run_number = %u",rn);
+	//                    0           1           2         3                    4
+	sprintf(query,"SELECT live_time_e,live_time_w,live_time,total_time-live_time,n_trigs FROM analysis WHERE run_number = %u",rn);
 	TSQLRow* row = getFirst();
 	if(!row)
 		return 0;
+	double tdead = fieldAsInt(row,4)*(12.e-6);
 	for(Side s = EAST; s <= NOSIDE; ++s)
-		b[s] = fieldAsFloat(row,s);
+		b[s] = fieldAsFloat(row,s)+(s==NOSIDE?tdead:-tdead);
 	delete(row);
 	return b;		
 }

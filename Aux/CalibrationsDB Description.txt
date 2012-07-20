@@ -185,7 +185,9 @@ CREATE TABLE analysis (
 	live_time_e DOUBLE,			# blinded East live time
 	live_time_w DOUBLE,			# blinded West live time
 	live_time DOUBLE,			# unblinded live time
-	total_time DOUBLE,			# total time
+	total_time DOUBLE,			# total wall time
+	n_trigs INT UNSIGNED,		# number of triggers during live time
+	total_trigs INT UNSIGNED,	# total number of trigger events
 	misaligned INT UNSIGNED,
 	tdc_corrupted INT UNSIGNED,
 	INDEX(run_number)

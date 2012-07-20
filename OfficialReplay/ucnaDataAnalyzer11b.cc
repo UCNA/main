@@ -13,7 +13,7 @@ RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.
 
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
 TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false),
-rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), ignore_beam_out(false),
+rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), nLiveTrigs(0), ignore_beam_out(false),
 nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	plotPath = bp+"/figures/run_"+itos(R)+"/";
 	dataPath = bp+"/data/";
@@ -116,6 +116,7 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 		fAbsTimeStart = r_AbsTime;
 		prevPassedCuts = prevPassedGVRate = true;
 		totalTime = deltaT = 0;
+		nLiveTrigs = 0;
 	}
 	if(r_AbsTime>fAbsTimeEnd) fAbsTimeEnd = r_AbsTime;
 	
@@ -155,6 +156,7 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 	
 	prevPassedCuts = fPassedGlobal;
 	totalTime = fTimeScaler;
+	nLiveTrigs += fPassedGlobal;
 }
 
 unsigned int ucnaDataAnalyzer11b::nFiring(Side s) const {
@@ -491,9 +493,10 @@ void ucnaDataAnalyzer11b::replaySummary() {
 	CDBout->execute();
 	TDatime tNow;
 	sprintf(CDBout->query,
-			"INSERT INTO analysis(run_number,analysis_time,live_time_e,live_time_w,live_time,total_time,misaligned,tdc_corrupted) \
-			VALUES (%i,'%s',%f,%f,%f,%f,%i,%i)",
-			int(rn),tNow.AsSQLString(),totalTime[EAST],totalTime[WEST],totalTime[BOTH],wallTime,int(nFailedEvnb),int(nFailedBkhf));
+			"INSERT INTO analysis(run_number,analysis_time,live_time_e,live_time_w,live_time,total_time,n_trigs,total_trigs,misaligned,tdc_corrupted) \
+			VALUES (%i,'%s',%f,%f,%f,%f,%u,%u,%i,%i)",
+			int(rn),tNow.AsSQLString(),totalTime[EAST],totalTime[WEST],totalTime[BOTH],
+			wallTime,nLiveTrigs,nEvents,int(nFailedEvnb),int(nFailedBkhf));
 	CDBout->execute();
 	TDatime tStart(fAbsTimeStart);
 	std::string sts(tStart.AsSQLString());
