@@ -36,7 +36,8 @@ void bmDecayTrapConstruction::Construct(G4LogicalVolume* world, double crinkleAn
 	G4Tubs* trap_win_tube = new G4Tubs("trap_win_tube",0.,decayTube_OR,thicknessOfTrapWindow/2.,0.,2*M_PI);  
 	G4Tubs* mylarTube = new G4Tubs("mylarTube",0.,decayTube_OR,fWindowThick/2.,0.,2*M_PI);  
 	G4Tubs* beTube = new G4Tubs("beTube",0.,decayTube_OR,fCoatingThick/2.,0.,2*M_PI);
-	G4Tubs* collimatorTube = new G4Tubs("collimatorTube",fIRcollimator,decayTube_OR,collimator_thick/2.,0.,2*M_PI);
+	G4Tubs* collimatorTube = new G4Tubs("collimatorTube",fIRcollimator,fIRcollimator+collimator_thick,collimator_thick/2.,0.,2*M_PI);
+	G4Tubs* collimatorBackTube = new G4Tubs("collimatorBackTube",decayTube_OR+1.*mm,fIRcollimator+collimator_thick,collimator_thick,0.,2*M_PI);
 	
 	const G4double beWinPosZ = -thicknessOfTrapWindow/2.+fCoatingThick/2.;
 	const G4double mylarWinPosZ = thicknessOfTrapWindow/2.-fWindowThick/2.;
@@ -82,8 +83,12 @@ void bmDecayTrapConstruction::Construct(G4LogicalVolume* world, double crinkleAn
 		G4double collimatorPosZ = (decayTube_Length+collimator_thick)/2.;
 		collimatorPosZ += (crinkleAngle?wigglefoils[s].getContainerThick():thicknessOfTrapWindow)/2.;
 		collimator_log[s] = new G4LogicalVolume(collimatorTube, fCollimatorMat, sideSubst("collimator_log%c",s));
+		G4double collimatorBackZ = decayTube_Length/2.-collimator_thick;
+		collimatorBack_log[s] = new G4LogicalVolume(collimatorBackTube, fCollimatorMat, sideSubst("collimatorBack_log%c",s));
 		new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(s)*collimatorPosZ),collimator_log[s],
 						  sideSubst("collimator%c",s),world,false,0);
+		new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(s)*collimatorBackZ),collimatorBack_log[s],
+						  sideSubst("collimatorBack%c",s),world,false,0);
 		
 		trap_monitor_log[s] = new G4LogicalVolume(trap_monitor_tube,Vacuum,sideSubst("trap_monitor_log%c",s));
 		new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(s)*trap_monitor_posZ),

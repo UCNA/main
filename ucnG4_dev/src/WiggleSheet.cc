@@ -34,7 +34,8 @@ void WiggleSheet::Construct() {
 	
 	G4Box* container_box = new G4Box("container_box",cmax,(nseg*period/2+ttotal)/2.,length/2.);
 	container_log = new G4LogicalVolume(container_box, containerMat, "wigglesheet_container_log");
-	
+	container_log->SetVisAttributes(G4VisAttributes::Invisible);
+
 	// construct logical volumes
 	double rout = rmax;
 	double rin = rmax-ttotal;

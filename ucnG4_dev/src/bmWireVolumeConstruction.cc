@@ -16,6 +16,7 @@ void bmWireVolumeConstruction::Construct(Side s) {
 	//effective mwpc gas volume containing the cathodes and anode
 	G4Box* mwpc_box = new G4Box("mwpc_box",wireplane_half_width,wireplane_half_width,planeSpacing);
 	gas_log = new G4LogicalVolume(mwpc_box,fMWPCGas,sideSubst("mwpc_log%c",s));
+	gas_log->SetVisAttributes(G4VisAttributes::Invisible);
 	
 	// anode, cathode wire containers... note these are "on their side" to allow wireplane parametrization,
 	// and will be rotated later

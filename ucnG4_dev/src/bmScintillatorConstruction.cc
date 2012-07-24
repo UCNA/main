@@ -24,7 +24,8 @@ void bmScintillatorConstruction::Construct(Side s) {
 	G4VisAttributes* visBacking= new G4VisAttributes(G4Colour(0.0,0.0,1,0.2));
 	
 	container_log = new G4LogicalVolume(N2_vol_tube,WCNitrogen,sideSubst("N2_vol_log%c",s));
-		
+	container_log->SetVisAttributes(G4VisAttributes::Invisible);
+	
 	Dscint_log = new G4LogicalVolume(Dscint_tube,Sci,sideSubst("Dscint_log%c",s));
 	Dscint_log->SetVisAttributes(visDScint);
 	Dscint_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,DscintPosZ),

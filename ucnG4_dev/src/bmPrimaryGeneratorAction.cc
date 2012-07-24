@@ -98,6 +98,13 @@ void randomTubePosition(const G4ThreeVector centerpos, const G4double radius, co
 	pos = centerpos+G4ThreeVector(x0,y0,z0);
 }
 
+/// generate a random position on a cylinder
+void randomCylPosition(const G4ThreeVector centerpos, const G4double radius, const G4double halfz, G4ThreeVector& pos) {
+	G4double theta = 2*PI*G4UniformRand();
+	G4double z0=(2.0*G4UniformRand()-1.0)*halfz;
+	pos = centerpos + G4ThreeVector(radius*cos(theta),radius*sin(theta),z0);
+}
+
 /// generate a random position with uniform number in radial bins
 void randomUniformRadialBins(const G4ThreeVector centerpos, const G4double radius, const G4double halfz, G4ThreeVector& pos) {
 	G4double r = G4UniformRand()*radius;
@@ -176,19 +183,21 @@ throwElectronsAndGammas(const std::vector<G4double>& electrons,
 }
 
 void bmPrimaryGeneratorAction::throwScintGamma(G4double eGamma,G4Event* anEvent) {
-	Side s = G4UniformRand()<0.5?EAST:WEST;
-	G4double x,y;
-	diskRandom(8*cm,x,y);
 	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
 	particleGun->SetParticleDefinition(particleTable->FindParticle("gamma"));
 	particleGun->SetParticleEnergy(eGamma);
 	
-	//particleGun->SetParticleMomentumDirection(G4ThreeVector(x,y,ssign(s)*2.2*m)-particleGun->GetParticlePosition());
-	particleGun->SetParticleMomentumDirection(G4ThreeVector(x,y,ssign(s)*1.5*m)-particleGun->GetParticlePosition());
-	//G4ThreeVector direction;
-	//RandomizeMomentum(direction);
-	//particleGun->SetParticleMomentumDirection(direction);
-
+	if(false) {
+		G4double x,y;
+		diskRandom(8*cm,x,y);
+		Side s = G4UniformRand()<0.5?EAST:WEST;
+		particleGun->SetParticleMomentumDirection(G4ThreeVector(x,y,ssign(s)*1.5*m)-particleGun->GetParticlePosition());
+	} else {
+		G4ThreeVector direction;
+		RandomizeMomentum(direction);
+		particleGun->SetParticleMomentumDirection(direction);
+	}
+	
 	particleGun->GeneratePrimaryVertex(anEvent);
 }
 
@@ -242,7 +251,9 @@ void bmPrimaryGeneratorAction::In114SourceGenerator(G4Event* anEvent) {
 void bmPrimaryGeneratorAction::nCaptureCuGammas(G4Event* anEvent) {
 	int selected(-1);
 	G4double gunEnergy;
-	if(G4UniformRand()<64.83/(64.83+30.84)) {
+	const double p63 = 69.17*4.52;
+	const double p65 = 30.83*2.17;
+	if(G4UniformRand()<p63/(p63+p65)) {
 		const double Cu63Lines[] = {7916,	278,	7538,	159,	7307,	609,	344};
 		const double Cu63Branch[]= {100,	72.51,	48.9,	45.32,	27.0,	23.56,	17.82};
 		gunEnergy = rand_outof_list(Cu63Lines, Cu63Branch, 7, selected)*keV;
@@ -349,6 +360,13 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	} else if(positioner=="DecayTrapFiducial") {
 		// uniform fill of 5.5cm radius volume from which events reach detectors
 		randomTubePosition(G4ThreeVector(0,0,0), 5.5*cm, 1.5*m, vertex_position);
+	} else if(positioner=="DecayTrapSurface") {
+		randomCylPosition(G4ThreeVector(0,0,0),myDetector->trap.fIRtrap,1.5*m,vertex_position);
+	} else if(positioner=="EndcapSurface") {
+		randomTubePosition(G4ThreeVector(0.,0.,1.5*m*(1-2*(G4UniformRand()<0.5))), myDetector->trap.fIRtrap, 0, vertex_position);
+	} else if(positioner=="EndcapEdge") {
+		randomCylPosition(G4ThreeVector(0.,0.,(1.5*m-1.*mm)*(1-2*(G4UniformRand()<0.5))),
+						  myDetector->trap.fIRtrap+2.5*mm,1.*mm,vertex_position);
 	} else if(positioner=="SpectrometerVolumeUniform") {
 		// uniform fill of (visible) spectrometer volume, for Xe
 		randomTubePosition(G4ThreeVector(0,0,0), 7.5*cm, 2.17*m, vertex_position);

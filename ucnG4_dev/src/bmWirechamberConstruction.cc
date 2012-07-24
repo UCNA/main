@@ -22,6 +22,7 @@ void bmWirechamberConstruction::Construct(Side s) {
 	// container volume for all MWPC
 	G4Box* mwpcContainer_box = new G4Box("mwpcContainer_box",mwpc_volume_width/2,mwpc_volume_width/2,mwpcContainer_halfZ);
 	container_log = new G4LogicalVolume(mwpcContainer_box, fMWPCGas,sideSubst("mwpcContainer_log%c",s));
+	container_log->SetVisAttributes(G4VisAttributes::Invisible);
 	
 	// MWPC active gas volume placement with wireplane, relative to MWPC container volume
 	myTranslation = G4ThreeVector(0.,0.,(entranceToCathodes-exitToCathodes)/2);
