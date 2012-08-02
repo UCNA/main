@@ -82,8 +82,8 @@ class runCal(KVMap):
 class bgSubtr(KVMap):
 	def __init__(self,m):
 		self.dat = m.dat
-		self.loadFloats(["bg","d_bg","nrate","d_nrate","fit_start","fit_end"])
-		self.loadStrings(["side","afp","type"])
+		self.loadFloats(["nBG","d_nBG","xs","d_xs","eMin","eMax"])
+		self.loadStrings(["side","afp","name"])
 
 class asymData:
 	"""Asymmetry data extracted from a group of runs"""
@@ -141,8 +141,9 @@ class AsymmetryFile(QFile,asymData):
 							self.addRun(k,rn)
 		if not self.getRuns():
 			rns = self.fname.split("/")[-1].split("_")[0].split("-")
-			self.addRun("start",int(rns[0]))
-			self.addRun("end",int(rns[1]))
+			if len(rns)==2:
+				self.addRun("start",int(rns[0]))
+				self.addRun("end",int(rns[1]))
 		self.runcals = dict([(r.run,r) for r in [runCal(m) for m in self.dat.get("runcal",[])]])
 		
 	def kepDelta(self,side,type="0"):
@@ -223,7 +224,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 					if not 782 < k.ep < 810:
 						print "*** Funny Endpoint",k.ep,k.side,k.afp,"in",af.fname
 				
-				rt = af.getRate(s,afp,'0',"hEnergy_Type_0_%s_%s"%(s,afpNames[afp]))
+				rt = af.getRate(s,afp,'0',"hEnergy_Type_0_%s_%s"%(s,afp))
 				if rt:
 					if not 0.15 < rt.rate < 0.35:
 						print "*** Funny rate",rt.rate,rt.side,rt.afp,"in",af.fname
@@ -234,7 +235,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 				else:
 					print "*** Can't find rate for",n,s,afp
 				
-				murt = af.getRate(s,afp,'1',"hMuonNoSub_%s_%s"%(s,afpNames[afp]))
+				murt = af.getRate(s,afp,'1',"hMuonNoSub_%s_%s"%(s,afp))
 				if murt:
 					if not 0.5 < murt.rate < 1.0:
 						print "*** Funny muons",murt.rate,murt.side,murt.afp,"in",af.fname
@@ -377,85 +378,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 			
 
 
-def plot_bgSubtrHist(basedir,depth=2):
 
-	print "--------------------- Division",depth,"-------------------------"
-	bgs = {}
-	n = 0
-	conn = open_connection()
-	for af in collectAsymmetries(basedir,depth):
-		for k in af.bgs:
-			bgs.setdefault(k,[]).append((getRunStartTime(conn,af.getRuns()[0]),af.bgs[k],af))
-		n += 1
-
-	gBgs=graph.graphxy(width=25,height=8,
-					   #x=graph.axis.lin(title=unitNames[depth],min=0,max=n-1),
-					   x=graph.axis.lin(title="Time [days]"),
-					   y=graph.axis.lin(title="Residual Background [$\\mu$Hz/keV]"),
-					   key = graph.key.key(pos="bl"))
-	setTexrunner(gBgs)
-
-	sideCols = {'E':rgb.red,'W':rgb.blue}
-	segCols = {0:rgb.red,1:rgb.blue}
-	segNames = {0:"BG Before",1:"BG After"}
-	s = 'E'
-	LF = LinearFitter(terms=[polyterm(0)])
-	
-	
-	for seg in [0,1]:
-		a0 = [b for b in bgs[(s,"Off","0")] if b[-1].whichSegment(depth)%2 == seg ] 
-		a1 = [b for b in bgs[(s,"On","0")] if b[-1].whichSegment(depth)%2 == seg ]
-		t0 = a0[0][0]
-		
-		gdat = [ (n,(b[0]-t0)/(24*3600.),(b[1].nrate+a1[n][1].nrate)*5e5,sqrt(b[1].d_nrate**2+a1[n][1].d_nrate**2)*5e5) for (n,b) in enumerate(a0)]
-		LF.fit(gdat,cols=(0,2,3),errorbarWeights=True)
-		err = 1.0/sqrt(LF.sumWeights())
-		gBgs.plot(graph.data.points(gdat,x=2,y=3,dy=4,title="%s: $%.1f \\pm %.1f$"%(segNames[seg],LF.coeffs[0],err)),
-					 [graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[segCols[seg],]),
-					  graph.style.errorbar(errorbarattrs=[segCols[seg],])])
-	
-	gBgs.writetofile(basedir+"/BGResid_%i.pdf"%depth)
-
-
-
-def plot_TypeIV_resid(basedir,depth=2):
-	print "--------------------- Division",depth,"-------------------------"
-	
-	rts = {}
-	n = -1
-	hname = "hEnergy_Type_4"
-	for af in collectAsymmetries(basedir,depth):
-		n += 1
-		if [badrun for badrun in [14166,14888,15518] if badrun in af.getRuns()]:
-			continue
-		for s in ["E","W"]:
-			for afp in ["On","Off"]:
-				rts.setdefault((s,afp),[]).append((n,af.getRate(s,afp,"1",hname+"_")))
-	
-	
-	gRts=graph.graphxy(width=30,height=10,
-					   x=graph.axis.lin(title=unitNames[depth],min=0,max=n),
-					   y=graph.axis.lin(title="Gamma Excess [Hz]"),
-					   key = graph.key.key(pos="bc",columns=2))
-	setTexrunner(gRts)
-
-	scols = {"E":rgb.red,"W":rgb.blue}
-	LF = LinearFitter(terms=[polyterm(0)])
-			
-	for s in scols:
-		for afp in afpSymbs:
-			gdat = [ [n,r.rate,r.d_rate] for (n,r) in rts[(s,afp)] ]
-			LF.fit(gdat,cols=(0,1,2),errorbarWeights=True)
-			err = 1.0/sqrt(LF.sumWeights())
-			chi2 = LF.ssResids()
-			ndf = len(gdat)-len(LF.coeffs)
-			gtitle = "%s %s: $%.3f \\pm %.3f$, $\\chi^2/\\nu = %.1f/%i$"%(s,afp,LF.coeffs[0],err,chi2,ndf)
-			print gtitle
-			gRts.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=gtitle),
-					  [graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=[scols[s],]),
-					   graph.style.errorbar(errorbarattrs=[scols[s]])])
-
-	gRts.writetofile(basedir+"/Rt_%s_%i.pdf"%(hname,depth))
 
 
 
@@ -581,7 +504,7 @@ class MC_Comparator:
 				LF.fit(gdat,cols=(0,1))
 				LFsim.fit(gdat,cols=(0,2))
 				err = LF.rmsDeviation()
-				gtitle = "%s$_{\\rm %s}$: $\\mu=%.1f$, $\\sigma=%.1f$; $\\mu_{\\rm sim}=%.1f$"%(s,afpNames[afp],LF.coeffs[0],err,LFsim.coeffs[0])
+				gtitle = "%s$_{\\rm %s}$: $\\mu=%.1f$, $\\sigma=%.1f$; $\\mu_{\\rm sim}=%.1f$"%(s,afp,LF.coeffs[0],err,LFsim.coeffs[0])
 				gEp.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=gtitle),
 							[graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=[sideCols[s],])])
 				gEp.plot(graph.data.points(gdat,x=1,y=3,title=None),[graph.style.line([sideCols[s],afpLines[afp]])])
@@ -640,13 +563,7 @@ if __name__=="__main__":
 		MCC.endpoint_gain_tweak(conn)
 		exit(0)
 
-
-#plot_bgSubtrHist(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Annulus/")
-	
-
-	for i in range(3):
-		plot_TypeIV_resid(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",i)
-		
-#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
-#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
-	
+	for i in range(3):				
+		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
+		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
+			

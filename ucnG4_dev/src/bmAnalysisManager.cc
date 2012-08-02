@@ -23,6 +23,7 @@
 #include "SMExcept.hh"
 
 #include "bmAnalysisManager.hh"
+#include "bmPrimaryGeneratorAction.hh"
 
 #include <vector>
 #include <string>
@@ -97,6 +98,10 @@ void bmAnalysisManager::StoreHitCollectionIDs() {
 
 void bmAnalysisManager::FillPrimaryData(const G4Event* evt_in, const long seed) {
 	mcEvent.eventID = evt_in->GetEventID();
+	double w = 1.0;
+	if(evt_in->GetUserInformation())
+		w = ((PrimEvtWeighting*)evt_in->GetUserInformation())->w;
+	
 	// convert each primary to ROOT-friendly form and store
 	for (int ivert=0; ivert<evt_in->GetNumberOfPrimaryVertex(); ivert++){
 		bmPrimaryInfo prim_info;
@@ -111,6 +116,7 @@ void bmAnalysisManager::FillPrimaryData(const G4Event* evt_in, const long seed) 
 		G4double energy = sqrt(momentum*momentum+mass*mass);
 		prim_info.KE = (energy - mass)/keV;
 		prim_info.seed = seed;
+		prim_info.weight = w;
 		mcEvent.AddPrimaryInfo(prim_info);
 	}
 }

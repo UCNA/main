@@ -81,6 +81,7 @@ public:
 	SimPositioner* SP;			//< optional postion modifier
 	bool reSimulate;			//< whether to re-simulate energy or use "raw" values
 	bool fakeClip;				//< whether to fake clipping on wirechamber entrance edge
+	bool weightAsym;			//< whether to weight simulated events by beta asymmetry
 	
 	double eQ[2];				//< Scintillator quenched energy [keV]
 	double eDep[2];				//< Scintillator deposited energy [keV[

@@ -62,6 +62,9 @@ void compareXenonSpectra();
 /// Decompose xenon spectrum for given run number
 void decomposeXenon(RunNum rn, bool includeFast = false);
 
+/// process simulation for neutron generated background
+void NGBGSpectra(std::string datname);
+
 /// systematic errors table generator
 class ErrTables {
 public:
@@ -91,5 +94,9 @@ protected:
 	AsymmetryAnalyzer Adat;	//< data for error estimation
 	TGraphErrors* S[2][2];	//< observed energy spectra for [side][afp] as TGraphs
 };
+
+
+/// test for BG subtraction statistics errors
+void lowStatsTest();
 
 #endif

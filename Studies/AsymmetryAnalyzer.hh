@@ -40,6 +40,10 @@ public:
 	quadHists* qAnodeCal[2];										//< anode calibration spectrum (Type 0, Erecon>225)
 	quadHists* qTotalSpectrum[2];									//< total spectrum based on analysis choice
 	quadHists* qBGDecay[2];											//< 5min E vs. time plot to see decaying BG components
+	quadHists* qExcessSpectra[2];									//< excess high-energy event spectrum
+	quadHists* qExcessGamma[2];										//< excess high-energy gamma event spectrum
+	quadHists* qExcessr2[2];										//< radius^2 distribution of >1keV "excess" Type 0,I events
+	quadHists* qExcessTheta[2];										//< angular distribution of >1keV excess events
 	
 protected:
 	
@@ -53,7 +57,7 @@ protected:
 	/// various beta spectrum endpoint fits
 	void endpointFits();
 	/// fit beyond-endpoint background subtraction
-	void bgSubtrFits();
+	void highEnergyExcess(quadHists* qh, double e0, double e1);
 	/// anode calibration fits
 	void anodeCalFits();
 	

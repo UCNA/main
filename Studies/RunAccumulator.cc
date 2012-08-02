@@ -92,7 +92,7 @@ SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false) {
 		// fetch total time
 		std::vector<Stringmap> times = qOld.retrieve("totalTime");
 		for(std::vector<Stringmap>::iterator it = times.begin(); it != times.end(); it++) {
-			unsigned int afp = (unsigned int)(it->getDefault("afp",3));
+			AFPState afp = strToAfp(it->getDefault("afp","Other"));
 			unsigned int fg = (unsigned int)(it->getDefault("fg",3));
 			assert(afp<=AFP_OTHER && fg <= GV_OPEN);
 			totalTime[afp][fg] = BlindTime(*it);
@@ -100,9 +100,9 @@ SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false) {
 		// fetch total counts
 		std::vector<Stringmap> counts = qOld.retrieve("totalCounts");
 		for(std::vector<Stringmap>::iterator it = counts.begin(); it != counts.end(); it++) {
-			unsigned int afp = (unsigned int)(it->getDefault("afp",3));
+			AFPState afp = strToAfp(it->getDefault("afp","Other"));
 			unsigned int fg = (unsigned int)(it->getDefault("fg",3));
-			assert(afp<=AFP_OTHER && fg <= GV_OPEN);
+			assert(fg <= GV_OPEN);
 			totalCounts[afp][fg] = it->getDefault("counts",0);
 		}
 		// fetch run counts, run times
@@ -200,8 +200,8 @@ void errorbarsFromMasterHisto(TH1* lowrate, const TH1* master) {
 void RunAccumulator::bgSubtractAll() {
 	for(std::map<std::string,fgbgPair*>::iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
 		if(getErrorEstimator())
-			errorbarsFromMasterHisto(it->second->h[0],getErrorEstimator()->getFGBGPair(it->second->getName()).h[0]);
-		it->second->bgSubtract(totalTime[it->second->afp][1],totalTime[it->second->afp][0]);
+			errorbarsFromMasterHisto(it->second->h[GV_CLOSED],getErrorEstimator()->getFGBGPair(it->second->getName()).h[GV_CLOSED]);
+		it->second->bgSubtract(totalTime[it->second->afp][GV_OPEN],totalTime[it->second->afp][GV_CLOSED]);
 	}
 	needsSubtraction = false;
 }
@@ -304,11 +304,11 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool cou
 	currentAFP = simData.getAFP();
 	printf("Loading %i events of simulated data (AFP=%i)...\n",nToSim,currentAFP);
 	simData.resetSimCounters();
-	simData.startScan(true);
-	while((countAll?simData.nSimmed:simData.nCounted)<=nToSim) {
-		simData.nextPoint();
+	simData.startScan(nToSim);
+	while(!nToSim || (countAll?simData.nSimmed:simData.nCounted)<=nToSim) {
+		bool np = simData.nextPoint();
 		loadSimPoint(simData);
-		if(!(int(simData.nSimmed)%(nToSim/20))) {
+		if(nToSim && !(int(simData.nSimmed)%(nToSim/20))) {
 			if(nToSim>1e6) {
 				printf("* %s\n",simData.evtInfo().toString().c_str());
 			} else {
@@ -316,6 +316,7 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool cou
 				fflush(stdout);
 			}
 		}
+		if(!nToSim && !np) break;
 	}
 	printf("\n--Scan complete.--\n");
 }

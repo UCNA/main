@@ -36,7 +36,8 @@ void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
 
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
-SP(NULL), reSimulate(true), fakeClip(false), nSimmed(0), nCounted(0), mwpcAccidentalProb(4.3e-4), afp(AFP_OTHER) {
+SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
+nSimmed(0), nCounted(0), mwpcAccidentalProb(4.3e-4), afp(AFP_OTHER) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		mwpcThresh[s] = 0.02;
@@ -59,7 +60,7 @@ Stringmap Sim2PMT::evtInfo() {
 
 void Sim2PMT::calcReweight() {
 	physicsWeight = 1.0;
-	if(afp==AFP_ON||afp==AFP_OFF)
+	if(weightAsym && (afp==AFP_ON || afp==AFP_OFF))
 		physicsWeight *= (1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_ON?1:-1)))*spectrumCorrectionFactor(ePrim);
 	if(fakeClip) {
 		const double R = 70.*sqrt(0.6); // wirechamber entrance window radius, projected back to decay trap

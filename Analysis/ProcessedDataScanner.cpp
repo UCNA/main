@@ -44,7 +44,7 @@ void ProcessedDataScanner::recalibrateEnergy() {
 }
 
 bool ProcessedDataScanner::passesPositionCut(Side s) {
-	//return 45 < radius(s) && radius(s) < 60;
+	//return fiducialRadius<radius(s) && radius(s)<80;;
 	return radius(s)<fiducialRadius;
 }
 

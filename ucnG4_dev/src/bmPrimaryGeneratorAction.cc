@@ -38,6 +38,7 @@
 #include "bmAnalysisManager.hh"
 #include "PathUtils.hh"
 #include "SMExcept.hh"
+#include "SurfaceGenerator.hh"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -182,22 +183,24 @@ throwElectronsAndGammas(const std::vector<G4double>& electrons,
 	}
 }
 
-void bmPrimaryGeneratorAction::throwScintGamma(G4double eGamma,G4Event* anEvent) {
+void bmPrimaryGeneratorAction::throwGammaAt(SurfaceSeg* S, double eGamma, G4Event* anEvent) {
 	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
 	particleGun->SetParticleDefinition(particleTable->FindParticle("gamma"));
 	particleGun->SetParticleEnergy(eGamma);
-	
-	if(false) {
-		G4double x,y;
-		diskRandom(8*cm,x,y);
-		Side s = G4UniformRand()<0.5?EAST:WEST;
-		particleGun->SetParticleMomentumDirection(G4ThreeVector(x,y,ssign(s)*1.5*m)-particleGun->GetParticlePosition());
+	G4ThreeVector pdir;
+	if(S) {
+		PrimEvtWeighting* w = new PrimEvtWeighting(0.);
+		anEvent->SetUserInformation(w);
+		do {
+			w->w++;
+			selectVertex();
+			RandomizeMomentum(pdir);
+		} while(!S->intersectsSurface(vertex_position,pdir));
+		G4cout << "Event vertex " << vertex_position/m << " after " << w->w << " tries." << G4endl;
 	} else {
-		G4ThreeVector direction;
-		RandomizeMomentum(direction);
-		particleGun->SetParticleMomentumDirection(direction);
+		RandomizeMomentum(pdir);
 	}
-	
+	particleGun->SetParticleMomentumDirection(pdir);
 	particleGun->GeneratePrimaryVertex(anEvent);
 }
 
@@ -248,21 +251,36 @@ void bmPrimaryGeneratorAction::In114SourceGenerator(G4Event* anEvent) {
 	throwElectronsAndGammas(electrons,gammas,anEvent);
 }
 
-void bmPrimaryGeneratorAction::nCaptureCuGammas(G4Event* anEvent) {
+void bmPrimaryGeneratorAction::nCaptureCuGammas(G4Event* anEvent, SurfaceAssembly* S) {
 	int selected(-1);
 	G4double gunEnergy;
-	const double p63 = 69.17*4.52;
-	const double p65 = 30.83*2.17;
+	
+	// common capture gammas and probabilities
+	static const double Cu63Lines[] = {7916,	278,	7538,	159,	7307,	609,	344};
+	static const double Cu63Branch[]= {100,	72.51,	48.9,	45.32,	27.0,	23.56,	17.82};		// 335.11%
+	static const double Cu65Lines[] = {186,	465,	386,	6601,	6680,	89,		5245};
+	static const double Cu65Branch[]= {100,	54.39,	46.34,	35.1,	33.6,	26.59,	17.8};		// 313.82%
+
+	// capture probability on each isotope,
+	// weighted by isotope abundance, capture cross section, and total gamma intensity
+	static const double p63 = 69.17*4.52*std::accumulate(Cu63Branch,Cu63Branch+7,0.);
+	static const double p65 = 30.83*2.17*std::accumulate(Cu65Branch,Cu65Branch+7,0.);
+	
 	if(G4UniformRand()<p63/(p63+p65)) {
-		const double Cu63Lines[] = {7916,	278,	7538,	159,	7307,	609,	344};
-		const double Cu63Branch[]= {100,	72.51,	48.9,	45.32,	27.0,	23.56,	17.82};
 		gunEnergy = rand_outof_list(Cu63Lines, Cu63Branch, 7, selected)*keV;
 	} else {
-		const double Cu65Lines[] = {186,	465,	386,	6601,	6680,	89,		5245};
-		const double Cu65Branch[]= {100,	54.39,	46.34,	35.1,	33.6,	26.59,	17.8};
 		gunEnergy = rand_outof_list(Cu65Lines, Cu65Branch, 7, selected)*keV;
 	}
-	throwScintGamma(gunEnergy,anEvent);
+	
+	throwGammaAt(S,gunEnergy,anEvent);
+}
+
+void bmPrimaryGeneratorAction::nCaptureFeGammas(G4Event* anEvent, SurfaceAssembly* S) {
+	int selected(-1);
+	const double Fe56Lines[] = {7631,	7645,	352};
+	const double Fe56Branch[]= {0.653,	0.549,	0.273};
+	G4double gunEnergy = rand_outof_list(Fe56Lines, Fe56Branch, 3, selected)*keV;
+	throwGammaAt(S,gunEnergy,anEvent);
 }
 
 bmPrimaryGeneratorAction::bmPrimaryGeneratorAction(bmDetectorConstruction* myDC): myDetector(myDC) {
@@ -295,6 +313,79 @@ void bmPrimaryGeneratorAction::displayGunStatus() {
 	<< " towards " << particleGun->GetParticleMomentumDirection()
 	<< ": " << particleGun->GetParticleEnergy()/keV << "keV" << G4endl;
 }
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void bmPrimaryGeneratorAction::selectVertex() {
+	// set vertex position for event according to position generator
+	// assumed position has been set in /gun/position!
+	static G4ThreeVector position_saved = particleGun->GetParticlePosition();
+	vertex_position = position_saved;
+	if(positioner=="Fixed") {
+		// fixed position set from macro file
+		vertex_position = position_saved;
+	} else if(positioner=="SourceDrop") {
+		// nominally 3mm disc around pre-set position for calibration sources
+		randomTubePosition(position_saved, sourceRadius, 0*um, vertex_position);
+	} else if(positioner=="DecayTrapUniform") {
+		// uniform fill of decay trap volume
+		randomTubePosition(G4ThreeVector(0,0,0), 62.2*mm, 1.5*m, vertex_position);
+	} else if(positioner=="DecayTrapFiducial") {
+		// uniform fill of 5.5cm radius volume from which events reach detectors
+		randomTubePosition(G4ThreeVector(0,0,0), 5.5*cm, 1.5*m, vertex_position);
+	} else if(positioner=="DecayTrapSurface") {
+		randomCylPosition(G4ThreeVector(0,0,0),myDetector->trap.fIRtrap,1.5*m,vertex_position);
+	} else if(positioner=="SpectrometerWall") {
+		randomCylPosition(G4ThreeVector(0,0,0),20*cm,1.8*m,vertex_position);
+	} else if(positioner=="EndcapSurface") {
+		randomTubePosition(G4ThreeVector(0.,0.,1.5*m*(1-2*(G4UniformRand()<0.5))), myDetector->trap.fIRtrap, 0, vertex_position);
+	} else if(positioner=="DetPkgFace") {
+		Side s = G4UniformRand()<0.5?EAST:WEST;
+		static double entrD = myDetector->dets[s].mwpc_entrance_depth;
+		static SurfaceAssembly pkgSurf(G4ThreeVector(0.,0.,2.2*m+myDetector->dets[s].entrance_face_pos+0.5*entrD));
+		if(!pkgSurf.getArea()) {
+			double r0 = myDetector->dets[s].mwpc.mwpc_entrance_R;
+			double r1 = myDetector->dets[s].detPackageRadius;
+			pkgSurf.addSegment(new ConeFrustum(G4ThreeVector(),r0,r0,entrD,true));
+			pkgSurf.addSegment(new ConeFrustum(G4ThreeVector(0,0,-0.5*entrD),r0,r1,0,false));
+			G4cout << "Constructed generator surface with area " << pkgSurf.getArea()/(cm*cm) << " cm^2" << G4endl;
+		}
+		vertex_position = pkgSurf.getSurfRandom();
+		vertex_position += pkgSurf.snorm * log(1.0-G4UniformRand()) * (1.0*mm);	// 1mm 3m/s UCN penetration depth into Al
+		vertex_position[2] *= ssign(s);
+	} else if(positioner=="ScintFace") {
+		Side s = G4UniformRand()<0.5?EAST:WEST;
+		static SurfaceAssembly scintSurf(G4ThreeVector(0.,0.,2.2*m));
+		if(!scintSurf.getArea())
+			scintSurf.addSegment(new ConeFrustum(G4ThreeVector(),0,7.5*cm,0,false));
+		vertex_position = scintSurf.getSurfRandom();
+		vertex_position += -scintSurf.snorm * log(1.0-G4UniformRand()) * (0.78*mm);	// 0.78mm 3m/s UCN penetration depth into scintillator
+		vertex_position[2] *= ssign(s);
+	} else if(positioner=="EntryPort") {
+		Side s = G4UniformRand()<0.5?EAST:WEST;
+		static double entrD = myDetector->dets[s].mwpc_entrance_depth;
+		static SurfaceAssembly entryPort(G4ThreeVector(0.,0.,2.2*m+myDetector->dets[s].entrance_face_pos+0.5*entrD));
+		if(!entryPort.getArea()) {
+			double r0 = myDetector->dets[s].mwpc.mwpc_entrance_R;
+			entryPort.addSegment(new ConeFrustum(G4ThreeVector(),r0,r0,entrD,true));
+		}
+		vertex_position = entryPort.getSurfRandom();
+		vertex_position += -entryPort.snorm * log(1.0-G4UniformRand()) * (1.0*mm);	// 1.0mm 3m/s UCN penetration depth into aluminum
+		vertex_position[2] *= ssign(s);
+	} else if(positioner=="EndcapEdge") {
+		randomCylPosition(G4ThreeVector(0.,0.,(1.5*m-1.*mm)*(1-2*(G4UniformRand()<0.5))),
+						  myDetector->trap.fIRtrap+2.5*mm,1.*mm,vertex_position);
+	} else if(positioner=="SpectrometerVolumeUniform") {
+		// uniform fill of (visible) spectrometer volume, for Xe
+		randomTubePosition(G4ThreeVector(0,0,0), 7.5*cm, 2.17*m, vertex_position);
+	} else if(positioner=="UniformRadialGasFill") {
+		randomUniformRadialBins(G4ThreeVector(0,0,0),7.5*cm, 2.15*m, vertex_position);
+	} else {
+		G4cout << "********* WARNING: Undefined positioner type! Defaulting to 'Fixed'! **********" << G4endl;
+	}
+	
+	particleGun->SetParticlePosition(vertex_position);
+}
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
@@ -344,46 +435,26 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	static NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays/",1e-6);
 	std::vector<NucDecayEvent> evts;
 	
-	// set vertex position for event according to position generator
-	// assumed position has been set in /gun/position!
-	static G4ThreeVector position_saved = particleGun->GetParticlePosition();
-	vertex_position = position_saved;
-	if(positioner=="Fixed") {
-		// fixed position set from macro file
-		vertex_position = position_saved;
-	} else if(positioner=="SourceDrop") {
-		// nominally 3mm disc around pre-set position for calibration sources
-		randomTubePosition(position_saved, sourceRadius, 0*um, vertex_position); 
-	} else if(positioner=="DecayTrapUniform") {
-		// uniform fill of decay trap volume
-		randomTubePosition(G4ThreeVector(0,0,0), 62.2*mm, 1.5*m, vertex_position);
-	} else if(positioner=="DecayTrapFiducial") {
-		// uniform fill of 5.5cm radius volume from which events reach detectors
-		randomTubePosition(G4ThreeVector(0,0,0), 5.5*cm, 1.5*m, vertex_position);
-	} else if(positioner=="DecayTrapSurface") {
-		randomCylPosition(G4ThreeVector(0,0,0),myDetector->trap.fIRtrap,1.5*m,vertex_position);
-	} else if(positioner=="EndcapSurface") {
-		randomTubePosition(G4ThreeVector(0.,0.,1.5*m*(1-2*(G4UniformRand()<0.5))), myDetector->trap.fIRtrap, 0, vertex_position);
-	} else if(positioner=="EndcapEdge") {
-		randomCylPosition(G4ThreeVector(0.,0.,(1.5*m-1.*mm)*(1-2*(G4UniformRand()<0.5))),
-						  myDetector->trap.fIRtrap+2.5*mm,1.*mm,vertex_position);
-	} else if(positioner=="SpectrometerVolumeUniform") {
-		// uniform fill of (visible) spectrometer volume, for Xe
-		randomTubePosition(G4ThreeVector(0,0,0), 7.5*cm, 2.17*m, vertex_position);
-	} else if(positioner=="UniformRadialGasFill") {
-		randomUniformRadialBins(G4ThreeVector(0,0,0),7.5*cm, 2.15*m, vertex_position);
-	} else {
-		G4cout << "********* WARNING: Undefined positioner type! Defaulting to 'Fixed'! **********" << G4endl;
-	}
-	particleGun->SetParticlePosition(vertex_position);
+	selectVertex();
 	G4cout << "Event vertex " << vertex_position/m << G4endl;
 	
 	if(gunType=="Cd113m") {
 		Cd113mSourceGenerator(anEvent);
-	} else if (gunType=="nCaptCu") {
-		nCaptureCuGammas(anEvent);
-	} else if(gunType=="nCaptH") {
-		throwScintGamma(2223.25*keV,anEvent);
+	} else if (gunType=="nCaptCu" || gunType=="nCaptH" || gunType=="nCaptFe") {
+		static SurfaceAssembly gammaTargets = SurfaceAssembly(G4ThreeVector());
+		if(!gammaTargets.getArea()) {
+			for(Side s = EAST; s <= WEST; ++s) {
+				gammaTargets.addSegment(new ConeFrustum(G4ThreeVector(0,0,2.2*m*ssign(s)),0.,10*cm,0));
+				gammaTargets.addSegment(new ConeFrustum(G4ThreeVector(0,0,2.02*m*ssign(s)),0.,10*cm,0));
+				gammaTargets.addSegment(new ConeFrustum(G4ThreeVector(0,0,(1.5*m+0.8*inch)*ssign(s)),5.0*cm,7.5*cm,0));
+			}
+		}
+		if(gunType=="nCaptH")
+			throwGammaAt(NULL,2223.25*keV,anEvent);
+		else if(gunType=="nCaptCu")
+			nCaptureCuGammas(anEvent,NULL);
+		else if(gunType=="nCaptFe")
+			nCaptureFeGammas(anEvent,NULL);
 	} else if (gunType=="In114" || gunType=="In114E" || gunType=="In114W") {
 		In114SourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {

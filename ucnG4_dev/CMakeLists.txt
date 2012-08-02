@@ -1,6 +1,7 @@
 #----------------------------------------------------------------------------
 # Usage:
 # cmake -DGeant4_DIR=~/geant4.9.5/geant4.9.5-install/lib/Geant4-9.5.0/ ../ucnG4_dev/
+# cmake -DGeant4_DIR=/Users/michael/Applications/geant4/lib/Geant4-9.5.1/ ../UCNA_git/ucnG4_dev/
 # make
 
 #----------------------------------------------------------------------------

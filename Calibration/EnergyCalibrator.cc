@@ -279,6 +279,11 @@ void PMTCalibrator::pedSubtract(Side s, float* adc, float time) {
 void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, float time, float poserr) const {
 	evt.energy.x = evt.energy.err = 0;
 	float weight[nBetaTubes];
+	// count clipped PMTs
+	unsigned int nclipped = 0;
+	for(unsigned int t=0; t<nBetaTubes; t++)
+		nclipped += evt.adc[t]>clipThreshold[s][t]-300;
+	
 	for(unsigned int t=0; t<nBetaTubes; t++) {
 		
 		float eta0 = eta(s,t,x,y);
@@ -299,11 +304,13 @@ void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, f
 		
 		evt.nPE[t] = E0*weight[t];
 		
-		// de-weight for clipping
-		if(evt.adc[t]>clipThreshold[s][t]-300)
-			weight[t] *= (clipThreshold[s][t]-evt.adc[t])/300.0;
-		if(evt.adc[t]>clipThreshold[s][t])
-			weight[t] = 0;
+		// de-weight for clipping, unless all PMTs clipped
+		if(nclipped<nBetaTubes) {
+			if(evt.adc[t]>clipThreshold[s][t]-300)
+				weight[t] *= (clipThreshold[s][t]-evt.adc[t])/300.0;
+			if(evt.adc[t]>clipThreshold[s][t])
+				weight[t] = 0;
+		}
 		
 		evt.energy.x += E0*weight[t];
 		evt.energy.err += weight[t];

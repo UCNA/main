@@ -8,9 +8,6 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 	// aluminum entrance collimator to detector package
 	//////////////////////
 	
-	const G4double detPackageRadius = 6.0*inch;
-	const G4double mwpc_entrance_thickness = 0.5*inch;
-	const G4double mwpc_entrance_depth = 6.0*inch;
 	G4Tubs* mwpc_entrance_tube = new G4Tubs("mwpc_entrance_tube",0,detPackageRadius,0.5*mwpc_entrance_depth,0.,2*M_PI); 
 	G4Tubs* entrance_front_tube = new G4Tubs("entrance_front_tube",mwpc.mwpc_entrance_R+mwpc_entrance_thickness,
 											 detPackageRadius,0.5*mwpc_entrance_thickness,0.,2*M_PI);

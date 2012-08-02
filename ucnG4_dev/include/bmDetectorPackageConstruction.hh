@@ -8,10 +8,16 @@
 class bmDetectorPackageConstruction: public MaterialUser {
 public:
 	/// constructor
-	bmDetectorPackageConstruction() {}
+	bmDetectorPackageConstruction(): detPackageRadius(6.0*inch),
+	mwpc_entrance_thickness(0.5*inch), mwpc_entrance_depth(6.0*inch) {}
+	
 	/// get scintillator face position within unit
 	G4double getScintFacePos() const { return 0; }
 	
+	G4double detPackageRadius;
+	G4double mwpc_entrance_thickness;
+	G4double mwpc_entrance_depth;
+
 	bmScintillatorConstruction scint;	//< scintillator assembly
 	bmWirechamberConstruction mwpc;		//< wirechamber assembly
 	G4LogicalVolume* container_log;		//< overall positioning container

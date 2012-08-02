@@ -31,24 +31,30 @@ class GeantSimManager:
 				
 	def enable_vis(self):
 		
-		self.settings["vis_cmd"] = "/vis/open HepRepFile\n"
-		#self.settings["vis_cmd"] = "/vis/open OGLSX\n"
+		#self.settings["vis_cmd"] = "/vis/open HepRepFile\n"
+		self.settings["vis_cmd"] = "/vis/open OGLIXm\n"
+		self.settings["vis_cmd"] += "/vis/drawVolume\n"
+		
+		#self.settings["vis_cmd"] = "/vis/open OGLIQt\n"
+		
 		self.settings["vis_cmd"] += "/vis/viewer/set/viewpointThetaPhi 90 0\n"
 		self.settings["vis_cmd"] += "/vis/viewer/panTo 2.2 0\n"
 		self.settings["vis_cmd"] += "/vis/viewer/zoom 10\n"
 		self.settings["vis_cmd"] += "/vis/viewer/set/viewpointThetaPhi 10 20\n"
-		self.settings["vis_cmd"] += "/vis/drawVolume\n"
-		self.settings["vis_cmd"] += "/vis/viewer/flush\n"
-		self.settings["vis_cmd"] += "/vis/modeling/trajectories/create/drawByCharge myTrackVis\n"
-		self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawStepPts true\n"
-		self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawAuxPts true\n"
-		self.settings["vis_cmd"] += "/vis/modeling/trajectories/select myTrackVis\n"
-		self.settings["vis_cmd"] += "/vis/scene/add/trajectories\n"
-		#self.settings["vis_cmd"] += "/vis/scene/add/trajectories rich\n"
-		self.settings["vis_cmd"] += "/vis/scene/add/hits\n"
 		
+		self.settings["vis_cmd"] += "/vis/viewer/set/auxiliaryEdge true\n"
+		self.settings["vis_cmd"] += "/vis/viewer/set/style surface"
+		#self.settings["vis_cmd"] += "/vis/viewer/set/hiddenEdge 1"
+		#self.settings["vis_cmd"] += "/vis/modeling/trajectories/create/drawByCharge myTrackVis\n"
+		#self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawStepPts true\n"
+		#self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawAuxPts true\n"
+		#self.settings["vis_cmd"] += "/vis/modeling/trajectories/select myTrackVis\n"
+		#self.settings["vis_cmd"] += "/vis/scene/add/trajectories\n"
+		#self.settings["vis_cmd"] += "/vis/scene/add/trajectories rich\n"
+		#self.settings["vis_cmd"] += "/vis/scene/add/hits\n"
 		#self.settings["vis_cmd"] += "/tracking/verbose 2\n"
-
+		
+		self.settings["vis_cmd"] += "/vis/viewer/flush\n"
 
 	def set_generator(self,generator,forcePositioner=None):
 		
@@ -351,16 +357,27 @@ if __name__ == "__main__":
 			iline.launch_postanalyzer()
 		
 	####################				
-	# Cu n capture gammas
+	# neutron generated backgrounds
 	####################
 	if 1:
-		nCapt = GeantSimManager("GuideCapt")
-		nCapt.set_generator("nCaptCu",forcePositioner="Fixed")
-		nCapt.settings["gunpos_mm"] = [61.,0.,0.]
+		nCapt = GeantSimManager("ScintFace")
+		nCapt.set_generator("nCaptH",forcePositioner="ScintFace")
+		nCapt.launch_sims(nEvents=2.5e8,nClusters=72,hours_old=0)
+		nCapt.launch_postanalyzer()
+	if 0:
+		nCapt = GeantSimManager("EntryPort")
+		nCapt.set_generator("Al28",forcePositioner="EntryPort")
 		nCapt.launch_sims(nEvents=1e7,nClusters=6,hours_old=0)
 		nCapt.launch_postanalyzer()
 
-# visualization test
-#launch_simulations(generators = ["eGunRandMomentum"], forcePositioner="SourceDrop",
-#					nEvents = 99, nClusters=0, folderPrefix = "VisTest",
-#					nMonoLines=1, eStart=60.0, eStop=60.0, hours_old = 0, resimOnly=False)
+	##################
+	# visualization test
+	##################
+	if 0:
+		vtest = GeantSimManager("VisTest")
+		vtest.set_generator("eGunRandMomentum")
+		vtest.settings["positioner"] = "Fixed"
+		vtest.settings["gunenergy"] = 500
+		vtest.enable_vis()
+		vtest.launch_sims(nEvents=10,nClusters=0,hours_old=0)
+

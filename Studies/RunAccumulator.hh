@@ -84,7 +84,7 @@ public:
 	/// fill data from a ProcessedDataScanner
 	virtual void loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS);
 	/// fill data from simulations
-	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll = false);
+	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim = 0, bool countAll = false);
 	/// load single current event from simulator
 	virtual void loadSimPoint(Sim2PMT& simData);
 	/// load sim data to match a given run

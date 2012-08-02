@@ -1,0 +1,10 @@
+#########
+# 28Al decay scheme
+#########
+
+level:	nm = 28.13.0	E = 4641.8		hl = 134.48			jpi = 3+
+level:	nm = 28.14.1	E = 1778.9	hl = 0		jpi = 2+
+level:	nm = 28.14.0	E = 0		hl = -1		jpi = 0+
+
+beta:	from = 28.13.0	to = 28.14.1	I = 99.990
+gamma:	from = 28.14.1	to = 28.14.0	Igamma = 100.0

@@ -16,6 +16,7 @@ public:
 	Float_t p[3];		//< primary momentum [keV]
 	
 	Float_t KE;			//< primary KE
+	Float_t weight;		//< event generator weight
 	Long_t  seed;		//< primary random seed
 	
 	ClassDef(bmPrimaryInfo, 1);

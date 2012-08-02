@@ -17,6 +17,7 @@
 #include "BetaSpectrum.hh"
 #include "LinHistCombo.hh"
 #include "PostOfficialAnalyzer.hh"
+#include "SimAsymmetryAnalyzer.hh"
 #include <TColor.h>
 
 
@@ -667,5 +668,47 @@ void ErrTables::NGBGTable(double Eoff, double Eon, double Woff, double Won, doub
 		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,(A-Ap)/A,errscale*sqrt(sxx-sx*sx));
 	}
 	fclose(f);
+}
+
+void lowStatsTest() {
+	int muMax=100;
+	unsigned int nBins = 10000;
+	TF1 cFit("cFit","pol0",0,nBins);
+	
+	for(double mu = 0; mu <= muMax; mu++) {
+		TH1F hCounts("hCounts","hCounts",nBins,-0.5,nBins+0.5);
+		hCounts.Sumw2();
+		for(unsigned int i=0; i<nBins; i++) {
+			int n = plRndSrc.Poisson(mu);
+			//hCounts.SetBinContent(i+1,n+1.-(n>0?1./n:0));
+			//hCounts.SetBinError(i+1,sqrt(n+1));
+			hCounts.SetBinContent(i+1,n);
+			hCounts.SetBinError(i+1,sqrt(n));
+		}
+		hCounts.Fit(&cFit,"Q");
+		double hint = hCounts.Integral()/nBins;
+		printf("mu = %g:\tobs = %.1f\t%.1f\t%.1f\t%.1f\n",mu,cFit.GetParameter(0),cFit.GetParameter(0)-mu,hint,hint-mu);
+	}
+}
+
+//-------------------------------------------------------------//
+
+void NGBGSpectra(std::string datname) {
+	OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
+	G4toPMT g2p;
+	g2p.addFile(getEnvSafe("G4WORKDIR")+"/output/"+datname+"/analyzed_*.root");
+	g2p.setAFP(AFP_OFF);
+	g2p.weightAsym = false;
+	PMTCalibrator PCal(15668);
+	g2p.setCalibrator(PCal);
+	
+	
+	SimAsymmetryAnalyzer AH(&OM,datname);
+	AH.loadSimData(g2p);
+	
+	AH.calculateResults();
+	AH.makePlots();
+	AH.write();
+	AH.setWriteRoot(true);
 }
 

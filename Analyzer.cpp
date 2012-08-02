@@ -183,6 +183,13 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
+	//NGBGSpectra("DetPkg_nCaptAl");
+	//NGBGSpectra("EndcapEdge_nCaptH");
+	//NGBGSpectra("EndcapEdge_nCaptCu");
+	NGBGSpectra("EntryPort_Al28");
+	NGBGSpectra("ScintFace_nCaptH");
+	return;
+	
 	ErrTables ET;
 	ET.gainfluctsTable(0.000125);
 	ET.pedShiftsTable(0.015);
