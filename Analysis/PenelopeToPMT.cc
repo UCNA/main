@@ -32,13 +32,13 @@ void PenelopeToPMT::setReadpoints() {
 
 
         Tch->SetBranchAddress("W1",&fcosThetaInFoils[EAST]);
-        Tch->SetBranchAddress("W3",&fcosThetaInWinOut[EAST]);
-        Tch->SetBranchAddress("W4",&fcosThetaInWinIn[EAST]);
+		Tch->SetBranchAddress("W3",&fcosThetaInWinIn[EAST]);
+        Tch->SetBranchAddress("W4",&fcosThetaInWinOut[EAST]);
         Tch->SetBranchAddress("W6",&fcosThetaInScint[EAST]);
 
         Tch->SetBranchAddress("W7",&fcosThetaOutFoils[EAST]);
-        Tch->SetBranchAddress("W9",&fcosThetaOutWinOut[EAST]);
-        Tch->SetBranchAddress("W10",&fcosThetaOutWinIn[EAST]);
+		Tch->SetBranchAddress("W9",&fcosThetaOutWinIn[EAST]);
+        Tch->SetBranchAddress("W10",&fcosThetaOutWinOut[EAST]);
         Tch->SetBranchAddress("W12",&fcosThetaOutScint[EAST]);  
 		
 	Tch->SetBranchAddress("E",&fEprim);

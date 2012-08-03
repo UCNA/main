@@ -13,16 +13,20 @@ baseCorrPath = "../../Aux/Corrections/"
 
 def PlotCorrections():
 	
-	clist = {"Linearity":"EnergyLinearityUncertainty_2010.txt",
-			"Gain Flucts":"GainFlucts.txt",
-			"Ped Shifts":"PedShifts.txt",
-			"Recoil Order":"RecoilOrder.txt",
-			"Radiative":"Radiative_h-g.txt"}
+	clist = {
+			None:"NGBG.txt",
+		#"Muon Veto":"MuonEffic.txt",
+		#	"Linearity":"EnergyLinearityUncertainty_2010.txt",
+		#	"Gain Flucts":"GainFlucts.txt",
+		#	"Ped Shifts":"PedShifts.txt",
+		#	"Recoil Order":"RecoilOrder.txt",
+		#	"Radiative":"Radiative_h-g.txt"
+			}
 	cxns = dict([(k,CorrFile(baseCorrPath+clist[k])) for k in clist])
 	
 	gCx=graph.graphxy(width=20,height=12,
-						  x=graph.axis.lin(title="Energy [keV]",min=0,max=1000),
-						  y=graph.axis.lin(title="Correction [\\%]",min=-5,max=5),
+						  x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
+						  y=graph.axis.lin(title="Correction [\\%]",min=-1,max=1),
 						  key = graph.key.key(pos="tl"))
 	setTexrunner(gCx)
 
@@ -35,5 +39,27 @@ def PlotCorrections():
 
 	gCx.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/test/AsymCorrections.pdf")
 				 
+
+def PlotUncerts():
+	
+	clist = { None:"NGBG.txt" }
+	cxns = dict([(k,CorrFile(baseCorrPath+clist[k])) for k in clist])
+	
+	gCx=graph.graphxy(width=20,height=12,
+					  x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
+					  y=graph.axis.lin(title="Error in A [\\%]",min=-1,max=0),
+					  key = graph.key.key(pos="tl"))
+	setTexrunner(gCx)
+	
+	cxcols = rainbowDict(cxns)
+	for cx in cxns:
+		gdat = [ [0.5*(d[0]+d[1]),100*d[3]] for d in cxns[cx].dat]
+		gCx.plot(graph.data.points(gdat,x=1,y=2,title=cx),
+				 [graph.style.symbol(symbol.circle,size=0.1,symbolattrs=[cxcols[cx]]),
+				  graph.style.errorbar(errorbarattrs=[cxcols[cx]])])
+	
+	gCx.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/test/AsymUncerts.pdf")
+
 if __name__=="__main__":
 	PlotCorrections()
+	#PlotUncerts()

@@ -308,4 +308,4 @@ def PlotCathNorm(basepath):
 
 if __name__ == "__main__":
 	conn = open_connection()
-	gen_cathcal_set(conn,13000,100000,14282,14347)
+	gen_cathcal_set(conn,13000,100000,14264,16077)
