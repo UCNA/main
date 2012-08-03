@@ -83,60 +83,74 @@ def plot_TypeIV_resid(basedir,depth=2):
 	gRts.writetofile(basedir+"/Rt_%s_%i.pdf"%(hname,depth))
 
 
-def excess_table(dset):
+def excess_table(dset,ltxt="",dscale=1.0):
 	
 	print "\n------------",dset,"--------------\n"
 	
 	AF = AsymmetryFile(os.environ["UCNA_ANA_PLOTS"]+"/"+dset)
 	xs = [bgSubtr(b) for b in AF.dat["bg_subtr_xs"]]
 
-	#cols = [("Type 0","hEnergy_Type_0",1000),("Type I","hEnergy_Type_1",1000),("Type II/III","hEnergy_Type_2",1000),
-	#		("$\\mu$ Backing","hBackMu",1000),("gamma","hEnergy_Type_4",1000),]
+	tsets = [[("Type 0","hEnergy_Type_0",1000),("Type I","hEnergy_Type_1",1000),("Type II/III","hEnergy_Type_2",1000),
+			  ("$\\mu$ Backing","hBackMu",1000),("gamma","hEnergy_Type_4",1000),],
+			 [("$\\beta$ 1--2.2MeV","ExcessE",1000),("$\\beta > 2.2$MeV","ExcessE",2200),
+			  ("$\\gamma$ 0.2--1MeV","ExcessGamma",200),("$\\gamma$ 1--2.2MeV","ExcessGamma",1000),("$\\gamma >2.2$MeV","ExcessGamma",2200)]]
 	
-	cols = [("$\\beta$ 1--2MeV","ExcessE",1000),("$\\beta >2.5$MeV","ExcessE",2500),
-			("$\\gamma$ 1--2MeV","ExcessGamma",1000),("$\\gamma >2.5$MeV","ExcessGamma",2500)]
+	for cols in tsets:
+		
+		tbl = "\\begin{table} \\centering \\begin{tabular}{| c ||"
+		for c in cols:
+			tbl += " c |"
+		tbl += "}\\hline\n "
+		for c in cols:
+			tbl += "& %s\t"%c[0]
+		tbl += "\\\\ \\hline \hline\n"
+				
+		for s in ["E","W"]:
+			for afp in ["Off","On"]:
+				if ltxt:
+					if afp == "On":
+						continue
+					tbl += ltxt+" "
+				else:
+					tbl += "%s %s "%(s,afp)
+				cdat = dict([(c,[x for x in xs if x.side==s and x.afp==afp and x.name==c[1] and x.eMin==c[2]]) for c in cols])
+				
+				for c in cols:
+					bxs = cdat[c]
+					assert len(bxs)==1
+					bxs = bxs[0]
+					tbl += "& $%i \\pm %i$\t"%(bxs.xs*dscale,bxs.d_xs*dscale)
+				
+				if ltxt:
+					tbl += "\\\\ \\hline\n"
+					continue
+						
+				tbl += "\\\\\nBG "
+				for c in cols:
+					bxs = cdat[c][0]
+					tbl += "& $%i $\t"%(bxs.nBG)
+				tbl += "\\\\ \\hline\n"
 
-	
-	tbl = "\\begin{table} \\centering \\begin{tabular}{| c ||"
-	for c in cols:
-		tbl += " c |"
-	tbl += "}\\hline\n "
-	for c in cols:
-		tbl += "& %s "%c[0]
-	tbl += "\\\\ \\hline \hline\n"
-			
-	for s in ["E","W"]:
-		for afp in ["Off","On"]:
-			tbl += "%s %s "%(s,afp)
-			cdat = dict([(c,[x for x in xs if x.side==s and x.afp==afp and x.name==c[1] and x.eMin==c[2]]) for c in cols])
-			
-			for c in cols:
-				bxs = cdat[c]
-				assert len(bxs)==1
-				bxs = bxs[0]
-				tbl += "& $%i \\pm %i$ "%(bxs.xs,bxs.d_xs)
-			
-			tbl += "\\\\\nBG "
-			for c in cols:
-				bxs = cdat[c][0]
-				tbl += "& $%i $ "%(bxs.nBG)
-			tbl += "\\\\ \\hline\n"
+		tbl += "\\end{tabular}\\caption{Excess event counts after BG subtraction and size of subtracted BG}\\end{table}"
 
-	tbl += "\\end{tabular}\\caption{Excess event counts after BG subtraction and size of subtracted BG}\\end{table}"
-
-
-	print tbl
+		print
+		print tbl
 
 
 if __name__=="__main__":
 	
 	excess_table("OctetAsym_Offic/OctetAsym_Offic.txt")
-	excess_table("NGBG/DetPkg_nCaptAl/DetPkg_nCaptAl.txt")
-	excess_table("NGBG/Collimator_nCaptCu/Collimator_nCaptCu.txt")
-	excess_table("NGBG/EndcapEdge_nCaptCu/EndcapEdge_nCaptCu.txt")
-	excess_table("NGBG/EndcapEdge_nCaptH/EndcapEdge_nCaptH.txt")
-	excess_table("NGBG/ScintFace_nCaptH/ScintFace_nCaptH.txt")
-	excess_table("NGBG/DetPkg_nCaptAl/DetPkg_nCaptAl.txt")
+	excess_table("NGBG/EndcapEdge_nCaptCu/EndcapEdge_nCaptCu.txt","Cu $\\gamma$",3.3)
+	
+	excess_table("NGBG/TrapWall_Cu66/TrapWall_Cu66.txt","$^{66}$Cu $\\beta$",0.35)
+	excess_table("NGBG/TrapWall_nCaptCu/TrapWall_nCaptCu.txt","$^{66}$Cu $\\beta$",0.35)
+	
+	excess_table("NGBG/EndcapEdge_nCaptH/EndcapEdge_nCaptH.txt","H $\\gamma$")
+	excess_table("NGBG/ScintFace_nCaptH/ScintFace_nCaptH.txt","Scintillator",0.10)
+	
+	excess_table("NGBG/EntryPort_Al28/EntryPort_Al28.txt","Al $\\beta$",0.50)
+	excess_table("NGBG/EntryPort_nCaptAl/EntryPort_nCaptAl.txt","Al $\\gamma$ entrance",0.50)
+	excess_table("NGBG/ExitPort_nCaptAl/ExitPort_nCaptAl.txt","Al $\\gamma$ exit",0.25)
 	exit(0)
 	
 	#plot_bgSubtrHist(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Annulus/")

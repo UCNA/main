@@ -9,12 +9,13 @@
 class bmDecayTrapConstruction: public MaterialUser {
 public:
 	/// constructor
-	bmDecayTrapConstruction(): fWindowThick(0.7*um), fCoatingThick(0.3*um), fIRtrap(2.45*inch), fIRcollimator(2.3*inch),
-	fTubeMat(Cu), fCollimatorMat(Polyethylene), fWindowMat(Mylar), fCoatingMat(Be) { }
+	bmDecayTrapConstruction(): fWindowThick(0.7*um), fCoatingThick(0.3*um), fIRtrap(2.45*inch), decayTube_Wall(2*mm),
+	fIRcollimator(2.3*inch), fTubeMat(Cu), fCollimatorMat(Polyethylene), fWindowMat(Mylar), fCoatingMat(Be) { }
 	
 	G4double fWindowThick;		//< window thickness
 	G4double fCoatingThick;		//< window Be coating thickness
 	G4double fIRtrap;			//< decay trap IR
+	G4double decayTube_Wall;	//< decay trap wall thickness
 	G4double fIRcollimator;		//< collimator IR
 	G4Material* fTubeMat;		//< decay tube material
 	G4Material* fCollimatorMat;	//< collimator material

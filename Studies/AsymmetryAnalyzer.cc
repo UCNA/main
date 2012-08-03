@@ -256,13 +256,13 @@ void AsymmetryAnalyzer::calculateResults() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		highEnergyExcess(qMuonSpectra[s][true],1000,2000);
 		highEnergyExcess(qBackMuons[s][true],1000,2000);
-		highEnergyExcess(qExcessSpectra[s],1000,2000);
-		highEnergyExcess(qExcessSpectra[s],2500,7000);
+		highEnergyExcess(qExcessSpectra[s],1000,2200);
+		highEnergyExcess(qExcessSpectra[s],2200,7000);
 		highEnergyExcess(qExcessGamma[s],200,1000);
-		highEnergyExcess(qExcessGamma[s],1000,2000);
-		highEnergyExcess(qExcessGamma[s],2500,7000);
+		highEnergyExcess(qExcessGamma[s],1000,2200);
+		highEnergyExcess(qExcessGamma[s],2200,7000);
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_IV_EVENT; ++tp)
-			highEnergyExcess(qEnergySpectra[s][nBetaTubes][tp],1000,2000);
+			highEnergyExcess(qEnergySpectra[s][nBetaTubes][tp],1000,7000);
 	}
 	anodeCalFits();
 	makeRatesSummary();

@@ -8,7 +8,6 @@ void bmDecayTrapConstruction::Construct(G4LogicalVolume* world, double crinkleAn
 	////////////////////////////////////////
 	// decay tube
 	////////////////////////////////////////
-	const G4double decayTube_Wall = 0.2*cm; 
 	const G4double decayTube_OR = fIRtrap+decayTube_Wall;
 	const G4double decayTube_Length = 3.0*m;
 	

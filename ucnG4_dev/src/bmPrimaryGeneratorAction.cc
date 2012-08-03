@@ -362,8 +362,8 @@ void bmPrimaryGeneratorAction::selectVertex() {
 		vertex_position[2] *= ssign(s);
 	} else if(positioner=="EntryPort") {
 		Side s = G4UniformRand()<0.5?EAST:WEST;
-		static double entrD = myDetector->dets[s].mwpc_entrance_depth;
-		static SurfaceAssembly entryPort(G4ThreeVector(0.,0.,2.2*m+myDetector->dets[s].entrance_face_pos+0.5*entrD));
+		static double entrD = myDetector->dets[s].frontwin_frame_thick;
+		static SurfaceAssembly entryPort(G4ThreeVector(0.,0.,2.2*m+myDetector->dets[s].entrance_win_pos-0.5*entrD));
 		if(!entryPort.getArea()) {
 			double r0 = myDetector->dets[s].mwpc.mwpc_entrance_R;
 			entryPort.addSegment(new ConeFrustum(G4ThreeVector(),r0,r0,entrD,true));
@@ -371,6 +371,18 @@ void bmPrimaryGeneratorAction::selectVertex() {
 		vertex_position = entryPort.getSurfRandom();
 		vertex_position += -entryPort.snorm * log(1.0-G4UniformRand()) * (1.0*mm);	// 1.0mm 3m/s UCN penetration depth into aluminum
 		vertex_position[2] *= ssign(s);
+	} else if(positioner=="ExitPort") {
+		Side s = G4UniformRand()<0.5?EAST:WEST;
+		static double exitD = myDetector->dets[s].backwin_frame_thick;
+		static double r0 = myDetector->dets[s].mwpc.mwpc_exit_R;
+		static ConeFrustum exitPort(G4ThreeVector(0.,0.,2.2*m+myDetector->dets[s].exit_frame_pos),r0,r0,exitD,true);
+		vertex_position = exitPort.getSurfRandom();
+		vertex_position += -exitPort.snorm * log(1.0-G4UniformRand()) * (1.0*mm);	// 1.0mm 3m/s UCN penetration depth into aluminum
+		vertex_position[2] *= ssign(s);
+	} else if(positioner=="TrapWall") {
+		static ConeFrustum twall(G4ThreeVector(),myDetector->trap.fIRtrap,myDetector->trap.fIRtrap,3.0*m,true);
+		vertex_position = twall.getSurfRandom();
+		vertex_position += twall.snorm * G4UniformRand() * (myDetector->trap.decayTube_Wall);	// uniform within trap wall
 	} else if(positioner=="EndcapEdge") {
 		randomCylPosition(G4ThreeVector(0.,0.,(1.5*m-1.*mm)*(1-2*(G4UniformRand()<0.5))),
 						  myDetector->trap.fIRtrap+2.5*mm,1.*mm,vertex_position);
@@ -455,6 +467,9 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 			nCaptureCuGammas(anEvent,NULL);
 		else if(gunType=="nCaptFe")
 			nCaptureFeGammas(anEvent,NULL);
+	} else if(gunType=="nCaptAl") {
+		static GammaForest GF(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Gammas/nCapt_Al27.txt");
+		GF.genDecays(evts,GF.getCrossSection()/0.231);
 	} else if (gunType=="In114" || gunType=="In114E" || gunType=="In114W") {
 		In114SourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {

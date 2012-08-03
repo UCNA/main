@@ -8,13 +8,15 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 	// aluminum entrance collimator to detector package
 	//////////////////////
 	
-	G4Tubs* mwpc_entrance_tube = new G4Tubs("mwpc_entrance_tube",0,detPackageRadius,0.5*mwpc_entrance_depth,0.,2*M_PI); 
-	G4Tubs* entrance_front_tube = new G4Tubs("entrance_front_tube",mwpc.mwpc_entrance_R+mwpc_entrance_thickness,
+	const G4double entrance_section_length = mwpc_entrance_depth+frontwin_frame_thick;
+	
+	G4Tubs* mwpc_entrance_tube = new G4Tubs("mwpc_entrance_tube",0,detPackageRadius,0.5*entrance_section_length,0.,2*M_PI);
+	G4Tubs* entrance_front_tube = new G4Tubs("entrance_front_tube",mwpc_entrance_r+mwpc_entrance_thickness,
 											 detPackageRadius,0.5*mwpc_entrance_thickness,0.,2*M_PI);
-	G4Tubs* entrance_mid_tube = new G4Tubs("entrance_mid_tube",mwpc.mwpc_entrance_R,
-										   mwpc.mwpc_entrance_R+mwpc_entrance_thickness,0.5*mwpc_entrance_depth,0.,2*M_PI);
-	G4Tubs* entrance_back_tube = new G4Tubs("entrance_mid_tube",mwpc.mwpc_entrance_R+mwpc_entrance_thickness,
-											detPackageRadius,0.5*mwpc_entrance_thickness,0.,2*M_PI);
+	G4Tubs* entrance_mid_tube = new G4Tubs("entrance_mid_tube",mwpc_entrance_r,
+										   mwpc_entrance_r+mwpc_entrance_thickness,0.5*mwpc_entrance_depth,0.,2*M_PI);
+	G4Tubs* entrance_back_tube = new G4Tubs("entrance_back_tube",mwpc.mwpc_entrance_R,
+											detPackageRadius,0.5*frontwin_frame_thick,0.,2*M_PI);
 	
 	G4VisAttributes* visMWPCEntrance = new G4VisAttributes(G4Colour(0.7,0.7,0.7,0.8));
 	mwpc_entrance_log = new G4LogicalVolume(mwpc_entrance_tube, Vacuum, sideSubst("mwpc_entrance_log%c",s));
@@ -26,11 +28,11 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 	entrance_mid_log->SetVisAttributes(visMWPCEntrance);
 	entrance_back_log->SetVisAttributes(visMWPCEntrance);
 	
-	entrance_front_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,-0.5*(mwpc_entrance_depth-mwpc_entrance_thickness)),
+	entrance_front_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,-0.5*(entrance_section_length-mwpc_entrance_thickness)),
 											entrance_front_log,sideSubst("entrance_front%c",s),mwpc_entrance_log,false,0);
-	entrance_mid_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,0),
+	entrance_mid_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,-0.5*frontwin_frame_thick),
 										  entrance_mid_log,sideSubst("entrance_mid%c",s),mwpc_entrance_log,false,0);
-	entrance_back_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,0.5*(mwpc_entrance_depth-mwpc_entrance_thickness)),
+	entrance_back_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,0.5*(entrance_section_length-frontwin_frame_thick)),
 										   entrance_back_log,sideSubst("entrance_back%c",s),mwpc_entrance_log,false,0);
 	
 	
@@ -55,8 +57,9 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 								  mwpc.container_log,sideSubst("mwpcContainer%c",s),container_log,false,0);
 	mwpc.myTranslation[2] += mwpc_pos;
 
-	const G4double entrance_pos = mwpc_pos-(mwpc.GetWidth()+mwpc_entrance_depth)/2;
-	entrance_face_pos = entrance_pos - 0.5*mwpc_entrance_depth;
+	const G4double entrance_pos = mwpc_pos-(mwpc.GetWidth()+entrance_section_length)/2;
+	entrance_face_pos = entrance_pos - 0.5*entrance_section_length;
+	entrance_win_pos = entrance_pos + 0.5*entrance_section_length;
 	mwpc_entrance_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,entrance_pos),
 										   mwpc_entrance_log,sideSubst("mwpc_entrance%c",s),container_log,false,0);
 	
@@ -64,12 +67,12 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 	// aluminum exit window at back of gas box
 	//////////////////////
 	
-	const G4double mwpc_exit_thickness = 0.5*inch;
-	G4Tubs* mwpc_exit_tube = new G4Tubs("mwpc_exit_tube",mwpc.mwpc_exit_R+0.1*mm,detPackageRadius,0.5*mwpc_exit_thickness,0.,2*M_PI);
+	G4Tubs* mwpc_exit_tube = new G4Tubs("mwpc_exit_tube",mwpc.mwpc_exit_R+0.1*mm,detPackageRadius,0.5*backwin_frame_thick,0.,2*M_PI);
 	G4VisAttributes* visMWPCExit = new G4VisAttributes(G4Colour(0.3,0.3,0.3,0.8));
 	mwpc_exit_log = new G4LogicalVolume(mwpc_exit_tube, Al, sideSubst("mwpc_exit_log%c",s));
 	mwpc_exit_log->SetVisAttributes(visMWPCExit);
-	mwpc_exit_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,mwpc_pos+(mwpc.GetWidth()+mwpc_exit_thickness)/2),
+	exit_frame_pos = mwpc_pos+(mwpc.GetWidth()+backwin_frame_thick)/2;
+	mwpc_exit_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,exit_frame_pos),
 									   mwpc_exit_log,sideSubst("mwpc_exit%c",s),container_log,false,0);	
 	
 	/////////////////////

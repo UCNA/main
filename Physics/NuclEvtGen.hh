@@ -254,5 +254,18 @@ protected:
 	std::set<std::string> cantdothis;			//< list of decay systems that can't be loaded
 };
 
+/// class for throwing from large list of gammas
+class GammaForest {
+public:
+	/// constructor
+	GammaForest(const std::string& fname, double E2keV = 1000);
+	/// get total cross section
+	double getCrossSection() const { return gammaProb.getCumProb(); }
+	/// generate cluster of gamma decays
+	void genDecays(std::vector<NucDecayEvent>& v, double n = 1.0);
+protected:
+	std::vector<double> gammaE;	//< gamma energies
+	PSelector gammaProb;		//< gamma probabilities selector
+};
 
 #endif

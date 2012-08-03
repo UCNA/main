@@ -183,11 +183,24 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
-	//NGBGSpectra("DetPkg_nCaptAl");
+	GammaForest(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Gammas/nCapt_Al27.txt");
+	
+	if(false) {
+		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
+		NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
+		PMTCalibrator PCal(16000);
+		showSimSpectrum("Cu66",OMTest,NDL,PCal);
+		return;
+	}
+	
 	//NGBGSpectra("EndcapEdge_nCaptH");
 	//NGBGSpectra("EndcapEdge_nCaptCu");
-	NGBGSpectra("EntryPort_Al28");
-	NGBGSpectra("ScintFace_nCaptH");
+	//NGBGSpectra("TrapWall_Cu66");
+	//NGBGSpectra("TrapWall_nCaptCu");
+	//NGBGSpectra("EntryPort_Al28");
+	//NGBGSpectra("EntryPort_nCaptAl");
+	NGBGSpectra("ExitPort_nCaptAl");
+	//NGBGSpectra("ScintFace_nCaptH");
 	return;
 	
 	ErrTables ET;
@@ -210,10 +223,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	compareXenonSpectra();
 	return;
 	
-	OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
-	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
-	PMTCalibrator PCal(16000);
-	showSimSpectrum("Cs137",OMTest,NDL,PCal);
+	
 	
 	//spectrumGenTest();
 		

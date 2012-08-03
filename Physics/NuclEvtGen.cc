@@ -449,3 +449,40 @@ bool NucDecayLibrary::hasGenerator(const std::string& nm) {
 	return false;
 }
 
+
+
+//-----------------------------------------
+
+
+GammaForest::GammaForest(const std::string& fname, double E2keV) {
+	if(!fileExists(fname)) {
+		SMExcept e("fileUnreadable");
+		e.insert("filename",fname);
+		throw(e);
+	}
+	std::ifstream fin(fname.c_str());
+	std::string s;
+	while (fin.good()) {
+		std::getline(fin,s);
+		s = strip(s);
+		if(!s.size() || s[0]=='#')
+			continue;
+		std::vector<double> v = sToDoubles(s," ,\t");
+		if(v.size() != 2) continue;
+		gammaE.push_back(v[0]*E2keV);
+		gammaProb.addProb(v[1]);
+	}
+	fin.close();
+	printf("Located %i gammas with total cross section %g\n",(int)gammaE.size(),gammaProb.getCumProb());
+}
+
+void GammaForest::genDecays(std::vector<NucDecayEvent>& v, double n) {
+	while(n>=1. || gRandom->Uniform(0,1)<n) {
+		NucDecayEvent evt;
+		evt.d = D_GAMMA;
+		evt.t = 0;
+		evt.E = gammaE[gammaProb.select()];
+		v.push_back(evt);
+		--n;
+	}
+}
