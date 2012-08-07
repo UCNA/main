@@ -30,6 +30,7 @@ public:
 	G4LogicalVolume* entrance_mid_log;	//< entrance port tube
 	G4LogicalVolume* entrance_back_log;	//< entrance port back plate (MWPC box cover)
 	G4LogicalVolume* mwpc_exit_log;		//< aluminum exit window from wirechamber
+	G4LogicalVolume* mwpc_exit_N2_log;	//< N2 between exit window and scintillator
 	G4LogicalVolume* backstuff_log;		//< miscellaneous mass behind detectors
 	
 	G4double entrance_face_pos;			//< entrance window port entrance relative to scint face
@@ -47,6 +48,7 @@ protected:
 	G4VPhysicalVolume* entrance_mid_phys;
 	G4VPhysicalVolume* entrance_back_phys;
 	G4VPhysicalVolume* mwpc_exit_phys;
+	G4VPhysicalVolume* mwpc_exit_N2_phys;
 	G4VPhysicalVolume* backstuff_phys;
 };
 

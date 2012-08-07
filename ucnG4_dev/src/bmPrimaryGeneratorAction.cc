@@ -320,6 +320,23 @@ void bmPrimaryGeneratorAction::selectVertex() {
 	// assumed position has been set in /gun/position!
 	static G4ThreeVector position_saved = particleGun->GetParticlePosition();
 	vertex_position = position_saved;
+	
+	// positioners for UCN cature on various surfaces
+	Side s = G4UniformRand()<0.5?EAST:WEST;
+	static double entrD = myDetector->dets[s].frontwin_frame_thick;
+	static double entrR = myDetector->dets[s].mwpc.mwpc_entrance_R;
+	static ConeFrustum entryPort(G4ThreeVector(0.,0.,2.2*m+myDetector->dets[s].entrance_win_pos-0.5*entrD),entrR,entrR,entrD,true);
+	static double exitD = myDetector->dets[s].backwin_frame_thick;
+	static double exitR = myDetector->dets[s].mwpc.mwpc_exit_R;
+	static ConeFrustum exitPort(G4ThreeVector(0.,0.,2.2*m+myDetector->dets[s].exit_frame_pos),exitR,exitR,exitD,true);
+	static SurfaceAssembly detAl(G4ThreeVector(0.,0.,0.));
+	if(!detAl.getArea()) {
+		detAl.addSegment(&entryPort);
+		detAl.addSegment(&exitPort);
+	}
+	static ConeFrustum scintSurf(G4ThreeVector(0.,0.,2.2*m),0,exitR,0,false);
+	static ConeFrustum twall(G4ThreeVector(),myDetector->trap.fIRtrap,myDetector->trap.fIRtrap,3.0*m,true);
+
 	if(positioner=="Fixed") {
 		// fixed position set from macro file
 		vertex_position = position_saved;
@@ -353,34 +370,22 @@ void bmPrimaryGeneratorAction::selectVertex() {
 		vertex_position += pkgSurf.snorm * log(1.0-G4UniformRand()) * (1.0*mm);	// 1mm 3m/s UCN penetration depth into Al
 		vertex_position[2] *= ssign(s);
 	} else if(positioner=="ScintFace") {
-		Side s = G4UniformRand()<0.5?EAST:WEST;
-		static SurfaceAssembly scintSurf(G4ThreeVector(0.,0.,2.2*m));
-		if(!scintSurf.getArea())
-			scintSurf.addSegment(new ConeFrustum(G4ThreeVector(),0,7.5*cm,0,false));
 		vertex_position = scintSurf.getSurfRandom();
 		vertex_position += -scintSurf.snorm * log(1.0-G4UniformRand()) * (0.78*mm);	// 0.78mm 3m/s UCN penetration depth into scintillator
 		vertex_position[2] *= ssign(s);
 	} else if(positioner=="EntryPort") {
-		Side s = G4UniformRand()<0.5?EAST:WEST;
-		static double entrD = myDetector->dets[s].frontwin_frame_thick;
-		static SurfaceAssembly entryPort(G4ThreeVector(0.,0.,2.2*m+myDetector->dets[s].entrance_win_pos-0.5*entrD));
-		if(!entryPort.getArea()) {
-			double r0 = myDetector->dets[s].mwpc.mwpc_entrance_R;
-			entryPort.addSegment(new ConeFrustum(G4ThreeVector(),r0,r0,entrD,true));
-		}
 		vertex_position = entryPort.getSurfRandom();
 		vertex_position += -entryPort.snorm * log(1.0-G4UniformRand()) * (1.0*mm);	// 1.0mm 3m/s UCN penetration depth into aluminum
 		vertex_position[2] *= ssign(s);
 	} else if(positioner=="ExitPort") {
-		Side s = G4UniformRand()<0.5?EAST:WEST;
-		static double exitD = myDetector->dets[s].backwin_frame_thick;
-		static double r0 = myDetector->dets[s].mwpc.mwpc_exit_R;
-		static ConeFrustum exitPort(G4ThreeVector(0.,0.,2.2*m+myDetector->dets[s].exit_frame_pos),r0,r0,exitD,true);
 		vertex_position = exitPort.getSurfRandom();
 		vertex_position += -exitPort.snorm * log(1.0-G4UniformRand()) * (1.0*mm);	// 1.0mm 3m/s UCN penetration depth into aluminum
 		vertex_position[2] *= ssign(s);
+	} else if(positioner=="DetAl") {
+		vertex_position = detAl.getSurfRandom();
+		vertex_position += -detAl.snorm * log(1.0-G4UniformRand()) * (1.0*mm);		// 1.0mm 3m/s UCN penetration depth into aluminum
+		vertex_position[2] *= ssign(s);
 	} else if(positioner=="TrapWall") {
-		static ConeFrustum twall(G4ThreeVector(),myDetector->trap.fIRtrap,myDetector->trap.fIRtrap,3.0*m,true);
 		vertex_position = twall.getSurfRandom();
 		vertex_position += twall.snorm * G4UniformRand() * (myDetector->trap.decayTube_Wall);	// uniform within trap wall
 	} else if(positioner=="EndcapEdge") {
@@ -392,7 +397,9 @@ void bmPrimaryGeneratorAction::selectVertex() {
 	} else if(positioner=="UniformRadialGasFill") {
 		randomUniformRadialBins(G4ThreeVector(0,0,0),7.5*cm, 2.15*m, vertex_position);
 	} else {
-		G4cout << "********* WARNING: Undefined positioner type! Defaulting to 'Fixed'! **********" << G4endl;
+		SMExcept e("UnknownPositioner");
+		e.insert("name",positioner);
+		throw(e);
 	}
 	
 	particleGun->SetParticlePosition(vertex_position);
@@ -449,7 +456,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	
 	selectVertex();
 	G4cout << "Event vertex " << vertex_position/m << G4endl;
-	
+		
 	if(gunType=="Cd113m") {
 		Cd113mSourceGenerator(anEvent);
 	} else if (gunType=="nCaptCu" || gunType=="nCaptH" || gunType=="nCaptFe") {
@@ -467,9 +474,14 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 			nCaptureCuGammas(anEvent,NULL);
 		else if(gunType=="nCaptFe")
 			nCaptureFeGammas(anEvent,NULL);
-	} else if(gunType=="nCaptAl") {
-		static GammaForest GF(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Gammas/nCapt_Al27.txt");
-		GF.genDecays(evts,GF.getCrossSection()/0.231);
+	} else if(gunType=="nCaptAl" || gunType=="nCaptAlGamma") {
+		if(gunType=="nCaptAlGamma" || G4UniformRand()<0.5) {
+			static GammaForest GF(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Gammas/nCapt_Al27.txt");
+			GF.genDecays(evts,GF.getCrossSection()/0.231);
+		} else {
+			while(!evts.size())
+				NDL.getGenerator("Al28").genDecayChain(evts);
+		}
 	} else if (gunType=="In114" || gunType=="In114E" || gunType=="In114W") {
 		In114SourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {
@@ -515,9 +527,11 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		while(!evts.size())
 			NDS.genDecayChain(evts);
 	} else {
-		G4cout << "********* WARNING: Undefined generator type! No events generated!! **********" << G4endl;
+		SMExcept e("UnknownGenerator");
+		e.insert("name",gunType);
+		throw(e);
 	}
-	
+
 	throwEvents(evts,anEvent);
 	
 	//now fill the primary tree here

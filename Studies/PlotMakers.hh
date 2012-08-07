@@ -87,7 +87,7 @@ public:
 	/// uniform efficiency shifts tables (e.g. deadtime, veto accidentals)
 	void efficShiftTable(double delta);
 	///constant neutron generated background (in Hz/keV)
-	void NGBGTable(double Eoff, double Eon, double Woff, double Won, double err, bool comshift = false);
+	void NGBGTable(double EScale, double dEScale, double WScale, double dWScale, double dAFPfrac);
 	
 protected:
 	OutputManager OM;		//< unused OutputManager

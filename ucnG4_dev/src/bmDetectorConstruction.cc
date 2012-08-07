@@ -281,8 +281,10 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 			
 			Dscint_SD[s] = registerSD(sideSubst("Dscint_SD%c",s));
 			dets[s].scint.Dscint_log->SetSensitiveDetector(Dscint_SD[s]);
-			dets[s].scint.container_log->SetSensitiveDetector(Dscint_SD[s]); // include N2 volume here
-			
+			dets[s].scint.container_log->SetSensitiveDetector(Dscint_SD[s]);
+			dets[s].mwpc_exit_N2_log->SetSensitiveDetector(Dscint_SD[s]);		// include N2 volume here
+			dets[s].scint.lightguide_log->SetSensitiveDetector(Dscint_SD[s]);	// and also light guides
+
 			backing_SD[s] = registerSD(sideSubst("backing_SD%c",s));
 			dets[s].scint.backing_log->SetSensitiveDetector(backing_SD[s]);
 			

@@ -612,60 +612,56 @@ void ErrTables::efficShiftTable(double delta) {
 	fclose(f);
 }
 
-void scalevars(double Eoff, double Eon, double Woff, double Won, double& Eoff1, double& Eon1, double& Woff1, double& Won1, bool comshift) {
-	if(comshift) {
-		double c = sqrt(Eon*Won/(Eoff*Woff));
-		Eoff1 = (Eon+Eoff)/(1+c);
-		Woff1 = (Won+Woff)/(1+c);
-		Eon1 = c*Eoff1;
-		Won1 = c*Woff1;
-	} else {
-		Eoff1 = Eoff;
-		Eon1 = Eon;
-		Woff1 = Woff;
-		Won1 = Won;
-	}
-}
-
-void ErrTables::NGBGTable(double Eoff, double Eon, double Woff, double Won, double err, bool comshift) {
+void ErrTables::NGBGTable(double EScale, double dEScale, double WScale, double dWScale, double dAFPfrac) {
 	FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/NGBG.txt").c_str(),"w");
-	fprintf(f,"# Uncertainty for neutron-generated backgrounds of Eoff,Eon,Woff,Won = %g,%g,%g,%g Hz/keV\n",Eoff,Eon,Woff,Won);
+	fprintf(f,"# Uncertainty for neutron-generated backgrounds\n");
 	fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
+	
+	// load NGBG estimate
+	OutputManager OM2("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
+	SimAsymmetryAnalyzer AH(&OM2,"Combined",OM2.basePath+"/Combined/Combined");
+	AH.calculateResults();
+	TGraph* hNGBG = TH1toTGraph(*AH.qTotalSpectrum[EAST]->fgbg[AFP_OFF]->h[GV_OPEN]);
+	
+	// AFP rates
+	double rAFP[2] = {25.8,16.7};
+	
 	double de = 10;
-	double tOn = Adat.totalTime[AFP_ON][GV_OPEN][BOTH];
-	double tOff = Adat.totalTime[AFP_OFF][GV_OPEN][BOTH];
-	
-	double errscale = 10;
-	err /= errscale;
-	
 	for(unsigned int b=0; b<800; b+=de) {
-		double Eoff1,Eon1,Woff1,Won1;
-		scalevars(Eoff,Eon,Woff,Won,Eoff1,Eon1,Woff1,Won1,comshift);
-		double e = b+5.;
-		double A = getAexp(e);
-		double Rp = ((S[EAST][AFP_OFF]->Eval(e)+de*Eoff1*tOff)*(S[WEST][AFP_ON]->Eval(e)+de*Won1*tOn) / 
-					 ((S[EAST][AFP_ON]->Eval(e)+de*Eon1*tOn)*(S[WEST][AFP_OFF]->Eval(e)+de*Woff1*tOff)));
-		double Ap = AofR(Rp);
 
+		double e = b+0.5*de;
+		double A = getAexp(e);
+		double NGBG = hNGBG->Eval(e);
+		
 		// MC for errors
 		double sx = 0;
 		double sxx = 0;
 		unsigned int n = 500;
 		for(unsigned int i=0; i<n; i++) {
-			scalevars(Eoff+plRndSrc.Gaus(0.,err),Eon+plRndSrc.Gaus(0.,err),
-					  Woff+plRndSrc.Gaus(0.,err),Won+plRndSrc.Gaus(0.,err),
-					  Eoff1,Eon1,Woff1,Won1,comshift);
-			double Rpp = ((S[EAST][AFP_OFF]->Eval(e)+de*Eoff1*tOff)*(S[WEST][AFP_ON]->Eval(e)+de*Won1*tOn) / 
-						 ((S[EAST][AFP_ON]->Eval(e)+de*Eon1*tOn)*(S[WEST][AFP_OFF]->Eval(e)+de*Woff1*tOff)));
-			double App = AofR(Rpp);
-			sx += (A-App)/A;
-			sxx += (A-App)/A*(A-App)/A;
+			// scaling for side
+			double sideScale[2] = {EScale+plRndSrc.Gaus(0.,dEScale),WScale+plRndSrc.Gaus(0.,dWScale)};
+			// calculate scaling between On/Off
+			double afpScale[2][2];
+			for(Side s = EAST; s <= WEST; ++s) {
+				afpScale[s][2] = 0;
+				for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
+					afpScale[s][2] += (afpScale[s][afp] = rAFP[afp]*plRndSrc.Gaus(1.0,dAFPfrac));
+				for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
+					afpScale[s][afp] /= afpScale[s][2];
+			}
+			// asymmetry + background
+			double Rp = ((S[EAST][AFP_OFF]->Eval(e)+NGBG*afpScale[EAST][AFP_OFF]*sideScale[EAST]) *
+						 (S[WEST][AFP_ON]->Eval(e)+NGBG*afpScale[WEST][AFP_ON]*sideScale[WEST]) /
+						 ((S[EAST][AFP_ON]->Eval(e)+NGBG*afpScale[EAST][AFP_ON]*sideScale[EAST]) *
+						  (S[WEST][AFP_OFF]->Eval(e)+NGBG*afpScale[WEST][AFP_OFF]*sideScale[WEST])));
+			double Ap = AofR(Rp);
+			sx += (A-Ap)/A;
+			sxx += (A-Ap)/A*(A-Ap)/A;
 		}
 		sx /= n;
 		sxx /= n;
 		
-		printf("%i\t%i\t%g\t%g\t%g\n",b,b+10,(A-Ap)/A,sx,errscale*sqrt(sxx-sx*sx));
-		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,(A-Ap)/A,errscale*sqrt(sxx-sx*sx));
+		fprintf(f,"%i\t%i\t%g\t%g\n",(int)b,(int)(b+de),sx,sqrt(sxx-sx*sx));
 	}
 	fclose(f);
 }

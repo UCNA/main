@@ -26,7 +26,7 @@ def PlotCorrections():
 	
 	gCx=graph.graphxy(width=20,height=12,
 						  x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
-						  y=graph.axis.lin(title="Correction [\\%]",min=-1,max=1),
+						  y=graph.axis.lin(title="Correction [\\%]",min=-0.05,max=0.2),
 						  key = graph.key.key(pos="tl"))
 	setTexrunner(gCx)
 
@@ -47,7 +47,7 @@ def PlotUncerts():
 	
 	gCx=graph.graphxy(width=20,height=12,
 					  x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
-					  y=graph.axis.lin(title="Error in A [\\%]",min=-1,max=0),
+					  y=graph.axis.lin(title="Error in A [\\%]",min=-0.1,max=0.1),
 					  key = graph.key.key(pos="tl"))
 	setTexrunner(gCx)
 	

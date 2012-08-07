@@ -17,6 +17,7 @@
 #include "G4toPMT.hh"
 #include "LEDScans.hh"
 #include "NuclEvtGen.hh"
+#include "EnumerationFitter.hh"
 
 std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
 	if(typeSelect=="ref") {
@@ -183,8 +184,21 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
-	GammaForest(getEnvSafe("UCNA_AUX")+"/NuclearDecays/Gammas/nCapt_Al27.txt");
-	
+	if(false) {
+		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
+		EnumerationFitter EF;
+		TGraphErrors* g = EF.loadFitFile("/home/mmendenhall/BGExcess_Combo_W.txt");
+		TF1* f = EF.getFitter();
+		f->SetRange(0,g->GetN());
+		for(unsigned int i=0; i<EF.getNParams(); i++)
+			f->SetParLimits(i,0.,100.);
+		g->Fit(f,"R");
+		printf("Chi2/ndf = %g/%i\n",f->GetChisquare(),f->GetNDF());
+		g->Draw("A*");
+		OMTest.printCanvas("BG_Components_ComboW");
+		return;
+	}
+		
 	if(false) {
 		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
 		NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
@@ -193,22 +207,45 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		return;
 	}
 	
+	if(true) {
+		ErrTables ET;
+		ET.gainfluctsTable(0.000125);
+		ET.pedShiftsTable(0.015);
+		ET.muonVetoEfficTable(0.002);
+		ET.NGBGTable(0.99,0.08,0.48,0.09, 0.25);
+		return;
+	}
+	
+	if(false) {
+		OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
+		SimAsymmetryAnalyzer AH(&OM,"Combined");
+		
+		SimAsymmetryAnalyzer AH1(&OM,"ScintFace_nCaptH",OM.basePath+"/ScintFace_nCaptH/ScintFace_nCaptH");
+		AH1.scaleData(0.126);
+		SimAsymmetryAnalyzer AH2(&OM,"DetAl_nCaptAl",OM.basePath+"/DetAl_nCaptAl/DetAl_nCaptAl");
+		AH2.scaleData(0.073);
+		SimAsymmetryAnalyzer AH3(&OM,"DetAl_nCaptAlGamma",OM.basePath+"/DetAl_nCaptAlGamma/DetAl_nCaptAlGamma");
+		AH3.scaleData(0.594);
+		
+		AH.addSegment(AH1);
+		AH.addSegment(AH2);
+		AH.addSegment(AH3);
+		
+		AH.calculateResults();
+		AH.makePlots();
+		AH.write();
+		AH.setWriteRoot(true);
+	}
+	
 	//NGBGSpectra("EndcapEdge_nCaptH");
 	//NGBGSpectra("EndcapEdge_nCaptCu");
 	//NGBGSpectra("TrapWall_Cu66");
 	//NGBGSpectra("TrapWall_nCaptCu");
 	//NGBGSpectra("EntryPort_Al28");
 	//NGBGSpectra("EntryPort_nCaptAl");
-	NGBGSpectra("ExitPort_nCaptAl");
-	//NGBGSpectra("ScintFace_nCaptH");
-	return;
-	
-	ErrTables ET;
-	ET.gainfluctsTable(0.000125);
-	ET.pedShiftsTable(0.015);
-	ET.muonVetoEfficTable(0.002);
-	// double Eoff, double Eon, double Woff, double Won
-	ET.NGBGTable(.73e-5,1.25e-5,0.42e-5,0.22e-5,0.27e-5,true);
+	NGBGSpectra("DetAl_nCaptAl");
+	NGBGSpectra("DetAl_nCaptAlGamma");
+	NGBGSpectra("ScintFace_nCaptH");
 	return;
 	
 	processWirechamberCal(14264,16077,20);

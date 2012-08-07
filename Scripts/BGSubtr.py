@@ -140,17 +140,11 @@ def excess_table(dset,ltxt="",dscale=1.0):
 if __name__=="__main__":
 	
 	excess_table("OctetAsym_Offic/OctetAsym_Offic.txt")
-	excess_table("NGBG/EndcapEdge_nCaptCu/EndcapEdge_nCaptCu.txt","Cu $\\gamma$",3.3)
 	
-	excess_table("NGBG/TrapWall_Cu66/TrapWall_Cu66.txt","$^{66}$Cu $\\beta$",0.35)
-	excess_table("NGBG/TrapWall_nCaptCu/TrapWall_nCaptCu.txt","$^{66}$Cu $\\beta$",0.35)
-	
-	excess_table("NGBG/EndcapEdge_nCaptH/EndcapEdge_nCaptH.txt","H $\\gamma$")
-	excess_table("NGBG/ScintFace_nCaptH/ScintFace_nCaptH.txt","Scintillator",0.10)
-	
-	excess_table("NGBG/EntryPort_Al28/EntryPort_Al28.txt","Al $\\beta$",0.50)
-	excess_table("NGBG/EntryPort_nCaptAl/EntryPort_nCaptAl.txt","Al $\\gamma$ entrance",0.50)
-	excess_table("NGBG/ExitPort_nCaptAl/ExitPort_nCaptAl.txt","Al $\\gamma$ exit",0.25)
+	excess_table("NGBG/ScintFace_nCaptH/ScintFace_nCaptH.txt","Scintillator",0.1)
+	excess_table("NGBG/DetAl_nCaptAl/DetAl_nCaptAl.txt","Al $\\beta+\gamma$",0.1)
+	excess_table("NGBG/DetAl_nCaptAlGamma/DetAl_nCaptAlGamma.txt","Al $\\gamma$",0.1)
+	excess_table("NGBG/Combined/Combined.txt","Combined",1.0)
 	exit(0)
 	
 	#plot_bgSubtrHist(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Annulus/")

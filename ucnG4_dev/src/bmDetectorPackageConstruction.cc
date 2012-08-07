@@ -52,7 +52,7 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 	scint_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,-scint.getScintFacePos()),
 								   scint.container_log,sideSubst("N2_vol_phys%c",s),container_log,false,0);
 	
-	const G4double mwpc_pos = -(mwpc.GetWidth()+scint.GetWidth())/2-scint.getScintFacePos();
+	const G4double mwpc_pos = -mwpc.GetWidth()/2.-backwin_frame_thick-(scint.GetWidth()/2.+scint.getScintFacePos());
 	mwpc_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,mwpc_pos),
 								  mwpc.container_log,sideSubst("mwpcContainer%c",s),container_log,false,0);
 	mwpc.myTranslation[2] += mwpc_pos;
@@ -64,16 +64,22 @@ void bmDetectorPackageConstruction::Construct(Side s) {
 										   mwpc_entrance_log,sideSubst("mwpc_entrance%c",s),container_log,false,0);
 	
 	//////////////////////
-	// aluminum exit window at back of gas box
+	// aluminum exit window and N2 volume at back of gas box
 	//////////////////////
 	
-	G4Tubs* mwpc_exit_tube = new G4Tubs("mwpc_exit_tube",mwpc.mwpc_exit_R+0.1*mm,detPackageRadius,0.5*backwin_frame_thick,0.,2*M_PI);
+	G4Tubs* mwpc_exit_tube = new G4Tubs("mwpc_exit_tube",mwpc.mwpc_exit_R,detPackageRadius,0.5*backwin_frame_thick,0.,2*M_PI);
 	G4VisAttributes* visMWPCExit = new G4VisAttributes(G4Colour(0.3,0.3,0.3,0.8));
 	mwpc_exit_log = new G4LogicalVolume(mwpc_exit_tube, Al, sideSubst("mwpc_exit_log%c",s));
 	mwpc_exit_log->SetVisAttributes(visMWPCExit);
 	exit_frame_pos = mwpc_pos+(mwpc.GetWidth()+backwin_frame_thick)/2;
 	mwpc_exit_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,exit_frame_pos),
 									   mwpc_exit_log,sideSubst("mwpc_exit%c",s),container_log,false,0);	
+	G4Tubs* mwpc_exit_N2_tube = new G4Tubs("mwpc_exit_N2_tube",0,mwpc.mwpc_exit_R,0.5*backwin_frame_thick,0.,2*M_PI);
+	mwpc_exit_N2_log = new G4LogicalVolume(mwpc_exit_N2_tube, WCNitrogen, sideSubst("mwpc_exit_N2_log%c",s));
+	mwpc_exit_N2_log->SetVisAttributes(G4VisAttributes::Invisible);
+	mwpc_exit_N2_phys = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,exit_frame_pos),
+										  mwpc_exit_N2_log,sideSubst("mwpc_exit%c",s),container_log,false,0);
+
 	
 	/////////////////////
 	// material behind detector

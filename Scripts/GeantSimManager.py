@@ -31,14 +31,13 @@ class GeantSimManager:
 				
 	def enable_vis(self):
 		
-		#self.settings["vis_cmd"] = "/vis/open HepRepFile\n"
-		self.settings["vis_cmd"] = "/vis/open OGLIX\n"
+		self.settings["vis_cmd"] = "/vis/open HepRepFile\n"
+		#self.settings["vis_cmd"] = "/vis/open OGLIX\n"
+		
 		#self.settings["vis_cmd"] = "/vis/open OGLIXm\n"
 		#self.settings["vis_cmd"] = "/vis/open OGLIQt\n"
 		
 		self.settings["vis_cmd"] += "/vis/drawVolume\n"
-		
-		
 		
 		self.settings["vis_cmd"] += "/vis/viewer/set/viewpointThetaPhi 90 0\n"
 		self.settings["vis_cmd"] += "/vis/viewer/panTo 2.2 0\n"
@@ -47,14 +46,18 @@ class GeantSimManager:
 		
 		self.settings["vis_cmd"] += "/vis/viewer/set/auxiliaryEdge true\n"
 		self.settings["vis_cmd"] += "/vis/viewer/set/style surface"
+		
 		#self.settings["vis_cmd"] += "/vis/viewer/set/hiddenEdge 1"
-		#self.settings["vis_cmd"] += "/vis/modeling/trajectories/create/drawByCharge myTrackVis\n"
-		#self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawStepPts true\n"
-		#self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawAuxPts true\n"
-		#self.settings["vis_cmd"] += "/vis/modeling/trajectories/select myTrackVis\n"
-		#self.settings["vis_cmd"] += "/vis/scene/add/trajectories\n"
-		#self.settings["vis_cmd"] += "/vis/scene/add/trajectories rich\n"
-		#self.settings["vis_cmd"] += "/vis/scene/add/hits\n"
+		
+		if 1:
+			self.settings["vis_cmd"] += "/vis/modeling/trajectories/create/drawByCharge myTrackVis\n"
+			#self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawStepPts true\n"
+			#self.settings["vis_cmd"] += "/vis/modeling/trajectories/myTrackVis/default/setDrawAuxPts true\n"
+			self.settings["vis_cmd"] += "/vis/modeling/trajectories/select myTrackVis\n"
+			self.settings["vis_cmd"] += "/vis/scene/add/trajectories\n"
+			self.settings["vis_cmd"] += "/vis/scene/add/trajectories rich\n"
+			self.settings["vis_cmd"] += "/vis/scene/add/hits\n"
+		
 		#self.settings["vis_cmd"] += "/tracking/verbose 2\n"
 		
 		self.settings["vis_cmd"] += "/vis/viewer/flush\n"
@@ -368,9 +371,9 @@ if __name__ == "__main__":
 		nCapt.launch_sims(nEvents=1e7,nClusters=6,hours_old=0)
 		nCapt.launch_postanalyzer()
 	if 1:
-		nCapt = GeantSimManager("ExitPort")
-		nCapt.set_generator("nCaptAl",forcePositioner="ExitPort")
-		nCapt.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
+		nCapt = GeantSimManager("ScintFace")
+		nCapt.set_generator("nCaptH",forcePositioner="ScintFace")
+		nCapt.launch_sims(nEvents=1e7,nClusters=36,hours_old=0)
 		nCapt.launch_postanalyzer()
 
 	##################
