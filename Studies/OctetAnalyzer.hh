@@ -74,6 +74,27 @@ public:
 	/// upload results to analysis results DB
 	virtual void uploadAnaResults() {}
 	
+	int depth;				//< octet division depth
+	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
+	
+private:
+	
+	std::map<std::string,quadHists*> coreHists;	//< core histograms for merging, BG subtraction
+};
+
+/// plug-in for OctetAnalyzer
+class OctetAnalyzerPlugin: public AnalyzerPlugin {
+public:
+	/// constructor
+	OctetAnalyzerPlugin(OctetAnalyzer* OA, const std::string& nm): AnalyzerPlugin(OA,nm), myA(OA) {}
+	
+	/// create or load a FG/BG,OFF/ON histogram set
+	quadHists* registerCoreHist(const std::string& hname, const std::string& title,
+								unsigned int nbins, float xmin,
+								float xmax, Side s = BOTH) { return registerCoreHist(hname,title,nbins,xmin,xmax,s); }
+	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
+	quadHists* registerCoreHist(const TH1& hTemplate, Side s = BOTH) { return registerCoreHist(hTemplate,s); }
+	
 	// ---- some utility routines for common analysis/output operations ---- //
 	
 	/// calculate (blinded) super-ratio from quadHists for each side (optionally asymmetry of background and/or instrumental)
@@ -85,12 +106,7 @@ public:
 	/// draw East/West pair of quadHists together, optionally also drawing AFP states together
 	void drawQuadSides(quadHists* qhE, quadHists* qhW, bool combineAFP = false,  const std::string& subfolder = ".", const std::string& opt = "");
 	
-	int depth;				//< octet division depth
-	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
-	
-private:
-	
-	std::map<std::string,quadHists*> coreHists;	//< core histograms for merging, BG subtraction
+	OctetAnalyzer* myA;	//< OctetAnalyzer with which this plugin is associated
 };
 
 /// process one pulse-pair worth of data

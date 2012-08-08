@@ -45,11 +45,14 @@ public:
 	// ----- Subclass me! ----- //
 	
 	/// create a new instance of this object (cloning self settings) for given directory
-	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) = 0;
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { assert(false); return NULL; }
 	/// virtual routine for generating output plots
 	virtual void makePlots() {}
 	/// virtual routine for generating calculated hists
 	virtual void calculateResults() {}
+	
+	TFile* fIn;									//< input file to read in histograms from
+	std::string inflname;						//< where to look for input file
 	
 protected:
 	
@@ -57,8 +60,6 @@ protected:
 	TH1* tryLoad(const std::string& hname);
 	
 	std::map<std::string,TH1*> saveHists;		//< saved histograms
-	TFile* fIn;									//< input file to read in histograms from
-	std::string inflname;						//< where to look for input file
 	double inflAge;								//< age of input file [s]; 0 for brand-new files
 };
 

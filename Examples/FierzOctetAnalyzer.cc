@@ -7,7 +7,7 @@
 TRandom3 fierz_rnd_src;
 
 
-FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, const string& inflname): OctetAnalyzer(pnt,nm,inflname) {
+FierzAnalyzerPlugin::FierzAnalyzerPlugin(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"fierz") {
 	for(Side s = EAST; s <= WEST; ++s) {
 		// energy histograms
 		qFullEnergySpectrum[s] = registerCoreHist("hFullEnergy", "Full Energy", 100, 0, 1000, s);
@@ -17,7 +17,7 @@ FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, con
 	}
 }
 
-void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+void FierzAnalyzerPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	Side s = PDS.fSide;
 	if(!(s==EAST || s==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA) {
@@ -37,7 +37,7 @@ void FierzOctetAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 }
 
 
-void FierzOctetAnalyzer::calculateResults() {
+void FierzAnalyzerPlugin::calculateResults() {
 	// form (blinded) super-ratio and super-sum of energy spectra
 	hFullEnergySR = (TH1F*)calculateSR("Full_Energy_Asymmetry", qFullEnergySpectrum[EAST], qFullEnergySpectrum[WEST]);
 	hFullEnergySR->SetMinimum(-0.20);
@@ -45,13 +45,13 @@ void FierzOctetAnalyzer::calculateResults() {
 	hFullEnergySS = (TH1F*)calculateSuperSum("Full_Energy_SuperSum", qFullEnergySpectrum[EAST], qFullEnergySpectrum[WEST]);
 	// Calculate trigger efficiency fraction
 	for(Side s = EAST; s <= WEST; ++s) {
-		gTrigCurve[s] = (TGraphAsymmErrors*)addObject(new TGraphAsymmErrors(pTriggerThreshold[s][0]->h[GV_OPEN]->GetNbinsX()));
+		gTrigCurve[s] = (TGraphAsymmErrors*)myA->addObject(new TGraphAsymmErrors(pTriggerThreshold[s][0]->h[GV_OPEN]->GetNbinsX()));
 		gTrigCurve[s]->SetName(sideSubst("gTrigCurve_%c",s).c_str());
 		gTrigCurve[s]->BayesDivide(pTriggerThreshold[s][1]->h[GV_OPEN],pTriggerThreshold[s][0]->h[GV_OPEN],"w");
 	}
 }
 
-void FierzOctetAnalyzer::makePlots() {
+void FierzAnalyzerPlugin::makePlots() {
 	// draw the asymmetry to "Full_Energy_Asymmetry.pdf" in this analyzer's base directory
 	hFullEnergySR->Draw();
 	printCanvas("Full_Energy_Asymmetry");
@@ -83,9 +83,9 @@ void FierzOctetAnalyzer::makePlots() {
 	}
 }
 
-void FierzOctetAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
+void FierzAnalyzerPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 	// re-cast to correct type
-	FierzOctetAnalyzer& dat = (FierzOctetAnalyzer&)OAdata;
+	FierzAnalyzerPlugin& dat = *(FierzAnalyzerPlugin*)AP;
 
 	// draw comparison with data (red=data, blue=MC)
 	drawHistoPair(dat.hFullEnergySS,hFullEnergySS);
@@ -98,6 +98,10 @@ void FierzOctetAnalyzer::compareMCtoData(RunAccumulator& OAdata) {
 
 string FierzOctetAnalyzer::processedLocation = "";	// set this later depending on situtation
 
+FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, const string& inflname): OctetAnalyzer(pnt,nm,inflname) {
+	addPlugin(myFierz = new FierzAnalyzerPlugin(this));
+}
+	
 int main(int argc, char *argv[]) {
 	
 	if(argc != 2) {

@@ -5,29 +5,28 @@
 #include "MuonAnalyzer.hh"
 #include "AnalysisDB.hh"
 
-/// primary octet data analysis class
-class AsymmetryAnalyzer: public MuonAnalyzer {
+/// energy spectra and asymmetry analysis class
+class AsymmetryAnalyzer: public OctetAnalyzerPlugin {
 public:
 	/// constructor
-	AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname = "");
+	AsymmetryAnalyzer(OctetAnalyzer* OA);
 	
-	/// cloning generator
-	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
-									   const std::string& inflname) { return new AsymmetryAnalyzer(this,nm,inflname); }
-	
+	/// fill from scan data point
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// calculate super-ratio asymmetry from anode spectra
 	virtual void calculateResults();
 	/// output plot generation
 	virtual void makePlots();
 	/// upload results to analysis results DB
 	virtual void uploadAnaResults();
-	
-	/// location of already-processed data (after first run) for errorbar estimation
-	virtual std::string estimatorHistoLocation() const { return AsymmetryAnalyzer::processedLocation; }
-	static std::string processedLocation;	//< set location here for already-processed files
+	/// MC/data comparison
+	virtual void compareMCtoData(AnalyzerPlugin* AP);
 	
 	/// get base AnaResult to fill in
 	AnaResult getResultBase() const;
+	
+	unsigned int nEnergyBins;		//< number of bins for energy histograms
+	double energyMax;				//< energy range for energy histograms
 	
 	TH1F* hAsym;					//< asymmetry
 	TH1F* hTpAsym[TYPE_III_EVENT];	//< asymmetry by event type
@@ -36,7 +35,6 @@ public:
 	TH1F* hEvtSS[TYPE_III_EVENT];	//< super-sum for each event type
 	
 	quadHists* qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
-	quadHists* qPositions[2][TYPE_III_EVENT+1];						//< event positions quad hists for [side][type]
 	quadHists* qAnodeCal[2];										//< anode calibration spectrum (Type 0, Erecon>225)
 	quadHists* qTotalSpectrum[2];									//< total spectrum based on analysis choice
 	quadHists* qBGDecay[2];											//< 5min E vs. time plot to see decaying BG components
@@ -46,9 +44,6 @@ public:
 	quadHists* qExcessTheta[2];										//< angular distribution of >1keV excess events
 	
 protected:
-	
-	/// fill from scan data point
-	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	
 	/// fit asymmetry over given range
 	void fitAsym(float fmin, float fmax, unsigned int color, AnaResult AR, bool avg = false);

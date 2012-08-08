@@ -9,6 +9,8 @@
 #include "G4toPMT.hh"
 #include <TRandom3.h>
 
+class AnalyzerPlugin;
+
 /// background-subtracting histograms pair
 class fgbgPair: private NoCopy {
 public:
@@ -103,13 +105,19 @@ public:
 	
 	TagCounter<RunNum> runCounts;	//< type-0 event counts by run, for re-simulation
 	
-	// ---- Subclass me! ---- //
+	/// set current AFP, GV state
+	void setCurrentState(AFPState afp, GVState gv);
+	/// fill core histograms in plugins from data point
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
+	/// make plots from each plugin
+	virtual void makePlots();
+	/// MC/Data comparison plots/calculations from each plugin
+	virtual void compareMCtoData(RunAccumulator& OAdata);
+	/// add an analyzer plugin
+	AnalyzerPlugin* addPlugin(AnalyzerPlugin* AP);
+	/// get plugin by name
+	AnalyzerPlugin* getPlugin(const std::string& nm);
 	
-	/// virtual routine for filling core histograms from data point
-	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight) = 0;
-	/// virtual routine for MC/Data comparison plots/calculations
-	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
-	virtual void compareMCtoData(RunAccumulator& OAdata) { }
 	/// location of errorbar estimates for low-rate histograms
 	virtual std::string estimatorHistoLocation() const { return ""; }
 	
@@ -118,13 +126,46 @@ public:
 	BlindTime totalTime[AFP_OTHER+1][2]; 		//< total time for [flipper][fg/bg]
 	TagCounter<RunNum> runTimes;				//< time spent on each run
 	
-	
 protected:
 	
-	static TRandom3 rnd_source;
+	std::map<std::string,AnalyzerPlugin*> myPlugins;	//< analysis plugins
+	static TRandom3 rnd_source;							//< random number source
 	
 	/// get matching RunAccumulator with "master" histograms for estimating error bars on low-counts bins
-	RunAccumulator* getErrorEstimator();	
+	RunAccumulator* getErrorEstimator();
+};
+
+/// generic analyzer plug-in class
+class AnalyzerPlugin {
+public:
+	/// constructor
+	AnalyzerPlugin(RunAccumulator* RA, const std::string& nm): name(nm), myA(RA) {}
+	/// destructor
+	virtual ~AnalyzerPlugin() {}
+	/// create or load a FG/BG TH1F* set
+	fgbgPair* registerFGBGPair(const std::string& hname, const std::string& title,
+							   unsigned int nbins, float xmin, float xmax,
+							   AFPState a = AFP_OTHER, Side s = BOTH) { return registerFGBGPair(hname,title,nbins,xmin,xmax,a,s); }
+	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
+	fgbgPair* registerFGBGPair(const TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH) { return registerFGBGPair(hTemplate,a,s); }
+	/// save canvas image
+	void printCanvas(std::string fname, std::string suffix=".pdf") const { printCanvas(fname,suffix); }
+	
+	std::string name;				//< plugin name
+	RunAccumulator* myA;			//< RunAccumulator with which this plugin is associated
+	AFPState currentAFP;			//< current state of AFP during data scanning
+	GVState currentGV;				//< current foreground/background status during data scanning
+	
+	/// virtual routine for filling core histograms from data point
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight) {}
+	
+	/// generate output plots
+	virtual void makePlots() {}
+	/// generate calculated hists
+	virtual void calculateResults() {}
+	/// virtual routine for MC/Data comparison plots/calculations
+	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
+	virtual void compareMCtoData(AnalyzerPlugin* AP) {}
 };
 
 #endif

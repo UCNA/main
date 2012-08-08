@@ -45,8 +45,8 @@ Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberC
 Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT.o G4toPMT.o \
 		PenelopeToPMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
 
-Studies = PlotMakers.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o MuonAnalyzer.o AsymmetryAnalyzer.o \
-	EndpointStudy.o SimAsymmetryAnalyzer.o LEDScans.o
+Studies = PlotMakers.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o MuonAnalyzer.o PositionAnalyzer.o \
+	AsymmetryAnalyzer.o BetaDecayAnalyzer.o EndpointStudy.o SimAsymmetryAnalyzer.o LEDScans.o
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 

@@ -4,23 +4,17 @@
 #include "OctetAnalyzer.hh"
 
 /// muon data analyzer class
-class MuonAnalyzer: public OctetAnalyzer {
+class MuonAnalyzer: public OctetAnalyzerPlugin {
 public:
 	/// constructor
-	MuonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname = "");
+	MuonAnalyzer(OctetAnalyzer* OA);
 	
-	/// cloning generator
-	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
-									   const std::string& inflname) { return new MuonAnalyzer(this,nm,inflname); }
-	
+	/// fill from scan data point
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// calculate muon-spectrum-related info
 	virtual void calculateResults();
 	/// output plot generation
 	virtual void makePlots();
-	
-	/// location of already-processed data (after first run) for errorbar estimation
-	virtual std::string estimatorHistoLocation() const { return MuonAnalyzer::processedLocation; }
-	static std::string processedLocation;	//< set location here for already-processed files
 	
 	unsigned int nEnergyBins;		//< number of bins for energy histograms
 	double energyMax;				//< energy range for energy histograms
@@ -28,11 +22,6 @@ public:
 	quadHists* qBackMuons[2][2];	//< back-veto tagged muon spectrum for [side][subtracted]
 	fgbgPair* pMuonPos[2];			//< muon event positions
 	fgbgPair* pBackMuPos[2];		//< backing veto muon event positions
-	
-protected:
-	
-	/// fill from scan data point
-	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 };
 
 #endif

@@ -125,129 +125,6 @@ void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool coun
 	RunAccumulator::loadSimData(simData,nToSim,countAll);
 }
 
-TH1* OctetAnalyzer::calculateSR(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg, bool instr) {
-	assert(qEast && qWest);
-	// first calculate R = E+W-/E-W+
-	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[fg]->Clone("SR_intermediate_R");
-	if(instr) {
-		hR->Multiply(qEast->fgbg[AFP_OFF]->h[fg]);
-	} else {
-		hR->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
-		hR->Scale(1.0/(totalTime[AFP_ON][fg][EAST]*totalTime[AFP_OFF][fg][WEST]));
-	}
-	
-	TH1* hAsym = (TH1*)qWest->fgbg[AFP_ON]->h[fg]->Clone(hname.c_str());
-	if(instr) {
-		hAsym->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
-	} else {
-		hAsym->Multiply(qEast->fgbg[AFP_OFF]->h[fg]);
-		hAsym->Scale(1.0/(totalTime[AFP_OFF][fg][EAST]*totalTime[AFP_ON][fg][WEST]));
-	}
-	
-	hR->Divide(hAsym);
-
-	// super-ratio asymmetry (1-sqrt(R))/(1+sqrt(R))
-	for(unsigned int i=0; i<totalBins(hR); i++) {
-		double r = hR->GetBinContent(i);
-		double dr = hR->GetBinError(i);
-		if(r>0 && r==r) {
-			hAsym->SetBinContent(i,(1.0-sqrt(r))/(1.0+sqrt(r)));
-			hAsym->SetBinError(i, dr/(sqrt(r)*(1+sqrt(r))*(1+sqrt(r))) * (simPerfectAsym && !instr?0.33:1.0));
-		} else {
-			hAsym->SetBinContent(i,0);
-			hAsym->SetBinError(i,1e6);
-		}
-	}
-	
-	hAsym->SetLineColor(1);
-	hAsym->SetLineStyle(1);
-	hAsym->SetTitle((qEast->title+" Asymmetry").c_str());
-	hAsym->GetXaxis()->SetTitle(qEast->fgbg[AFP_ON]->h[fg]->GetXaxis()->GetTitle());
-	
-	delete(hR);
-	return (TH1*)addObject(hAsym);
-}
-
-/// square root of a histogram
-void sqrtHist(TH1* h) {
-	for(unsigned int i=0; i<totalBins(h); i++) {
-		double y = h->GetBinContent(i);
-		double dy = h->GetBinError(i);
-		if(y>0 && y==y) {
-			h->SetBinContent(i,sqrt(y));
-			h->SetBinError(i,dy/(2*sqrt(y)));
-		} else {
-			h->SetBinContent(i,0);
-			h->SetBinError(i,0);
-		}
-	}
-}
-
-TH1* OctetAnalyzer::calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg) {
-	assert(qEast && qWest);
-	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[fg]->Clone("SuperSum_intermediate");
-	hR->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
-	hR->Scale(1.0/(totalTime[AFP_ON][fg][EAST]*totalTime[AFP_OFF][fg][WEST]));
-	
-	TH1* hSS = (TH1*)qEast->fgbg[AFP_OFF]->h[fg]->Clone(hname.c_str());
-	hSS->Multiply(qWest->fgbg[AFP_ON]->h[fg]);
-	hSS->Scale(1.0/(totalTime[AFP_OFF][fg][EAST]*totalTime[AFP_ON][fg][WEST]));
-	
-	sqrtHist(hR);
-	sqrtHist(hSS);
-	hSS->Add(hR);
-	hSS->Scale(0.5);
-	
-	hSS->SetTitle((qEast->title+" SuperSum").c_str());
-	hSS->SetLineColor(1);
-	hSS->SetLineStyle(1);
-	hSS->GetXaxis()->SetTitle(qEast->fgbg[AFP_ON]->h[fg]->GetXaxis()->GetTitle());
-	
-	delete(hR);
-	return (TH1*)addObject(hSS);
-}
-
-void OctetAnalyzer::drawQuad(quadHists* qh, const std::string& subfolder, const char* opt) {
-	assert(qh);
-	defaultCanvas->cd();
-	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
-			if(!qh->fgbg[afp]->h[gv]->Integral()) continue; // automatically skip empty histograms
-			qh->fgbg[afp]->h[gv]->Draw(opt);
-			printCanvas(subfolder+"/"+qh->getHistoName(AFPState(afp),gv));
-		}
-	}
-}
-
-void OctetAnalyzer::drawQuadSides(quadHists* qhE, quadHists* qhW, bool combineAFP, const std::string& subfolder, const std::string& opt) {
-	assert(qhE && qhW);
-	defaultCanvas->cd();
-	std::vector<TH1*> hToPlot;
-	for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
-		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-			qhE->fgbg[afp]->h[gv]->SetLineColor(2);
-			qhW->fgbg[afp]->h[gv]->SetLineColor(4);
-			if(!qhE->fgbg[afp]->h[gv]->Integral() && !qhW->fgbg[afp]->h[gv]->Integral()) continue;
-			hToPlot.push_back(qhE->fgbg[afp]->h[gv]);
-			hToPlot.push_back(qhW->fgbg[afp]->h[gv]);
-			if(!combineAFP) {
-				drawSimulHistos(hToPlot,opt);
-				printCanvas(subfolder+"/"+qhE->name+(afp?"_On":"_Off")+(gv?"":"_BG"));
-				hToPlot.clear();
-			} else {
-				qhE->fgbg[afp]->h[gv]->SetLineStyle(1+2*afp);
-				qhW->fgbg[afp]->h[gv]->SetLineStyle(1+2*afp);
-			}
-		}
-		if(combineAFP && hToPlot.size()) {
-			drawSimulHistos(hToPlot,opt,qhE->title+(gv?"":" Background"));
-			printCanvas(subfolder+"/"+qhE->name+(gv?"":"_BG"));
-			hToPlot.clear();
-		}
-	}
-}
-
-
 unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor, double replaceIfOlder) {
 	
 	printf("\n------ Cloning data in '%s'\n------                        to '%s'...\n",basedata.c_str(),basePath.c_str());
@@ -360,6 +237,129 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 	delete(origOA);
 	return nCloned;
 }
+
+/* --------------------------------------------------- */
+
+TH1* OctetAnalyzerPlugin::calculateSR(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg, bool instr) {
+	assert(qEast && qWest);
+	// first calculate R = E+W-/E-W+
+	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[fg]->Clone("SR_intermediate_R");
+	if(instr) {
+		hR->Multiply(qEast->fgbg[AFP_OFF]->h[fg]);
+	} else {
+		hR->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
+		hR->Scale(1.0/(myA->totalTime[AFP_ON][fg][EAST]*myA->totalTime[AFP_OFF][fg][WEST]));
+	}
+	
+	TH1* hAsym = (TH1*)qWest->fgbg[AFP_ON]->h[fg]->Clone(hname.c_str());
+	if(instr) {
+		hAsym->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
+	} else {
+		hAsym->Multiply(qEast->fgbg[AFP_OFF]->h[fg]);
+		hAsym->Scale(1.0/(myA->totalTime[AFP_OFF][fg][EAST]*myA->totalTime[AFP_ON][fg][WEST]));
+	}
+	
+	hR->Divide(hAsym);
+	
+	// super-ratio asymmetry (1-sqrt(R))/(1+sqrt(R))
+	for(unsigned int i=0; i<totalBins(hR); i++) {
+		double r = hR->GetBinContent(i);
+		double dr = hR->GetBinError(i);
+		if(r>0 && r==r) {
+			hAsym->SetBinContent(i,(1.0-sqrt(r))/(1.0+sqrt(r)));
+			hAsym->SetBinError(i, dr/(sqrt(r)*(1+sqrt(r))*(1+sqrt(r))) * (myA->simPerfectAsym && !instr?0.33:1.0));
+		} else {
+			hAsym->SetBinContent(i,0);
+			hAsym->SetBinError(i,1e6);
+		}
+	}
+	
+	hAsym->SetLineColor(1);
+	hAsym->SetLineStyle(1);
+	hAsym->SetTitle((qEast->title+" Asymmetry").c_str());
+	hAsym->GetXaxis()->SetTitle(qEast->fgbg[AFP_ON]->h[fg]->GetXaxis()->GetTitle());
+	
+	delete(hR);
+	return (TH1*)myA->addObject(hAsym);
+}
+
+/// square root of a histogram
+void sqrtHist(TH1* h) {
+	for(unsigned int i=0; i<totalBins(h); i++) {
+		double y = h->GetBinContent(i);
+		double dy = h->GetBinError(i);
+		if(y>0 && y==y) {
+			h->SetBinContent(i,sqrt(y));
+			h->SetBinError(i,dy/(2*sqrt(y)));
+		} else {
+			h->SetBinContent(i,0);
+			h->SetBinError(i,0);
+		}
+	}
+}
+
+TH1* OctetAnalyzerPlugin::calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg) {
+	assert(qEast && qWest);
+	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[fg]->Clone("SuperSum_intermediate");
+	hR->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
+	hR->Scale(1.0/(myA->totalTime[AFP_ON][fg][EAST]*myA->totalTime[AFP_OFF][fg][WEST]));
+	
+	TH1* hSS = (TH1*)qEast->fgbg[AFP_OFF]->h[fg]->Clone(hname.c_str());
+	hSS->Multiply(qWest->fgbg[AFP_ON]->h[fg]);
+	hSS->Scale(1.0/(myA->totalTime[AFP_OFF][fg][EAST]*myA->totalTime[AFP_ON][fg][WEST]));
+	
+	sqrtHist(hR);
+	sqrtHist(hSS);
+	hSS->Add(hR);
+	hSS->Scale(0.5);
+	
+	hSS->SetTitle((qEast->title+" SuperSum").c_str());
+	hSS->SetLineColor(1);
+	hSS->SetLineStyle(1);
+	hSS->GetXaxis()->SetTitle(qEast->fgbg[AFP_ON]->h[fg]->GetXaxis()->GetTitle());
+	
+	delete(hR);
+	return (TH1*)myA->addObject(hSS);
+}
+
+void OctetAnalyzerPlugin::drawQuad(quadHists* qh, const std::string& subfolder, const char* opt) {
+	assert(qh);
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
+		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
+			if(!qh->fgbg[afp]->h[gv]->Integral()) continue; // automatically skip empty histograms
+			qh->fgbg[afp]->h[gv]->Draw(opt);
+			printCanvas(subfolder+"/"+qh->getHistoName(AFPState(afp),gv));
+		}
+	}
+}
+
+void OctetAnalyzerPlugin::drawQuadSides(quadHists* qhE, quadHists* qhW, bool combineAFP, const std::string& subfolder, const std::string& opt) {
+	assert(qhE && qhW);
+	std::vector<TH1*> hToPlot;
+	for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
+		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
+			qhE->fgbg[afp]->h[gv]->SetLineColor(2);
+			qhW->fgbg[afp]->h[gv]->SetLineColor(4);
+			if(!qhE->fgbg[afp]->h[gv]->Integral() && !qhW->fgbg[afp]->h[gv]->Integral()) continue;
+			hToPlot.push_back(qhE->fgbg[afp]->h[gv]);
+			hToPlot.push_back(qhW->fgbg[afp]->h[gv]);
+			if(!combineAFP) {
+				drawSimulHistos(hToPlot,opt);
+				printCanvas(subfolder+"/"+qhE->name+(afp?"_On":"_Off")+(gv?"":"_BG"));
+				hToPlot.clear();
+			} else {
+				qhE->fgbg[afp]->h[gv]->SetLineStyle(1+2*afp);
+				qhW->fgbg[afp]->h[gv]->SetLineStyle(1+2*afp);
+			}
+		}
+		if(combineAFP && hToPlot.size()) {
+			drawSimulHistos(hToPlot,opt,qhE->title+(gv?"":" Background"));
+			printCanvas(subfolder+"/"+qhE->name+(gv?"":"_BG"));
+			hToPlot.clear();
+		}
+	}
+}
+
 
 /* --------------------------------------------------- */
 

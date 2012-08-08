@@ -8,7 +8,7 @@
 #include "NuclEvtGen.hh"
 #include "OutputManager.hh"
 #include "BetaSpectrum.hh"
-#include "AsymmetryAnalyzer.hh"
+#include "BetaDecayAnalyzer.hh"
 #include <vector>
 #include <string>
 
@@ -91,7 +91,7 @@ public:
 	
 protected:
 	OutputManager OM;		//< unused OutputManager
-	AsymmetryAnalyzer Adat;	//< data for error estimation
+	BetaDecayAnalyzer Adat;	//< data for error estimation
 	TGraphErrors* S[2][2];	//< observed energy spectra for [side][afp] as TGraphs
 };
 

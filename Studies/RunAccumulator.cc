@@ -114,6 +114,49 @@ SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false) {
 RunAccumulator::~RunAccumulator() {
 	for(std::map<std::string,fgbgPair*>::iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++)
 		delete it->second;
+	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++)
+		delete it->second;
+}
+
+void RunAccumulator::setCurrentState(AFPState afp, GVState gv) {
+	currentAFP = afp;
+	currentGV = gv;
+	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++) {
+		it->second->currentGV = currentGV;
+		it->second->currentAFP = currentAFP;
+	}
+}
+
+AnalyzerPlugin* RunAccumulator::addPlugin(AnalyzerPlugin* AP) {
+	assert(myPlugins.find(AP->name) == myPlugins.end());
+	myPlugins.insert(std::make_pair(AP->name,AP));
+	return AP;
+}
+
+
+AnalyzerPlugin* RunAccumulator::getPlugin(const std::string& nm) {
+	std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.find(nm);
+	return it != myPlugins.end() ? it->second : NULL;
+
+}
+
+void RunAccumulator::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++)
+		it->second->fillCoreHists(PDS,weight);
+}
+
+void RunAccumulator::makePlots() {
+	defaultCanvas->cd();
+	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++)
+		it->second->makePlots();
+}
+
+void RunAccumulator::compareMCtoData(RunAccumulator& OAdata) {
+	defaultCanvas->cd();
+	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++) {
+		AnalyzerPlugin* AP = OAdata.getPlugin(it->second->name);
+		if(AP) it->second->compareMCtoData(AP);
+	}
 }
 
 void RunAccumulator::zeroCounters() {
@@ -274,8 +317,7 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 	printf("Loading AFP=%i, fg=%i processed data...\n",afp,gv);
 	assert(afp <= AFP_OTHER);
 	assert(gv==GV_CLOSED || gv==GV_OPEN);
-	currentGV = gv;
-	currentAFP = afp;
+	setCurrentState(afp,gv);
 	if(!PDS.getnFiles())
 		return;
 	PDS.startScan();
@@ -300,8 +342,7 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
 	isSimulated = true;
-	currentGV = GV_OPEN;
-	currentAFP = simData.getAFP();
+	setCurrentState(simData.getAFP(),GV_OPEN);
 	printf("Loading %i events of simulated data (AFP=%i)...\n",nToSim,currentAFP);
 	simData.resetSimCounters();
 	simData.startScan(nToSim);

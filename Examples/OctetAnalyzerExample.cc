@@ -2,20 +2,20 @@
 #include "GraphicsUtils.hh"
 #include <TStyle.h>
 
-OctetAnalyzerExample::OctetAnalyzerExample(OutputManager* pnt, const std::string& nm, const std::string& inflname): OctetAnalyzer(pnt,nm,inflname) {
+ExampleAnalyzerPlugin::ExampleAnalyzerPlugin(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"example") {
 	// set up histograms of interest
 	for(Side s = EAST; s <= WEST; ++s)
 		qAnodeSpectrum[s] = registerCoreHist("hAnode", "Wirechamber Energy", 100, 0, 20, s);
 }
 
-void OctetAnalyzerExample::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+void ExampleAnalyzerPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	// fill wirechamber spectrum for Type 0 beta events on each side
 	if(!(PDS.fSide==EAST || PDS.fSide==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)
 		qAnodeSpectrum[PDS.fSide]->fillPoint->Fill(PDS.mwpcEnergy[PDS.fSide],weight);
 }
 
-void OctetAnalyzerExample::calculateResults() {
+void ExampleAnalyzerPlugin::calculateResults() {
 	// form (blinded) super-ratio and super-sum of anode spectra
 	hAnodeSR = (TH1F*)calculateSR("Wirechamber_Energy_Asymmetry",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
 	hAnodeSR->SetMinimum(-0.20);
@@ -23,7 +23,7 @@ void OctetAnalyzerExample::calculateResults() {
 	hAnodeSS = (TH1F*)calculateSuperSum("Wirechamber_Energy_SuperSum",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
 }
 
-void OctetAnalyzerExample::makePlots() {
+void ExampleAnalyzerPlugin::makePlots() {
 	// draw the asymmetry to "Wirechamber_Energy_Asymmetry.pdf" in this analyzer's base directory
 	hAnodeSR->Draw();
 	printCanvas("Wirechamber_Energy_Asymmetry");
@@ -34,9 +34,9 @@ void OctetAnalyzerExample::makePlots() {
 	drawQuadSides(qAnodeSpectrum[EAST],qAnodeSpectrum[WEST],true,"MWPC_Energy");
 }
 
-void OctetAnalyzerExample::compareMCtoData(RunAccumulator& OAdata) {
+void ExampleAnalyzerPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 	// re-cast to correct type
-	OctetAnalyzerExample& dat = (OctetAnalyzerExample&)OAdata;
+	ExampleAnalyzerPlugin& dat = *(ExampleAnalyzerPlugin*)AP;
 	// draw comparison with data (red=data, blue=MC)
 	drawHistoPair(dat.hAnodeSS,hAnodeSS);
 	printCanvas("DataComparison/Wirechamber_Energy_SuperSum");

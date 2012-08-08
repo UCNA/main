@@ -4,20 +4,17 @@
 #include "GraphicsUtils.hh"
 #include <TH2F.h>
 
-std::string AsymmetryAnalyzer::processedLocation = "";	// set this later depending on situtation
-
 /// nominal asymmetry for fit
 Double_t asymmetryFitFunc(const Double_t* x, const Double_t* par) {
 	return par[0]*plainAsymmetry(x[0],0.5)/A0_PDG;
 }
 
 TF1 AsymmetryAnalyzer::asymmetryFit = TF1("asymFit",&asymmetryFitFunc,0,neutronBetaEp,1);
-TF1 AsymmetryAnalyzer::averagerFit = TF1("averagerFir","pol0",0,neutronBetaEp);
+TF1 AsymmetryAnalyzer::averagerFit = TF1("averagerFit","pol0",0,neutronBetaEp);
 AnalysisChoice  AsymmetryAnalyzer::anChoice = ANCHOICE_A;
 
-AsymmetryAnalyzer::AsymmetryAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname):
-MuonAnalyzer(pnt,nm,inflname) {
-	ignoreMissingHistos = true;
+AsymmetryAnalyzer::AsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500) {
+	myA->ignoreMissingHistos = true;
 	for(Side s = EAST; s <= WEST; ++s) {
 		qExcessr2[s] = registerCoreHist("Excessr2","Excess events radial distribution",10,0,80*80,s);
 		qExcessr2[s]->setAxisTitle(X_DIRECTION,"event radius squared [mm^2]");
@@ -37,23 +34,16 @@ MuonAnalyzer(pnt,nm,inflname) {
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
 				qEnergySpectra[s][p][t] = registerCoreHist("hEnergy_"+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
-														   "Type "+itos(t)+" Events Energy",
-														   nEnergyBins, 0, energyMax, s);
+																"Type "+itos(t)+" Events Energy",
+																nEnergyBins, 0, energyMax, s);
 				qEnergySpectra[s][p][t]->setAxisTitle(X_DIRECTION,"Energy [keV]");
 			}
-			if(t>TYPE_III_EVENT) continue;
-			TH2F hPositionsTemplate(("hPos_Type_"+itos(t)).c_str(),
-									("Type "+itos(t)+" Positions").c_str(),
-									200,-65,65,200,-65,65);
-			qPositions[s][t] = registerCoreHist(hPositionsTemplate,s);
-			qPositions[s][t]->setAxisTitle(X_DIRECTION,"x Position [mm]");
-			qPositions[s][t]->setAxisTitle(Y_DIRECTION,"y Position [mm]");
 		}
 	}
+	myA->ignoreMissingHistos = false;
 }
 
 void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
-	MuonAnalyzer::fillCoreHists(PDS,weight);
 	Side s = PDS.fSide;
 	if(!(s==EAST || s==WEST)) return;
 	if(PDS.fPID == PID_SINGLE && PDS.fType == TYPE_IV_EVENT) {
@@ -75,15 +65,13 @@ void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			qEnergySpectra[s][t][PDS.fType]->fillPoint->Fill(PDS.scints[s].tuben[t].x,weight);
 	}
-	if(PDS.fType <= TYPE_III_EVENT)
-		((TH2F*)qPositions[s][PDS.fType]->fillPoint)->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 }
 
 AnaResult AsymmetryAnalyzer::getResultBase() const {
 	AnaResult AR;
-	AR.datp = isSimulated?AnaResult::G4_DATA:AnaResult::REAL_DATA;
-	AR.startRun = runCounts.counts.begin()->first;
-	AR.endRun = runCounts.counts.rbegin()->first;
+	AR.datp = myA->isSimulated?AnaResult::G4_DATA:AnaResult::REAL_DATA;
+	AR.startRun = myA->runCounts.counts.begin()->first;
+	AR.endRun = myA->runCounts.counts.rbegin()->first;
 	AR.anach = anChoice;
 	return AR;
 }
@@ -102,7 +90,7 @@ void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, AnaR
 	m.insert("fitMax",fmax);
 	m.insert("anChoice",itos(anChoice));
 	m.insert("method",avg?"average":"fit");
-	qOut.insert("asymmetry",m);
+	myA->qOut.insert("asymmetry",m);
 	
 	// save results
 	AR.anatp = AnaResult::ANA_ASYM;
@@ -128,14 +116,14 @@ void AsymmetryAnalyzer::fitInstAsym(float fmin, float fmax, unsigned int color) 
 	m.insert("fitMax",fmax);
 	m.insert("anChoice",itos(anChoice));
 	m.insert("method","average");
-	qOut.insert("instasym",m);
+	myA->qOut.insert("instasym",m);
 }
 
 
 void AsymmetryAnalyzer::endpointFits() {
 	const float fitStart = 250;
-	const float fitEnd = 750;	
-	for(Side s = EAST; s <= WEST; ++s) {		
+	const float fitEnd = 750;
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			for(unsigned int t=0; t<=nBetaTubes; t++) {
 				float_err ep = kurieIterator((TH1F*)qEnergySpectra[s][t][TYPE_0_EVENT]->fgbg[afp]->h[1],
@@ -151,7 +139,7 @@ void AsymmetryAnalyzer::endpointFits() {
 				m.insert("dendpoint",ep.err);
 				m.insert("counts",qEnergySpectra[s][t][TYPE_0_EVENT]->fgbg[afp]->h[1]->Integral());
 				m.display("--- ");
-				qOut.insert("kurieFit",m);
+				myA->qOut.insert("kurieFit",m);
 			}
 		}
 	}
@@ -168,7 +156,7 @@ void AsymmetryAnalyzer::highEnergyExcess(quadHists* qh, double e0, double e1) {
 		double nBG = hEnBG->Integral(b0,b1);
 		double xs = hEn->Integral(b0,b1);
 		double d_nBG = integrateErrors(hEnBG,b0,b1);
-		double d_xs = integrateErrors(hEn,b0,b1);				
+		double d_xs = integrateErrors(hEn,b0,b1);
 		
 		Stringmap m;
 		m.insert("side",sideSubst("%c",qh->mySide));
@@ -182,12 +170,12 @@ void AsymmetryAnalyzer::highEnergyExcess(quadHists* qh, double e0, double e1) {
 		m.insert("eMax",e1);		// upper energy cut
 		m.insert("b0",itos(b0));
 		m.insert("b1",itos(b1));
-		qOut.insert("bg_subtr_xs",m);
+		myA->qOut.insert("bg_subtr_xs",m);
 	}
 }
 
 void AsymmetryAnalyzer::anodeCalFits() {
-	for(Side s = EAST; s <= WEST; ++s) {		
+	for(Side s = EAST; s <= WEST; ++s) {
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			TF1 fLandau("landauFit","landau",0,15);
 			fLandau.SetLineColor(2+2*s);
@@ -202,19 +190,17 @@ void AsymmetryAnalyzer::anodeCalFits() {
 			m.insert("d_mpv",fLandau.GetParError(1));
 			m.insert("sigma",fLandau.GetParameter(2));
 			m.insert("d_sigma",fLandau.GetParError(2));
-			qOut.insert("anodeCalFit",m);
+			myA->qOut.insert("anodeCalFit",m);
 		}
-	}	
+	}
 }
 
 void AsymmetryAnalyzer::calculateResults() {
 	
-	MuonAnalyzer::calculateResults();
-	
 	// build total spectra based on analysis choice
 	AnaResult ARtot = getResultBase();
 	for(Side s = EAST; s <= WEST; ++s) {
-		qTotalSpectrum[s] = cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents", "All Events Energy");
+		qTotalSpectrum[s] = myA->cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents", "All Events Energy");
 		if(!(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C || anChoice == ANCHOICE_D))
 			*qTotalSpectrum[s] *= 0;	// analysis choices without Type 0 events
 		else ARtot.etypes.insert(TYPE_0_EVENT);
@@ -237,13 +223,13 @@ void AsymmetryAnalyzer::calculateResults() {
 	hSuperSum = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp) {
 		hTpAsym[tp] = (TH1F*)calculateSR("Asymmetry_Type_"+itos(tp),
-										 qEnergySpectra[EAST][nBetaTubes][tp],
-										 qEnergySpectra[WEST][nBetaTubes][tp]);
+											  qEnergySpectra[EAST][nBetaTubes][tp],
+											  qEnergySpectra[WEST][nBetaTubes][tp]);
 		hTpAsym[tp]->SetMinimum(-0.10);
 		hTpAsym[tp]->SetMaximum(0.0);
 		hEvtSS[tp] = (TH1F*)calculateSuperSum("SuperSum_Type_"+itos(tp),
-											  qEnergySpectra[EAST][nBetaTubes][tp],
-											  qEnergySpectra[WEST][nBetaTubes][tp]);
+												   qEnergySpectra[EAST][nBetaTubes][tp],
+												   qEnergySpectra[WEST][nBetaTubes][tp]);
 	}
 	
 	// perform data fits
@@ -254,8 +240,8 @@ void AsymmetryAnalyzer::calculateResults() {
 	fitInstAsym();
 	endpointFits();
 	for(Side s = EAST; s <= WEST; ++s) {
-		highEnergyExcess(qMuonSpectra[s][true],1000,2000);
-		highEnergyExcess(qBackMuons[s][true],1000,2000);
+		//highEnergyExcess(qMuonSpectra[s][true],1000,2000);
+		//highEnergyExcess(qBackMuons[s][true],1000,2000);
 		highEnergyExcess(qExcessSpectra[s],1000,2200);
 		highEnergyExcess(qExcessSpectra[s],2200,7000);
 		highEnergyExcess(qExcessGamma[s],200,1000);
@@ -265,14 +251,14 @@ void AsymmetryAnalyzer::calculateResults() {
 			highEnergyExcess(qEnergySpectra[s][nBetaTubes][tp],1000,7000);
 	}
 	anodeCalFits();
-	makeRatesSummary();
+	myA->makeRatesSummary();
 }
 
 void AsymmetryAnalyzer::uploadAnaResults() {
 	
 	AnalysisDB* ADB = AnalysisDB::getADB();
 	
-	// delete old fit results 
+	// delete old fit results
 	for(unsigned int n=0; n<asymFits.size(); n++) {
 		std::vector<AnaResult> oldr = ADB->findMatching(asymFits[n]);
 		for(unsigned int i=0; i<oldr.size(); i++)
@@ -318,7 +304,6 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 }
 
 void AsymmetryAnalyzer::makePlots() {
-	MuonAnalyzer::makePlots();
 	
 	hAsym->SetMinimum(-0.10);
 	hAsym->SetMaximum(0.0);
@@ -341,17 +326,52 @@ void AsymmetryAnalyzer::makePlots() {
 		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][t], qEnergySpectra[WEST][nBetaTubes][t], true, "Energy");
 	drawQuadSides(qEnergySpectra[EAST][nBetaTubes][TYPE_IV_EVENT], qEnergySpectra[WEST][nBetaTubes][TYPE_IV_EVENT], true, "Energy");
 	
-	// positions
-	if(depth <= 0) {
-		for(Side s = EAST; s <= WEST; ++s) {
-			for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
-				qPositions[s][t]->setDrawRange(0,false);
-				drawQuad(qPositions[s][t],"Positions","COL");
-			}
-		}
+	if(myA->depth <= 0) {
 		drawQuadSides(qExcessGamma[EAST],qExcessGamma[WEST],true,"Energy");
 		drawQuadSides(qExcessSpectra[EAST],qExcessSpectra[WEST],true,"Energy");
 		drawQuadSides(qExcessr2[EAST],qExcessr2[WEST],true,"Positions");
 		drawQuadSides(qExcessTheta[EAST],qExcessTheta[WEST],true,"Positions");
 	}
 }
+
+void AsymmetryAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
+	// re-cast to correct type
+	AsymmetryAnalyzer& dat = *(AsymmetryAnalyzer*)AP;
+	
+	hAsym->SetLineColor(4);
+	dat.hAsym->SetLineColor(2);
+	hAsym->Draw("HIST E1");
+	dat.hAsym->Draw("SAME HIST E1");
+	printCanvas("DataComparison/Asymmetry");
+	
+	drawHistoPair(dat.hSuperSum,hSuperSum);
+	printCanvas("DataComparison/SuperSum");
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp) {
+		dat.hEvtSS[tp]->SetMarkerStyle(1);
+		hEvtSS[tp]->SetMarkerStyle(1);
+		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
+		printCanvas("DataComparison/SuperSum_Type_"+itos(tp));
+		
+		dat.hTpAsym[tp]->SetMarkerStyle(1);
+		hTpAsym[tp]->SetMarkerStyle(1);
+		drawHistoPair(dat.hTpAsym[tp],hTpAsym[tp]);
+		printCanvas("DataComparison/Asymmetry_Type_"+itos(tp));
+	}
+	
+	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
+		std::vector<TH1*> hToPlot;
+		for(Side s = EAST; s <= WEST; ++s) {
+			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
+				qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerColor(2+2*s);
+				qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerStyle(22+4*afp);
+				hToPlot.push_back(qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]);
+				dat.qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerColor(2+2*s);
+				dat.qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerStyle(20+4*afp);
+				hToPlot.push_back(dat.qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]);
+			}
+		}
+		drawSimulHistos(hToPlot,"HIST P");
+		printCanvas("DataComparison/Type_"+itos(t));
+	}
+}
+

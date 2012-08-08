@@ -19,16 +19,11 @@ struct CathodeSeg {
 	float pos;				//< cathode position
 };
 
-/// wirechamber position/calibration analysis
-class WirechamberAnalyzer: public RunAccumulator {
+/// analyzer plugin for wirechamber position/calibration analysis
+class WirechamberAnalyzer: public AnalyzerPlugin {
 public:
 	/// constructor
-	WirechamberAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& infl="");
-	
-	/// cloning generator: just return another of the same subclass (with any settings you want to preserve)
-	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
-									   const std::string& inflname) { return new WirechamberAnalyzer(this,nm,inflname); }
-	
+	WirechamberAnalyzer(RunAccumulator* RA);
 	/// process a data point into position histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// make output plots
@@ -51,19 +46,14 @@ struct SectorDat {
 	float_err xe_ep;
 };
 
-/// class for position-segmented analysis
-class PositionBinner: public WirechamberAnalyzer {
+/// analyzer plugin for position-segmented analysis
+class PositionBinner: public AnalyzerPlugin {
 public:
 	/// constructor
-	PositionBinner(OutputManager* pnt, const std::string& nm, unsigned int nr, const std::string& infl="");
-	
-	/// cloning generator: just return another of the same subclass (with any settings you want to preserve)
-	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
-									   const std::string& inflname) { return new PositionBinner(this,nm,sects.n,inflname); }
+	PositionBinner(RunAccumulator* RA, unsigned int nr = 0);
 	
 	/// process a data point into position histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
-	
 	/// overall spectrum info
 	virtual void calculateResults();
 	/// fit enpoints in each sector
@@ -73,7 +63,7 @@ public:
 	/// make output plots
 	virtual void makePlots();
 	/// virtual routine for MC/Data comparison plots/calculations
-	virtual void compareMCtoData(RunAccumulator& OAdata);
+	virtual void compareMCtoData(AnalyzerPlugin* AP);
 	
 	fgbgPair* energySpectrum;							//< total energy spectrum
 	TH1F* hTuben[2][nBetaTubes];						//< type 0 PMT energy for gain matching
@@ -88,15 +78,29 @@ protected:
 	std::vector<fgbgPair*> sectAnode[2];				//< anode histograms by position
 };
 
+/// analyzer for xenon data
+class XenonAnalyzer: public RunAccumulator {
+public:
+	/// constructor
+	XenonAnalyzer(OutputManager* pnt, const std::string& nm = "XenonAnalyzer", unsigned int nr = 0, const std::string& inflName = ""):
+	RunAccumulator(pnt,nm,inflName) {
+		addPlugin(myEndpt = new PositionBinner(this,nr));
+		addPlugin(myWC = new WirechamberAnalyzer(this));
+	}
+	/// create a new instance of this object (cloning self settings) for given directory
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) {
+		return new XenonAnalyzer(this,nm,myEndpt->sects.n,inflname); }
+	
+	PositionBinner* myEndpt;	//< xenon endpoint map plugin
+	WirechamberAnalyzer* myWC;	//< wirechamber positions plugin
+};
+
 /// process xenon runs
 void process_xenon(RunNum r0, RunNum r1, unsigned int nrings);
-
 /// generate xenon simulation runs
 void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle=0, unsigned int nRings =12);
-
 /// comparison between data, simulated Xenon to produce position map
 void xenon_posmap(RunNum r0, RunNum r1, unsigned int nRings);
-
 
 /// process wirechamber calibraiton data
 void processWirechamberCal(WirechamberAnalyzer& WCdat, WirechamberAnalyzer& WCsim);

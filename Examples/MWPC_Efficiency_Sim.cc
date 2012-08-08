@@ -1,4 +1,4 @@
-#include "AsymmetryAnalyzer.hh"
+#include "BetaDecayAnalyzer.hh"
 #include "GraphicsUtils.hh"
 #include <TStyle.h>
 #include <vector>
@@ -13,9 +13,9 @@ void runSimulation() {
 	printf("Simulating MWPC threshold variation...\n");
 	
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/MWPC_Effic_Sim/");
-	std::vector<AsymmetryAnalyzer*> AAs;
+	std::vector<BetaDecayAnalyzer*> AAs;
 	for(unsigned int i=0; i<nThreshBins; i++) {
-		AAs.push_back(new AsymmetryAnalyzer(&OM,"Threshold_"+itos(i)));
+		AAs.push_back(new BetaDecayAnalyzer(&OM,"Threshold_"+itos(i)));
 		AAs.back()->currentGV = GV_OPEN;
 	}
 	
@@ -62,10 +62,10 @@ void runSimulation() {
 
 void processSimulation() {
 	OutputManager OM("MWPC_Effic_Compare",getEnvSafe("UCNA_ANA_PLOTS")+"/MWPC_Effic_Sim/");
-	std::vector<AsymmetryAnalyzer*> AAs;
+	std::vector<BetaDecayAnalyzer*> AAs;
 	for(unsigned int i=0; i<nThreshBins; i++) {
 		std::string tname = "Threshold_"+itos(i);
-		AAs.push_back(new AsymmetryAnalyzer(&OM,tname,OM.basePath+'/'+tname+'/'+tname));
+		AAs.push_back(new BetaDecayAnalyzer(&OM,tname,OM.basePath+'/'+tname+'/'+tname));
 		AAs.back()->currentGV = GV_OPEN;
 	}
 	
@@ -73,9 +73,9 @@ void processSimulation() {
 	std::vector<TH1*> hDeltaSpectrum;
 	for(unsigned int i=0; i<nThreshBins; i++) {
 		AAs[i]->calculateResults();
-		hDeltaAsym.push_back((TH1*)AAs[i]->hAsym->Clone(("hAsym_"+itos(i)).c_str()));
-		hDeltaAsym.back()->Add(AAs[0]->hAsym,-1.0);
-		hDeltaAsym.back()->Divide(AAs[0]->hAsym);
+		hDeltaAsym.push_back((TH1*)AAs[i]->myAsym->hAsym->Clone(("hAsym_"+itos(i)).c_str()));
+		hDeltaAsym.back()->Add(AAs[0]->myAsym->hAsym,-1.0);
+		hDeltaAsym.back()->Divide(AAs[0]->myAsym->hAsym);
 		hDeltaAsym.back()->SetLineColor( (i%6)+1 );
 		hDeltaAsym.back()->Scale(100.0);
 		hDeltaAsym.back()->SetMinimum(-5.);
@@ -83,9 +83,9 @@ void processSimulation() {
 		hDeltaAsym.back()->SetTitle("Asymmetry % Change");
 		hDeltaAsym.back()->GetXaxis()->SetTitle("Energy [keV]");
 		
-		hDeltaSpectrum.push_back((TH1*)AAs[i]->hSuperSum->Clone(("hSS_"+itos(i)).c_str()));
-		hDeltaSpectrum.back()->Add(AAs[0]->hSuperSum,-1.0);
-		hDeltaSpectrum.back()->Divide(AAs[0]->hSuperSum);
+		hDeltaSpectrum.push_back((TH1*)AAs[i]->myAsym->hSuperSum->Clone(("hSS_"+itos(i)).c_str()));
+		hDeltaSpectrum.back()->Add(AAs[0]->myAsym->hSuperSum,-1.0);
+		hDeltaSpectrum.back()->Divide(AAs[0]->myAsym->hSuperSum);
 		hDeltaSpectrum.back()->Scale(-100.0);
 		hDeltaSpectrum.back()->SetTitle("Type 0 % Inefficiency");
 		hDeltaSpectrum.back()->SetLineColor( (i%6)+1 );

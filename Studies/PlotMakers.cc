@@ -17,7 +17,7 @@
 #include "BetaSpectrum.hh"
 #include "LinHistCombo.hh"
 #include "PostOfficialAnalyzer.hh"
-#include "SimAsymmetryAnalyzer.hh"
+#include "BetaDecayAnalyzer.hh"
 #include <TColor.h>
 
 
@@ -515,7 +515,7 @@ Adat(&OM, "nameUnused", getEnvSafe("UCNA_ANA_PLOTS")+"/"+datset+"/"+datset) {
 	Adat.calculateResults();
 	for(Side s = EAST; s <= WEST; ++s)
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
-			S[s][afp] = TH1toTGraph(*Adat.qTotalSpectrum[s]->fgbg[afp]->h[GV_OPEN]);
+			S[s][afp] = TH1toTGraph(*Adat.myAsym->qTotalSpectrum[s]->fgbg[afp]->h[GV_OPEN]);
 }
 
 ErrTables::~ErrTables() {
@@ -574,7 +574,7 @@ void ErrTables::muonVetoEfficTable(double delta) {
 	TGraphErrors* M[2][2];
 	for(Side s = EAST; s <= WEST; ++s)
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
-			M[s][afp] = TH1toTGraph(*Adat.qMuonSpectra[s][false]->fgbg[afp]->h[GV_OPEN]);
+			M[s][afp] = TH1toTGraph(*Adat.myMuons->qMuonSpectra[s][false]->fgbg[afp]->h[GV_OPEN]);
 	
 	// write uncertainty file
 	FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/MuonEffic.txt").c_str(),"w");
@@ -619,9 +619,9 @@ void ErrTables::NGBGTable(double EScale, double dEScale, double WScale, double d
 	
 	// load NGBG estimate
 	OutputManager OM2("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
-	SimAsymmetryAnalyzer AH(&OM2,"Combined",OM2.basePath+"/Combined/Combined");
+	SimBetaDecayAnalyzer AH(&OM2,"Combined",OM2.basePath+"/Combined/Combined");
 	AH.calculateResults();
-	TGraph* hNGBG = TH1toTGraph(*AH.qTotalSpectrum[EAST]->fgbg[AFP_OFF]->h[GV_OPEN]);
+	TGraph* hNGBG = TH1toTGraph(*AH.myAsym->qTotalSpectrum[EAST]->fgbg[AFP_OFF]->h[GV_OPEN]);
 	
 	// AFP rates
 	double rAFP[2] = {25.8,16.7};
@@ -699,7 +699,7 @@ void NGBGSpectra(std::string datname) {
 	g2p.setCalibrator(PCal);
 	
 	
-	SimAsymmetryAnalyzer AH(&OM,datname);
+	SimBetaDecayAnalyzer AH(&OM,datname);
 	AH.loadSimData(g2p);
 	
 	AH.calculateResults();

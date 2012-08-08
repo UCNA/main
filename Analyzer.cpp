@@ -7,8 +7,7 @@
 #include "PathUtils.hh"
 #include "GraphicsUtils.hh"
 #include "PositionResponse.hh"
-#include "AsymmetryAnalyzer.hh"
-#include "SimAsymmetryAnalyzer.hh"
+#include "BetaDecayAnalyzer.hh"
 #include "EndpointStudy.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "PlotMakers.hh"
@@ -129,11 +128,11 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	unsigned int nTot = 52;
 	unsigned int stride = 7;
 	
-	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
+	BetaDecayAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
 	if(octn==1000) {
 		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
-		AsymmetryAnalyzer AA(&OM,outputDir);
+		BetaDecayAnalyzer AA(&OM,outputDir);
 		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600);
 	} else if(octn < 0) {
 		G4toPMT simData;
@@ -142,14 +141,14 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 		simData.PGen[EAST].xscatter = simData.PGen[WEST].xscatter = 0.01;
 		if(octn==-1000) {
 			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
-			SimAsymmetryAnalyzer AA_Sim(&OM,simOutputDir);
+			SimBetaDecayAnalyzer AA_Sim(&OM,simOutputDir);
 			AA_Sim.simPerfectAsym = true;
 			AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, simData, 1.0, 365*24*3600);
 		} else {
 			Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),-octn-1);
 			if(!oct.getNRuns()) return;
 			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+simOutputDir);
-			SimAsymmetryAnalyzer AA_Sim(&OM,oct.octName());	
+			SimBetaDecayAnalyzer AA_Sim(&OM,oct.octName());
 			AA_Sim.simPerfectAsym = true;
 			AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), simData, 1.0, 0.*3600);
 		}
@@ -157,7 +156,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),octn);
 		if(!oct.getNRuns()) return;
 		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir);
-		AsymmetryAnalyzer AA(&OM,oct.octName());
+		BetaDecayAnalyzer AA(&OM,oct.octName());
 		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false),0.*3600);
 	}
 }
@@ -218,13 +217,13 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
 	if(false) {
 		OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
-		SimAsymmetryAnalyzer AH(&OM,"Combined");
+		SimBetaDecayAnalyzer AH(&OM,"Combined");
 		
-		SimAsymmetryAnalyzer AH1(&OM,"ScintFace_nCaptH",OM.basePath+"/ScintFace_nCaptH/ScintFace_nCaptH");
+		SimBetaDecayAnalyzer AH1(&OM,"ScintFace_nCaptH",OM.basePath+"/ScintFace_nCaptH/ScintFace_nCaptH");
 		AH1.scaleData(0.126);
-		SimAsymmetryAnalyzer AH2(&OM,"DetAl_nCaptAl",OM.basePath+"/DetAl_nCaptAl/DetAl_nCaptAl");
+		SimBetaDecayAnalyzer AH2(&OM,"DetAl_nCaptAl",OM.basePath+"/DetAl_nCaptAl/DetAl_nCaptAl");
 		AH2.scaleData(0.073);
-		SimAsymmetryAnalyzer AH3(&OM,"DetAl_nCaptAlGamma",OM.basePath+"/DetAl_nCaptAlGamma/DetAl_nCaptAlGamma");
+		SimBetaDecayAnalyzer AH3(&OM,"DetAl_nCaptAlGamma",OM.basePath+"/DetAl_nCaptAlGamma/DetAl_nCaptAlGamma");
 		AH3.scaleData(0.594);
 		
 		AH.addSegment(AH1);
