@@ -10,14 +10,20 @@
 #include <fstream>
 #include <string>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
-static double expected_fierz = 0.654026;
-static unsigned nToSim = 1E6;				// how many triggering events to simulate
+//static double expected_fierz = 0.654026;
+static double expected_fierz = 0.6111;
+static unsigned nToSim = 50E6;				// how many triggering events to simulate
 static double loading_prob = 50; 			// ucn loading probability 
-static int bins = 40;						// replace with value from data or smoothing fit
-double scale_x = 1.015;
-double min_E = 120;
-double max_E = 700;
+static int bins = 150;						// replace with value from data or smoothing fit
+//double scale_x = 1.015;
+double scale_x = 1.0;
+double min_E = 150;
+double max_E = 600;
 
 class FierzHistogram {
   public: 
@@ -57,7 +63,7 @@ class FierzHistogram {
 };
 
 // ug. needs to be static
-FierzHistogram mc(0,1000,40);
+FierzHistogram mc(0,1500,bins);
 
 /**
  * x[0] : kenetic energy
@@ -92,6 +98,7 @@ void normalize(TH1F* hist) {
 TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
     TH1F *super_ratio_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_ratio_histogram->GetNbinsX();
+	std::cout << "bins " << bins;
     for (int bin = 1; bin < bins+2; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
@@ -253,7 +260,7 @@ int main(int argc, char *argv[]) {
 	G4toPMT G2P;
 	// use data from these MC files (most recent unpolarized beta decay, includes Fermi function spectrum correction)
 	// note wildcard * in filename; MC output is split up over many files, but G2P will TChain them together
-	G2P.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_1.root");
+	G2P.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/geant4/output/Baseline_20110826_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined");
     //G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
@@ -276,7 +283,6 @@ int main(int argc, char *argv[]) {
 	//G2P.setGenerators(&PGenE,&PGenW);
 	G2P.setCalibrator(PCal);
 
-	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	
     /*
     double minBin = 0;
@@ -292,9 +298,16 @@ int main(int argc, char *argv[]) {
 	// note that it can take many seconds to load the first point of a scan (loading file segment into memory), but will go much faster afterwards.
 	G2P.startScan(false);
 
-	while(true) {
+	srand ( time(NULL) );
+
+	TChain* tchain = G2P.getChain();  // can be used to for GetEntries()
+	int n = tchain->GetEntries();
+	std::cout << "Total number of emtries without cuts: " << n << std::endl;
+
+	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
+	while(G2P.nextPoint()) { // will stop 
 		// load next point. If end of data is reached, this will loop back and start at the beginning again.
-		G2P.nextPoint();
+		//G2P.nextPoint();
 
 		// perform energy calibrations/simulations to fill class variables with correct values for this simulated event
 		G2P.recalibrateEnergy();
@@ -392,7 +405,8 @@ int main(int argc, char *argv[]) {
 	    //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined.root");
         //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
 		//"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/OctetAsym_10keV_Bins.root");
-		"/home/mmendenhall/UCNA/PostPlots/OctetAsym_Offic/OctetAsym_Offic.root");
+		//"/home/mmendenhall/UCNA/PostPlots/OctetAsym_Offic/OctetAsym_Offic.root");
+		"/home/mmendenhall/Plots/OctetAsym_Offic/OctetAsym_Offic.root");
 	if (ucna_data_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
@@ -459,6 +473,7 @@ int main(int argc, char *argv[]) {
 
     // Compute the super sums
     TH1F *super_sum_histogram = compute_super_sum(ucna_data_histogram);
+	std::cout << "Number of super sum entries " << super_sum_histogram->GetEntries() << std::endl;
     normalize(super_sum_histogram);
     super_sum_histogram->SetLineColor(2);
 	super_sum_histogram->SetStats(0);
@@ -493,6 +508,8 @@ int main(int argc, char *argv[]) {
     fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
+	std::cout << super_sum_histogram->GetNbinsX() << std::endl;
+	std::cout << mc.sm_super_sum_histogram->GetNbinsX() << std::endl;
 
 	// fit the Fierz ratio 
 	char fit_str[1024];

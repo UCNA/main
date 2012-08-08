@@ -9,7 +9,7 @@
 #include <fstream>
 #include <string>
 #include "Studies/BetaSpectrum.hh" 
-#include "ucnG4_dev/include/bmPrimaryGeneratorAction.hh"
+//#include "ucnG4_dev/include/bmPrimaryGeneratorAction.hh"
 
 
 const double    Q           = 782.344;              /// end point KE        			(30)
@@ -21,19 +21,22 @@ const int 		n 			= 1E4;					/// number of points to simulate
 double PhaseSpaceIntegral() {
 	double integral = 0;
 	for (double KE = 0; KE < Q; KE += Q/(double)n)
-	{
-		//double P = correctedBetaSpectrum(KE) / n * 1.2078377907569861626768670;
-		double P = correctedBetaSpectrum(KE) / n;
-		integral += P;
-		printf("%f\t%.12f\n", KE, P);
-	}
+		integral += correctedBetaSpectrum(KE) / n;
 
-	//printf("%16.25f\n", 1/integral);
+	printf("%16.25f\n", integral);
 	return integral;
 }
 
+void PhaseSpaceCurve() {
+	for (double KE = 0; KE < Q; KE += Q/(double)n)
+	{
+		double P = correctedBetaSpectrum(KE) / n / 1.1356741907175162964449555;
+		printf("%f\t%.12f\n", KE, P);
+	}
+}
 
 
 int main (int argc, char ** argv) {
-	PhaseSpaceIntegral();
+	//PhaseSpaceIntegral();
+	PhaseSpaceCurve();
 }
