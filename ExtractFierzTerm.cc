@@ -15,15 +15,16 @@
 #include <time.h>
 
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
-//static double expected_fierz = 0.654026;
-static double expected_fierz = 0.6111;
+double min_E = 150;
+double max_E = 600;
+//static double expected_fierz = 0.6540;	// full range
+static double expected_fierz = 0.6111;		// for range 150 - 600
+static double expected_gluck = 11.8498;     // for range 150 - 600
 static unsigned nToSim = 50E6;				// how many triggering events to simulate
 static double loading_prob = 50; 			// ucn loading probability 
 static int bins = 150;						// replace with value from data or smoothing fit
 //double scale_x = 1.015;
 double scale_x = 1.0;
-double min_E = 150;
-double max_E = 600;
 
 class FierzHistogram {
   public: 
