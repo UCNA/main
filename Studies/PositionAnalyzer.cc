@@ -1,14 +1,13 @@
 #include "PositionAnalyzer.hh"
 
-PositionAnalyzer::PositionAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"position"), offSects(5.0,45.0) {
+PositionAnalyzer::PositionAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"position"), offSects(5,45.0) {
 	myA->ignoreMissingHistos = true;
 	for(unsigned int m=0; m<offSects.nSectors(); m++) {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
-			poff[d].push_back(registerFGBGPair("pOff_"+itos(m), "Type I Position Offsets",50,-25, 25));
+			poff[d].push_back(registerFGBGPair((d==X_DIRECTION?"pOff_X_":"pOff_Y_")+itos(m), "Type I Position Offsets",50,-25, 25));
 			poff[d].back()->setAxisTitle(X_DIRECTION,"E-W offset [mm]");
 		}
 	}
-	myA->ignoreMissingHistos = false;
 	
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_III_EVENT; ++t) {
@@ -20,6 +19,7 @@ PositionAnalyzer::PositionAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"p
 			qPositions[s][t]->setAxisTitle(Y_DIRECTION,"y Position [mm]");
 		}
 	}
+	myA->ignoreMissingHistos = false;
 }
 
 void PositionAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {

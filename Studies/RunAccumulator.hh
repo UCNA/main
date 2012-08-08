@@ -109,6 +109,8 @@ public:
 	void setCurrentState(AFPState afp, GVState gv);
 	/// fill core histograms in plugins from data point
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
+	/// calculate results from filled histograms
+	virtual void calculateResults();
 	/// make plots from each plugin
 	virtual void makePlots();
 	/// MC/Data comparison plots/calculations from each plugin
@@ -139,17 +141,17 @@ protected:
 class AnalyzerPlugin {
 public:
 	/// constructor
-	AnalyzerPlugin(RunAccumulator* RA, const std::string& nm): name(nm), myA(RA) {}
+	AnalyzerPlugin(RunAccumulator* RA, const std::string& nm): name(nm), myA(RA) { }
 	/// destructor
 	virtual ~AnalyzerPlugin() {}
 	/// create or load a FG/BG TH1F* set
 	fgbgPair* registerFGBGPair(const std::string& hname, const std::string& title,
 							   unsigned int nbins, float xmin, float xmax,
-							   AFPState a = AFP_OTHER, Side s = BOTH) { return registerFGBGPair(hname,title,nbins,xmin,xmax,a,s); }
+							   AFPState a = AFP_OTHER, Side s = BOTH) { return myA->registerFGBGPair(hname,title,nbins,xmin,xmax,a,s); }
 	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
-	fgbgPair* registerFGBGPair(const TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH) { return registerFGBGPair(hTemplate,a,s); }
+	fgbgPair* registerFGBGPair(const TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH) { return myA->registerFGBGPair(hTemplate,a,s); }
 	/// save canvas image
-	void printCanvas(std::string fname, std::string suffix=".pdf") const { printCanvas(fname,suffix); }
+	void printCanvas(std::string fname, std::string suffix=".pdf") const { myA->printCanvas(fname,suffix); }
 	
 	std::string name;				//< plugin name
 	RunAccumulator* myA;			//< RunAccumulator with which this plugin is associated

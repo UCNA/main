@@ -86,14 +86,14 @@ private:
 class OctetAnalyzerPlugin: public AnalyzerPlugin {
 public:
 	/// constructor
-	OctetAnalyzerPlugin(OctetAnalyzer* OA, const std::string& nm): AnalyzerPlugin(OA,nm), myA(OA) {}
+	OctetAnalyzerPlugin(OctetAnalyzer* OA, const std::string& nm): AnalyzerPlugin(OA,nm), myA(OA) { }
 	
 	/// create or load a FG/BG,OFF/ON histogram set
 	quadHists* registerCoreHist(const std::string& hname, const std::string& title,
 								unsigned int nbins, float xmin,
-								float xmax, Side s = BOTH) { return registerCoreHist(hname,title,nbins,xmin,xmax,s); }
+								float xmax, Side s = BOTH) { return myA->registerCoreHist(hname,title,nbins,xmin,xmax,s); }
 	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
-	quadHists* registerCoreHist(const TH1& hTemplate, Side s = BOTH) { return registerCoreHist(hTemplate,s); }
+	quadHists* registerCoreHist(const TH1& hTemplate, Side s = BOTH) { return myA->registerCoreHist(hTemplate,s); }
 	
 	// ---- some utility routines for common analysis/output operations ---- //
 	

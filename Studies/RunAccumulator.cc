@@ -1,5 +1,6 @@
 #include "RunAccumulator.hh"
 #include "GraphUtils.hh"
+#include "SMExcept.hh"
 
 TRandom3 RunAccumulator::rnd_source;
 
@@ -41,7 +42,11 @@ void fgbgPair::setAxisTitle(AxisDirection d, const std::string& ttl) {
 fgbgPair* RunAccumulator::registerFGBGPair(const std::string& hname, const std::string& title,
 										  unsigned int nbins, float xmin, float xmax, AFPState a, Side s) {
 	fgbgPair* p = new fgbgPair(hname,title,a,s);
-	assert(fgbgHists.find(p->getName())==fgbgHists.end()); // don't duplicate names!
+	if(fgbgHists.find(p->getName())!=fgbgHists.end()) {
+		SMExcept e("duplicateHistoName");
+		e.insert("name",p->getName());
+		throw e;
+	}
 	for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
 		p->h[gv] = registerSavedHist(p->getHistoName(gv),p->getHistoTitle(gv),nbins,xmin,xmax);
 		if(!p->h[gv]->GetSumw2N())
@@ -55,7 +60,11 @@ fgbgPair* RunAccumulator::registerFGBGPair(const TH1& hTemplate, AFPState a, Sid
 	std::string hname = hTemplate.GetName();
 	std::string htitle = hTemplate.GetTitle();
 	fgbgPair* p = new fgbgPair(hname,htitle,a,s);
-	assert(fgbgHists.find(p->getName())==fgbgHists.end()); // don't duplicate names!
+	if(fgbgHists.find(p->getName())!=fgbgHists.end()) {
+		SMExcept e("duplicateHistoName");
+		e.insert("name",p->getName());
+		throw e;
+	}
 	for(int fg = 1; fg >=0; fg--) {
 		p->h[fg] = registerSavedHist(p->getHistoName(fg),hTemplate);
 		if(!p->h[fg]->GetSumw2N())
@@ -143,6 +152,11 @@ AnalyzerPlugin* RunAccumulator::getPlugin(const std::string& nm) {
 void RunAccumulator::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++)
 		it->second->fillCoreHists(PDS,weight);
+}
+
+void RunAccumulator::calculateResults() {
+	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++)
+		it->second->calculateResults();
 }
 
 void RunAccumulator::makePlots() {
