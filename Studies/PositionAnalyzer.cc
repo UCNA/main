@@ -37,7 +37,25 @@ void PositionAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 }
 
 void PositionAnalyzer::calculateResults() {
-	
+	float x,y;
+	TF1 gausFit("gasufit","gaus",-25,25);
+	gausFit.SetLineColor(2);
+	for(unsigned int m=0; m<offSects.nSectors(); m++) {
+		Stringmap odat;
+		offSects.sectorCenter(m,x,y);
+		odat.insert("m",itos(m));
+		odat.insert("x",x);
+		odat.insert("y",y);
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+			std::string axname = (d==X_DIRECTION?"x":"y");
+			poff[d][m]->h[GV_OPEN]->Fit(&gausFit,"QR");
+			odat.insert("d"+axname,gausFit.GetParameter(1));
+			odat.insert("d_d"+axname,gausFit.GetParError(1));
+			odat.insert("w"+axname,gausFit.GetParameter(2));
+			odat.insert("d_w"+axname,gausFit.GetParError(2));
+		}
+		myA->qOut.insert("posOffset",odat);
+	}
 }
 
 void PositionAnalyzer::makePlots() {
