@@ -347,8 +347,8 @@ void bmPrimaryGeneratorAction::selectVertex() {
 		// uniform fill of decay trap volume
 		randomTubePosition(G4ThreeVector(0,0,0), 62.2*mm, 1.5*m, vertex_position);
 	} else if(positioner=="DecayTrapFiducial") {
-		// uniform fill of 5.5cm radius volume from which events reach detectors
-		randomTubePosition(G4ThreeVector(0,0,0), 5.5*cm, 1.5*m, vertex_position);
+		// uniform fill out to collimator radius
+		randomTubePosition(G4ThreeVector(0,0,0), myDetector->trap.fIRcollimator, 1.5*m, vertex_position);
 	} else if(positioner=="DecayTrapSurface") {
 		randomCylPosition(G4ThreeVector(0,0,0),myDetector->trap.fIRtrap,1.5*m,vertex_position);
 	} else if(positioner=="SpectrometerWall") {

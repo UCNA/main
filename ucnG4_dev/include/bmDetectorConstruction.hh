@@ -106,11 +106,20 @@ private:
 	G4UIcmdWithAString* fFieldCmd;					//< whether to turn on/off the magnetic field
 	G4String fieldSwitch;
 	
+	G4UIcmdWithABool* fAFPFieldCmd;					//< whether to enable the AFP fringe field
+	bool fAddAFPField;
+	
 	G4UIcmdWithAString* fFieldMapFileCmd;			//< which field map to use
 	TString sFieldMapFile;	
 	
 	G4UIcmdWith3VectorAndUnit* fSourceHolderPosCmd;	//< source holder position
 	G4ThreeVector fSourceHolderPos;
+	
+	G4UIcmdWith3VectorAndUnit* fDetOffsetCmd;		//< Symmetrical detector offset from center axis
+	G4ThreeVector fDetOffset;
+	
+	G4UIcmdWithADouble* fDetRotCmd;					//< Symmetrical detector rotation angle around Z axis (radians)
+	Float_t fDetRot;
 	
 	G4UIcmdWithABool* fInFoilCmd;					//< construction of Indium 10um Al source foil
 	bool makeInFoil;

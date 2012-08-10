@@ -51,7 +51,7 @@
 
 #include <cassert>
 
-bmDetectorConstruction::bmDetectorConstruction() {
+bmDetectorConstruction::bmDetectorConstruction(): fpMagField(NULL) {
 	
 	fDetectorDir = new G4UIdirectory("/detector/");
 	fDetectorDir->SetGuidance("/detector control");
@@ -59,15 +59,36 @@ bmDetectorConstruction::bmDetectorConstruction() {
 	fDetectorGeometry = new G4UIcmdWithAString("/detector/geometry",this);
 	fDetectorGeometry->SetGuidance("Set the geometry of the detector");
 	fDetectorGeometry->AvailableForStates(G4State_PreInit);
+	sGeometry = "C";
 	
 	fFieldCmd = new G4UIcmdWithAString("/detector/field",this);
 	fFieldCmd->SetGuidance("Set B field switch");
+	fieldSwitch = "on";
 	
+	fAFPFieldCmd = new G4UIcmdWithABool("/detector/afpfield",this);
+	fAFPFieldCmd->SetGuidance("Set true to add AFP fringe field to magnetic field model");
+	fAFPFieldCmd->SetDefaultValue(false);
+	fAddAFPField = false;
+	
+	fDetOffsetCmd = new G4UIcmdWith3VectorAndUnit("/detector/offset",this);
+	fDetOffsetCmd->SetGuidance("antisymmetric offset of detector packages from central axis");
+	fDetOffsetCmd->SetDefaultValue(G4ThreeVector());
+	fDetOffsetCmd->AvailableForStates(G4State_PreInit);
+	fDetOffset = G4ThreeVector();
+	
+	fDetRotCmd = new G4UIcmdWithADouble("/detector/rotation",this);
+	fDetRotCmd->SetGuidance("Antisymmetric rotation of detector packages around z axis");
+	fDetRotCmd->SetDefaultValue(0.);
+	fDetRotCmd->AvailableForStates(G4State_PreInit);
+	fDetRot = 0.;
+
 	fFieldMapFileCmd = new G4UIcmdWithAString("/detector/fieldmapfile",this);
 	fFieldMapFileCmd->SetGuidance("Set B field map file");
+	sFieldMapFile = "";
 	
 	fVacuumLevelCmd = new G4UIcmdWithADoubleAndUnit("/detector/vacuum",this);
 	fVacuumLevelCmd->SetGuidance("Set SCS vacuum pressure");
+	fVacuumPressure = 0;
 	
 	fMWPCBowingCmd = new G4UIcmdWithADoubleAndUnit("/detector/MWPCBowing",this);
 	fMWPCBowingCmd->SetGuidance("Set extra wirechamber width from bowing");
@@ -108,12 +129,6 @@ bmDetectorConstruction::bmDetectorConstruction() {
 	
 	experimentalHall_log = NULL;
 	experimentalHall_phys = NULL;
-	
-	sGeometry = "A";
-	fpMagField = 0;
-	fieldSwitch = "on";
-	sFieldMapFile = "";
-	fVacuumPressure = 0;
 }
 
 void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValue) {
@@ -123,6 +138,16 @@ void bmDetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValu
 		fieldSwitch = G4String(newValue);
 	} else if (command == fFieldMapFileCmd) {
 		sFieldMapFile = TString(newValue);
+	} else if(command == fAFPFieldCmd) {
+		fAddAFPField = fAFPFieldCmd->GetNewBoolValue(newValue);
+		if(fpMagField) fpMagField->addAFP = fAddAFPField;
+		G4cout << "Setting AFP field inclusion to " << fAddAFPField << G4endl;
+	} else if (command == fDetOffsetCmd) {
+		fDetOffset = fDetOffsetCmd->GetNew3VectorValue(newValue);
+		G4cout << "Setting detector offsets to " << fDetOffset/mm << " mm" << G4endl;
+	} else if (command == fDetRotCmd) {
+		fDetRot = fDetRotCmd->GetNewDoubleValue(newValue);
+		G4cout << "Setting detector rotation to " << fDetRot << " radians" << G4endl;
 	} else if (command == fSourceHolderPosCmd) {
 		fSourceHolderPos = fSourceHolderPosCmd->GetNew3VectorValue(newValue);
 		G4cout<<"setting the source at "<<fSourceHolderPos/m<<G4endl;
@@ -254,9 +279,10 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 			
 			dets[s].Construct(s);
 			G4RotationMatrix* sideFlip = new G4RotationMatrix();
+			sideFlip->rotateZ(fDetRot*ssign(s)*rad);
 			if(s==EAST)
 				sideFlip->rotateY(M_PI*rad);
-			G4ThreeVector sideTrans = G4ThreeVector(0.,0.,ssign(s)*(2.2*m-dets[s].getScintFacePos()));
+			G4ThreeVector sideTrans = G4ThreeVector(0.,0.,ssign(s)*(2.2*m-dets[s].getScintFacePos()))+fDetOffset*ssign(s);
 			
 			detPackage_phys[s] = new G4PVPlacement(sideFlip,sideTrans,
 												   dets[s].container_log,sideSubst("detPackage_phys%c",s),experimentalHall_log,false,0);
@@ -345,6 +371,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 		ConstructField(sFieldMapFile);
 		//then switch the field on or off based on the UI
 		SetFieldOnOff(fieldSwitch);
+		fpMagField->addAFP = fAddAFPField;
 	}
 	
 	return experimentalHall_phys;

@@ -28,6 +28,8 @@ public:
 	/// load fieldmap from file
 	void LoadFieldMap(const TString filename);
 	
+	bool addAFP;	//< whether to add the AFP fringe field
+	
 private:
 	/// add point to field profile
 	void addPoint(G4double z, G4double B) { Zpoints.push_back(z); Bpoints.push_back(B); }

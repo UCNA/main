@@ -270,11 +270,13 @@ if __name__ == "__main__":
 	####################
 	
 	# unpolarized beta baseline: 5e7 in 52 clusters
-	if 0:
-		betaSim = GeantSimManager("Test")
+	if 1:
+		betaSim = GeantSimManager("20120810")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
-		betaSim.launch_sims(nEvents=2e4,nClusters=1,hours_old=0)
+		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
+		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
+		betaSim.launch_sims(nEvents=5e7,nClusters=52,hours_old=0)
 		betaSim.launch_postanalyzer()
 	
 	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 52 clusters
@@ -370,7 +372,7 @@ if __name__ == "__main__":
 		nCapt.set_generator("nCaptCu",forcePositioner="TrapWall")
 		nCapt.launch_sims(nEvents=1e7,nClusters=6,hours_old=0)
 		nCapt.launch_postanalyzer()
-	if 1:
+	if 0:
 		nCapt = GeantSimManager("ScintFace")
 		nCapt.set_generator("nCaptH",forcePositioner="ScintFace")
 		nCapt.launch_sims(nEvents=1e7,nClusters=36,hours_old=0)
@@ -380,10 +382,15 @@ if __name__ == "__main__":
 	# visualization test
 	##################
 	if 0:
-		vtest = GeantSimManager("VisTest")
+		vtest = GeantSimManager("DetShift")
 		vtest.set_generator("eGunRandMomentum")
 		vtest.settings["positioner"] = "Fixed"
+		self.settings["gunpos_mm"] = [-30,0.,0.]
 		vtest.settings["gunenergy"] = 500
-		vtest.enable_vis()
-		vtest.launch_sims(nEvents=10,nClusters=0,hours_old=0)
+		vtest.settings["extra_cmds"] += "/detector/rotation 0.037\n"
+		vtest.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
+		#vtest.settings["extra_cmds"] += "/detector/afpfield y\n"
+		#vtest.enable_vis()
+		vtest.launch_sims(nEvents=1e4,nClusters=1,hours_old=0)
+		vtest.launch_postanalyzer()
 

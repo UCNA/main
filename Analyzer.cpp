@@ -157,7 +157,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 		if(!oct.getNRuns()) return;
 		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir);
 		BetaDecayAnalyzer AA(&OM,oct.octName());
-		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false),0.*3600);
+		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false),10.*24*3600);
 	}
 }
 

@@ -391,7 +391,7 @@ unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, do
 	
 	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
 		octn++;
-		if(octn == 2+1 || octn == 17+1 || octn == 30+1) continue;
+		//if(octn == 2+1 || octn == 17+1 || octn == 30+1) continue; // anomalous gamma backgrounds
 		
 		
 		// check if there are any runs to process
