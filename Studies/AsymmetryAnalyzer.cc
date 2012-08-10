@@ -14,7 +14,6 @@ TF1 AsymmetryAnalyzer::averagerFit = TF1("averagerFit","pol0",0,neutronBetaEp);
 AnalysisChoice  AsymmetryAnalyzer::anChoice = ANCHOICE_A;
 
 AsymmetryAnalyzer::AsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500) {
-	myA->ignoreMissingHistos = true;
 	for(Side s = EAST; s <= WEST; ++s) {
 		qExcessr2[s] = registerCoreHist("Excessr2","Excess events radial distribution",10,0,80*80,s);
 		qExcessr2[s]->setAxisTitle(X_DIRECTION,"event radius squared [mm^2]");
@@ -24,7 +23,6 @@ AsymmetryAnalyzer::AsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,
 		qExcessSpectra[s]->setAxisTitle(X_DIRECTION,"Energy [keV]");
 		qExcessGamma[s] = registerCoreHist("ExcessGamma","Excess high energy gamma event spectrum",72,800,8000,s);
 		qExcessGamma[s]->setAxisTitle(X_DIRECTION,"Energy [keV]");
-		qAnodeCal[s] = registerCoreHist("AnodeCal","Anode Calibration Events",50, 0, 8, s);
 		TH2F hBGDecayTemplate("hBGDecay","energy vs time",60,0,300,80,0,2000);
 		qBGDecay[s] = registerCoreHist(hBGDecayTemplate,s);
 		qBGDecay[s]->setSubtraction(false);
@@ -40,7 +38,6 @@ AsymmetryAnalyzer::AsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,
 			}
 		}
 	}
-	myA->ignoreMissingHistos = false;
 }
 
 void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
@@ -57,8 +54,6 @@ void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 		qExcessr2[s]->fillPoint->Fill(PDS.radius2(s),weight);
 		qExcessTheta[s]->fillPoint->Fill(atan2(PDS.wires[s][Y_DIRECTION].center,PDS.wires[s][X_DIRECTION].center),weight);
 	}
-	if(PDS.passesPositionCut(s) && PDS.fType == TYPE_0_EVENT && PDS.getEtrue()>225)
-		qAnodeCal[s]->fillPoint->Fill(PDS.mwpcEnergy[s]/PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock[s]),weight);
 	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT) {
 		qEnergySpectra[s][nBetaTubes][PDS.fType]->fillPoint->Fill(PDS.getEtrue(),weight);
 		((TH2F*)qBGDecay[s]->fillPoint)->Fill(PDS.runClock[s],PDS.getEtrue(),weight);
@@ -174,27 +169,6 @@ void AsymmetryAnalyzer::highEnergyExcess(quadHists* qh, double e0, double e1) {
 	}
 }
 
-void AsymmetryAnalyzer::anodeCalFits() {
-	for(Side s = EAST; s <= WEST; ++s) {
-		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-			TF1 fLandau("landauFit","landau",0,15);
-			fLandau.SetLineColor(2+2*s);
-			int fiterr = qAnodeCal[s]->fgbg[afp]->h[1]->Fit(&fLandau,"Q");
-			Stringmap m;
-			m.insert("afp",afpWords(afp));
-			m.insert("side",ctos(sideNames(s)));
-			m.insert("fiterr",itos(fiterr));
-			m.insert("height",fLandau.GetParameter(0));
-			m.insert("d_height",fLandau.GetParError(0));
-			m.insert("mpv",fLandau.GetParameter(1));
-			m.insert("d_mpv",fLandau.GetParError(1));
-			m.insert("sigma",fLandau.GetParameter(2));
-			m.insert("d_sigma",fLandau.GetParError(2));
-			myA->qOut.insert("anodeCalFit",m);
-		}
-	}
-}
-
 void AsymmetryAnalyzer::calculateResults() {
 	
 	// build total spectra based on analysis choice
@@ -250,7 +224,6 @@ void AsymmetryAnalyzer::calculateResults() {
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_IV_EVENT; ++tp)
 			highEnergyExcess(qEnergySpectra[s][nBetaTubes][tp],1000,7000);
 	}
-	anodeCalFits();
 	myA->makeRatesSummary();
 }
 
@@ -319,9 +292,7 @@ void AsymmetryAnalyzer::makePlots() {
 	
 	hSuperSum->Draw();
 	printCanvas("SuperSum");
-	
-	drawQuadSides(qAnodeCal[EAST], qAnodeCal[WEST], true, "AnodeCal");
-	
+		
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++)
 		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][t], qEnergySpectra[WEST][nBetaTubes][t], true, "Energy");
 	drawQuadSides(qEnergySpectra[EAST][nBetaTubes][TYPE_IV_EVENT], qEnergySpectra[WEST][nBetaTubes][TYPE_IV_EVENT], true, "Energy");

@@ -35,7 +35,6 @@ public:
 	TH1F* hEvtSS[TYPE_III_EVENT];	//< super-sum for each event type
 	
 	quadHists* qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
-	quadHists* qAnodeCal[2];										//< anode calibration spectrum (Type 0, Erecon>225)
 	quadHists* qTotalSpectrum[2];									//< total spectrum based on analysis choice
 	quadHists* qBGDecay[2];											//< 5min E vs. time plot to see decaying BG components
 	quadHists* qExcessSpectra[2];									//< excess high-energy event spectrum
@@ -53,8 +52,6 @@ protected:
 	void endpointFits();
 	/// fit beyond-endpoint background subtraction
 	void highEnergyExcess(quadHists* qh, double e0, double e1);
-	/// anode calibration fits
-	void anodeCalFits();
 	
 	std::vector<AnaResult> asymFits;	//< list of asymmetry fits available for upload
 	std::vector<AnaCutSpec> asymCuts;	//< list of cut specifications for asymmetry fits

@@ -3,6 +3,7 @@
 
 #include "MuonAnalyzer.hh"
 #include "PositionAnalyzer.hh"
+#include "WirechamberGainAnalyzer.hh"
 #include "AsymmetryAnalyzer.hh"
 #include "SimAsymmetryAnalyzer.hh"
 
@@ -17,9 +18,10 @@ public:
 	virtual std::string estimatorHistoLocation() const { return processedLocation; }
 	static std::string processedLocation;	//< processed data location for background estimation
 	
-	MuonAnalyzer* myMuons;		//< muons plugin
-	PositionAnalyzer* myPos;	//< positions plugin
-	AsymmetryAnalyzer* myAsym;	//< asymmetry plugin
+	MuonAnalyzer* myMuons;			//< muons plugin
+	PositionAnalyzer* myPos;		//< positions plugin
+	WirechamberGainAnalyzer* myWG;	//< wirechamber gain plugin
+	AsymmetryAnalyzer* myAsym;		//< asymmetry plugin
 };
 
 /// analyzer for beta decay simulation

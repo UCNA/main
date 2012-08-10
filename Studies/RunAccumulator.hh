@@ -138,7 +138,7 @@ protected:
 };
 
 /// generic analyzer plug-in class
-class AnalyzerPlugin {
+class AnalyzerPlugin: private NoCopy {
 public:
 	/// constructor
 	AnalyzerPlugin(RunAccumulator* RA, const std::string& nm): name(nm), myA(RA) { }

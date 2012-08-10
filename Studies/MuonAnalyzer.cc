@@ -1,7 +1,6 @@
 #include "MuonAnalyzer.hh"
 
 MuonAnalyzer::MuonAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"muon"), nEnergyBins(150), energyMax(1500) {
-	myA->ignoreMissingHistos = true;
 	for(Side s = EAST; s <= WEST; ++s) {
 		qMuonSpectra[s][false] = registerCoreHist("hMuonNoSub", "Tagged Muon Events Energy",
 													   nEnergyBins, 0, energyMax, s);
@@ -30,7 +29,6 @@ MuonAnalyzer::MuonAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"muon"), n
 		pBackMuPos[s]->setAxisTitle(X_DIRECTION,"x Position [mm]");
 		pBackMuPos[s]->setAxisTitle(Y_DIRECTION,"y Position [mm]");
 	}
-	myA->ignoreMissingHistos = false;
 }
 
 void MuonAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
