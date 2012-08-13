@@ -20,7 +20,7 @@ double max_E = 600;
 //static double expected_fierz = 0.6540;	// full range
 static double expected_fierz = 0.6111;		// for range 150 - 600
 static double expected_gluck = 11.8498;     // for range 150 - 600
-static unsigned nToSim = 50E6;				// how many triggering events to simulate
+static unsigned nToSim = 5E7;				// how many triggering events to simulate
 static double loading_prob = 50; 			// ucn loading probability 
 static int bins = 150;						// replace with value from data or smoothing fit
 //double scale_x = 1.015;
@@ -61,6 +61,12 @@ class FierzHistogram {
     void normalizeHistogram(TH1F* hist) {
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
     }
+
+    void normalizeHistogram(TH1F* hist, double min, double max) {
+		int intmin = hist->FindBin(min);
+		int intmax = hist->FindBin(max);
+        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(intmin, intmax)));
+    }
 };
 
 // ug. needs to be static
@@ -93,6 +99,12 @@ double mc_model(double *x, double*p) {
 
 void normalize(TH1F* hist) {
     hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
+}
+
+void normalize(TH1F* hist, double min, double max) {
+	int intmin = hist->FindBin(min);
+	int intmax = hist->FindBin(max);
+	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(intmin, intmax)));
 }
 
 // S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
@@ -303,7 +315,7 @@ int main(int argc, char *argv[]) {
 
 	TChain* tchain = G2P.getChain();  // can be used to for GetEntries()
 	int n = tchain->GetEntries();
-	std::cout << "Total number of emtries without cuts: " << n << std::endl;
+	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
 
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	while(G2P.nextPoint()) { // will stop 
@@ -354,16 +366,22 @@ int main(int argc, char *argv[]) {
 			break;
 	}
     
+	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
+
     mc.sm_super_sum_histogram = compute_super_sum(mc.sm_histogram);
-    normalize(mc.sm_super_sum_histogram);
+    //normalize(mc.sm_super_sum_histogram);
+    normalize(mc.sm_super_sum_histogram, min_E, max_E);
 
     mc.fierz_super_sum_histogram = compute_super_sum(mc.fierz_histogram);
-    normalize(mc.fierz_super_sum_histogram);
+    //normalize(mc.fierz_super_sum_histogram);
+    normalize(mc.fierz_super_sum_histogram, min_E, max_E);
 
     for (int side = 0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++) {
-            normalize(mc.fierz_histogram[side][spin]);
-            normalize(mc.sm_histogram[side][spin]);
+            //normalize(mc.fierz_histogram[side][spin]);
+            //normalize(mc.sm_histogram[side][spin]);
+            normalize(mc.fierz_histogram[side][spin], min_E, max_E);
+            normalize(mc.sm_histogram[side][spin], min_E, max_E);
         }
 
 
@@ -475,7 +493,8 @@ int main(int argc, char *argv[]) {
     // Compute the super sums
     TH1F *super_sum_histogram = compute_super_sum(ucna_data_histogram);
 	std::cout << "Number of super sum entries " << super_sum_histogram->GetEntries() << std::endl;
-    normalize(super_sum_histogram);
+    //normalize(super_sum_histogram);
+    normalize(super_sum_histogram, min_E, max_E);
     super_sum_histogram->SetLineColor(2);
 	super_sum_histogram->SetStats(0);
     super_sum_histogram->Draw("");
@@ -507,7 +526,8 @@ int main(int argc, char *argv[]) {
     // compute little b factor
     TH1F *fierz_ratio_histogram = new TH1F(*super_sum_histogram);
     fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
-    fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
+    //fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
+    fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
 	std::cout << super_sum_histogram->GetNbinsX() << std::endl;
 	std::cout << mc.sm_super_sum_histogram->GetNbinsX() << std::endl;
