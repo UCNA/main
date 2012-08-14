@@ -3,6 +3,7 @@
 
 #include "RunAccumulator.hh"
 #include "WirechamberCalibrator.hh"
+#include <TGraphErrors.h>
 
 /// Struct for cathode calibration data
 struct CathodeSeg {
@@ -22,10 +23,23 @@ Stringmap cathseg2sm(const CathodeSeg& c);
 CathodeSeg sm2cathseg(const Stringmap& m);
 
 /// analyzer plugin for wirechamber position/calibration analysis
-class WirechamberGainAnalyzer: public AnalyzerPlugin {
+class CathodeGainAnalyzer: public AnalyzerPlugin {
 public:
 	/// constructor
-	WirechamberGainAnalyzer(RunAccumulator* RA);
+	CathodeGainAnalyzer(RunAccumulator* RA);
+	/// process a data point into position histograms
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
+	
+	fgbgPair* cathNorm[2][2][kMaxCathodes];		//< cathode normalization histograms by [side][plane][cathode]
+};
+
+
+class AnodeGainAnalyzer: public AnalyzerPlugin {
+public:
+	/// constructor
+	AnodeGainAnalyzer(RunAccumulator* RA);
+	/// destructor
+	~AnodeGainAnalyzer();
 	/// process a data point into position histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// calculations on filled histograms
@@ -35,10 +49,21 @@ public:
 	/// MC/data comparison
 	virtual void compareMCtoData(AnalyzerPlugin* AP);
 	
-	fgbgPair* cathNorm[2][2][kMaxCathodes];	//< cathode normalization histograms
-	fgbgPair* anodeCal[2];					//< anode calibration spectrum (Type 0, Erecon>225)
+	fgbgPair* anodeCal[2][TYPE_III_EVENT+1];	//< anode energy spectrum binned by event energy by [side][type]
+	fgbgPair* anodeGaincorr;					//< average anode gain correction factor in use
+	TGraphErrors* gAnode[2][TYPE_III_EVENT+1];	//< anode energy distribution fit
 };
 
+/// analyzer plugin for evaluating simulated Type II/III MWPC energy deposition split
+class WirechamberSimTypeID: public AnalyzerPlugin {
+public:
+	/// constructor
+	WirechamberSimTypeID(RunAccumulator* RA);
+	/// process a data point into position histograms
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
+	
+	fgbgPair* anodeTypeID[2][TYPE_III_EVENT+1];	//< anode energy spectrum binned by event energy by [side][type]
+};
 
 
 #endif

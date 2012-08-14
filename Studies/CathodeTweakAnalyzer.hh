@@ -28,8 +28,8 @@ public:
 	/// create a new instance of this analyzer
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new MWPCTuningAnalyzer(this,nm,inflname); }
 	
-	WirechamberGainAnalyzer* myWG;		//< wirechamber gain
-	CathodeTweakAnalyzer* myCT;			//< cathode position tweaking
+	CathodeGainAnalyzer* myCG;		//< cathode gain
+	CathodeTweakAnalyzer* myCT;		//< cathode position tweaking
 };
 
 /// process wirechamber calibration data

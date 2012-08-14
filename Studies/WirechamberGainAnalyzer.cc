@@ -1,4 +1,8 @@
 #include "WirechamberGainAnalyzer.hh"
+#include "GraphUtils.hh"
+#include <TH2F.h>
+#include <TH3F.h>
+#include <TProfile.h>
 
 Stringmap cathseg2sm(const CathodeSeg& c) {
 	Stringmap m;
@@ -32,9 +36,8 @@ CathodeSeg sm2cathseg(const Stringmap& m) {
 
 //---------------------------------------------------
 
-WirechamberGainAnalyzer::WirechamberGainAnalyzer(RunAccumulator* RA): AnalyzerPlugin(RA,"wirechambergain") {
+CathodeGainAnalyzer::CathodeGainAnalyzer(RunAccumulator* RA): AnalyzerPlugin(RA,"cathodegain") {
 	for(Side s = EAST; s <= WEST; ++s) {
-		anodeCal[s] = registerFGBGPair("AnodeCal","Anode Calibration Events",50, 0, 8, AFP_OTHER, s);
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(unsigned int c=0; c < kMaxCathodes; c++) {
 				TH2F hCathNormTemplate((std::string("hCathNorm_")+(d==X_DIRECTION?"x_":"y_")+itos(c)).c_str(),
@@ -47,10 +50,10 @@ WirechamberGainAnalyzer::WirechamberGainAnalyzer(RunAccumulator* RA): AnalyzerPl
 	}
 }
 
-void WirechamberGainAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+void CathodeGainAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	const Side s = PDS.fSide;
-	if(!(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA && (s==EAST||s==WEST))) return;
-	if(PDS.mwpcs[s].anode < 1000) { // avoid most massively clipped events
+	if(!(PDS.fPID == PID_BETA && (s==EAST||s==WEST))) return;
+	if(PDS.fType == TYPE_0_EVENT && PDS.mwpcs[s].anode < 1000) { // avoid most massively clipped events
 		unsigned int n;
 		float c;
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
@@ -59,36 +62,159 @@ void WirechamberGainAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double we
 			((TH2F*)cathNorm[s][d][n]->h[currentGV])->Fill(c,PDS.cathodes[s][d][n]/PDS.mwpcs[s].anode,weight);
 		}
 	}
-	if(PDS.passesPositionCut(s) && PDS.getEtrue()>225)
-		anodeCal[s]->h[currentGV]->Fill(PDS.mwpcEnergy[s]/PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock[s]),weight);
 }
 
-void WirechamberGainAnalyzer::calculateResults() {
-	for(Side s = EAST; s <= WEST; ++s) {
-		TF1 fLandau("landauFit","landau",0,15);
-		fLandau.SetLineColor(2+2*s);
-		int fiterr = anodeCal[s]->h[GV_OPEN]->Fit(&fLandau,"Q");
-		Stringmap m;
-		m.insert("side",ctos(sideNames(s)));
-		m.insert("fiterr",itos(fiterr));
-		m.insert("height",fLandau.GetParameter(0));
-		m.insert("d_height",fLandau.GetParError(0));
-		m.insert("mpv",fLandau.GetParameter(1));
-		m.insert("d_mpv",fLandau.GetParError(1));
-		m.insert("sigma",fLandau.GetParameter(2));
-		m.insert("d_sigma",fLandau.GetParError(2));
-		myA->qOut.insert("anodeCalFit",m);
+//---------------------------------------------------
+
+AnodeGainAnalyzer::AnodeGainAnalyzer(RunAccumulator* RA): AnalyzerPlugin(RA,"wirechambergain") {
+	TProfile anodeGaincorrTemplate("pAnodeGaincorr","Anode Gain Correction",2,-0.5,1.5);
+	anodeGaincorr = registerFGBGPair(anodeGaincorrTemplate, AFP_OTHER, BOTH);
+	anodeGaincorr->doSubtraction = false;
+	anodeGaincorr->setAxisTitle(X_DIRECTION, "Side");
+	anodeGaincorr->setAxisTitle(Y_DIRECTION, "Anode Gain Correction Factor");
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+		TH2F hAnodeTemplate(("hAnodeEnergy_Tp"+itos(tp)).c_str(),"MWPC Energy",10,0,1000,50,0,10);
+		for(Side s = EAST; s <= WEST; ++s) {
+			gAnode[s][tp] = NULL;
+			anodeCal[s][tp] = registerFGBGPair(hAnodeTemplate, AFP_OTHER, s);
+			anodeCal[s][tp]->setAxisTitle(X_DIRECTION, "Scintillator Energy [keV]");
+			anodeCal[s][tp]->setAxisTitle(Y_DIRECTION, "Primary Side MWPC Energy [keV]");
+		}
 	}
 }
 
-void WirechamberGainAnalyzer::makePlots() {
-	//drawQuadSides(anodeCal[EAST], anodeCal[WEST], true, "AnodeCal");
-	//TODO
+AnodeGainAnalyzer::~AnodeGainAnalyzer() {
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+			if(gAnode[s][tp]) {
+				delete gAnode[s][tp];
+				gAnode[s][tp] = NULL;
+			}
+		}
+	}
 }
 
-void WirechamberGainAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
+void AnodeGainAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+	const Side s = PDS.fSide;
+	if(!(PDS.fPID == PID_BETA && (s==EAST||s==WEST))) return;
+	((TProfile*)anodeGaincorr->h[currentGV])->Fill(s,PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock[BOTH]),weight);
+	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT)
+		((TH2F*)(anodeCal[s][PDS.fType]->h[currentGV]))->Fill(PDS.getEnergy(),PDS.mwpcEnergy[s],weight);
+}
+
+void AnodeGainAnalyzer::calculateResults() {
+	// fit anode spectrum vs. scintillator energy
+	TF1 fLandau("landauFit","landau",0,10);
+	TF1 fAvg("avgFit","pol0",400,800);
+	for(Side s = EAST; s <= WEST; ++s) {
+		
+		// average gain correction
+		Stringmap mGC;
+		mGC.insert("side",ctos(sideNames(s)));
+		mGC.insert("avg",anodeGaincorr->h[GV_OPEN]->GetBinContent(s+1));
+		mGC.insert("d_avg",anodeGaincorr->h[GV_OPEN]->GetBinError(s+1));
+		myA->qOut.insert("anodeGaincorr",mGC);
+		
+		// fit each scintillator energy slice and record results
+		fLandau.SetLineColor(2+2*s);
+		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+			TH2F* hAnode = (TH2F*)(anodeCal[s][tp]->h[GV_OPEN]);
+			std::vector<TH1D*> fslices = replaceFitSlicesY(hAnode, &fLandau);
+			int nEnergyBins = hAnode->GetNbinsX();
+			assert(fslices.size()==4);
+			for(int i = 0; i < 3; i++)
+				assert(fslices[i]->GetNbinsX()==nEnergyBins);
+			gAnode[s][tp] = new TGraphErrors(nEnergyBins);
+			for(int i=0; i<nEnergyBins; i++) {
+				double e0 = hAnode->GetBinCenter(i+1);
+				Stringmap m;
+				m.insert("side",ctos(sideNames(s)));
+				m.insert("type",itos(tp));
+				m.insert("energy",e0);
+				m.insert("height",fslices[0]->GetBinContent(i+1));
+				m.insert("d_height",fslices[0]->GetBinError(i+1));
+				m.insert("mpv",fslices[1]->GetBinContent(i+1));
+				m.insert("d_mpv",fslices[1]->GetBinError(i+1));
+				m.insert("sigma",fslices[2]->GetBinContent(i+1));
+				m.insert("d_sigma",fslices[2]->GetBinError(i+1));
+				myA->qOut.insert("anodeCalFit",m);
+				gAnode[s][tp]->SetPoint(i,e0,fslices[1]->GetBinContent(i+1));
+				gAnode[s][tp]->SetPointError(i,hAnode->GetBinWidth(i+1)*0.5,fslices[2]->GetBinContent(i+1));
+			}
+			
+			// average anode MPV energy
+			fslices[1]->Fit(&fAvg,"QR");
+			Stringmap m;
+			m.insert("side",ctos(sideNames(s)));
+			m.insert("type",itos(tp));
+			m.insert("avg",fAvg.GetParameter(0));
+			m.insert("d_avg",fAvg.GetParError(0));
+			myA->qOut.insert("anodeCalAvg",m);
+
+			for(unsigned int i=0; i<fslices.size(); ++i)
+				delete fslices[i];
+		}
+	}
+}
+
+void AnodeGainAnalyzer::makePlots() {
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+			if(!gAnode[s][tp]) continue;
+			gAnode[s][tp]->Draw("AP");
+			gAnode[s][tp]->SetTitle((sideSubst("%s Type ",s)+itos(tp)+" Events").c_str());
+			gAnode[s][tp]->GetXaxis()->SetTitle("Scintillator Energy [keV]");
+			gAnode[s][tp]->GetYaxis()->SetTitle("Primary Side MWPC Energy [keV]");
+			gAnode[s][tp]->GetYaxis()->SetRangeUser(0.0,10.0);
+			gAnode[s][tp]->Draw("AP");
+			printCanvas(sideSubst("AnodeCal/EMWPC_%c_",s)+itos(tp));
+		}
+	}
+}
+
+void AnodeGainAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 	// re-cast to correct type
-	WirechamberGainAnalyzer& dat = *(WirechamberGainAnalyzer*)AP;
+	AnodeGainAnalyzer& dat = *(AnodeGainAnalyzer*)AP;
+	
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+			if(!gAnode[s][tp] || !dat.gAnode[s][tp]) continue;
+			dat.gAnode[s][tp]->SetLineColor(2);
+			dat.gAnode[s][tp]->Draw("AP");
+			dat.gAnode[s][tp]->GetXaxis()->SetTitle("Scintillator Energy [keV]");
+			dat.gAnode[s][tp]->GetYaxis()->SetTitle("Primary Side MWPC Energy [keV]");
+			dat.gAnode[s][tp]->GetYaxis()->SetRangeUser(0.0,10.0);
+			dat.gAnode[s][tp]->Draw("AP");
+			gAnode[s][tp]->SetLineColor(4);
+			gAnode[s][tp]->Draw("P");
+			printCanvas(sideSubst("DataComparison/EMWPC_%c_",s)+itos(tp));
+		}
+	}
 }
 
 
+//---------------------------------------------------
+
+
+WirechamberSimTypeID::WirechamberSimTypeID(RunAccumulator* RA): AnalyzerPlugin(RA,"wirechamberTypeID") {
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+		TH3F hAnodeTemplate(("hAnodeTypeID_Tp"+itos(tp)).c_str(),"MWPC Energy",10,0,1000,50,0,10,50,0,10);
+		for(Side s = EAST; s <= WEST; ++s) {
+			if(tp<TYPE_II_EVENT) { anodeTypeID[s][tp] = NULL; continue; }
+			anodeTypeID[s][tp] = registerFGBGPair(hAnodeTemplate, AFP_OTHER, s);
+			anodeTypeID[s][tp]->setAxisTitle(X_DIRECTION, "Scintillator Energy [keV]");
+			anodeTypeID[s][tp]->setAxisTitle(Y_DIRECTION, "Primary Side MWPC energy [keV]");
+			anodeTypeID[s][tp]->setAxisTitle(Z_DIRECTION, "Secondary Side MWPC energy [keV]");
+		}
+	}
+}
+
+void WirechamberSimTypeID::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+	assert(PDS.isSimulated());
+	Sim2PMT& SDS = *(Sim2PMT*)&PDS;
+	const Side s = SDS.fSide; // should be primary side
+	EventType tp = SDS.fType;
+	EventType rtp = (s!=SDS.primSide)?TYPE_II_EVENT:TYPE_III_EVENT;	// "real" event type
+	if(SDS.fPID == PID_BETA && (s==EAST||s==WEST) && PDS.passesPositionCut(s) && (tp==TYPE_II_EVENT||tp==TYPE_III_EVENT))
+		((TH3F*)(anodeTypeID[s][rtp]->h[currentGV]))->Fill(SDS.getEnergy(),SDS.mwpcEnergy[s],SDS.mwpcEnergy[otherSide(s)],weight);
+}

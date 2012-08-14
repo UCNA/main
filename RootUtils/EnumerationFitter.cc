@@ -11,7 +11,7 @@ double EnumerationFitter::Evaluate(double *x, double *p) {
 	int i = (int)(*x);
 	double s = 0;
 	for(unsigned int n=0; n<fterms.size(); n++) {
-		if(i>=0 && i<fterms[n].size());
+		if(i>=0 && i<(int)fterms[n].size());
 			s += fterms[n][i]*p[n];
 	}
 	return s;
