@@ -16,6 +16,8 @@ Stringmap ProcessedDataScanner::evtInfo() {
 	m.insert("EvtN",currentEvent);
 	for(Side s = EAST; s <= WEST; ++s)
 		m.insert(sideSubst("EQ%c",s),scints[s].energy.x);
+	for(Side s = EAST; s <= WEST; ++s)
+		m.insert(sideSubst("MWPC%c",s),mwpcEnergy[s]);
 	m.insert("PID",fPID);
 	m.insert("side",sideSubst("%c",fSide));
 	m.insert("type",fType);

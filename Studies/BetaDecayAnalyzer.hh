@@ -20,19 +20,26 @@ public:
 	
 	MuonAnalyzer* myMuons;			//< muons plugin
 	PositionAnalyzer* myPos;		//< positions plugin
-	WirechamberGainAnalyzer* myWG;	//< wirechamber gain plugin
+	AnodeGainAnalyzer* myAG;		//< wirechamber anode gain plugin
+	CathodeGainAnalyzer* myCG;		//< wirechamber cathode gain plugin
 	AsymmetryAnalyzer* myAsym;		//< asymmetry plugin
 };
 
 /// analyzer for beta decay simulation
-class SimBetaDecayAnalyzer: public BetaDecayAnalyzer {
+class SimBetaDecayAnalyzer: public OctetAnalyzer {
 public:
 	/// constructor
 	SimBetaDecayAnalyzer(OutputManager* pnt, const std::string& nm = "BetaDecayAnalyzer", const std::string& inflName = "");
 	/// create a new instance of this object (cloning self settings) for given directory
-	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new SimBetaDecayAnalyzer(this,nm,inflname); }
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname);
 	
+	MuonAnalyzer* myMuons;				//< muons plugin
+	PositionAnalyzer* myPos;			//< positions plugin
+	AnodeGainAnalyzer* myAG;			//< wirechamber anode gain plugin
+	AsymmetryAnalyzer* myAsym;			//< asymmetry plugin
+
 	SimAsymmetryAnalyzer* mySimAsym;	//< simulated asymmetry plugin
+	WirechamberSimTypeID* mySimID;		//< simulated Type II/III separation
 };
 
 #endif

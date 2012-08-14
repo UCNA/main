@@ -91,6 +91,7 @@ public:
 	double primPos[4];			//< primary event vertex position (4=radius)
 	double time[2];				//< hit time [s] in each scintillator
 	double costheta;			//< primary event cos pitch angle
+	Side primSide;				//< side primary event is heading towards
 	double ePrim;				//< primary event energy
 	
 	double edepFoils[2];		//< energy deposition [keV] in decay trap foils

@@ -122,9 +122,9 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octn = streamInteractor::popInt(stack);
 	const std::string outputDir="OctetAsym_Offic";
 	
-	const std::string simOutputDir=outputDir+"_Sim_MagF_2";
+	const std::string simOutputDir=outputDir+"_Simulated";
 	
-	std::string simFile="/home/mmendenhall/geant4/output/WideKev_neutronBetaUnpol/analyzed_";
+	std::string simFile="/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_";
 	
 	unsigned int nTot = 52;
 	unsigned int stride = 7;
@@ -158,7 +158,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 		if(!oct.getNRuns()) return;
 		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir);
 		BetaDecayAnalyzer AA(&OM,oct.octName());
-		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false),10.*24*3600);
+		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false),0*24*3600);
 	}
 }
 

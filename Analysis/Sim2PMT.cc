@@ -136,6 +136,8 @@ void Sim2PMT::classifyEvent() {
 	bool passesMWPC[2];
 	bool is2fold[2];
 	
+	primSide = costheta>0?WEST:EAST;
+	
 	for(Side s = EAST; s <= WEST; ++s) {
 		passesMWPC[s] = (eW[s] > mwpcThresh[s]);		
 		is2fold[s] = passesMWPC[s] && passesScint[s];

@@ -136,6 +136,13 @@ void RunAccumulator::setCurrentState(AFPState afp, GVState gv) {
 	}
 }
 
+BlindTime RunAccumulator::getTotalTime(AFPState afp, bool fg) const {
+	if(afp==AFP_OTHER)
+		return totalTime[AFP_ON][fg]+totalTime[AFP_OFF][fg]+totalTime[AFP_OTHER][fg];
+	return totalTime[afp][fg];
+}
+
+
 AnalyzerPlugin* RunAccumulator::addPlugin(AnalyzerPlugin* AP) {
 	assert(myPlugins.find(AP->name) == myPlugins.end());
 	myPlugins.insert(std::make_pair(AP->name,AP));
@@ -258,7 +265,7 @@ void RunAccumulator::bgSubtractAll() {
 	for(std::map<std::string,fgbgPair*>::iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
 		if(getErrorEstimator())
 			errorbarsFromMasterHisto(it->second->h[GV_CLOSED],getErrorEstimator()->getFGBGPair(it->second->getName()).h[GV_CLOSED]);
-		it->second->bgSubtract(totalTime[it->second->afp][GV_OPEN],totalTime[it->second->afp][GV_CLOSED]);
+			it->second->bgSubtract(getTotalTime(it->second->afp,GV_OPEN),getTotalTime(it->second->afp,GV_CLOSED));
 	}
 	needsSubtraction = false;
 }
@@ -295,7 +302,7 @@ void RunAccumulator::makeRatesSummary() {
 			rt.insert("fg",itos(gv));
 			double counts = it->second->h[gv]->Integral();
 			double d_counts = integrateErrors(it->second->h[gv]);
-			double rtime = totalTime[it->second->afp][gv][it->second->mySide];
+			double rtime = getTotalTime(it->second->afp,gv)[it->second->mySide];
 			rt.insert("counts",counts);
 			rt.insert("d_counts",d_counts);
 			rt.insert("rate",counts?counts/rtime:0);

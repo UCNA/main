@@ -60,7 +60,7 @@ void CathodeTweakAnalyzer::makePlots() {
 
 MWPCTuningAnalyzer::MWPCTuningAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
 RunAccumulator(pnt,nm,inflName) {
-	addPlugin(myWG = new WirechamberGainAnalyzer(this));
+	addPlugin(myCG = new CathodeGainAnalyzer(this));
 	addPlugin(myCT = new CathodeTweakAnalyzer(this));
 }
 
@@ -89,7 +89,7 @@ void processWirechamberCal(MWPCTuningAnalyzer& WCdat, MWPCTuningAnalyzer& WCsim)
 				// cathode normalization plots
 				////////////////////
 				
-				TH2* hCathNorm =  (TH2*)WCdat.myWG->cathNorm[s][d][c]->h[GV_OPEN];
+				TH2* hCathNorm =  (TH2*)WCdat.myCG->cathNorm[s][d][c]->h[GV_OPEN];
 				std::vector<TH1D*> slicefits = replaceFitSlicesY(hCathNorm);
 				for(std::vector<TH1D*>::iterator it = slicefits.begin(); it != slicefits.end(); it++) {
 					(*it)->SetDirectory(0);
