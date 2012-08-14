@@ -134,9 +134,12 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_sum = 0.5*TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
-        double rel_error = 0.5*TMath::Sqrt( 1/(r[0][0] + r[1][0]) + 1/(r[1][1] * r[0][1]));
-        if ( TMath::IsNaN(super_sum) ) 
+        double rel_error = 0.5*TMath::Sqrt( 1/(r[0][0] + r[1][0] + 1) + 1/(r[1][1] * r[0][1] + 1));
+        if ( TMath::IsNaN(super_sum)) 
             super_sum = 0;
+
+        if (TMath::IsNaN(rel_error)) 
+			rel_error = 0;
 
         printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
         super_sum_histogram->SetBinContent(bin, super_sum);
@@ -462,7 +465,7 @@ int main(int argc, char *argv[]) {
 		for (int j = 0; j < 2; j++)
 		{
 			std::cout << "Number of entries in (" 
-					  << i << ", " << j << " is "
+					  << i << ", " << j << ") is "
 					  << (int)ucna_data_histogram[i][j]->GetEntries() << std::endl;
 			if (ucna_data_histogram[i][j] == NULL)
 			{
