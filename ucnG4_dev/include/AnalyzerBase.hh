@@ -36,6 +36,7 @@ public:
 	
 	Double_t primKE;			//< primary event kinetic energy
 	Double_t primTheta;			//< primary event emission angle
+	Double_t primWeight;		//< primary event generator weight
 	Double_t primPos[4];		//< primary event position (4th coordinate = radius)
 	int pID;					//< track pID
 	int detectorID;				//< track detector ID

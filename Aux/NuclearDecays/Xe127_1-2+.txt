@@ -1,0 +1,28 @@
+####
+# Xe127 1/2+ decay chain
+# decay scheme from Hashizume, Nuclear Data Sheets 112, 1718 (2011)
+####
+
+fileinfo:	fancyname = $^{127}$Xe $1/2^+$
+
+# 127I levels
+level:	nm = 127.53.0	E = 0			hl = -1				jpi = 5/2+
+level:	nm = 127.53.1	E = 57.609		hl = 1.86e-9		jpi = 7/2+
+level:	nm = 127.53.2	E = 202.860		hl = 0.39e-9		jpi = 3/2+
+level:	nm = 127.53.3	E = 374.992		hl = 0				jpi = 1/2+
+level:	nm = 127.53.4	E = 618.4		hl = 0				jpi = 3/2+
+
+level:	nm = 127.54.0	E = 662.3		hl = 3.14e6			jpi = 7/2+
+
+gamma:	from = 127.53.1	to = 127.53.0	Igamma = 1.79	CE_K = 3.18~.03	CE_L = .452~.008@1:.118:.068	CE_M = .0916~.002	CE_N = .0205~.0003
+gamma:	from = 127.53.2	to = 127.53.1	Igamma = 6.28	CE_K = .357~.005	CE_L = .0906~.0013@1:.76:.87	CE_M = .0189~.0003	CE_N = .00369~.00006	CE_O = .000362~.000005
+gamma:	from = 127.53.3	to = 127.53.2	Igamma = 37.4	CE_K = 0.1419~.0020	CE_L = .0185~.0003@1:.066:.016	CE_M = .00373~.00006	CE_N = .000754~.000011	CE_O = 8.82e-5~0.13e-5
+gamma:	from = 127.53.2	to = 127.53.0	Igamma = 100.	CE_K = .0965~.0017	CE_L = .0142~.0005@1:.160:121	CE_M = .00289~.00010	CE_N = .000580~.000018	CE_O = 6.50e-5~0.17e-5
+gamma:	from = 127.53.3	to = 127.53.0	Igamma = 25.2	CE_K = .01671~.00024	CE_L = .00257~.00004@1:.26:.17	CE_M = .000524~.000008	CE_N = .0001044~.0000015	CE_O = 1.144e-5~0.016e-5
+gamma:	from = 127.53.4	to = 127.53.0	Igamma = .0208	CE_K = .31~.07	CE_L = .52~.05	CE_M = .170~.018
+
+norm:	gamma = groundstate
+
+ecapt: from = 127.54.0
+
+AugerK:	Z = 53	ka1 = 46.5	ka2 = 25.2	kb3 = 4.33	kb1 = 8.35	kb2 = 2.47	Iauger = 11.8

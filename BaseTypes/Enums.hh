@@ -14,8 +14,8 @@ enum Side {
 	EAST = 0,	//< East side of detector
 	WEST = 1,	//< West side of detector
 	BOTH = 2,	//< Both sides of detector
-	NONE = 3,	//< Neither side of detector
-	BADSIDE = 4
+	NOSIDE = 3,	//< Neither side of detector
+	BADSIDE = 4 //< Improperly defined side
 };
 
 /// iteration to next side
@@ -24,14 +24,21 @@ inline Side& operator++(Side& s) { return s = Side(s+1); }
 /// run number type
 typedef unsigned int RunNum;
 /// get letter for side names
-char sideNames(Side s);
+char sideNames(Side s, bool clower = false);
 /// get full word for side names
 const char* sideWords(Side s);
+/// get database enum side names (in single quotes)
+const char* dbSideName(Side s);
+/// convert string back to side
+Side strToSide(const std::string& s);
 /// substitute side names into string expression
-std::string sideSubst(const std::string& instr, Side s);
+std::string sideSubst(const std::string& instr, Side s, bool clower = false);
 
 /// opposite side to given side
 Side otherSide(Side s);
+
+/// "sign" for side, East = -1, West = +1
+inline int ssign(Side s) { return s==EAST?-1:s==WEST?1:0; }
 
 /// directions, to clean up wireplane direction confusion
 enum AxisDirection {
@@ -42,23 +49,6 @@ enum AxisDirection {
 };
 /// iteration to next axis
 inline AxisDirection& operator++(AxisDirection& d) { return d = AxisDirection(d+1); }
-
-/// float value with an error estimate
-struct float_err {
-	float_err(float c=0, float dc=0): x(c), err(dc) {}
-	float x;
-	float err;
-	//const float_err& operator=(const float_err& rhs) { x = rhs.x; err = rhs.err; return *this; }
-};
-
-/// add float_errs assuming independent statistics
-float_err operator+(float_err a, float_err b);
-/// multiply float_err by float
-float_err operator*(float a, float_err b);
-/// statistically weighted sum of n values with errors, useful for combining PMT results
-float_err weightedSum(unsigned int n, const float_err* d);
-/// measure of combined statistical proximity of points d to central value c
-float proximity(unsigned int n, const float_err* d, float_err c);
 
 /// types of UCNA data runs
 enum RunType {
@@ -99,6 +89,10 @@ enum AFPState {
 };
 
 inline AFPState& operator++(AFPState& a) { return a = AFPState(a+1); }
+/// string for AFP state
+std::string afpWords(AFPState afp);
+/// convert string back to AFPState
+AFPState strToAfp(const std::string& s);
 
 /// state of gate valve during a run
 enum GVState {
@@ -125,7 +119,7 @@ enum DataQuality {
 	DQ_CHECKED		=	1<<0,	//< data quality has been checked
 	DQ_TRASH		=	1<<1,	//< run is garbage, DO NOT USE
 	DQ_CORRUPT_END	=	1<<2,	//< data at end of run is corrupted
-	DQ_BEAM_ISSUES	=	1<<3,	//< beam quality dubious during run
+	DQ_BEAM_ISSUES	=	1<<3	//< beam quality dubious during run
 };
 
 /// get the geometry for a given run
@@ -138,42 +132,39 @@ unsigned int pmtHardwareNum(Side s, unsigned int quadrant);
 /// enumeration for Jianglai asymmetry analysis choices
 enum AnalysisChoice {
 	ANCHOICE_NONE=0,
-	ANCHOICE_A,		//< Assign 0, I, II+III (unseparated) to primary trigger side
-	ANCHOICE_B,		//< Only use 0, I
-	ANCHOICE_C,		//< Separate II/III with 4keV MWPC cut
-	ANCHOICE_D,		//< Only use 0
-	ANCHOICE_E,		//< Separate II/III with likelihood
-	ANCHOICE_F,
-	ANCHOICE_G
+	ANCHOICE_A=1,	//< Assign 0, I, II+III (unseparated) to primary trigger side
+	ANCHOICE_B=2,	//< Only use 0, I
+	ANCHOICE_C=3,	//< Separate II/III with 4keV MWPC cut
+	ANCHOICE_D=4,	//< Only use 0
+	ANCHOICE_E=5,	//< Separate II/III with likelihood
+	ANCHOICE_F=6,
+	ANCHOICE_G=7
 };
+/// choice name letter
+char choiceLetter(AnalysisChoice a);
 
 /// enumeration for Jianglai particle ID
 enum PID {
 	PID_SINGLE = 0,	//< "single" gamma event
 	PID_BETA = 1,	//< beta event
 	PID_MUON = 2,	//< muon event
-	PID_LED = 3,		//< tagged LED event
+	PID_LED = 3,	//< tagged LED event
 	PID_PULSER = 4	//< tagged Bi pulser event
 };
 
-//--------------------------------------------------------------------------
-// 1	"Type I" -- Both scintillators and wirechambers
-// 2	"Type II" -- Scatters off wirechamber, goes through other side
-// 3	"Type III" -- Scatters off scintillator, dies in other wirechamber
-// 5	"Type IV" -- Undetectable scatters off wirechamber surface
-//--------------------------------------------------------------------------
-
-/// event type enum
+/// event backscattering types
 enum EventType {
-	TYPE_0_EVENT	= 0,
-	TYPE_I_EVENT	= 1,
-	TYPE_II_EVENT	= 2,
-	TYPE_III_EVENT	= 3,
-	TYPE_IV_EVENT	= 4
+	TYPE_0_EVENT	= 0,	//< "Correct" events arrive on only one side of detector
+	TYPE_I_EVENT	= 1,	//< Scatters to hit both scintillators and wirechambers
+	TYPE_II_EVENT	= 2,	//< Scatters off wirechamber, hits scintillator and wirechamber on opposite side
+	TYPE_III_EVENT	= 3,	//< Triggers and scatters off scintillator; triggers only wirechamber on opposite side
+	TYPE_IV_EVENT	= 4		//< Undetectable backscatters (also used for "unclassifiable" events)
 };
+
 /// iteration to next event type
 inline EventType& operator++(EventType& tp) { return tp = EventType(tp+1); }
 
+/// names for event types
 std::string typeWords(EventType tp);
 
 #endif

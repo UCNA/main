@@ -1,0 +1,31 @@
+####
+# Xe133 3/2+ decay chain
+# decay scheme from Khazov, Rodionov, Kondev,  Nuclear Data Sheets 112, 933 (2011)
+####
+
+fileinfo:	fancyname = $^{133}$Xe $3/2^+$
+
+# 133Cs levels
+level:	nm = 133.55.0	E = 0			hl = -1			jpi = 7/2+
+level:	nm = 133.55.1	E = 80.9779		hl = 6.283e-9	jpi = 5/2+
+level:	nm = 133.55.2	E = 160.6121	hl = 0			jpi = 5/2+
+level:	nm = 133.55.3	E = 383.8491	hl = 0			jpi = 3/2+
+
+
+# Xe133 3/2+ ground state
+level:	nm = 133.54.0	E = 427.4	hl = 4.5338e5		jpi = 3/2+
+
+beta:	from = 133.54.0	to = 133.55.1	I = 98.5
+beta:	from = 133.54.0	to = 133.55.2	I = 1.4
+beta:	from = 133.54.0	to = 133.55.3	I = .0087
+
+gamma:	from = 133.55.2	to = 133.55.1	Igamma = 1.2	CE_K = 1.495~.022	CE_L = 0.217~.006@0.060:.009:.009	CE_M = .0447~.0013	CE_N = .00940~.00025	CE_O = .00128~.00003
+gamma:	from = 133.55.1	to = 133.55.0	Igamma = 100	CE_K = 1.431~.020	CE_L = 0.216~.004@12.9:1.94:1.44	CE_M = .0447~.0008@3.0:0.56:0.37	CE_N = .00939~.00016@0.64:0.08	CE_O = .001271~.000020
+gamma:	from = 133.55.2	to = 133.55.0	Igamma = .2889	CE_K = .234~.004	CE_L = .0471~.0013	CE_M = .0099~.0003	CE_N = .00205~.00006	CE_O = 0.000261~.000007
+gamma:	from = 133.55.3	to = 133.55.2	Igamma = .00037	CE_K = .0836~.0012	CE_L = .01103~.00016	CE_M = .00226~.00004	CE_N = .000477~.000007	CE_O = 6.64e-5~.10e-5
+gamma:	from = 133.55.3	to = 133.55.1	Igamma = .0150	CE_K = .0373~.0006	CE_L = .00484~.00007	CE_M = .000988~.000014	CE_N = .000209~.000003	CE_O = 2.92e-5~.04e-5
+gamma:	from = 133.55.3	to = 133.55.0	Igamma = .0073	CE_K = .01684~.00024	CE_L = .00270~.00004	CE_M = .000560~.000008	CE_N = .0001166~.0000017	CE_O = 1.541e-5~.022e-5
+
+norm:	gamma = groundstate
+
+AugerK:	Z = 55	ka2 = 13.6	ka1 = 25.0	kb3 = 2.36	kb1 = 4.56	kb2 = 1.41	Iauger = 5.67

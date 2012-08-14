@@ -117,7 +117,8 @@ def EQ2ET(fbase, conn=None):
 			
 if __name__ == "__main__":
 	conn = open_connection()
+	#conn = None
 	if conn:
 		delete_all_EQ2ET(conn)
-	EQ2ET(os.environ["UCNA_ANA_PLOTS"]+"/Evis2ETrue/Livermore/",conn)
+	EQ2ET(os.environ["UCNA_ANA_PLOTS"]+"/Evis2ETrue/WideKev/",conn)
 	

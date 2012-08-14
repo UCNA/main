@@ -20,15 +20,15 @@ void PostOfficialAnalyzer::setReadpoints() {
 	Tch->SetBranchAddress("Side",&fSide);
 	Tch->SetBranchAddress("Type",&fType);
 	// clock
-	Tch->SetBranchAddress("TimeE",&runClock.t[EAST]);
-	Tch->SetBranchAddress("TimeW",&runClock.t[WEST]);
-	runClock.t[BOTH]=runClock.t[NONE]=0.0;
+	Tch->SetBranchAddress("TimeE",&runClock[EAST]);
+	Tch->SetBranchAddress("TimeW",&runClock[WEST]);
+	runClock[BOTH]=runClock[NOSIDE]=0.0;
 	
 	for(Side s=EAST; s<=WEST; ++s) {
 		
 		// wirechamber planes
 		for(int p=X_DIRECTION; p<=Y_DIRECTION; p++) {
-			Tch->SetBranchAddress((std::string(p==X_DIRECTION?"x":"y")+sideSubst("%cmpm",s)).c_str(),&wires[s][p]);
+			Tch->SetBranchAddress(((p==X_DIRECTION?"x":"y")+sideSubst("%cmpm",s)).c_str(),&wires[s][p]);
 			Tch->SetBranchAddress((sideSubst("Cathodes_%c",s)+(p==X_DIRECTION?"x":"y")).c_str(),cathodes[s][p]);
 		}
 		
@@ -39,5 +39,8 @@ void PostOfficialAnalyzer::setReadpoints() {
 		Tch->SetBranchAddress(sideSubst("Anode%c",s).c_str(),&mwpcs[s].anode);
 		Tch->SetBranchAddress(sideSubst("CathSum%c",s).c_str(),&mwpcs[s].cathodeSum);
 		Tch->SetBranchAddress(sideSubst("EMWPC_%c",s).c_str(),&mwpcEnergy[s]);
+		
+		/// muon tags
+		Tch->SetBranchAddress(sideSubst("TaggedBack%c",s).c_str(),&fTaggedBack[s]);
 	}
 }

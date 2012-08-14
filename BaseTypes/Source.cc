@@ -14,7 +14,7 @@ Source::Source(Stringmap S) {
 	else if(sd[0] == sideNames(WEST))
 		mySide = WEST;
 	else
-		mySide = NONE;
+		mySide = NOSIDE;
 }
 
 Stringmap Source::getProperties() const {

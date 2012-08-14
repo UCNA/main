@@ -2,9 +2,11 @@
 #include "GainStabilizer.hh"
 #include "GraphUtils.hh"
 #include "SQL_Utils.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 #include <utility>
+#include <TRandom3.h>
 
+TRandom3 pcal_random_src;
 
 PedestalCorrector::~PedestalCorrector() {
 	for(std::map<std::string,TGraph*>::iterator it = pedestals.begin(); it != pedestals.end(); it++)
@@ -29,7 +31,7 @@ float PedestalCorrector::getPedestal(const std::string& sensorName, float time) 
 		return it->second->Eval(time);
 	TGraph* tg = pCDB->getPedestals(myRun,sensorName);
 	if(!tg) {
-		UCNAException e("missingPed");
+		SMExcept e("missingPed");
 		e.insert("sensor",sensorName);
 		throw(e);
 	}
@@ -42,7 +44,7 @@ float PedestalCorrector::getPedwidth(const std::string& sensorName, float time) 
 		return it->second->Eval(time);
 	TGraph* tg = pCDB->getPedwidths(myRun,sensorName);
 	if(!tg) {
-		UCNAException e("missingPed");
+		SMExcept e("missingPed");
 		e.insert("sensor",sensorName);
 		throw(e);
 	}
@@ -51,7 +53,7 @@ float PedestalCorrector::getPedwidth(const std::string& sensorName, float time) 
 }
 void PedestalCorrector::insertPedestal(const std::string& sensorName, TGraph* g) {
 	if(g->GetN()<2)
-		throw(UCNAException("tooFewPoints"));
+		throw(SMExcept("tooFewPoints"));
 	pedestals.erase(sensorName);
 	pedestals.insert(std::make_pair(sensorName,g));
 }
@@ -184,7 +186,11 @@ PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) 
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			pmtEffic[s][t] = CDB->getTrigeff(myRun,s,t);
-			clipThreshold[s][t] = 4000-1.1*getPedestal(sensorNames[s][t],0);
+			clipThreshold[s][t] = 4000;
+			if(checkPedestals(sensorNames[s][t]))
+				clipThreshold[s][t] -= 1.1*getPedestal(sensorNames[s][t],0);
+			else
+				clipThreshold[s][t] -= 500;
 		}
 	}
 	printSummary();
@@ -270,20 +276,27 @@ void PMTCalibrator::pedSubtract(Side s, float* adc, float time) {
 	for(unsigned int t=0; t<nBetaTubes; t++)
 		adc[t] -= getPedestal(sensorNames[s][t],time);
 }
-void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, float time) const {
+void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, float time, float poserr) const {
 	evt.energy.x = evt.energy.err = 0;
 	float weight[nBetaTubes];
+	// count clipped PMTs
+	unsigned int nclipped = 0;
+	for(unsigned int t=0; t<nBetaTubes; t++)
+		nclipped += evt.adc[t]>clipThreshold[s][t]-300;
+	
 	for(unsigned int t=0; t<nBetaTubes; t++) {
 		
 		float eta0 = eta(s,t,x,y);
+		if(poserr) eta0 *= pcal_random_src.Gaus(1.,poserr);
 		float l0 = linearityCorrector(s,t,evt.adc[t],time); // tube observed light
 		if(l0 != l0)
 			l0 = 0;
 		float E0 = l0/eta0; // tube observed energy keV
 		
-		weight[t] = eta0*l0/pow(lightResolution(s,t,l0,time),2.0); // = nPE/keV for this position
 		if(evt.adc[t] < 5 || l0 < 50)
 			weight[t] = eta0*50/pow(lightResolution(s,t,50,time),2.0); // = nPE/keV @ 50keV to avoid uncertainty at 0
+		else
+			weight[t] = eta0*l0/pow(lightResolution(s,t,l0,time),2.0); // = nPE/keV for this position
 		
 		// remove bad weights
 		if(!(weight[t]>0.01 && weight[t]<10.0))
@@ -291,11 +304,13 @@ void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, f
 		
 		evt.nPE[t] = E0*weight[t];
 		
-		// de-weight for clipping
-		if(evt.adc[t]>clipThreshold[s][t]-300)
-			weight[t] *= (clipThreshold[s][t]-evt.adc[t])/300.0;
-		if(evt.adc[t]>clipThreshold[s][t])
-			weight[t] = 0;
+		// de-weight for clipping, unless all PMTs clipped
+		if(nclipped<nBetaTubes) {
+			if(evt.adc[t]>clipThreshold[s][t]-300)
+				weight[t] *= (clipThreshold[s][t]-evt.adc[t])/300.0;
+			if(evt.adc[t]>clipThreshold[s][t])
+				weight[t] = 0;
+		}
 		
 		evt.energy.x += E0*weight[t];
 		evt.energy.err += weight[t];
@@ -368,12 +383,13 @@ void PMTCalibrator::printSummary() {
 		}		
 		printf("\t  photoelectrons at 50%% PMT trigger threshold\n");
 	}
-	printWirecalSummary();
+	WirechamberCalibrator::printSummary();
 	printf("----------------------------------------------\n\n");
 }
 
 Stringmap PMTCalibrator::calSummary() const { 
-	Stringmap m = GS?GS->gmsSummary():Stringmap();
+	Stringmap m = wirecalSummary();
+	if(GS) m += GS->gmsSummary();
 	m.insert("run",itos(myRun));
 	m.insert("tstart",itos(CDB->startTime(myRun)));
 	m.insert("tend",itos(CDB->endTime(myRun)));

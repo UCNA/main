@@ -6,6 +6,7 @@
 #include "Enums.hh"
 #include "QFile.hh"
 #include "strutils.hh"
+#include "FloatErr.hh"
 
 #include <TBranch.h>
 #include <string>
@@ -15,14 +16,21 @@
 #include <TFile.h>
 #include <TMath.h>
 #include <map>
+#include <cassert>
 
-/// CDF for poisson function (for trigger efficiency fits)
-Double_t poiscdf(const Double_t *x, const Double_t *par);
-/// Fancier trigger efficiency model
-Double_t fancyfish(const Double_t *x, const Double_t *par);
+/// class to prevent unintended copying of sub-classes
+class NoCopy {
+protected:
+	/// constructor
+	NoCopy() {}
+	~NoCopy() {}
+private:
+	/// copy constructor is private
+	NoCopy(const NoCopy&);
+	/// copy operator is private
+	const NoCopy& operator=(const NoCopy&);
+};
 
-/// Whether a point falls inside an ellipse
-inline bool pointIsInEllipse(float x, float y, float wx, float wy) { return x*x/(wx*wx) + y*y/(wy*wy) < 1.0; }
 /// interpolate fractional bin positions from a TAxis (needed to interpret TSpectrum positions)
 double binterpolate(const TAxis* ax, double binloc);
 
@@ -33,15 +41,19 @@ unsigned int totalBins(const TH1* h);
 class BlindTime {
 public:
 	/// constructor from time
-	BlindTime(Float_t t0=0) { t[EAST]=t[WEST]=t[BOTH]=t[NONE]=t0; }
+	BlindTime(Float_t t0=0) { t[EAST]=t[WEST]=t[BOTH]=t[NOSIDE]=t0; }
 	/// constructor from Stringmap
 	BlindTime(const Stringmap& m);
 	/// convert to Stringmap
 	Stringmap toStringmap() const;
 	/// add another blinded time
-	inline void operator+= (const BlindTime& bt) { for(Side s=EAST; s!=NONE; ++s) t[s] += bt.t[s]; }
+	inline void operator+= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] += bt[s]; }
 	/// subtract another blinded time
-	inline void operator-= (const BlindTime& bt) { for(Side s=EAST; s!=NONE; ++s) t[s] -= bt.t[s]; }
+	inline void operator-= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] -= bt[s]; }
+	/// access blinded times for side
+	Float_t& operator[](Side s) { assert(s<=NOSIDE); return t[s]; }
+	/// const blinded times access
+	Float_t operator[](Side s) const { assert(s<=NOSIDE); return t[s]; }
 	
 	Float_t t[4];	//< blinded timings for each side
 };

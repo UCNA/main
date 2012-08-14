@@ -7,6 +7,7 @@
 #include "PositionResponse.hh"
 #include "EfficCurve.hh"
 #include "RunInfo.hh"
+#include "CathSegCalibrator.hh"
 
 /// abstract class for interface to database of calibration settings and peaks
 class CalDB {
@@ -76,6 +77,8 @@ public:
 	virtual EfficCurve* getTrigeff(RunNum rn, Side s, unsigned int t) = 0;
 	/// get E_vis -> E_true parametrization
 	virtual TGraph* getEvisConversion(RunNum rn, Side s, EventType tp) = 0;
+	/// get list of cathode segment calibrators (caller is responsible for deletion)
+	virtual std::vector<CathSegCalibrator*> getCathSegCalibrators(RunNum rn, Side s, AxisDirection d) = 0;
 	
 	/// run start time
 	virtual int startTime(RunNum rn, int t0 = 0) { return 0; }

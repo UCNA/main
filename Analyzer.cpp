@@ -1,46 +1,45 @@
 #include <exception>
 #include <TStyle.h>
+#include <TROOT.h>
 #include <iostream>
 
 #include "ControlMenu.hh"
 #include "PathUtils.hh"
 #include "GraphicsUtils.hh"
 #include "PositionResponse.hh"
-#include "WirechamberStudy.hh"
-#include "AsymmetryAnalyzer.hh"
-#include "EndpointStudy.hh"
+#include "BetaDecayAnalyzer.hh"
+#include "CathodeTweakAnalyzer.hh"
+#include "XenonAnalyzer.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "PlotMakers.hh"
 #include "PMTGenerator.hh"
 #include "ReSource.hh"
 #include "G4toPMT.hh"
-
+#include "LEDScans.hh"
+#include "NuclEvtGen.hh"
+#include "EnumerationFitter.hh"
 
 std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
-	char tmp[1024];
 	if(typeSelect=="ref") {
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'SourceCalib' ORDER BY run_number ASC",r0,r1);
-		std::vector<RunNum> sruns = CalDBSQL::getCDB()->findRuns(tmp);
+		std::vector<RunNum> sruns = CalDBSQL::getCDB()->findRuns("run_type = 'SourceCalib'",r0,r1);
 		std::vector<RunNum> rruns;
 		for(std::vector<RunNum>::iterator it = sruns.begin(); it != sruns.end(); it++)
 			if(CalDBSQL::getCDB()->getGMSRun(*it) == *it)
 				rruns.push_back(*it);
 		return rruns;
 	} else if(typeSelect=="all")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i ORDER BY run_number ASC",r0,r1);
+		return CalDBSQL::getCDB()->findRuns("",r0,r1);
 	else if(typeSelect=="asym")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'Asymmetry' ORDER BY run_number ASC",r0,r1);
+		return CalDBSQL::getCDB()->findRuns("run_type = 'Asymmetry'",r0,r1);
 	else if(typeSelect=="LED")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'LEDCalib' ORDER BY run_number ASC",r0,r1);
+		return CalDBSQL::getCDB()->findRuns("run_type = 'LEDCalib'",r0,r1);
 	else if(typeSelect=="source")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'SourceCalib' ORDER BY run_number ASC",r0,r1);
+		return CalDBSQL::getCDB()->findRuns("run_type = 'SourceCalib'",r0,r1);
 	else if(typeSelect=="beta")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'Asymmetry' AND gate_valve = 'Open' ORDER BY run_number ASC",r0,r1);
+		return CalDBSQL::getCDB()->findRuns("run_type = 'Asymmetry' AND gate_valve = 'Open'",r0,r1);
 	else if(typeSelect=="bg")
-		sprintf(tmp,"run_number >= %i AND run_number <= %i AND run_type = 'Asymmetry' AND gate_valve = 'Closed' ORDER BY run_number ASC",r0,r1);
-	else
-		sprintf(tmp,"0 = 1");
-	return CalDBSQL::getCDB()->findRuns(tmp);
+		return CalDBSQL::getCDB()->findRuns("run_type = 'Asymmetry' AND gate_valve = 'Closed'",r0,r1);
+	return CalDBSQL::getCDB()->findRuns("0 = 1",r0,r1);
 }
 
 void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -51,17 +50,18 @@ void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) 
 }
 
 void mi_EndpointStudySim(std::deque<std::string>&, std::stack<std::string>& stack) {
+	unsigned int nRings = streamInteractor::popInt(stack);
 	RunNum rsingle = streamInteractor::popInt(stack);
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
-	simulate_xenon(r0,r1,rsingle);
+	simulate_xenon(r0,r1,rsingle,nRings);
 }
 
-void mi_WirechamberStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
-	unsigned int nr = streamInteractor::popInt(stack);
+void mi_EndpointStudyReSim(std::deque<std::string>&, std::stack<std::string>& stack) {
+	unsigned int nRings = streamInteractor::popInt(stack);
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
-	runWirechamberAnalyzer(r0,r1,nr);
+	xenon_posmap(r0,r1,nRings);
 }
 
 void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -77,7 +77,7 @@ void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	RunNum rn = streamInteractor::popInt(stack);
-	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
+	PMTCalibrator PCal(rn);
 	OutputManager OM("NPE",getEnvSafe("UCNA_ANA_PLOTS")+"/nPE/Run_"+itos(rn));
 	PosPlotter PP(&OM);
 	PP.npePlot(&PCal);
@@ -122,36 +122,34 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octn = streamInteractor::popInt(stack);
 	const std::string outputDir="OctetAsym_Offic";
 	
-	const std::string simOutputDir=outputDir+"_Simulated";
+	const std::string simOutputDir=outputDir+"_Sim_MagF_2";
 	
-	//std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_MagF_neutronBetaUnpol/analyzed_";
-	//simFile += itos(abs(octn)%4)+".root";
+	std::string simFile="/home/mmendenhall/geant4/output/WideKev_neutronBetaUnpol/analyzed_";
 	
-	//std::string simFile = "/home/mmendenhall/geant4/output/LivPhys_495_BadVac_neutronBetaUnpol/analyzed_";
-	//simFile += itos(abs(octn)%9)+".root";
+	unsigned int nTot = 52;
+	unsigned int stride = 7;
 	
-	std::string simFile="/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_";
-	simFile += itos(abs(octn)%32)+".root";
-	
-	AsymmetryAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
+	BetaDecayAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
 	if(octn==1000) {
 		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
-		AsymmetryAnalyzer AA(&OM,outputDir);
+		BetaDecayAnalyzer AA(&OM,outputDir);
 		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600);
 	} else if(octn < 0) {
 		G4toPMT simData;
-		simData.addFile(simFile);
+		for(unsigned int i=0; i<stride; i++)
+			simData.addFile(simFile+itos((stride*abs(octn)+i)%nTot)+".root");
+		simData.PGen[EAST].xscatter = simData.PGen[WEST].xscatter = 0.01;
 		if(octn==-1000) {
 			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
-			AsymmetryAnalyzer AA_Sim(&OM,simOutputDir);
+			SimBetaDecayAnalyzer AA_Sim(&OM,simOutputDir);
 			AA_Sim.simPerfectAsym = true;
 			AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, simData, 1.0, 365*24*3600);
 		} else {
 			Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),-octn-1);
 			if(!oct.getNRuns()) return;
 			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+simOutputDir);
-			AsymmetryAnalyzer AA_Sim(&OM,oct.octName());	
+			SimBetaDecayAnalyzer AA_Sim(&OM,oct.octName());
 			AA_Sim.simPerfectAsym = true;
 			AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), simData, 1.0, 0.*3600);
 		}
@@ -159,16 +157,16 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),octn);
 		if(!oct.getNRuns()) return;
 		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir);
-		AsymmetryAnalyzer AA(&OM,oct.octName());
-		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false),0.*3600);
+		BetaDecayAnalyzer AA(&OM,oct.octName());
+		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false),10.*24*3600);
 	}
 }
 
 void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
-	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/Livermore/");
+	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/WideKev/");
 	G4toPMT g2p;
-	g2p.addFile("/home/mmendenhall/geant4/output/LivPhys_495_neutronBetaUnpol_geomC/analyzed_*.root");
-	PMTCalibrator PCal(16000,CalDBSQL::getCDB());
+	g2p.addFile("/home/mmendenhall/geant4/output/WideKev_neutronBetaUnpol/analyzed_*.root");
+	PMTCalibrator PCal(16000);
 	g2p.setCalibrator(PCal);
 	SimSpectrumInfo(g2p,OM);
 	OM.setWriteRoot(true);
@@ -177,10 +175,109 @@ void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
 
 void mi_sourcelog(std::deque<std::string>&, std::stack<std::string>&) { uploadRunSources(); }
 
-void mi_radcor(std::deque<std::string>&, std::stack<std::string>&) { makeCorrectionsFile(getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection.txt"); }
+void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
+	float Ep = streamInteractor::popFloat(stack);
+	int Z = streamInteractor::popInt(stack);
+	int A = streamInteractor::popInt(stack);
+	makeCorrectionsFile(A,Z,Ep);
+}
+
+void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
+	
+	if(false) {
+		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
+		EnumerationFitter EF;
+		TGraphErrors* g = EF.loadFitFile("/home/mmendenhall/BGExcess_Combo_W.txt");
+		TF1* f = EF.getFitter();
+		f->SetRange(0,g->GetN());
+		for(unsigned int i=0; i<EF.getNParams(); i++)
+			f->SetParLimits(i,0.,100.);
+		g->Fit(f,"R");
+		printf("Chi2/ndf = %g/%i\n",f->GetChisquare(),f->GetNDF());
+		g->Draw("A*");
+		OMTest.printCanvas("BG_Components_ComboW");
+		return;
+	}
+		
+	if(false) {
+		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
+		NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
+		PMTCalibrator PCal(16000);
+		showSimSpectrum("Cu66",OMTest,NDL,PCal);
+		return;
+	}
+	
+	if(true) {
+		ErrTables ET;
+		ET.gainfluctsTable(0.000125);
+		ET.pedShiftsTable(0.015);
+		ET.muonVetoEfficTable(0.002);
+		ET.NGBGTable(0.99,0.08,0.48,0.09, 0.25);
+		return;
+	}
+	
+	if(false) {
+		OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
+		SimBetaDecayAnalyzer AH(&OM,"Combined");
+		
+		SimBetaDecayAnalyzer AH1(&OM,"ScintFace_nCaptH",OM.basePath+"/ScintFace_nCaptH/ScintFace_nCaptH");
+		AH1.scaleData(0.126);
+		SimBetaDecayAnalyzer AH2(&OM,"DetAl_nCaptAl",OM.basePath+"/DetAl_nCaptAl/DetAl_nCaptAl");
+		AH2.scaleData(0.073);
+		SimBetaDecayAnalyzer AH3(&OM,"DetAl_nCaptAlGamma",OM.basePath+"/DetAl_nCaptAlGamma/DetAl_nCaptAlGamma");
+		AH3.scaleData(0.594);
+		
+		AH.addSegment(AH1);
+		AH.addSegment(AH2);
+		AH.addSegment(AH3);
+		
+		AH.calculateResults();
+		AH.makePlots();
+		AH.write();
+		AH.setWriteRoot(true);
+	}
+	
+	//NGBGSpectra("EndcapEdge_nCaptH");
+	//NGBGSpectra("EndcapEdge_nCaptCu");
+	//NGBGSpectra("TrapWall_Cu66");
+	//NGBGSpectra("TrapWall_nCaptCu");
+	//NGBGSpectra("EntryPort_Al28");
+	//NGBGSpectra("EntryPort_nCaptAl");
+	NGBGSpectra("DetAl_nCaptAl");
+	NGBGSpectra("DetAl_nCaptAlGamma");
+	NGBGSpectra("ScintFace_nCaptH");
+	return;
+	
+	processWirechamberCal(14264,16077,20);
+	return;
+	
+	//decomposeXenon(15991,true);
+	//decomposeXenon(14282,false);
+	//decomposeXenon(14347,false);
+	//decomposeXenon(17224,false);
+	//return;
+	
+	compareXenonSpectra();
+	return;
+	
+	
+	
+	//spectrumGenTest();
+		
+	/*
+	 OutputManager OMLS("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorr");
+	 LEDScanScanner LSS;
+	 std::vector<RunNum> bruns = selectRuns(16193, 16216, "beta");
+	 //std::vector<RunNum> bruns = selectRuns(16097, 16216, "beta");
+	 LSS.addRuns(bruns);
+	 PMT_LED_Correlations(OMLS,LSS);
+	 exit(0);	
+	 */
+}
 
 void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
+	gROOT->SetStyle("Plain");
 	gStyle->SetPalette(1);
 	gStyle->SetNumberContours(255);
 	gStyle->SetOptStat("e");	
@@ -190,6 +287,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	inputRequester exitMenu("Exit Menu",&menutils_Exit);
 	inputRequester peek("Show stack",&menutils_PrintStack);
+	inputRequester doMisc("Misc",&mi_misc);
 	
 	// selection utilities
 	NameSelector selectRuntype("Run Type");
@@ -211,6 +309,11 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	pm_posmap_sim.addArg("Start Run");
 	pm_posmap_sim.addArg("End Run");
 	pm_posmap_sim.addArg("Single Run","0");
+	pm_posmap_sim.addArg("n Rings","12");
+	inputRequester pm_posmap_resim("Reupload Position Map",&mi_EndpointStudyReSim);
+	pm_posmap_resim.addArg("Start Run");
+	pm_posmap_resim.addArg("End Run");
+	pm_posmap_resim.addArg("n Rings","12");
 	inputRequester posmapLister("List Posmaps",&mi_listPosmaps);
 	inputRequester posmapPlot("Plot Position Map",&mi_PosmapPlot);
 	posmapPlot.addArg("Posmap ID");
@@ -223,6 +326,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OptionsMenu PMapR("Position Map Routines");
 	PMapR.addChoice(&pm_posmap,"gen");
 	PMapR.addChoice(&pm_posmap_sim,"sim");
+	PMapR.addChoice(&pm_posmap_resim,"rup");
 	PMapR.addChoice(&posmapLister,"ls");
 	PMapR.addChoice(&posmapPlot,"plot");
 	PMapR.addChoice(&posmapDumper,"dump");
@@ -254,11 +358,9 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	inputRequester evis2etrue("Caluculate eVis->eTrue curves",&mi_evis2etrue);
 	// radiative corrections
 	inputRequester radcor("Make radiative corrections table",&mi_radcor);
-	// wirechamber calibration
-	inputRequester anawc("Gather wirechamber calibration data",&mi_WirechamberStudy);
-	anawc.addArg("Start Run");
-	anawc.addArg("End Run");
-	anawc.addArg("n Rings","6");
+	radcor.addArg("A","1");
+	radcor.addArg("Z","1");
+	radcor.addArg("Endpoint",dtos(neutronBetaEp));
 	
 	// main menu
 	OptionsMenu OM("Analyzer Main Menu");
@@ -268,7 +370,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OM.addChoice(&uploadSources,"us");
 	OM.addChoice(&evis2etrue,"ev");
 	OM.addChoice(&radcor,"rc");
-	OM.addChoice(&anawc,"wc");
+	OM.addChoice(&doMisc,"msc");
 	OM.addChoice(&exitMenu,"x");
 	OM.addSynonym("x","exit");
 	OM.addSynonym("x","quit");

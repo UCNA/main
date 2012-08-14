@@ -35,4 +35,7 @@ protected:
 /// study correlations between PMTs using LED data
 void PMT_LED_Correlations(OutputManager& OM, LEDScanScanner& LSS);
 
+/// tests on spectrum generation
+void spectrumGenTest();
+
 #endif

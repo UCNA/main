@@ -7,7 +7,8 @@ void ucnG4_analyzer::analyzeFileList(const string& flist) {
 	ifstream file;
 	file.open(flist.c_str());
 	string fname;
-	while(file){
+	while(!file.fail() && !file.eof()){
+		fname = "";
 		file >> fname;
 		if(fname.size())
 			analyzeFile(fname);
@@ -33,6 +34,7 @@ void ucnG4_analyzer::analyzeFile(const string& fname) {
 		anaTree->Branch("primKE",&primKE,"primKE/D");
 		anaTree->Branch("primTheta",&primTheta,"primTheta/D");
 		anaTree->Branch("primPos",primPos,"primPos[4]/D");
+		anaTree->Branch("primWeight",&primWeight,"primWeight/D");
 		anaTree->Branch("trapped",&fTrapped,"trapped/I");
 		anaTree->Branch("compTime",&fCompTime,"compTime/D");
 		anaTree->Branch("seed",&seed,"seed/I");	
@@ -78,6 +80,7 @@ void ucnG4_analyzer::analyzeFile(const string& fname) {
 		// primary event info
 		priminfo = (bmPrimaryInfo*)priminfo_array[0];
 		primKE = priminfo->KE;
+		primWeight = priminfo->weight;
 		for(unsigned int i=0; i<3; i++)
 			primPos[i] = priminfo->vertex[i];
 		primPos[3] = sqrt(primPos[0]*primPos[0]+primPos[1]*primPos[1]);

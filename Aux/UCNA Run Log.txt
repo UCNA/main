@@ -16,7 +16,7 @@
 #	Calibration run types:		
 #		SourcesCal		Source calibration
 #		Xe			Acrivated Xenon calibration
-#		Misc			Miscellaneous run (see comments)
+#		Other			Miscellaneous run (see comments)
 #		
 #
 #	Lines starting with an '@' specify properties of all the following runs
@@ -347,6 +347,7 @@
 *14118	SourcesCal
 @sources
 
+# rather old Xenon
 *14120	Xe
 *14121	Xe
 *14122	Xe
@@ -754,9 +755,12 @@
 #######################
 @cycle October 22 Calibrations
 #######################
-*14513	Xe
-*14514	Xe
+
+# old Xenon
+*14513	Other
+*14514	Other
 *14515	BgOff
+
 @sources Bi
 *14516	SourcesCal	# all the way in
 @sources E Bi Ce
@@ -2967,7 +2971,7 @@
 *17464	A10	# lost beam
 *17466	A10
 *17467	A11
-*174612	A12
+*17468	A12
 
 ### B->A ###
 
@@ -4061,7 +4065,7 @@
 
 *18507	A1
 *18508	A2
-*18508	A3
+*18509	A3
 *18510	A4
 *18511	A5
 *18512	A6
@@ -4102,18 +4106,18 @@
 *18544	B11
 *18545	B12
 
-*18446	A1
-*18447	A2
-*18448	A3
-*18449	A4
-*18450	A5
-*18451	A6
-*18452	A7
-*18453	A8
-*18454	A9
-*18455	A10
-*18456	A11
-*18457	A12
+*18546	A1
+*18547	A2
+*18548	A3
+*18549	A4
+*18550	A5
+*18551	A6
+*18552	A7
+*18553	A8
+*18554	A9
+*18555	A10
+*18556	A11
+*18557	A12
 
 ### A->B ###
 

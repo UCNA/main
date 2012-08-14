@@ -7,6 +7,7 @@
 #include "PathUtils.hh"
 #include "SourceDBSQL.hh"
 #include "CalDBSQL.hh"
+#include "SMExcept.hh"
 #include <TSpectrum.h>
 #include <TSpectrum2.h>
 #include <utility>
@@ -15,10 +16,11 @@
 ReSourcer::ReSourcer(OutputManager* O, const Source& s, PMTCalibrator* P):
 OM(O), mySource(s), PCal(P), dbgplots(false), simMode(false),
 nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
-		
+	
 	// source-dependent ranges
 	if(mySource.t == "Bi207") {
 		pkMin = 200;
+		nSigma = 1.5;
 		addCorrFit(400,475);
 		addCorrFit(900,1100);
 	} else if(mySource.t == "Sn113") {
@@ -65,7 +67,7 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 			OM->addObject(pPMTCorr[t][t2]);
 		}
 	}	
-	for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
+	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 		hitPos[d] = OM->registeredTH1F(s.name()+"_hits_profile_"+itos(d),"Hit Positions",300,-10,10);
 		hitPos[d]->SetLineColor(2+2*d);
 	}
@@ -94,7 +96,7 @@ unsigned int ReSourcer::fill(const ProcessedDataScanner& P) {
 			continue;
 		hTubes[t][tp]->Fill(P.scints[s].tuben[t].x,P.physicsWeight);
 		if(PCal && !simMode && tp==TYPE_0_EVENT)
-			hTubesRaw[t]->Fill(P.scints[s].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock.t[BOTH]),P.physicsWeight);
+			hTubesRaw[t]->Fill(P.scints[s].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock[BOTH]),P.physicsWeight);
 	}
 	if(tp==TYPE_0_EVENT)
 		hTubes[nBetaTubes][tp]->Fill(P.scints[s].energy.x,P.physicsWeight);
@@ -149,6 +151,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 			if(searchsigma < 4)
 				searchsigma = 4;		
 			
+			OM->defaultCanvas->SetLogy(false);
 			std::string fitPlotName = "";
 			if(dbgplots)
 				fitPlotName = OM->plotPath+"/"+mySource.name()+"/Fit_Spectrum_"+(t==nBetaTubes?"Combined":itos(t))+".pdf";
@@ -177,7 +180,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 				for(unsigned int i=0; i<tubePeaks[t].size(); i++) {
 					printf("-------- %c%i --------\n",sideNames(mySource.mySide),t);
 					tubePeaks[t][i].toStringmap().display();
-					OM->qOut.insert(std::string("Main_")+tubePeaks[t][i].name()+"_peak_"+itos(t),tubePeaks[t][i].toStringmap());
+					OM->qOut.insert("Main_"+tubePeaks[t][i].name()+"_peak_"+itos(t),tubePeaks[t][i].toStringmap());
 					SourceDBSQL::getSourceDBSQL()->addPeak(tubePeaks[t][i]);
 				}
 			}
@@ -187,6 +190,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 			continue;
 		
 		// individual tube plots, convert peaks back to PMT ADC values
+		OM->defaultCanvas->SetLogy(true);
 		if(!simMode)
 			hTubesRaw[t]->Draw();
 		for(unsigned int i=0; i<tubePeaks[t].size(); i++) {
@@ -202,7 +206,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 				drawVLine((tubePeaks[t][i].center.x-tubePeaks[t][i].width.x)*tubePeaks[t][i].gms, OM->defaultCanvas,4);
 				drawVLine((tubePeaks[t][i].center.x+tubePeaks[t][i].width.x)*tubePeaks[t][i].gms, OM->defaultCanvas,4);				
 			}
-			std::string qoutname = std::string("Main_")+tubePeaks[t][i].name()+"_peak_"+itos(t);
+			std::string qoutname = "Main_"+tubePeaks[t][i].name()+"_peak_"+itos(t);
 			printf("-------- %c%i %s --------\n",sideNames(mySource.mySide),t,qoutname.c_str());
 			tubePeaks[t][i].toStringmap().display();
 			OM->qOut.insert(qoutname,tubePeaks[t][i].toStringmap());
@@ -224,13 +228,13 @@ void ReSourcer::findSourcePeaks(float runtime) {
 					hToPlot.push_back(hTubes[t][tp]);
 			}
 			drawSimulHistos(hToPlot);
-			OM->printCanvas(mySource.name()+"/Spectrum_Combined"+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp))+(simMode?"_Sim":""));
+			OM->printCanvas(mySource.name()+"/Spectrum_Combined"+(tp==TYPE_0_EVENT?"":"_type_"+itos(tp))+(simMode?"_Sim":""));
 		}
 	}
 	
 	OM->defaultCanvas->SetLogy(false);
 	std::vector<TH1*> hToPlot;
-	for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++)
+	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 		hToPlot.push_back(hitPos[d]);
 	drawSimulHistos(hToPlot);
 	OM->printCanvas(mySource.name()+"/Hit_Positions"+(simMode?"_Sim":""));
@@ -271,19 +275,22 @@ void reSource(RunNum rn) {
 	P->addRun(rn);
 	
 	if(!P->getnFiles()) {
-		printf("Processed run %i not found! Aborting!\n",rn);
+		SMExcept e("MissingProcessedRun");
+		e.insert("runnum",rn);
 		delete(P);
-		return;
+		throw(e);
 	}
-	if(P->totalTime.t[BOTH] < 1.0) { //TODO
-		printf("Run %i is too short (%f s). Aborting.\n",rn,P->totalTime.t[BOTH]);
+	if(P->totalTime[BOTH] < 1.0) { //TODO
+		SMExcept e("RunTooShort");
+		e.insert("runnum",rn);
+		e.insert("runtime",P->totalTime[BOTH]);
 		delete(P);
-		return;
+		throw(e);
 	}	
 	
 	// set up output paths
 	std::string outPath = getEnvSafe("UCNA_ANA_PLOTS")+"/LivermoreSources/";
-	PMTCalibrator PCal(rn,CalDBSQL::getCDB());
+	PMTCalibrator PCal(rn);
 	RunInfo RI = CalDBSQL::getCDB()->getRunInfo(rn);
 	OutputManager TM("Run_"+itos(RI.runNum), outPath+replace(RI.groupName,' ','_')+"/"+itos(rn)+"_"+RI.roleName+"/");
 	
@@ -294,7 +301,7 @@ void reSource(RunNum rn) {
 		sources.insert(std::make_pair(it->sID,ReSourcer(&TM,*it,&PCal)));
 		Stringmap m = it->toStringmap();
 		for(unsigned int t=0; t<nBetaTubes; t++)
-			m.insert(std::string("eta_")+itos(t),PCal.eta(it->mySide,t,it->x,it->y));
+			m.insert("eta_"+itos(t),PCal.eta(it->mySide,t,it->x,it->y));
 		TM.qOut.insert("Source",m);
 	}
 	
@@ -305,7 +312,7 @@ void reSource(RunNum rn) {
 			m.insert("gms0_"+itos(t),PCal.getGMS0(s,t));
 			m.insert("gmsRel_"+itos(t),PCal.gmsFactor(s,t,0)/PCal.getGMS0(s,t));
 		}
-		TM.qOut.insert(std::string("BetaSc")+sideNames(s),m);
+		TM.qOut.insert("BetaSc"+sideNames(s),m);
 	}
 	
 	printf("Expecting %i sources...\n",(int)sources.size());
@@ -358,18 +365,20 @@ void reSource(RunNum rn) {
 		// fit source peaks
 		it->second.dbgplots = PCal.isRefRun() || it->second.mySource.t=="Bi207" || it->second.mySource.t=="Cd109";
 		it->second.simMode = false;
-		it->second.findSourcePeaks(P->totalTime.t[BOTH]);
+		it->second.findSourcePeaks(P->totalTime[BOTH]);
 		it->second.calcPMTcorr();
 		
 		// fit simulated source data with same parameters
 		Source simSource = it->second.mySource;	
 		Sim2PMT* g2p = NULL;
-		std::string g4dat = "/home/mmendenhall/geant4/output/LivPhys_495_";
+		std::string g4dat = "/home/mmendenhall/geant4/output/FixGeom_";
 		printf("Loading source simulation data...\n");
+		if(simSource.t=="Bi207" || simSource.t=="Ce139" || simSource.t=="Sn113")
+			g4dat = "/home/mmendenhall/geant4/output/9.5uFoil_";
 		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
 		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
 			g2p = new G4toPMT();
-			g2p->addFile(g4dat + simSource.t + "_geomC/analyzed_*.root");
+			g2p->addFile(g4dat + simSource.t + "/analyzed_*.root");
 		} else if(simSource.t=="Cd113m") {
 			/*
 			 G4toPMT* cd109 = new G4toPMT();
@@ -389,7 +398,9 @@ void reSource(RunNum rn) {
 		
 		printf("Preparing to simulate source data...\n");
 		
-		g2p->setOffset(simSource.x, simSource.y);
+		SourcedropPositioner SDP(simSource.x, simSource.y,
+								 (simSource.t=="Ce139" || simSource.t=="Cd109")?1.25:1.5);
+		g2p->SP = &SDP;
 		g2p->setCalibrator(PCal);
 		g2p->fakeClip = true;
 		
@@ -424,24 +435,27 @@ void reSource(RunNum rn) {
 				hToPlot.push_back(it->second.hTubes[t][tp]);
 				TM.defaultCanvas->SetLogy(true);
 				drawSimulHistos(hToPlot);
-				TM.printCanvas(it->second.mySource.name()+"/Spectrum_Comparison_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp)));
+				TM.printCanvas(it->second.mySource.name()+"/Spectrum_Comparison_"+itos(t)+(tp==TYPE_0_EVENT?"":"_type_"+itos(tp)));
 				
 				// same, linear scale
 				TM.defaultCanvas->SetLogy(false);
 				RS.hTubes[t][tp]->SetMinimum(0);
 				it->second.hTubes[t][tp]->SetMinimum(0);
 				drawSimulHistos(hToPlot);
-				std::string outName = it->second.mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":std::string("_type_")+itos(tp));
+				std::string outName = it->second.mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":"_type_"+itos(tp));
 				TM.printCanvas(outName);
 			}
-			TM.defaultCanvas->SetLogy(false);
-			for(unsigned int t2=0; t2<nBetaTubes; t2++) {
-				if(t==t2 || t==nBetaTubes) continue;
-				RS.pPMTCorr[t][t2]->SetLineColor(4);
-				RS.pPMTCorr[t][t2]->Draw();
-				it->second.pPMTCorr[t][t2]->SetLineColor(2);
-				it->second.pPMTCorr[t][t2]->Draw("Same");
-				TM.printCanvas(it->second.mySource.name()+"/PMTCorr/"+itos(t)+"_v_"+itos(t2));
+			
+			if(0) {
+				TM.defaultCanvas->SetLogy(false);
+				for(unsigned int t2=0; t2<nBetaTubes; t2++) {
+					if(t==t2 || t==nBetaTubes) continue;
+					RS.pPMTCorr[t][t2]->SetLineColor(4);
+					RS.pPMTCorr[t][t2]->Draw();
+					it->second.pPMTCorr[t][t2]->SetLineColor(2);
+					it->second.pPMTCorr[t][t2]->Draw("Same");
+					TM.printCanvas(it->second.mySource.name()+"/PMTCorr/"+itos(t)+"_v_"+itos(t2));
+				}
 			}
 		}
 		

@@ -106,6 +106,34 @@ CREATE TABLE anode_cal (
 	INDEX(start_run), INDEX(end_run)
 );
 
+# cathode calibration sets
+CREATE TABLE cathcal_set (
+	cathcal_set_id SERIAL,			# unique ID number
+	side ENUM('East','West'),		# which side this calibration applies to
+	plane ENUM('X','Y'),			# which cathode plane to consider
+	start_run INT UNSIGNED,			# starting run for calibration set
+	end_run INT UNSIGNED,			# ending run for calibration set
+	INDEX(cathcal_set_id), INDEX (start_run,end_run,side,plane)
+);
+
+# cathode/positioning calibration
+CREATE TABLE cathseg_cal (
+	cathseg_id SERIAL,				# unique ID for this cathode calibration
+	cathcal_set_id INT UNSIGNED,	# which cathcal set this belongs to
+	position DOUBLE,				# coordinate position for segment center
+	sensor_name text,				# readout sensor name for this segment
+	norm DOUBLE,					# normalization factor for this segment
+	PRIMARY KEY(cathseg_id), INDEX(cathcal_set_id,position)
+);
+
+# position shaping graphs
+CREATE TABLE cathshape_graphs (
+	graph_id INT UNSIGNED,			# shape parameter graph vs. energy
+	cathseg_id INT UNSIGNED,		# cathode segment this applies to
+	PRIMARY KEY (graph_id),
+	INDEX (cathseg_id)
+);
+
 # run grouping names
 CREATE TABLE run_group(
 	run_group_id SERIAL,			# unique ID
@@ -157,7 +185,9 @@ CREATE TABLE analysis (
 	live_time_e DOUBLE,			# blinded East live time
 	live_time_w DOUBLE,			# blinded West live time
 	live_time DOUBLE,			# unblinded live time
-	total_time DOUBLE,			# total time
+	total_time DOUBLE,			# total wall time
+	n_trigs INT UNSIGNED,		# number of triggers during live time
+	total_trigs INT UNSIGNED,	# total number of trigger events
 	misaligned INT UNSIGNED,
 	tdc_corrupted INT UNSIGNED,
 	INDEX(run_number)
@@ -196,3 +226,47 @@ CREATE TABLE sourcepeaks (
 	nPE DOUBLE,								# estimated peak photoelectrons
 	INDEX(sourcepeak_id), INDEX(source_id)
 );
+
+
+
+############################
+# Analysis comparison tables
+#
+
+CREATE DATABASE IF NOT EXISTS analysis_results;
+use analysis_results;
+
+# generic specification of cuts
+CREATE TABLE cut_spec (
+	cut_spec_id SERIAL,		# unique ID for cut
+	energy_min DOUBLE,		# minimum energy
+	energy_max DOUBLE,		# maximum energy
+	radius DOUBLE,			# event radius
+	positioning ENUM('plain','rotated'),	# what type of positining scheme is used
+	INDEX(cut_spec_id), INDEX(energy_min,energy_max,radius)
+);
+
+# generic analysis results
+CREATE TABLE analysis_results (
+	analsysis_results_id SERIAL,			# unique ID for this result
+	author ENUM('MPM','RWP','BZ'),			# person generating result
+	date DATETIME,							# result generation date
+	type ENUM('Asymmetry','Counts'),		# type of result
+	source ENUM('Data','G4','Pen'),			# data or MC source
+	start_run INT UNSIGNED,					# run range start for result
+	end_run INT UNSIGNED,					# run range end for result
+	event_type SET('0','I','II','III'),		# event type used for result
+	ana_choice ENUM('A','B','C','D','E','F','G','H'),	# ``analysis choice''
+	side ENUM('East','West','Both'),		# event side of result
+	afp ENUM('On','Off','Other','On2Off','Off2On'),	# AFP state for result
+	value DOUBLE,							# result value
+	err DOUBLE,								# result uncertainty
+	cut_spec_id INT UNSIGNED,				# ID for cut specification
+	INDEX(author), INDEX(type,event_type,side,afp), INDEX(start_run,end_run), INDEX(date), INDEX(cut_spec_id)
+);
+
+# permissions
+GRANT SELECT ON * to ucn;
+GRANT SELECT, INSERT, DELETE, UPDATE ON * TO ucnwrite;
+FLUSH PRIVILEGES;
+

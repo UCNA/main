@@ -1,0 +1,15 @@
+####
+# Xe129 11/2- decay to Xe129 1/2+ ground state
+# decay scheme from Tendow, Nuclear Data Sheets 77, 631 (1996)
+####
+
+fileinfo:	fancyname = $^{129}$Xe* $11/2^-$
+
+level:	nm = 129.54.0	E = 0		hl = -1			jpi = 1/2+
+level:	nm = 129.54.1	E = 39.578	hl = 0.97e-9	jpi = 3/2+
+level:	nm = 129.54.2	E = 236.14	hl = 7.67e5		jpi = 11/2-
+
+gamma:	from = 129.54.1	to = 129.54.0	Igamma = 7.5	CE_K = 10.4943	CE_L = 1.428~.011	CE_M = 0.2882~.0023	CE_N = 0.097
+gamma:	from = 129.54.2	to = 129.54.1	Igamma = 4.59	CE_K = 13.94	CE_L = 5.33	CE_M = 1.20	CE_N = 0.33
+
+AugerK:	Z = 54	ka2 = 36.1	ka1 = 66.6	kb3 = 6.23	kb1 = 12.0	kb2 = 3.64	Iauger = 16.0

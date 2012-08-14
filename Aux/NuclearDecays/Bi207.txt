@@ -1,0 +1,31 @@
+####
+# Bi207 EC decay to Pb207, followed by internal conversions
+# Energy level and a(KLMN) data from Kondev, Lalkovsi: Nuclear Data Sheets 112 (2011) 707–853
+# CE subshell splittings from experiment Fujita et al.: Nuc. Phys. A484 (1988) 77-89
+####
+
+level:	nm = 207.82.0	E = 0.			hl = -1					jpi = 1/2-
+level:	nm = 207.82.1	E = 569.6982	hl = 130.5e-12			jpi = 5/2-
+level:	nm = 207.82.2	E = 897.698		hl = 0.115e-12			jpi = 3/2-
+level:	nm = 207.82.3	E = 1633.358	hl = 0.806				jpi = 13/2+
+level:	nm = 207.82.4	E = 2339.921	hl = 0					jpi = 7/2-
+level:	nm = 207.83.0	E = 2397.5		hl = 9.956e8			jpi = 9/2-
+
+gamma:	from = 207.82.1	to = 207.82.0	Igamma = 97.75	CE_K = 0.01572~.00023	CE_L = 0.00452~.00006@4.33:2.84:1	\
+	CE_M = 0.00114~.00005@3.70:3.01:1	CE_N = 0.00029~.00003
+	
+gamma:	from = 207.82.3	to = 207.82.1	Igamma = 74.5	CE_K = 0.0951~.0023		CE_L = 0.0247~.0006@10.7:2.09:1		\
+	CE_M = 0.0059~.0004@10.5:2.1:1	CE_N = 0.0017~.0003
+
+gamma:	from = 207.82.2	to = 207.82.1	Igamma = .00069	CE_K = 0.273	CE_L = 0.0466	CE_M = 0.01090	CE_N = 0.00338
+
+gamma:	from = 207.82.2	to = 207.82.0	Igamma = 0.128	CE_K = 0.0192	CE_L = 0.0038	CE_M = 0.000741	CE_N = 0.000230
+
+# K:L:M+ = 1000(50):157(15):44(7) 1974Av03
+gamma:	from = 207.82.4	to = 207.82.2	Igamma = 0.131	CE_K = 0.00244~.00013	CE_L = 0.00042~.00004	CE_M = 0.00011~.00002
+
+gamma:	from = 207.82.4	to = 207.82.1	Igamma = 6.87	CE_K = 0.00346	CE_L = 0.00049	CE_M = 0.00013
+
+ecapt: from = 207.83.0
+
+AugerK:	Z = 82	ka1 = 21.4	ka2 = 35.7	kb3 = 4.31	kb1 = 8.27	kb2 = 3.02	Iauger = 2.9

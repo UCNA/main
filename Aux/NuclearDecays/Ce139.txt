@@ -1,0 +1,14 @@
+#####
+# Ce139 to  EC followed by internal conversions
+# Data from T. W. Burrows, Nuclear Data Sheets 92, 623 (2001)
+#####
+
+level:	nm = 139.57.0	E = 0.			hl = -1				jpi = 7/2+
+level:	nm = 139.57.1	E = 165.8576	hl = 1.499e-9		jpi = 5/2+
+level:	nm = 139.58.0	E = 264.6		hl = 1.1892e7		jpi = 3/2+
+
+# a(K) from H.H. Hansen, Eur. Appl. Res. Rept. Nucl. Sci. Vol 6, No. 4, 777-816 (1985)
+# K/M+=28(1); L1:L2:L3=1:0.072(3):0.016(1) experimental from Geiger et al, Nuclear Physics 68, 352-368 (1965)
+gamma:	from = 139.57.1	to = 139.57.0	Igamma = 79.9	CE_K = 0.2146~.0010		CE_L = 0.0289~.0012@1:.072:.016		CE_M = .0077~.0003
+ecapt:	from = 139.58.0
+AugerK:	Z = 57	ka1 = 41.0	ka2 = 22.5	kb3 = 3.95	kb1 = 7.62	kb2 = 2.46	Iauger = 8.3

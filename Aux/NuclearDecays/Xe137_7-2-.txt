@@ -1,0 +1,87 @@
+####
+# Xe137 7/2- decay chain
+# decay scheme from Browne, Tuli, Nuclear Data Sheets 108, 2201 (2007)
+####
+
+fileinfo:	fancyname = $^{137}$Xe $7/2^-$
+
+# 137Cs levels
+level:	nm = 137.55.0	E = 0			hl = 9.486e8			jpi = 7/2+
+level:	nm = 137.55.1	E = 455.490		hl = 0					jpi = 5/2+
+level:	nm = 137.55.2	E = 848.90		hl = 0					jpi = ???
+level:	nm = 137.55.3	E = 1184.71		hl = 0					jpi = (11/2+)
+level:	nm = 137.55.4	E = 1273.20		hl = 0					jpi = ???
+level:	nm = 137.55.5	E = 1564.13		hl = 0					jpi = ???
+level:	nm = 137.55.6	E = 1569.84		hl = 0					jpi = ???
+level:	nm = 137.55.7	E = 1574.84		hl = 0					jpi = ???
+level:	nm = 137.55.8	E = 1651.24		hl = 0					jpi = ???
+level:	nm = 137.55.9	E = 1783.47		hl = 0					jpi = ???
+level:	nm = 137.55.10	E = 1867.87		hl = 0					jpi = 9/2-
+level:	nm = 137.55.11	E = 1916.27		hl = 0					jpi = ???
+level:	nm = 137.55.12	E = 2068.03		hl = 0					jpi = (3/2+,5/2+)
+level:	nm = 137.55.13	E = 2099.41		hl = 0					jpi = ???
+level:	nm = 137.55.14	E = 2216.8		hl = 0					jpi = ???
+level:	nm = 137.55.15	E = 2367.84		hl = 0					jpi = ???
+level:	nm = 137.55.16	E = 2795.9		hl = 0					jpi = ???
+level:	nm = 137.55.17	E = 2849.11		hl = 0					jpi = ???
+level:	nm = 137.55.18	E = 2850.04		hl = 0					jpi = ???
+level:	nm = 137.55.19	E = 2945.19		hl = 0					jpi = ???
+level:	nm = 137.55.20	E = 3037.31		hl = 0					jpi = ???
+level:	nm = 137.55.21	E = 3104.2		hl = 0					jpi = ???
+level:	nm = 137.55.22	E = 3159.5		hl = 0					jpi = ???
+level:	nm = 137.55.23	E = 3377.46		hl = 0					jpi = ???
+level:	nm = 137.55.24	E = 3584.1		hl = 0					jpi = ???
+level:	nm = 137.55.25	E = 3694.1		hl = 0					jpi = ???
+level:	nm = 137.55.26	E = 3736.7		hl = 0					jpi = ???
+level:	nm = 137.55.27	E = 3786.9		hl = 0					jpi = ???
+level:	nm = 137.55.28	E = 3824.0		hl = 0					jpi = ???
+level:	nm = 137.55.29	E = 3907.16		hl = 0					jpi = ???
+level:	nm = 137.55.30	E = 3938.2		hl = 0					jpi = ???
+level:	nm = 137.55.31	E = 3940.8		hl = 0					jpi = ???
+level:	nm = 137.55.32	E = 3952.41		hl = 0					jpi = ???
+level:	nm = 137.55.33	E = 3955.7		hl = 0					jpi = ???
+level:	nm = 137.55.34	E = 3976.4		hl = 0					jpi = ???
+
+level:	nm = 137.54.0	E = 4173		hl = 229.08				jpi = 7/2-
+
+beta:	from = 137.54.0	to = 137.55.34	I = .0003
+beta:	from = 137.54.0	to = 137.55.33	I = .0009
+beta:	from = 137.54.0	to = 137.55.32	I = .030
+beta:	from = 137.54.0	to = 137.55.31	I = .0002
+beta:	from = 137.54.0	to = 137.55.30	I = .0011
+beta:	from = 137.54.0	to = 137.55.29	I = .0018
+beta:	from = 137.54.0	to = 137.55.28	I = .0061
+beta:	from = 137.54.0	to = 137.55.27	I = .011
+beta:	from = 137.54.0	to = 137.55.26	I = .0010
+beta:	from = 137.54.0	to = 137.55.25	I = .0062
+beta:	from = 137.54.0	to = 137.55.24	I = .0056
+beta:	from = 137.54.0	to = 137.55.23	I = .027
+beta:	from = 137.54.0	to = 137.55.22	I = .013
+beta:	from = 137.54.0	to = 137.55.21	I = .006
+beta:	from = 137.54.0	to = 137.55.20	I = .036
+beta:	from = 137.54.0	to = 137.55.19	I = .010
+beta:	from = 137.54.0	to = 137.55.18	I = .72
+beta:	from = 137.54.0	to = 137.55.17	I = .100
+beta:	from = 137.54.0	to = 137.55.16	I = .004
+beta:	from = 137.54.0	to = 137.55.15	I = 0.
+beta:	from = 137.54.0	to = 137.55.14	I = .005
+beta:	from = 137.54.0	to = 137.55.13	I = 0.
+beta:	from = 137.54.0	to = 137.55.12	I = .14
+beta:	from = 137.54.0	to = 137.55.11	I = .073
+beta:	from = 137.54.0	to = 137.55.10	I = 0.
+beta:	from = 137.54.0	to = 137.55.9	I = .38
+beta:	from = 137.54.0	to = 137.55.8	I = .051
+beta:	from = 137.54.0	to = 137.55.7	I = .17
+
+beta:	from = 137.54.0	to = 137.55.5	I = .066
+beta:	from = 137.54.0	to = 137.55.4	I = .04
+beta:	from = 137.54.0	to = 137.55.3	I = 0.
+beta:	from = 137.54.0	to = 137.55.2	I = .65
+beta:	from = 137.54.0	to = 137.55.1	I = 31.
+beta:	from = 137.54.0	to = 137.55.0	I = 67.
+
+gamma:	from = 137.55.1	to = 137.55.0	Igamma = 31.	CE_K = .0118~.0016	CE_L = .00163~.00007	CE_M = .00033~.00001
+gamma:	from = 137.55.2	to = 137.55.0	Igamma = 0.62
+gamma:	from = 137.55.9	to = 137.55.0	Igamma = 0.41
+
+AugerK:	Z = 55	ka1 = .171	ka2 = .0933	kb3 = .0162	kb1 = .0312	kb2 = .00966	Iauger = .0388

@@ -30,7 +30,11 @@ def plot_run_monitor(rlist,sname,tp="pedestal",outpath=None):
 	for rn in rlist:
 		if not rn%10:
 			print rn
-		cgid,wgid = getRunMonitorGIDs(conn,rn,sname,tp)
+		cgwgid = getRunMonitorGIDs(conn,rn,sname,tp)
+		if not cgwgid:
+			print "*** Can't find run monitor for",rn,"***"
+			continue	
+		cgid,wgid = cgwgid
 		cg = getGraph(conn,cgid)
 		wg = getGraph(conn,wgid)
 		if cg and wg:
@@ -111,8 +115,8 @@ def plot_trigeff_history(rmin,rmax):
 	
 if __name__ == "__main__":
 	
-	#plot_all_pedestals(13900,16300)
+	#plot_all_pedestals(14000,16300)
 	#plot_all_pedestals(16500,19900)
 	
-	#plot_trigeff_history(13900,16300)
-	plot_trigeff_history(16500,19900)
+	plot_trigeff_history(14000,16300)
+	#plot_trigeff_history(16500,19900)

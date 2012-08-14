@@ -6,7 +6,6 @@
 
 #include "RunSetScanner.hh"
 #include "EnergyCalibrator.hh"
-#include "WirechamberReconstruction.hh"
 
 #include "QFile.hh"
 #include "PMTGenerator.hh"
@@ -36,10 +35,12 @@ public:
 	/// get info about current event
 	virtual Stringmap evtInfo();
 	
+	bool redoPositions;			//< whether to re-calibrate positions
+
 	ScintEvent scints[2];		//< readout point for scintillator data
 	Float_t led_pd[2];			//< readout point for reference photodiode
 	wireHit wires[2][2];		//< readout point for wirechamber data [side][plane]
-	float cathodes[2][2][16];	//< readout point for pedestal-subtracted cathode values, [side][plane][cathode]
+	float cathodes[2][2][kMaxCathodes];	//< readout point for pedestal-subtracted cathode values, [side][plane][cathode]
 	MWPCevent mwpcs[2];			//< readout point for mwpc data (anode & cathode sum)
 	Float_t mwpcEnergy[2];		//< calibrated wirechamber energy deposition on each side
 	BlindTime runClock;			//< time of current event since run start
@@ -47,6 +48,7 @@ public:
 	PID fPID;					//< analysis particle ID
 	EventType fType;			//< analysis event type
 	Side fSide;					//< analysis event side
+	UInt_t fTaggedBack[2];		//< whether event was tagged by the muon backing veto on each side
 	double physicsWeight;		//< event spectrum re-weighting factor
 	
 	AnalysisChoice anChoice;	//< which analysis choice to use in identifying event types

@@ -1,5 +1,8 @@
 #include "AnalyzerBase.hh"
-#include "Sides.hh"
+#include "Enums.hh"
+
+/// number of sensitive detector regions
+#define N_SD 24
 
 class UCNA_MC_Analyzer: public ucnG4_analyzer {
 public:
@@ -16,15 +19,16 @@ public:
 	Double_t ScintPosSigma[2][3];	//< scintillator quenched energy weighted position variance
 	
 	Double_t fMWPCEnergy[2];		//< MWPC deposited energy
-	Double_t EdepSD[19];			//< array for energy deposition in all SDs
+	Double_t EdepSD[N_SD];			//< array for energy deposition in all SDs
+	Double_t thetaInSD[N_SD];		//< entrance angle in each sensitive detector
+	Double_t thetaOutSD[N_SD];		//< exit angle for each sensitive detector
+	Double_t keInSD[N_SD];			//< kinetic energy entering each sensitive detector
+	Double_t keOutSD[N_SD];			//< kinetic energy exiting each sensitive detector
+	Int_t hitCountSD[N_SD];			//< count of primary tracks in each volume
 	Double_t EdepAll;				//< total edep in all SDs
 	Double_t hitTime[2];			//< timing info for hits on each side
+	Double_t hitTimeSD[N_SD];		//< earliest hit time in each SD
 	Double_t trapMonTime[2];		//< timing for trap monitor hits
-	Double_t thetaIn[2];			//< particle angle entering wirechamber
-	Double_t thetaOut[2];			//< particle angle exiting wirechamber
-	Double_t kEIn[2];				//< particle energy entering scintillator
-	Double_t kEInTrapMon[2];		//< particle energy entering decay trap monitor volume
-	Double_t kEOut[2];				//< particle energy leaving scintillator
 	
 protected:
 	

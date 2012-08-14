@@ -50,7 +50,7 @@ Cut_MWPC_W_CathMax:	start = 200	end = 5000	runStart = 19823	runEnd = 19863
 
 Cut_TDC_Back_E:		start = 1000	end = 2800	runStart = 13000	runEnd = 100000
 Cut_TDC_Back_W:		start = 1200	end = 3200	runStart = 13000	runEnd = 100000
-Cut_TDC_Top_E:		start = 1250	end = 3250	runStart = 13000	runEnd = 100000
+Cut_TDC_Top_E:		start = 1250	end = 3600	runStart = 13000	runEnd = 100000
 Cut_ADC_Drift_E:	start = 1400	end = 3300	runStart = 13000	runEnd = 100000
 Cut_ADC_Drift_W:	start = 800	end = 2300	runStart = 13000	runEnd = 100000
 

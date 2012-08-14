@@ -4,10 +4,14 @@
 #include <stdio.h>
 #include <cassert>
 
-char sideNames(Side s) {
+//---------------------------------------
+
+char sideNames(Side s, bool clower) {
+	assert(s<BADSIDE);
 	const char snm[] = {'E','W','B','N'};
-	return snm[s];
-};
+	const char snml[] = {'e','w','b','n'};
+	return clower?snml[s]:snm[s];
+}
 
 const char* sideWords(Side s) {
 	assert(s<=BADSIDE);
@@ -21,14 +25,19 @@ std::string typeWords(EventType tp) {
 	return twd[tp];
 }
 
+const char* dbSideName(Side s) {
+	assert(s<=BADSIDE);
+	const char* swd[] = {"'East'","'West'","'Both'","'None'","'BadSide'"};
+	return swd[s];
+}
 
-std::string sideSubst(const std::string& instr, Side s) {
+std::string sideSubst(const std::string& instr, Side s, bool clower) {
 	std::vector<std::string> segs = split(instr,"%");
 	if(!segs.size()) return "";
 	std::string sout = (instr[0]=='%')?"":segs[0];
 	for(unsigned int i=(instr[0]!='%'); i<segs.size(); i++) {
 		if(!segs[i].size()) continue;
-		if(segs[i][0]=='c') sout += ctos(sideNames(s));
+		if(segs[i][0]=='c') sout += ctos(sideNames(s,clower));
 		else if(segs[i][0]=='s') sout += sideWords(s);
 		else sout += ctos(segs[i][0]);
 		sout += segs[i].substr(1,segs[i].size());
@@ -37,48 +46,30 @@ std::string sideSubst(const std::string& instr, Side s) {
 }
 
 Side otherSide(Side s) {
-	switch(s) {
-		case EAST:
-			return WEST;
-		case WEST:
-			return EAST;
-		case BOTH:
-			return NONE;
-		default:
-			return BOTH;
-	}
+	return s==EAST?WEST : s==WEST?EAST : s==BOTH?NOSIDE : BOTH;
 }
 
 unsigned int pmtHardwareNum(Side s, unsigned int quadrant) {
-	if(s==EAST)
-		return (quadrant+2)%4+1;
-	if(s==WEST)
-		return quadrant+1;
-	return 0;
+	return s==EAST?(quadrant+2)%4+1 : s==WEST?quadrant+1 : 0;
 }
 
-float_err operator+(float_err a, float_err b) { return float_err(a.x+b.x,sqrt(a.err*a.err + b.err*b.err)); }
-
-float_err operator*(float a, float_err b) { return float_err(a*b.x,a*b.err); }
-
-float_err weightedSum(unsigned int n, const float_err* d) {
-	float_err sum;
-	sum.x = sum.err = 0;
-	for(unsigned int i=0; i<n; i++) {
-		sum.x += d[i].x/(d[i].err*d[i].err);
-		sum.err += 1/(d[i].err*d[i].err);
-	}
-	sum.x /= sum.err;
-	sum.err = 1/sqrt(sum.err);
-	return sum;
+Side strToSide(const std::string& s) {
+	return s=="East"?EAST:s=="West"?WEST:s=="Both"?BOTH:s=="None"?NOSIDE:BADSIDE;
 }
 
-float proximity(unsigned int n, const float_err* d, float_err c) {
-	float psum = 0;
-	for(unsigned int i=0; i<n; i++)
-		psum += (d[i].x-c.x)*(d[i].x-c.x)/(d[i].err*d[i].err + c.err*c.err);
-	return sqrt(psum/n);
+//---------------------------------------
+
+std::string afpWords(AFPState afp) {
+	if(afp>AFP_ON2OFF) afp = AFP_OTHER;
+	const char* awd[] = {"Off","On","Other","Off2On","On2Off"};
+	return awd[afp];
 }
+
+AFPState strToAfp(const std::string& s) {
+	return s=="On"?AFP_ON:s=="Off"?AFP_OFF:s=="On2Off"?AFP_ON2OFF:s=="Off2On"?AFP_OFF2ON:AFP_OTHER;
+}
+
+//---------------------------------------
 
 RunGeometry whichGeometry(RunNum rn) {
 	if( rn < 1000 )
@@ -109,5 +100,10 @@ std::string geomName(RunGeometry g) {
 		return "D";
 	return "OTHER";
 }
+
+char choiceLetter(AnalysisChoice a) {
+	return (ANCHOICE_A <= a)?'A'+(a-ANCHOICE_A):'0';
+}
+
 
 

@@ -7,11 +7,9 @@
 #include "Types.hh"
 #include "EnergyCalibrator.hh"
 #include "CalDBSQL.hh"
-#include "WirechamberReconstruction.hh"
 #include "ManualInfo.hh"
 #include "RollingWindow.hh"
 
-const size_t kMWPCWires = 16;	//< maximum number of MWPC wires (may be less if some dead)
 const size_t kNumModules = 5;	//< number of DAQ modules for internal event header checks
 const size_t kNumUCNMons = 4;	//< number of UCN monitors
 
@@ -103,6 +101,8 @@ public:
 	
 	/// set whether to separately analyze LED events
 	bool analyzeLED;
+	/// set whether pedestals need to be measured
+	bool needsPeds;
 	
 protected:
 	// read variables
@@ -115,7 +115,7 @@ protected:
 	Float_t r_MonADC[kNumUCNMons];				//< UCN monitor ADCs
 	Float_t r_PMTADC[2][nBetaTubes];			//< PMT ADCs
 	Float_t r_PMTTDC[2][nBetaTubes+1];			//< PMT TDCs
-	Float_t r_MWPC_caths[2][2][kMWPCWires];		//< cathodes on [side][xplane][wire]
+	Float_t r_MWPC_caths[2][2][kMaxCathodes];		//< cathodes on [side][xplane][wire]
 	Float_t r_MWPC_anode[2];					//< MWPC anode on each side
 	Float_t r_Backing_TDC[2];					//< Backing Veto TDC
 	Float_t r_Drift_TAC[2];						//< Drift tubes TAC
@@ -129,13 +129,13 @@ protected:
 	RunNum rn;									//< run number for file being processed
 	PMTCalibrator PCal;							//< PMT Calibrator for this run
 	CalDBSQL* CDBout;							//< output database connection
-	std::vector<Float_t> kWirePositions[2][2];	//< wire positions on each [side][xplane]
 	std::vector<std::string> cathNames[2][2];	//< cathode sensor names on each [side][xplane]
 	Float_t fAbsTimeStart;						//< absolute start time of run
 	Float_t fAbsTimeEnd;						//< absolute end time of run
 	BlindTime deltaT;							//< time scaler wraparound fix
 	BlindTime totalTime;						//< total running time (accumulated from last event); after scanning, total ``live'' time (less global cuts)
 	Float_t wallTime;							//< initial estimate of run time before actually scanning events; after scanning, total run time
+	unsigned int nLiveTrigs;					//< number of triggers not removed by cuts
 	bool ignore_beam_out;						//< whether to ignore long beam outages (e.g. for a source run)
 	Float_t nFailedEvnb;						//< total Evnb failures
 	Float_t nFailedBkhf;						//< total Bkhf failures
@@ -154,7 +154,7 @@ protected:
 	CutVariable fScint_tdc[2][nBetaTubes+1];//< TDC readout for each PMT and side
 	ScintEvent sevt[2];						//< scintillator event, for reconstructing energy
 	CutVariable fMWPC_anode[2];				//< anode ADC
-	Float_t fMWPC_caths[2][2][kMWPCWires];	//< cathodes on [side][xplane][wire]
+	std::vector<float> fMWPC_caths[2][2];	//< cathodes on [side][xplane][wire]
 	CutVariable fBacking_tdc[2];			//< muon backing veto TDC
 	Float_t fBacking_adc[2];				//< muon backing veto ADC
 	CutVariable fDrift_tac[2];				//< muon veto drift tubes TAC
@@ -227,6 +227,8 @@ protected:
 	void calcTrigEffic();
 	/// Bi pulser gain stabilizer
 	void processBiPulser();
+	/// estimate muon veto accidentals rates
+	void muonVetoAccidentals();
 	/// tally total run time
 	void tallyRunTime();
 	/// output replay summary info, optionally into AnalysisDB
@@ -264,7 +266,7 @@ protected:
 	TH1F* hTuben[2][nBetaTubes];		//< individual PMT visible energy
 	TH1F* hMonADC[kNumUCNMons];			//< UCN Monitor ADCs
 	TH1F* hMonRate[kNumUCNMons];		//< UCM Monitor rates
-	TH1F* hTypeRate[TYPE_III_EVENT+1];	//< rate of event type for betas
+	TH1F* hTypeRate[TYPE_IV_EVENT+1];	//< rate of event type for betas
 	TH1F* hSideRate[2][2];				//< rate for [side][muon/beta]
 	TH1F* hBkhfFailRate;				//< rate of bad Bkhf events
 	TH1F* hEvnbFailRate;				//< rate of bad Evnb events

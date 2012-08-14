@@ -1,0 +1,26 @@
+####
+# Xe135 11/2- decay chain
+# decay scheme from Singh, Rodionov, Khazov, Nuclear Data Sheets 109, 557-563 (2008)
+####
+
+fileinfo:	fancyname = $^{135}$Xe* $11/2^-$
+
+# 135Cs levels
+level:	nm = 135.55.0	E = 0			hl = -1			jpi = 7/2+
+level:	nm = 135.55.1	E = 786.9		hl = 0			jpi = 11/2+
+level:	nm = 135.55.2	E = 1133		hl = 0			jpi = ???
+level:	nm = 135.55.3	E = 1192		hl = 0			jpi = ???
+level:	nm = 135.55.4	E = 1358		hl = 0			jpi = ???
+
+# 135Xe levels, rel. to 135Cs GS, 526.562keV splitting
+level:	nm = 135.54.0	E = 1165		hl = 32.9e3		jpi = 3/2+
+level:	nm = 135.54.1	E = 1691.562	hl = 917.4		jpi = 11/2-
+
+beta:	from = 135.54.1	to = 135.55.1	I = .0035
+beta:	from = 135.54.1	to = 135.55.2	I = .00024
+beta:	from = 135.54.1	to = 135.55.3	I = .000032
+beta:	from = 135.54.1	to = 135.55.4	I = .00016
+
+gamma:	from = 135.54.1	to = 135.54.0	Igamma = 80.8	CE_K = .1910~.0024	CE_L = .0364~.0005	CE_M = .00771~.00011	CE_N = .001588~.000024	CE_O = .0001897~.0000027
+
+AugerK:	Z = 54	ka1 = 7.15	ka2 = 3.88	kb3 = .669	kb1 = 1.29	kb2 = .391	Iauger = 1.72

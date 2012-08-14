@@ -1,4 +1,5 @@
 #include "TagCounter.hh"
+#include <stdlib.h>
 
 template<>
 TagCounter<int>::TagCounter(Stringmap m) {

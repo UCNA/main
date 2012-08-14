@@ -152,7 +152,7 @@ class LinearFitter:
 		self.coeffs = c
 	
 	# latex printable form
-	def toLatex(self,varname='x'):
+	def toLatex(self,varname='x',cfmt=".4g"):
 		s = ""
 		for (n,f) in enumerate(self.terms):
 		
@@ -170,9 +170,9 @@ class LinearFitter:
 				s += "-"+coeffstr
 				continue
 				
-			fmt = "%+.4g"
+			fmt = "%+"+cfmt
 			if n==0:
-				fmt = "%.4g"
+				fmt = "%"+cfmt
 			if coeffstr == "1":
 				coeffstr = ""
 			else:
@@ -198,7 +198,7 @@ class TransformedFitter:
 			self.LF.fit([(self.xtrans(x[cols[0]]),self.ytrans(x[cols[1]])) for x in xydat])
 		else:
 			self.LF.fit([(self.xtrans(x[cols[0]]),self.ytrans(x[cols[1]]),x[cols[2]]) for x in xydat],cols=(0,1,2))
-	
+		self.coeffs = self.LF.coeffs
 	
 	# evaluate at x
 	def __call__(self,x):

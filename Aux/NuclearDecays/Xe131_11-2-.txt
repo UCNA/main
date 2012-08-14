@@ -1,0 +1,15 @@
+####
+# Xe131 11/2- decay to Xe131 3/2+ ground state
+# decay scheme from Khazov, Mitropolsky, Rodionov, Nuclear Data Sheets 107, 2715 (2006)
+####
+
+fileinfo:	fancyname = $^{131}$Xe* $11/2^-$
+
+level:	nm = 131.54.0	E = 0		hl = -1			jpi = 3/2+
+level:	nm = 131.54.1	E = 163.930	hl = 1.025e6	jpi = 11/2-
+
+gamma:	from = 131.54.1	to = 131.54.0	Igamma = 100.	CE_K = 31.6~.5	CE_L = 14.75~0.21@7.14:1.643:6.00	CE_M=3.38~.05	CE_N = .691~.010	CE_O = 0.0755~.0011
+
+norm:	gamma = groundstate
+
+AugerK:	Z = 54	ka2 = 15.6	ka1 = 28.7	kb3 = 2.69	kb1 = 5.19	kb2 = 1.57	Iauger = 6.9

@@ -1,6 +1,7 @@
 #include "ManualInfo.hh"
 #include <cfloat>
 #include <cmath>
+#include <algorithm>
 
 ManualInfo ManualInfo::MI("../Aux/ManualInfo.txt");
 

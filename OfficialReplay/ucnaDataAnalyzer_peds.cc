@@ -8,7 +8,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	
 	// get total run time; force pre-pass if missing
 	wallTime = PCal.CDB->totalTime(rn);
-	unsigned int needsPeds = !wallTime;
+	needsPeds |= !wallTime;
 	if(needsPeds)
 		printf("Total run time not found in DB; force pre-pass\n");
 	else {
@@ -16,11 +16,11 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 		printf("Checking for pedestals data...\n");
 		for(Side s = EAST; s <= WEST; ++s) {
 			for(unsigned int t=0; t<nBetaTubes; t++)
-				needsPeds += !PCal.checkPedestals(PCal.sensorNames[s][t]);
+				needsPeds |= !PCal.checkPedestals(PCal.sensorNames[s][t]);
 			for(unsigned int p = X_DIRECTION; p <= Y_DIRECTION; p++)
 				for(unsigned int c=0; c<cathNames[s][p].size(); c++)
-					needsPeds += !PCal.checkPedestals(cathNames[s][p][c]);
-			needsPeds += !PCal.checkPedestals(sideSubst("MWPC%cAnode",s));
+					needsPeds |= !PCal.checkPedestals(cathNames[s][p][c]);
+			needsPeds |= !PCal.checkPedestals(sideSubst("MWPC%cAnode",s));
 		}
 	}
 	if(!needsPeds) return;
@@ -31,22 +31,22 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	std::vector<float> pmtPeds[2][nBetaTubes];
 	std::vector<float> pmtTimes[2];
 	std::vector<float> anodePeds[2];
-	std::vector<float> cathPeds[2][2][kMWPCWires];
+	std::vector<float> cathPeds[2][2][kMaxCathodes];
 	std::vector<float> mwpcTimes[2];
 	startScan();
 	while (nextPoint()) {
 		convertReadin();
 		calibrateTimes();
 		for(Side s = EAST; s <= WEST; ++s) {
-			if( !trig2of4(s) && qadcSum(otherSide(s))>2000 && !isLED() ) {
-				pmtTimes[s].push_back(fTimeScaler.t[BOTH]);
+			if(isUCNMon() || iSis00==(s==EAST?2:1)) {
+				pmtTimes[s].push_back(fTimeScaler[BOTH]);
 				for(unsigned int t=0; t<nBetaTubes; t++)
 					pmtPeds[s][t].push_back(sevt[s].adc[t]);
 			}
 			if(isLED() || (isPulserTrigger() && !nFiring(s)) || isUCNMon()) {
-				mwpcTimes[s].push_back(fTimeScaler.t[BOTH]);
+				mwpcTimes[s].push_back(fTimeScaler[BOTH]);
 				for(AxisDirection p = X_DIRECTION; p <= Y_DIRECTION; ++p)
-					for(unsigned int c=0; c<kMWPCWires; c++)
+					for(unsigned int c=0; c<kMaxCathodes; c++)
 						cathPeds[s][p][c].push_back(fMWPC_caths[s][p][c]);
 				anodePeds[s].push_back(fMWPC_anode[s].val);
 			}
@@ -64,7 +64,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	}
 	
 	// re-set for next scan
-	wallTime = totalTime.t[BOTH];
+	wallTime = totalTime[BOTH];
 }
 
 void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const std::vector<float>& vtime,

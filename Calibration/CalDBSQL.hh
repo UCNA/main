@@ -7,14 +7,13 @@
 #include <TF1.h>
 #include <map>
 #include "PathUtils.hh"
+#include "Types.hh"
 
 /// class for retrieving calibration data from DB
-class CalDBSQL: public SQLHelper, public CalDB {
+class CalDBSQL: public SQLHelper, public CalDB, private NoCopy {
 public:
 	/// destructor
 	~CalDBSQL();
-	/// forbid copying
-	CalDBSQL& operator=(CalDBSQL&) { assert(false); return *this; }
 	
 	/// check if valid data available for run
 	bool isValid(RunNum rn) { return getCalSetInfo(rn,"ecal_id"); }
@@ -49,19 +48,6 @@ public:
 	/// get pedestal widths for named sensor
 	virtual TGraph* getPedwidths(RunNum rn, const std::string& sensorName) { return getRunMonitor(rn,sensorName,"pedestal",false); }
 	
-	/*
-	/// get LED peak for named sensor
-	virtual TGraph* getLED(RunNum rn, const std::string& sensorName) { return getRunMonitor(rn,sensorName,"GMS_peak"); }
-	/// get Co60 data for named sensor
-	virtual TGraph* getCo60(RunNum rn, Side s, unsigned int peakNum) {
-		if(rn >= 12229 && s==WEST)
-			s=EAST;
-		return getContinuousMonitor(std::string("ADCRef")+sideNames(s)+"Co60", std::string("Co60_Peak_")+itos(peakNum+1), rn, true);
-	}
-	/// get muon peak history for given sensor
-	virtual TGraph* getMuonPeak(RunNum rn, const std::string& sensorName) { return getContinuousMonitor(sensorName, "Muon_Peak", rn, true); }
-	*/
-	
 	/// get kurie endpoint calibration energy for given run, side, PMT
 	virtual float getKurieEnergy(RunNum rn, Side s, unsigned int t);
 	/// get kurie endpoint calibration energy for given run, side, PMT
@@ -83,6 +69,8 @@ public:
 	EfficCurve* getTrigeff(RunNum rn, Side s, unsigned int t);
 	/// get E_vis -> E_true parametrization
 	TGraph* getEvisConversion(RunNum rn, Side s, EventType tp);
+	/// get list of cathode segment calibrators (caller is responsible for deletion)
+	virtual std::vector<CathSegCalibrator*> getCathSegCalibrators(RunNum rn, Side s, AxisDirection d);
 	
 	/// run start time
 	int startTime(RunNum rn, int t0 = 0);
@@ -95,7 +83,7 @@ public:
 	/// get RunInfo for given run
 	RunInfo getRunInfo(RunNum r);
 	/// get a list of run numbers matching the given conditions
-	std::vector<RunNum> findRuns(const char* whereConditions);
+	std::vector<RunNum> findRuns(const std::string& whereConditions, RunNum r0, RunNum r1);
 	
 	/// get name
 	virtual std::string getName() const { return getDBName(); }
@@ -147,8 +135,6 @@ protected:
 	virtual float getTubecalData(RunNum rn, Side s, unsigned int t, const char* field);
 	/// get tube calibrations table (int) entry
 	virtual int getTubecalInt(RunNum rn, Side s, unsigned int t, const char* field);
-	/// database names for the sides
-	const char* dbSideName(Side s) const;
 	/// get graph by ID number
 	TGraphErrors* getGraph(unsigned int gid);	
 	/// get graph for run time range

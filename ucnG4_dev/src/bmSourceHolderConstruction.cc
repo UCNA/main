@@ -23,6 +23,7 @@ void bmSourceHolderConstruction::SetNewValue(G4UIcommand * command, G4String new
 
 void bmSourceHolderConstruction::Construct() {
 	
+	if(!fWindowThick) fWindowThick = 0.001*um;
 	const G4double fSourceRingRadius = 0.5*inch;
 	const G4double fSourceWindowRadius = fSourceRingRadius-3.*mm;
 	const G4double fSourceRingThickness = 3.2*mm;			// suspiciously close to 1/8 in
@@ -54,7 +55,7 @@ void bmSourceHolderConstruction::Construct() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		coating_log[s] = new G4LogicalVolume(coating_tube,fCoatingMat,sideSubst("source_coating_log_%c",s));
 		coating_log[s]->SetVisAttributes(new G4VisAttributes(G4Colour(0,1,0,0.5)));
-		coating_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,sign(s)*(fWindowThick+fCoatingThick*0.5)),
+		coating_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(s)*(fWindowThick+fCoatingThick*0.5)),
 											coating_log[s],sideSubst("source_coating_phys_%c",s),container_log,false,0);
 	}
 	

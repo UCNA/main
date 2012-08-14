@@ -18,9 +18,9 @@ SHELL = /bin/sh
 CC = cc
 CXX = g++
 
-CXXFLAGS = -O3 -m32 -Wall `root-config --cflags` \
-	-I. -IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies
-LDFLAGS = `root-config --libs` -lSpectrum 
+CXXFLAGS = -O3 -Wall -fPIC `root-config --cflags` -I. \
+	-IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics
+LDFLAGS = `root-config --libs` -lSpectrum  -L. -lUCNA
 
 ifdef PROFILER_COMPILE
 	CXXFLAGS += -pg
@@ -31,51 +31,73 @@ endif
 # things to build
 #
 
-VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/
+VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/:Physics/:Examples/
 
-Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o SectorCutter.o \
-	Enums.o Types.o UCNAException.o Octet.o SpectrumPeak.o Source.o SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o RData.o
+Physics = BetaSpectrum.o ElectronBindingEnergy.o NuclEvtGen.o
 
-Calibration = PositionResponse.o PMTGenerator.o WirechamberReconstruction.o \
-	EnergyCalibrator.o WirechamberCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
+Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
+		SectorCutter.o LinHistCombo.o Enums.o Types.o FloatErr.o SMExcept.o Octet.o SpectrumPeak.o Source.o \
+		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o RData.o EnumerationFitter.o
+
+Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberCalibrator.o \
+		EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
 	
-Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o G4toPMT.o TH1toPMT.o \
-	KurieFitter.o EndpointStudy.o ReSource.o EfficCurve.o BetaSpectrum.o
+Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT.o G4toPMT.o \
+		PenelopeToPMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
 
-Studies = PlotMakers.o SegmentSaver.o RunAccumulator.o OctetAnalyzer.o AsymmetryAnalyzer.o WirechamberStudy.o LEDScans.o
+Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o \
+	MuonAnalyzer.o PositionAnalyzer.o WirechamberGainAnalyzer.o \
+	AsymmetryAnalyzer.o SimAsymmetryAnalyzer.o BetaDecayAnalyzer.o \
+	CathodeTweakAnalyzer.o PositionBinnedAnalyzer.o AnodePositionAnalyzer.o XenonAnalyzer.o \
+	PlotMakers.o LEDScans.o
 
-objects = $(Utils) $(Calibration) $(Analysis) $(Studies)
+objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
-all:
-	make UCNAnalyzer
+ExampleObjs = CalibratorExample DataScannerExample ExtractCorrectBetaSpectrum ExtractFierzTerm \
+	QCalc MC_Comparisons MWPC_Efficiency_Sim FierzOctetAnalyzer OctetAnalyzerExample
 
-UCNAnalyzer: Analyzer.cpp $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) Analyzer.cpp $(objects) -o UCNAnalyzer
-
-CalibratorExample: CalibratorExample.cpp $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) CalibratorExample.cpp $(objects) -o CalibratorExample
-
-DataScannerExample: DataScannerExample.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) DataScannerExample.cc $(objects) -o DataScannerExample
-
-OctetAnalyzerExample: OctetAnalyzerExample.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/OctetAnalyzerExample.cc $(objects) -o OctetAnalyzerExample
+all: UCNAnalyzer
 	
-ExtractFierzTerm: ExtractFierzTerm.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) ExtractFierzTerm.cc $(objects) -o ExtractFierzTerm
+libUCNA.a: $(objects)
+	ar rs libUCNA.a $(objects)
+	
+UCNAnalyzer: Analyzer.cpp libUCNA.a
+	$(CXX) $(CXXFLAGS) Analyzer.cpp $(LDFLAGS) -o UCNAnalyzer
 
-ExtractCorrectBetaSpectrum: ExtractCorrectBetaSpectrum.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) ExtractCorrectBetaSpectrum.cc $(objects) -o ExtractCorrectBetaSpectrum
+ExtractFierzTerm: ExtractFierzTerm.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) ExtractFierzTerm.cc $(LDFLAGS) -o ExtractFierzTerm
+	
+examples: $(ExampleObjs)
 
-MWPC_Efficiency_Sim: MWPC_Efficiency_Sim.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/MWPC_Efficiency_Sim.cc $(objects) -o MWPC_Efficiency_Sim
+
+CalibratorExample: CalibratorExample.cpp libUCNA.a
+	$(CXX) $(CXXFLAGS) Examples/CalibratorExample.cpp $(LDFLAGS) -o CalibratorExample
+
+DataScannerExample: DataScannerExample.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Examples/DataScannerExample.cc $(LDFLAGS) -o DataScannerExample
+
+OctetAnalyzerExample: OctetAnalyzerExample.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Examples/OctetAnalyzerExample.cc $(LDFLAGS) -o OctetAnalyzerExample
+
+ExtractCorrectBetaSpectrum: ExtractCorrectBetaSpectrum.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Examples/ExtractCorrectBetaSpectrum.cc $(LDFLAGS) -o ExtractCorrectBetaSpectrum
+
+MWPC_Efficiency_Sim: MWPC_Efficiency_Sim.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Examples/MWPC_Efficiency_Sim.cc $(LDFLAGS) -o MWPC_Efficiency_Sim
 	
-QCalc: FPNCalc.cc $(Utils)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) IOUtils/FPNCalc.cc $(objects) -o QCalc
+QCalc: FPNCalc.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Examples/FPNCalc.cc $(LDFLAGS) -o QCalc
 	
-FierzOctetAnalyzer: FierzOctetAnalyzer.cc $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) Studies/FierzOctetAnalyzer.cc $(objects) -o FierzOctetAnalyzer
+FierzOctetAnalyzer: FierzOctetAnalyzer.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Examples/FierzOctetAnalyzer.cc $(LDFLAGS) -o FierzOctetAnalyzer
 	
+MC_Comparisons: MC_Comparisons.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Examples/MC_Comparisons.cc $(LDFLAGS) -o MC_Comparisons
+
+ucnG4:
+	mkdir -p g4build/
+	cd g4build; cmake -DGeant4_DIR=~/geant4.9.5/geant4.9.5-install/lib/Geant4-9.5.0/ ../ucnG4_dev/; make
+
 #
 # documentation via Doxygen
 #
@@ -92,7 +114,7 @@ latex/ : Doxyfile
 #
 .PHONY: clean
 clean:
-	-rm -f UCNAnalyzer OctetAnalyzerExample DataScannerExample CalibratorExample ExtractFierzTerm Analyzer MWPC_Efficiency_Sim
+	-rm -f libUCNA.a UCNAnalyzer $(ExampleObjs)
 	-rm -f *.o
 	-rm -rf *.dSYM
 	-rm -rf latex/

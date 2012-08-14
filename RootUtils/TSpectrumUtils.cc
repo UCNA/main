@@ -107,11 +107,15 @@ MultiGaus multiPeakFitter(TH1F* indat, const std::vector<SpectrumPeak>& expected
 		mg.setParameter(3*n+1, expectedPeaks[n].center.x);
 		mg.setParameter(3*n+2, expectedPeaks[n].width.x);
 		if(expectedPeaks[n].type==BI_PEAK_2) {
-			mg.addCorrelated(n,553./482.,0.438/1.515, 553./482.);
-			mg.addCorrelated(n,566./482.,0.147/1.515, 566./482.);
+			//mg.addCorrelated(n,554.4/481.7,0.442/1.54);
+			//mg.addCorrelated(n,566.1/481.7,0.111/1.54);
+			//mg.addCorrelated(n,568.8/481.7,0.0283/1.54);
 		}
-		if(expectedPeaks[n].type==BI_PEAK_1)
-			mg.addCorrelated(n,1048./976.,1.84/7.03, 1048./976.);
+		if(expectedPeaks[n].type==BI_PEAK_1) {
+			//mg.addCorrelated(n,1048.1/975.7,1.84/7.08);
+			//mg.addCorrelated(n,1059.9/975.7,.440/7.08);
+			//mg.addCorrelated(n,1062.8/975.7,.127/7.08);
+		}
 	}
 	mg.getFitter()->SetLineColor(6);
 	mg.fit(indat);

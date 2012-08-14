@@ -1,0 +1,45 @@
+####
+# Xe135 3/2+ decay chain
+# decay scheme from Singh, Rodionov, Khazov, Nuclear Data Sheets 109, 560 (2008)
+####
+
+fileinfo:	fancyname = $^{135}$Xe $3/2^+$
+
+# 135Cs levels
+level:	nm = 135.55.0	E = 0			hl = -1			jpi = 7/2+
+level:	nm = 135.55.1	E = 249.767		hl = 0.28e-9	jpi = 5/2+
+level:	nm = 135.55.2	E = 408.026		hl = 0			jpi = ??
+level:	nm = 135.55.3	E = 608.153		hl = 0			jpi = 5/2+
+level:	nm = 135.55.4	E = 981.396		hl = 0			jpi = ???
+level:	nm = 135.55.5	E = 1062.385	hl = 0			jpi = ???
+
+# Xe135 3/2+ ground state; note, energy has a 4keV uncertainty (affects all betas)!
+level:	nm = 135.54.0	E = 1165.	hl = 32.9e3		jpi = 3/2+
+
+beta:	from = 135.54.0	to = 135.55.1	I = 96
+beta:	from = 135.54.0	to = 135.55.2	I = 0.59
+beta:	from = 135.54.0	to = 135.55.3	I = 3.11
+beta:	from = 135.54.0	to = 135.55.4	I = 0.075
+beta:	from = 135.54.0	to = 135.55.5	I = 0.123
+
+# CE from theory
+gamma:	from = 135.55.1	to = 135.55.0	Igamma = 90.	CE_K = .0623~.0010	CE_L = 0.0091~.0011	CE_M = .00188~.00023	\
+	CE_N = .00039~.00005	CE_O = 5.3e-5~.5e-5
+	# CE_P = 2.34e-6~0.09e-6
+gamma:	from = 135.55.2	to = 135.55.0	Igamma = 0.358
+gamma:	from = 135.55.2	to = 135.55.1	Igamma = 0.289
+gamma:	from = 135.55.3	to = 135.55.0	Igamma = 2.90	CE_K = 0.00629~.00020	CE_L = 0.000803~.000019	CE_M = 0.000164~.000004	\
+	CE_N = 3.46e-5~0.09e-5	CE_O = 4.84e-6~0.13e-6
+	# CE_P = 2.41e-7~0.09e-7
+gamma:	from = 135.55.3	to = 135.55.1	Igamma = 0.221	CE_K = 0.0224~.0018	CE_L = 0.00325~.00015	CE_M = 0.00067~.00004	\
+	CE_N = 0.000141~.000007	CE_O = 1.90e-5~.04e-5
+gamma:	from = 135.55.3	to = 135.55.2	Igamma = .012
+gamma:	from = 135.55.4	to = 135.55.1	Igamma = .055
+gamma:	from = 135.55.4	to = 135.55.2	Igamma = .0048
+gamma:	from = 135.55.4	to = 135.55.3	Igamma = .015
+gamma:	from = 135.55.5	to = 135.55.0	Igamma = .0041
+gamma:	from = 135.55.5	to = 135.55.1	Igamma = .070
+gamma:	from = 135.55.5	to = 135.55.2	Igamma = .0450
+gamma:	from = 135.55.5	to = 135.55.3	Igamma = .0036
+
+AugerK:	Z = 55	ka1 = 2.63	ka2 = 1.44	kb3 = .249	kb1 = .480	kb2 = .149	Iauger = 0.597

@@ -4,6 +4,7 @@
 #include <map>
 #include <iostream>
 #include <istream>
+#include <sstream>
 #include "QFile.hh"
 
 template<typename T>
@@ -17,6 +18,8 @@ public:
 	void add(const T& itm, double c);
 	/// add another counter
 	void operator+=(const TagCounter<T>& c);
+	/// multiply all counts
+	void scale(double s);
 	/// make into Stringmap
 	Stringmap toStringmap();
 	/// get number of counted items
@@ -36,9 +39,15 @@ void TagCounter<T>::add(const T& itm, double c) {
 
 template<typename T>
 void TagCounter<T>::operator+=(const TagCounter<T>& c) {
-	std::map<T,float> dfksj;
 	for(typename std::map<T,double>::const_iterator it = c.counts.begin(); it != c.counts.end(); it++)
 		add(it->first,it->second);
+}
+
+template<typename T>
+void TagCounter<T>::scale(double s) {
+	if(s==1) return;
+	for(typename std::map<T,double>::iterator it = counts.begin(); it != counts.end(); it++)
+		it->second *= s;
 }
 
 template<typename T>
@@ -47,7 +56,7 @@ Stringmap TagCounter<T>::toStringmap() {
 	for(typename std::map<T,double>::const_iterator it = counts.begin(); it != counts.end(); it++) {
 		std::ostringstream s;
 		s << (*it).first;
-		m.insert(std::string(s.str()),dtos(it->second));
+		m.insert(s.str(),dtos(it->second));
 	}
 	return m;
 }

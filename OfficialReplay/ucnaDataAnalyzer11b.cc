@@ -3,7 +3,7 @@
 #include "ManualInfo.hh"
 #include "GraphicsUtils.hh"
 #include "MultiGaus.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 #include <stdio.h>
 #include <unistd.h>
 #include <TStyle.h>
@@ -12,14 +12,14 @@
 RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
 
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
-TChainScanner("h1"), OutputManager(std::string("spec_")+itos(R),bp+"/hists/"), analyzeLED(false), rn(R), PCal(R,CDB), CDBout(NULL),
-deltaT(0), totalTime(0), ignore_beam_out(false), nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
-	if(R>16300 && !CDB->isValid(R)) {
-		printf("*** Bogus calibration for new runs! ***\n");
-		PCal = PMTCalibrator(16000,CDB);
-	}
+TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false),
+rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), nLiveTrigs(0), ignore_beam_out(false),
+nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	plotPath = bp+"/figures/run_"+itos(R)+"/";
 	dataPath = bp+"/data/";
+	for(Side s = EAST; s <= WEST; ++s)
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
+			fMWPC_caths[s][d].resize(kMaxCathodes);
 }
 
 void ucnaDataAnalyzer11b::analyze() {
@@ -37,6 +37,7 @@ void ucnaDataAnalyzer11b::analyze() {
 	printf("Done.\n");
 	
 	processBiPulser();
+	muonVetoAccidentals();
 	calcTrigEffic();
 	tallyRunTime();
 	locateSourcePositions();
@@ -49,7 +50,7 @@ void ucnaDataAnalyzer11b::analyze() {
 void ucnaDataAnalyzer11b::loadCut(CutVariable& c, const std::string& cutName) {
 	std::vector<Stringmap> v = ManualInfo::MI.getInRange(cutName,rn);
 	if(!v.size()) {
-		UCNAException e("missingCut");
+		SMExcept e("missingCut");
 		e.insert("cutName",cutName);
 		e.insert("runNum",rn);
 		throw(e);
@@ -98,7 +99,7 @@ void ucnaDataAnalyzer11b::convertReadin() {
 		for(unsigned int t=0; t<=nBetaTubes; t++)
 			fScint_tdc[s][t].val = r_PMTTDC[s][t];
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) 
-			for(unsigned int c=0; c<kMWPCWires; c++)
+			for(unsigned int c=0; c<kMaxCathodes; c++)
 				fMWPC_caths[s][d][c] = r_MWPC_caths[s][d][c];
 		fMWPC_anode[s].val = r_MWPC_anode[s];
 		for(unsigned int t=0; t<nBetaTubes; t++)
@@ -115,8 +116,9 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 		fAbsTimeStart = r_AbsTime;
 		prevPassedCuts = prevPassedGVRate = true;
 		totalTime = deltaT = 0;
+		nLiveTrigs = 0;
 	}
-	fAbsTimeEnd = r_AbsTime;
+	if(r_AbsTime>fAbsTimeEnd) fAbsTimeEnd = r_AbsTime;
 	
 	// convert microseconds to seconds
 	fTimeScaler = 1.e-6 * r_Clk;
@@ -124,24 +126,24 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 	fDelt0 = 1.e-6 * r_Delt0;
 	
 	// check for overflow condition
-	if(fTimeScaler.t[BOTH] < totalTime.t[BOTH]-deltaT.t[BOTH]-1000.0) {
+	if(fTimeScaler[BOTH] < totalTime[BOTH]-deltaT[BOTH]-1000.0) {
 		printf("\tFixing timing scaler overflow... ");
-		deltaT.t[BOTH] += 4294967296.0*1e-6;
+		deltaT[BOTH] += pow(2,32)*1.e-6;
 		for(Side s = EAST; s<=WEST; ++s)
-			deltaT.t[s] = totalTime.t[s];
+			deltaT[s] = totalTime[s];
 	}
 	// add overflow wraparound time
 	fTimeScaler += deltaT;
 	
 	if(isUCNMon(UCN_MON_GV))
-		gvMonChecker.addCount(fTimeScaler.t[BOTH]);
+		gvMonChecker.addCount(fTimeScaler[BOTH]);
 	else
-		gvMonChecker.moveTimeLimit(fTimeScaler.t[BOTH]);
+		gvMonChecker.moveTimeLimit(fTimeScaler[BOTH]);
 	
 	// check global time cuts, add new blips as necessary
 	bool passedGVRate = (gvMonChecker.getCount() == gvMonChecker.nMax) || (prevPassedGVRate && gvMonChecker.getCount() > gvMonChecker.nMax/2.0);
 	prevPassedGVRate = passedGVRate;
-	fPassedGlobal = passesBeamCuts() && (ignore_beam_out || fTimeScaler.t[BOTH]<gvMonChecker.lMax || passedGVRate);
+	fPassedGlobal = passesBeamCuts() && (ignore_beam_out || fTimeScaler[BOTH]<gvMonChecker.lMax || passedGVRate);
 	if(fPassedGlobal != prevPassedCuts) {
 		if(!fPassedGlobal) {
 			Blip b;
@@ -154,6 +156,7 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 	
 	prevPassedCuts = fPassedGlobal;
 	totalTime = fTimeScaler;
+	nLiveTrigs += fPassedGlobal;
 }
 
 unsigned int ucnaDataAnalyzer11b::nFiring(Side s) const {
@@ -186,20 +189,20 @@ bool ucnaDataAnalyzer11b::passesBeamCuts() {
 		return false;	
 	// remove manually tagged segments
 	for(std::vector< std::pair<double,double> >::const_iterator it = manualCuts.begin(); it != manualCuts.end(); it++)
-		if (it->first <= fTimeScaler.t[BOTH] && fTimeScaler.t[BOTH] <= it->second)
+		if (it->first <= fTimeScaler[BOTH] && fTimeScaler[BOTH] <= it->second)
 			return false;
 	return true;
 }
 
 void ucnaDataAnalyzer11b::reconstructPosition() {
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int d = X_DIRECTION; d <= Y_DIRECTION; d++) {
-			float cathPeds[kMWPCWires];
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+			std::vector<float> cathPeds;
 			for(unsigned int c=0; c<cathNames[s][d].size(); c++)
-				cathPeds[c] = PCal.getPedestal(cathNames[s][d][c],fTimeScaler.t[BOTH]);
-			wirePos[s][d] = mpmGaussianPositioner(kWirePositions[s][d], fMWPC_caths[s][d], cathPeds);
+				cathPeds.push_back(PCal.getPedestal(cathNames[s][d][c],fTimeScaler[BOTH]));
+			wirePos[s][d] = PCal.calcHitPos(s,d,fMWPC_caths[s][d],cathPeds);
 		}
-		fMWPC_anode[s].val -= PCal.getPedestal(sideSubst("MWPC%cAnode",s),fTimeScaler.t[BOTH]);
+		fMWPC_anode[s].val -= PCal.getPedestal(sideSubst("MWPC%cAnode",s),fTimeScaler[BOTH]);
 		fCathSum[s].val = wirePos[s][X_DIRECTION].cathodeSum + wirePos[s][Y_DIRECTION].cathodeSum;
 		fCathMax[s].val = wirePos[s][X_DIRECTION].maxValue<wirePos[s][Y_DIRECTION].maxValue?wirePos[s][X_DIRECTION].maxValue:wirePos[s][Y_DIRECTION].maxValue;
 		fPassedAnode[s] = fMWPC_anode[s].inRange();
@@ -213,13 +216,18 @@ void ucnaDataAnalyzer11b::reconstructVisibleEnergy() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		// get calibrated energy from the 4 tubes combined; also, wirechamber energy deposition estimate
 		if(passedMWPC(s)) {
-			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler.t[BOTH]);
-			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,fTimeScaler.t[BOTH]);
+			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler[BOTH]);
+			// second pass with tweaked positions
+			for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
+				PCal.tweakPosition(s,d,wirePos[s][d],sevt[s].energy.x);
+			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler[BOTH]);
+			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,wirePos[s][X_DIRECTION].center,
+											wirePos[s][Y_DIRECTION].center,fTimeScaler[BOTH]);
 		} else {
-			PCal.calibrateEnergy(s,0,0,sevt[s],fTimeScaler.t[BOTH]);
-			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,0,0,fTimeScaler.t[BOTH]);
+			PCal.calibrateEnergy(s,0,0,sevt[s],fTimeScaler[BOTH]);
+			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,0,0,fTimeScaler[BOTH]);
 		}
-	}	
+	}
 }
 
 void ucnaDataAnalyzer11b::checkMuonVetos() {
@@ -248,7 +256,7 @@ void ucnaDataAnalyzer11b::classifyEventType() {
 	
 	// type, side
 	fType = TYPE_IV_EVENT;
-	fSide = NONE;
+	fSide = NOSIDE;
 	for(Side s = EAST; s<=WEST; ++s) {
 		if(Is2fold(s)) {
 			if(passedCutTDC(otherSide(s)))
@@ -368,14 +376,14 @@ bool ucnaDataAnalyzer11b::processEvent() {
 	
 	// Stage II: processing and histograms for all events
 	for(Side s = EAST; s <= WEST; ++s)
-		PCal.pedSubtract(s, sevt[s].adc, fTimeScaler.t[BOTH]);
+		PCal.pedSubtract(s, sevt[s].adc, fTimeScaler[BOTH]);
 	fillEarlyHistograms();
 	
 	// LED tree events
 	if(isLED() && TLED) {
 		reconstructPosition();
 		for(Side s = EAST; s <= WEST; ++s)
-			PCal.calibrateEnergy(s,0.,0.,sevt[s],fTimeScaler.t[BOTH]);
+			PCal.calibrateEnergy(s,0.,0.,sevt[s],fTimeScaler[BOTH]);
 		TLED->Fill();
 	}
 	
@@ -466,17 +474,17 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 
 void ucnaDataAnalyzer11b::tallyRunTime() {
 	// complete potential un-closed blip
-	if(cutBlips.size() && cutBlips.back().end.t[BOTH] == 0)
+	if(cutBlips.size() && cutBlips.back().end[BOTH] == 0)
 		cutBlips.back().end = totalTime;
 	// sum up lost time	
 	BlindTime lostTime;
 	for(std::vector<Blip>::iterator it = cutBlips.begin(); it != cutBlips.end(); it++)
 		lostTime += it->length();
-	wallTime = totalTime.t[BOTH]; // now an informed guess :) 
+	wallTime = totalTime[BOTH]; // now an informed guess :) 
 	totalTime -= lostTime;
 	printf("\nFiducial time tally:\n");
 	printf("Lost %.1fs run time to %i blips, leaving %.1fs. (%g,%g failed Evnb,Bkhf)\n",
-		   lostTime.t[BOTH],(int)cutBlips.size(),totalTime.t[BOTH],nFailedEvnb,nFailedBkhf);
+		   lostTime[BOTH],(int)cutBlips.size(),totalTime[BOTH],nFailedEvnb,nFailedBkhf);
 }
 
 void ucnaDataAnalyzer11b::replaySummary() {
@@ -485,13 +493,17 @@ void ucnaDataAnalyzer11b::replaySummary() {
 	CDBout->execute();
 	TDatime tNow;
 	sprintf(CDBout->query,
-			"INSERT INTO analysis(run_number,analysis_time,live_time_e,live_time_w,live_time,total_time,misaligned,tdc_corrupted) \
-			VALUES (%i,'%s',%f,%f,%f,%f,%i,%i)",
-			int(rn),tNow.AsSQLString(),totalTime.t[EAST],totalTime.t[WEST],totalTime.t[BOTH],wallTime,int(nFailedEvnb),int(nFailedBkhf));
+			"INSERT INTO analysis(run_number,analysis_time,live_time_e,live_time_w,live_time,total_time,n_trigs,total_trigs,misaligned,tdc_corrupted) \
+			VALUES (%i,'%s',%f,%f,%f,%f,%u,%u,%i,%i)",
+			int(rn),tNow.AsSQLString(),totalTime[EAST],totalTime[WEST],totalTime[BOTH],
+			wallTime,nLiveTrigs,nEvents,int(nFailedEvnb),int(nFailedBkhf));
 	CDBout->execute();
 	TDatime tStart(fAbsTimeStart);
+	std::string sts(tStart.AsSQLString());
 	TDatime tEnd(fAbsTimeEnd);
-	sprintf(CDBout->query,"UPDATE run SET start_time='%s', end_time='%s' WHERE run_number=%i",tStart.AsSQLString(),tEnd.AsSQLString(),int(rn));
+	std::string ste(tEnd.AsSQLString());
+	sprintf(CDBout->query,"UPDATE run SET start_time='%s', end_time='%s' WHERE run_number=%i",sts.c_str(),ste.c_str(),int(rn));
+	printf("%s\n",CDBout->query);
 	CDBout->execute();
 }
 
@@ -517,11 +529,22 @@ void ucnaDataAnalyzer11b::quickAnalyzerSummary() const {
 	printf("----------------------------------------------------\n\n");
 }
 
+void printHelp(const char* argname) {
+	printf("Syntax: %s <run number(s)> [options...]\n",argname);
+	printf("\t<run number(s)>: <number> || <number>-<number>\n");
+	printf("\toptions:\n");
+	printf("\t\tcutbeam: cut out beam pulses and when GV rate too low (use this for beta/background runs!)\n");
+	printf("\t\tnodbout: do not access Calibrations DB for writing\n");
+	printf("\t\tnoroot: skip saving output .root file (plots/summary only)\n");
+	printf("\t\tledtree: produce separate TTree with only LED events\n");
+	printf("\t\tforceped: force recalculation of pedestals\n");
+}
+
 int main(int argc, char** argv) {
 	
 	// check correct arguments
 	if(argc<2) {
-		printf("Syntax: %s <run number> [ignore beam/source status]\n",argv[0]);
+		printHelp(argv[0]);
 		exit(1);
 	}
 	
@@ -539,6 +562,7 @@ int main(int argc, char** argv) {
 	bool nodbout = false;
 	bool noroot = false;
 	bool ledtree = false;
+	bool forceped = false;
 	for(int i=2; i<argc; i++) {
 		std::string arg(argv[i]);
 		if(arg=="cutbeam")
@@ -549,8 +573,12 @@ int main(int argc, char** argv) {
 			noroot = true;
 		else if(arg=="ledtree")
 			ledtree = true;
-		else 
-			assert(false);
+		else if(arg=="forceped")
+			forceped = true;
+		else {
+			printHelp(argv[0]);
+			exit(1);
+		}
 	}
 	
 	gStyle->SetPalette(1);
@@ -568,6 +596,7 @@ int main(int argc, char** argv) {
 		ucnaDataAnalyzer11b A(r,outDir,CalDBSQL::getCDB(true));
 		A.setIgnoreBeamOut(!cutBeam);
 		A.analyzeLED = ledtree;
+		A.needsPeds = forceped;
 		if(!nodbout) {
 			printf("Connecting to output DB...\n");
 			A.setOutputDB(CalDBSQL::getCDB(false));

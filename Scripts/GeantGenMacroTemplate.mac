@@ -21,8 +21,8 @@
 /detector/field %(magf)s
 #comment out line below to use uniform field
 %(fieldmapcmd)s
-# detector vacuum, in torr
-/detector/vacuum %(vacuum)g
+# detector vacuum
+/detector/vacuum %(vacuum)s
 
 /detector/sourceholderpos %(sourceholderpos)s
 /detector/infoil %(makeinfoil)s
@@ -41,11 +41,12 @@
 /gun/position %(gunpos)s
 # source generator
 /gun/energy %(gunenergy)f keV
+/benchmark/gun/particle %(particle)s
 /benchmark/gun/type %(generator)s
 /benchmark/gun/positioner %(positioner)s
 /benchmark/gun/sourceRadius %(sourceRadius)s
 
+/run/beamOn %(nevt)i
+
 # optional visualization commands
 %(vis_cmd)s
-
-/run/beamOn %(nevt)i

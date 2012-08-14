@@ -2,7 +2,7 @@
 #include "PathUtils.hh"
 #include "CalDBSQL.hh"
 #include "CalDBFake.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 #include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +24,7 @@ unsigned int RunSetScanner::addRuns(const std::vector<RunNum>& rns) {
 		n+=addRun(*it);
 		printf("*"); fflush(stdout);
 	}
-	printf("------------------- %i Runs, %i events found, %.2fh running.\n",getnFiles(),nEvents,totalTime.t[BOTH]/3600.0);
+	printf("------------------- %i Runs, %i events found, %.2fh running.\n",getnFiles(),nEvents,totalTime[BOTH]/3600.0);
 	return n;
 }
 
@@ -57,7 +57,7 @@ void RunSetScanner::speedload(unsigned int e) {
 		if(withCals) {
 			std::map<RunNum,PMTCalibrator*>::iterator it = PCals.find(evtRun);
 			if(it == PCals.end()) {
-				UCNAException e("missingCalibration");
+				SMExcept e("missingCalibration");
 				e.insert("runNum",evtRun);
 				throw(e);
 			}			
@@ -75,12 +75,12 @@ bool RunSetScanner::addRun(RunNum r) {
 		RunInfo R = CalDBSQL::getCDB()->getRunInfo(r);
 		if(R.afpState <= AFP_ON) nAFP[R.afpState] += nnEvents.back();
 		if(withCals)
-			PCals.insert(std::make_pair(r,new PMTCalibrator(r,CalDBSQL::getCDB())));
+			PCals.insert(std::make_pair(r,new PMTCalibrator(r)));
 		BlindTime b = CalDBSQL::getCDB()->fiducialTime(r);
-		if(!b.t[BOTH])
+		if(!b[BOTH])
 			printf("**** WARNING: Run %i has zero fiducial time!\n",r);
 		totalTime += b;
-		runTimes.add(r,b.t[BOTH]);
+		runTimes.add(r,b[BOTH]);
 		return true;
 	}
 	printf("**** FAILED TO LOCATE analyzed data for run %i at '%s'! *****\n",r,f.c_str());

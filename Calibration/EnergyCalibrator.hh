@@ -3,6 +3,7 @@
 
 #include "Types.hh"
 #include "CalDB.hh"
+#include "CalDBSQL.hh"
 #include "GainStabilizer.hh"
 #include "EvisConverter.hh"
 #include "WirechamberCalibrator.hh"
@@ -15,7 +16,7 @@
 class PedestalCorrector {
 public:
 	/// constructor
-	PedestalCorrector(RunNum rn, CalDB* cdb): myRun(rn), pCDB(cdb) {}
+	PedestalCorrector(RunNum rn, CalDB* cdb): myRun(rn), totalTime(cdb->totalTime(rn)), pCDB(cdb) {}
 	/// destructor
 	virtual ~PedestalCorrector();
 	/// check whether pedestal info exists
@@ -25,7 +26,8 @@ public:
 	/// get sensor pedestal at given time from beginning of run
 	float getPedwidth(const std::string& sensorName, float time);
 	
-	RunNum myRun;								//< run number for this run
+	RunNum myRun;			//< run number for this run
+	float totalTime;		//< run time for this run
 	
 	/// insert a pedestal graph
 	void insertPedestal(const std::string& sensorName, TGraph* g);
@@ -99,7 +101,7 @@ protected:
 class PMTCalibrator: public LinearityCorrector, public PedestalCorrector, public EvisConverter, public WirechamberCalibrator {
 public:
 	/// Constructor, for specified run number
-	PMTCalibrator(RunNum rn, CalDB* cdb);
+	PMTCalibrator(RunNum rn, CalDB* cdb = CalDBSQL::getCDB());
 	/// Destructor
 	~PMTCalibrator();
 	/// resolution deltaLight for given light seen in tube
@@ -131,11 +133,11 @@ public:
 	/// subtract pedestals from 4-tube ADC array (do this before energy calibrations!)
 	void pedSubtract(Side s, float* adc, float time);
 	/// convert all 4 tubes ped-subtracted ADC to energy estimates
-	void calibrateEnergy(Side s, float x, float y, ScintEvent& evt, float time) const;	
+	void calibrateEnergy(Side s, float x, float y, ScintEvent& evt, float time, float poserr = 0) const;	
 	/// convert all 4 tubes ped-subtracted ADC to energy estimates and return QADC-sum averaged energy (ignores individual tube resolutions)
 	void summedEnergy(Side s, float x, float y, ScintEvent& evt, float time) const;		
 	/// print summary of energy calibrations
-	void printSummary();
+	virtual void printSummary();
 	/// stringmap energy calibrations summary
 	Stringmap calSummary() const;
 	/// get clipping threshold for a PMT

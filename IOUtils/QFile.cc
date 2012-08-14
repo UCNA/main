@@ -6,15 +6,15 @@
 #include <utility>
 #include "strutils.hh"
 #include "PathUtils.hh"
-#include "UCNAException.hh"
+#include "SMExcept.hh"
 
 Stringmap::Stringmap(const std::string& s) {
 	std::vector<std::string> pairs = split(s,"\t");
 	for(std::vector<std::string>::const_iterator it = pairs.begin(); it!=pairs.end(); it++) {
-		std::vector<std::string> keyval = split(*it," =");
+		std::vector<std::string> keyval = split(*it,"=");
 		if(keyval.size() != 2)
 			continue;
-		dat.insert(std::make_pair(keyval[0],keyval[1]));
+		dat.insert(std::make_pair(strip(keyval[0]),strip(keyval[1])));
 	}
 }
 
@@ -25,6 +25,10 @@ Stringmap::Stringmap(const Stringmap& m) {
 
 void Stringmap::insert(const std::string& s, const std::string& v) {
 	dat.insert(std::make_pair(s,v));
+}
+
+void Stringmap::insert(const std::string& s, double d) {
+	insert(s,dtos(d));
 }
 
 void Stringmap::erase(const std::string& s) { dat.erase(s); }
@@ -77,22 +81,19 @@ std::vector<double> Stringmap::retrieveDouble(const std::string& k) const {
 	return v;
 }
 
-void Stringmap::insert(const std::string& s, double d) {
-	insert(s,dtos(d));
-}
-
 void Stringmap::mergeInto(Stringmap& S) const {
 	for(std::multimap<std::string,std::string>::const_iterator it = dat.begin(); it != dat.end(); it++)
 		S.insert(it->first,it->second);	
 }
 
+/*
 RData* Stringmap::toRData() const {
 	RDataMem* RM = new RDataMem;
 	for(std::multimap<std::string,std::string>::const_iterator it = dat.begin(); it != dat.end(); it++)
 		RM->getForced(it->first)->insert(it->second);
 	return RM;
 }
-
+*/
 
 //----------------------------------------------------------------------------------------------
 
@@ -104,7 +105,7 @@ QFile::QFile(const std::string& fname, bool readit) {
 	if(!readit || name=="")
 		return;
 	if(!fileExists(fname)) {
-		UCNAException e("fileUnreadable");
+		SMExcept e("fileUnreadable");
 		e.insert("filename",fname);
 		throw(e);
 	}
@@ -112,10 +113,20 @@ QFile::QFile(const std::string& fname, bool readit) {
 	std::string s;
 	while (fin.good()) {
 		std::getline(fin,s);
-		std::vector<std::string> q = split(s,":");
-		if(q.size() != 2)
-			continue;
-		insert(q[0],Stringmap(q[1]));
+		s = strip(s);
+		size_t n = s.find(':');
+		if(n==std::string::npos || s[0]=='#') continue;
+		std::string key = s.substr(0,n);
+		std::string vals = s.substr(n+1);
+		vals=strip(vals);
+		while(vals.size() && vals[vals.size()-1]=='\\') {
+			vals.erase(vals.size()-1);
+			std::getline(fin,s);
+			s = strip(s);
+			vals += '\t';
+			vals += s;
+		}
+		insert(key,Stringmap(vals));
 	}
 	fin.close();
 }
@@ -152,7 +163,7 @@ void QFile::commit(std::string outname) const {
 	makePath(outname,true);
 	std::ofstream fout(outname.c_str());
 	if(!fout.good()) {
-		UCNAException e("fileUnwriteable");
+		SMExcept e("fileUnwriteable");
 		e.insert("filename",outname);
 		throw(e);
 	}
@@ -162,7 +173,7 @@ void QFile::commit(std::string outname) const {
 	fout.close();
 }
 
-std::vector<std::string> QFile::retrieve(const std::string& k1, const std::string& k2) {
+std::vector<std::string> QFile::retrieve(const std::string& k1, const std::string& k2) const {
 	std::vector<std::string> v1;
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.lower_bound(k1); it != dat.upper_bound(k1); it++) {
 		std::vector<std::string> v2 = it->second.retrieve(k2);
@@ -172,7 +183,7 @@ std::vector<std::string> QFile::retrieve(const std::string& k1, const std::strin
 	return v1;
 }
 
-std::vector<double> QFile::retrieveDouble(const std::string& k1, const std::string& k2) {
+std::vector<double> QFile::retrieveDouble(const std::string& k1, const std::string& k2) const {
 	std::vector<double> v1;
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.lower_bound(k1); it != dat.upper_bound(k1); it++) {
 		std::vector<double> v2 = it->second.retrieveDouble(k2);
@@ -182,7 +193,7 @@ std::vector<double> QFile::retrieveDouble(const std::string& k1, const std::stri
 	return v1;
 }
 
-std::string QFile::getDefault(const std::string& k1, const std::string& k2, const std::string& d) {
+std::string QFile::getDefault(const std::string& k1, const std::string& k2, const std::string& d) const {
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.lower_bound(k1); it != dat.upper_bound(k1); it++) {
 		std::vector<std::string> v2 = it->second.retrieve(k2);
 		if(v2.size())
@@ -191,7 +202,7 @@ std::string QFile::getDefault(const std::string& k1, const std::string& k2, cons
 	return d;
 }
 
-double QFile::getDefault(const std::string& k1, const std::string& k2, double d) {
+double QFile::getDefault(const std::string& k1, const std::string& k2, double d) const {
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.lower_bound(k1); it != dat.upper_bound(k1); it++) {
 		std::vector<double> v2 = it->second.retrieveDouble(k2);
 		if(v2.size())
@@ -207,6 +218,7 @@ Stringmap QFile::getFirst(const std::string& s, const Stringmap& dflt) const {
 	return it->second;
 }
 
+/*
 RData* QFile::toRData() const {
 	RDataMem* RM = new RDataMem;
 	for(std::multimap<std::string,Stringmap>::const_iterator it = dat.begin(); it != dat.end(); it++) {
@@ -216,4 +228,5 @@ RData* QFile::toRData() const {
 	}
 	return RM;
 }
+*/
 

@@ -40,20 +40,22 @@
 #include "G4LossTableManager.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4Gamma.hh"
+#include "SMExcept.hh"
+#include "strutils.hh"
 #include <cmath>
 #include <cassert>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 bmTrackerSD::bmTrackerSD(G4String name): G4VSensitiveDetector(name) {
-	G4String HCname;
-	collectionName.insert(HCname="trackerCollection");
+	collectionName.insert("trackerCollection");
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void bmTrackerSD::Initialize(G4HCofThisEvent* HCE) {
 	// make a new hits collection and register it for this event
+	assert(collectionName.size());
 	trackerCollection = new bmTrackerHitsCollection(SensitiveDetectorName,collectionName[0]); 
 	G4int HCID = G4SDManager::GetSDMpointer()->GetCollectionID(trackerCollection); 
 	HCE->AddHitsCollection(HCID, trackerCollection); 
@@ -76,7 +78,7 @@ double quenchFactor(double E) {
 //If the track is already stored, simply update dedx
 //otherwise add a new entry into the hit collection
 G4bool bmTrackerSD::ProcessHits(G4Step* aStep,G4TouchableHistory*) {
-	
+	assert(aStep);
 	G4Track* aTrack = aStep->GetTrack();
 	assert(aTrack);
 
@@ -86,10 +88,15 @@ G4bool bmTrackerSD::ProcessHits(G4Step* aStep,G4TouchableHistory*) {
 	if(!creatorProcess) creator_proc="original";
 	else creator_proc = creatorProcess->GetProcessName();  
 	
-	G4ThreeVector prePos = aStep->GetPreStepPoint()->GetPosition();
-	G4ThreeVector postPos = aStep->GetPostStepPoint()->GetPosition();
-	G4double E0 = aStep->GetPreStepPoint()->GetKineticEnergy();
-	G4double E1 = aStep->GetPostStepPoint()->GetKineticEnergy();
+	G4StepPoint* preStep = aStep->GetPreStepPoint();
+	assert(preStep);
+	G4StepPoint* postStep = aStep->GetPostStepPoint();
+	assert(postStep);
+	
+	G4ThreeVector prePos = preStep->GetPosition();
+	G4ThreeVector postPos = postStep->GetPosition();
+	G4double E0 = preStep->GetKineticEnergy();
+	G4double E1 = postStep->GetKineticEnergy();
 	G4double Ec = 0.5*(E0+E1);
 
 	// get prior track, or initialize a new one
@@ -100,11 +107,12 @@ G4bool bmTrackerSD::ProcessHits(G4Step* aStep,G4TouchableHistory*) {
 		newHit->SetTrackID(thisTrackID);
 		newHit->SetPID(aTrack->GetDefinition()->GetPDGEncoding());
 		newHit->SetProcessName(creator_proc);
-		newHit->SetIncidentEnergy(aStep->GetPreStepPoint()->GetKineticEnergy());
+		newHit->SetIncidentEnergy(preStep->GetKineticEnergy());
 		newHit->SetPos(postPos);
-		newHit->SetHitTime(aStep->GetPreStepPoint()->GetGlobalTime());
-		newHit->SetIncidentMomentum(aStep->GetPreStepPoint()->GetMomentum());
-		newHit->SetVolumeName(aStep->GetPostStepPoint()->GetPhysicalVolume()->GetName());
+		newHit->SetHitTime(preStep->GetGlobalTime());
+		newHit->SetIncidentMomentum(preStep->GetMomentum());
+		G4VPhysicalVolume* preVolume = preStep->GetPhysicalVolume();
+		newHit->SetVolumeName(preVolume?preVolume->GetName():"Unknown");
 		newHit->SetVertex(aTrack->GetVertexPosition());
 		newHit->SetCreatorVolumeName(aTrack->GetLogicalVolumeAtVertex()->GetName());
 		newHit->nSecondaries = 0;
@@ -125,17 +133,10 @@ G4bool bmTrackerSD::ProcessHits(G4Step* aStep,G4TouchableHistory*) {
 	// accumulate edep, edepq, local position for this step
 	G4double edep = aStep->GetTotalEnergyDeposit();
 	G4double edepQ = edep*quenchFactor(myTrack->second->originEnergy==0?Ec:myTrack->second->originEnergy);
-	// "dead layer" loss effect in scintillator
-	G4ThreeVector localPosition = aStep->GetPreStepPoint()->GetTouchableHandle()->GetHistory()->GetTopTransform().TransformPoint(prePos);
-	G4double localZ = localPosition[2];
-	if(localZ < -1.75*mm || localZ > 1.75*mm)
-		localZ=1.75*mm;
-	G4double edgeLoss = 1.0-0.5*exp(-(1.75*mm-localZ)/(6*um))-0.5*exp(-(1.75*mm+localZ)/(6*um));
+	G4ThreeVector localPosition = preStep->GetTouchableHandle()->GetHistory()->GetTopTransform().TransformPoint(prePos);
 	myTrack->second->AddEdep(edep,localPosition);
-	//myTrack->second->AddEdepQuenched(edepQ*edgeLoss);
 	myTrack->second->AddEdepQuenched(edepQ);
-	myTrack->second->SetExitMomentum(aStep->GetPostStepPoint()->GetMomentum());
-	
+	myTrack->second->SetExitMomentum(postStep->GetMomentum());
 	
 	// record origin energy for secondaries in same volume
 	const G4TrackVector* secondaries = aStep->GetSecondary();
@@ -145,8 +146,14 @@ G4bool bmTrackerSD::ProcessHits(G4Step* aStep,G4TouchableHistory*) {
 		if(sTrack->GetVolume() != aTrack->GetVolume())
 			continue;
 		const G4double eOrig = myTrack->second->originEnergy>0?myTrack->second->originEnergy:Ec;
-		assert(originEnergy.find(sTrack)==originEnergy.end()); //TODO figure out why this fails
-		//if(originEnergy.find(sTrack)==originEnergy.end())
+		if(originEnergy.find(sTrack) != originEnergy.end()) {
+			SMExcept e("duplicateSecondary");
+			e.insert("eOrig",eOrig);
+			e.insert("pID",myTrack->second->GetPID());
+			e.insert("nSec",myTrack->second->nSecondaries++);
+			e.insert("eOrig_old",originEnergy.find(sTrack)->second);
+			throw(e);
+		}
 		originEnergy.insert(std::pair<const G4Track*,double>(sTrack,eOrig));
 	}
 	

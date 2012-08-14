@@ -20,13 +20,14 @@
 #include "G4SDManager.hh"
 #include "G4EventManager.hh"
 #include "Randomize.hh"
+#include "SMExcept.hh"
 
 #include "bmAnalysisManager.hh"
+#include "bmPrimaryGeneratorAction.hh"
 
-
-//STL vectors
 #include <vector>
 #include <string>
+#include <cassert>
 
 using namespace CLHEP;
 using namespace std;
@@ -49,14 +50,14 @@ void bmAnalysisManager::OpenFile(const G4String filename) {
 	if(fROOTOutputFile != 0)
 		CloseFile();  
 	
-	G4cout<<"Openning root file "<<filename<<G4endl;
+	G4cout<<"Opening root file "<<filename<<G4endl;
 	
 	fROOTOutputFile= new TFile(filename.c_str(), "RECREATE", "Geant4 benchmark simulation output file");  
 	
 	if (fROOTOutputFile == 0) {
-		G4cerr << "Could not open ROOT output file "
-		<< filename << G4endl;
-		return;
+		SMExcept e("CannotOpenOutputFile");
+		e.insert("filename",filename);
+		throw(e);
     }
 	CreateTrees();
 }
@@ -84,6 +85,12 @@ void bmAnalysisManager::StoreHitCollectionIDs() {
 	detectorIDs.clear();
 	for(size_t ii=0;ii<fSDNames.size();ii++){
 		int id = SDman->GetCollectionID(fSDNames[ii]+"/trackerCollection");
+		if(id<0) {
+			SMExcept e("BadCollectionID");
+			e.insert("id",id);
+			e.insert("name",fSDNames[ii]+"/trackerCollection");
+			throw(e);
+		}
 		detectorIDs.push_back(id);
 		G4cout<<fSDNames[ii]<<" : Id = "<<id<<G4endl;
 	} 
@@ -91,6 +98,10 @@ void bmAnalysisManager::StoreHitCollectionIDs() {
 
 void bmAnalysisManager::FillPrimaryData(const G4Event* evt_in, const long seed) {
 	mcEvent.eventID = evt_in->GetEventID();
+	double w = 1.0;
+	if(evt_in->GetUserInformation())
+		w = ((PrimEvtWeighting*)evt_in->GetUserInformation())->w;
+	
 	// convert each primary to ROOT-friendly form and store
 	for (int ivert=0; ivert<evt_in->GetNumberOfPrimaryVertex(); ivert++){
 		bmPrimaryInfo prim_info;
@@ -105,6 +116,7 @@ void bmAnalysisManager::FillPrimaryData(const G4Event* evt_in, const long seed) 
 		G4double energy = sqrt(momentum*momentum+mass*mass);
 		prim_info.KE = (energy - mass)/keV;
 		prim_info.seed = seed;
+		prim_info.weight = w;
 		mcEvent.AddPrimaryInfo(prim_info);
 	}
 }

@@ -1,0 +1,71 @@
+####
+# Xe125 1/2+ decay chain
+# decay scheme from Katakura, Nuclear Data Sheets 112, 589 (2010)
+####
+
+fileinfo:	fancyname = $^{125}$Xe $1/2^+$
+
+level:	nm = 125.53.0	E = 0			hl = 5.1329e6		jpi = 5/2+
+level:	nm = 125.53.1	E = 113.544		hl = .610e-9		jpi = 7/2+
+level:	nm = 125.53.2	E = 188.416		hl = .344e-9		jpi = 3/2+
+level:	nm = 125.53.3	E = 243.382		hl = .230e-9		jpi = 1/2+
+level:	nm = 125.53.4	E = 372.066		hl = 0				jpi = 3/2+
+level:	nm = 125.53.5	E = 453.792		hl = 0				jpi = 3/2+
+level:	nm = 125.53.6	E = 1007.450	hl = 0				jpi = 3/2+
+level:	nm = 125.53.7	E = 1082.8		hl = 0				jpi = ???
+level:	nm = 125.53.8	E = 1089.904	hl = 0				jpi = (1/2)+
+level:	nm = 125.53.9	E = 1180.872	hl = 0				jpi = 3/2+
+level:	nm = 125.53.10	E = 1263.95		hl = 0				jpi = (1/2,3/2)
+level:	nm = 125.53.11	E = 1381.635	hl = 0				jpi = 1/2+,3/2+
+level:	nm = 125.53.12	E = 1442.79		hl = 0				jpi = 3/2+
+level:	nm = 125.53.13	E = 1562.43		hl = 0				jpi = 1/2,3/2
+
+level:	nm = 125.54.6	E = 1644.5		hl = 60840			jpi = 3/2+
+
+gamma:	from = 125.53.3	to = 125.53.2	Igamma = 12.6	CE_K = 3.60~.05		CE_L = 0.479~.008@100:8.1:2.2	CE_M = .0965~.0015	CE_N = .0195~.0003	CE_O = .00227~.00004
+gamma:	from = 125.53.2	to = 125.53.1	Igamma = 0.22	CE_K = 2.88~.04		CE_L = 1.627~.023@100:244:308	CE_M = 0.346~.005	CE_N = .0664~.0010	CE_O = .00600~.00009
+gamma:	from = 125.53.1	to = 125.53.0	Igamma = 0.890	CE_K = 0.454~.007	CE_L = .0614~.0014@100:8.8:4.6	CE_M = .0124~.0003	CE_N = .00250~.00006	CE_O = .000290~.000006
+gamma:	from = 125.53.2	to = 125.53.0	Igamma = 100.	CE_K = .1152~.0017	CE_L = .01625~.00025@100:12.3:8.2	CE_M = .00329~.00005	CE_N = .000662~.000010	CE_O = 7.53e-5~.11e-5
+gamma:	from = 125.53.5	to = 125.53.3	Igamma = 0.139	CE_K = .093~.012	CE_L = .016~.005	CE_M = .0032~.0011	CE_N = .00063~.00021	CE_O = 6.8e-5~1.8e-5
+gamma:	from = 125.53.3	to = 125.53.0	Igamma = 55.7	CE_K = .0651~.0010	CE_L = .01185~.000170@100:39.3:36.0	CE_M = 0.00244~.00004	CE_N = .000532~.000008	CE_O = 5.04e-5~.07e-5
+gamma:	from = 125.53.4	to = 125.53.1	Igamma = 0.025
+gamma:	from = 125.53.5	to = 125.53.1	Igamma = 0.037	CE_K = 0.0225~.0004	CE_L = 0.00357~.00005	CE_M = .000729~.000011	CE_N = .0001449~.0000021	CE_O = 1.574e-5~.022e-5
+gamma:	from = 125.53.4	to = 125.53.0	Igamma = 0.317	CE_K = .0178~.0008	CE_L = .00249~.00016	CE_M = .00050~.00004	CE_N = .000101~.000006	CE_O = 1.15e-5~.03e-5
+gamma:	from = 125.53.5	to = 125.53.0	Igamma = 8.68	CE_K = .01126~.00016	CE_L = .001414~.000020	CE_M = .000284~.00004	CE_N = 5.75e-5~.08e-5	CE_O = 6.78e-6~.10e-6
+gamma:	from = 125.53.6	to = 125.53.5	Igamma = 0.057
+gamma:	from = 125.53.6	to = 125.53.4	Igamma = 0.220	CE_K = .0044~.0006	CE_L = .00057~.00005	CE_M = .000114~.000010	CE_N = 2.30e-5~.20e-5	CE_O = 2.7e-6~.3e-6
+gamma:	from = 125.53.8	to = 125.53.5	Igamma = 0.21	CE_K = .0044~.0006	CE_L = .00057~.00005	CE_M = .000114~.000010	CE_N = 2.30e-5~.20e-5	CE_O = 2.7e-6~.3e-6 
+
+gamma:	from = 125.53.8	to = 125.53.4	Igamma = 0.025
+gamma:	from = 125.53.9	to = 125.53.5	Igamma = 0.102	CE_K = .0032~.0005	CE_L = .00040~.00004	CE_M = 8.1e-5~.8e-5	CE_N = 1.64e-5~.17e-5	CE_O = 1.91e-6~.22e-6
+gamma:	from = 125.53.6	to = 125.53.3	Igamma = 0.014
+gamma:	from = 125.53.9	to = 125.53.4	Igamma = 0.013
+gamma:	from = 125.53.6	to = 125.53.2	Igamma = 0.045
+gamma:	from = 125.53.8	to = 125.53.3	Igamma = 2.06	CE_K = .00252~.00004	CE_L = .000310~.000005	CE_M = 6.21e-5~.09e-5	CE_N = 1.259e-5~.018e-5	CE_O = 1.488e-6~.021e-6
+
+gamma:	from = 125.53.7	to = 125.53.2	Igamma = 0.030
+gamma:	from = 125.53.8	to = 125.53.2	Igamma = 1.074	CE_K = .0019~.0003	CE_L = .00024~.00003	CE_M = 4.8e-5~.6e-5	CE_N = 9.8e-6~1.2e-6	CE_O = 1.14e-6~.15e-6
+
+gamma:	from = 125.53.9	to = 125.53.3	Igamma = 0.280	CE_K = .00176~.00024	CE_L = .000219~.000025	CE_M = 4.4e-5~.5e-5	CE_N = 8.9e-6~1.1e-6	CE_O = 1.04e-6~.13e-6
+gamma:	from = 125.53.9	to = 125.53.2	Igamma = 0.189
+gamma:	from = 125.53.6	to = 125.53.0	Igamma = 0.299	CE_K = 0.00150~.00020	CE_L = .000186~.000021	CE_M = 3.75e-5~.05e-5	CE_N = 7.5e-6~0.9e-6	CE_O = 8.9e-7~1.1e-7
+gamma:	from = 125.53.10	to = 125.53.3	Igamma = 0.044
+gamma:	from = 125.53.12	to = 125.53.4	Igamma = 0.033
+gamma:	from = 125.53.10	to = 125.53.2	Igamma = 0.114
+gamma:	from = 125.53.8	to = 125.53.0	Igamma = 0.121
+gamma:	from = 125.53.13	to = 125.53.5	Igamma = 0.0048
+gamma:	from = 125.53.11	to = 125.53.2	Igamma = 0.556	CE_K = .00114~.00014	CE_L = .000141~.000016	CE_M = 2.8e-5~.3e-5	CE_N = 5.7e-6~.7e-6	CE_O = 6.7e-7~.8e-7
+gamma:	from = 125.53.9	to = 125.53.0	Igamma = 1.27	CE_K = .00106~.00013	CE_L = .000130~.000015	CE_M = 2.6e-5~.3e-5	CE_N = 5.3e-6~.6e-6	CE_O = 6.2e-7~.8e-7
+gamma:	from = 125.53.11	to = 125.53.2	Igamma = 0.123
+gamma:	from = 125.53.12	to = 125.53.3	Igamma = 0.0074
+gamma:	from = 125.53.12	to = 125.53.2	Igamma = 0.0030
+gamma:	from = 125.53.13	to = 125.53.3	Igamma = 0.0021
+gamma:	from = 125.53.11	to = 125.53.0	Igamma = 0.0028
+gamma:	from = 125.53.12	to = 125.53.0	Igamma = 0.013
+gamma:	from = 125.53.13	to = 125.53.0	Igamma = 0.0020
+
+ecapt: from = 125.54.6
+
+norm:	gamma = groundstate
+
+AugerK:	Z = 53	ka1 = 55.0	ka2 = 29.9	kb3 = 5.12	kb1 = 9.9	kb2 = 2.93	Iauger = 24.4

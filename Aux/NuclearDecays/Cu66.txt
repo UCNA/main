@@ -1,0 +1,21 @@
+#########
+# Cu66 decay scheme
+#########
+
+level:	nm = 66.29.0	E = 2640.9	hl = 307.2		jpi = 2+
+
+level:	nm = 66.30.3	E = 2371.7		hl = 0		jpi = 0+
+level:	nm = 66.30.2	E = 1872.2		hl = 0		jpi = 2+
+level:	nm = 66.30.1	E = 1039.21		hl = 1.68e-12		jpi = 2+
+level:	nm = 66.30.0	E = 0		hl = -1		jpi = 0+
+
+
+beta:	from = 66.29.0	to = 66.30.0	I = 90.77
+beta:	from = 66.29.0	to = 66.30.1	I = 9.01
+beta:	from = 66.29.0	to = 66.30.2	I = 0.220
+beta:	from = 66.29.0	to = 66.30.3	I = 0.0037
+
+gamma:	from = 66.30.1	to = 66.30.0	Igamma = 100.0	CE_K = 0.000241~.000004	CE_L = 2.41e-5~.04e-5	CE_M = 3.46e-6~0.05e-6
+gamma:	from = 66.30.2	to = 66.30.1	Igamma = 2.38	CE_K = 0.000389~.000008	CE_L = 3.91e-5~.08e-5	CE_M = 5.60e-6~0.11e-6
+gamma:	from = 66.30.2	to = 66.30.0	Igamma = 0.005
+gamma:	from = 66.30.3	to = 66.30.1	Igamma = 0.040	CE_K = 0.0001383~.0000020	CE_L = 1.379e-5~.020e-5	CE_M = 1.98e-6~0.03e-6

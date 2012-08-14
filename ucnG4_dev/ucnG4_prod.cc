@@ -42,11 +42,12 @@
 #include "bmSteppingAction.hh"
 #include "bmSteppingVerbose.hh"
 #include "bmAnalysisManager.hh"
-
+#include "G4UnitsTable.hh"
 
 
 #include "G4RunManager.hh"
 #include "G4UImanager.hh"
+#include "G4UIExecutive.hh"
 #ifdef G4VIS_USE
 #include "G4VisExecutive.hh"
 #endif
@@ -85,6 +86,10 @@ int main(int argc, char** argv) {
 	}
 	G4cout << "Using physics list: " << physlist << G4endl;
 	
+	new G4UnitDefinition("torr","torr","Pressure",atmosphere/760.);
+	//G4UnitDefinition::PrintUnitsTable();
+	//G4ParticleTable::GetParticleTable()->DumpTable();
+	
 #ifdef G4VIS_USE
 	// Visualization, if you choose to have it!
 	G4VisManager* visManager = new G4VisExecutive;
@@ -105,6 +110,13 @@ int main(int argc, char** argv) {
 	G4String command = "/control/execute ";
 	G4String fileName = argv[1];
 	UI->ApplyCommand(command+fileName);
+	
+	// interactive UI session
+	if(argc >= 3 && std::string(argv[argc-1]) == "ui") {
+		G4UIExecutive* UIuser = new G4UIExecutive(argc, argv);
+		UIuser->SessionStart();
+		delete UIuser;
+	}
 	
 #ifdef G4VIS_USE
 	delete visManager;

@@ -29,16 +29,19 @@ public:
 	/// set generator position (sets scint and wirechamber position)
 	void setPosition(float xx, float yy, float dxw=0, float dyw=0);
 	/// set event side
-	void setSide(Side s) { mySide = s; }
+	void setSide(Side s);
 	
 	/// get current calibrator
 	const PMTCalibrator* getCalibrator() const { return currentCal; }
 		
 	float x,y;						//< event hit position in scintillator (projected back to decay trap)
 	float xw,yw;					//< wirechamber hit offset from source position
+	float evtm;						//< event time during run
 	float presmear;					//< nPE/keV already smeared in input spectrum
-	float threshnoise;				//< electronic threshold noise (equivalent photoelectrons)
-	float propnoise;				//< extra fraction of noise proportional to signal
+	float dgain;					//< gain at first photomultiplier stage (smears single-PE resolution)
+	float pedcorr;					//< pedestal noise correlation
+	float crosstalk;				//< inter-channel noise crosstalk
+	float xscatter;					//< "extra" proportional random scatter
 	
 	unsigned int nTrigs;			//< number of individual PMTs triggered
 	bool pmtTriggered[nBetaTubes];	//< whether each PMT triggered above threshold

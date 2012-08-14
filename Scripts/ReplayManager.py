@@ -4,10 +4,10 @@ import time
 from EncalDB import *
 from optparse import OptionParser	
 	
-def processOctets(sim=False):
+def processOctets(sim,omin,omax):
 	pcmd = "cd ..; ./UCNAnalyzer pr oct %i x x\n"
 	freplaylist = open("oct_replaylist.txt","w")
-	for r in range(60):
+	for r in range(60)[omin:omax+1]:
 		if sim:
 			freplaylist.write(pcmd%(-r-1));
 		else:
@@ -35,27 +35,30 @@ def processSources(rmin,rmax):
 		os.system("nice -n 10 parallel < source_replaylist.txt")
 		os.system("rm source_replaylist.txt")
 
-def processXeMap(rmin,rmax):
-		pcmd = "cd ..; ./UCNAnalyzer pmap gen %i %i 12 x x\n"
+def processXeMap(rmin,rmax,nr):
+		pcmd = "cd ..; ./UCNAnalyzer pmap gen %i %i %i x x\n"
 		freplaylist = open("xenon_replaylist.txt","w")
 		for r in range(rmin,rmax+1):
-			freplaylist.write(pcmd%(r,r))
+			freplaylist.write(pcmd%(r,r,nr))
 		freplaylist.close()
 		os.system("cat xenon_replaylist.txt")
 		os.system("nice -n 15 parallel -P 3 < xenon_replaylist.txt")
 		os.system("rm xenon_replaylist.txt")
-		os.system(pcmd%(rmin,rmax))
+		os.system(pcmd%(rmin,rmax,nr))
 
-def processXeSim(rmin,rmax):
-		pcmd = "cd ..; ./UCNAnalyzer pmap sim %i %i %i x x\n"
+def processXeSim(rmin,rmax,nr):
+		pcmd = "cd ..; ./UCNAnalyzer pmap sim %i %i %i %i x x\n"
 		freplaylist = open("xenon_simlist.txt","w")
 		for r in range(rmin,rmax+1):
-			freplaylist.write(pcmd%(rmin,rmax,r))
+			freplaylist.write(pcmd%(rmin,rmax,r,nr))
 		freplaylist.close()
 		os.system("cat xenon_simlist.txt")
-		os.system("nice -n 15 parallel < xenon_simlist.txt")
+		nproc = 6
+		if nr > 12:
+			nproc = 3
+		os.system("nice -n 15 parallel -P %i < xenon_simlist.txt"%nproc)
 		os.system("rm xenon_simlist.txt")
-		os.system(pcmd%(rmin,rmax,0))
+		os.system(pcmd%(rmin,rmax,0,nr))
 	
 if __name__ == "__main__":
 	
@@ -68,6 +71,7 @@ if __name__ == "__main__":
 	parser.add_option("-s", "--sources", dest="sources", action="store_true", default=False, help="process (official) source data")
 	parser.add_option("--rmin", type="int", dest="rmin", default=0)
 	parser.add_option("--rmax", type="int", dest="rmax", default=100000)
+	parser.add_option("--nrings", type="int", dest="nrings", default=12, help="number of rings for position map")
 	
 	options, args = parser.parse_args()
 	if options.kill:
@@ -81,18 +85,18 @@ if __name__ == "__main__":
 		exit(1)
 	
 	if options.xenon:
-		processXeMap(options.rmin,options.rmax)
+		processXeMap(options.rmin,options.rmax,options.nrings)
 		exit(0)
 	
 	if options.xesim:
-		processXeSim(options.rmin,options.rmax)
+		processXeSim(options.rmin,options.rmax,options.nrings)
 		exit(0)
 		
 	if options.octs:
-		processOctets(False)
+		processOctets(False,options.rmin,options.rmax)
 		
 	if options.simocts:
-		processOctets(True)
+		processOctets(True,options.rmin,options.rmax)
 		
 	if options.sources:
 		processSources(options.rmin,options.rmax)
