@@ -116,7 +116,7 @@ public:
 	/// MC/Data comparison plots/calculations from each plugin
 	virtual void compareMCtoData(RunAccumulator& OAdata);
 	/// add an analyzer plugin
-	AnalyzerPlugin* addPlugin(AnalyzerPlugin* AP);
+	void addPlugin(AnalyzerPlugin* AP);
 	/// get plugin by name
 	AnalyzerPlugin* getPlugin(const std::string& nm);
 	

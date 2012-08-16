@@ -37,7 +37,7 @@ void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
 SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
-nSimmed(0), nCounted(0), mwpcAccidentalProb(4.3e-4), afp(AFP_OTHER) {
+nSimmed(0), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		mwpcThresh[s] = 0.02;

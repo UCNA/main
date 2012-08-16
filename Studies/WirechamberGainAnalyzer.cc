@@ -1,5 +1,6 @@
 #include "WirechamberGainAnalyzer.hh"
 #include "GraphUtils.hh"
+#include "GraphicsUtils.hh"
 #include <TH2F.h>
 #include <TH3F.h>
 #include <TProfile.h>
@@ -73,7 +74,7 @@ AnodeGainAnalyzer::AnodeGainAnalyzer(RunAccumulator* RA): AnalyzerPlugin(RA,"wir
 	anodeGaincorr->setAxisTitle(X_DIRECTION, "Side");
 	anodeGaincorr->setAxisTitle(Y_DIRECTION, "Anode Gain Correction Factor");
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
-		TH2F hAnodeTemplate(("hAnodeEnergy_Tp"+itos(tp)).c_str(),"MWPC Energy",10,0,1000,50,0,10);
+		TH2F hAnodeTemplate(("hAnodeEnergy_Tp"+itos(tp)).c_str(),"MWPC Energy",10,0,1000,100,0,10);
 		for(Side s = EAST; s <= WEST; ++s) {
 			gAnode[s][tp] = NULL;
 			anodeCal[s][tp] = registerFGBGPair(hAnodeTemplate, AFP_OTHER, s);
@@ -90,6 +91,8 @@ AnodeGainAnalyzer::~AnodeGainAnalyzer() {
 				delete gAnode[s][tp];
 				gAnode[s][tp] = NULL;
 			}
+			for(unsigned int i=0; i<hSlices[s][tp].size(); i++)
+				delete hSlices[s][tp][i];
 		}
 	}
 }
@@ -105,6 +108,8 @@ void AnodeGainAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 void AnodeGainAnalyzer::calculateResults() {
 	// fit anode spectrum vs. scintillator energy
 	TF1 fLandau("landauFit","landau",0,10);
+	fLandau.SetParLimits(1,0.1,10.);
+	fLandau.SetParLimits(2,0.20,5.0);
 	TF1 fAvg("avgFit","pol0",400,800);
 	for(Side s = EAST; s <= WEST; ++s) {
 		
@@ -119,40 +124,50 @@ void AnodeGainAnalyzer::calculateResults() {
 		fLandau.SetLineColor(2+2*s);
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 			TH2F* hAnode = (TH2F*)(anodeCal[s][tp]->h[GV_OPEN]);
-			std::vector<TH1D*> fslices = replaceFitSlicesY(hAnode, &fLandau);
-			int nEnergyBins = hAnode->GetNbinsX();
-			assert(fslices.size()==4);
-			for(int i = 0; i < 3; i++)
-				assert(fslices[i]->GetNbinsX()==nEnergyBins);
-			gAnode[s][tp] = new TGraphErrors(nEnergyBins);
-			for(int i=0; i<nEnergyBins; i++) {
+			hSlices[s][tp] = sliceTH2(*hAnode,X_DIRECTION);
+			gAnode[s][tp] = new TGraphErrors(hSlices[s][tp].size());
+			TGraphErrors gAvg(hSlices[s][tp].size());
+			for(unsigned int i=0; i<hSlices[s][tp].size(); i++) {
 				double e0 = hAnode->GetBinCenter(i+1);
+				double c = hSlices[s][tp][i]->GetBinCenter(hSlices[s][tp][i]->GetMaximumBin());
+				double mx = hSlices[s][tp][i]->GetMaximum();
+				fLandau.SetParameter(2,0.23*c);
+				fLandau.SetParameter(0,c*mx/fLandau.GetParameter(2));
+				fLandau.SetParameter(1,c);
+				fLandau.SetRange(0,2*c);
+				printf("\n---- Anode %s Type %i E=%i : estimated h=%.2g at MPV=%.2f (sigma=%.2f) ----\n",
+					   sideWords(s),tp,(int)e0,fLandau.GetParameter(0),c,fLandau.GetParameter(2));
+				hSlices[s][tp][i]->Fit(&fLandau,"RBME");
 				Stringmap m;
 				m.insert("side",ctos(sideNames(s)));
 				m.insert("type",itos(tp));
 				m.insert("energy",e0);
-				m.insert("height",fslices[0]->GetBinContent(i+1));
-				m.insert("d_height",fslices[0]->GetBinError(i+1));
-				m.insert("mpv",fslices[1]->GetBinContent(i+1));
-				m.insert("d_mpv",fslices[1]->GetBinError(i+1));
-				m.insert("sigma",fslices[2]->GetBinContent(i+1));
-				m.insert("d_sigma",fslices[2]->GetBinError(i+1));
+				m.insert("height",fLandau.GetParameter(0));
+				m.insert("d_height",fLandau.GetParError(0));
+				m.insert("mpv",fLandau.GetParameter(1));
+				m.insert("d_mpv",fLandau.GetParError(1));
+				m.insert("sigma",fLandau.GetParameter(2));
+				m.insert("d_sigma",fLandau.GetParError(2));
 				myA->qOut.insert("anodeCalFit",m);
-				gAnode[s][tp]->SetPoint(i,e0,fslices[1]->GetBinContent(i+1));
-				gAnode[s][tp]->SetPointError(i,hAnode->GetBinWidth(i+1)*0.5,fslices[2]->GetBinContent(i+1));
+				gAnode[s][tp]->SetPoint(i,e0,fLandau.GetParameter(1));
+				gAnode[s][tp]->SetPointError(i,hAnode->GetBinWidth(i+1)*0.5,fLandau.GetParameter(2));
+				gAvg.SetPoint(i,e0,fLandau.GetParameter(1));
+				gAvg.SetPointError(i,0,fLandau.GetParError(1));
 			}
 			
 			// average anode MPV energy
-			fslices[1]->Fit(&fAvg,"QR");
+			double emin = tp==TYPE_0_EVENT?400:200;
+			double emax = tp==TYPE_0_EVENT?800:500;
+			fAvg.SetRange(emin,emax);
+			gAvg.Fit(&fAvg,"QR");
 			Stringmap m;
 			m.insert("side",ctos(sideNames(s)));
 			m.insert("type",itos(tp));
+			m.insert("emin",emin);
+			m.insert("emax",emax);
 			m.insert("avg",fAvg.GetParameter(0));
 			m.insert("d_avg",fAvg.GetParError(0));
 			myA->qOut.insert("anodeCalAvg",m);
-
-			for(unsigned int i=0; i<fslices.size(); ++i)
-				delete fslices[i];
 		}
 	}
 }
@@ -160,12 +175,20 @@ void AnodeGainAnalyzer::calculateResults() {
 void AnodeGainAnalyzer::makePlots() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+			if(hSlices[s][tp].size()) {
+				std::vector<TH1*> hToPlot;
+				for(unsigned int i=0; i<hSlices[s][tp].size(); i++)
+					hToPlot.push_back(hSlices[s][tp][i]);
+				drawSimulHistos(hToPlot);
+				printCanvas(sideSubst("AnodeCal/hAnode_%c_",s)+itos(tp));
+			}
 			if(!gAnode[s][tp]) continue;
 			gAnode[s][tp]->Draw("AP");
 			gAnode[s][tp]->SetTitle((sideSubst("%s Type ",s)+itos(tp)+" Events").c_str());
 			gAnode[s][tp]->GetXaxis()->SetTitle("Scintillator Energy [keV]");
 			gAnode[s][tp]->GetYaxis()->SetTitle("Primary Side MWPC Energy [keV]");
 			gAnode[s][tp]->GetYaxis()->SetRangeUser(0.0,10.0);
+			gAnode[s][tp]->GetXaxis()->SetRangeUser(0.0,800.0);
 			gAnode[s][tp]->Draw("AP");
 			printCanvas(sideSubst("AnodeCal/EMWPC_%c_",s)+itos(tp));
 		}
@@ -181,9 +204,11 @@ void AnodeGainAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 			if(!gAnode[s][tp] || !dat.gAnode[s][tp]) continue;
 			dat.gAnode[s][tp]->SetLineColor(2);
 			dat.gAnode[s][tp]->Draw("AP");
+			dat.gAnode[s][tp]->SetTitle((sideSubst("%s Type ",s)+itos(tp)+" Events").c_str());
 			dat.gAnode[s][tp]->GetXaxis()->SetTitle("Scintillator Energy [keV]");
 			dat.gAnode[s][tp]->GetYaxis()->SetTitle("Primary Side MWPC Energy [keV]");
 			dat.gAnode[s][tp]->GetYaxis()->SetRangeUser(0.0,10.0);
+			dat.gAnode[s][tp]->GetXaxis()->SetRangeUser(0.0,800.0);
 			dat.gAnode[s][tp]->Draw("AP");
 			gAnode[s][tp]->SetLineColor(4);
 			gAnode[s][tp]->Draw("P");
@@ -199,6 +224,7 @@ void AnodeGainAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 WirechamberSimTypeID::WirechamberSimTypeID(RunAccumulator* RA): AnalyzerPlugin(RA,"wirechamberTypeID") {
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 		TH3F hAnodeTemplate(("hAnodeTypeID_Tp"+itos(tp)).c_str(),"MWPC Energy",10,0,1000,50,0,10,50,0,10);
+		//TH3F hAnodeTemplate(("hAnodeTypeID_Tp"+itos(tp)).c_str(),"MWPC Energy",10,0,1000,100,0,20,100,0,20);
 		for(Side s = EAST; s <= WEST; ++s) {
 			if(tp<TYPE_II_EVENT) { anodeTypeID[s][tp] = NULL; continue; }
 			anodeTypeID[s][tp] = registerFGBGPair(hAnodeTemplate, AFP_OTHER, s);
@@ -218,3 +244,19 @@ void WirechamberSimTypeID::fillCoreHists(ProcessedDataScanner& PDS, double weigh
 	if(SDS.fPID == PID_BETA && (s==EAST||s==WEST) && PDS.passesPositionCut(s) && (tp==TYPE_II_EVENT||tp==TYPE_III_EVENT))
 		((TH3F*)(anodeTypeID[s][rtp]->h[currentGV]))->Fill(SDS.getEnergy(),SDS.mwpcEnergy[s],SDS.mwpcEnergy[otherSide(s)],weight);
 }
+
+void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
+	for(Side s = EAST; s <= WEST; ++s) {
+		unsigned int nx = anodeTypeID[s][TYPE_II_EVENT]->h[GV_OPEN]->GetNbinsX();
+		std::vector<TH2F*> v2 = sliceTH3(*(TH3F*)(anodeTypeID[s][TYPE_II_EVENT]->h[GV_OPEN]),X_DIRECTION);
+		std::vector<TH2F*> v3 = sliceTH3(*(TH3F*)(anodeTypeID[s][TYPE_III_EVENT]->h[GV_OPEN]),X_DIRECTION);
+		for(unsigned int ne = 1; ne <= nx; ne++) {
+			v2[ne]->SetMarkerColor(2);
+			v2[ne]->Draw();
+			v3[ne]->SetMarkerColor(4);
+			v3[ne]->Draw("Same");
+			OM.printCanvas(sideSubst("PrimVSec_%c_",s)+itos(ne));
+		}
+	}
+}
+

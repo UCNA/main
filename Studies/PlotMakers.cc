@@ -18,6 +18,7 @@
 #include "LinHistCombo.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "BetaDecayAnalyzer.hh"
+#include "AnodePositionAnalyzer.hh"
 #include <TColor.h>
 
 
@@ -56,12 +57,9 @@ void dumpPosmap(std::string basepath, unsigned int pnum) {
 	QFile fout(basepath+"/Posmap_"+itos(pnum)+".txt",false);
 	
 	for(Side s = EAST; s<=WEST; ++s) {
-		for(int t=0; t<=nBetaTubes; t++) {
-			
-			if(t==nBetaTubes && !PCal)
-				continue;
-			
-			SectorCutter& psects = PCor->getSectors(s,0);
+		for(unsigned int t=0; t<PCor->getNMaps(s); t++) {
+	
+			SectorCutter& psects = PCor->getSectors(s,t);
 			
 			for(unsigned int n=0; n<psects.nSectors(); n++) {
 				
@@ -325,11 +323,7 @@ void PosPlotter::etaPlot(PositioningCorrector* P, double axisRange) {
 	r0 = Sects.r;
 	
 	for(Side s = EAST; s<=WEST; ++s) {
-		for(unsigned int t=0; t<nBetaTubes; t++) {
-			
-			if(!P->eval(s, t, 0, 0))
-				continue;
-			
+		for(unsigned int t=0; t<P->getNMaps(s); t++) {
 			TH2F* interpogrid = makeHisto(sideSubst("%c ",s)+itos(t+1), sideSubst("%s PMT ",s)+itos(t+1)+" Light Transport");
 			interpogrid->SetAxisRange(0,axisRange,"Z");
 			
@@ -708,3 +702,22 @@ void NGBGSpectra(std::string datname) {
 	AH.setWriteRoot(true);
 }
 
+//-------------------------------------------------------------//
+
+void separate23(std::string datname) {
+	OutputManager OM("23Separation",getEnvSafe("UCNA_ANA_PLOTS")+"/Test/23Separation/");
+	RunAccumulator RA(&OM, "RunAccumulator", datname);
+	WirechamberSimTypeID* WS = new WirechamberSimTypeID(&RA);
+	RA.addPlugin(WS);
+	WS->make23SepInfo(OM);
+}
+
+//-------------------------------------------------------------//
+
+void refitXeAnode(std::string datname) {
+	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/Test/");
+	RunAccumulator RA(&OM, "RunAccumulator", datname);
+	AnodePositionAnalyzer* AP = new AnodePositionAnalyzer(&RA,0);
+	RA.addPlugin(AP);
+	AP->genAnodePosmap();
+}

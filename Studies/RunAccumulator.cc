@@ -32,9 +32,9 @@ void fgbgPair::operator*=(double c) {
 }
 
 void fgbgPair::setAxisTitle(AxisDirection d, const std::string& ttl) {
-	if(d!=X_DIRECTION && d!=Y_DIRECTION) return;
+	if(d > Z_DIRECTION) return;
 	for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv)
-		(d==X_DIRECTION?h[gv]->GetXaxis():h[gv]->GetYaxis())->SetTitle(ttl.c_str());
+		(d==X_DIRECTION?h[gv]->GetXaxis():d==Y_DIRECTION?h[gv]->GetYaxis():h[gv]->GetZaxis())->SetTitle(ttl.c_str());
 }
 
 //------------------------------------------------------------------------
@@ -143,10 +143,14 @@ BlindTime RunAccumulator::getTotalTime(AFPState afp, bool fg) const {
 }
 
 
-AnalyzerPlugin* RunAccumulator::addPlugin(AnalyzerPlugin* AP) {
-	assert(myPlugins.find(AP->name) == myPlugins.end());
+void RunAccumulator::addPlugin(AnalyzerPlugin* AP) {
+	if(myPlugins.find(AP->name) != myPlugins.end()) {
+		SMExcept e("DuplicatePluginName");
+		e.insert("myName",name);
+		e.insert("pluginName",AP->name);
+		throw(e);
+	}
 	myPlugins.insert(std::make_pair(AP->name,AP));
-	return AP;
 }
 
 

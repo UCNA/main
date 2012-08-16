@@ -8,6 +8,7 @@
 
 WirechamberCalibrator::WirechamberCalibrator(RunNum rn, CalDB* cdb): anodeP(cdb->getAnodePositioningCorrector(rn)) {
 	assert(anodeP);
+	anodeP->setNormAvg();
 	for(Side s = EAST; s <= WEST; ++s) {
 		anodeGainCorr[s]=cdb->getAnodeGain(rn,s);
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
@@ -45,7 +46,7 @@ float WirechamberCalibrator::wirechamberGainCorr(Side s, float) const {
 
 float WirechamberCalibrator::calibrateAnode(float adc, Side s, float x, float y, float t) const {
 	assert(s==EAST||s==WEST);
-	return adc*wirechamberGainCorr(s,t)/anodeP->eval(s,nBetaTubes,x,y,false);
+	return adc*wirechamberGainCorr(s,t)/anodeP->eval(s,0,x,y,true);
 }
 
 void WirechamberCalibrator::tweakPosition(Side s, AxisDirection d, wireHit& h, double E) const {
@@ -76,8 +77,7 @@ void WirechamberCalibrator::printSummary() {
 			printf("\n");
 		}
 	}
-	printf("Anode:\t\tcE=%.2f\tcW=%.2f\n",wirechamberGainCorr(EAST,0),wirechamberGainCorr(WEST,0));
-	
+	printf("Anode 1000:\tE=%.2f\tW=%.2f\n",calibrateAnode(1000,EAST,0,0,0),calibrateAnode(1000,WEST,0,0,0));
 }
 
 void WirechamberCalibrator::toLocal(Side s, AxisDirection d, float x, unsigned int& n, float& c) const {

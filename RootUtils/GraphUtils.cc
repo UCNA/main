@@ -303,27 +303,41 @@ std::vector<TH1D*> replaceFitSlicesY(TH2* h, TF1* f1) {
 	return hlist;
 }
 
-std::vector<TH2F*> sliceTH3(const TH3& h3) {
+std::vector<TH2F*> sliceTH3(const TH3& h3, AxisDirection d) {
+	assert(d<=Z_DIRECTION);
+	
+	TAxis* Ax1 = d==X_DIRECTION?h3.GetYaxis():h3.GetXaxis();
+	TAxis* Ax2 = d==Z_DIRECTION?h3.GetYaxis():h3.GetZaxis();
+	TAxis* Ax3 = d==X_DIRECTION?h3.GetXaxis():d==Y_DIRECTION?h3.GetYaxis():h3.GetZaxis();
+	const unsigned int n1 = Ax1->GetNbins();
+	const unsigned int n2 = Ax2->GetNbins();
+	const unsigned int n3 = Ax3->GetNbins();
+	
 	std::vector<TH2F*> h2s;
-	const unsigned int nx = h3.GetNbinsX();
-	const unsigned int ny = h3.GetNbinsY();
-	const unsigned int nz = h3.GetNbinsZ();
-	for(unsigned int z = 0; z <= nz+1; z++) {
+	for(unsigned int z = 0; z <= n3+1; z++) {
 		TH2F* h2 = new TH2F((std::string(h3.GetName())+"_"+itos(z)).c_str(),
 							h3.GetTitle(),
-							nx,
-							h3.GetXaxis()->GetBinLowEdge(1),
-							h3.GetXaxis()->GetBinUpEdge(nx),
-							ny,
-							h3.GetYaxis()->GetBinLowEdge(1),
-							h3.GetYaxis()->GetBinUpEdge(ny));
+							n1,
+							Ax1->GetBinLowEdge(1),
+							Ax1->GetBinUpEdge(n1),
+							n2,
+							Ax2->GetBinLowEdge(1),
+							Ax2->GetBinUpEdge(n2));
 		if(h3.GetSumw2()) h2->Sumw2();
-		h2->GetXaxis()->SetTitle(h3.GetXaxis()->GetTitle());
-		h2->GetYaxis()->SetTitle(h3.GetYaxis()->GetTitle());
-		for(unsigned int x=0; x <= nx+1; x++) {
-			for(unsigned int y=0; y <= ny+1; y++) {
-				h2->SetBinContent(x,y,h3.GetBinContent(x,y,z));
-				h2->SetBinError(x,y,h3.GetBinError(x,y,z));
+		h2->GetXaxis()->SetTitle(Ax1->GetTitle());
+		h2->GetYaxis()->SetTitle(Ax2->GetTitle());
+		for(unsigned int x=0; x <= n1+1; x++) {
+			for(unsigned int y=0; y <= n2+1; y++) {
+				if(d==X_DIRECTION) {
+					h2->SetBinContent(x,y,h3.GetBinContent(z,x,y));
+					h2->SetBinError(x,y,h3.GetBinError(z,x,y));
+				} else if(d==Y_DIRECTION) {
+					h2->SetBinContent(x,y,h3.GetBinContent(x,z,y));
+					h2->SetBinError(x,y,h3.GetBinError(x,z,y));
+				} else if(d==Z_DIRECTION) {
+					h2->SetBinContent(x,y,h3.GetBinContent(x,y,z));
+					h2->SetBinError(x,y,h3.GetBinError(x,y,z));
+				}
 			}
 		}
 		h2s.push_back(h2);
@@ -344,9 +358,9 @@ std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d, bool includeOverflow
 		if(!includeOverflow && (z==0 || z==nz+1)) continue;
 		TH1F* h1 = new TH1F((std::string(h2.GetName())+"_"+itos(z)).c_str(),
 							h2.GetTitle(),
-							nx,
+							nn,
 							axs->GetBinLowEdge(1),
-							axs->GetBinUpEdge(nx));
+							axs->GetBinUpEdge(nn));
 		if(h2.GetSumw2()) h1->Sumw2();
 		h1->GetXaxis()->SetTitle(axs->GetTitle());
 		for(unsigned int n=0; n <= nn+1; n++) {

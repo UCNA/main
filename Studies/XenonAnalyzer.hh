@@ -21,7 +21,7 @@ SectorDat sm2sd(const Stringmap& m);
 /// convert SectorDat to Stringmap
 Stringmap sd2sm(const SectorDat& sd);
 
-
+/// analyzer plugin for Xenon spectrum shape fitting and position map
 class XenonSpectrumAnalyzer: public PositionBinnedAnalyzer {
 public:
 	/// constructor
@@ -44,17 +44,26 @@ protected:
 	void fitSpectrum(TH1* hSpec,SectorDat& sd);
 };
 
-
+/// analyzer for xenon data
 class XenonAnalyzer: public MWPCTuningAnalyzer {
 public:
 	/// constructor
-	XenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0, unsigned int nrA = 7);
+	XenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0, unsigned int nrA = 12);
 	/// create a new instance of this analyzer
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) {
 		return new XenonAnalyzer(this,nm,inflname,myXeSpec->sects.n,myAnode->sects.n); }
 	
 	XenonSpectrumAnalyzer* myXeSpec;	//< position-binned Xenon spectrum analysis
 	AnodePositionAnalyzer* myAnode;		//< anode position gain
+};
+
+/// analyzer for simulated xenon data
+class SimXenonAnalyzer: public MWPCTuningAnalyzer {
+public:
+	/// constructor
+	SimXenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0);
+	
+	XenonSpectrumAnalyzer* myXeSpec;	//< position-binned Xenon spectrum analysis
 };
 
 /// process xenon runs

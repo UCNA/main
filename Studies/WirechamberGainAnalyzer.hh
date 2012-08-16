@@ -27,7 +27,7 @@ class CathodeGainAnalyzer: public AnalyzerPlugin {
 public:
 	/// constructor
 	CathodeGainAnalyzer(RunAccumulator* RA);
-	/// process a data point into position histograms
+	/// fill histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	
 	fgbgPair* cathNorm[2][2][kMaxCathodes];		//< cathode normalization histograms by [side][plane][cathode]
@@ -51,7 +51,9 @@ public:
 	
 	fgbgPair* anodeCal[2][TYPE_III_EVENT+1];	//< anode energy spectrum binned by event energy by [side][type]
 	fgbgPair* anodeGaincorr;					//< average anode gain correction factor in use
-	TGraphErrors* gAnode[2][TYPE_III_EVENT+1];	//< anode energy distribution fit
+	
+	std::vector<TH1F*> hSlices[2][TYPE_III_EVENT+1];	//< fit anode spectrum "slices"
+	TGraphErrors* gAnode[2][TYPE_III_EVENT+1];			//< anode energy distribution fit
 };
 
 /// analyzer plugin for evaluating simulated Type II/III MWPC energy deposition split
@@ -59,8 +61,10 @@ class WirechamberSimTypeID: public AnalyzerPlugin {
 public:
 	/// constructor
 	WirechamberSimTypeID(RunAccumulator* RA);
-	/// process a data point into position histograms
+	/// fill histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
+	/// generate Type II/III separation data
+	void make23SepInfo(OutputManager& OM);
 	
 	fgbgPair* anodeTypeID[2][TYPE_III_EVENT+1];	//< anode energy spectrum binned by event energy by [side][type]
 };

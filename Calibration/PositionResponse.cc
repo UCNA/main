@@ -40,12 +40,37 @@ void PositioningCorrector::initPIs(std::vector<PosmapInfo>& indat) {
 		assert(!tubes[it->s][it->t]);
 		tubes[it->s][it->t] = new PositioningInterpolator(*it);
 	}
-	for(Side s = EAST; s <= WEST; ++s)
-		for(unsigned int t=0; t<tubes[s].size(); t++)
-			neta[s].push_back(eval(s,t,0.0,0.0,false));	
 }
 
-PositioningCorrector::PositioningCorrector(std::vector<PosmapInfo>& indat) { initPIs(indat); }
+void PositioningCorrector::setNormCenter(double c) {
+	for(Side s = EAST; s <= WEST; ++s) {
+		neta[s].clear();
+		for(unsigned int t=0; t<tubes[s].size(); t++)
+			neta[s].push_back(eval(s,t,0.0,0.0,false)/c);
+	}
+}
+
+void PositioningCorrector::setNormAvg(double c) {
+	for(Side s = EAST; s <= WEST; ++s) {
+		neta[s].clear();
+		for(unsigned int t=0; t<tubes[s].size(); t++) {
+			SectorCutter& tsects = getSectors(s,t);
+			float x,y;
+			double avg = 0;
+			for(unsigned int m=0; m<tsects.nSectors(); m++) {
+				tsects.sectorCenter(m,x,y);
+				avg += eval(s,t,x,y,false)*tsects.sectorArea(m);
+			}
+			avg /= tsects.totalArea();
+			neta[s].push_back(avg/c);
+		}
+	}
+}
+
+PositioningCorrector::PositioningCorrector(std::vector<PosmapInfo>& indat) {
+	initPIs(indat);
+	setNormCenter();
+}
 
 PositioningCorrector::PositioningCorrector(QFile& qin) {
 	
@@ -84,6 +109,7 @@ PositioningCorrector::PositioningCorrector(QFile& qin) {
 	}
 	
 	initPIs(pinf);
+	setNormCenter();
 }
 
 PositioningCorrector::~PositioningCorrector() {

@@ -65,6 +65,9 @@ void decomposeXenon(RunNum rn, bool includeFast = false);
 /// process simulation for neutron generated background
 void NGBGSpectra(std::string datname);
 
+/// determine Type II/III anode cuts
+void separate23(std::string datname);
+
 /// systematic errors table generator
 class ErrTables {
 public:
@@ -98,5 +101,8 @@ protected:
 
 /// test for BG subtraction statistics errors
 void lowStatsTest();
+
+/// redo position map from Xe anode data
+void refitXeAnode(std::string datname);
 
 #endif

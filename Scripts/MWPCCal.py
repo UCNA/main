@@ -4,6 +4,7 @@ from EncalDB import *
 from math import *
 from QFile import *
 from PyxUtils import *
+from Asymmetries import *
 import os
 
 class wireSpec:
@@ -96,6 +97,14 @@ def new_cathseg_cal(conn,ccsid,wspec):
 
 def set_cathshape_graph(conn,csid,gid):
 	conn.execute("INSERT INTO cathshape_graphs(graph_id,cathseg_id) VALUES (%i,%i)"%(gid,csid))
+
+def deleteAllAnodeCals(conn):
+	conn.execute("DELETE FROM anode_cal WHERE 1")
+
+def uploadAnodeCal(conn,rmin,rmax,pmap,ecor,wcor):
+	cmd = "INSERT INTO anode_cal(start_run,end_run,anode_posmap_id,calfactor_E,calfactor_W) VALUES (%i,%i,%i,%g,%g)"%(rmin,rmax,pmap,ecor,wcor)
+	print cmd
+	conn.execute(cmd)
 
 ###############
 # wires info
@@ -300,7 +309,86 @@ def PlotCathNorm(basepath):
 	return cathnorms
 		
 
+###############
+# anode gain calibration
+###############
 
+class anodeCalAvg(KVMap):
+	def __init__(self,m=KVMap()):
+		self.dat = m.dat
+		self.loadFloats(["avg","d_avg","type"])
+		self.type = int(self.type)
+		self.loadStrings(["side"])
+
+class anodeGaincorr(KVMap):
+	def __init__(self,m=KVMap()):
+		self.dat = m.dat
+		self.loadFloats(["avg","d_avg"])
+		self.loadStrings(["side"])
+
+def getAnodeCalAvgs(AF):
+	return dict([((m.side,m.type),m) for m in [anodeCalAvg(m) for m in AF.dat["anodeCalAvg"]]])
+
+class Anode_MC_Comparator(MC_Comparator):
+	
+	def __init__(self,basedir,simdir,depth=0):
+		MC_Comparator.__init__(self,basedir,simdir,depth)
+
+	def betaAnodeGainCal(self,conn=None,pmap=None):
+		"""Set anode calibration to match data and simulation"""
+		# collect data
+		gdat = {}
+		for (n,rns) in enumerate(self.rungrps):
+			print n,(rns[0],rns[-1]),"-"*80
+			# previous anode gain corrections
+			prevagc = dict([(m.side,m) for m in [anodeGaincorr(m) for m in self.datAsyms[rns].dat["anodeGaincorr"]]])
+			# data and simulation average values
+			datAvgs = getAnodeCalAvgs(self.datAsyms[rns])
+			simAvgs = getAnodeCalAvgs(self.simAsyms[rns])
+			# plottable data by side, event type
+			for s in ["E","W"]:
+				for tp in range(3):
+					adat = datAvgs[(s,tp)].avg
+					asim = simAvgs[(s,tp)].avg
+					gOld = prevagc[s].avg
+					gdat.setdefault((s,tp),[]).append([n,adat,asim,asim/adat*gOld])
+					print "\t%s%i:\t%f\t%f\t%f\tgOld: %f"%(s,tp,adat,asim,gdat[(s,tp)][-1][-1],gOld)
+			# upload correction factors
+			if conn:
+				uploadAnodeCal(conn,rns[0],rns[-1],pmap,gdat[('E',0)][-1][-1],gdat[('W',0)][-1][-1])
+	
+		# plot
+		gAGC=graph.graphxy(width=25,height=10,
+						  x=graph.axis.lin(title=unitNames[self.depth],min=0,max=len(self.rungrps)-1),
+						  y=graph.axis.lin(title="Anode calibration [keV/channel]"),
+						  key = graph.key.key(pos="bl"))
+		setTexrunner(gAGC)
+		tpsymbs = {0:symbol.circle,1:symbol.triangle,2:symbol.plus}
+		for s in ["East","West"]:
+			for tp in range(2):
+				gtitle = s + " Type " + {0:"0",1:"I",2:"II/III"}[tp]
+				gAGC.plot(graph.data.points(gdat[(s[0],tp)],x=1,y=-1,title=gtitle),[graph.style.symbol(tpsymbs[tp],symbolattrs=[scols[s],])])
+		gAGC.writetofile(self.basedir+"/AnodeGainCal.pdf")
+
+		# side average values
+		LF = LinearFitter(terms=[polyterm(0)])
+		savg = {}
+		for s in ['E','W']:
+			LF.fit(gdat[(s,0)],cols=(0,-1))
+			savg[s] = LF.coeffs[0]
+		return savg
+	
+def anodeGainCal(conn=None):
+	if(conn):
+		deleteAllAnodeCals(conn)
+	
+	pmap = 145
+			
+	AMC = Anode_MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated/",0)
+	savg = AMC.betaAnodeGainCal(conn,pmap)
+	if conn:
+		uploadAnodeCal(conn,7000,100000,pmap,savg['E'],savg['W'])
+		
 
 ###############
 #             #
@@ -308,4 +396,5 @@ def PlotCathNorm(basepath):
 
 if __name__ == "__main__":
 	conn = open_connection()
-	gen_cathcal_set(conn,13000,100000,14264,16077)
+	anodeGainCal(conn)
+	#gen_cathcal_set(conn,13000,100000,14264,16077)

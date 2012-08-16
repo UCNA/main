@@ -174,6 +174,13 @@ MWPCTuningAnalyzer(pnt,nm,inflName) {
 
 //----------------------------------------------------------------
 
+SimXenonAnalyzer::SimXenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName, unsigned int nrE):
+MWPCTuningAnalyzer(pnt,nm,inflName) {
+	addPlugin(myXeSpec = new XenonSpectrumAnalyzer(this,nrE));
+}
+
+//----------------------------------------------------------------
+
 void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	
 	// scan data from each run
@@ -211,6 +218,7 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	// finish and output
 	XA.calculateResults();
 	XA.makePlots();
+	XA.myAnode->genAnodePosmap();
 	XA.write();
 	XA.setWriteRoot(true);
 }
@@ -231,7 +239,7 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, XenonAnalyzer& XA, 
 	std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
 	if(forceResim || !fileExists(prevFile+".root")) {
 		PMTCalibrator PCal(r);
-		XenonAnalyzer XAM(&OM1,singleName,"",XA.myXeSpec->sects.n);
+		SimXenonAnalyzer XAM(&OM1,singleName,"",XA.myXeSpec->sects.n);
 		XAM.totalTime[AFP_OTHER][GV_OPEN] += XA.totalTime[AFP_OTHER][GV_OPEN];
 		XAM.runTimes += XA.runTimes;
 		
@@ -239,7 +247,7 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, XenonAnalyzer& XA, 
 		printf("Data counts West: %f; to sim = %i\n",XA.myXeSpec->energySpectrum->h[GV_OPEN]->Integral(),nToSim);
 		
 		// simulate for each isotope
-		std::vector<XenonAnalyzer*> XAMi;
+		std::vector<SimXenonAnalyzer*> XAMi;
 		std::vector<std::string> isots;
 		LinHistCombo LHC;
 		isots.push_back("Xe125_1-2+");
@@ -260,7 +268,7 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, XenonAnalyzer& XA, 
 		
 		for(unsigned int n=0; n<isots.size(); n++) {
 			printf("Simulating for component %s...\n",isots[p[n]].c_str());
-			XAMi.push_back(new XenonAnalyzer(&OM1,singleName+"_"+isots[p[n]],"",XA.myXeSpec->sects.n));
+			XAMi.push_back(new SimXenonAnalyzer(&OM1,singleName+"_"+isots[p[n]],"",XA.myXeSpec->sects.n));
 			//G4SegmentMultiplier GSM(XA.myXeSpec->sects);
 			G4SegmentMultiplier GSM(SectorCutter(4,52.));
 			GSM.setCalibrator(PCal);
@@ -339,7 +347,7 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle, unsigned int nRings) {
 		snames.push_back(simulate_one_xenon(rit->first,OM1,XA,simFactor));
 	
 	// merge simulated data
-	XenonAnalyzer XAM(&OM, "SimXe_"+readname, "", XA.myXeSpec->sects.n);
+	SimXenonAnalyzer XAM(&OM, "SimXe_"+readname, "", XA.myXeSpec->sects.n);
 	XAM.isSimulated = true;
 	for(std::vector<std::string>::iterator it = snames.begin(); it != snames.end(); it++) {
 		std::string prevFile = OM1.basePath+"/"+*it+"/"+*it;

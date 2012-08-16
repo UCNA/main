@@ -60,7 +60,7 @@ void fixNaNs(TH1* h);
 std::vector<TH1D*> replaceFitSlicesY(TH2* h, TF1* f1=NULL);
 	
 /// slice a TH3 into a stack of TH2Fs
-std::vector<TH2F*> sliceTH3(const TH3& h3);
+std::vector<TH2F*> sliceTH3(const TH3& h3, AxisDirection d = Z_DIRECTION);
 
 /// slice a TH2 into a stack of TH1Fs
 std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d, bool includeOverflow = false);
