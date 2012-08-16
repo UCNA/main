@@ -66,7 +66,8 @@ public:
 	/// generate Type II/III separation data
 	void make23SepInfo(OutputManager& OM);
 	
-	fgbgPair* anodeTypeID[2][TYPE_III_EVENT+1];	//< anode energy spectrum binned by event energy by [side][type]
+	fgbgPair* anodeTypeID[2][TYPE_III_EVENT+1];		//< anode energy spectrum binned by event energy by [side][type]
+	fgbgPair* anodeNormCoords[2][TYPE_III_EVENT+1];	//< anode energy spectrum in cut-normalized coordinates by [side][type]
 };
 
 

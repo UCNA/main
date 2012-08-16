@@ -4,6 +4,7 @@
 #include <math.h> 
 #include <TROOT.h>
 #include <TDirectory.h>
+#include <cfloat>
 
 Stringmap histoToStringmap(const TH1* h) {
 	assert(h);
@@ -98,6 +99,22 @@ TGraph* invertGraph(const TGraph* g) {
 		gi->SetPoint(i,y,x);
 	}
 	return gi;
+}
+
+TGraph* combine_graphs(const std::vector<TGraph*> gs) {
+	unsigned int npts = 0;
+	for(unsigned int n=0; n<gs.size(); n++)
+		npts += gs[n]->GetN();
+	TGraph* g = new TGraph(npts);
+	npts = 0;
+	double x,y;
+	for(unsigned int n=0; n<gs.size(); n++) {
+		for(int n2 = 0; n2 < gs[n]->GetN(); n2++) {
+			gs[n]->GetPoint(n2,x,y);
+			g->SetPoint(npts++,x,y);
+		}
+	}
+	return g;
 }
 
 TGraphErrors* merge_plots(const std::vector<TGraphErrors*>& pin, const std::vector<int>& toffset) {
@@ -400,3 +417,38 @@ double integrateErrors(const TH1* h, int b0, int b1) {
 	for(int b = b0; b <= b1; b++) err += pow(h->GetBinError(b),2);
 	return sqrt(err);
 }
+
+TH1* projectTH2(const TH2& h, double nb, double cx, double cy) {
+	TAxis* Ax = h.GetXaxis();
+	TAxis* Ay = h.GetYaxis();
+	double x0 = Ax->GetXmin();
+	double x1 = Ax->GetXmax();
+	double y0 = Ay->GetXmin();
+	double y1 = Ay->GetXmax();
+	TH1D* hOut = new TH1D((h.GetName()+std::string("_Projected")).c_str(),"Projected Histogram",nb,
+						  cx*(cx>0?x0:x1)+cy*(cy>0?y0:y1),cx*(cx>0?x1:x0)+cy*(cy>0?y1:y0));
+	for(int bx=1; bx<=Ax->GetNbins(); bx++)
+		for(int by=1; by<=Ay->GetNbins(); by++)
+			hOut->Fill(cx*Ax->GetBinCenter(bx)+cy*Ay->GetBinCenter(by),h.GetBinContent(bx,by));
+	return hOut;
+}
+
+void histoverlap(const TH1& h1, const TH1& h2, double& o, double& xdiv) {
+	int nb = h1.GetNbinsX();
+	assert(nb==h2.GetNbinsX());
+	double* csum = new double[nb+2];
+	csum[0] = csum[nb+1] = 0;
+	for(int b=1; b<=nb; b++)
+		csum[b] = csum[b-1]+h2.GetBinContent(b);
+	double c = 0;
+	int bmn = nb;
+	for(int b=nb; b>=1; b--) {
+		c += (b==nb?0:h1.GetBinContent(b+1));
+		csum[b] += c;
+		if(csum[b] <= csum[bmn]) bmn=b;
+	}
+	o = csum[bmn];
+	xdiv = h1.GetBinLowEdge(bmn+1);
+	delete[] csum;
+}
+

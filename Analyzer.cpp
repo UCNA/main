@@ -185,8 +185,8 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
 	if(true) {
-		refitXeAnode(getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Xenon_14282-14347_20/Xenon_14282-14347_20");
-		return;
+		//refitXeAnode(getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Xenon_14282-14347_20/Xenon_14282-14347_20");
+		//return;
 		separate23(getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Simulated/OctetAsym_Offic_Simulated");
 		return;
 	}
@@ -287,7 +287,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	gROOT->SetStyle("Plain");
 	gStyle->SetPalette(1);
 	gStyle->SetNumberContours(255);
-	gStyle->SetOptStat("e");	
+	gStyle->SetOptStat("e");
 	TCanvas defaultCanvas;
 	defaultCanvas.SetFillColor(0);
 	defaultCanvas.SetCanvasSize(300,300);

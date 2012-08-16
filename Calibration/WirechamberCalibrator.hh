@@ -76,6 +76,9 @@ public:
 	/// convert back from local normalized position
 	float fromLocal(Side s, AxisDirection d, unsigned int n, float c) const;
 	
+	/// Type II/III separation MWPC energy cut as a function of scintillator energy
+	static float sep23Cut(Side s, float Escint);
+	
 protected:
 	PositioningCorrector* anodeP;					//< anode calibration maps
 	float anodeGainCorr[2];							//< anode correction factor for each side

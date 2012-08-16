@@ -4,6 +4,7 @@
 #include <TH2F.h>
 #include <TH3F.h>
 #include <TProfile.h>
+#include <TStyle.h>
 
 Stringmap cathseg2sm(const CathodeSeg& c) {
 	Stringmap m;
@@ -224,9 +225,15 @@ void AnodeGainAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 WirechamberSimTypeID::WirechamberSimTypeID(RunAccumulator* RA): AnalyzerPlugin(RA,"wirechamberTypeID") {
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 		TH3F hAnodeTemplate(("hAnodeTypeID_Tp"+itos(tp)).c_str(),"MWPC Energy",10,0,1000,50,0,10,50,0,10);
-		//TH3F hAnodeTemplate(("hAnodeTypeID_Tp"+itos(tp)).c_str(),"MWPC Energy",10,0,1000,100,0,20,100,0,20);
+		TH2F hAnodeNormTemplate(("hAnodeNormCoords_Tp"+itos(tp)).c_str(),"MWPC Normalized",10,0,1000,50,-1.0,4.0);
 		for(Side s = EAST; s <= WEST; ++s) {
-			if(tp<TYPE_II_EVENT) { anodeTypeID[s][tp] = NULL; continue; }
+			if(tp<TYPE_II_EVENT) {
+				anodeTypeID[s][tp] = anodeNormCoords[s][tp] = NULL;
+				continue;
+			}
+			anodeNormCoords[s][tp] = registerFGBGPair(hAnodeNormTemplate, AFP_OTHER, s);
+			anodeNormCoords[s][tp]->setAxisTitle(X_DIRECTION, "Scintillator Energy [keV]");
+			anodeNormCoords[s][tp]->setAxisTitle(Y_DIRECTION, "MWPC Normalized to II/III Cut");
 			anodeTypeID[s][tp] = registerFGBGPair(hAnodeTemplate, AFP_OTHER, s);
 			anodeTypeID[s][tp]->setAxisTitle(X_DIRECTION, "Scintillator Energy [keV]");
 			anodeTypeID[s][tp]->setAxisTitle(Y_DIRECTION, "Primary Side MWPC energy [keV]");
@@ -241,22 +248,119 @@ void WirechamberSimTypeID::fillCoreHists(ProcessedDataScanner& PDS, double weigh
 	const Side s = SDS.fSide; // should be primary side
 	EventType tp = SDS.fType;
 	EventType rtp = (s!=SDS.primSide)?TYPE_II_EVENT:TYPE_III_EVENT;	// "real" event type
-	if(SDS.fPID == PID_BETA && (s==EAST||s==WEST) && PDS.passesPositionCut(s) && (tp==TYPE_II_EVENT||tp==TYPE_III_EVENT))
-		((TH3F*)(anodeTypeID[s][rtp]->h[currentGV]))->Fill(SDS.getEnergy(),SDS.mwpcEnergy[s],SDS.mwpcEnergy[otherSide(s)],weight);
+	if(SDS.fPID == PID_BETA && (s==EAST||s==WEST) && PDS.passesPositionCut(s) && (tp==TYPE_II_EVENT||tp==TYPE_III_EVENT)) {
+		float Escint = SDS.getEnergy();
+		float Emwpc = SDS.mwpcEnergy[s];
+		float nMWPC = WirechamberCalibrator::sep23Cut(s,Escint);
+		((TH3F*)(anodeTypeID[s][rtp]->h[currentGV]))->Fill(Escint,Emwpc,SDS.mwpcEnergy[otherSide(s)],weight);
+		((TH2F*)(anodeNormCoords[s][rtp]->h[currentGV]))->Fill(Escint,(Emwpc-nMWPC)/nMWPC,weight);
+	}
 }
 
 void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
+	OM.defaultCanvas->cd();
+	OM.defaultCanvas->SetLeftMargin(0.12);
+	std::vector<TGraph*> gOptDiv;
+	
 	for(Side s = EAST; s <= WEST; ++s) {
+		// separate by energy bins
 		unsigned int nx = anodeTypeID[s][TYPE_II_EVENT]->h[GV_OPEN]->GetNbinsX();
-		std::vector<TH2F*> v2 = sliceTH3(*(TH3F*)(anodeTypeID[s][TYPE_II_EVENT]->h[GV_OPEN]),X_DIRECTION);
+		gOptDiv.push_back(new TGraph(nx));
+		gOptDiv[s]->SetMarkerColor(2+2*s);
+		TH3F* hTpII = (TH3F*)(anodeTypeID[s][TYPE_II_EVENT]->h[GV_OPEN]);
+		std::vector<TH2F*> v2 = sliceTH3(*hTpII,X_DIRECTION);
 		std::vector<TH2F*> v3 = sliceTH3(*(TH3F*)(anodeTypeID[s][TYPE_III_EVENT]->h[GV_OPEN]),X_DIRECTION);
 		for(unsigned int ne = 1; ne <= nx; ne++) {
+			// energy window under consideration
+			double e0 = hTpII->GetXaxis()->GetBinLowEdge(ne);
+			double e1 = hTpII->GetXaxis()->GetBinUpEdge(ne);
+			std::string eRange = itos(e0)+"-"+itos(e1)+" keV";
+			
+			// plot 2D distributions
 			v2[ne]->SetMarkerColor(2);
+			v2[ne]->SetTitle(("Type II/III Backscatters, "+eRange).c_str());
 			v2[ne]->Draw();
 			v3[ne]->SetMarkerColor(4);
 			v3[ne]->Draw("Same");
 			OM.printCanvas(sideSubst("PrimVSec_%c_",s)+itos(ne));
+			
+			// study separation efficiency by angle
+			int nAngles = 50;
+			std::vector<TH1*> aProj2, aProj3;
+			TGraph gAngleSep(nAngles);
+			TGraph gDivPt(nAngles);
+			double amin = 0;
+			double omin = 1.0;
+			double divmin = 0;
+			for(int a = 0; a < nAngles; a++) {
+				double th = a*M_PI/nAngles-M_PI/2;
+				TH1* ap2 = projectTH2(*v2[ne],50,cos(th),sin(th));
+				ap2->SetLineColor(2);
+				ap2->SetTitle(("Optimized Type II/III separation, "+eRange).c_str());
+				ap2->GetXaxis()->SetTitle("MWPC Energy [keV]");
+				aProj2.push_back(ap2);
+				TH1* ap3 = projectTH2(*v3[ne],50,cos(th),sin(th));
+				ap3->SetLineColor(4);
+				ap3->SetTitle(("Optimized Type II/III separation, "+eRange).c_str());
+				ap3->GetXaxis()->SetTitle("MWPC Energy [keV]");
+				aProj3.push_back(ap3);
+				double o,xdiv;
+				if(ap2->GetMaximumBin() <= ap3->GetMaximumBin())
+					histoverlap(*ap2, *ap3, o, xdiv);
+				else
+					histoverlap(*ap3, *ap2, o, xdiv);
+				double cTot = ap2->Integral()+ap3->Integral();
+				gAngleSep.SetPoint(a,th,o/cTot);
+				gDivPt.SetPoint(a,th,xdiv);
+				//if(o/cTot < omin) {
+				if(a==nAngles/2) {
+					omin = o/cTot;
+					amin = a;
+					divmin = xdiv;
+				}
+			}
+			gAngleSep.Draw("A*");
+			gAngleSep.GetXaxis()->SetRangeUser(-M_PI/2.,M_PI/2);
+			gAngleSep.GetXaxis()->SetTitle("Projection angle [radians]");
+			gAngleSep.GetYaxis()->SetRangeUser(0.,0.5);
+			gAngleSep.GetYaxis()->SetTitle("Misidentified event fraction");
+			gAngleSep.GetYaxis()->SetTitleOffset(1.5);
+			gAngleSep.SetTitle(("Type II/III Separation Cut Optimization, "+eRange).c_str());
+			gAngleSep.Draw("A*");
+			OM.printCanvas(sideSubst("OptCut_%c_",s)+itos(ne));
+			
+			gOptDiv[s]->SetPoint(ne-1, 0.5*(e0+e1), divmin);
+			
+			std::vector<TH1*> hToPlot;
+			hToPlot.push_back(aProj2[amin]);
+			hToPlot.push_back(aProj3[amin]);
+			drawSimulHistos(hToPlot);
+			drawVLine(divmin,OM.defaultCanvas);
+			OM.printCanvas(sideSubst("OptSeparation_%c_",s)+itos(ne));
+			
+			for(int a = 0; a < nAngles; a++) {
+				delete aProj2[a];
+				delete aProj3[a];
+			}
 		}
 	}
+	
+	TF1 cutFit("cutFit","[0]+[1]*exp(-x/[2])",0,700);
+	cutFit.SetParameter(0,3.0);
+	cutFit.SetParameter(1,4.0);
+	cutFit.SetParameter(2,150);
+	TGraph* gCombo = combine_graphs(gOptDiv);
+	gCombo->Fit(&cutFit,"RBME");
+	gCombo->Draw("A*");
+	gCombo->GetXaxis()->SetRangeUser(0.,700.);
+	gCombo->GetXaxis()->SetTitle("Scintillator Energy [keV]");
+	gCombo->GetYaxis()->SetRangeUser(0.,10.0);
+	gCombo->GetYaxis()->SetTitle("Optimum MWPC Cut [keV]");
+	//gOptDiv.GetYaxis()->SetTitleOffset(1.5);
+	gCombo->SetTitle("Type II/III Separation Cut");
+	gCombo->Draw("AP");
+	gOptDiv[EAST]->Draw("*");
+	gOptDiv[WEST]->Draw("*");
+	OM.printCanvas("OptCut");
 }
 

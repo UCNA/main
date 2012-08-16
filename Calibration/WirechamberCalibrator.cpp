@@ -65,6 +65,11 @@ std::vector<std::string> WirechamberCalibrator::getCathChans(Side s, AxisDirecti
 	return chans;
 }
 
+float WirechamberCalibrator::sep23Cut(Side, float Escint) {
+	// magic numbers formula from simulation
+	return 3.11 + 4.03*exp(-Escint/153);
+}
+
 void WirechamberCalibrator::printSummary() {
 	printf("Wirechamber Calibrator for %i,%i, %i,%i cathodes\n",
 		   (int)cathsegs[EAST][X_DIRECTION].size(),(int)cathsegs[EAST][Y_DIRECTION].size(),

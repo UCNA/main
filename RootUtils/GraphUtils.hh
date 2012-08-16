@@ -29,6 +29,9 @@ TH1F* cumulativeHist(const TH1F& h, bool normalize = false);
 /// invert a TGraph
 TGraph* invertGraph(const TGraph* g);
 
+/// combine a list of TGraphs
+TGraph* combine_graphs(const std::vector<TGraph*> gs);
+
 /// merge a list of TGrapherrors into a larger TGraphError, offsetting x values by given offsets
 TGraphErrors* merge_plots(const std::vector<TGraphErrors*>& pin, const std::vector<int>& toffset);
 
@@ -71,4 +74,10 @@ std::vector<unsigned int> equipartition(const std::vector<float>& elems, unsigne
 /// integrate error bars on histogram, adding in quadrature
 double integrateErrors(const TH1* h, int b0 = -1, int b1 = -1);
 
+/// project a TH2 onto an arbitrary line
+TH1* projectTH2(const TH2& h, double nb, double cx, double cy);
+
+/// calculate optimum dividing point and overlap error between two histograms
+void histoverlap(const TH1& h1, const TH1& h2, double& xdiv, double& o);
+	
 #endif
