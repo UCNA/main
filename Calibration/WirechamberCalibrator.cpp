@@ -67,7 +67,21 @@ std::vector<std::string> WirechamberCalibrator::getCathChans(Side s, AxisDirecti
 
 float WirechamberCalibrator::sep23Cut(Side, float Escint) {
 	// magic numbers formula from simulation
-	return 3.11 + 4.03*exp(-Escint/153);
+	return 2.68 + 4.17*exp(-Escint/146);
+}
+
+float WirechamberCalibrator::sep23Prob(Side s, float Escint, float Emwpc) {
+	double c = sep23Cut(s,Escint); // hard cut location
+	double m = (Emwpc-c)/c; // normalized MWPC
+	
+	// asymptotic value
+	double asympt = ((m<0)?
+					 0.0456+3.138e-4*Escint+8.240e-8*Escint*Escint :
+					 0.9505-0.2827*exp(-Escint/132.3) );
+	// falloff scale
+	double m0 = (m<0)? -0.15 : 0.20;
+	
+	return asympt+(0.5-asympt)*exp(-m/m0);
 }
 
 void WirechamberCalibrator::printSummary() {

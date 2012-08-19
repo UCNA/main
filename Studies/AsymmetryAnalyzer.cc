@@ -1,4 +1,5 @@
 #include "AsymmetryAnalyzer.hh"
+#include "HighEnergyExcess.hh"
 #include "BetaSpectrum.hh"
 #include "KurieFitter.hh"
 #include "GraphicsUtils.hh"
@@ -15,21 +16,13 @@ AnalysisChoice  AsymmetryAnalyzer::anChoice = ANCHOICE_A;
 
 AsymmetryAnalyzer::AsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500) {
 	for(Side s = EAST; s <= WEST; ++s) {
-		qExcessr2[s] = registerCoreHist("Excessr2","Excess events radial distribution",10,0,80*80,s);
-		qExcessr2[s]->setAxisTitle(X_DIRECTION,"event radius squared [mm^2]");
-		qExcessTheta[s] = registerCoreHist("ExcessTheta","Excess events angular distribution",10,-M_PI,M_PI,s);
-		qExcessTheta[s]->setAxisTitle(X_DIRECTION,"event position angle [radians]");
-		qExcessSpectra[s] = registerCoreHist("ExcessE","Excess high energy event spectrum",72,800,8000,s);
-		qExcessSpectra[s]->setAxisTitle(X_DIRECTION,"Energy [keV]");
-		qExcessGamma[s] = registerCoreHist("ExcessGamma","Excess high energy gamma event spectrum",72,800,8000,s);
-		qExcessGamma[s]->setAxisTitle(X_DIRECTION,"Energy [keV]");
-		TH2F hBGDecayTemplate("hBGDecay","energy vs time",60,0,300,80,0,2000);
-		qBGDecay[s] = registerCoreHist(hBGDecayTemplate,s);
-		qBGDecay[s]->setSubtraction(false);
-		qBGDecay[s]->setTimeScaling(false);
-		qBGDecay[s]->setAxisTitle(X_DIRECTION,"time [s]");
-		qBGDecay[s]->setAxisTitle(Y_DIRECTION,"energy [keV]");
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
+			if(t==TYPE_II_EVENT || t==TYPE_III_EVENT) {
+				q23ProbCut[s][t] = registerCoreHist("h23ProbCut_Tp_"+itos(t),
+													"Type "+itos(t)+" Events Energy",
+													nEnergyBins, 0, energyMax, s);
+				q23ProbCut[s][t]->setAxisTitle(X_DIRECTION,"Energy [keV]");
+			}
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
 				qEnergySpectra[s][p][t] = registerCoreHist("hEnergy_"+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
 																"Type "+itos(t)+" Events Energy",
@@ -43,20 +36,15 @@ AsymmetryAnalyzer::AsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,
 void AsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	Side s = PDS.fSide;
 	if(!(s==EAST || s==WEST)) return;
-	if(PDS.fPID == PID_SINGLE && PDS.fType == TYPE_IV_EVENT) {
+	if(PDS.fPID == PID_SINGLE && PDS.fType == TYPE_IV_EVENT)
 		qEnergySpectra[s][nBetaTubes][TYPE_IV_EVENT]->fillPoint->Fill(PDS.getEtrue(),weight);
-		qExcessGamma[s]->fillPoint->Fill(PDS.getEtrue(),weight);
-	}
 	if(PDS.fPID != PID_BETA) return;
-	if(PDS.fType <= TYPE_I_EVENT)
-		qExcessSpectra[s]->fillPoint->Fill(PDS.getEtrue(),weight);
-	if(PDS.fType <= TYPE_I_EVENT && PDS.getEtrue()>1000) {
-		qExcessr2[s]->fillPoint->Fill(PDS.radius2(s),weight);
-		qExcessTheta[s]->fillPoint->Fill(atan2(PDS.wires[s][Y_DIRECTION].center,PDS.wires[s][X_DIRECTION].center),weight);
-	}
 	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT) {
 		qEnergySpectra[s][nBetaTubes][PDS.fType]->fillPoint->Fill(PDS.getEtrue(),weight);
-		((TH2F*)qBGDecay[s]->fillPoint)->Fill(PDS.runClock[s],PDS.getEtrue(),weight);
+		if(PDS.fType >= TYPE_II_EVENT) {
+			q23ProbCut[s][TYPE_II_EVENT]->fillPoint->Fill(PDS.getEtrue(),weight*(1.0-PDS.fProbIII));
+			q23ProbCut[s][TYPE_III_EVENT]->fillPoint->Fill(PDS.getEtrue(),weight*PDS.fProbIII);
+		}
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			qEnergySpectra[s][t][PDS.fType]->fillPoint->Fill(PDS.scints[s].tuben[t].x,weight);
 	}
@@ -140,54 +128,35 @@ void AsymmetryAnalyzer::endpointFits() {
 	}
 }
 
-void AsymmetryAnalyzer::highEnergyExcess(quadHists* qh, double e0, double e1) {
-	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-		TH1* hEn = qh->fgbg[afp]->h[GV_OPEN];
-		TH1* hEnBG = qh->fgbg[afp]->h[GV_CLOSED];
-		
-		int b0 = hEnBG->FindBin(e0);
-		int b1 = hEnBG->FindBin(e1)-1;
-		if(b1 == hEnBG->GetNbinsX()) ++b1;
-		double nBG = hEnBG->Integral(b0,b1);
-		double xs = hEn->Integral(b0,b1);
-		double d_nBG = integrateErrors(hEnBG,b0,b1);
-		double d_xs = integrateErrors(hEn,b0,b1);
-		
-		Stringmap m;
-		m.insert("side",sideSubst("%c",qh->mySide));
-		m.insert("afp",afpWords(afp));
-		m.insert("name",qh->name);
-		m.insert("nBG",nBG);		// number of BG counts
-		m.insert("d_nBG",d_nBG);	// error on BG counts
-		m.insert("xs",xs);			// number of excess counts
-		m.insert("d_xs",d_xs);		// error on excess counts
-		m.insert("eMin",e0);		// lower energy cut
-		m.insert("eMax",e1);		// upper energy cut
-		m.insert("b0",itos(b0));
-		m.insert("b1",itos(b1));
-		myA->qOut.insert("bg_subtr_xs",m);
-	}
-}
-
 void AsymmetryAnalyzer::calculateResults() {
 	
 	// build total spectra based on analysis choice
 	AnaResult ARtot = getResultBase();
 	for(Side s = EAST; s <= WEST; ++s) {
 		qTotalSpectrum[s] = myA->cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents", "All Events Energy");
-		if(!(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C || anChoice == ANCHOICE_D))
+		if(!(ANCHOICE_A <= anChoice && anChoice <= ANCHOICE_E))
 			*qTotalSpectrum[s] *= 0;	// analysis choices without Type 0 events
 		else ARtot.etypes.insert(TYPE_0_EVENT);
-		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_B || anChoice == ANCHOICE_C) {
+		if(ANCHOICE_A <= anChoice && anChoice <= ANCHOICE_F && anChoice != ANCHOICE_D) {
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_I_EVENT];
 			ARtot.etypes.insert(TYPE_I_EVENT);
-		}
-		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C) {
+		}		
+		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_G) {
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_II_EVENT];
-			ARtot.etypes.insert(TYPE_II_EVENT);
-		}
-		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_C) {
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
+			ARtot.etypes.insert(TYPE_II_EVENT);
+			ARtot.etypes.insert(TYPE_III_EVENT);
+		}
+		if(anChoice == ANCHOICE_C || anChoice == ANCHOICE_H) {
+			*qTotalSpectrum[s] += *qEnergySpectra[otherSide(s)][nBetaTubes][TYPE_II_EVENT];
+			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
+			ARtot.etypes.insert(TYPE_II_EVENT);
+			ARtot.etypes.insert(TYPE_III_EVENT);
+		}
+		if(anChoice == ANCHOICE_E || anChoice == ANCHOICE_I) {
+			*qTotalSpectrum[s] += *q23ProbCut[otherSide(s)][TYPE_II_EVENT];
+			*qTotalSpectrum[s] += *q23ProbCut[s][TYPE_III_EVENT];
+			ARtot.etypes.insert(TYPE_II_EVENT);
 			ARtot.etypes.insert(TYPE_III_EVENT);
 		}
 	}
@@ -195,7 +164,7 @@ void AsymmetryAnalyzer::calculateResults() {
 	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	hInstAsym = (TH1F*)calculateSR("Total_Instrumental_Asym",qTotalSpectrum[EAST],qTotalSpectrum[WEST],true,true);
 	hSuperSum = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
-	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp) {
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 		hTpAsym[tp] = (TH1F*)calculateSR("Asymmetry_Type_"+itos(tp),
 											  qEnergySpectra[EAST][nBetaTubes][tp],
 											  qEnergySpectra[WEST][nBetaTubes][tp]);
@@ -216,13 +185,8 @@ void AsymmetryAnalyzer::calculateResults() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		//highEnergyExcess(qMuonSpectra[s][true],1000,2000);
 		//highEnergyExcess(qBackMuons[s][true],1000,2000);
-		highEnergyExcess(qExcessSpectra[s],1000,2200);
-		highEnergyExcess(qExcessSpectra[s],2200,7000);
-		highEnergyExcess(qExcessGamma[s],200,1000);
-		highEnergyExcess(qExcessGamma[s],1000,2200);
-		highEnergyExcess(qExcessGamma[s],2200,7000);
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_IV_EVENT; ++tp)
-			highEnergyExcess(qEnergySpectra[s][nBetaTubes][tp],1000,7000);
+			fitHighEnergyExcess(myA->qOut,qEnergySpectra[s][nBetaTubes][tp],1000,7000);
 	}
 	myA->makeRatesSummary();
 }
@@ -293,16 +257,9 @@ void AsymmetryAnalyzer::makePlots() {
 	hSuperSum->Draw();
 	printCanvas("SuperSum");
 		
-	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++)
+	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_III_EVENT; t++)
 		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][t], qEnergySpectra[WEST][nBetaTubes][t], true, "Energy");
 	drawQuadSides(qEnergySpectra[EAST][nBetaTubes][TYPE_IV_EVENT], qEnergySpectra[WEST][nBetaTubes][TYPE_IV_EVENT], true, "Energy");
-	
-	if(myA->depth <= 0) {
-		drawQuadSides(qExcessGamma[EAST],qExcessGamma[WEST],true,"Energy");
-		drawQuadSides(qExcessSpectra[EAST],qExcessSpectra[WEST],true,"Energy");
-		drawQuadSides(qExcessr2[EAST],qExcessr2[WEST],true,"Positions");
-		drawQuadSides(qExcessTheta[EAST],qExcessTheta[WEST],true,"Positions");
-	}
 }
 
 void AsymmetryAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
@@ -317,7 +274,7 @@ void AsymmetryAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 	
 	drawHistoPair(dat.hSuperSum,hSuperSum);
 	printCanvas("DataComparison/SuperSum");
-	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_II_EVENT; ++tp) {
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 		dat.hEvtSS[tp]->SetMarkerStyle(1);
 		hEvtSS[tp]->SetMarkerStyle(1);
 		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
@@ -329,7 +286,7 @@ void AsymmetryAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 		printCanvas("DataComparison/Asymmetry_Type_"+itos(tp));
 	}
 	
-	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_II_EVENT; t++) {
+	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_III_EVENT; t++) {
 		std::vector<TH1*> hToPlot;
 		for(Side s = EAST; s <= WEST; ++s) {
 			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {

@@ -46,7 +46,7 @@ Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAn
 		PenelopeToPMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
 
 Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o \
-	MuonAnalyzer.o PositionAnalyzer.o WirechamberGainAnalyzer.o \
+	MuonAnalyzer.o PositionAnalyzer.o WirechamberGainAnalyzer.o BGDecayAnalyzer.o HighEnergyExcess.o \
 	AsymmetryAnalyzer.o SimAsymmetryAnalyzer.o BetaDecayAnalyzer.o \
 	CathodeTweakAnalyzer.o PositionBinnedAnalyzer.o AnodePositionAnalyzer.o XenonAnalyzer.o \
 	PlotMakers.o LEDScans.o

@@ -19,6 +19,10 @@ void PostOfficialAnalyzer::setReadpoints() {
 	Tch->SetBranchAddress("PID",&fPID);
 	Tch->SetBranchAddress("Side",&fSide);
 	Tch->SetBranchAddress("Type",&fType);
+	if(Tch->GetBranch("ProbIII"))
+		Tch->SetBranchAddress("ProbIII",&fProbIII);
+	else
+		fProbIII = 0;
 	// clock
 	Tch->SetBranchAddress("TimeE",&runClock[EAST]);
 	Tch->SetBranchAddress("TimeW",&runClock[WEST]);

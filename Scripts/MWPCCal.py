@@ -395,6 +395,6 @@ def anodeGainCal(conn=None):
 ###############
 
 if __name__ == "__main__":
-	conn = open_connection()
+	conn = None #open_connection()
 	anodeGainCal(conn)
 	#gen_cathcal_set(conn,13000,100000,14264,16077)

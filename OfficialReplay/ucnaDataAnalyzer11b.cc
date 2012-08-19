@@ -269,6 +269,12 @@ void ucnaDataAnalyzer11b::classifyEventType() {
 	// if side is ambiguous, TDCW has a cleaner TDC separation; make an 1-D cut (JL)
 	if(passedCutTDC(WEST)&&passedCutTDC(EAST))
 		fSide = (fScint_tdc[WEST][nBetaTubes].val < ScintSelftrig[WEST].start)?EAST:WEST;
+	
+	// Type II/III separation
+	fProbIII = ((fType==TYPE_II_EVENT)?
+				WirechamberCalibrator::sep23Prob(fSide, sevt[EAST].energy.x + sevt[WEST].energy.x, fEMWPC[fSide])
+				: 0.);
+	if(fProbIII>0.5) fType=TYPE_III_EVENT;
 }
 
 void ucnaDataAnalyzer11b::reconstructTrueEnergy() {

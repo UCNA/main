@@ -46,7 +46,6 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 		}
 		
 		for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
-			if(t==TYPE_III_EVENT) continue;	// not separated out at this stage
 			hEtrue[s][t] = registeredTH1F(sideSubst("hErecon_%c_",s)+itos(t),"Reconstructed Energy, Type "+itos(t),200,0,1500);
 			hEtrue[s][t]->SetLineColor(2+2*s);
 			hEtrue[s][t]->GetXaxis()->SetTitle("Erecon [keV]");
@@ -202,7 +201,7 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 		
 		if(fPID==PID_BETA) {
 			hSideRate[s][1]->Fill(fTimeScaler[BOTH]);
-			if(fType <= TYPE_II_EVENT && fPassedGlobal)
+			if(fType <= TYPE_III_EVENT && fPassedGlobal)
 				hEtrue[s][fType]->Fill(fEtrue);
 			if(fType == TYPE_0_EVENT && fPassedGlobal)
 				for(unsigned int t=0; t<nBetaTubes; t++)
@@ -379,7 +378,6 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	// energy by event type
 	defaultCanvas->SetLogy(false);
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
-		if(t==TYPE_III_EVENT) continue;
 		hToPlot.clear();
 		for(Side s = EAST; s <= WEST; ++s)
 			hToPlot.push_back(hEtrue[s][t]);

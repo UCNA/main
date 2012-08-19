@@ -78,6 +78,8 @@ public:
 	
 	/// Type II/III separation MWPC energy cut as a function of scintillator energy
 	static float sep23Cut(Side s, float Escint);
+	/// Type II/III separation probability
+	static float sep23Prob(Side s, float Escint, float Emwpc);
 	
 protected:
 	PositioningCorrector* anodeP;					//< anode calibration maps

@@ -77,6 +77,9 @@ double integrateErrors(const TH1* h, int b0 = -1, int b1 = -1);
 /// project a TH2 onto an arbitrary line
 TH1* projectTH2(const TH2& h, double nb, double cx, double cy);
 
+/// get plot indicating optimal separation point between two histograms
+TH1* histsep(const TH1& h1, const TH1& h2);
+
 /// calculate optimum dividing point and overlap error between two histograms
 void histoverlap(const TH1& h1, const TH1& h2, double& xdiv, double& o);
 	

@@ -433,6 +433,23 @@ TH1* projectTH2(const TH2& h, double nb, double cx, double cy) {
 	return hOut;
 }
 
+TH1* histsep(const TH1& h1, const TH1& h2) {
+	int nb = h1.GetNbinsX();
+	assert(nb==h2.GetNbinsX());
+	TH1* hDiv = (TH1*)h1.Clone("hDivision");
+	hDiv->SetBinContent(0,0);
+	hDiv->SetBinContent(nb+1,0);
+	for(int b=1; b<=nb; b++)
+		hDiv->SetBinContent(b,hDiv->GetBinContent(b-1)+h2.GetBinContent(b));
+	double c = 0;
+	for(int b=nb; b>=1; b--) {
+		c += (b==nb?0:h1.GetBinContent(b+1));
+		hDiv->SetBinContent(b,hDiv->GetBinContent(b)+c);
+		hDiv->SetBinError(b,0);
+	}
+	return hDiv;
+}
+
 void histoverlap(const TH1& h1, const TH1& h2, double& o, double& xdiv) {
 	int nb = h1.GetNbinsX();
 	assert(nb==h2.GetNbinsX());

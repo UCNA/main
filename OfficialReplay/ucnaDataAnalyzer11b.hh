@@ -194,6 +194,7 @@ protected:
 	Side fSide;				//< event primary scintillator side
 	EventType fType;		//< event backscatter type
 	PID fPID;				//< event particle ID
+	Float_t fProbIII;		//< event estimated probability of being a Type III backscatter
 	Float_t fEtrue;			//< event reconstructed true energy
 	
 	/// pre-scan data to extract pedestals
