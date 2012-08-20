@@ -22,7 +22,7 @@ public:
 	bool dbgplots;			//< whether to print extra "debugging" plots
 	bool simMode;			//< whether the data is from simulation
 	
-	TH1F* hTubes[nBetaTubes+1][3];						//< calibrated PMT energy spectra by event type
+	TH1F* hTubes[nBetaTubes+1][TYPE_III_EVENT+1];		//< calibrated PMT energy spectra by event type
 	TH1F* hTubesRaw[nBetaTubes+1];						//< raw ADC energy spectra
 	std::vector<SpectrumPeak> tubePeaks[nBetaTubes+1];	//< found peaks for each PMT
 	TH1F* hitPos[2];									//< x,y hit profiles
