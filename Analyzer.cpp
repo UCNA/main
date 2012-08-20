@@ -163,9 +163,9 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 }
 
 void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
-	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/WideKev/");
+	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/20120810/");
 	G4toPMT g2p;
-	g2p.addFile("/home/mmendenhall/geant4/output/WideKev_neutronBetaUnpol/analyzed_*.root");
+	g2p.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
 	PMTCalibrator PCal(16000);
 	g2p.setCalibrator(PCal);
 	SimSpectrumInfo(g2p,OM);

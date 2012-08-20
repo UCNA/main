@@ -44,9 +44,9 @@ def EQ2ET(fbase, conn=None):
 	epts = [EnergyPoint(m) for m in f.dat.get("spectrumInfo",[])]
 	
 	scols = {"East":rgb.red,"West":rgb.blue}
-	typeSymbs = {0:symbol.circle,1:symbol.triangle,2:symbol.square}
-	typeLines = {0:style.linestyle.solid,1:style.linestyle.dashed,2:style.linestyle.dotted}
-	typeNames = {0:"0",1:"I",2:"II/III"}
+	typeSymbs = {0:symbol.circle,1:symbol.triangle,2:symbol.square,3:symbol.cross}
+	typeLines = {0:style.linestyle.solid,1:style.linestyle.dashed,2:style.linestyle.dotted,3:style.linestyle.dashdotted}
+	typeNames = {0:"0",1:"I",2:"II",3:"III"}
 	
 	for forward in [True,]:
 	
@@ -120,5 +120,5 @@ if __name__ == "__main__":
 	#conn = None
 	if conn:
 		delete_all_EQ2ET(conn)
-	EQ2ET(os.environ["UCNA_ANA_PLOTS"]+"/Evis2ETrue/WideKev/",conn)
+	EQ2ET(os.environ["UCNA_ANA_PLOTS"]+"/Evis2ETrue/20120810/",conn)
 	

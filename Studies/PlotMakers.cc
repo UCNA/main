@@ -93,11 +93,11 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	double nbins = nsegs*5;
 	
 	// set up histograms
-	std::vector<TH1*> hEnergy[2][TYPE_III_EVENT][2];	// energy [side][type][vis/true] for each input bin
-	TProfile* inputEnergy[2][TYPE_III_EVENT][2];		// input bins [side][type][vis/true]
+	std::vector<TH1*> hEnergy[2][TYPE_III_EVENT+1][2];	// energy [side][type][vis/true] for each input bin
+	TProfile* inputEnergy[2][TYPE_III_EVENT+1][2];		// input bins [side][type][vis/true]
 	TProfile* inputTotal = (TProfile*)OM.addObject(new TProfile("inputTotal","Input Visible Energy Total",nsegs,0,emax));
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_II_EVENT; t++) {
+		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_III_EVENT; t++) {
 			inputEnergy[s][t][false] = (TProfile*)OM.addObject(new TProfile((sideSubst("inputEvis_%c",s)+itos(t)).c_str(),"Input Visible Energy",nsegs,0,emax));
 			inputEnergy[s][t][true] = (TProfile*)OM.addObject(new TProfile((sideSubst("inputEtrue_%c",s)+itos(t)).c_str(),"Input True Energy",nsegs,0,emax));
 			for(unsigned int i=0; i<nsegs; i++) {
@@ -115,7 +115,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	S.startScan();
 	while(S.nextPoint()) {
 		inputTotal->Fill(S.ePrim,S.ePrim);
-		if(S.fPID != PID_BETA || S.fType > TYPE_II_EVENT || S.radius(S.fSide)>50.)
+		if(S.fPID != PID_BETA || S.fType > TYPE_III_EVENT || S.radius(S.fSide)>50.)
 			continue;
 		inputEnergy[S.fSide][S.fType][true]->Fill(S.ePrim,S.ePrim);
 		int trueSeg = inputEnergy[S.fSide][S.fType][true]->FindBin(S.ePrim)-1;
@@ -130,7 +130,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	// collect histogram data
 	for(unsigned int i=0; i<nsegs; i++) {
 		for(Side s = EAST; s <= WEST; ++s) {
-			for(unsigned int t = TYPE_0_EVENT; t <= TYPE_II_EVENT; t++) {
+			for(unsigned int t = TYPE_0_EVENT; t <= TYPE_III_EVENT; t++) {
 				Stringmap m;
 				
 				m.insert("segment",i);
@@ -162,7 +162,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	OM.defaultCanvas->cd();
 	gStyle->SetOptStat("");
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_II_EVENT; t++) {
+		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_III_EVENT; t++) {
 			for(unsigned int n=0; n<=1; n++) {
 				for(unsigned int i=0; i<nsegs; i++) {
 					hEnergy[s][t][n][i]->Scale(1.0/hEnergy[s][t][n][i]->GetBinWidth(1));
@@ -359,7 +359,7 @@ void showSimSpectrum(const std::string& nm, OutputManager& OM, NucDecayLibrary& 
 	hSpec->Draw();
 	OM.printCanvas(nm+"_GenSpectrum");
 	
-	std::string g4dat = "/home/mmendenhall/geant4/output/WideKev_";
+	std::string g4dat = "/home/mmendenhall/geant4/output/20120810_";
 	G4toPMT g2p;
 	g2p.addFile(g4dat + nm + "/analyzed_*.root");
 	
