@@ -51,7 +51,10 @@ void UCNA_MC_Analyzer::processTrack() {
 	// detector ID numbers
 	const int ID_scint[2] = {0,10};
 	const int ID_mwpc[2] = {6,16};
-		
+	const int ID_deadmwpc[2] = {8,18};
+	const int ID_winOut[2] = {3,13};
+	const int ID_winIn[2] = {4,14};
+	
 	const int ID_trapmon[2] = {21,22};
 	// particle ID numbers
 	const int PDG_ELECTRON = 11;
@@ -107,12 +110,19 @@ void UCNA_MC_Analyzer::processTrack() {
 				trapMonTime[s] = trackinfo->hitTime; //earliest hit time 
 		}
 		
-		// wirechamber deposited energy and position
-		if(detectorID==ID_mwpc[s]) {
-			fMWPCEnergy[s] += trackinfo->Edep;
+		// wirechamber deposited energy and position, possibly with contribution from "dead" regions
+		double anodeScale = 0;
+		if(detectorID==ID_winIn[s] || detectorID==ID_winOut[s])
+			anodeScale = 0.;
+		if(detectorID==ID_deadmwpc[s])
+			anodeScale = 0.;
+		if(detectorID==ID_mwpc[s])
+			anodeScale = 1.0;
+		if(anodeScale) {
+			fMWPCEnergy[s] += anodeScale*trackinfo->Edep;
 			for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
-				MWPCPos[s][d] += trackinfo->edepPos[d];
-				MWPCPosSigma[s][d] += trackinfo->edepPos2[d];
+				MWPCPos[s][d] += anodeScale*trackinfo->edepPos[d];
+				MWPCPosSigma[s][d] += anodeScale*trackinfo->edepPos2[d];
 			}
 		}
 	}

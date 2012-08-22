@@ -22,7 +22,7 @@ bmPhysList495::bmPhysList495(bool usePenelope) : G4VModularPhysicsList() {
 	G4LossTableManager::Instance();
 	defaultCutValue = 1.*um;
 	cutForGamma     = defaultCutValue;
-	cutForElectron  = defaultCutValue;
+	cutForElectron  = 0.5*defaultCutValue;
 	cutForPositron  = defaultCutValue;
 	
 	SetVerboseLevel(1);
@@ -87,6 +87,8 @@ void bmPhysList495::SetCuts() {
 		G4cout << "PhysicsList::SetCuts:";
 		G4cout << "CutLength : " << G4BestUnit(defaultCutValue,"Length") << G4endl;
 	}
+	
+	G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(100*eV, 1*GeV);
 	
 	// set cut values for gamma at first and for e- second and next for e+,
 	// because some processes for e+/e- need cut values for gamma

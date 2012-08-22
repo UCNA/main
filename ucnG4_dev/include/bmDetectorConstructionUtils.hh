@@ -30,10 +30,11 @@ public:
 	//static G4UnitDefinition torr_def;
 	
 	static G4Material* Be;				//< Beryllium for trap windows
-	static G4Material* Al;				//< Aluminum 
+	static G4Material* Al;				//< Aluminum
 	static G4Material* Si;				//< Silicon
 	static G4Material* Cu;				//< Copper for decay trap
 	static G4Material* Wu;				//< Tungsten for anode wires
+	static G4Material* Au;				//< Gold for cathode wires coating
 	
 	static G4Material* Vacuum;			//< our slightly crappy vacuum
 	static G4Material* Brass;			//< brass for source holder
