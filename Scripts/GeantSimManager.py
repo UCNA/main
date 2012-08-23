@@ -2,6 +2,7 @@
 import os
 import time
 from math import *
+from optparse import OptionParser
 
 # killall -9 GeantSimManager.py; killall -9 parallel; killall -9 ucnG4_prod
 
@@ -265,39 +266,53 @@ class GeantSimManager:
 
 if __name__ == "__main__":
 	
+	parser = OptionParser()
+	parser.add_option("-k", "--kill", dest="kill", action="store_true", default=False, help="kill running replays")
+	options, args = parser.parse_args()
+	if options.kill:
+		os.system("killall -9 parallel")
+		os.system("killall -9 ucnG4_prod")
+		os.system("killall -9 UCNA_MC_Analyzer")
+		os.system("killall -9 GeantSimManager.py")
+		exit(0)
+	
 	####################				
 	# neutrons
 	####################
 	
-	# unpolarized beta baseline: 5e7 in 52 clusters
-	if 1:
-		betaSim = GeantSimManager("20120810")
+	# unpolarized beta baseline: 5e7 in 520 clusters
+	if 0:
+		betaSim = GeantSimManager("20120823")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
 		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
 		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
-		betaSim.launch_sims(nEvents=5e7,nClusters=52,hours_old=0)
-		betaSim.launch_postanalyzer()
+		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
+		betaSim.launch_sims(nEvents=5e6,nClusters=52,hours_old=0)
+		betaSim.launch_postanalyzer(0,10000)
 	
 	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 52 clusters
 	if 0:
-		betaSim = GeantSimManager("WideKev",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+		betaSim = GeantSimManager("20120815_MagF",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
-		betaSim.launch_sims(nEvents=1e7,nClusters=52,hours_old=1000)
-		betaSim.launch_postanalyzer(16)
+		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
+		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
+		betaSim.launch_sims(nEvents=1e7,nClusters=52,hours_old=10*24)
+		betaSim.launch_postanalyzer()
 	
 	####################				
 	# calibration sources
 	####################
 	
 	# sources ["Bi207","Sn113","Ce139","Cd109","In114E","In114W","Cd113m"] 1e6 each
-	if 0:
-		for g in ["Bi207","Sn113","Ce139","Cd109"]:
-			sourceSim = GeantSimManager("9.5uFoil",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+	if 1:
+		for g in ["Bi207","Sn113","Ce139"]:
+			sourceSim = GeantSimManager("20120823",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.settings["sourceScan"]=80.
 			sourceSim.settings["extra_cmds"] += "/detector/sourcefoilthick 9.5 um\n"
+			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 			sourceSim.set_generator(g)
 			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
 			sourceSim.launch_postanalyzer()

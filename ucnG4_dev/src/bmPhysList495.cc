@@ -88,8 +88,11 @@ void bmPhysList495::SetCuts() {
 		G4cout << "CutLength : " << G4BestUnit(defaultCutValue,"Length") << G4endl;
 	}
 	
-	G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(100*eV, 1*GeV);
-	
+	if(emName == "Livermore")
+		G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(250*eV, 1*GeV);
+	else if(emName == "Penelope")
+		G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(100*eV, 1*GeV);
+
 	// set cut values for gamma at first and for e- second and next for e+,
 	// because some processes for e+/e- need cut values for gamma
 	SetCutValue(cutForGamma, "gamma");

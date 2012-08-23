@@ -274,8 +274,8 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 		////////////////////////////////////////
 		trap.Construct(experimentalHall_log, fCrinkleAngle);
 		for(Side s = EAST; s <= WEST; ++s) {
-			dets[s].mwpc.entranceToCathodes += fMWPCBowing/2.;
-			dets[s].mwpc.exitToCathodes += fMWPCBowing/2.;
+			dets[s].mwpc.entranceToCathodes += fMWPCBowing;
+			//dets[s].mwpc.exitToCathodes += fMWPCBowing/2.;
 			
 			dets[s].Construct(s);
 			G4RotationMatrix* sideFlip = new G4RotationMatrix();

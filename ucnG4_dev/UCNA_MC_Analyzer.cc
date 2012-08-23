@@ -110,12 +110,10 @@ void UCNA_MC_Analyzer::processTrack() {
 				trapMonTime[s] = trackinfo->hitTime; //earliest hit time 
 		}
 		
-		// wirechamber deposited energy and position, possibly with contribution from "dead" regions
+		// wirechamber deposited energy and position
 		double anodeScale = 0;
-		if(detectorID==ID_winIn[s] || detectorID==ID_winOut[s])
-			anodeScale = 0.;
-		if(detectorID==ID_deadmwpc[s])
-			anodeScale = 0.;
+		if(detectorID==ID_deadmwpc[s]) // contribution from "dead" gas
+			anodeScale = 0.5;
 		if(detectorID==ID_mwpc[s])
 			anodeScale = 1.0;
 		if(anodeScale) {
