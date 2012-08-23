@@ -166,8 +166,8 @@ void AsymmetryAnalyzer::calculateResults() {
 	hSuperSum = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 		hTpAsym[tp] = (TH1F*)calculateSR("Asymmetry_Type_"+itos(tp),
-											  qEnergySpectra[EAST][nBetaTubes][tp],
-											  qEnergySpectra[WEST][nBetaTubes][tp]);
+											  qEnergySpectra[tp==TYPE_II_EVENT?WEST:EAST][nBetaTubes][tp],
+											  qEnergySpectra[tp==TYPE_II_EVENT?EAST:WEST][nBetaTubes][tp]);
 		hTpAsym[tp]->SetMinimum(-0.10);
 		hTpAsym[tp]->SetMaximum(0.0);
 		hEvtSS[tp] = (TH1F*)calculateSuperSum("SuperSum_Type_"+itos(tp),

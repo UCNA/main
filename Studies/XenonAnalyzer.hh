@@ -33,6 +33,8 @@ public:
 	virtual void calculateResults();
 	/// generate position map from data endpoints
 	void compareMCtoData(AnalyzerPlugin* AP);
+	/// fit endpoint in each sector
+	void fitSectors();
 	
 	fgbgPair* energySpectrum;							//< overall energy spectrum for isotope decomposition
 	std::vector<fgbgPair*> sectEnergy[2][nBetaTubes+1];	//< visible light histograms by position, PMT
@@ -55,6 +57,7 @@ public:
 	
 	XenonSpectrumAnalyzer* myXeSpec;	//< position-binned Xenon spectrum analysis
 	AnodePositionAnalyzer* myAnode;		//< anode position gain
+	AnodeGainAnalyzer* myWG;			//< anode energy calibration
 };
 
 /// analyzer for simulated xenon data
@@ -64,6 +67,7 @@ public:
 	SimXenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0);
 	
 	XenonSpectrumAnalyzer* myXeSpec;	//< position-binned Xenon spectrum analysis
+	AnodeGainAnalyzer* myWG;			//< anode energy calibration
 };
 
 /// process xenon runs

@@ -78,6 +78,8 @@ public:
 	
 	/// Type II/III separation MWPC energy cut as a function of scintillator energy
 	static float sep23Cut(Side s, float Escint);
+	/// normalized MWPC signal for Type II/III events
+	static float normMWPC(Side s, float Escint, float Emwpc);
 	/// Type II/III separation probability
 	static float sep23Prob(Side s, float Escint, float Emwpc);
 	

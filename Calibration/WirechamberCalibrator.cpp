@@ -67,12 +67,18 @@ std::vector<std::string> WirechamberCalibrator::getCathChans(Side s, AxisDirecti
 
 float WirechamberCalibrator::sep23Cut(Side, float Escint) {
 	// magic numbers formula from simulation
-	return 2.68 + 4.17*exp(-Escint/146);
+	//return 2.68 + 4.17*exp(-Escint/146);	// 20120810 baseline simulation
+	//return 3.82 + 5.31*exp(-Escint/127.6);	// gold plate, with 50% dead gas contrib
+	return 3.69 + 4.80*exp(-Escint/135.3);	// 20120822 small cuts + 50% dead contrib
+}
+
+float WirechamberCalibrator::normMWPC(Side s, float Escint, float Emwpc) {
+	double c = sep23Cut(s,Escint); // hard cut location
+	return (Emwpc-c)/c; // normalized MWPC
 }
 
 float WirechamberCalibrator::sep23Prob(Side s, float Escint, float Emwpc) {
-	double c = sep23Cut(s,Escint); // hard cut location
-	double m = (Emwpc-c)/c; // normalized MWPC
+	double m = normMWPC(s,Escint,Emwpc);
 	
 	// asymptotic value
 	double asympt = ((m<0)?

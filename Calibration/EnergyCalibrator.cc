@@ -75,6 +75,8 @@ scaleNoiseWithL(true), P(cdb->getPositioningCorrector(myRun)), GS(NULL), rn(myRu
 		return;
 	}
 	
+	P->setNormAvg();
+	
 	rGMS = CDB->getGMSRun(myRun);
 	if(isRefRun())
 		LCRef = this;

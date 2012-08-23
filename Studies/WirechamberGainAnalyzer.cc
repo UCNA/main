@@ -75,6 +75,10 @@ AnodeGainAnalyzer::AnodeGainAnalyzer(RunAccumulator* RA): AnalyzerPlugin(RA,"wir
 	anodeGaincorr->doSubtraction = false;
 	anodeGaincorr->setAxisTitle(X_DIRECTION, "Side");
 	anodeGaincorr->setAxisTitle(Y_DIRECTION, "Anode Gain Correction Factor");
+	for(Side s = EAST; s <= WEST; ++s) {
+		norm23[s] = registerFGBGPair("norm23", "Type II/III Normalized MWPC", 50, -1, 4, AFP_OTHER, s);
+		norm23[s]->setAxisTitle(X_DIRECTION, "Normalized MWPC signal");
+	}
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 		TH2F hAnodeTemplate(("hAnodeEnergy_Tp"+itos(tp)).c_str(),"MWPC Energy",10,0,1000,100,0,10);
 		for(Side s = EAST; s <= WEST; ++s) {
@@ -103,8 +107,11 @@ void AnodeGainAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 	const Side s = PDS.fSide;
 	if(!(PDS.fPID == PID_BETA && (s==EAST||s==WEST))) return;
 	((TProfile*)anodeGaincorr->h[currentGV])->Fill(s,PDS.ActiveCal->wirechamberGainCorr(s,PDS.runClock[BOTH]),weight);
-	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT)
+	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT) {
 		((TH2F*)(anodeCal[s][PDS.fType]->h[currentGV]))->Fill(PDS.getEnergy(),PDS.mwpcEnergy[s],weight);
+		if(PDS.fType >= TYPE_II_EVENT)
+			norm23[s]->h[currentGV]->Fill(WirechamberCalibrator::normMWPC(s,PDS.getEnergy(),PDS.mwpcEnergy[s]),weight);
+	}
 }
 
 void AnodeGainAnalyzer::calculateResults() {
@@ -202,6 +209,15 @@ void AnodeGainAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 	AnodeGainAnalyzer& dat = *(AnodeGainAnalyzer*)AP;
 	
 	for(Side s = EAST; s <= WEST; ++s) {
+		std::vector<TH1*> hToPlot;
+		norm23[s]->h[GV_OPEN]->SetLineColor(4);
+		dat.norm23[s]->h[GV_OPEN]->SetLineColor(2);
+		hToPlot.push_back(norm23[s]->h[GV_OPEN]);
+		hToPlot.push_back(dat.norm23[s]->h[GV_OPEN]);
+		drawSimulHistos(hToPlot);
+		drawVLine(0,myA->defaultCanvas);
+		printCanvas(sideSubst("DataComparison/NormMWPC_%c",s));
+		
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 			if(!gAnode[s][tp] || !dat.gAnode[s][tp]) continue;
 			dat.gAnode[s][tp]->SetLineColor(2);
@@ -385,7 +401,10 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 				double x1 = (-p2+del)/(2*p1);
 				double x2 = (-p2-del)/(2*p1);
 				double xdiv = minFit.Eval(x1)<minFit.Eval(x2)?x1:x2;
-				gOptDiv[s]->SetPoint(ne-1, 0.5*(e0+e1), xdiv);
+				if(1 < xdiv && xdiv < 9)
+					gOptDiv[s]->SetPoint(ne-1, 0.5*(e0+e1), xdiv);
+				else
+					gOptDiv[s]->SetPoint(ne-1,0,0);
 				
 				hSep->Draw();
 				drawVLine(xdiv,OM.defaultCanvas);
@@ -405,14 +424,21 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 			
 		}
 	}
-		
-	TF1 cutFit("cutFit","[0]+[1]*exp(-x/[2])",0,600);
-	cutFit.SetParameter(0,3.0);
-	cutFit.SetParameter(1,4.0);
-	cutFit.SetParameter(2,150);
+	
+	TF1 cutFit("cutFit","[0]+[1]*exp(-x/[2])",25,600);
+	//cutFit.SetParameter(0,3.0);
+	//cutFit.SetParameter(1,4.0);
+	cutFit.SetParameter(0,5.0);
+	cutFit.SetParLimits(0, 1.0, 8.0);
+	cutFit.SetParameter(1,7.0);
+	cutFit.SetParLimits(1,1.0,15.0);
+	//cutFit.SetParameter(2,150);
+	cutFit.SetParameter(2,300);
+	cutFit.SetParLimits(2,75,1000);
 	TGraph* gCombo = combine_graphs(gOptDiv);
 	printf("\n\n///////////// Separation Cut Fit ////////////////\n\n");
 	gCombo->Fit(&cutFit,"RBME");
+	printf("%.2f + %.2f*exp(-Escint/%.1f)\n",cutFit.GetParameter(0),cutFit.GetParameter(1),cutFit.GetParameter(2));
 	gCombo->Draw("A*");
 	gCombo->GetXaxis()->SetRangeUser(0.,700.);
 	gCombo->GetXaxis()->SetTitle("Scintillator Energy [keV]");
@@ -501,6 +527,7 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 		if(n==0) {
 			TF1 fPol("fPol","pol2",25,625);
 			gCombo->Fit(&fPol,"R");
+			printf("Low Asympt: %.3g+%.3g*Escint+%.3g*Escint*Escint\n",fPol.GetParameter(0),fPol.GetParameter(1),fPol.GetParameter(2));
 		}
 		if(n==2) {
 			TF1 expFit("expFit","[0]-[1]*exp(-x/[2])",25,625);
@@ -508,6 +535,7 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 			expFit.SetParameter(1,0.2);
 			expFit.SetParameter(2,100);
 			gCombo->Fit(&expFit,"RBME");
+			printf("High Asympt: %.3g-%.3g*exp(-Escint/%.1g)\n",expFit.GetParameter(0),expFit.GetParameter(1),expFit.GetParameter(2));
 		}
 		
 		gCombo->Draw("AP");
@@ -521,6 +549,5 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 			sgraphs[s]->Draw("*");
 		OM.printCanvas("ProbFitParam_"+itos(n));
 	}
-
 }
 
