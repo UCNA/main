@@ -86,7 +86,8 @@ def plotWilkinsonCorrs(fin,outpath):
 	gSpec.plot(graph.data.points(gdat,x=1,y=2,title="Plain"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
 	gSpec.writetofile(outpath+"/BetaSpectrum_%i_%i_%f.pdf"%(A,Z,ep))
 
-	return
+	if A != 1:
+		return
 	
 	##############
 	# total spectrum shape corrections
@@ -113,14 +114,15 @@ def plotWilkinsonCorrs(fin,outpath):
 	setTexrunner(gWCA)
 	gWCA.plot(graph.data.points([(c.energy,c.RWM) for c in corrs],x=1,y=2,title="Wilkinson recoil-order"),[graph.style.line([style.linewidth.Thick])])
 	gWCA.plot(graph.data.points([(c.energy,c.hmg) for c in corrs],x=1,y=2,title="Radiative $h - g$"),[graph.style.line([style.linewidth.Thick,rgb.red])])
-	if 0:
+	if 1:
 		def gluckx2E(x):
 			return x*(782.6+511.)-511.
 		gluck_da = [ [gluckx2E(0.4),0.03/1.66],[gluckx2E(0.5),0.01/6.55],[gluckx2E(0.6),0.01/8.08],
 						[gluckx2E(0.7),0.01/8.90],[gluckx2E(0.8),0.01/9.41],[gluckx2E(0.9),0.01/9.76]]
-		#gluck_da = [ [gluckx2E(0.4),0.003],[gluckx2E(0.5),0.001],[gluckx2E(0.6),0.001],
-		#				[gluckx2E(0.7),0.001],[gluckx2E(0.8),0.001],[gluckx2E(0.9),0.001]]
-		gWCA.plot(graph.data.points(gluck_da,x=1,y=2,title='Gl\\"uck 1992 $\\delta \\alpha_e$ table'),[graph.style.symbol(symbolattrs=[rgb.blue])])
+		#def beta(x):
+		#	return sqrt(x*x+2*511*x)/(511+x)
+		#gluck_da = [ [d[0],beta(d[0])*d[1]] for d in gluck_da]
+		gWCA.plot(graph.data.points(gluck_da,x=1,y=2,title='Gl\\"uck 1992 $\\delta \\alpha_e$ table'),[graph.style.symbol(symbolattrs=[rgb.green])])
 	gWCA.writetofile(outpath+"/A_Rad_Corrections.pdf")
 
 	################

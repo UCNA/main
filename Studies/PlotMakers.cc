@@ -203,6 +203,7 @@ void makeCorrectionsFile(int A, int Z, double Endpt) {
 		double W = e/m_e+1.;
 		m.insert("energy",e);
 		m.insert("W",W);
+		m.insert("beta",beta(e));
 		m.insert("F0m1",WilkinsonF0(Z,W,R)-1.0);
 		m.insert("L0m1",WilkinsonL0(Z,W,R)-1.0);
 		m.insert("RVm1",WilkinsonRV(W,W0,M0)-1.0);
@@ -212,7 +213,9 @@ void makeCorrectionsFile(int A, int Z, double Endpt) {
 		m.insert("ACm1",WilkinsonAC(Z,W,W0,R)-1.0);
 		m.insert("Qm1",WilkinsonQ(Z,W,W0,M0)-1.0);
 		m.insert("g",Wilkinson_g(W,W0));
+		m.insert("gS",Sirlin_g(e,Endpt));
 		m.insert("hmg",shann_h_minus_g(W,W0));
+		m.insert("h",shann_h(e,Endpt));
 		m.insert("RWM",WilkinsonACorrection(W));
 		m.insert("S0",plainPhaseSpace(W,W0));
 		m.insert("S",correctedBetaSpectrum(e,A,Z,Endpt));

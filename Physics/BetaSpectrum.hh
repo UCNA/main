@@ -55,8 +55,8 @@ double WilkinsonAC(double Z, double W, double W0=beta_W0, double R=neutron_R0);
 /// Wilkinson Q(Z,W,M) as in [0], nucleon recoil effect on Coulomb corrections
 double WilkinsonQ(double Z,double W,double W0=beta_W0,double M=proton_M0);
 
-/// Sirlin 1967 g radiative corrections to order alpha, also in [5]
-double Sirlin_g(double E,double E0,double m=m_e);
+/// Sirlin 1967 g * alpha/2pi radiative corrections to order alpha, also in [5]
+double Sirlin_g(double KE,double KE0,double m=m_e);
 /// Wilkinson g: Sirlin g + fix for logarithm divergence [5]
 double Wilkinson_g(double W,double W0=beta_W0);
 
@@ -70,7 +70,9 @@ double correctedBetaSpectrum(double KE, int A = 1, int Z = 1, double ep = neutro
 /// uncorrected asymmetry as a function of kinetic energy [keV]
 inline double plainAsymmetry(double KE, double costheta=0.5) { return A0_PDG*beta(KE)*costheta; }
 
-/// h-g radiative correction to A
+/// h*alpha/2pi radiative correction
+double shann_h(double KE, double KE0=neutronBetaEp, double m = m_e);
+/// (h-g)*alpha/2pi radiative correction to A
 double shann_h_minus_g(double W, double W0=beta_W0);
 /// Wilkinson weak magnetism + g_V*g_A interference + recoil correction to A [0]
 double WilkinsonACorrection(double W);
