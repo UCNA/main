@@ -11,8 +11,8 @@ void fitHighEnergyExcess(QFile& qOut, quadHists* qh, double e0, double e1) {
 		if(b1 == hEnBG->GetNbinsX()) ++b1;
 		double nBG = hEnBG->Integral(b0,b1);
 		double xs = hEn->Integral(b0,b1);
-		double d_nBG = integrateErrors(hEnBG,b0,b1);
-		double d_xs = integrateErrors(hEn,b0,b1);
+		Double_t d_xs;
+		double d_nBG = hEnBG->IntegralAndError(b0,b1,d_xs);
 		
 		Stringmap m;
 		m.insert("side",sideSubst("%c",qh->mySide));

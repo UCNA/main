@@ -304,8 +304,8 @@ void RunAccumulator::makeRatesSummary() {
 			rt.insert("afp",afpWords(it->second->afp));
 			rt.insert("name",it->second->getName());
 			rt.insert("fg",itos(gv));
-			double counts = it->second->h[gv]->Integral();
-			double d_counts = integrateErrors(it->second->h[gv]);
+			Double_t d_counts;
+			double counts = it->second->h[gv]->IntegralAndError(-1, -1, d_counts);
 			double rtime = getTotalTime(it->second->afp,gv)[it->second->mySide];
 			rt.insert("counts",counts);
 			rt.insert("d_counts",d_counts);

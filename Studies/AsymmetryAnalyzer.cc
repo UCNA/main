@@ -104,8 +104,8 @@ void AsymmetryAnalyzer::fitInstAsym(float fmin, float fmax, unsigned int color) 
 
 
 void AsymmetryAnalyzer::endpointFits() {
-	const float fitStart = 250;
-	const float fitEnd = 750;
+	const float fitStart = 150;
+	const float fitEnd = 700;
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			for(unsigned int t=0; t<=nBetaTubes; t++) {
@@ -231,8 +231,9 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 				int b0 = h->FindBin(c.emin);
 				int b1 = h->FindBin(c.emax);
 				
-				ARtot.value = h->Integral(b0,b1);
-				ARtot.err = integrateErrors(h,b0,b1);
+				Double_t ierr;
+				ARtot.value = h->IntegralAndError(b0,b1,ierr);
+				ARtot.err = ierr;
 				ARtot.csid = ADB->uploadCutSpec(c);
 				ADB->uploadAnaResult(ARtot);
 			}
@@ -266,6 +267,7 @@ void AsymmetryAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 	// re-cast to correct type
 	AsymmetryAnalyzer& dat = *(AsymmetryAnalyzer*)AP;
 	
+	hAsym->GetXaxis()->SetRangeUser(0,800);
 	hAsym->SetLineColor(4);
 	dat.hAsym->SetLineColor(2);
 	hAsym->Draw("HIST E1");
@@ -274,12 +276,18 @@ void AsymmetryAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 	
 	drawHistoPair(dat.hSuperSum,hSuperSum);
 	printCanvas("DataComparison/SuperSum");
+	double evtscale = dat.hEvtSS[TYPE_0_EVENT]->Integral()/hEvtSS[TYPE_0_EVENT]->Integral();
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+		dat.hEvtSS[tp]->GetXaxis()->SetRangeUser(0,800);
+		hEvtSS[tp]->GetXaxis()->SetRangeUser(0,800);
 		dat.hEvtSS[tp]->SetMarkerStyle(1);
 		hEvtSS[tp]->SetMarkerStyle(1);
+		hEvtSS[tp]->Scale(evtscale);
 		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
 		printCanvas("DataComparison/SuperSum_Type_"+itos(tp));
 		
+		dat.hTpAsym[tp]->GetXaxis()->SetRangeUser(0,800);
+		hTpAsym[tp]->GetXaxis()->SetRangeUser(0,800);
 		dat.hTpAsym[tp]->SetMarkerStyle(1);
 		hTpAsym[tp]->SetMarkerStyle(1);
 		drawHistoPair(dat.hTpAsym[tp],hTpAsym[tp]);
