@@ -265,61 +265,6 @@ void fixNaNs(TH1* h) {
 	}
 }
 
-std::vector<TH1D*> replaceFitSlicesY(TH2* h, TF1* f1) {
-	
-	Int_t nbins  = h->GetXaxis()->GetNbins();
-	std::vector<TH1D*> hlist;
-	
-	//default is to fit with a gaussian
-	if (!f1) {
-		double ymin=h->GetYaxis()->GetXmin();
-		double ymax=h->GetYaxis()->GetXmax();
-		f1 = (TF1*)gROOT->GetFunction("gaus");
-		if(!f1) f1 = new TF1("gaus","gaus",ymin,ymax);
-		else f1->SetRange(ymin,ymax);
-	}
-	Int_t npar = f1->GetNpar();
-	if (npar <= 0) return hlist;
-	Double_t *parsave = new Double_t[npar];
-	f1->GetParameters(parsave);
-	
-	//Create one histogram for each function parameter
-	const TArrayD* bins = h->GetXaxis()->GetXbins();
-	for (Int_t ipar=0; ipar<=npar; ipar++) {
-		std::string name = h->GetName()+("_"+itos(ipar));
-		std::string title = "Fit parameter "+itos(ipar);
-		delete gDirectory->FindObject(name.c_str());
-		if (bins->fN == 0) {
-			hlist.push_back(new TH1D(name.c_str(), title.c_str(), nbins, h->GetXaxis()->GetXmin(),  h->GetXaxis()->GetXmax()));
-		} else {
-			hlist.push_back(new TH1D(name.c_str(), title.c_str(), nbins,bins->fArray));
-		}
-		hlist.back()->GetXaxis()->SetTitle( h->GetXaxis()->GetTitle());
-	}
-	
-	//Loop on all bins in X, generate a projection along Y
-	for (Int_t bin=1; bin<=nbins; bin++) {
-		TH1D *hpy = h->ProjectionY("_temp",bin,bin,"e");
-		if (hpy == 0) continue;
-		Int_t nentries = Int_t(hpy->GetEntries());
-		if (nentries == 0) {delete hpy; continue;}
-		f1->SetParameters(parsave);
-		hpy->Fit(f1,"QNR");
-		Int_t npfits = f1->GetNumberFitPoints();
-		if (npfits > npar) {
-			for (Int_t ipar=0; ipar<npar; ipar++) {
-				hlist[ipar]->Fill(h->GetXaxis()->GetBinCenter(bin),f1->GetParameter(ipar));
-				hlist[ipar]->SetBinError(bin,f1->GetParError(ipar));
-			}
-			hlist[npar]->Fill(h->GetXaxis()->GetBinCenter(bin),f1->GetChisquare()/(npfits-npar));
-		}
-		delete hpy;
-	}
-	
-	delete [] parsave;
-	return hlist;
-}
-
 std::vector<TH2F*> sliceTH3(const TH3& h3, AxisDirection d) {
 	assert(d<=Z_DIRECTION);
 	

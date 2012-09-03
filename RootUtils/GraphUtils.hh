@@ -58,9 +58,6 @@ double invCDF(TH1* h, double p);
 
 /// check histogram for NaNs
 void fixNaNs(TH1* h);
-
-/// replacement for missing TH2::FitSlicesY in older version of ROOT
-std::vector<TH1D*> replaceFitSlicesY(TH2* h, TF1* f1=NULL);
 	
 /// slice a TH3 into a stack of TH2Fs
 std::vector<TH2F*> sliceTH3(const TH3& h3, AxisDirection d = Z_DIRECTION);

@@ -1,6 +1,7 @@
 #include "CathodeTweakAnalyzer.hh"
 #include "GraphUtils.hh"
 #include "GraphicsUtils.hh"
+#include <TObjArray.h>
 
 CathodeTweakAnalyzer::CathodeTweakAnalyzer(RunAccumulator* RA): AnalyzerPlugin(RA,"wirechamber") {
 	TH2F hPositionsTemplate("hPositions","Event Positions",200,-60,60,200,-60,60);
@@ -90,10 +91,13 @@ void processWirechamberCal(MWPCTuningAnalyzer& WCdat, MWPCTuningAnalyzer& WCsim)
 				////////////////////
 				
 				TH2* hCathNorm =  (TH2*)WCdat.myCG->cathNorm[s][d][c]->h[GV_OPEN];
-				std::vector<TH1D*> slicefits = replaceFitSlicesY(hCathNorm);
-				for(std::vector<TH1D*>::iterator it = slicefits.begin(); it != slicefits.end(); it++) {
-					(*it)->SetDirectory(0);
-					OM.addObject(*it);
+				TObjArray sls;
+				hCathNorm->FitSlicesY(0, 0, -1, 0, "QNR", &sls);
+				sls.SetOwner(kFALSE);
+				std::vector<TH1D*> slicefits;
+				for(int i=0; i<sls.GetEntriesFast(); i++) {
+					OM.addObject(sls[i]);
+					slicefits.push_back((TH1D*)sls[i]);
 				}
 				slicefits[1]->Fit(&fCathCenter,"QR");
 				CathodeSeg cs;
