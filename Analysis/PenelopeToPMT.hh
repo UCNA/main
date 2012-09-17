@@ -10,6 +10,8 @@ public:
 	PenelopeToPMT(): Sim2PMT("h34") { }	
 	/// unit conversions
 	virtual void doUnits();
+	/// calculate physics weighting factor (undo pre-baked asymmetry)
+	void calcReweight();
 	
 	float fEprim;				//< float version for primary energy
 	float fEdep[2];				//< float version for scintillator energy
@@ -17,7 +19,7 @@ public:
 	float fEW[2];				//< float version of wirechamber energy
 	float fMWPCpos[2][2];		//< float version of MWPC position
 	float fEWd[2];				//< float version of MWPC dead gas energy
-	float fEMWPCDead[2][2];
+	float fEMWPCDead[2][2];		//< float version of MWPC deead gas energy for each [side][front/back]
 	float fEMWPCWires[2][2];	//< float version of wire plane energy 
 	
 	float fedepFoils[2];
