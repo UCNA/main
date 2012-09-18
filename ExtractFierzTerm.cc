@@ -1,5 +1,6 @@
 /// \file DataScannerExample.cc example code for using MC simulation data
 #include "G4toPMT.hh"
+#include "PenelopeToPMT.hh"
 #include "CalDBSQL.hh"
 #include <TH1F.h>
 #include <TLegend.h>
@@ -20,8 +21,8 @@ double max_E = 600;
 //static double expected_fierz = 0.6540;	// full range
 static double expected_fierz = 0.6111;		// for range 150 - 600
 static double expected_gluck = 11.8498;     // for range 150 - 600
-static unsigned nToSim = 5E4;				// how many triggering events to simulate
-static double loading_prob = 50; 			// ucn loading probability 
+static unsigned nToSim = 5E7;				// how many triggering events to simulate
+static double loading_prob = 40; 		// ucn loading probability (percent)
 static int bins = 150;						// replace with value from data or smoothing fit
 //double scale_x = 1.015;
 double scale_x = 1.0;
@@ -133,8 +134,8 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
-        double super_sum = 0.5*TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
-        double rel_error = 0.5*TMath::Sqrt( 1/(r[0][0] + r[1][0] + 1) + 1/(r[1][1] * r[0][1] + 1));
+        double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
+        double rel_error = TMath::Sqrt( 1/(r[0][0] + r[1][0]) + 1/(r[1][1] * r[0][1]));
         if ( TMath::IsNaN(super_sum)) 
             super_sum = 0;
 
@@ -275,10 +276,15 @@ void output_histogram(string filename, TH1F* h, double ax, double ay)
 int main(int argc, char *argv[]) {
 	
 	// Geant4 MC data scanner object
-	G4toPMT G2P;
+	//G4toPMT G2P;
+	PenelopeToPMT G2P;
+
 	// use data from these MC files (most recent unpolarized beta decay, includes Fermi function spectrum correction)
 	// note wildcard * in filename; MC output is split up over many files, but G2P will TChain them together
-	G2P.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
+	G2P.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root"); // standard final Penelope
+	//G2P.addFile("/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_*.root"); // magnetic wiggles Monte Carlo
+	//G2P.addFile("/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_*.root"); // standard final Monte Carlo 
+	//G2P.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/geant4/output/Baseline_20110826_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined");
@@ -337,6 +343,7 @@ int main(int argc, char *argv[]) {
 			EventType tp = G2P.fType;
 
 			// skip non-triggering events, or those outside 50mm position cut (you could add your own custom cuts here, if you cared)
+			//if(tp>=TYPE_I_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
 			if(tp>=TYPE_I_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
 				continue;
 			
@@ -536,19 +543,21 @@ int main(int argc, char *argv[]) {
 
     // compute little b factor
     TH1F *fierz_ratio_histogram = new TH1F(*super_sum_histogram);
-    fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
-/*
+    //fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
     int bins = super_sum_histogram->GetNbinsX();
-    for (int bin = 1; bin < bins+2; bin++) {
-		double x = super_sum_histogram->GetBinError(bin);
-		double y = mc.sm_super_sum_histogram->GetBinError(bin);
-		fierz_ratio_histogram->SetBinError(bin, TMath::Sqrt(x*x + y*y));
-
+    for (int bin = 1; bin < bins+1; bin++) {
 		double X = super_sum_histogram->GetBinContent(bin);
 		double Y = mc.sm_super_sum_histogram->GetBinContent(bin);
-		fierz_ratio_histogram->SetBinError(bin, X/Y);
+		double Z = X/Y;
+		if (Y > 0)
+			fierz_ratio_histogram->SetBinContent(bin, X/Y);
+		else
+			fierz_ratio_histogram->SetBinContent(bin, 0);
+
+		double x = super_sum_histogram->GetBinError(bin);
+		double y = mc.sm_super_sum_histogram->GetBinError(bin);
+		fierz_ratio_histogram->SetBinError(bin, Z*TMath::Sqrt(x*x/X/X + y*y/Y/Y));
 	}
-		*/
     //fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
