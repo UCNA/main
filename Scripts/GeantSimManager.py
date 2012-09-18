@@ -336,7 +336,7 @@ if __name__ == "__main__":
 	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
 	####################
 	if 1:
-		for g in [	"Xe135_3-2+","Xe133_3-2+", "Xe129_11-2-","Xe131_11-2-", "Xe133_11-2-", "Xe135_11-2-", "Xe137_7-2-", "Xe127_1-2+", "Xe125_1-2+"	]:
+		for g in [ "Xe133_3-2+", "Xe135_11-2-", "Xe137_7-2-" ]:
 			sourceSim = GeantSimManager("20120917",vacuum="1.e-3 torr")
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 			sourceSim.settings["physlist"]="livermore"
