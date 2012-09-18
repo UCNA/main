@@ -1,5 +1,6 @@
 /// \file DataScannerExample.cc example code for using MC simulation data
 #include "G4toPMT.hh"
+#include "PenelopeToPMT.hh"
 #include "CalDBSQL.hh"
 #include <TH1F.h>
 #include <TLegend.h>
@@ -10,14 +11,21 @@
 #include <fstream>
 #include <string>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
-static double expected_fierz = 0.654026;
-static unsigned nToSim = 1E6;				// how many triggering events to simulate
-static double loading_prob = 50; 			// ucn loading probability 
-static int bins = 40;						// replace with value from data or smoothing fit
-double scale_x = 1.015;
-double min_E = 120;
-double max_E = 700;
+double min_E = 150;
+double max_E = 600;
+//static double expected_fierz = 0.6540;	// full range
+static double expected_fierz = 0.6111;		// for range 150 - 600
+static double expected_gluck = 11.8498;     // for range 150 - 600
+static unsigned nToSim = 5E7;				// how many triggering events to simulate
+static double loading_prob = 40; 		// ucn loading probability (percent)
+static int bins = 150;						// replace with value from data or smoothing fit
+//double scale_x = 1.015;
+double scale_x = 1.0;
 
 class FierzHistogram {
   public: 
@@ -54,10 +62,16 @@ class FierzHistogram {
     void normalizeHistogram(TH1F* hist) {
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
     }
+
+    void normalizeHistogram(TH1F* hist, double min, double max) {
+		int intmin = hist->FindBin(min);
+		int intmax = hist->FindBin(max);
+        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(intmin, intmax)));
+    }
 };
 
 // ug. needs to be static
-FierzHistogram mc(0,1000,40);
+FierzHistogram mc(0,1500,bins);
 
 /**
  * x[0] : kenetic energy
@@ -88,10 +102,17 @@ void normalize(TH1F* hist) {
     hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
 }
 
+void normalize(TH1F* hist, double min, double max) {
+	int intmin = hist->FindBin(min);
+	int intmax = hist->FindBin(max);
+	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(intmin, intmax)));
+}
+
 // S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
 TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
     TH1F *super_ratio_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_ratio_histogram->GetNbinsX();
+	std::cout << "bins " << bins;
     for (int bin = 1; bin < bins+2; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
@@ -114,12 +135,17 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
-        if ( TMath::IsNaN(super_sum) ) 
+        double rel_error = TMath::Sqrt( 1/(r[0][0] + r[1][0]) + 1/(r[1][1] * r[0][1]));
+        if ( TMath::IsNaN(super_sum)) 
             super_sum = 0;
+
+        if (TMath::IsNaN(rel_error)) 
+			rel_error = 0;
 
         printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
         super_sum_histogram->SetBinContent(bin, super_sum);
-        super_sum_histogram->SetBinError(bin, TMath::Sqrt(super_sum));
+        //super_sum_histogram->SetBinError(bin, TMath::Sqrt(super_sum));
+        super_sum_histogram->SetBinError(bin, super_sum*rel_error);
     }
     return super_sum_histogram;
 }
@@ -250,10 +276,16 @@ void output_histogram(string filename, TH1F* h, double ax, double ay)
 int main(int argc, char *argv[]) {
 	
 	// Geant4 MC data scanner object
-	G4toPMT G2P;
+	//G4toPMT G2P;
+	PenelopeToPMT G2P;
+
 	// use data from these MC files (most recent unpolarized beta decay, includes Fermi function spectrum correction)
 	// note wildcard * in filename; MC output is split up over many files, but G2P will TChain them together
-	G2P.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_1.root");
+	G2P.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root"); // standard final Penelope
+	//G2P.addFile("/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_*.root"); // magnetic wiggles Monte Carlo
+	//G2P.addFile("/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_*.root"); // standard final Monte Carlo 
+	//G2P.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
+	//G2P.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/geant4/output/Baseline_20110826_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined");
     //G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
@@ -276,7 +308,6 @@ int main(int argc, char *argv[]) {
 	//G2P.setGenerators(&PGenE,&PGenW);
 	G2P.setCalibrator(PCal);
 
-	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	
     /*
     double minBin = 0;
@@ -292,9 +323,16 @@ int main(int argc, char *argv[]) {
 	// note that it can take many seconds to load the first point of a scan (loading file segment into memory), but will go much faster afterwards.
 	G2P.startScan(false);
 
-	while(true) {
+	srand ( time(NULL) );
+
+	TChain* tchain = G2P.getChain();  // can be used to for GetEntries()
+	int n = tchain->GetEntries();
+	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
+
+	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
+	while(G2P.nextPoint()) { // will stop 
 		// load next point. If end of data is reached, this will loop back and start at the beginning again.
-		G2P.nextPoint();
+		//G2P.nextPoint();
 
 		// perform energy calibrations/simulations to fill class variables with correct values for this simulated event
 		G2P.recalibrateEnergy();
@@ -305,6 +343,7 @@ int main(int argc, char *argv[]) {
 			EventType tp = G2P.fType;
 
 			// skip non-triggering events, or those outside 50mm position cut (you could add your own custom cuts here, if you cared)
+			//if(tp>=TYPE_I_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
 			if(tp>=TYPE_I_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
 				continue;
 			
@@ -340,16 +379,22 @@ int main(int argc, char *argv[]) {
 			break;
 	}
     
+	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
+
     mc.sm_super_sum_histogram = compute_super_sum(mc.sm_histogram);
-    normalize(mc.sm_super_sum_histogram);
+    //normalize(mc.sm_super_sum_histogram);
+    normalize(mc.sm_super_sum_histogram, min_E, max_E);
 
     mc.fierz_super_sum_histogram = compute_super_sum(mc.fierz_histogram);
-    normalize(mc.fierz_super_sum_histogram);
+    //normalize(mc.fierz_super_sum_histogram);
+    normalize(mc.fierz_super_sum_histogram, min_E, max_E);
 
     for (int side = 0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++) {
-            normalize(mc.fierz_histogram[side][spin]);
-            normalize(mc.sm_histogram[side][spin]);
+            //normalize(mc.fierz_histogram[side][spin]);
+            //normalize(mc.sm_histogram[side][spin]);
+            normalize(mc.fierz_histogram[side][spin], min_E, max_E);
+            normalize(mc.sm_histogram[side][spin], min_E, max_E);
         }
 
 
@@ -392,7 +437,8 @@ int main(int argc, char *argv[]) {
 	    //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined.root");
         //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
 		//"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/OctetAsym_10keV_Bins.root");
-		"/home/mmendenhall/UCNA/PostPlots/OctetAsym_Offic/OctetAsym_Offic.root");
+		//"/home/mmendenhall/UCNA/PostPlots/OctetAsym_Offic/OctetAsym_Offic.root");
+		"/home/mmendenhall/Plots/OctetAsym_Offic/OctetAsym_Offic.root");
 	if (ucna_data_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
@@ -424,11 +470,16 @@ int main(int argc, char *argv[]) {
     //normalize(ucna_data_histogram[0][0]);
 	for (int i = 0; i < 2; i++)
 		for (int j = 0; j < 2; j++)
+		{
+			std::cout << "Number of entries in (" 
+					  << i << ", " << j << ") is "
+					  << (int)ucna_data_histogram[i][j]->GetEntries() << std::endl;
 			if (ucna_data_histogram[i][j] == NULL)
 			{
 				puts("histogram is null. Aborting...");
 				exit(1);
 			}
+		}
 
 	
     /*
@@ -459,7 +510,9 @@ int main(int argc, char *argv[]) {
 
     // Compute the super sums
     TH1F *super_sum_histogram = compute_super_sum(ucna_data_histogram);
-    normalize(super_sum_histogram);
+	std::cout << "Number of super sum entries " << (int)super_sum_histogram->GetEntries() << std::endl;
+    //normalize(super_sum_histogram);
+    normalize(super_sum_histogram, min_E, max_E);
     super_sum_histogram->SetLineColor(2);
 	super_sum_histogram->SetStats(0);
     super_sum_histogram->Draw("");
@@ -490,9 +543,26 @@ int main(int argc, char *argv[]) {
 
     // compute little b factor
     TH1F *fierz_ratio_histogram = new TH1F(*super_sum_histogram);
-    fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
-    fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
+    //fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
+    int bins = super_sum_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+1; bin++) {
+		double X = super_sum_histogram->GetBinContent(bin);
+		double Y = mc.sm_super_sum_histogram->GetBinContent(bin);
+		double Z = X/Y;
+		if (Y > 0)
+			fierz_ratio_histogram->SetBinContent(bin, X/Y);
+		else
+			fierz_ratio_histogram->SetBinContent(bin, 0);
+
+		double x = super_sum_histogram->GetBinError(bin);
+		double y = mc.sm_super_sum_histogram->GetBinError(bin);
+		fierz_ratio_histogram->SetBinError(bin, Z*TMath::Sqrt(x*x/X/X + y*y/Y/Y));
+	}
+    //fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
+    fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
+	std::cout << super_sum_histogram->GetNbinsX() << std::endl;
+	std::cout << mc.sm_super_sum_histogram->GetNbinsX() << std::endl;
 
 	// fit the Fierz ratio 
 	char fit_str[1024];
