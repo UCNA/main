@@ -8,6 +8,7 @@
 
 WirechamberCalibrator::WirechamberCalibrator(RunNum rn, CalDB* cdb): anodeP(cdb->getAnodePositioningCorrector(rn)) {
 	assert(anodeP);
+	anodeP->setNormAvg();
 	for(Side s = EAST; s <= WEST; ++s) {
 		anodeGainCorr[s]=cdb->getAnodeGain(rn,s);
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
@@ -45,7 +46,7 @@ float WirechamberCalibrator::wirechamberGainCorr(Side s, float) const {
 
 float WirechamberCalibrator::calibrateAnode(float adc, Side s, float x, float y, float t) const {
 	assert(s==EAST||s==WEST);
-	return adc*wirechamberGainCorr(s,t)/anodeP->eval(s,nBetaTubes,x,y,false);
+	return adc*wirechamberGainCorr(s,t)/anodeP->eval(s,0,x,y,true);
 }
 
 void WirechamberCalibrator::tweakPosition(Side s, AxisDirection d, wireHit& h, double E) const {
@@ -64,6 +65,31 @@ std::vector<std::string> WirechamberCalibrator::getCathChans(Side s, AxisDirecti
 	return chans;
 }
 
+float WirechamberCalibrator::sep23Cut(Side, float Escint) {
+	// magic numbers formula from simulation
+	//return 2.68 + 4.17*exp(-Escint/146);	// 20120810 baseline simulation
+	//return 3.82 + 5.31*exp(-Escint/127.6);	// gold plate, with 50% dead gas contrib
+	return 3.69 + 4.80*exp(-Escint/135.3);	// 20120822 small cuts + 50% dead contrib
+}
+
+float WirechamberCalibrator::normMWPC(Side s, float Escint, float Emwpc) {
+	double c = sep23Cut(s,Escint); // hard cut location
+	return (Emwpc-c)/c; // normalized MWPC
+}
+
+float WirechamberCalibrator::sep23Prob(Side s, float Escint, float Emwpc) {
+	double m = normMWPC(s,Escint,Emwpc);
+	
+	// asymptotic value
+	double asympt = ((m<0)?
+					 0.0456+3.138e-4*Escint+8.240e-8*Escint*Escint :
+					 0.9505-0.2827*exp(-Escint/132.3) );
+	// falloff scale
+	double m0 = (m<0)? -0.15 : 0.20;
+	
+	return asympt+(0.5-asympt)*exp(-m/m0);
+}
+
 void WirechamberCalibrator::printSummary() {
 	printf("Wirechamber Calibrator for %i,%i, %i,%i cathodes\n",
 		   (int)cathsegs[EAST][X_DIRECTION].size(),(int)cathsegs[EAST][Y_DIRECTION].size(),
@@ -76,8 +102,7 @@ void WirechamberCalibrator::printSummary() {
 			printf("\n");
 		}
 	}
-	printf("Anode:\t\tcE=%.2f\tcW=%.2f\n",wirechamberGainCorr(EAST,0),wirechamberGainCorr(WEST,0));
-	
+	printf("Anode 1000:\tE=%.2f\tW=%.2f\n",calibrateAnode(1000,EAST,0,0,0),calibrateAnode(1000,WEST,0,0,0));
 }
 
 void WirechamberCalibrator::toLocal(Side s, AxisDirection d, float x, unsigned int& n, float& c) const {

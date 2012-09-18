@@ -8,7 +8,7 @@ ROOTCFLAGS    = $(shell root-config --cflags)
 CXX           = g++ 
 INCLUDEPATH   = -I./ -I../IOUtils -I../RootUtils -I../BaseTypes -I../Detectors -I../MathUtils -I../Calibration -I../Analysis -I../Studies
 CXXFLAGS      = -O3 -Wall -fPIC $(ROOTCFLAGS) $(INCLUDEPATH)
-LDFLAGS       = $(ROOTLIBS) $(ROOTGLIBS) -lSpectrum -lstdc++ -lz -L.. -lUCNA
+LDFLAGS       = -L.. -lUCNA $(ROOTLIBS) $(ROOTGLIBS) -lSpectrum -lstdc++ -lz
 
 ANA_OBJS      = ManualInfo.o ucnaDataAnalyzer_hists.o ucnaDataAnalyzer_tree.o ucnaDataAnalyzer_peds.o
 

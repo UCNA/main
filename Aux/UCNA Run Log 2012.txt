@@ -1,0 +1,124 @@
+#####################
+# UCNA Run Data Log #
+#####################
+#
+#	--- file format description ---
+#
+#	Run lines start with a '*', of the form:
+#		*[Run Number] [Run Type]
+#
+#	Data run types (may be optionally followed by a slow daq run number):
+#
+#		BgOff/BgOn	background with flipper off/on
+#		BetaOff/BetaOn	beta decay with flipper off/on
+#		A1...A12,B1...B12	data octet segments
+#
+#	Calibration run types:		
+#		SourcesCal		Source calibration
+#		Xe			Acrivated Xenon calibration
+#		Other			Miscellaneous run (see comments)
+#		
+#
+#	Lines starting with an '@' specify properties of all the following runs
+#	(until over-written by another '@' line):
+#		@cycle	<Name>		start a contiguous group of runs to be analyzed togetherl resets @cal to 0
+#		@sources <Sources>	sources in holder, Left to Right in wirechamber Y position (from Sn Bi Sr85 Sr90 Cd In)
+#	All other lines (those not starting with a '*' or an '@') are comments.
+#
+
+#########################
+#						#
+#	A1	Background Off	#
+#	A2	Beta Off		#
+#	A3	Depol Off->On	#
+#	A4	Background On	#
+#	A5	Beta On			#
+#	A6	Depol On->Off	#
+#	A7	Beta On			#
+#	A8	Depol On->Off	#
+#	A9	Background On	#
+#	A10	Beta Off		#
+#	A11	Depol Off->On	#
+#	A12	Background Off	#
+#						#
+#	B1	Background On	#
+#	B2	Beta On			#
+#	B3	Depol On->Off	#
+#	B4	Background Off	#
+#	B5	Beta Off		#
+#	B6	Depol Off->On	#
+#	B7	Beta Off		#
+#	B8	Depol Off->On	#
+#	B9	Background Off	#
+#	B10	Beta On			#
+#	B11	Depol On->Off	#
+#	B12	Background On	#
+#						#
+#########################
+
+########
+# 2012 #
+########
+
+#######################
+@cycle September 9-10 First beta runs
+#######################
+
+### A->B ###
+
+*20121	A1
+*20122	A2
+*20123	A3
+*20124	A4
+*20125	A5
+*20126	A6
+*20127	A7
+*20128	A8
+*20129	A9
+*20130	A10
+*20131	A11
+*20132	A12
+
+*20133	B1
+*20134	B2
+*20135	B3
+*20136	B4
+*20137	B5
+*20138	B6
+*20139	B7
+*20140	B8
+*20141	B9
+*20142	B10
+*20143	B11
+*20144	B12
+
+# melt & refreeze
+
+### B->A ###
+
+*20146	B1
+*20147	B2
+*20148	B3
+*20149	B4
+*20150	B5
+*20151	B6
+*20152	B7
+*20153	B8
+*20154	B9
+*20155	B10
+*20156	B11
+*20157	B12
+
+*20158	A1
+*20159	A2
+*20160	A3
+*20161	A4
+*20162	A5
+*20163	A6
+*20164	A7
+*20165	A8
+*20166	A9
+*20167	A10
+*20168	A11
+*20169	A12
+

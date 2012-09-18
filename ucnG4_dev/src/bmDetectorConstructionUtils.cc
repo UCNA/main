@@ -5,6 +5,7 @@ G4Material* MaterialUser::Al= NULL;
 G4Material* MaterialUser::Si= NULL;
 G4Material* MaterialUser::Cu= NULL;
 G4Material* MaterialUser::Wu= NULL;
+G4Material* MaterialUser::Au= NULL;
 
 G4Material* MaterialUser::Vacuum = NULL;
 G4Material* MaterialUser::Brass = NULL;
@@ -44,6 +45,7 @@ MaterialUser::MaterialUser() {
 	Si = new G4Material("Silicon",14.,28.09*g/mole,2.33*g/cm3);
 	Cu = new G4Material("Copper", 29., 63.55*g/mole, 8.96*g/cm3);
 	Wu = new G4Material("Tungsten",74.,183.84*g/mole,19.3*g/cm3);
+	Au = new G4Material("Gold",79.,196.97*g/mole,19.3*g/cm3);
 	
 	Brass = new G4Material("Brass",8.5*g/cm3,2);
 	Brass->AddElement(G4Element::GetElement("Cu"),massFrac=0.70);
@@ -70,11 +72,14 @@ MaterialUser::MaterialUser() {
 	Polyethylene->AddElement(G4Element::GetElement("H"),nAtoms=4);
 	
 	//Wirechamber fill: pentane @ 100torr
-	WCPentane = new G4Material("Pentane",0.388*mg/cm3,2,kStateGas,298*kelvin,100*torr);
+	double P_MWPC = 100*torr;
+	double T_MWPC = 298*kelvin;
+	WCPentane = new G4Material("Pentane",(72.17*mg)/(22.4*cm3)*P_MWPC/(760*torr)*(273.15*kelvin)/T_MWPC,2,kStateGas,T_MWPC,P_MWPC);
 	WCPentane->AddElement(G4Element::GetElement("C"),nAtoms=5);
 	WCPentane->AddElement(G4Element::GetElement("H"),nAtoms=12);
 	//Wirechamber fill: N2 @ 95torr
-	WCNitrogen = new G4Material("MWPC_N2",0.143*mg/cm3,1,kStateGas,298*kelvin,95*torr);
+	double P_N2 = P_MWPC - 5*torr;
+	WCNitrogen = new G4Material("MWPC_N2",(28*mg)/(22.4*cm3)*P_N2/(760*torr)*(273.15*kelvin)/T_MWPC,1,kStateGas,T_MWPC,P_N2);
 	WCNitrogen->AddElement(G4Element::GetElement("N"),nAtoms=2);
 	
 	//Scintillator

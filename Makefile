@@ -20,7 +20,7 @@ CXX = g++
 
 CXXFLAGS = -O3 -Wall -fPIC `root-config --cflags` -I. \
 	-IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics
-LDFLAGS = `root-config --libs` -lSpectrum  -L. -lUCNA
+LDFLAGS =  -L. -lUCNA -lSpectrum `root-config --libs`
 
 ifdef PROFILER_COMPILE
 	CXXFLAGS += -pg
@@ -46,7 +46,7 @@ Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAn
 		PenelopeToPMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
 
 Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o \
-	MuonAnalyzer.o PositionAnalyzer.o WirechamberGainAnalyzer.o \
+	MuonAnalyzer.o PositionAnalyzer.o WirechamberGainAnalyzer.o BGDecayAnalyzer.o HighEnergyExcess.o \
 	AsymmetryAnalyzer.o SimAsymmetryAnalyzer.o BetaDecayAnalyzer.o \
 	CathodeTweakAnalyzer.o PositionBinnedAnalyzer.o AnodePositionAnalyzer.o XenonAnalyzer.o \
 	PlotMakers.o LEDScans.o

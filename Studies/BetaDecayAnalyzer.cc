@@ -9,6 +9,7 @@ OctetAnalyzer(pnt,nm,inflName) {
 	addPlugin(myAG = new AnodeGainAnalyzer(this));
 	addPlugin(myCG = new CathodeGainAnalyzer(this));
 	addPlugin(myAsym = new AsymmetryAnalyzer(this));
+	//addPlugin(myHEE = new HighEnergyExcessAnalyzer(this));
 }
 
 //-----------------------------------------

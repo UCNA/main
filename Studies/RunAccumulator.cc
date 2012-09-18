@@ -32,9 +32,9 @@ void fgbgPair::operator*=(double c) {
 }
 
 void fgbgPair::setAxisTitle(AxisDirection d, const std::string& ttl) {
-	if(d!=X_DIRECTION && d!=Y_DIRECTION) return;
+	if(d > Z_DIRECTION) return;
 	for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv)
-		(d==X_DIRECTION?h[gv]->GetXaxis():h[gv]->GetYaxis())->SetTitle(ttl.c_str());
+		(d==X_DIRECTION?h[gv]->GetXaxis():d==Y_DIRECTION?h[gv]->GetYaxis():h[gv]->GetZaxis())->SetTitle(ttl.c_str());
 }
 
 //------------------------------------------------------------------------
@@ -143,10 +143,14 @@ BlindTime RunAccumulator::getTotalTime(AFPState afp, bool fg) const {
 }
 
 
-AnalyzerPlugin* RunAccumulator::addPlugin(AnalyzerPlugin* AP) {
-	assert(myPlugins.find(AP->name) == myPlugins.end());
+void RunAccumulator::addPlugin(AnalyzerPlugin* AP) {
+	if(myPlugins.find(AP->name) != myPlugins.end()) {
+		SMExcept e("DuplicatePluginName");
+		e.insert("myName",name);
+		e.insert("pluginName",AP->name);
+		throw(e);
+	}
 	myPlugins.insert(std::make_pair(AP->name,AP));
-	return AP;
 }
 
 
@@ -300,8 +304,8 @@ void RunAccumulator::makeRatesSummary() {
 			rt.insert("afp",afpWords(it->second->afp));
 			rt.insert("name",it->second->getName());
 			rt.insert("fg",itos(gv));
-			double counts = it->second->h[gv]->Integral();
-			double d_counts = integrateErrors(it->second->h[gv]);
+			Double_t d_counts;
+			double counts = it->second->h[gv]->IntegralAndError(-1, -1, d_counts);
 			double rtime = getTotalTime(it->second->afp,gv)[it->second->mySide];
 			rt.insert("counts",counts);
 			rt.insert("d_counts",d_counts);

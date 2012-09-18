@@ -1,4 +1,5 @@
 #include "PositionBinnedAnalyzer.hh"
+#include "SMExcept.hh"
 
 double PositionBinnedAnalyzer::fidRadius = 50.;
 
@@ -10,7 +11,12 @@ AnalyzerPlugin(RA,nm), sects(nr,PositionBinnedAnalyzer::fidRadius) {
 		QFile qOld(myA->inflname+".txt");
 		Stringmap sct = qOld.getFirst("SectorCutter_"+name);
 		sects = SectorCutter(int(sct.getDefault("nRings",0)),sct.getDefault("radius",0));
-		assert(sects.n && sects.r);
+		if(!(sects.n && sects.r)) {
+			SMExcept e("MissingSectorInfo");
+			e.insert("name",name);
+			e.insert("file",myA->inflname+".txt");
+			throw e;
+		}
 	}
 	
 	// save sector cutter

@@ -4,6 +4,7 @@
 #include <math.h> 
 #include <TROOT.h>
 #include <TDirectory.h>
+#include <cfloat>
 
 Stringmap histoToStringmap(const TH1* h) {
 	assert(h);
@@ -98,6 +99,22 @@ TGraph* invertGraph(const TGraph* g) {
 		gi->SetPoint(i,y,x);
 	}
 	return gi;
+}
+
+TGraph* combine_graphs(const std::vector<TGraph*> gs) {
+	unsigned int npts = 0;
+	for(unsigned int n=0; n<gs.size(); n++)
+		npts += gs[n]->GetN();
+	TGraph* g = new TGraph(npts);
+	npts = 0;
+	double x,y;
+	for(unsigned int n=0; n<gs.size(); n++) {
+		for(int n2 = 0; n2 < gs[n]->GetN(); n2++) {
+			gs[n]->GetPoint(n2,x,y);
+			g->SetPoint(npts++,x,y);
+		}
+	}
+	return g;
 }
 
 TGraphErrors* merge_plots(const std::vector<TGraphErrors*>& pin, const std::vector<int>& toffset) {
@@ -248,82 +265,41 @@ void fixNaNs(TH1* h) {
 	}
 }
 
-std::vector<TH1D*> replaceFitSlicesY(TH2* h, TF1* f1) {
+std::vector<TH2F*> sliceTH3(const TH3& h3, AxisDirection d) {
+	assert(d<=Z_DIRECTION);
 	
-	Int_t nbins  = h->GetXaxis()->GetNbins();
-	std::vector<TH1D*> hlist;
+	TAxis* Ax1 = d==X_DIRECTION?h3.GetYaxis():h3.GetXaxis();
+	TAxis* Ax2 = d==Z_DIRECTION?h3.GetYaxis():h3.GetZaxis();
+	TAxis* Ax3 = d==X_DIRECTION?h3.GetXaxis():d==Y_DIRECTION?h3.GetYaxis():h3.GetZaxis();
+	const unsigned int n1 = Ax1->GetNbins();
+	const unsigned int n2 = Ax2->GetNbins();
+	const unsigned int n3 = Ax3->GetNbins();
 	
-	//default is to fit with a gaussian
-	if (!f1) {
-		double ymin=h->GetYaxis()->GetXmin();
-		double ymax=h->GetYaxis()->GetXmax();
-		f1 = (TF1*)gROOT->GetFunction("gaus");
-		if(!f1) f1 = new TF1("gaus","gaus",ymin,ymax);
-		else f1->SetRange(ymin,ymax);
-	}
-	Int_t npar = f1->GetNpar();
-	if (npar <= 0) return hlist;
-	Double_t *parsave = new Double_t[npar];
-	f1->GetParameters(parsave);
-	
-	//Create one histogram for each function parameter
-	const TArrayD* bins = h->GetXaxis()->GetXbins();
-	for (Int_t ipar=0; ipar<=npar; ipar++) {
-		std::string name = h->GetName()+("_"+itos(ipar));
-		std::string title = "Fit parameter "+itos(ipar);
-		delete gDirectory->FindObject(name.c_str());
-		if (bins->fN == 0) {
-			hlist.push_back(new TH1D(name.c_str(), title.c_str(), nbins, h->GetXaxis()->GetXmin(),  h->GetXaxis()->GetXmax()));
-		} else {
-			hlist.push_back(new TH1D(name.c_str(), title.c_str(), nbins,bins->fArray));
-		}
-		hlist.back()->GetXaxis()->SetTitle( h->GetXaxis()->GetTitle());
-	}
-	
-	//Loop on all bins in X, generate a projection along Y
-	for (Int_t bin=1; bin<=nbins; bin++) {
-		TH1D *hpy = h->ProjectionY("_temp",bin,bin,"e");
-		if (hpy == 0) continue;
-		Int_t nentries = Int_t(hpy->GetEntries());
-		if (nentries == 0) {delete hpy; continue;}
-		f1->SetParameters(parsave);
-		hpy->Fit(f1,"QNR");
-		Int_t npfits = f1->GetNumberFitPoints();
-		if (npfits > npar) {
-			for (Int_t ipar=0; ipar<npar; ipar++) {
-				hlist[ipar]->Fill(h->GetXaxis()->GetBinCenter(bin),f1->GetParameter(ipar));
-				hlist[ipar]->SetBinError(bin,f1->GetParError(ipar));
-			}
-			hlist[npar]->Fill(h->GetXaxis()->GetBinCenter(bin),f1->GetChisquare()/(npfits-npar));
-		}
-		delete hpy;
-	}
-	
-	delete [] parsave;
-	return hlist;
-}
-
-std::vector<TH2F*> sliceTH3(const TH3& h3) {
 	std::vector<TH2F*> h2s;
-	const unsigned int nx = h3.GetNbinsX();
-	const unsigned int ny = h3.GetNbinsY();
-	const unsigned int nz = h3.GetNbinsZ();
-	for(unsigned int z = 0; z <= nz+1; z++) {
+	for(unsigned int z = 0; z <= n3+1; z++) {
 		TH2F* h2 = new TH2F((std::string(h3.GetName())+"_"+itos(z)).c_str(),
 							h3.GetTitle(),
-							nx,
-							h3.GetXaxis()->GetBinLowEdge(1),
-							h3.GetXaxis()->GetBinUpEdge(nx),
-							ny,
-							h3.GetYaxis()->GetBinLowEdge(1),
-							h3.GetYaxis()->GetBinUpEdge(ny));
+							n1,
+							Ax1->GetBinLowEdge(1),
+							Ax1->GetBinUpEdge(n1),
+							n2,
+							Ax2->GetBinLowEdge(1),
+							Ax2->GetBinUpEdge(n2));
 		if(h3.GetSumw2()) h2->Sumw2();
-		h2->GetXaxis()->SetTitle(h3.GetXaxis()->GetTitle());
-		h2->GetYaxis()->SetTitle(h3.GetYaxis()->GetTitle());
-		for(unsigned int x=0; x <= nx+1; x++) {
-			for(unsigned int y=0; y <= ny+1; y++) {
-				h2->SetBinContent(x,y,h3.GetBinContent(x,y,z));
-				h2->SetBinError(x,y,h3.GetBinError(x,y,z));
+		h2->GetXaxis()->SetTitle(Ax1->GetTitle());
+		h2->GetYaxis()->SetTitle(Ax2->GetTitle());
+		for(unsigned int x=0; x <= n1+1; x++) {
+			for(unsigned int y=0; y <= n2+1; y++) {
+				if(d==X_DIRECTION) {
+					h2->SetBinContent(x,y,h3.GetBinContent(z,x,y));
+					h2->SetBinError(x,y,h3.GetBinError(z,x,y));
+				} else if(d==Y_DIRECTION) {
+					h2->SetBinContent(x,y,h3.GetBinContent(x,z,y));
+					h2->SetBinError(x,y,h3.GetBinError(x,z,y));
+				} else if(d==Z_DIRECTION) {
+					h2->SetBinContent(x,y,h3.GetBinContent(x,y,z));
+					h2->SetBinError(x,y,h3.GetBinError(x,y,z));
+				}
 			}
 		}
 		h2s.push_back(h2);
@@ -344,9 +320,9 @@ std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d, bool includeOverflow
 		if(!includeOverflow && (z==0 || z==nz+1)) continue;
 		TH1F* h1 = new TH1F((std::string(h2.GetName())+"_"+itos(z)).c_str(),
 							h2.GetTitle(),
-							nx,
+							nn,
 							axs->GetBinLowEdge(1),
-							axs->GetBinUpEdge(nx));
+							axs->GetBinUpEdge(nn));
 		if(h2.GetSumw2()) h1->Sumw2();
 		h1->GetXaxis()->SetTitle(axs->GetTitle());
 		for(unsigned int n=0; n <= nn+1; n++) {
@@ -379,10 +355,54 @@ std::vector<unsigned int> equipartition(const std::vector<float>& elems, unsigne
 	return part;
 }
 
-double integrateErrors(const TH1* h, int b0, int b1) {
-	if(b0==-1) b0 = 1;
-	if(b1==-1) b1 = h->GetNbinsX();
-	double err = 0;
-	for(int b = b0; b <= b1; b++) err += pow(h->GetBinError(b),2);
-	return sqrt(err);
+TH1* projectTH2(const TH2& h, double nb, double cx, double cy) {
+	TAxis* Ax = h.GetXaxis();
+	TAxis* Ay = h.GetYaxis();
+	double x0 = Ax->GetXmin();
+	double x1 = Ax->GetXmax();
+	double y0 = Ay->GetXmin();
+	double y1 = Ay->GetXmax();
+	TH1D* hOut = new TH1D((h.GetName()+std::string("_Projected")).c_str(),"Projected Histogram",nb,
+						  cx*(cx>0?x0:x1)+cy*(cy>0?y0:y1),cx*(cx>0?x1:x0)+cy*(cy>0?y1:y0));
+	for(int bx=1; bx<=Ax->GetNbins(); bx++)
+		for(int by=1; by<=Ay->GetNbins(); by++)
+			hOut->Fill(cx*Ax->GetBinCenter(bx)+cy*Ay->GetBinCenter(by),h.GetBinContent(bx,by));
+	return hOut;
 }
+
+TH1* histsep(const TH1& h1, const TH1& h2) {
+	int nb = h1.GetNbinsX();
+	assert(nb==h2.GetNbinsX());
+	TH1* hDiv = (TH1*)h1.Clone("hDivision");
+	hDiv->SetBinContent(0,0);
+	hDiv->SetBinContent(nb+1,0);
+	for(int b=1; b<=nb; b++)
+		hDiv->SetBinContent(b,hDiv->GetBinContent(b-1)+h2.GetBinContent(b));
+	double c = 0;
+	for(int b=nb; b>=1; b--) {
+		c += (b==nb?0:h1.GetBinContent(b+1));
+		hDiv->SetBinContent(b,hDiv->GetBinContent(b)+c);
+		hDiv->SetBinError(b,0);
+	}
+	return hDiv;
+}
+
+void histoverlap(const TH1& h1, const TH1& h2, double& o, double& xdiv) {
+	int nb = h1.GetNbinsX();
+	assert(nb==h2.GetNbinsX());
+	double* csum = new double[nb+2];
+	csum[0] = csum[nb+1] = 0;
+	for(int b=1; b<=nb; b++)
+		csum[b] = csum[b-1]+h2.GetBinContent(b);
+	double c = 0;
+	int bmn = nb;
+	for(int b=nb; b>=1; b--) {
+		c += (b==nb?0:h1.GetBinContent(b+1));
+		csum[b] += c;
+		if(csum[b] <= csum[bmn]) bmn=b;
+	}
+	o = csum[bmn];
+	xdiv = h1.GetBinLowEdge(bmn+1);
+	delete[] csum;
+}
+

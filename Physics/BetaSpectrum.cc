@@ -236,33 +236,48 @@ double SpenceL(double x, unsigned int N=20) {
 	double xk = x;
 	for(unsigned int k=1; k<=N; k++) {
 		s += xk/(k*k);
-		xk *= -x;
+		xk *= x;
 	}
-	return s;
+	return -s;
 }
 
-double Sirlin_g(double E,double E0,double m) {
-	if(E>=E0)
+double Sirlin_g(double KE,double KE0,double m) {
+	if(KE<=0 || KE>=KE0)
 		return 0;
-	double beta = sqrt(E*E-m_e*m_e)/E;
-	double athb = atanh(beta);
+	double b = beta(KE,m);
+	double E = KE+m;
+	double E0 = KE0+m;
+	double athb = atanh(b);
 	return (3.*log(m_p/m)-3./4.
-			+4.*(athb/beta-1.)*((E0-E)/(3.*E)-3./2.+log(2.*(E0-E)/m))
-			+4./beta*SpenceL(2.*beta/(1.+beta))
-			+athb/beta*(2.*(1.+beta*beta)+(E0-E)*(E0-E)/(6.*E*E)-4.*athb)
-			)*alpha/2./M_PI;
+			+4.*(athb/b-1.)*((E0-E)/(3.*E)-3./2.+log(2.*(E0-E)/m))
+			+4./b*SpenceL(2.*b/(1.+b))
+			+athb/b*(2.*(1.+b*b)+(E0-E)*(E0-E)/(6.*E*E)-4.*athb)
+			)*alpha/(2.*M_PI);
+}
+
+double shann_h(double KE, double KE0, double m) {
+	if(KE<=0 || KE>=KE0)
+		return 0;
+	double b = beta(KE,m);
+	double E = KE+m;
+	double E0 = KE0+m;
+	double athb = atanh(b);
+	return (3.*log(m_p/m)-3./4.
+			+ 4.*(athb/b-1.)*((E0-E)/(3.*E*b*b)+(E0-E)*(E0-E)/(24*E*E*b*b)-3./2.+log(2.*(E0-E)/m))
+			+ 4./b*SpenceL(2.*b/(1.+b))+4*athb/b*(1-athb)
+			)*alpha/(2.*M_PI);
 }
 
 double Wilkinson_g(double W,double W0) {
 	if(W>=W0 || W<=1)
 		return 0;
-	double beta = sqrt(W*W-1)/W;
-	double athb = atanh(beta);
+	double b = sqrt(W*W-1)/W;
+	double athb = atanh(b);
 	double g = (3.*log(m_p/m_e)-3./4.
-				+4.*(athb/beta-1.)*((W0-W)/(3.*W)-3./2.+log(2))
-				+4./beta*SpenceL(2.*beta/(1.+beta))
-				+athb/beta*(2.*(1.+beta*beta)+(W0-W)*(W0-W)/(6.*W*W)-4.*athb)
-				)*alpha/2./M_PI+pow((W0-W),2*alpha/M_PI*(athb/beta-1.))-1.;
+				+4.*(athb/b-1.)*((W0-W)/(3.*W)-3./2.+log(2))
+				+4./b*SpenceL(2.*b/(1.+b))
+				+athb/b*(2.*(1.+b*b)+(W0-W)*(W0-W)/(6.*W*W)-4.*athb)
+				)*alpha/(2.*M_PI)+pow((W0-W),2*alpha/M_PI*(athb/b-1.))-1.;
 	return g==g?g:0;
 }
 
@@ -286,18 +301,13 @@ double correctedBetaSpectrum(double KE, int A, int Z, double ep) {
 	return plainPhaseSpace(W,W0)*spectrumCorrectionFactor(KE,A,Z,ep);
 }
 
-
-
-
-
-
 double shann_h_minus_g(double W, double W0) {
 	if(W>=W0 || W<=1)
 		return 0;
-	double beta = sqrt(W*W-1)/W;
-	double athb = atanh(beta);
-	return ( 4.*(athb/beta-1.)*(W0-W)*(1-beta*beta)/(3.*W*beta*beta)*(1.-beta*beta-(W0-W)/(8.*W))
-			+athb/beta*(2.-2.*beta*beta-(W0-W)*(W0-W)/(6.*W*W)) )*alpha/2./M_PI;	
+	double b = sqrt(W*W-1)/W;
+	double athb = atanh(b);
+	return ( 4.*(athb/b-1.)*(1/(b*b)-1)*(W0-W)/(3*W)*(1+(W0-W)/(8*W))
+			+athb/b*(2.-2.*b*b) - (W0-W)*(W0-W)/(6.*W*W) )*alpha/(2.*M_PI);
 }
 
 double WilkinsonACorrection(double W) {

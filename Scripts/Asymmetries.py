@@ -19,6 +19,7 @@ octSegments = [hoSegments[0]+hoSegments[1],]
 divSegments = [octSegments,hoSegments,ppSegments]
 unitNames = {0:"Octet",1:"Half Octet",2:"Pulse Pair",3:"Run"}
 
+scols = {"East":rgb.red,"West":rgb.blue}
 afpSymbs = {"On":symbol.circle,"Off":symbol.triangle}
 afpLines = {"Off":style.linestyle.dashed,"On":style.linestyle.dotted}
 

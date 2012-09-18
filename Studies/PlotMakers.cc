@@ -18,6 +18,7 @@
 #include "LinHistCombo.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "BetaDecayAnalyzer.hh"
+#include "AnodePositionAnalyzer.hh"
 #include <TColor.h>
 
 
@@ -56,12 +57,9 @@ void dumpPosmap(std::string basepath, unsigned int pnum) {
 	QFile fout(basepath+"/Posmap_"+itos(pnum)+".txt",false);
 	
 	for(Side s = EAST; s<=WEST; ++s) {
-		for(int t=0; t<=nBetaTubes; t++) {
-			
-			if(t==nBetaTubes && !PCal)
-				continue;
-			
-			SectorCutter& psects = PCor->getSectors(s,0);
+		for(unsigned int t=0; t<PCor->getNMaps(s); t++) {
+	
+			SectorCutter& psects = PCor->getSectors(s,t);
 			
 			for(unsigned int n=0; n<psects.nSectors(); n++) {
 				
@@ -95,11 +93,11 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	double nbins = nsegs*5;
 	
 	// set up histograms
-	std::vector<TH1*> hEnergy[2][TYPE_III_EVENT][2];	// energy [side][type][vis/true] for each input bin
-	TProfile* inputEnergy[2][TYPE_III_EVENT][2];		// input bins [side][type][vis/true]
+	std::vector<TH1*> hEnergy[2][TYPE_III_EVENT+1][2];	// energy [side][type][vis/true] for each input bin
+	TProfile* inputEnergy[2][TYPE_III_EVENT+1][2];		// input bins [side][type][vis/true]
 	TProfile* inputTotal = (TProfile*)OM.addObject(new TProfile("inputTotal","Input Visible Energy Total",nsegs,0,emax));
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_II_EVENT; t++) {
+		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_III_EVENT; t++) {
 			inputEnergy[s][t][false] = (TProfile*)OM.addObject(new TProfile((sideSubst("inputEvis_%c",s)+itos(t)).c_str(),"Input Visible Energy",nsegs,0,emax));
 			inputEnergy[s][t][true] = (TProfile*)OM.addObject(new TProfile((sideSubst("inputEtrue_%c",s)+itos(t)).c_str(),"Input True Energy",nsegs,0,emax));
 			for(unsigned int i=0; i<nsegs; i++) {
@@ -117,7 +115,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	S.startScan();
 	while(S.nextPoint()) {
 		inputTotal->Fill(S.ePrim,S.ePrim);
-		if(S.fPID != PID_BETA || S.fType > TYPE_II_EVENT || S.radius(S.fSide)>50.)
+		if(S.fPID != PID_BETA || S.fType > TYPE_III_EVENT || S.radius(S.fSide)>50.)
 			continue;
 		inputEnergy[S.fSide][S.fType][true]->Fill(S.ePrim,S.ePrim);
 		int trueSeg = inputEnergy[S.fSide][S.fType][true]->FindBin(S.ePrim)-1;
@@ -132,7 +130,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	// collect histogram data
 	for(unsigned int i=0; i<nsegs; i++) {
 		for(Side s = EAST; s <= WEST; ++s) {
-			for(unsigned int t = TYPE_0_EVENT; t <= TYPE_II_EVENT; t++) {
+			for(unsigned int t = TYPE_0_EVENT; t <= TYPE_III_EVENT; t++) {
 				Stringmap m;
 				
 				m.insert("segment",i);
@@ -164,7 +162,7 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	OM.defaultCanvas->cd();
 	gStyle->SetOptStat("");
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_II_EVENT; t++) {
+		for(unsigned int t = TYPE_0_EVENT; t <= TYPE_III_EVENT; t++) {
 			for(unsigned int n=0; n<=1; n++) {
 				for(unsigned int i=0; i<nsegs; i++) {
 					hEnergy[s][t][n][i]->Scale(1.0/hEnergy[s][t][n][i]->GetBinWidth(1));
@@ -205,6 +203,7 @@ void makeCorrectionsFile(int A, int Z, double Endpt) {
 		double W = e/m_e+1.;
 		m.insert("energy",e);
 		m.insert("W",W);
+		m.insert("beta",beta(e));
 		m.insert("F0m1",WilkinsonF0(Z,W,R)-1.0);
 		m.insert("L0m1",WilkinsonL0(Z,W,R)-1.0);
 		m.insert("RVm1",WilkinsonRV(W,W0,M0)-1.0);
@@ -214,7 +213,9 @@ void makeCorrectionsFile(int A, int Z, double Endpt) {
 		m.insert("ACm1",WilkinsonAC(Z,W,W0,R)-1.0);
 		m.insert("Qm1",WilkinsonQ(Z,W,W0,M0)-1.0);
 		m.insert("g",Wilkinson_g(W,W0));
+		m.insert("gS",Sirlin_g(e,Endpt));
 		m.insert("hmg",shann_h_minus_g(W,W0));
+		m.insert("h",shann_h(e,Endpt));
 		m.insert("RWM",WilkinsonACorrection(W));
 		m.insert("S0",plainPhaseSpace(W,W0));
 		m.insert("S",correctedBetaSpectrum(e,A,Z,Endpt));
@@ -325,11 +326,7 @@ void PosPlotter::etaPlot(PositioningCorrector* P, double axisRange) {
 	r0 = Sects.r;
 	
 	for(Side s = EAST; s<=WEST; ++s) {
-		for(unsigned int t=0; t<nBetaTubes; t++) {
-			
-			if(!P->eval(s, t, 0, 0))
-				continue;
-			
+		for(unsigned int t=0; t<P->getNMaps(s); t++) {
 			TH2F* interpogrid = makeHisto(sideSubst("%c ",s)+itos(t+1), sideSubst("%s PMT ",s)+itos(t+1)+" Light Transport");
 			interpogrid->SetAxisRange(0,axisRange,"Z");
 			
@@ -365,7 +362,7 @@ void showSimSpectrum(const std::string& nm, OutputManager& OM, NucDecayLibrary& 
 	hSpec->Draw();
 	OM.printCanvas(nm+"_GenSpectrum");
 	
-	std::string g4dat = "/home/mmendenhall/geant4/output/WideKev_";
+	std::string g4dat = "/home/mmendenhall/geant4/output/20120810_";
 	G4toPMT g2p;
 	g2p.addFile(g4dat + nm + "/analyzed_*.root");
 	
@@ -708,3 +705,22 @@ void NGBGSpectra(std::string datname) {
 	AH.setWriteRoot(true);
 }
 
+//-------------------------------------------------------------//
+
+void separate23(std::string datname) {
+	OutputManager OM("23Separation",getEnvSafe("UCNA_ANA_PLOTS")+"/Test/23Separation/");
+	RunAccumulator RA(&OM, "RunAccumulator", datname);
+	WirechamberSimTypeID* WS = new WirechamberSimTypeID(&RA);
+	RA.addPlugin(WS);
+	WS->make23SepInfo(OM);
+}
+
+//-------------------------------------------------------------//
+
+void refitXeAnode(std::string datname) {
+	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/Test/");
+	RunAccumulator RA(&OM, "RunAccumulator", datname);
+	AnodePositionAnalyzer* AP = new AnodePositionAnalyzer(&RA,0);
+	RA.addPlugin(AP);
+	AP->genAnodePosmap();
+}

@@ -2,6 +2,7 @@
 #define POSITIONRESPONSE_HH 1
 
 #include "Enums.hh"
+#include "Types.hh"
 #include "Interpolator.hh"
 #include "SectorCutter.hh"
 #include "QFile.hh"
@@ -46,20 +47,26 @@ protected:
 };
 
 /// positioning interpolators for each tube
-class PositioningCorrector {
+class PositioningCorrector: private NoCopy {
 public:
 	/// constructor, from input data
 	PositioningCorrector(std::vector<PosmapInfo>& indat);
 	/// constructor, from QFile
 	PositioningCorrector(QFile& qin);
+	/// destructor
+	~PositioningCorrector();
+	
 	/// get sector cutter
 	SectorCutter& getSectors(Side s, unsigned int t) { assert((s==EAST||s==WEST) && t<tubes[s].size() && tubes[s][t]); return tubes[s][t]->S; }
-	/// destructor
-	~PositioningCorrector();	
-	/// forbid copying
-	PositioningCorrector& operator=(PositioningCorrector&) { assert(false); return *this; }
 	/// get positioning correction for given tube
 	double eval(Side s, unsigned int t, double x, double y, bool normalize = false) const;
+	/// set normalization to c at center
+	void setNormCenter(double c = 1.0);
+	/// set normalization to average of c
+	void setNormAvg(double c = 1.0);
+	
+	/// get number of maps available on side
+	unsigned int getNMaps(Side s) const { assert(s==EAST||s==WEST); return tubes[s].size(); }
 	
 private:
 	/// init positioning interpolators

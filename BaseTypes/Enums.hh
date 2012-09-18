@@ -138,7 +138,9 @@ enum AnalysisChoice {
 	ANCHOICE_D=4,	//< Only use 0
 	ANCHOICE_E=5,	//< Separate II/III with likelihood
 	ANCHOICE_F=6,
-	ANCHOICE_G=7
+	ANCHOICE_G=7,
+	ANCHOICE_H=8,
+	ANCHOICE_I=9
 };
 /// choice name letter
 char choiceLetter(AnalysisChoice a);

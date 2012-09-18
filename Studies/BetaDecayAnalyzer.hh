@@ -6,6 +6,7 @@
 #include "WirechamberGainAnalyzer.hh"
 #include "AsymmetryAnalyzer.hh"
 #include "SimAsymmetryAnalyzer.hh"
+#include "HighEnergyExcess.hh"
 
 /// analyzer for beta decay data
 class BetaDecayAnalyzer: public OctetAnalyzer {
@@ -23,6 +24,7 @@ public:
 	AnodeGainAnalyzer* myAG;		//< wirechamber anode gain plugin
 	CathodeGainAnalyzer* myCG;		//< wirechamber cathode gain plugin
 	AsymmetryAnalyzer* myAsym;		//< asymmetry plugin
+	//HighEnergyExcessAnalyzer* myHEE;	//< high energy excess events
 };
 
 /// analyzer for beta decay simulation

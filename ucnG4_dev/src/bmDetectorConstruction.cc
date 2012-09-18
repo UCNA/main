@@ -274,8 +274,8 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 		////////////////////////////////////////
 		trap.Construct(experimentalHall_log, fCrinkleAngle);
 		for(Side s = EAST; s <= WEST; ++s) {
-			dets[s].mwpc.entranceToCathodes += fMWPCBowing/2.;
-			dets[s].mwpc.exitToCathodes += fMWPCBowing/2.;
+			dets[s].mwpc.entranceToCathodes += fMWPCBowing;
+			//dets[s].mwpc.exitToCathodes += fMWPCBowing/2.;
 			
 			dets[s].Construct(s);
 			G4RotationMatrix* sideFlip = new G4RotationMatrix();
@@ -332,6 +332,7 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 			
 			mwpc_planes_SD[s] = registerSD(sideSubst("mwpc_planes_SD%c",s));
 			dets[s].mwpc.activeRegion.cathode_wire_log->SetSensitiveDetector(mwpc_planes_SD[s]);
+			dets[s].mwpc.activeRegion.cath_plate_log->SetSensitiveDetector(mwpc_planes_SD[s]);
 			dets[s].mwpc.activeRegion.anode_wire_log->SetSensitiveDetector(mwpc_planes_SD[s]);
 			
 			mwpcDead_SD[s] = registerSD(sideSubst("mwpcDead_SD%c",s));

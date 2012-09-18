@@ -125,7 +125,7 @@ void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool coun
 	RunAccumulator::loadSimData(simData,nToSim,countAll);
 }
 
-unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor, double replaceIfOlder) {
+unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor, double replaceIfOlder, bool doPlots) {
 	
 	printf("\n------ Cloning data in '%s'\n------                        to '%s'...\n",basedata.c_str(),basePath.c_str());
 	int nCloned = 0;
@@ -164,7 +164,7 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 		OctetAnalyzer* subOA = (OctetAnalyzer*)makeAnalyzer(*it,OctetAnalyzer::inflExists(siminfl)?siminfl:"");
 		subOA->depth = depth+1;
 		subOA->simPerfectAsym = simPerfectAsym;
-		nCloned += subOA->simuClone(basedata+"/"+(*it),simData,simfactor,replaceIfOlder);
+		nCloned += subOA->simuClone(basedata+"/"+(*it),simData,simfactor,replaceIfOlder,doPlots);
 		addSegment(*subOA);
 		delete(subOA);
 	}
@@ -227,10 +227,12 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 	
 	// generate output
 	calculateResults();
-	makePlots();
-	origOA->calculateResults();
-	compareMCtoData(*origOA);
-	uploadAnaResults();
+	if(doPlots) {
+		makePlots();
+		origOA->calculateResults();
+		compareMCtoData(*origOA);
+		uploadAnaResults();
+	}
 	write();
 	setWriteRoot(true);
 	

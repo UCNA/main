@@ -28,19 +28,15 @@ public:
 	unsigned int nEnergyBins;		//< number of bins for energy histograms
 	double energyMax;				//< energy range for energy histograms
 	
-	TH1F* hAsym;					//< asymmetry
-	TH1F* hTpAsym[TYPE_III_EVENT];	//< asymmetry by event type
-	TH1F* hInstAsym;				//< instrumental asymmetry
-	TH1F* hSuperSum;				//< super-sum spectrum
-	TH1F* hEvtSS[TYPE_III_EVENT];	//< super-sum for each event type
+	TH1F* hAsym;						//< asymmetry
+	TH1F* hTpAsym[TYPE_III_EVENT+1];	//< asymmetry by event type
+	TH1F* hInstAsym;					//< instrumental asymmetry
+	TH1F* hSuperSum;					//< super-sum spectrum
+	TH1F* hEvtSS[TYPE_III_EVENT+1];		//< super-sum for each event type
 	
 	quadHists* qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
+	quadHists* q23ProbCut[2][TYPE_III_EVENT+1];						//< Type II/III spectra by probability cut for [side][type]
 	quadHists* qTotalSpectrum[2];									//< total spectrum based on analysis choice
-	quadHists* qBGDecay[2];											//< 5min E vs. time plot to see decaying BG components
-	quadHists* qExcessSpectra[2];									//< excess high-energy event spectrum
-	quadHists* qExcessGamma[2];										//< excess high-energy gamma event spectrum
-	quadHists* qExcessr2[2];										//< radius^2 distribution of >1keV "excess" Type 0,I events
-	quadHists* qExcessTheta[2];										//< angular distribution of >1keV excess events
 	
 protected:
 	
@@ -50,8 +46,6 @@ protected:
 	void fitInstAsym(float fmin=200, float fmax=600, unsigned int color = 2);
 	/// various beta spectrum endpoint fits
 	void endpointFits();
-	/// fit beyond-endpoint background subtraction
-	void highEnergyExcess(quadHists* qh, double e0, double e1);
 	
 	std::vector<AnaResult> asymFits;	//< list of asymmetry fits available for upload
 	std::vector<AnaCutSpec> asymCuts;	//< list of cut specifications for asymmetry fits

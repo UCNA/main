@@ -37,7 +37,7 @@ void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
 SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
-nSimmed(0), nCounted(0), mwpcAccidentalProb(4.3e-4), afp(AFP_OTHER) {
+nSimmed(0), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		mwpcThresh[s] = 0.02;
@@ -139,7 +139,7 @@ void Sim2PMT::classifyEvent() {
 	primSide = costheta>0?WEST:EAST;
 	
 	for(Side s = EAST; s <= WEST; ++s) {
-		passesMWPC[s] = (eW[s] > mwpcThresh[s]);		
+		passesMWPC[s] = (mwpcEnergy[s] > mwpcThresh[s]);		
 		is2fold[s] = passesMWPC[s] && passesScint[s];
 	}
 	
@@ -159,6 +159,12 @@ void Sim2PMT::classifyEvent() {
 	}
 	if(passesScint[EAST] && passesScint[WEST])
 		fSide = time[EAST]<time[WEST]?EAST:WEST;
+	
+	// Type II/III separation
+	fProbIII = ((fType==TYPE_II_EVENT)?
+				WirechamberCalibrator::sep23Prob(fSide,getEnergy(),mwpcEnergy[fSide])
+				: 0.);
+	if(fProbIII>0.5) fType=TYPE_III_EVENT;
 }
 
 float Sim2PMT::getEtrue() {

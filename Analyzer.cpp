@@ -163,9 +163,9 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 }
 
 void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
-	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/WideKev/");
+	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/20120810/");
 	G4toPMT g2p;
-	g2p.addFile("/home/mmendenhall/geant4/output/WideKev_neutronBetaUnpol/analyzed_*.root");
+	g2p.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
 	PMTCalibrator PCal(16000);
 	g2p.setCalibrator(PCal);
 	SimSpectrumInfo(g2p,OM);
@@ -183,6 +183,13 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
 }
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
+	
+	if(true) {
+		//refitXeAnode(getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Xenon_14282-14347_20/Xenon_14282-14347_20");
+		//return;
+		separate23(getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Simulated/OctetAsym_Offic_Simulated");
+		return;
+	}
 	
 	if(false) {
 		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
@@ -280,7 +287,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	gROOT->SetStyle("Plain");
 	gStyle->SetPalette(1);
 	gStyle->SetNumberContours(255);
-	gStyle->SetOptStat("e");	
+	gStyle->SetOptStat("e");
 	TCanvas defaultCanvas;
 	defaultCanvas.SetFillColor(0);
 	defaultCanvas.SetCanvasSize(300,300);

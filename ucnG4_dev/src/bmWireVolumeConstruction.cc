@@ -5,7 +5,8 @@ void bmWireVolumeConstruction::Construct(Side s) {
 	
 	G4Material* fCathodeWireMaterial = Al;			//< cathode wire material
 	G4Material* fAnodeWireMaterial = Wu;			//< anode wire material
-
+	G4Material* fCathodePlateMaterial = Au;			//< cathode plating material
+	
 	assert(fMWPCGas);
 	assert(fCathodeWireMaterial);
 	assert(fAnodeWireMaterial);	
@@ -23,7 +24,8 @@ void bmWireVolumeConstruction::Construct(Side s) {
 	G4Box* cathContainer_box = new G4Box("cathContainer_box",wireplane_half_width,cathode_R,wireplane_half_width);
 	G4Box* anodeContainer_box = new G4Box("anodeContainer_box",wireplane_half_width,anode_R,wireplane_half_width);
 	// anode, cathode wires and surrounding gas
-	G4Tubs* cathode_tube = new G4Tubs("cathode_tube",0,cathode_R,wireplane_half_width,0.,2*M_PI);
+	G4Tubs* cathplate_tube = new G4Tubs("cathplate_tube",cathode_R-plating_thick,cathode_R,wireplane_half_width,0,2*M_PI);
+	G4Tubs* cathode_tube = new G4Tubs("cathode_tube",0,cathode_R-plating_thick,wireplane_half_width,0.,2*M_PI);
 	G4Tubs* anode_tube = new G4Tubs("anode_tube",0,anode_R,wireplane_half_width,0.,2*M_PI);
 	G4Box* cathodeSegmentBox = new G4Box("cathodeSegmentBox",spacing/2,cathode_R,wireplane_half_width);
 	G4Box* anodeSegmentBox = new G4Box("anodeSegmentBox",spacing/2,anode_R,wireplane_half_width);
@@ -46,11 +48,15 @@ void bmWireVolumeConstruction::Construct(Side s) {
 	anodeSeg_log->SetVisAttributes(G4VisAttributes::Invisible);
 	cathode_wire_log = new G4LogicalVolume(cathode_tube,fCathodeWireMaterial,sideSubst("cathode_log%c",s));
 	cathode_wire_log->SetVisAttributes(visCathWires);
+	cath_plate_log = new G4LogicalVolume(cathplate_tube,fCathodePlateMaterial,sideSubst("cathplate_log%c",s));
+	cath_plate_log->SetVisAttributes(visCathWires);
 	anode_wire_log = new G4LogicalVolume(anode_tube,fAnodeWireMaterial,sideSubst("anode_log%c",s));				
 	anode_wire_log->SetVisAttributes(visAnodeWires);
 	
 	new G4PVPlacement(NULL,G4ThreeVector(),cathode_wire_log,
 					  sideSubst("cathode_wire_phys%c",s),cathSeg_log,true,0);
+	new G4PVPlacement(NULL,G4ThreeVector(),cath_plate_log,
+					  sideSubst("cath_plate_phys%c",s),cathSeg_log,true,0);
 	new G4PVPlacement(NULL,G4ThreeVector(),anode_wire_log,
 					  sideSubst("anode_wire_phys%c",s),anodeSeg_log,true,0);
 	

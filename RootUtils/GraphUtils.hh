@@ -29,6 +29,9 @@ TH1F* cumulativeHist(const TH1F& h, bool normalize = false);
 /// invert a TGraph
 TGraph* invertGraph(const TGraph* g);
 
+/// combine a list of TGraphs
+TGraph* combine_graphs(const std::vector<TGraph*> gs);
+
 /// merge a list of TGrapherrors into a larger TGraphError, offsetting x values by given offsets
 TGraphErrors* merge_plots(const std::vector<TGraphErrors*>& pin, const std::vector<int>& toffset);
 
@@ -55,12 +58,9 @@ double invCDF(TH1* h, double p);
 
 /// check histogram for NaNs
 void fixNaNs(TH1* h);
-
-/// replacement for missing TH2::FitSlicesY in older version of ROOT
-std::vector<TH1D*> replaceFitSlicesY(TH2* h, TF1* f1=NULL);
 	
 /// slice a TH3 into a stack of TH2Fs
-std::vector<TH2F*> sliceTH3(const TH3& h3);
+std::vector<TH2F*> sliceTH3(const TH3& h3, AxisDirection d = Z_DIRECTION);
 
 /// slice a TH2 into a stack of TH1Fs
 std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d, bool includeOverflow = false);
@@ -68,7 +68,13 @@ std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d, bool includeOverflow
 /// split a list of counts into approximately equal segments
 std::vector<unsigned int> equipartition(const std::vector<float>& elems, unsigned int n);
 
-/// integrate error bars on histogram, adding in quadrature
-double integrateErrors(const TH1* h, int b0 = -1, int b1 = -1);
+/// project a TH2 onto an arbitrary line
+TH1* projectTH2(const TH2& h, double nb, double cx, double cy);
 
+/// get plot indicating optimal separation point between two histograms
+TH1* histsep(const TH1& h1, const TH1& h2);
+
+/// calculate optimum dividing point and overlap error between two histograms
+void histoverlap(const TH1& h1, const TH1& h2, double& xdiv, double& o);
+	
 #endif

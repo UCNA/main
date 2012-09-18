@@ -41,7 +41,7 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 	
 	// set up histograms
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
-		for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_II_EVENT; tp++) {
+		for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_III_EVENT; tp++) {
 			hTubes[t][tp] = OM->registeredTH1F(s.name()+(t==nBetaTubes?"_Combined":"_Tube_"+itos(t))+"_type_"+itos(tp),mySource.t+" energy spectrum",
 											   tp==TYPE_0_EVENT?nBins:nBins/4,eMin,eMax);
 			if(tp==TYPE_0_EVENT) hTubes[t][tp]->Sumw2();
@@ -77,7 +77,7 @@ unsigned int ReSourcer::fill(const ProcessedDataScanner& P) {
 	EventType tp = P.fType;
 	Side s = P.fSide;
 	
-	if(tp > TYPE_II_EVENT || s != mySource.mySide) return 0;
+	if(tp > TYPE_III_EVENT || s != mySource.mySide) return 0;
 	float x = P.wires[P.fSide][X_DIRECTION].center;
 	float y = P.wires[P.fSide][Y_DIRECTION].center;
 	if(!mySource.inSourceRegion(x,y,4.0)) return 0;
@@ -114,7 +114,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 	// normalize to rate Hz/keV; record rates
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
 		double nType0 = hTubes[t][TYPE_0_EVENT]->Integral();
-		for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_II_EVENT; tp++) {
+		for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_III_EVENT; tp++) {
 			if(t==nBetaTubes) {
 				Stringmap m;
 				m.insert("type",itos(tp));
@@ -327,7 +327,7 @@ void reSource(RunNum rn) {
 	unsigned int nSPts = 0;
 	while(P->nextPoint()) {
 		Side s = P->fSide;
-		if(P->fType <= TYPE_II_EVENT && (P->fPID == PID_BETA || P->fPID == PID_MUON) && (s==EAST || s==WEST)) {
+		if(P->fType <= TYPE_III_EVENT && (P->fPID == PID_BETA || P->fPID == PID_MUON) && (s==EAST || s==WEST)) {
 			P->recalibrateEnergy();
 			hitPos[s]->Fill(P->wires[P->fSide][X_DIRECTION].center,P->wires[P->fSide][Y_DIRECTION].center);
 			for(std::map<unsigned int, ReSourcer>::iterator it = sources.begin(); it != sources.end(); it++)
@@ -374,7 +374,7 @@ void reSource(RunNum rn) {
 		std::string g4dat = "/home/mmendenhall/geant4/output/FixGeom_";
 		printf("Loading source simulation data...\n");
 		if(simSource.t=="Bi207" || simSource.t=="Ce139" || simSource.t=="Sn113")
-			g4dat = "/home/mmendenhall/geant4/output/9.5uFoil_";
+			g4dat = "/home/mmendenhall/geant4/output/20120817_";
 		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
 		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
 			g2p = new G4toPMT();
@@ -422,7 +422,7 @@ void reSource(RunNum rn) {
 		TM.defaultCanvas->SetLeftMargin(1.25);
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			float simNorm = it->second.hTubes[t][TYPE_0_EVENT]->Integral()/RS.hTubes[t][TYPE_0_EVENT]->Integral();
-			for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_II_EVENT; tp++) {
+			for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_III_EVENT; tp++) {
 				if(tp>TYPE_0_EVENT && t!=nBetaTubes) continue;
 				std::vector<TH1*> hToPlot;
 				RS.hTubes[t][tp]->Scale(simNorm);
