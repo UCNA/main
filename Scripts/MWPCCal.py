@@ -384,7 +384,7 @@ def anodeGainCal(conn=None):
 	
 	pmap = 145
 			
-	AMC = Anode_MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Simulated/",0)
+	AMC = Anode_MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_SimMagF/",0)
 	savg = AMC.betaAnodeGainCal(conn,pmap)
 	if conn:
 		uploadAnodeCal(conn,7000,100000,pmap,savg['E'],savg['W'])
@@ -395,6 +395,6 @@ def anodeGainCal(conn=None):
 ###############
 
 if __name__ == "__main__":
-	conn = None #open_connection()
+	conn = open_connection()
 	anodeGainCal(conn)
 	#gen_cathcal_set(conn,13000,100000,14264,16077)

@@ -118,9 +118,10 @@ class asymData:
 		self.octruns.setdefault(rtype,[]).append(int(rn))
 	
 	def getAsym(self,fitMin=225,fitMax=675):
-		for a in self.asyms:
-			if a.fitMin==fitMin and a.fitMax==fitMax:
-				return a
+		matchAsyms = [a for a in self.asyms if a.fitMin==fitMin and a.fitMax==fitMax]
+		if len(matchAsyms)==1:
+			return matchAsyms[0]
+		assert not len(matchAsyms)
 		return None
 	
 		
@@ -227,8 +228,8 @@ def plot_octet_asymmetries(basedir,depth=0):
 				
 				rt = af.getRate(s,afp,'0',"hEnergy_Type_0_%s_%s"%(s,afp))
 				if rt:
-					if not 0.15 < rt.rate < 0.35:
-						print "*** Funny rate",rt.rate,rt.side,rt.afp,"in",af.fname
+					if not 0.10 < rt.rate < 0.30:
+						print "*** Funny BG rate",rt.rate,rt.side,rt.afp,"in",af.fname
 					if not 0.001 < rt.dRate():
 						print "**** Funny dRate",rt.dRate(),rt.side,rt.afp,"in",af.fname
 						continue
@@ -238,7 +239,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 				
 				murt = af.getRate(s,afp,'1',"hMuonNoSub_%s_%s"%(s,afp))
 				if murt:
-					if not 0.5 < murt.rate < 1.0:
+					if not 0.85 < murt.rate < 1.15:
 						print "*** Funny muons",murt.rate,murt.side,murt.afp,"in",af.fname
 					muRateDat[s][afp].append([n,murt.rate,murt.dRate()])
 				else:
@@ -261,7 +262,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 
 	gBgRate=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
-				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.40),
+				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.25),
 				key = graph.key.key(pos="bl"))
 	setTexrunner(gBgRate)
 
@@ -356,7 +357,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 				print chi2
 				ndf = len(bgRateDat[s][afp])-len(LF.coeffs)
 				gtitle = s+" Side, AFP=%s: $%.4f$Hz $\\chi^2/\\nu = %.1f/%i$"%(afp,LF.coeffs[0],chi2,ndf)
-				if stats:	
+				if stats:
 					gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
 				gBgRate.plot(graph.data.points(bgRateDat[s][afp],x=1,y=2,dy=3,title=gtitle),
 							[graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=[sideCols[s],]),
@@ -441,10 +442,10 @@ class MC_Comparator:
 		# plot
 		tcols = [rgb.red,rgb.green,rgb.blue,rgb(1,1,0)]
 		for s in ["East","West"]:
-			gEp=graph.graphxy(width=25,height=8,
+			gEp=graph.graphxy(width=30,height=10,
 				x=graph.axis.lin(title=unitNames[self.depth],min=0,max=len(self.rungrps)-1),
-				y=graph.axis.lin(title="Endpoint [keV]",min=720,max=800),
-				key = graph.key.key(pos="tl"))
+				y=graph.axis.lin(title="Endpoint [keV]",min=700,max=780),
+				key = graph.key.key(pos="tc",columns=2))
 			setTexrunner(gEp)
 			
 			gTwk=graph.graphxy(width=15,height=15,
@@ -453,10 +454,10 @@ class MC_Comparator:
 				key = graph.key.key(pos="tl"))
 			setTexrunner(gTwk)
 			
-			gTwkOct=graph.graphxy(width=25,height=8,
+			gTwkOct=graph.graphxy(width=30,height=10,
 								  x=graph.axis.lin(title=unitNames[self.depth],min=0,max=len(self.rungrps)-1),
 								  y=graph.axis.lin(title="\\% Gain Tweak"),
-								  key = None) #graph.key.key(pos="tl"))
+								  key = graph.key.key(pos="bc",columns=4))
 			setTexrunner(gTwkOct)
 
 			
@@ -477,6 +478,7 @@ class MC_Comparator:
 				
 				gtitle = "%s %i: $\\mu=%+.2f$\\%%, $\\sigma=%.2f$"%(s,t,hTweak.avg(),hTweak.rms())
 				gTwk.plot(graph.data.points(hTweak.lineData(),x=1,y=2,title=gtitle),[graph.style.line([tcols[t]])])
+				gtitle = "%s %i"%(s,t)
 				gTwkOct.plot(graph.data.points(gdat[(s,t)],x=1,y=5,title=gtitle),[graph.style.symbol(symbol.circle,symbolattrs=[tcols[t],])])
 							
 			gEp.writetofile(self.basedir+"/TubeEp_%s_%i.pdf"%(s,self.depth))
@@ -485,10 +487,10 @@ class MC_Comparator:
 	
 	def plot_endpoints(self):
 		"""Compare data and MC spectrum endpoints"""
-		gEp=graph.graphxy(width=25,height=8,
+		gEp=graph.graphxy(width=30,height=10,
 				x=graph.axis.lin(title=unitNames[self.depth],min=0,max=len(self.rungrps)-1),
 				y=graph.axis.lin(title="Endpoint [keV]",min=760,max=820),
-				key = graph.key.key(pos="bl"))
+				key = graph.key.key(pos="bc",columns=2))
 		setTexrunner(gEp)
 
 			
@@ -517,53 +519,86 @@ class MC_Comparator:
 		"""Plot data and simulation backscatter fractions"""
 		nmax = len(self.rungrps)-1
 		gScatter=graph.graphxy(width=30,height=15,
-			x=graph.axis.lin(title=unitNames[self.depth],min=-nmax/3,max=nmax),
+			x=graph.axis.lin(title=unitNames[self.depth],min=-nmax/4,max=nmax),
 			y=graph.axis.lin(title="Backscatter Fraction (\\% of Type 0)",min=0,max=4.0),
-			key = graph.key.key(pos="tl"))
+			key = graph.key.key(pos="ml"))
 		setTexrunner(gScatter)
 		
 		scols = {'E':rgb.red,'W':rgb.blue}
+		afpFills = {"Off":[],"On":[deco.filled]}
+		afpThick = {"Off":style.linewidth.thick,"On":style.linewidth.THick}
+		typeSymbs = {1:symbol.circle,2:symbol.triangle,3:symbol.square}
+		typeLines = {1:style.linestyle.solid,2:style.linestyle.dashed,3:style.linestyle.dotted}
 		
 		for s in ["E","W"]:
 			for afp in ["Off","On"]:
 				gdat = []
 				for (n,rns) in enumerate(self.rungrps):
-					dat0 = self.datAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_0_").counts
-					dat1 = self.datAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_1_").counts
-					dat2 = self.datAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_2_").counts
-					sim0 = self.simAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_0_").counts
-					sim1 = self.simAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_1_").counts
-					sim2 = self.simAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_2_").counts
-					gdat.append([n,rns[0],100.*dat1/dat0,100.*dat2/dat0,100.*sim1/sim0,100.*sim2/sim0])
+					dat = [ self.datAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_%i_"%t).counts for t in range(4) ]
+					sim = [ self.simAsyms[rns].getRate(s,afp,'1',"hEnergy_Type_%i_"%t).counts for t in range(4) ]
+					gdat.append([n,rns[0]] + [100.*dat[t]/dat[0] for t in range(4)[1:]] + [100.*sim[t]/sim[0] for t in range(4)[1:]])
 					print n,rns
 					print gdat[-1]
-				gScatter.plot(graph.data.points(gdat,x=1,y=3,title="%s$_{\\rm %s}$ Type I"%(s,afp)),
-							[graph.style.symbol(afpSymbs[afp],symbolattrs=[scols[s],deco.filled]),])
-				gScatter.plot(graph.data.points(gdat,x=1,y=4,title="%s$_{\\rm %s}$ Type II/III"%(s,afp)),
-							[graph.style.symbol(afpSymbs[afp],symbolattrs=[scols[s]]),])
-				gScatter.plot(graph.data.points(gdat,x=1,y=5,title="%s$_{\\rm %s}$ Type I MC"%(s,afp)),
-							[graph.style.line([afpLines[afp],scols[s],style.linewidth.THick]),])
-				gScatter.plot(graph.data.points(gdat,x=1,y=6,title="%s$_{\\rm %s}$ Type II/III MC"%(s,afp)),
-							[graph.style.line([afpLines[afp],scols[s]]),])	
+				
+				for t in range(4)[1:]:
+					gScatter.plot(graph.data.points(gdat,x=1,y=2+t,title="%s$_{\\rm %s}$ Type "%(s,afp)+"I"*t),
+								[graph.style.symbol(typeSymbs[t],symbolattrs=[scols[s],]+afpFills[afp]),])
+					gScatter.plot(graph.data.points(gdat,x=1,y=5+t,title=None),
+								[graph.style.line([typeLines[t],scols[s],afpThick[afp]]),])
 					
-		gScatter.writetofile(self.basedir+"/BacscatterFrac_%i.pdf"%self.depth)
+		gScatter.writetofile(self.basedir+"/BackscatterFrac_%i.pdf"%self.depth)
 		
 		
 		
+def backscatterFracTableLine(fname):
+	AF = AsymmetryFile(fname)
+	counts = [0,0,0,0]
+	for s in ["E","W"]:
+		for afp in ["Off","On"]:
+			for t in range(4):
+				counts[t] += AF.getRate(s,afp,'1',"hEnergy_Type_%i_"%t).counts
+	return tuple([100.*counts[1]/counts[0],100.*counts[2]/counts[0],100.*counts[3]/counts[0]])
+
+def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
+	print "\\begin{table} \\centering \\begin{tabular}{|c||c|c|c|} \\hline"
+	print "& Type I & Type II & Type III \\\\ \\hline \\hline"
+	
+	
+	sOct = None
+	#sOct = "15764-15789_0"
+	
+	datf = None
+	simf = None
+	if sOct:
+		datf = backscatterFracTableLine(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/%s/%s.txt"%(sOct,sOct))
+		simf = backscatterFracTableLine(os.environ["UCNA_ANA_PLOTS"]+"/%s/%s/%s.txt"%(simV,sOct,sOct))
+	else:
+		datf = backscatterFracTableLine(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/OctetAsym_Offic.txt")
+		simf = backscatterFracTableLine(os.environ["UCNA_ANA_PLOTS"]+"/%s/%s.txt"%(simV,simV))
 		
-		
+	print "Data & %.2f\\%% & %.2f\\%% & %.2f\\%% \\\\ \\hline"%datf
+	print "MC & %.2f\\%% & %.2f\\%% & %.2f\\%% \\\\ \\hline"%simf
+	print "Error & %.0f\\%% & %.0f\\%% & %.0f\\%% \\\\ \\hline"%tuple([ 100*(simf[t]-datf[t])/datf[t] for  t in range(3)])
+	print "\\end{tabular}\\caption{Backscatter events as fraction of Type 0}\\end{table}"
+
+
+
 if __name__=="__main__":
 	
+	backscatterFracTable("OctetAsym_Offic_SimPen")
+	exit(0)
+	
 	if 0:
-		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2")
+		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_SimMagF/")
 		MCC.backscatter_fractions()
-		MCC.plot_endpoints()
-		
+		exit(0)
+		#MCC.plot_endpoints()
+	
 		conn=open_connection()
-		#conn=None
+		conn=None
 		MCC.endpoint_gain_tweak(conn)
 		exit(0)
-
+	
 	for i in range(3):				
 		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
 		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)

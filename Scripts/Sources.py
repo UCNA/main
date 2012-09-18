@@ -220,7 +220,8 @@ class LinearityCurve:
 			return
 		dmin,dmax = min([p[0] for p in combodat]),max([p[0] for p in combodat])
 		dmin=min(dmin,100)
-		self.fitter.fit(combodat,cols=(0,1,2),errorbarWeights=True)
+		#self.fitter.fit(combodat,cols=(0,1,2),errorbarWeights=True)
+		self.fitter.fit(combodat,cols=(0,1))
 		trimcdat = []
 		for p in combodat:
 			if not 1/1.2 < p[1]/self.fitter(p[0]) < 1.2:
@@ -456,13 +457,13 @@ def plotBackscatters(conn,rlist):
 # calibration definitions:
 #				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
 cal_2010 = [
-			(	13883,	13894,	13890,	13879,	13964,		94,		97,			129 ),	# 0 first usable? data + little Xe
-			(	14104,	14116,	14111,	14077,	14380,		144,	147,		129 ),	# 1	Columbus Day weekend + big Xe	
-			(	14383,	14394,	14390,	14383,	14507,		212,	215,		129 ),	# 2 Oct. 15-21 week
-			(	14516,	14530,	14524,	14513,	14667,		268,	271,		129 ),	# 3 Oct. 22-24 weekend
-			(	14736,	14746,	14743,	14688,	14994,		330,	333,		129 ),	# 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
-			(	15645,	15662,	15653,	15084,	15915,		437,	440,		129	),	# 5 Nov. 22-29 Thanksgiving Week
-			(	15916,	15939,	15931,	15916,	100000,		553,	555,		129	)	# 6 Post-Thanksgiving
+			(	13883,	13894,	13890,	13879,	13964,		94,		97,			147 ),	# 63 0 first usable? data + little Xe
+			(	14104,	14116,	14111,	14077,	14380,		144,	147,		147 ),	# 63 1	Columbus Day weekend + big Xe
+			(	14383,	14394,	14390,	14383,	14507,		212,	215,		147 ),	# 63 2 Oct. 15-21 week
+			(	14516,	14530,	14524,	14513,	14667,		268,	271,		147 ),	# 63 3 Oct. 22-24 weekend
+			(	14736,	14746,	14743,	14688,	14994,		330,	333,		147 ),	# 63 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
+			(	15645,	15662,	15653,	15084,	15915,		437,	440,		151 ),	# 65 5 Nov. 22-29 Thanksgiving Week
+			(	15916,	15939,	15931,	15916,	100000,		553,	555,		151 )	# 65 6 Post-Thanksgiving
 			]
 			
 cal_2011 = [
@@ -507,8 +508,8 @@ if __name__=="__main__":
 			#continue
 			
 			# make new calibrations set
-			ecid = None
-			if False and len(c)>2:
+			# ecid = None
+			if True and len(c)>2:
 				ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
 			
 			# fit linearity curves for each PMT

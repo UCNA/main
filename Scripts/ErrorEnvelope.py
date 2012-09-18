@@ -53,6 +53,8 @@ def plotAllErrors(outpath,year,s="Both",t=4):
 			continue
 		print k,peakNames[k]
 		for l in gdat:
+			if abs(l[-1].erecon-l[-1].sim.erecon) > 15:
+				print "****************"
 			if abs(l[-1].erecon-l[-1].sim.erecon) > 6:
 				print "Large error",l[-1].src.run,l[-1].uid,l[-1].erecon-l[-1].sim.erecon,"from expected"
 		g.plot(graph.data.points(gdat,x=1,y=2,title=None), [graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[scols[k]]),])

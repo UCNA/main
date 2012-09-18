@@ -15,9 +15,9 @@ def processOctets(sim,omin,omax):
 	freplaylist.close()
 	os.system("cat oct_replaylist.txt")
 	if sim:
-		os.system("nice -n 10 parallel -P 4 < oct_replaylist.txt")
+		os.system("nice -n 5 parallel -P 6 < oct_replaylist.txt")
 	else:
-		os.system("nice -n 10 parallel < oct_replaylist.txt")
+		os.system("nice -n 5 parallel -P 6 < oct_replaylist.txt")
 	os.system("rm oct_replaylist.txt")
 	if sim:
 		os.system("cd ..; ./UCNAnalyzer pr oct -1000 x x\n");
@@ -32,7 +32,7 @@ def processSources(rmin,rmax):
 			freplaylist.write(pcmd%(r,r))
 		freplaylist.close()
 		os.system("cat source_replaylist.txt")
-		os.system("nice -n 10 parallel < source_replaylist.txt")
+		os.system("nice -n 10 parallel -P 6 < source_replaylist.txt")
 		os.system("rm source_replaylist.txt")
 
 def processXeMap(rmin,rmax,nr):
@@ -54,7 +54,7 @@ def processXeSim(rmin,rmax,nr):
 		freplaylist.close()
 		os.system("cat xenon_simlist.txt")
 		nproc = 6
-		if nr > 12:
+		if nr > 15:
 			nproc = 3
 		os.system("nice -n 15 parallel -P %i < xenon_simlist.txt"%nproc)
 		os.system("rm xenon_simlist.txt")

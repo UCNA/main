@@ -32,10 +32,10 @@ class XeFile(QFile):
 	def __init__(self,fname):
 		QFile.__init__(self,fname)
 		
-		self.sects = SectorCutter(self.getFirst("SectorCutter"))
+		self.sects = SectorCutter(self.getFirst("SectorCutter_Xe"))
 		
 		self.tuben = {}
-		for m in [XeFit(m) for m in self.dat.get("tuben",[])]:
+		for m in [XeFit(m) for m in self.dat.get("sectDat",[]) if m.dat.get("m")==["%i"%self.sects.nSectors]]:
 			self.tuben[(m.side,m.tube)] = m
 		
 		self.sectdat = {}
@@ -74,7 +74,7 @@ def XeGainTweak(rn,conn,nrings):
 				upload_gain_tweak(conn,[rn],s,t,ldat/oldtweak,lsim)
 							
 							
-def XeTimeEvolution(rmin,rmax):
+def XeTimeEvolution(rmin,rmax,nrings):
 	simpath = os.environ["UCNA_ANA_PLOTS"]+"/PositionMaps/SingleRunsSim/"
 	conn = open_connection()
 	isotdat = {}						
@@ -83,7 +83,7 @@ def XeTimeEvolution(rmin,rmax):
 	tmin = 1e100
 	for rn in range(rmin,rmax+1):
 		try:
-			rname = "Xenon_%i_20_50"%rn
+			rname = "Xenon_%i_%i_50"%(rn,nrings)
 			xsim = XeFile(simpath+"/"+rname+"/"+rname+".txt")
 			trange = (getRunStartTime(conn,rn),getRunEndTime(conn,rn))
 			rtime = xsim.runtimes[rn]
@@ -203,8 +203,8 @@ def data_v_sim(rmin,rmax,nrings):
 
 if __name__ == "__main__":
 	
-	#XeTimeEvolution(14283,14333)
-	XeTimeEvolution(15992,16077)
+	#XeTimeEvolution(14283,14333,15)
+	#XeTimeEvolution(15992,16077,15)
 	#exit(0)
 	
 	#data_v_sim(14282,14347,12)
@@ -216,7 +216,7 @@ if __name__ == "__main__":
 	
 	conn = open_connection()
 	#conn = None
-	#for rn in range(14282,14347+1):
-	for rn in range(15991,16077+1):
-		XeGainTweak(rn,conn,20)
+	for rn in range(14282,14347+1):
+	#for rn in range(15991,16077+1):
+		XeGainTweak(rn,conn,15)
 

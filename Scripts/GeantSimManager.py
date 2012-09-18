@@ -288,17 +288,18 @@ if __name__ == "__main__":
 		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
 		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
 		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
-		betaSim.launch_sims(nEvents=5e6,nClusters=52,hours_old=0)
-		betaSim.launch_postanalyzer(0,10000)
+		betaSim.launch_sims(nEvents=5e7,nClusters=520,hours_old=10*24)
+		betaSim.launch_postanalyzer(52,10000)
 	
-	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 52 clusters
+	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 104 clusters
 	if 0:
-		betaSim = GeantSimManager("20120815_MagF",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+		betaSim = GeantSimManager("20120824_MagF",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
 		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
 		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
-		betaSim.launch_sims(nEvents=1e7,nClusters=52,hours_old=10*24)
+		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
+		#betaSim.launch_sims(nEvents=1e7,nClusters=104,hours_old=0)
 		betaSim.launch_postanalyzer()
 	
 	####################				
@@ -306,7 +307,7 @@ if __name__ == "__main__":
 	####################
 	
 	# sources ["Bi207","Sn113","Ce139","Cd109","In114E","In114W","Cd113m"] 1e6 each
-	if 1:
+	if 0:
 		for g in ["Bi207","Sn113","Ce139"]:
 			sourceSim = GeantSimManager("20120823",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
 			sourceSim.settings["physlist"]="livermore"
@@ -334,12 +335,13 @@ if __name__ == "__main__":
 	#			"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
 	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
 	####################
-	if 0:
-		for g in ["Xe137_7-2-","Xe133_3-2+"]:
-			sourceSim = GeantSimManager("WideKev",vacuum="1.e-3 torr")
+	if 1:
+		for g in [	"Xe135_3-2+","Xe133_3-2+", "Xe129_11-2-","Xe131_11-2-", "Xe133_11-2-", "Xe135_11-2-", "Xe137_7-2-", "Xe127_1-2+", "Xe125_1-2+"	]:
+			sourceSim = GeantSimManager("20120917",vacuum="1.e-3 torr")
+			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=3e6,nClusters=18,hours_old=24)
+			sourceSim.launch_sims(nEvents=3e6,nClusters=54,hours_old=0)
 			sourceSim.launch_postanalyzer()
 
 	
