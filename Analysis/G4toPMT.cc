@@ -30,7 +30,7 @@ void G4toPMT::doUnits() {
 	for(unsigned int i=0; i<4; i++)
 		primPos[i] *= 1000.0;	// convert m to mm
 	// wirechamber position projection plus empirical window-diameter-matching fudge factor
-	const double wcPosConversion = 10.0*sqrt(0.6)*(51.96/52.8);
+	const double wcPosConversion = 10.0*sqrt(0.6)*(51.96/52.4);
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
 			int flip = (d==X_DIRECTION && s==EAST)?-1:1;

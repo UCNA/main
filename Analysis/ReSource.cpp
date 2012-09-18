@@ -374,7 +374,7 @@ void reSource(RunNum rn) {
 		std::string g4dat = "/home/mmendenhall/geant4/output/FixGeom_";
 		printf("Loading source simulation data...\n");
 		if(simSource.t=="Bi207" || simSource.t=="Ce139" || simSource.t=="Sn113")
-			g4dat = "/home/mmendenhall/geant4/output/20120817_";
+			g4dat = "/home/mmendenhall/geant4/output/20120823_";
 		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
 		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
 			g2p = new G4toPMT();

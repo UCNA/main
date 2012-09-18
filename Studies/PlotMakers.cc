@@ -448,7 +448,7 @@ void decomposeXenon(RunNum rn, bool includeFast) {
 	std::vector<TH1F*> hIsot;
 	LinHistCombo LHC;
 	for(unsigned int i=0; i<isots.size(); i++) {
-		std::string g4dat = "/home/mmendenhall/geant4/output/WideKev_";
+		std::string g4dat = "/home/mmendenhall/geant4/output/20120917_";
 		G4SegmentMultiplier g2p(SC);
 		g2p.addFile(g4dat + isots[i] + "/analyzed_*.root");
 		assert(g2p.getnFiles());
@@ -724,3 +724,18 @@ void refitXeAnode(std::string datname) {
 	RA.addPlugin(AP);
 	AP->genAnodePosmap();
 }
+
+//-------------------------------------------------------------//
+
+void calcAnalysisChoices(OutputManager& OM, const std::string& inflname) {
+	for(AnalysisChoice ac = ANCHOICE_A; ac <= ANCHOICE_K; ++ac) {
+		OctetAnalyzer OA(&OM, "Anchoice_"+ctos(choiceLetter(ac)), inflname);
+		AsymmetryAnalyzer* AA = new AsymmetryAnalyzer(&OA);
+		AA->anChoice = ac;
+		OA.addPlugin(AA);
+		OA.calculateResults();
+		OA.makePlots();
+		OA.write();
+	}
+}
+

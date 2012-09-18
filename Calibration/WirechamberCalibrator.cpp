@@ -67,9 +67,10 @@ std::vector<std::string> WirechamberCalibrator::getCathChans(Side s, AxisDirecti
 
 float WirechamberCalibrator::sep23Cut(Side, float Escint) {
 	// magic numbers formula from simulation
-	//return 2.68 + 4.17*exp(-Escint/146);	// 20120810 baseline simulation
-	//return 3.82 + 5.31*exp(-Escint/127.6);	// gold plate, with 50% dead gas contrib
-	return 3.69 + 4.80*exp(-Escint/135.3);	// 20120822 small cuts + 50% dead contrib
+	//return 2.68 + 4.17*exp(-Escint/146);		// 20120810 baseline simulation
+	//return 3.69 + 4.80*exp(-Escint/135.3);	// 20120822 small cuts + 50% dead contrib
+	//return 4.16 + 5.94*exp(-Escint/125.6);	// 20120823 +5mm window bowing
+	return 3.99 + 5.39*exp(-Escint/148.8); 		// 20120824 MagF
 }
 
 float WirechamberCalibrator::normMWPC(Side s, float Escint, float Emwpc) {
@@ -82,8 +83,10 @@ float WirechamberCalibrator::sep23Prob(Side s, float Escint, float Emwpc) {
 	
 	// asymptotic value
 	double asympt = ((m<0)?
-					 0.0456+3.138e-4*Escint+8.240e-8*Escint*Escint :
-					 0.9505-0.2827*exp(-Escint/132.3) );
+					 0.053+0.000301*Escint+1.27e-07*Escint*Escint :
+					 0.962-0.285*exp(-Escint/149.5) ); // 20120824 MagF
+					 //0.0456+3.138e-4*Escint+8.240e-8*Escint*Escint :
+					 //0.9505-0.2827*exp(-Escint/132.3) );
 	// falloff scale
 	double m0 = (m<0)? -0.15 : 0.20;
 	

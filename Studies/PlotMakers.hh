@@ -105,4 +105,7 @@ void lowStatsTest();
 /// redo position map from Xe anode data
 void refitXeAnode(std::string datname);
 
+/// generate asymmetry spectra for each analysis choice
+void calcAnalysisChoices(OutputManager& OM, const std::string& inflname);
+
 #endif

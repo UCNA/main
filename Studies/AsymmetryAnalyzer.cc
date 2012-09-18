@@ -12,9 +12,9 @@ Double_t asymmetryFitFunc(const Double_t* x, const Double_t* par) {
 
 TF1 AsymmetryAnalyzer::asymmetryFit = TF1("asymFit",&asymmetryFitFunc,0,neutronBetaEp,1);
 TF1 AsymmetryAnalyzer::averagerFit = TF1("averagerFit","pol0",0,neutronBetaEp);
-AnalysisChoice  AsymmetryAnalyzer::anChoice = ANCHOICE_A;
 
-AsymmetryAnalyzer::AsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500) {
+AsymmetryAnalyzer::AsymmetryAnalyzer(OctetAnalyzer* OA):
+OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500), anChoice(ANCHOICE_A) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			if(t==TYPE_II_EVENT || t==TYPE_III_EVENT) {
@@ -159,6 +159,14 @@ void AsymmetryAnalyzer::calculateResults() {
 			ARtot.etypes.insert(TYPE_II_EVENT);
 			ARtot.etypes.insert(TYPE_III_EVENT);
 		}
+		if(anChoice == ANCHOICE_J) {
+			*qTotalSpectrum[s] += *qEnergySpectra[otherSide(s)][nBetaTubes][TYPE_II_EVENT];
+			ARtot.etypes.insert(TYPE_II_EVENT);
+		}
+		if(anChoice == ANCHOICE_K) {
+			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
+			ARtot.etypes.insert(TYPE_III_EVENT);
+		}
 	}
 	// calculate SR and SS
 	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
@@ -258,9 +266,8 @@ void AsymmetryAnalyzer::makePlots() {
 	hSuperSum->Draw();
 	printCanvas("SuperSum");
 		
-	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_III_EVENT; t++)
+	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++)
 		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][t], qEnergySpectra[WEST][nBetaTubes][t], true, "Energy");
-	drawQuadSides(qEnergySpectra[EAST][nBetaTubes][TYPE_IV_EVENT], qEnergySpectra[WEST][nBetaTubes][TYPE_IV_EVENT], true, "Energy");
 }
 
 void AsymmetryAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
@@ -278,14 +285,33 @@ void AsymmetryAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 	printCanvas("DataComparison/SuperSum");
 	double evtscale = dat.hEvtSS[TYPE_0_EVENT]->Integral()/hEvtSS[TYPE_0_EVENT]->Integral();
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+		// data vs. MC supersums by event type
 		dat.hEvtSS[tp]->GetXaxis()->SetRangeUser(0,800);
 		hEvtSS[tp]->GetXaxis()->SetRangeUser(0,800);
+		dat.hEvtSS[tp]->SetMinimum(0);
+		hEvtSS[tp]->SetMinimum(0);
 		dat.hEvtSS[tp]->SetMarkerStyle(1);
 		hEvtSS[tp]->SetMarkerStyle(1);
 		hEvtSS[tp]->Scale(evtscale);
 		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
 		printCanvas("DataComparison/SuperSum_Type_"+itos(tp));
+		// match data, MC scales to compare shapes
+		hEvtSS[tp]->Scale(dat.hEvtSS[tp]->Integral()/hEvtSS[tp]->Integral());
+		hEvtSS[tp]->SetMinimum(0);
+		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
+		printCanvas("DataComparison/SuperSumScaled_Type_"+itos(tp));
 		
+		if(tp>TYPE_0_EVENT) {
+			dat.hTpAsym[tp]->Rebin(4);
+			dat.hTpAsym[tp]->Scale(1/4.);
+			dat.hTpAsym[tp]->SetMinimum(-0.10);
+			dat.hTpAsym[tp]->SetMaximum(0.0);
+			
+			hTpAsym[tp]->Rebin(4);
+			hTpAsym[tp]->Scale(1/4.);
+			hTpAsym[tp]->SetMinimum(-0.10);
+			hTpAsym[tp]->SetMaximum(0.0);
+		}
 		dat.hTpAsym[tp]->GetXaxis()->SetRangeUser(0,800);
 		hTpAsym[tp]->GetXaxis()->SetRangeUser(0,800);
 		dat.hTpAsym[tp]->SetMarkerStyle(1);
@@ -300,9 +326,11 @@ void AsymmetryAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 				qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerColor(2+2*s);
 				qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerStyle(22+4*afp);
+				qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerSize(0.25);
 				hToPlot.push_back(qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]);
 				dat.qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerColor(2+2*s);
 				dat.qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerStyle(20+4*afp);
+				dat.qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]->SetMarkerSize(0.25);
 				hToPlot.push_back(dat.qEnergySpectra[s][nBetaTubes][t]->fgbg[afp]->h[GV_OPEN]);
 			}
 		}

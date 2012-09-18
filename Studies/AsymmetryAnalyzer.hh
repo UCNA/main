@@ -38,6 +38,8 @@ public:
 	quadHists* q23ProbCut[2][TYPE_III_EVENT+1];						//< Type II/III spectra by probability cut for [side][type]
 	quadHists* qTotalSpectrum[2];									//< total spectrum based on analysis choice
 	
+	AnalysisChoice anChoice;	//< asymmetry analysis choice
+
 protected:
 	
 	/// fit asymmetry over given range
@@ -52,7 +54,6 @@ protected:
 	
 	static TF1 asymmetryFit;		//< fit function for asymmetry
 	static TF1 averagerFit;			//< pol0 line fit for averaging
-	static AnalysisChoice anChoice;	//< asymmetry analysis choice
 };
 
 #endif

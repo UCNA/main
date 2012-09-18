@@ -291,9 +291,9 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, XenonAnalyzer& XA, 
 			XAMi.push_back(new SimXenonAnalyzer(&OM1,singleName+"_"+isots[n],"",XA.myXeSpec->sects.n));
 			G4SegmentMultiplier GSM(SectorCutter(4,52.));
 			GSM.setCalibrator(PCal);
-			std::string simFile = "/home/mmendenhall/geant4/output/WideKev_"+isots[n]+"/analyzed_";
-			unsigned int nTot = 18;
-			unsigned int stride = 7;
+			std::string simFile = "/home/mmendenhall/geant4/output/20120917_"+isots[n]+"/analyzed_";
+			unsigned int nTot = 54;
+			unsigned int stride = 23;
 			for(unsigned int i=0; i<stride; i++)
 				GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
 			XAMi.back()->loadSimData(GSM, nToSim*(isots[n]=="Xe135_3-2+"?1.5:0.25));

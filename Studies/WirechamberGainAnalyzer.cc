@@ -146,7 +146,7 @@ void AnodeGainAnalyzer::calculateResults() {
 				fLandau.SetRange(0,2*c);
 				printf("\n---- Anode %s Type %i E=%i : estimated h=%.2g at MPV=%.2f (sigma=%.2f) ----\n",
 					   sideWords(s),tp,(int)e0,fLandau.GetParameter(0),c,fLandau.GetParameter(2));
-				hSlices[s][tp][i]->Fit(&fLandau,"RBME");
+				hSlices[s][tp][i]->Fit(&fLandau,"RBNME");
 				Stringmap m;
 				m.insert("side",ctos(sideNames(s)));
 				m.insert("type",itos(tp));
@@ -212,6 +212,7 @@ void AnodeGainAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 		std::vector<TH1*> hToPlot;
 		norm23[s]->h[GV_OPEN]->SetLineColor(4);
 		dat.norm23[s]->h[GV_OPEN]->SetLineColor(2);
+		norm23[s]->h[GV_OPEN]->Scale(dat.norm23[s]->h[GV_OPEN]->Integral()/norm23[s]->h[GV_OPEN]->Integral());
 		hToPlot.push_back(norm23[s]->h[GV_OPEN]);
 		hToPlot.push_back(dat.norm23[s]->h[GV_OPEN]);
 		drawSimulHistos(hToPlot);
@@ -232,6 +233,16 @@ void AnodeGainAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 			gAnode[s][tp]->Draw("P");
 			printCanvas(sideSubst("DataComparison/EMWPC_%c_",s)+itos(tp));
 		}
+		
+		// Type 0 upper energy anode slices
+		unsigned int i0 = 1;
+		for(unsigned int i=i0+1; i<hSlices[s][TYPE_0_EVENT].size(); i++) {
+			hSlices[s][TYPE_0_EVENT][i0]->Add(hSlices[s][TYPE_0_EVENT][i]);
+			assert(i<dat.hSlices[s][TYPE_0_EVENT].size());
+			dat.hSlices[s][TYPE_0_EVENT][i0]->Add(dat.hSlices[s][TYPE_0_EVENT][i]);
+		}
+		drawHistoPair(dat.hSlices[s][TYPE_0_EVENT][i0], hSlices[s][TYPE_0_EVENT][i0]);
+		printCanvas(sideSubst("DataComparison/AnodeSpec_%c",s));
 	}
 }
 
@@ -527,7 +538,7 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 		if(n==0) {
 			TF1 fPol("fPol","pol2",25,625);
 			gCombo->Fit(&fPol,"R");
-			printf("Low Asympt: %.3g+%.3g*Escint+%.3g*Escint*Escint\n",fPol.GetParameter(0),fPol.GetParameter(1),fPol.GetParameter(2));
+			printf("Low Asympt: %.3f+%.3g*Escint+%.3g*Escint*Escint\n",fPol.GetParameter(0),fPol.GetParameter(1),fPol.GetParameter(2));
 		}
 		if(n==2) {
 			TF1 expFit("expFit","[0]-[1]*exp(-x/[2])",25,625);
@@ -535,7 +546,7 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 			expFit.SetParameter(1,0.2);
 			expFit.SetParameter(2,100);
 			gCombo->Fit(&expFit,"RBME");
-			printf("High Asympt: %.3g-%.3g*exp(-Escint/%.1g)\n",expFit.GetParameter(0),expFit.GetParameter(1),expFit.GetParameter(2));
+			printf("High Asympt: %.3f-%.3f*exp(-Escint/%.1f)\n",expFit.GetParameter(0),expFit.GetParameter(1),expFit.GetParameter(2));
 		}
 		
 		gCombo->Draw("AP");

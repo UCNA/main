@@ -16,10 +16,13 @@ public:
 	virtual void calculateResults();
 	/// output plot generation
 	virtual void makePlots();
+	/// MC/data comparison plots
+	virtual void compareMCtoData(AnalyzerPlugin* AP);
 	
 	SectorCutter offSects;						//< sector cutter for position binning data
 	std::vector<fgbgPair*> poff[2];				//< East-West position offsets for [x/y direction] in each sector
 	quadHists* qPositions[2][TYPE_III_EVENT+1];	//< event positions quad hists for [side][type]
+	quadHists* qRadius2[2][TYPE_III_EVENT+1];	//< event radius^2 by [side][type]
 };
 
 #endif

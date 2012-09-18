@@ -41,7 +41,7 @@ double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt, const s
 	TH1* maxHist = *std::max_element(hists.begin(),hists.end(),compareHistosByMax);
 	assert(maxHist);
 	printf("with ymax = %g...",maxHist->GetMaximum()); fflush(stdout);
-	maxHist->SetAxisRange(xmin,xmax,"X");
+	//maxHist->SetAxisRange(xmin,xmax,"X");
 	std::string oldTitle = maxHist->GetTitle();
 	if(newTitle != "DEFAULT")
 		maxHist->SetTitle(newTitle.c_str());
