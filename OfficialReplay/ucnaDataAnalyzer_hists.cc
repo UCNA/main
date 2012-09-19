@@ -13,6 +13,10 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 		hCathMax[s][1] = registeredTH1F(sideSubst("hCathMaxCut_%c",s),sideSubst("%s Max Cathode, MWPC Cut",s),200,-200,4200);
 		hCathMax[s][1]->SetLineColor(2);
 		hCathMax[s][0]->GetXaxis()->SetTitle("ADC Channels");
+		hCathMaxSum[s][0] = registeredTH1F(sideSubst("hCathMaxSum_%c",s),sideSubst("%s Max Cathode Sum",s),200,-200,8200);
+		hCathMaxSum[s][1] = registeredTH1F(sideSubst("hCathMaxSumCut_%c",s),sideSubst("%s Max Cathode Sum, MWPC Cut",s),200,-200,8200);
+		hCathMaxSum[s][1]->SetLineColor(2);
+		hCathMaxSum[s][0]->GetXaxis()->SetTitle("ADC Channels");
 		hAnode[s][0] = registeredTH1F(sideSubst("hAnode_%c",s),sideSubst("%s Anode",s),200,-200,4000);
 		hAnode[s][1] = registeredTH1F(sideSubst("hAnodeCut_%c",s),sideSubst("%s Anode, MWPC Cut",s),200,-200,4000);
 		hAnode[s][1]->SetLineColor(2);
@@ -154,10 +158,12 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 		
 		// wirechambers
 		hCathMax[s][0]->Fill(fCathMax[s].val);
+		hCathMaxSum[s][0]->Fill(fCathMaxSum[s].val);
 		hCathSum[s][0]->Fill(fCathSum[s].val);
 		hAnode[s][0]->Fill(fMWPC_anode[s].val);
 		if(passedMWPC(s)) {
 			hCathMax[s][1]->Fill(fCathMax[s].val);
+			hCathMaxSum[s][1]->Fill(fCathMaxSum[s].val);
 			hCathSum[s][1]->Fill(fCathSum[s].val);
 			hAnode[s][1]->Fill(fMWPC_anode[s].val);
 			if(fPID==PID_BETA && fSide==s) {
@@ -245,6 +251,11 @@ void ucnaDataAnalyzer11b::plotHistos() {
 		hCathMax[s][1]->Draw("Same");
 		drawCutRange(fCathMax[s].R);
 		printCanvas(sideSubst("Wirechamber/CathMax_%c",s));
+		
+		hCathMaxSum[s][0]->Draw();
+		hCathMaxSum[s][1]->Draw("Same");
+		drawCutRange(fCathMaxSum[s].R);
+		printCanvas(sideSubst("Wirechamber/CathMaxSum_%c",s));
 		
 		hAnode[s][0]->Draw();
 		hAnode[s][1]->Draw("Same");

@@ -73,7 +73,7 @@ public:
 	/// beam + data cuts
 	bool passesBeamCuts();
 	/// overall wirechamber cut
-	inline bool passedMWPC(Side s) const { return fPassedCathMax[s]; } 
+	inline bool passedMWPC(Side s) const { return fPassedCathMaxSum[s]; }
 	/// scintillator TDC cut
 	inline bool passedCutTDC(Side s) const { return fScint_tdc[s][nBetaTubes].inRange(); }
 	/// overall wirechamber+scintillator cut
@@ -183,10 +183,12 @@ protected:
 	Int_t fPassedAnode[2];	//< whether passed anode cut on each side 
 	Int_t fPassedCath[2];	//< whether passed cathode sum cut on each side
 	Int_t fPassedCathMax[2];//< whether passed cathode max cut on each side
+	Int_t fPassedCathMaxSum[2];	//< whether passed cathode max sum on each side
 	Int_t fPassedGlobal;	//< whether this event passed global beam/misc cuts on each side (counts for total run time)
 	wireHit wirePos[2][2];	//< wire positioning data for [side][direction]
 	CutVariable fCathSum[2];//< combined x+y cathode sum on each side
 	CutVariable fCathMax[2];//< min(max cathode each plane) for each side
+	CutVariable fCathMaxSum[2];	//< sum of max cathode from each plane for each side
 	Float_t fEMWPC[2];		//< reconstructed energy deposition in wirechamber
 	UInt_t fTaggedBack[2];	//< whether event was tagged by the muon backing veto on each side
 	UInt_t fTaggedDrift[2];	//< whether event was tagged by muon veto drift tubes on each side
@@ -255,6 +257,7 @@ protected:
 	void drawExclusionBlips(Int_t c=4);
 	// histograms
 	TH1F* hCathMax[2][2];				//< cathode max, [side][cut]
+	TH1F* hCathMaxSum[2][2];			//< cathode max sum, [side][cut]
 	TH1F* hAnode[2][2];					//< anode, [side][cut]
 	TH1F* hCathSum[2][2];				//< cathode sum, [side][cut]
 	TH1F* hBackTDC[2];					//< backing TDC

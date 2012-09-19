@@ -64,6 +64,7 @@ void ucnaDataAnalyzer11b::loadCuts() {
 		loadCut(fMWPC_anode[s], sideSubst("Cut_MWPC_%c_Anode",s));
 		loadCut(fCathMax[s],sideSubst("Cut_MWPC_%c_CathMax",s));
 		loadCut(fCathSum[s],sideSubst("Cut_MWPC_%c_CathSum",s));
+		loadCut(fCathMaxSum[s],sideSubst("Cut_MWPC_%c_CathMaxSum",s));
 		loadCut(fBacking_tdc[s], sideSubst("Cut_TDC_Back_%c",s));
 		loadCut(fDrift_tac[s], sideSubst("Cut_ADC_Drift_%c",s));
 		loadCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c_Selftrig",s));
@@ -205,9 +206,11 @@ void ucnaDataAnalyzer11b::reconstructPosition() {
 		fMWPC_anode[s].val -= PCal.getPedestal(sideSubst("MWPC%cAnode",s),fTimeScaler[BOTH]);
 		fCathSum[s].val = wirePos[s][X_DIRECTION].cathodeSum + wirePos[s][Y_DIRECTION].cathodeSum;
 		fCathMax[s].val = wirePos[s][X_DIRECTION].maxValue<wirePos[s][Y_DIRECTION].maxValue?wirePos[s][X_DIRECTION].maxValue:wirePos[s][Y_DIRECTION].maxValue;
+		fCathMaxSum[s].val = wirePos[s][X_DIRECTION].maxValue+wirePos[s][Y_DIRECTION].maxValue;
 		fPassedAnode[s] = fMWPC_anode[s].inRange();
 		fPassedCath[s] = fCathSum[s].inRange();
-		fPassedCathMax[s] = fCathMax[s].inRange();			
+		fPassedCathMax[s] = fCathMax[s].inRange();
+		fPassedCathMaxSum[s] = fCathMaxSum[s].inRange();
 	}
 }
 
