@@ -113,6 +113,6 @@ public:
 unsigned int processPulsePair(OctetAnalyzer& OA, const Octet& PP);
 
 /// process a set of octets; return number of processed pulse-pairs
-unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& O, double replaceIfOlder = 0);
+unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& O, double replaceIfOlder = 0, bool doPlots = true);
 	
 #endif

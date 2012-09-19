@@ -385,7 +385,7 @@ unsigned int processPulsePair(OctetAnalyzer& OA, const Octet& PP) {
 	return nproc;
 }
 
-unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, double replaceIfOlder) {
+unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, double replaceIfOlder, bool doPlots) {
 	
 	unsigned int nproc = 0;
 	
@@ -415,7 +415,7 @@ unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, do
 			} else {
 				subOA = (OctetAnalyzer*)OA.makeAnalyzer(octit->octName(),"");
 				subOA->depth = octit->divlevel;
-				nproc += processOctets(*subOA,octit->getSubdivs(octit->divlevel+1,false),replaceIfOlder);
+				nproc += processOctets(*subOA,octit->getSubdivs(octit->divlevel+1,false),replaceIfOlder, doPlots);
 			}
 			OA.addSegment(*subOA);
 			delete(subOA);
@@ -429,7 +429,8 @@ unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, do
 		OA.bgSubtractAll();
 	OA.calculateResults();
 	OA.uploadAnaResults();
-	OA.makePlots();
+	if(doPlots)
+		OA.makePlots();
 	OA.write();
 	OA.setWriteRoot(true);
 	
