@@ -34,6 +34,8 @@ Cut_MWPC_E_CathSum:	start = 700	end = 100e3	runStart = 13000	runEnd = 100000
 Cut_MWPC_W_CathSum:	start = 850	end = 100e3	runStart = 13000	runEnd = 100000
 Cut_MWPC_E_CathMax:	start = 125	end = 5000	runStart = 13000	runEnd = 100000
 Cut_MWPC_W_CathMax:	start = 150	end = 5000	runStart = 13000	runEnd = 100000
+Cut_MWPC_E_CathMaxSum:	start = 300	end = 10000	runStart = 13000	runEnd = 100000
+Cut_MWPC_W_CathMaxSum:	start = 300	end = 10000	runStart = 13000	runEnd = 100000
 Cut_MWPC_E_Anode:	start = 60	end = 5000	runStart = 13000	runEnd = 100000
 Cut_MWPC_W_Anode:	start = 75	end = 5000	runStart = 13000	runEnd = 100000
 
