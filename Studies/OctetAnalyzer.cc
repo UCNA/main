@@ -41,6 +41,12 @@ void quadHists::setDrawRange(double y, bool maximum) {
 				fgbg[afp]->h[gv]->SetMinimum(y);
 }
 
+void quadHists::setRangeUser(double mn, double mx, AxisDirection d) {
+	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
+		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv)
+			(d==X_DIRECTION?fgbg[afp]->h[gv]->GetXaxis():fgbg[afp]->h[gv]->GetYaxis())->SetRangeUser(mn,mx);
+}
+
 void quadHists::setAxisTitle(AxisDirection d, const std::string& ttl) {
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		fgbg[afp]->setAxisTitle(d,ttl);
@@ -394,7 +400,7 @@ unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, do
 	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
 		octn++;
 		//if(octn == 2+1 || octn == 17+1 || octn == 30+1) continue; // anomalous gamma backgrounds
-		
+		//if(octn>29) continue;
 		
 		// check if there are any runs to process
 		printf("Processing octet '%s' at division %i...\n",octit->octName().c_str(),octit->divlevel);

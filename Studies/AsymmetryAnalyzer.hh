@@ -15,6 +15,8 @@ public:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// calculate super-ratio asymmetry from anode spectra
 	virtual void calculateResults();
+	/// combine events used to form asymmetry, super-sums
+	void calcSuperCombos();
 	/// output plot generation
 	virtual void makePlots();
 	/// upload results to analysis results DB
@@ -49,6 +51,7 @@ protected:
 	/// various beta spectrum endpoint fits
 	void endpointFits();
 	
+	AnaResult ARtot;					//< temporary analysis result holder
 	std::vector<AnaResult> asymFits;	//< list of asymmetry fits available for upload
 	std::vector<AnaCutSpec> asymCuts;	//< list of cut specifications for asymmetry fits
 	

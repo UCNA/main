@@ -58,7 +58,7 @@ void dumpPosmap(std::string basepath, unsigned int pnum) {
 	
 	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<PCor->getNMaps(s); t++) {
-	
+			
 			SectorCutter& psects = PCor->getSectors(s,t);
 			
 			for(unsigned int n=0; n<psects.nSectors(); n++) {
@@ -73,7 +73,7 @@ void dumpPosmap(std::string basepath, unsigned int pnum) {
 				m.insert("x",x);
 				m.insert("y",y);
 				if(t<nBetaTubes)
-					m.insert("light",PCor->eval(s,t,x,y,true)); 
+					m.insert("light",PCor->eval(s,t,x,y,true));
 				else
 					m.insert("light",PCal->nPE(s, nBetaTubes, 1000, x, y, 0));
 				m.insert("energy",1.0);
@@ -283,7 +283,7 @@ void PosPlotter::npePlot(PMTCalibrator* PCal) {
 			
 			interpogrid->Draw("COL Z");
 			//drawSectors(Sects,6);
-			OM->printCanvas(sideSubst("nPE_%c",s)+itos(t));			
+			OM->printCanvas(sideSubst("nPE_%c",s)+itos(t));
 		}
 	}
 }
@@ -506,7 +506,7 @@ void decomposeXenon(RunNum rn, bool includeFast) {
 
 //-------------------------------------------------------------//
 
-ErrTables::ErrTables(const std::string& datset): 
+ErrTables::ErrTables(const std::string& datset):
 OM("nameUnused",getEnvSafe("UCNA_ANA_PLOTS")),
 Adat(&OM, "nameUnused", getEnvSafe("UCNA_ANA_PLOTS")+"/"+datset+"/"+datset) {
 	Adat.calculateResults();
@@ -522,7 +522,7 @@ ErrTables::~ErrTables() {
 }
 
 double ErrTables::getRexp(double e) const {
-	return (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e) / 
+	return (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e) /
 			(S[EAST][AFP_ON]->Eval(e)*S[WEST][AFP_OFF]->Eval(e)));
 }
 
@@ -543,12 +543,12 @@ void ErrTables::gainfluctsTable(double delta) {
 	for(unsigned int b=0; b<800; b+=10) {
 		double e = b+5.;
 		double A = getAexp(e);
-		double Rp = (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e/(1-delta)) / 
+		double Rp = (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e/(1-delta)) /
 					 (S[EAST][AFP_ON]->Eval(e/(1+delta))*S[WEST][AFP_OFF]->Eval(e)));
 		double Ap = AofR(Rp);
 		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,0.,(A-Ap)/A);
 	}
-	fclose(f);	
+	fclose(f);
 }
 
 void ErrTables::pedShiftsTable(double delta) {
@@ -558,7 +558,7 @@ void ErrTables::pedShiftsTable(double delta) {
 	for(unsigned int b=0; b<800; b+=10) {
 		double e = b+5.;
 		double A = getAexp(e);
-		double Rp = (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e+delta) / 
+		double Rp = (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e+delta) /
 					 (S[EAST][AFP_ON]->Eval(e-delta)*S[WEST][AFP_OFF]->Eval(e)));
 		double Ap = AofR(Rp);
 		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,0.,(A-Ap)/A);
@@ -580,9 +580,9 @@ void ErrTables::muonVetoEfficTable(double delta) {
 	for(unsigned int b=0; b<800; b+=10) {
 		double e = b+5.;
 		double A = getAexp(e);
-		double Rp = ((S[EAST][AFP_OFF]->Eval(e)+0.5*delta*M[EAST][AFP_OFF]->Eval(e)) * 
-					 (S[WEST][AFP_ON]->Eval(e)+0.5*delta*M[WEST][AFP_ON]->Eval(e)) / 
-					 (S[EAST][AFP_ON]->Eval(e)-0.5*delta*M[EAST][AFP_ON]->Eval(e)) / 
+		double Rp = ((S[EAST][AFP_OFF]->Eval(e)+0.5*delta*M[EAST][AFP_OFF]->Eval(e)) *
+					 (S[WEST][AFP_ON]->Eval(e)+0.5*delta*M[WEST][AFP_ON]->Eval(e)) /
+					 (S[EAST][AFP_ON]->Eval(e)-0.5*delta*M[EAST][AFP_ON]->Eval(e)) /
 					 (S[WEST][AFP_OFF]->Eval(e)-0.5*delta*M[WEST][AFP_OFF]->Eval(e)));
 		double Ap = AofR(Rp);
 		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,0.,(A-Ap)/A);
@@ -625,7 +625,7 @@ void ErrTables::NGBGTable(double EScale, double dEScale, double WScale, double d
 	
 	double de = 10;
 	for(unsigned int b=0; b<800; b+=de) {
-
+		
 		double e = b+0.5*de;
 		double A = getAexp(e);
 		double NGBG = hNGBG->Eval(e);
@@ -707,18 +707,19 @@ void NGBGSpectra(std::string datname) {
 
 //-------------------------------------------------------------//
 
-void separate23(std::string datname) {
-	OutputManager OM("23Separation",getEnvSafe("UCNA_ANA_PLOTS")+"/Test/23Separation/");
-	RunAccumulator RA(&OM, "RunAccumulator", datname);
+void separate23(std::string simName) {
+	OutputManager OM("23Separation",getEnvSafe("UCNA_ANA_PLOTS")+"/test/23Separation_"+simName+"/");
+	RunAccumulator RA(&OM, "RunAccumulator", getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+simName+"/OctetAsym_Offic_"+simName);
 	WirechamberSimTypeID* WS = new WirechamberSimTypeID(&RA);
 	RA.addPlugin(WS);
 	WS->make23SepInfo(OM);
+	OM.write();
 }
 
 //-------------------------------------------------------------//
 
 void refitXeAnode(std::string datname) {
-	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/Test/");
+	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/test/");
 	RunAccumulator RA(&OM, "RunAccumulator", datname);
 	AnodePositionAnalyzer* AP = new AnodePositionAnalyzer(&RA,0);
 	RA.addPlugin(AP);
@@ -736,6 +737,26 @@ void calcAnalysisChoices(OutputManager& OM, const std::string& inflname) {
 		OA.calculateResults();
 		OA.makePlots();
 		OA.write();
+	}
+}
+
+//-------------------------------------------------------------//
+
+void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin) {
+	for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_E; ++a) {
+		OctetAnalyzer OAdat(&OM, "DataCorrector", datin);
+		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+		AAdat->anChoice = a;
+		OAdat.addPlugin(AAdat);
+		
+		OctetAnalyzer OAsim(&OM, "Corr_Anchoice_"+ctos(choiceLetter(a)), simin);
+		AsymmetryAnalyzer* AAsim = new AsymmetryAnalyzer(&OAsim);
+		AAsim->anChoice = a;
+		OAsim.addPlugin(AAsim);
+		SimAsymmetryAnalyzer* SAAsim = new SimAsymmetryAnalyzer(&OAsim);
+		OAsim.addPlugin(SAAsim);
+		
+		SAAsim->calculateCorrections(*AAdat,*AAsim);
 	}
 }
 

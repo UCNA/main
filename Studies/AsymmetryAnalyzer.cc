@@ -28,6 +28,7 @@ OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500), anChoice
 																"Type "+itos(t)+" Events Energy",
 																nEnergyBins, 0, energyMax, s);
 				qEnergySpectra[s][p][t]->setAxisTitle(X_DIRECTION,"Energy [keV]");
+				qEnergySpectra[s][p][t]->setRangeUser(0,800);
 			}
 		}
 	}
@@ -128,10 +129,9 @@ void AsymmetryAnalyzer::endpointFits() {
 	}
 }
 
-void AsymmetryAnalyzer::calculateResults() {
-	
+void AsymmetryAnalyzer::calcSuperCombos() {
 	// build total spectra based on analysis choice
-	AnaResult ARtot = getResultBase();
+	ARtot = getResultBase();
 	for(Side s = EAST; s <= WEST; ++s) {
 		qTotalSpectrum[s] = myA->cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents", "All Events Energy");
 		if(!(ANCHOICE_A <= anChoice && anChoice <= ANCHOICE_E))
@@ -140,7 +140,7 @@ void AsymmetryAnalyzer::calculateResults() {
 		if(ANCHOICE_A <= anChoice && anChoice <= ANCHOICE_F && anChoice != ANCHOICE_D) {
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_I_EVENT];
 			ARtot.etypes.insert(TYPE_I_EVENT);
-		}		
+		}
 		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_G) {
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_II_EVENT];
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
@@ -168,19 +168,25 @@ void AsymmetryAnalyzer::calculateResults() {
 			ARtot.etypes.insert(TYPE_III_EVENT);
 		}
 	}
+}
+
+void AsymmetryAnalyzer::calculateResults() {
+	
+	calcSuperCombos();
+	
 	// calculate SR and SS
 	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	hInstAsym = (TH1F*)calculateSR("Total_Instrumental_Asym",qTotalSpectrum[EAST],qTotalSpectrum[WEST],true,true);
 	hSuperSum = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 		hTpAsym[tp] = (TH1F*)calculateSR("Asymmetry_Type_"+itos(tp),
-											  qEnergySpectra[tp==TYPE_II_EVENT?WEST:EAST][nBetaTubes][tp],
-											  qEnergySpectra[tp==TYPE_II_EVENT?EAST:WEST][nBetaTubes][tp]);
+										 qEnergySpectra[tp==TYPE_II_EVENT?WEST:EAST][nBetaTubes][tp],
+										 qEnergySpectra[tp==TYPE_II_EVENT?EAST:WEST][nBetaTubes][tp]);
 		hTpAsym[tp]->SetMinimum(-0.10);
 		hTpAsym[tp]->SetMaximum(0.0);
 		hEvtSS[tp] = (TH1F*)calculateSuperSum("SuperSum_Type_"+itos(tp),
-												   qEnergySpectra[EAST][nBetaTubes][tp],
-												   qEnergySpectra[WEST][nBetaTubes][tp]);
+											  qEnergySpectra[EAST][nBetaTubes][tp],
+											  qEnergySpectra[WEST][nBetaTubes][tp]);
 	}
 	
 	// perform data fits
@@ -216,7 +222,7 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 	}
 	
 	// event count results
-	AnaResult ARtot = getResultBase();
+	ARtot = getResultBase();
 	ARtot.anatp = AnaResult::ANA_COUNTS;
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {

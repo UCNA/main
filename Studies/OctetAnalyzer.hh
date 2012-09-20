@@ -33,8 +33,10 @@ public:
 	void setSubtraction(bool b);
 	/// set time scaling option
 	void setTimeScaling(bool b);
-	/// set draw range minimum for all histograms
+	/// set draw range y minimum/maximum for all histograms
 	void setDrawRange(double y, bool maximum);
+	/// set draw range for specified axis
+	void setRangeUser(double mn, double mx, AxisDirection d = X_DIRECTION);
 	/// set axis title
 	void setAxisTitle(AxisDirection d, const std::string& ttl);
 	/// naming convention for each histogram

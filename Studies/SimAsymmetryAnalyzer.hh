@@ -2,6 +2,7 @@
 #define SIMASYMMETRYANALYZER_HH 1
 
 #include "OctetAnalyzer.hh"
+#include "AsymmetryAnalyzer.hh"
 
 /// plugin with extra plots for simulated runs
 class SimAsymmetryAnalyzer: public OctetAnalyzerPlugin {
@@ -13,6 +14,8 @@ public:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// output plot generation
 	virtual void makePlots();
+	/// calculate corrections given actual data
+	void calculateCorrections(AsymmetryAnalyzer& Adat, AsymmetryAnalyzer& Asim);
 	
 	quadHists* qBCT[2][TYPE_IV_EVENT+1];		//< average beta cos theta TProfiles by [side][event type]
 	quadHists* qWrongSide[2][TYPE_III_EVENT+1];	//< Energy spectra of events ID'd on wrong side by [side][type]

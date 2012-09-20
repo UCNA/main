@@ -480,6 +480,20 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 			std::string eRange = itos(e0)+"-"+itos(e1)+" keV";
 			printf("--- %s ---\n",eRange.c_str());
 			
+			// backscatter counts and mis-ID'd events
+			Stringmap m;
+			int b0 = v2[ne]->FindBin(0);
+			int nb = v2[ne]->GetNbinsX();
+			m.insert("side",sideWords(s));
+			m.insert("e0",e0);
+			m.insert("e1",e1);
+			m.insert("II",v2[ne]->Integral(0,b0));
+			m.insert("IIx",v2[ne]->Integral(b0,nb+1));
+			m.insert("IIIx",v3[ne]->Integral(0,b0));
+			m.insert("III",v3[ne]->Integral(b0,nb+1));
+			OM.qOut.insert("23counts",m);
+			
+			// sum and plot
 			v2[ne]->SetLineColor(2);
 			v3[ne]->SetLineColor(4);
 			TH1F* hBoth = (TH1F*)v2[ne]->Clone("sumIIandIII");

@@ -63,7 +63,7 @@ void compareXenonSpectra();
 void decomposeXenon(RunNum rn, bool includeFast = false);
 
 /// process simulation for neutron generated background
-void NGBGSpectra(std::string datname);
+void NGBGSpectra(std::string simName);
 
 /// determine Type II/III anode cuts
 void separate23(std::string datname);
@@ -107,5 +107,8 @@ void refitXeAnode(std::string datname);
 
 /// generate asymmetry spectra for each analysis choice
 void calcAnalysisChoices(OutputManager& OM, const std::string& inflname);
+
+/// calculate MC-based corrections given data, MC filenames
+void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin);
 
 #endif
