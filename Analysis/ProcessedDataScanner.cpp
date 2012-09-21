@@ -9,7 +9,7 @@
 
 ProcessedDataScanner::ProcessedDataScanner(const std::string& treeName, bool withCalibrators):
 RunSetScanner(treeName,withCalibrators), redoPositions(false), runClock(0),
-physicsWeight(1.0), anChoice(ANCHOICE_A), fiducialRadius(45.0) { }
+physicsWeight(1.0), anChoice(ANCHOICE_A), fiducialRadius(50.0) { }
 
 Stringmap ProcessedDataScanner::evtInfo() {
 	Stringmap m;
@@ -46,7 +46,6 @@ void ProcessedDataScanner::recalibrateEnergy() {
 }
 
 bool ProcessedDataScanner::passesPositionCut(Side s) {
-	//return fiducialRadius<radius(s) && radius(s)<80;;
 	return radius(s)<fiducialRadius;
 }
 

@@ -111,6 +111,8 @@ public:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// calculate results from filled histograms
 	virtual void calculateResults();
+	/// upload results to analysis DB
+	virtual void uploadAnaResults();
 	/// make plots from each plugin
 	virtual void makePlots();
 	/// MC/Data comparison plots/calculations from each plugin
@@ -165,6 +167,8 @@ public:
 	virtual void makePlots() {}
 	/// generate calculated hists
 	virtual void calculateResults() {}
+	/// upload results to analysis DB
+	virtual void uploadAnaResults() {}
 	/// virtual routine for MC/Data comparison plots/calculations
 	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
 	virtual void compareMCtoData(AnalyzerPlugin* AP) {}

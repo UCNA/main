@@ -233,11 +233,11 @@ unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simD
 	
 	// generate output
 	calculateResults();
+	uploadAnaResults();
 	if(doPlots) {
 		makePlots();
 		origOA->calculateResults();
 		compareMCtoData(*origOA);
-		uploadAnaResults();
 	}
 	write();
 	setWriteRoot(true);

@@ -138,7 +138,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	//unsigned int nTot = 520;
 	//unsigned int stride = 73;
 	
-	bool doPlots = false;
+	bool doPlots = true;
 	
 	BetaDecayAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	

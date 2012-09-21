@@ -170,6 +170,11 @@ void RunAccumulator::calculateResults() {
 		it->second->calculateResults();
 }
 
+void RunAccumulator::uploadAnaResults() {
+	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++)
+		it->second->uploadAnaResults();
+}
+
 void RunAccumulator::makePlots() {
 	defaultCanvas->cd();
 	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++)

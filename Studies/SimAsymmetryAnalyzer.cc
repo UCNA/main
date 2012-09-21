@@ -3,6 +3,7 @@
 #include "GraphicsUtils.hh"
 #include <TProfile.h>
 #include <TGraph.h>
+#include <iostream>
 
 SimAsymmetryAnalyzer::SimAsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"simasymmetry") {
 	myA->isSimulated = true;
@@ -14,15 +15,39 @@ SimAsymmetryAnalyzer::SimAsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlug
 	qMissedSpectrum->setAxisTitle(X_DIRECTION,"Energy [keV]");
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
+			
 			TProfile pBCTTemplate(("pBcT_Type_"+itos(t)).c_str(),
 								  ("Type "+itos(t)+" Beta Cos Theta").c_str(),
 								  nEnergyBins,0,energyMax);
+			pBCTTemplate.Sumw2();
 			qBCT[s][t] = registerCoreHist(pBCTTemplate,s);
 			qBCT[s][t]->setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
 			qBCT[s][t]->setAxisTitle(Y_DIRECTION,"<#beta cos #theta>");
 			qBCT[s][t]->setDrawRange(-1.0,false);
 			qBCT[s][t]->setDrawRange(1.0,true);
 			qBCT[s][t]->setRangeUser(0,800);
+			
+			TProfile pBetaTemplate(("pBeta_Type_"+itos(t)).c_str(),
+								  ("Type "+itos(t)+" #beta").c_str(),
+								  nEnergyBins,0,energyMax);
+			pBetaTemplate.Sumw2();
+			qBeta[s][t] = registerCoreHist(pBetaTemplate,s);
+			qBeta[s][t]->setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
+			qBeta[s][t]->setAxisTitle(Y_DIRECTION,"<#beta>");
+			qBeta[s][t]->setDrawRange(0.0,false);
+			qBeta[s][t]->setDrawRange(1.0,true);
+			qBeta[s][t]->setRangeUser(0,800);
+			
+			TProfile pCosthTemplate(("pCosth_Type_"+itos(t)).c_str(),
+								   ("Type "+itos(t)+" cos #theta").c_str(),
+								   nEnergyBins,0,energyMax);
+			pCosthTemplate.Sumw2();
+			qCosth[s][t] = registerCoreHist(pCosthTemplate,s);
+			qCosth[s][t]->setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
+			qCosth[s][t]->setAxisTitle(Y_DIRECTION,"<cos #theta>");
+			qCosth[s][t]->setDrawRange(-1.0,false);
+			qCosth[s][t]->setDrawRange(1.0,true);
+			qCosth[s][t]->setRangeUser(0,800);
 			
 			qWrongSide[s][t] = registerCoreHist("hWrongSide_"+itos(t),"Wrong-side ID events",
 												nEnergyBins, 0, energyMax, s);
@@ -41,6 +66,8 @@ void SimAsymmetryAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weigh
 	if(S2P.fPID != PID_BETA) return;
 	if(S2P.passesPositionCut(s) && S2P.fType <= TYPE_III_EVENT) {
 		((TProfile*)(qBCT[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getEtrue(),beta(S2P.ePrim)*S2P.costheta,weight);
+		((TProfile*)(qBeta[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getEtrue(),beta(S2P.ePrim),weight);
+		((TProfile*)(qCosth[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getEtrue(),S2P.costheta,weight);
 		if( (S2P.fType == TYPE_II_EVENT?otherSide(s):s) != S2P.primSide )
 			qWrongSide[s][S2P.fType]->fillPoint->Fill(S2P.getEtrue(),weight);
 	}
@@ -50,6 +77,10 @@ void SimAsymmetryAnalyzer::makePlots() {
 	drawQuad(qMissedSpectrum,"Energy/");
 	for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t)
 		drawQuadSides(qBCT[EAST][t],qBCT[WEST][t],false,"BetaCosTheta/");
+	for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t)
+		drawQuadSides(qBeta[EAST][t],qBeta[WEST][t],false,"BetaCosTheta/");
+	for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t)
+		drawQuadSides(qCosth[EAST][t],qCosth[WEST][t],false,"BetaCosTheta/");
 	for(EventType t=TYPE_0_EVENT; t<=TYPE_III_EVENT; ++t)
 		drawQuadSides(qWrongSide[EAST][t],qWrongSide[WEST][t],false,"WrongSide/");
 }

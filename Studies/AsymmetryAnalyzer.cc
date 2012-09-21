@@ -14,7 +14,7 @@ TF1 AsymmetryAnalyzer::asymmetryFit = TF1("asymFit",&asymmetryFitFunc,0,neutronB
 TF1 AsymmetryAnalyzer::averagerFit = TF1("averagerFit","pol0",0,neutronBetaEp);
 
 AsymmetryAnalyzer::AsymmetryAnalyzer(OctetAnalyzer* OA):
-OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500), anChoice(ANCHOICE_A) {
+OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500), anChoice(ANCHOICE_C) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			if(t==TYPE_II_EVENT || t==TYPE_III_EVENT) {
@@ -83,7 +83,7 @@ void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, AnaR
 	AnaCutSpec c;
 	c.emin = fmin;
 	c.emax = fmax;
-	//c.radius = fiducialR;
+	c.radius = 50.;
 	asymFits.push_back(AR);
 	asymCuts.push_back(c);
 }
@@ -221,8 +221,29 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 		ADB->uploadAnaResult(asymFits[n]);
 	}
 	
+	AnaCutSpec c;
+	c.emin = 220;
+	c.emax = 670;
+	c.radius = 50.;
+	ARtot.csid = ADB->uploadCutSpec(c);
+
+	// raw counts asymmetry
+	ARtot.anatp = AnaResult::ANA_ASYM;
+	double cts[2][2];
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
+			TH1* h = (TH1F*)qTotalSpectrum[s]->fgbg[afp]->h[GV_OPEN];
+			int b0 = h->FindBin(c.emin+0.5);
+			int b1 = h->FindBin(c.emax-0.5);
+			cts[s][afp] = h->Integral(b0,b1)/myA->totalTime[afp][GV_OPEN][s];
+		}
+	}
+	double S = (cts[EAST][AFP_OFF]*cts[WEST][AFP_ON])/(cts[EAST][AFP_ON]*cts[WEST][AFP_OFF]);
+	ARtot.value = (1-sqrt(S))/(1+sqrt(S));
+	ARtot.err = 0;
+	ADB->uploadAnaResult(ARtot);
+	
 	// event count results
-	ARtot = getResultBase();
 	ARtot.anatp = AnaResult::ANA_COUNTS;
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
@@ -237,22 +258,20 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 				for(unsigned int i=0; i<oldr.size(); i++)
 					ADB->deleteAnaResult(oldr[i].arid);
 				
-				AnaCutSpec c;
-				c.emin = 225;
-				c.emax = 675;
-				//c.radius = fiducialR;
 				TH1* h = (TH1F*)qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[GV_OPEN];
-				int b0 = h->FindBin(c.emin);
-				int b1 = h->FindBin(c.emax);
+				int b0 = h->FindBin(c.emin+0.5);
+				int b1 = h->FindBin(c.emax-0.5);
 				
 				Double_t ierr;
 				ARtot.value = h->IntegralAndError(b0,b1,ierr);
 				ARtot.err = ierr;
-				ARtot.csid = ADB->uploadCutSpec(c);
 				ADB->uploadAnaResult(ARtot);
 			}
 		}
 	}
+	
+	
+	
 }
 
 void AsymmetryAnalyzer::makePlots() {

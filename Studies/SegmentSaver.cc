@@ -2,6 +2,7 @@
 #include "Types.hh"
 #include "PathUtils.hh"
 #include "SMExcept.hh"
+#include <TString.h>
 
 TH1* SegmentSaver::tryLoad(const std::string& hname) {
 	if(!fIn) return NULL;
@@ -84,7 +85,8 @@ void SegmentSaver::zeroSavedHists() {
 void SegmentSaver::scaleData(double s) {
 	if(s==1.) return;
 	for(std::map<std::string,TH1*>::iterator it = saveHists.begin(); it != saveHists.end(); it++)
-		it->second->Scale(s);
+		if(it->second->ClassName() != TString("TProfile"))
+			it->second->Scale(s);
 }
 
 bool SegmentSaver::isEquivalent(const SegmentSaver& S) const {
