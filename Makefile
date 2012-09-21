@@ -49,7 +49,7 @@ Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o \
 	MuonAnalyzer.o PositionAnalyzer.o WirechamberGainAnalyzer.o BGDecayAnalyzer.o HighEnergyExcess.o \
 	AsymmetryAnalyzer.o SimAsymmetryAnalyzer.o BetaDecayAnalyzer.o \
 	CathodeTweakAnalyzer.o PositionBinnedAnalyzer.o AnodePositionAnalyzer.o XenonAnalyzer.o \
-	PlotMakers.o LEDScans.o
+	PlotMakers.o LEDScans.o AsymmetryCorrections.o
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
