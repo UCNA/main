@@ -756,7 +756,47 @@ void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string&
 		SimAsymmetryAnalyzer* SAAsim = new SimAsymmetryAnalyzer(&OAsim);
 		OAsim.addPlugin(SAAsim);
 		
-		SAAsim->calculateCorrections(*AAdat,*AAsim);
+		std::vector<TH1*> asymStages = SAAsim->calculateCorrections(*AAdat,*AAsim);
+		
+		// re-bin for less awful stats
+		for(unsigned int i=0; i<asymStages.size(); i++)
+			asymStages[i]->Rebin(5);
+		// back out each incremental correction stage
+		for(unsigned int i = asymStages.size()-1; i>0; i--)
+			asymStages[i]->Divide(asymStages[i-1]);
+		
+		// convert to graphs and draw
+		for(unsigned int i=1; i<asymStages.size(); i++) {
+			TGraph* g = new TGraph(asymStages[i]->GetNbinsX());
+			for(int b=1; b<=asymStages[i]->GetNbinsX(); b++) {
+				double c = asymStages[i]->GetBinContent(b);
+				c = c>1.5?1.5:c<0.5?0.5:c==c?c:1;
+				g->SetPoint(b-1,asymStages[i]->GetBinCenter(b),c-1);
+			}
+			g->SetTitle(("#Delta_{2,"+itos(i-1)+"} Correction").c_str());
+			g->Draw("AP");
+			g->GetYaxis()->SetRangeUser(-0.05,0.05);
+			g->GetXaxis()->SetRangeUser(0,800);
+			g->SetMarkerStyle(24);
+			g->SetMarkerSize(0.5);
+			g->SetMarkerColor(2);
+			g->Draw("ACP");
+			OAsim.printCanvas("Delta_2_"+itos(i-1));
+			
+			// write correction file
+			if(a==ANCHOICE_C) {
+				FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/Delta_2_"+itos(i-1)+".txt").c_str(),"w");
+				fprintf(f,"# MC Backscattering Correction Delta_{2,%i}\n",i-1);
+				fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
+				for(unsigned int b=0; b<800; b+=10) {
+					double e = b+5.;
+					double dA = g->Eval(e);
+					fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,dA,fabs(dA/3.));
+				}
+				fclose(f);
+			}
+			
+		}
 	}
 }
 

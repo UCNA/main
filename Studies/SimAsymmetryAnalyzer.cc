@@ -2,6 +2,7 @@
 #include "BetaSpectrum.hh"
 #include "GraphicsUtils.hh"
 #include <TProfile.h>
+#include <TGraph.h>
 
 SimAsymmetryAnalyzer::SimAsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"simasymmetry") {
 	myA->isSimulated = true;
@@ -70,7 +71,7 @@ void unmix(TH1* hE, TH1* hW, TH1* pEx, TH1* pWx) {
 	}
 }
 
-void SimAsymmetryAnalyzer::calculateCorrections(AsymmetryAnalyzer& Adat, AsymmetryAnalyzer& Asim) {
+std::vector<TH1*> SimAsymmetryAnalyzer::calculateCorrections(AsymmetryAnalyzer& Adat, AsymmetryAnalyzer& Asim) {
 	// unmodified asymmetry
 	Adat.calcSuperCombos();
 	std::vector<TH1*> asymStages;
@@ -81,20 +82,14 @@ void SimAsymmetryAnalyzer::calculateCorrections(AsymmetryAnalyzer& Adat, Asymmet
 		quadHists* qMisCorr[2];
 		std::vector<TH1*> hToPlot;
 		
-		for(Side s = EAST; s <= WEST; ++s) {
+		for(Side s = EAST; s <= WEST; ++s)
 			qMisCorr[s] = myA->cloneQuadHist(qWrongSide[otherSide(s)][t],sideSubst("SideCorrector_%c_",s)+itos(t),"Mis-ID events correction");
-			// spin-average mis-ID'd fraction for better statistics
-			//combineHists(Asim.qEnergySpectra[s][nBetaTubes][t]->fgbg[AFP_OFF]->h[GV_OPEN],Asim.qEnergySpectra[s][nBetaTubes][t]->fgbg[AFP_ON]->h[GV_OPEN]);
-			//combineHists(qMisCorr[s]->fgbg[AFP_OFF]->h[GV_OPEN],qMisCorr[s]->fgbg[AFP_ON]->h[GV_OPEN]);
-		}
 		
 		for(Side s = EAST; s <= WEST; ++s) {			
 			for(AFPState a = AFP_OFF; a<=AFP_ON; ++a) {
 				TH1* hMisID = qMisCorr[s]->fgbg[a]->h[GV_OPEN];
 				TH1* hRightID = Asim.qEnergySpectra[s][nBetaTubes][t]->fgbg[a]->h[GV_OPEN];
 				hRightID->Add(qWrongSide[s][t]->fgbg[a]->h[GV_OPEN],-1.0); // remove counts coming from wrong side
-				//hRightID->Add(qWrongSide[s][t]->fgbg[AFP_OFF]->h[GV_OPEN],-1.0);
-				//hRightID->Add(qWrongSide[s][t]->fgbg[AFP_ON]->h[GV_OPEN],-1.0);
 				hMisID->Divide(hRightID);
 				
 				hMisID->SetLineColor(2+2*s);
@@ -118,21 +113,5 @@ void SimAsymmetryAnalyzer::calculateCorrections(AsymmetryAnalyzer& Adat, Asymmet
 		asymStages.push_back(calculateSR("SR_Delta_2_"+itos(t),Adat.qTotalSpectrum[EAST],Adat.qTotalSpectrum[WEST]));
 	}
 	
-	// re-bin for less awful stats
-	for(unsigned int i=0; i<asymStages.size(); i++)
-		asymStages[i]->Rebin(5);
-	
-	// back out each incremental correction stage
-	for(unsigned int i = asymStages.size()-1; i>0; i--) {
-		asymStages[i]->Divide(asymStages[i-1]);
-		asymStages[i]->SetTitle(("(1+#Delta_{2,"+itos(i-1)+"}) Correction").c_str());
-		asymStages[i]->SetMinimum(0.95);
-		asymStages[i]->SetMaximum(1.05);
-		asymStages[i]->SetMarkerStyle(24);
-		asymStages[i]->SetMarkerSize(0.5);
-		asymStages[i]->SetMarkerColor(2);
-		asymStages[i]->GetXaxis()->SetRangeUser(0,800);
-		asymStages[i]->Draw("HIST P");
-		printCanvas("Correction_stage_"+itos(i));
-	}
+	return asymStages;
 }

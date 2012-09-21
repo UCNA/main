@@ -14,8 +14,8 @@ public:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// output plot generation
 	virtual void makePlots();
-	/// calculate corrections given actual data
-	void calculateCorrections(AsymmetryAnalyzer& Adat, AsymmetryAnalyzer& Asim);
+	/// calculate corrections given actual data; return asymmetry correction stages
+	std::vector<TH1*> calculateCorrections(AsymmetryAnalyzer& Adat, AsymmetryAnalyzer& Asim);
 	
 	quadHists* qBCT[2][TYPE_IV_EVENT+1];		//< average beta cos theta TProfiles by [side][event type]
 	quadHists* qWrongSide[2][TYPE_III_EVENT+1];	//< Energy spectra of events ID'd on wrong side by [side][type]
