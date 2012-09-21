@@ -19,6 +19,7 @@
 #include "LEDScans.hh"
 #include "NuclEvtGen.hh"
 #include "EnumerationFitter.hh"
+#include "AsymmetryCorrections.hh"
 
 std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
 	if(typeSelect=="ref") {
@@ -212,11 +213,21 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		return;
 	}
 	
-	if(true) {
+	if(false) {
 		std::string sim = "Sim0823";
 		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_"+sim+"/");
 		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
 					getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim);
+		return;
+	}
+	
+	if(true) {
+		OutputManager OM("CorrectedAsym",getEnvSafe("UCNA_ANA_PLOTS")+"/test/CorrectAsym/");
+		OctetAnalyzer OAdat(&OM, "DataCorrector", getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
+		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+		OAdat.addPlugin(AAdat);
+		AAdat->anChoice = ANCHOICE_C;
+		doFullCorrections(*AAdat);
 		return;
 	}
 	

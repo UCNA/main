@@ -68,37 +68,6 @@ void NGBGSpectra(std::string simName);
 /// determine Type II/III anode cuts
 void separate23(std::string datname);
 
-/// systematic errors table generator
-class ErrTables {
-public:
-	/// constructor
-	ErrTables(const std::string& datset = "OctetAsym_Offic");	
-	/// destructor
-	~ErrTables();
-	/// experimental super-ratio R
-	double getRexp(double e) const;
-	/// experimental asymmetry at given energy
-	double getAexp(double e) const;
-	/// asymmetry from superratio
-	static double AofR(double R);
-	/// gain fluctuations errors
-	void gainfluctsTable(double delta);
-	/// pedestal fluctuations errors
-	void pedShiftsTable(double delta);
-	/// muon veto efficiency change errors
-	void muonVetoEfficTable(double delta);
-	/// uniform efficiency shifts tables (e.g. deadtime, veto accidentals)
-	void efficShiftTable(double delta);
-	///constant neutron generated background (in Hz/keV)
-	void NGBGTable(double EScale, double dEScale, double WScale, double dWScale, double dAFPfrac);
-	
-protected:
-	OutputManager OM;		//< unused OutputManager
-	BetaDecayAnalyzer Adat;	//< data for error estimation
-	TGraphErrors* S[2][2];	//< observed energy spectra for [side][afp] as TGraphs
-};
-
-
 /// test for BG subtraction statistics errors
 void lowStatsTest();
 
@@ -107,8 +76,5 @@ void refitXeAnode(std::string datname);
 
 /// generate asymmetry spectra for each analysis choice
 void calcAnalysisChoices(OutputManager& OM, const std::string& inflname);
-
-/// calculate MC-based corrections given data, MC filenames
-void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin);
 
 #endif
