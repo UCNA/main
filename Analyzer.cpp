@@ -215,7 +215,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		return;
 	}
 	
-	std::string sim = "SimPen";
+	std::string sim = "Sim0823_4x";
 	if(true) {
 		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_"+sim+"/");
 		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
