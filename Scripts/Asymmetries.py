@@ -197,6 +197,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 	##############
 	gdat = []
 	iadat = []
+	ndat = []
 	bgRateDat = {'E':{"Off":[],"On":[]},'W':{"Off":[],"On":[]}}
 	muRateDat = {'E':{"Off":[],"On":[]},'W':{"Off":[],"On":[]}}
 	kdat = {'E':{"Off":[],"On":[]},'W':{"Off":[],"On":[]}}
@@ -214,6 +215,9 @@ def plot_octet_asymmetries(basedir,depth=0):
 			print "**** Missing asym in",af.fname
 		ia = af.getInstAsym()
 		iadat.append([n,ia.IA,ia.dIA])
+		ndat.append([n,0])
+		if len(ndat)>1:
+			ndat[-1][-1] += ndat[-2][-1]
 		# kurie data
 		for s in kdat:
 			kepDelta[s].append([n,]+af.kepDelta(s))
@@ -225,6 +229,10 @@ def plot_octet_asymmetries(basedir,depth=0):
 					kdat[s][afp].append([n,k.ep,k.dep]+[af.getKurie(s,afp,"0",t) for t in range(4)])
 					if not 782 < k.ep < 810:
 						print "*** Funny Endpoint",k.ep,k.side,k.afp,"in",af.fname
+				
+				rt = af.getRate(s,afp,'1',"hEnergy_Type_0_%s_%s"%(s,afp))
+				if rt:
+					ndat[-1][-1] += rt.counts
 				
 				rt = af.getRate(s,afp,'0',"hEnergy_Type_0_%s_%s"%(s,afp))
 				if rt:
@@ -260,9 +268,15 @@ def plot_octet_asymmetries(basedir,depth=0):
 				key = graph.key.key(pos="bl"))
 	setTexrunner(gAsyms)
 
+	gCount=graph.graphxy(width=15,height=15,
+						 x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
+						 y=graph.axis.lin(title="Type 0 Counts",min=0),
+						 key = None)
+	setTexrunner(gCount)
+			
 	gBgRate=graph.graphxy(width=25,height=8,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
-				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.25),
+				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.35),
 				key = graph.key.key(pos="bl"))
 	setTexrunner(gBgRate)
 
@@ -278,6 +292,11 @@ def plot_octet_asymmetries(basedir,depth=0):
 				key = graph.key.key(pos="bl"))
 	setTexrunner(gdEp)
 	
+	##############
+	# event count
+	##############
+	gCount.plot(graph.data.points(ndat,x=1,y=2),[graph.style.line(lineattrs=[rgb.red,])])
+	gCount.writetofile(basedir+"/OctetCounts_%i.pdf"%depth)
 		
 	##############
 	# asymmetry plots
@@ -285,10 +304,10 @@ def plot_octet_asymmetries(basedir,depth=0):
 	gAsyms.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
 				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
 				graph.style.errorbar(errorbarattrs=[rgb.red,])])
-
+			
 	LF = LinearFitter(terms=[polyterm(0)])
 	
-	rbreak = 15400 # 14800
+	rbreak = 14800 # 15400 = magnet ramp, calibration changes
 	gdat_A = [g for g in gdat if 14000 < g[3] < rbreak]
 	gdat_B = [g for g in gdat if rbreak < g[3] ]
 	
@@ -585,21 +604,22 @@ def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
 
 if __name__=="__main__":
 	
-	backscatterFracTable("OctetAsym_Offic_SimPen")
-	exit(0)
+	#backscatterFracTable("OctetAsym_Offic_SimMagF")
+	#exit(0)
 	
 	if 0:
 		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_SimMagF/")
-		MCC.backscatter_fractions()
-		exit(0)
-		#MCC.plot_endpoints()
+		#MCC.backscatter_fractions()
+		MCC.plot_endpoints()
+		#exit(0)
+		
 	
 		conn=open_connection()
-		conn=None
+		#conn=None
 		MCC.endpoint_gain_tweak(conn)
 		exit(0)
 	
 	for i in range(3):				
-		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
+		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",i)
 		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
 			

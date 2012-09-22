@@ -20,7 +20,7 @@ public:
 };
 
 /// do corrections to asymmetry
-void doFullCorrections(AsymmetryAnalyzer& AA);
+void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM);
 
 /// systematic errors table generator
 class ErrTables {

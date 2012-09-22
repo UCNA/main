@@ -54,7 +54,14 @@ class CathFile(QFile):
 			for d in ["x","y"]:
 				self.cnorms[(s,d)] = [float(x) for x in self.getItem("runcal","cnorm_"+s+d).split(",")]
 		
-						  
+class count23(KVMap):
+	def __init__(self,m=KVMap()):
+		self.dat = m.dat
+		self.loadFloats(["e0","e1","II","IIx","III","IIIx"])
+		self.loadStrings(["side"])
+		self.total = self.II+self.IIx+self.III+self.IIIx
+
+
 ###############
 # DB commands
 ###############
@@ -388,13 +395,41 @@ def anodeGainCal(conn=None):
 	savg = AMC.betaAnodeGainCal(conn,pmap)
 	if conn:
 		uploadAnodeCal(conn,7000,100000,pmap,savg['E'],savg['W'])
+
+#####################
+# II/III Separation #
+#####################
+
+def sep23effic(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation/"):
+	cdat = [ count23(c) for c in QFile(basedir+"/23Separation.txt").dat["23counts"]]
+	
+	for s in ["East","West"]:
+		gdat = [ (c.e0,c.e1,c.total,c.II/c.total,c.IIIx/c.total,c.III/c.total,c.IIx/c.total,0.5*(c.e0+c.e1)) for c in cdat if c.side==s ]
+		gdat.sort()
 		
+		g23=graph.graphxy(width=15,height=10,
+						   x=graph.axis.lin(title="Energy [keV]"),
+						   y=graph.axis.lin(title="Fraction of II+III",min=0,max=1),
+						   key = graph.key.key(pos="tc",columns=2))
+		setTexrunner(g23)
+
+		print gdat
+		
+		g23.plot(graph.data.points(gdat,x=-1,y=4,title="II"),[graph.style.line(lineattrs=[rgb.red,])])
+		g23.plot(graph.data.points(gdat,x=-1,y=5,title="III*"),[graph.style.line(lineattrs=[rgb.blue,style.linestyle.dashed])])
+		g23.plot(graph.data.points(gdat,x=-1,y=6,title="III"),[graph.style.line(lineattrs=[rgb.blue,])])
+		g23.plot(graph.data.points(gdat,x=-1,y=7,title="II*"),[graph.style.line(lineattrs=[rgb.red,style.linestyle.dashed])])
+		
+		g23.writetofile(basedir+"frac23_%s.pdf"%s)
 
 ###############
 #             #
 ###############
 
 if __name__ == "__main__":
-	conn = open_connection()
-	anodeGainCal(conn)
+	
+	sep23effic(os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation_SimPen/")
+	
+	#conn = open_connection()
+	#anodeGainCal(conn)
 	#gen_cathcal_set(conn,13000,100000,14264,16077)

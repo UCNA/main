@@ -230,17 +230,25 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 	// raw counts asymmetry
 	ARtot.anatp = AnaResult::ANA_ASYM;
 	double cts[2][2];
+	double cterr[2][2];
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			TH1* h = (TH1F*)qTotalSpectrum[s]->fgbg[afp]->h[GV_OPEN];
 			int b0 = h->FindBin(c.emin+0.5);
 			int b1 = h->FindBin(c.emax-0.5);
-			cts[s][afp] = h->Integral(b0,b1)/myA->totalTime[afp][GV_OPEN][s];
+			cts[s][afp] = h->IntegralAndError(b0,b1,cterr[s][afp])/myA->totalTime[afp][GV_OPEN][s];
+			cterr[s][afp] /= myA->totalTime[afp][GV_OPEN][s];
 		}
 	}
+		
 	double S = (cts[EAST][AFP_OFF]*cts[WEST][AFP_ON])/(cts[EAST][AFP_ON]*cts[WEST][AFP_OFF]);
-	ARtot.value = (1-sqrt(S))/(1+sqrt(S));
+	S = (1-sqrt(S))/(1+sqrt(S));
+	ARtot.value = S;
 	ARtot.err = 0;
+	for(Side s = EAST; s <= WEST; ++s)
+		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
+			ARtot.err += pow(cterr[s][afp]/cts[s][afp],2);
+	ARtot.err *= sqrt(S)/pow(1+sqrt(S),2);
 	ADB->uploadAnaResult(ARtot);
 	
 	// event count results

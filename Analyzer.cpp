@@ -124,20 +124,22 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octn = streamInteractor::popInt(stack);
 	const std::string outputDir="OctetAsym_Offic";
 	
-	const std::string simOutputDir=outputDir+"_SimMagF";
-	//const std::string simOutputDir=outputDir+"_Sim0823";
+	//const std::string simOutputDir=outputDir+"_Sim0823_4x";
+	//const std::string simOutputDir=outputDir+"_SimMagF";
+	const std::string simOutputDir=outputDir+"_SimPen";
 	
-	//std::string simFile="/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_";
-	std::string simFile="/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_";
+	std::string simFile="/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_";
+	//std::string simFile="/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_";
 	
 	/////////// Geant4 MagF
-	unsigned int nTot = 104;
-	unsigned int stride = 14;
+	//unsigned int nTot = 104;
+	//unsigned int stride = 14;
 	
 	/////////// Geant4 0823
-	//unsigned int nTot = 520;
-	//unsigned int stride = 73;
+	unsigned int nTot = 520;
+	unsigned int stride = 73;
 	
+	double simFactor = 4.0;
 	bool doPlots = true;
 	
 	BetaDecayAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
@@ -156,7 +158,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 			SimBetaDecayAnalyzer AA_Sim(&OM,simOutputDir);
 			AA_Sim.simPerfectAsym = true;
-			AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, simData, 1.0, 365*24*3600);
+			AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, simData, simFactor, 365*24*3600);
 		} else {
 			Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),-octn-1);
 			if(!oct.getNRuns()) return;
@@ -167,10 +169,10 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 				PenelopeToPMT penSim;
 				penSim.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root");
 				penSim.PGen[EAST].xscatter = penSim.PGen[WEST].xscatter = 0.005;
-				AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), penSim, 1.0, 0.*3600, doPlots);
+				AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), penSim, simFactor, 0.*3600, doPlots);
 			}
 			else
-				AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), simData, 1.0, 0.*3600, doPlots);
+				AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), simData, simFactor, 0.*3600, doPlots);
 		}
 	} else {
 		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),octn);
@@ -213,21 +215,24 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		return;
 	}
 	
-	if(false) {
-		std::string sim = "Sim0823";
+	std::string sim = "SimPen";
+	if(true) {
 		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_"+sim+"/");
 		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
 					getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim);
-		return;
+		//return;
 	}
 	
 	if(true) {
-		OutputManager OM("CorrectedAsym",getEnvSafe("UCNA_ANA_PLOTS")+"/test/CorrectAsym/");
-		OctetAnalyzer OAdat(&OM, "DataCorrector", getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
-		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
-		OAdat.addPlugin(AAdat);
-		AAdat->anChoice = ANCHOICE_C;
-		doFullCorrections(*AAdat);
+		OutputManager OM("CorrectedAsym",getEnvSafe("UCNA_ANA_PLOTS")+"/test/CorrectAsym_"+sim+"/");
+		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
+			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
+			AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+			OAdat.addPlugin(AAdat);
+			AAdat->anChoice = a;
+			doFullCorrections(*AAdat,OM);
+		}
+		OM.write();
 		return;
 	}
 	
