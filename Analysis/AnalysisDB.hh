@@ -49,10 +49,10 @@ public:
 		PEN_DATA			//< Penelope MC
 	} datp;					//< data/MC source for analysis
 	enum RunGrouping {
-		GROUP_RUN,			//< single run (or grouped runs with same purpose)
-		GROUP_PAIR,			//< AFP On/Off pulse pair
-		GROUP_QUARTET,		//< A or B pair of pulse pairs
-		GROUP_OCTET			//< A->B or B->A octet
+		GROUP_RUN=0,		//< single run (or grouped runs with same purpose)
+		GROUP_PAIR=1,		//< AFP On/Off pulse pair
+		GROUP_QUARTET=2,	//< A or B pair of pulse pairs
+		GROUP_OCTET=3		//< A->B or B->A octet
 	} grouping;
 	RunNum startRun;		//< start of run range analyzed
 	RunNum endRun;			//< end of run range analyzed
