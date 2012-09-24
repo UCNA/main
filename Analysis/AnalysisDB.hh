@@ -48,6 +48,12 @@ public:
 		G4_DATA,			//< Geant4 MC
 		PEN_DATA			//< Penelope MC
 	} datp;					//< data/MC source for analysis
+	enum RunGrouping {
+		GROUP_RUN,			//< single run (or grouped runs with same purpose)
+		GROUP_PAIR,			//< AFP On/Off pulse pair
+		GROUP_QUARTET,		//< A or B pair of pulse pairs
+		GROUP_OCTET			//< A->B or B->A octet
+	} grouping;
 	RunNum startRun;		//< start of run range analyzed
 	RunNum endRun;			//< end of run range analyzed
 	std::set<EventType> etypes;	//< event types considered
@@ -64,6 +70,8 @@ public:
 	static AnaType strToAtype(const std::string& str);
 	/// words for data source
 	static std::string dsourceWord(DataSource d);
+	/// words for octet grouping
+	static std::string groupWord(RunGrouping g);
 	/// data type from word
 	static DataSource strToDsource(const std::string& str);
 };

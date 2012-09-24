@@ -5,6 +5,7 @@ startRun(0), endRun(0), s(BOTH), afp(AFP_OTHER), value(0), err(0), csid(0) { }
 
 std::string AnaResult::atypeWord(AnaType t) { return t==ANA_ASYM?"Asymmetry":"Counts"; }
 std::string AnaResult::dsourceWord(DataSource d) { return d==REAL_DATA?"Data":d==G4_DATA?"G4":"Pen"; }
+std::string AnaResult::groupWord(RunGrouping g) { return g==GROUP_RUN?"run":g==GROUP_PAIR?"pair":g==GROUP_QUARTET?"quartet":"octet"; }
 AnaResult::AnaType AnaResult::strToAtype(const std::string& str) { return str=="Asymmetry"?ANA_ASYM:ANA_COUNTS; }
 AnaResult::DataSource AnaResult::strToDsource(const std::string& str) { return str=="Data"?REAL_DATA:str=="G4"?G4_DATA:PEN_DATA; }
 
@@ -14,6 +15,7 @@ Stringmap AnaResult::toStringmap() const {
 	m.insert("timestamp",itos(timestamp));
 	m.insert("startRun",startRun);
 	m.insert("endRun",endRun);
+	m.insert("grouping",groupWord(grouping));
 	m.insert("evtps",typeSetString());
 	m.insert("side",sideWords(s));
 	m.insert("afp",afpWords(afp));
@@ -53,14 +55,15 @@ unsigned int AnalysisDB::uploadCutSpec(AnaCutSpec& c) {
 unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
 	printf("Uploading analysis result:\n");
 	r.toStringmap().display();
-	sprintf(query,"INSERT INTO analysis_results(author,date,type,source,start_run,end_run,event_type,ana_choice,side,afp,value,err,cut_spec_id) \
-			VALUES ('%s',FROM_UNIXTIME(%u),'%s','%s',%i,%i,'%s','%c',%s,'%s',%f,%f,%u)",
+	sprintf(query,"INSERT INTO analysis_results(author,date,type,source,start_run,end_run,grouping,event_type,ana_choice,side,afp,value,err,cut_spec_id) \
+			VALUES ('%s',FROM_UNIXTIME(%u),'%s','%s',%i,%i,'%s','%s','%c',%s,'%s',%f,%f,%u)",
 			r.author.c_str(),
 			(unsigned int)r.timestamp,
 			AnaResult::atypeWord(r.anatp).c_str(),
 			AnaResult::dsourceWord(r.datp).c_str(),
 			r.startRun,
 			r.endRun,
+			AnaResult::groupWord(r.grouping).c_str(),
 			r.typeSetString().c_str(),
 			choiceLetter(r.anach),
 			dbSideName(r.s),

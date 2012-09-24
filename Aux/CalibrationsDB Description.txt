@@ -243,7 +243,7 @@ CREATE TABLE cut_spec (
 	energy_max DOUBLE,		# maximum energy
 	radius DOUBLE,			# event radius
 	positioning ENUM('plain','rotated'),	# what type of positining scheme is used
-	INDEX(cut_spec_id), INDEX(energy_min,energy_max,radius)
+	INDEX(cut_spec_id), INDEX(energy_min,energy_max,radius,positioning)
 );
 
 # generic analysis results
@@ -255,6 +255,7 @@ CREATE TABLE analysis_results (
 	source ENUM('Data','G4','Pen'),			# data or MC source
 	start_run INT UNSIGNED,					# run range start for result
 	end_run INT UNSIGNED,					# run range end for result
+	grouping ENUM('run','pair','quartet','octet'),	# octet grouping level
 	event_type SET('0','I','II','III'),		# event type used for result
 	ana_choice ENUM('A','B','C','D','E','F','G','H'),	# ``analysis choice''
 	side ENUM('East','West','Both'),		# event side of result
@@ -262,7 +263,7 @@ CREATE TABLE analysis_results (
 	value DOUBLE,							# result value
 	err DOUBLE,								# result uncertainty
 	cut_spec_id INT UNSIGNED,				# ID for cut specification
-	INDEX(author), INDEX(type,event_type,side,afp), INDEX(start_run,end_run), INDEX(date), INDEX(cut_spec_id)
+	INDEX(author), INDEX(type,event_type,side,afp), INDEX(start_run,end_run), INDEX(date), INDEX(cut_spec_id), INDEX(grouping)
 );
 
 # permissions

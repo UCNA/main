@@ -57,6 +57,7 @@ AnaResult AsymmetryAnalyzer::getResultBase() const {
 	AR.startRun = myA->runCounts.counts.begin()->first;
 	AR.endRun = myA->runCounts.counts.rbegin()->first;
 	AR.anach = anChoice;
+	AR.grouping = AnaResult::RunGrouping(AnaResult::GROUP_OCTET-myA->depth);
 	return AR;
 }
 

@@ -160,7 +160,7 @@ std::vector<TH1*> SimAsymmetryAnalyzer::calculateCorrections(AsymmetryAnalyzer& 
 				hMisID->SetLineColor(2+2*s);
 				hMisID->SetLineStyle(1+2*a);
 				hMisID->SetMinimum(0);
-				hMisID->SetMaximum(t<TYPE_II_EVENT?0.2:1);
+				hMisID->SetMaximum(t<TYPE_II_EVENT?0.2:Adat.anChoice==ANCHOICE_A?2:1);
 				hToPlot.push_back(hMisID);
 			}
 		}
