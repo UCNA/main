@@ -53,6 +53,9 @@ protected:
 };
 
 /// calculate MC-based corrections given data, MC filenames
-void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin);
+void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin, bool writeAux = false, bool oldCorr = false);
+
+/// comparison between two MCs
+void compareMCs(OutputManager& OM, const std::string& sim0, const std::string& sim1, const std::string& fOut = "");
 
 #endif

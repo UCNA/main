@@ -3,8 +3,8 @@
 #include <TStyle.h>
 #include <vector>
 
-const unsigned int nThreshBins = 20;
-const double maxThresh = 0.75;
+const unsigned int nThreshBins = 100;
+const double maxThresh = 1.0;
 
 void runSimulation() {
 	
@@ -57,7 +57,65 @@ void runSimulation() {
 		AAs[i]->write();
 		AAs[i]->setWriteRoot(true);
 		delete(AAs[i]);
-	}	
+	}
+}
+
+void SnMWPCEffic() {
+	unsigned int nToSim = 1e5;
+	
+	printf("Simulating MWPC threshold variation...\n");
+	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/MWPC_Effic_Sim/");
+	
+	printf("Setting input file...\n");
+	G4toPMT simData;
+	simData.addFile("/home/mmendenhall/geant4/output/20120823_Sn113/analyzed_*.root");
+	PMTCalibrator PCal(16000);
+	simData.setCalibrator(PCal);
+	simData.setAFP(AFP_OTHER);
+	
+	TH1F* hSnCounts[2];
+	TH1F* hSnMWPC[2];
+	for(Side s = EAST; s <= WEST; ++s) {
+		hSnCounts[s] = new TH1F(sideSubst("hSnEffic_%c",s).c_str(),"Sn Source Type 0 Detection Efficiency",nThreshBins,0,maxThresh);
+		hSnCounts[s]->GetXaxis()->SetTitle("East MWPC Threshold");
+		hSnCounts[s]->GetYaxis()->SetTitle("Type 0 Efficiency");
+		hSnMWPC[s] = new TH1F(sideSubst("hSnMWPC_%c",s).c_str(),"Sn Source MWPC Spectrum",5*nThreshBins,0,5*maxThresh);
+		hSnMWPC[s]->GetYaxis()->SetTitle("MWPC Energy");
+	}
+	
+	printf("Scanning simulation data...\n");
+	std::vector<double> thresholds;
+	for(unsigned int i=0; i<nThreshBins; i++)
+		thresholds.push_back(maxThresh*float(i)/(nThreshBins-1));
+	for(unsigned int p=0; p<nToSim; p++) {
+		simData.mwpcThresh[EAST]=0;
+		simData.nextPoint();
+		for(Side s = EAST; s <= WEST; ++s)
+			if(simData.fType==TYPE_0_EVENT && simData.fPID == PID_BETA && simData.fSide==s)
+				hSnMWPC[s]->Fill(simData.mwpcEnergy[s]);
+		for(unsigned int i=0; i<nThreshBins; i++) {
+			simData.mwpcThresh[EAST]=hSnCounts[EAST]->GetBinCenter(i+1);
+			simData.classifyEvent();
+			for(Side s = EAST; s <= WEST; ++s)
+				if(simData.fType==TYPE_0_EVENT && simData.fPID == PID_BETA && simData.fSide==s)
+					hSnCounts[s]->Fill(simData.mwpcThresh[EAST]);
+		}
+		if(!(p%(nToSim/20))) {
+			printf("+");
+			fflush(stdout);
+		}
+	}
+	
+	printf(" Done.\n");
+	for(Side s = EAST; s <= WEST; ++s) {
+		hSnCounts[s]->Scale(1.0/hSnCounts[s]->GetBinContent(1));
+		hSnCounts[s]->GetYaxis()->SetRangeUser(.995,1.001);
+	}
+	
+	drawHistoPair(hSnCounts[EAST],hSnCounts[WEST]);
+	OM.printCanvas("SnEffic");
+	drawHistoPair(hSnMWPC[EAST],hSnMWPC[WEST]);
+	OM.printCanvas("SnMWPC");
 }
 
 void processSimulation() {
@@ -112,10 +170,12 @@ int main(int argc, char *argv[]) {
 	gStyle->SetPalette(1);
 	gStyle->SetNumberContours(255);
 	
-	if(argc<=1)
-		runSimulation();
-	else
-		processSimulation();
+	SnMWPCEffic();
+	
+	//if(argc<=1)
+	//	runSimulation();
+	//else
+	//	processSimulation();
 	
 	return 0;
 }

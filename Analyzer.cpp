@@ -125,19 +125,20 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	const std::string outputDir="OctetAsym_Offic";
 	
 	//const std::string simOutputDir=outputDir+"_Sim0823_4x";
-	//const std::string simOutputDir=outputDir+"_SimMagF";
-	const std::string simOutputDir=outputDir+"_SimPen";
+	//const std::string simOutputDir=outputDir+"_SimMagF_MWPCthresh";
+	const std::string simOutputDir=outputDir+"_SimMagF_4x";
+	//const std::string simOutputDir=outputDir+"_SimPen";
 	
-	std::string simFile="/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_";
-	//std::string simFile="/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_";
+	//std::string simFile="/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_";
+	std::string simFile="/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_";
 	
 	/////////// Geant4 MagF
-	//unsigned int nTot = 104;
-	//unsigned int stride = 14;
+	unsigned int nTot = 104;
+	unsigned int stride = 14;
 	
 	/////////// Geant4 0823
-	unsigned int nTot = 520;
-	unsigned int stride = 73;
+	//unsigned int nTot = 520;
+	//unsigned int stride = 73;
 	
 	double simFactor = 4.0;
 	bool doPlots = true;
@@ -215,11 +216,20 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		return;
 	}
 	
-	std::string sim = "Sim0823_4x";
 	if(true) {
-		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_"+sim+"/");
+		std::string sim = "SimMagF_4x";
+		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCChanges_"+sim+"/");
+		compareMCs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Sim0823_4x/OctetAsym_Offic_Sim0823_4x",
+				   getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,"MagF");
+		//return;
+	}
+	
+	std::string sim = "Sim0823_4x";
+	//std::string sim = "SimPen";
+	if(false) {
+		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_Old_"+sim+"/");
 		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
-					getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim);
+					getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim, true, false);
 		//return;
 	}
 	
@@ -236,7 +246,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		return;
 	}
 	
-	if(true) {
+	if(false) {
 		//refitXeAnode(getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Xenon_14282-14347_20/Xenon_14282-14347_20");
 		//return;
 		separate23("SimPen");
@@ -295,6 +305,8 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		AH.write();
 		AH.setWriteRoot(true);
 	}
+	
+	return;
 	
 	//NGBGSpectra("EndcapEdge_nCaptH");
 	//NGBGSpectra("EndcapEdge_nCaptCu");

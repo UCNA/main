@@ -40,7 +40,7 @@ SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
 nSimmed(0), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
-		mwpcThresh[s] = 0.02;
+		mwpcThresh[s] = 0; //(s==EAST?0.98:0.10);
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 			for(unsigned int c = 0; c < kMaxCathodes; c++)
 				cathodes[s][d][c] = 0;

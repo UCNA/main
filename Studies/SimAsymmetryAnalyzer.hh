@@ -16,6 +16,8 @@ public:
 	virtual void makePlots();
 	/// calculate corrections given actual data; return asymmetry correction stages
 	std::vector<TH1*> calculateCorrections(AsymmetryAnalyzer& Adat, AsymmetryAnalyzer& Asim);
+	/// "old style" corrections calculation
+	std::vector<TH1*> calculateCorrectionsOld(AsymmetryAnalyzer& Asim);
 	
 	quadHists* qBCT[2][TYPE_IV_EVENT+1];		//< average beta cos theta TProfiles by [side][event type]
 	quadHists* qCosth[2][TYPE_IV_EVENT+1];		//< average cos theta TProfiles by [side][type]

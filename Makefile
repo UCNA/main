@@ -53,7 +53,7 @@ Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o \
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
-ExampleObjs = CalibratorExample DataScannerExample ExtractCorrectBetaSpectrum ExtractFierzTerm \
+ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm \
 	QCalc MC_Comparisons MWPC_Efficiency_Sim FierzOctetAnalyzer OctetAnalyzerExample
 
 all: UCNAnalyzer

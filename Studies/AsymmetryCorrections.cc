@@ -60,6 +60,8 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	ctable.push_back(new AsymCorr("GainFlucts"));
 	ctable.push_back(new AsymCorr("EnergyLinearityUncertainty_2010"));
 	ctable.push_back(new AsymCorr("NGBG"));
+	ctable.push_back(new AsymCorr("MWPCeffic"));
+	ctable.push_back(new AsymCorr("MagF"));
 	ctable.push_back(new AsymCorr("Radiative_h-g"));
 	ctable.push_back(new AsymCorr("RecoilOrder"));
 	
@@ -97,7 +99,7 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	// integrate errors
 	int b0 = AA.hAsym->FindBin(emin);
 	int b1 = AA.hAsym->FindBin(emax);
-
+	
 	// root average fit
 	AA.hAsym->Fit(&lineFit,"R");
 	Stringmap m2;
@@ -111,7 +113,7 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
 	AA.hAsym->Draw();
 	AA.myA->printCanvas("hAsym_A3");
-		
+	
 	double statw = 0;
 	double mu = 0;
 	std::vector<double> sumc(ctable.size());
@@ -157,7 +159,7 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 
 //-------------------------------------------------------------//
 
-void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin) {
+void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin, bool writeAux, bool oldCorr) {
 	for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_E; ++a) {
 		OctetAnalyzer OAdat(&OM, "DataCorrector", datin);
 		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
@@ -171,7 +173,7 @@ void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string&
 		SimAsymmetryAnalyzer* SAAsim = new SimAsymmetryAnalyzer(&OAsim);
 		OAsim.addPlugin(SAAsim);
 		
-		std::vector<TH1*> asymStages = SAAsim->calculateCorrections(*AAdat,*AAsim);
+		std::vector<TH1*> asymStages = oldCorr?SAAsim->calculateCorrectionsOld(*AAsim):SAAsim->calculateCorrections(*AAdat,*AAsim);
 		
 		// re-bin for less awful stats
 		for(unsigned int i=0; i<asymStages.size(); i++)
@@ -204,23 +206,76 @@ void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string&
 			OAsim.printCanvas(sname);
 			
 			// write correction file
-			FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/"+sname+".txt").c_str(),"w");
-			if(i<=TYPE_III_EVENT+1)
-				fprintf(f,"# MC Backscattering Correction Delta_{2,%i} for Analysis Choice %c\n",i-1,choiceLetter(a));
-			else
-				fprintf(f,"# MC Acceptance Correction Delta_3 for Analysis Choice %c\n",choiceLetter(a));
-			fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
-			for(unsigned int b=0; b<800; b+=10) {
-				double e = b+5.;
-				double dA = g->Eval(e);
-				fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,dA,fabs(dA/3.));
+			if(writeAux) {
+				FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/"+sname+".txt").c_str(),"w");
+				if(i<=TYPE_III_EVENT+1)
+					fprintf(f,"# MC Backscattering Correction Delta_{2,%i} for Analysis Choice %c\n",i-1,choiceLetter(a));
+				else
+					fprintf(f,"# MC Acceptance Correction Delta_3 for Analysis Choice %c\n",choiceLetter(a));
+				fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
+				for(unsigned int b=0; b<800; b+=10) {
+					double e = b+5.;
+					double dA = g->Eval(e);
+					fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,dA,fabs(dA*0.30));
+				}
+				fclose(f);
 			}
-			fclose(f);
 		}
 	}
 }
 
 //-------------------------------------------------------------//
+
+void compareMCs(OutputManager& OM, const std::string& sim0, const std::string& sim1, const std::string& fOut) {
+	OctetAnalyzer OA0(&OM, "DataCorrector", sim0);
+	AsymmetryAnalyzer* AA0 = new AsymmetryAnalyzer(&OA0);
+	OA0.addPlugin(AA0);
+	OctetAnalyzer OA1(&OM, "DataCorrector", sim1);
+	AsymmetryAnalyzer* AA1 = new AsymmetryAnalyzer(&OA1);
+	OA1.addPlugin(AA1);
+	
+	AA1->anChoice = AA0->anChoice;
+	
+	OA0.calculateResults();
+	OA1.calculateResults();
+	
+	AA0->hAsym->Rebin(10);
+	AA1->hAsym->Rebin(10);
+	
+	AA0->hAsym->Divide(AA1->hAsym);
+	
+	TGraph* g = new TGraph(AA0->hAsym->GetNbinsX());
+	for(int b=1; b<=AA0->hAsym->GetNbinsX(); b++) {
+		double c = AA0->hAsym->GetBinContent(b);
+		c = c>5.0?5.0:c<0.2?0.2:c==c?c:1;
+		g->SetPoint(b-1,AA0->hAsym->GetBinCenter(b),c-1);
+	}
+	g->SetTitle("MC Correction");
+	g->Draw("AL");
+	g->GetYaxis()->SetRangeUser(-0.01,0.01);
+	g->GetXaxis()->SetRangeUser(0,800);
+	g->SetMarkerStyle(24);
+	g->SetMarkerSize(0.5);
+	g->SetMarkerColor(2);
+	g->Draw("ALP");
+	OM.printCanvas("AsymDiff_"+ctos(choiceLetter(AA0->anChoice)));
+	
+	// write correction file
+	if(fOut.size()>0) {
+		FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/"+fOut+".txt").c_str(),"w");
+		fprintf(f,"# MC correction\n");
+		fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
+		for(unsigned int b=0; b<800; b+=10) {
+			double e = b+5.;
+			double dA = g->Eval(e);
+			fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,dA,fabs(dA*0.5));
+		}
+		fclose(f);
+	}
+}
+
+//-------------------------------------------------------------//
+
 
 ErrTables::ErrTables(const std::string& datset):
 OM("nameUnused",getEnvSafe("UCNA_ANA_PLOTS")),

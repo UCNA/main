@@ -57,7 +57,7 @@ AnaResult AsymmetryAnalyzer::getResultBase() const {
 	AR.startRun = myA->runCounts.counts.begin()->first;
 	AR.endRun = myA->runCounts.counts.rbegin()->first;
 	AR.anach = anChoice;
-	AR.grouping = AnaResult::RunGrouping(AnaResult::GROUP_OCTET-myA->depth);
+	AR.grouping = AnaResult::RunGrouping(AnaResult::GROUP_OCTET-myA->depth-myA->isSimulated);
 	return AR;
 }
 
@@ -241,16 +241,21 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 			cterr[s][afp] /= myA->totalTime[afp][GV_OPEN][s];
 		}
 	}
-		
+	
+	// RWP:
+	// Ar = (1-sqrt(S))/(1+sqrt(S))
+	// S = (<R1><R2>)/(<R3><R4>) with the <R> being the average of the rates then the statistical uncertainty is :
+	// dA = (sqrt(S)) / (1+sqrt(S))^2 sqrt(sum (dR/R)^2)
 	double S = (cts[EAST][AFP_OFF]*cts[WEST][AFP_ON])/(cts[EAST][AFP_ON]*cts[WEST][AFP_OFF]);
-	S = (1-sqrt(S))/(1+sqrt(S));
-	ARtot.value = S;
+	ARtot.value = (1-sqrt(S))/(1+sqrt(S));
 	ARtot.err = 0;
 	for(Side s = EAST; s <= WEST; ++s)
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 			ARtot.err += pow(cterr[s][afp]/cts[s][afp],2);
+	ARtot.err = sqrt(ARtot.err);
 	ARtot.err *= sqrt(S)/pow(1+sqrt(S),2);
 	ADB->uploadAnaResult(ARtot);
+	
 	
 	// event count results
 	ARtot.anatp = AnaResult::ANA_COUNTS;

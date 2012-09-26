@@ -391,6 +391,9 @@ RunInfo CalDBSQL::getRunInfo(RunNum r) {
 	
 	delete(row);
 	
+	R.liveTime = fiducialTime(r);
+	R.wallTime = totalTime(r);
+	
 	return R;
 }
 
