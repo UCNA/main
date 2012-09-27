@@ -13,7 +13,6 @@ unsigned int totalBins(const TH1* h) {
 	return nbinsx*nbinsy*nbinsz;
 }
 
-
 BlindTime::BlindTime(const Stringmap& m) {
 	for(Side s = EAST; s != BADSIDE; ++s)
 		t[s]=m.getDefault(sideWords(s),0.);

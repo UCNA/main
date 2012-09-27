@@ -27,6 +27,10 @@ ifdef PROFILER_COMPILE
 	LDFLAGS += -pg
 endif
 
+ifdef UNBLINDED
+	CXXFLAGS += -DUNBLINDED
+endif
+
 #
 # things to build
 #
@@ -68,7 +72,6 @@ ExtractFierzTerm: ExtractFierzTerm.cc libUCNA.a
 	$(CXX) $(CXXFLAGS) ExtractFierzTerm.cc $(LDFLAGS) -o ExtractFierzTerm
 	
 examples: $(ExampleObjs)
-
 
 CalibratorExample: CalibratorExample.cpp libUCNA.a
 	$(CXX) $(CXXFLAGS) Examples/CalibratorExample.cpp $(LDFLAGS) -o CalibratorExample
