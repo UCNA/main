@@ -142,7 +142,8 @@ enum AnalysisChoice {
 	ANCHOICE_H=8,	//< II/III hard cut
 	ANCHOICE_I=9,	//< II/III probability assigned
 	ANCHOICE_J=10,	//< II hard cut
-	ANCHOICE_K=11	//< III hard cut
+	ANCHOICE_K=11,	//< III hard cut
+	ANCHOICE_Z=26	//< placeholder
 };
 /// iteration to next analysis choice
 inline AnalysisChoice& operator++(AnalysisChoice& ac) { return ac = AnalysisChoice(ac+1); }
