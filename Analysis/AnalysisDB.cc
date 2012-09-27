@@ -1,7 +1,7 @@
 #include "AnalysisDB.hh"
 
 AnaResult::AnaResult(const std::string& auth): arid(0), author(auth), timestamp(time(NULL)),
-startRun(0), endRun(0), s(BOTH), afp(AFP_OTHER), value(0), err(0), csid(0) { }
+startRun(0), endRun(0), anach(ANCHOICE_C), s(BOTH), afp(AFP_OTHER), value(0), err(0), csid(0) { }
 
 std::string AnaResult::atypeWord(AnaType t) { return t==ANA_ASYM?"Asymmetry":"Counts"; }
 std::string AnaResult::dsourceWord(DataSource d) { return d==REAL_DATA?"Data":d==G4_DATA?"G4":"Pen"; }
