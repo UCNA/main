@@ -102,7 +102,7 @@ std::string geomName(RunGeometry g) {
 }
 
 char choiceLetter(AnalysisChoice a) {
-	return (ANCHOICE_A <= a)?'A'+(a-ANCHOICE_A):'0';
+	return (ANCHOICE_A <= a && a < ANCHOICE_NONE)?'A'+(a-ANCHOICE_A):'0';
 }
 
 
