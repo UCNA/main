@@ -259,10 +259,12 @@ std::vector<TH1*> SimAsymmetryAnalyzer::calculateCorrections(AsymmetryAnalyzer& 
 		
 		for(Side s = EAST; s <= WEST; ++s) {
 			for(AFPState a = AFP_OFF; a<=AFP_ON; ++a) {
+				double fudge = (t==TYPE_0_EVENT?1.10:1.0);
 				TH1* hMisID = qMisCorr[s]->fgbg[a]->h[GV_OPEN];
 				TH1* hRightID = Asim.qEnergySpectra[s][nBetaTubes][t]->fgbg[a]->h[GV_OPEN];
-				hRightID->Add(qWrongSide[s][t]->fgbg[a]->h[GV_OPEN],-1.0); // remove counts coming from wrong side
+				hRightID->Add(qWrongSide[s][t]->fgbg[a]->h[GV_OPEN],-fudge); // remove counts coming from wrong side
 				hMisID->Divide(hRightID);
+				hMisID->Scale(fudge);
 				
 				hMisID->SetLineColor(2+2*s);
 				hMisID->SetLineStyle(1+2*a);
