@@ -216,7 +216,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		return;
 	}
 	
-	if(true) {
+	if(false) {
 		std::string sim = "SimMagF_4x";
 		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCChanges_"+sim+"/");
 		compareMCs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Sim0823_4x/OctetAsym_Offic_Sim0823_4x",
@@ -226,7 +226,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
 	std::string sim = "Sim0823_4x";
 	//std::string sim = "SimPen";
-	if(false) {
+	if(true) {
 		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_Old_"+sim+"/");
 		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
 					getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim, true, false);
