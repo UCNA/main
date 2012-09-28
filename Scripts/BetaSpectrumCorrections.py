@@ -45,7 +45,7 @@ def plotWilkinsonCorrs(fin,outpath):
 				abs(c.BiRWM),	# 6
 				-c.VCm1,		# 7
 				-c.ACm1,		# 8
-				abs(c.g),		# 9
+				c.g,			# 9
 				0.000401,		# 10
 				0.0004*(1+0.2*sin(c.energy/30)) ] for c in corrs]
 				
@@ -112,8 +112,8 @@ def plotWilkinsonCorrs(fin,outpath):
 			y=graph.axis.lin(title="Fractional Correction to $A$",min=0.0000),
 			key = graph.key.key(pos="tl"))
 	setTexrunner(gWCA)
-	gWCA.plot(graph.data.points([(c.energy,c.RWM) for c in corrs],x=1,y=2,title="Wilkinson recoil-order"),[graph.style.line([style.linewidth.Thick])])
-	gWCA.plot(graph.data.points([(c.energy,c.hmg) for c in corrs],x=1,y=2,title="Radiative $h - g$"),[graph.style.line([style.linewidth.Thick,rgb.red])])
+	gWCA.plot(graph.data.points([(c.energy,c.RWM) for c in corrs],x=1,y=2,title="recoil-order (Wilkinson)"),[graph.style.line([style.linewidth.Thick])])
+	gWCA.plot(graph.data.points([(c.energy,c.hmg) for c in corrs],x=1,y=2,title="Radiative $h - g$ (Shann/Sirlin)"),[graph.style.line([style.linewidth.Thick,rgb.red])])
 	if 1:
 		def gluckx2E(x):
 			return x*(782.6+511.)-511.

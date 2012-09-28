@@ -80,5 +80,5 @@ def compare_corrections(basedir,fin):
 
 if __name__=="__main__":
 	#compare_anchoices(os.environ["UCNA_ANA_PLOTS"]+"/test/Anchoices/",os.environ["UCNA_ANA_PLOTS"]+"/test/Anchoices_SimMagF/")
+	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym_Sim0823_4x/","CorrectedAsym.txt")
 	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym_SimPen/","CorrectedAsym.txt")
-	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym/","CorrectedAsym.txt")

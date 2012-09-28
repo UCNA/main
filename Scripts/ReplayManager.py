@@ -71,7 +71,7 @@ if __name__ == "__main__":
 	parser.add_option("-s", "--sources", dest="sources", action="store_true", default=False, help="process (official) source data")
 	parser.add_option("--rmin", type="int", dest="rmin", default=0)
 	parser.add_option("--rmax", type="int", dest="rmax", default=100000)
-	parser.add_option("--nrings", type="int", dest="nrings", default=12, help="number of rings for position map")
+	parser.add_option("--nrings", type="int", dest="nrings", default=11, help="number of rings for position map")
 	
 	options, args = parser.parse_args()
 	if options.kill:

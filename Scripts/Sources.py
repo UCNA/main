@@ -122,7 +122,7 @@ def delete_ALL_calibrations(conn):
 			
 class SourceDatDirectory:
 	"""Class for locating source cal output files"""
-	def __init__(self,bp="../Plots/LivermoreSources/"):
+	def __init__(self,bp="../../Plots/LivermoreSources/"):
 		self.basepath = bp
 		self.runpaths = {}
 		self.rundat = {}
@@ -384,6 +384,7 @@ class LinearityCurve:
 		except:
 			print "Tube calibration upload failed!"
 			delete_graph(conn,lgid)
+			raw_input("Press enter to acknowledge and continue...")
 		
 def makeCalset(conn,r0,r1,rgms,posmap,replace=False):
 	"""Set calibration definition for range of runs in calibration DB."""
@@ -457,13 +458,13 @@ def plotBackscatters(conn,rlist):
 # calibration definitions:
 #				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
 cal_2010 = [
-			(	13883,	13894,	13890,	13879,	13964,		94,		97,			147 ),	# 63 0 first usable? data + little Xe
-			(	14104,	14116,	14111,	14077,	14380,		144,	147,		147 ),	# 63 1	Columbus Day weekend + big Xe
-			(	14383,	14394,	14390,	14383,	14507,		212,	215,		147 ),	# 63 2 Oct. 15-21 week
-			(	14516,	14530,	14524,	14513,	14667,		268,	271,		147 ),	# 63 3 Oct. 22-24 weekend
-			(	14736,	14746,	14743,	14688,	14994,		330,	333,		147 ),	# 63 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
-			(	15645,	15662,	15653,	15084,	15915,		437,	440,		151 ),	# 65 5 Nov. 22-29 Thanksgiving Week
-			(	15916,	15939,	15931,	15916,	100000,		553,	555,		151 )	# 65 6 Post-Thanksgiving
+			(	13883,	13894,	13890,	13879,	13964,		94,		97,			161 ),	# 63 0 first usable? data + little Xe
+			(	14104,	14116,	14111,	14077,	14380,		144,	147,		161 ),	# 63 1	Columbus Day weekend + big Xe
+			(	14383,	14394,	14390,	14383,	14507,		212,	215,		161 ),	# 63 2 Oct. 15-21 week
+			(	14516,	14530,	14524,	14513,	14667,		268,	271,		161 ),	# 63 3 Oct. 22-24 weekend
+			(	14736,	14746,	14743,	14688,	14994,		330,	333,		161 ),	# 63 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
+			(	15645,	15662,	15653,	15084,	15915,		437,	440,		164 ),	# 65/151 5 Nov. 22-29 Thanksgiving Week
+			(	15916,	15939,	15931,	15916,	100000,		553,	555,		164 )	# 65 6 Post-Thanksgiving
 			]
 			
 cal_2011 = [
@@ -499,33 +500,30 @@ if __name__=="__main__":
 	
 	for c in cal_2010:
 	
-		if True:
-			# gather source data from calibration runs
-			rlist = range(c[0],c[1]+1)
-			slines = gather_peakdat(conn,rlist)
-			
-			#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
-			#continue
-			
-			# make new calibrations set
-			# ecid = None
-			if True and len(c)>2:
-				ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
-			
-			# fit linearity curves for each PMT
-			for (sn,s) in enumerate(["East","West"]):
-				for t in range(5):
-					LC = LinearityCurve(s,t)
-					if t<4:
-						LC.fitLinearity(slines)
-						if LC.cnvs:
-							LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
-					LC.plot_erecon(slines)
-					if ecid and t<4:
-						LC.dbUpload(conn,ecid,c[5+sn])
-					if not LC.cnvs:
-							continue
-					LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
-					LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
-		else:
-			pass
+		# gather source data from calibration runs
+		rlist = range(c[0],c[1]+1)
+		slines = gather_peakdat(conn,rlist)
+		
+		plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
+		continue
+		
+		# make new calibrations set
+		ecid = None
+		if True and len(c)>2:
+			ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
+		
+		# fit linearity curves for each PMT
+		for (sn,s) in enumerate(["East","West"]):
+			for t in range(5):
+				LC = LinearityCurve(s,t)
+				if t<4:
+					LC.fitLinearity(slines)
+					if LC.cnvs:
+						LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
+				LC.plot_erecon(slines)
+				if ecid and t<4:
+					LC.dbUpload(conn,ecid,c[5+sn])
+				if not LC.cnvs:
+						continue
+				LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
+				LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
