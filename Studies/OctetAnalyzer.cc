@@ -391,16 +391,13 @@ unsigned int processPulsePair(OctetAnalyzer& OA, const Octet& PP) {
 	return nproc;
 }
 
-unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, double replaceIfOlder, bool doPlots) {
+unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, double replaceIfOlder, bool doPlots, unsigned int oMin, unsigned int oMax) {
 	
 	unsigned int nproc = 0;
-	
-	unsigned int octn = 0;
-	
+		
 	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
-		octn++;
-		//if(octn == 2+1 || octn == 17+1 || octn == 30+1) continue; // anomalous gamma backgrounds
-		//if(octn>29) continue;
+		unsigned int octn = (unsigned int)(octit-Octs.begin());
+		if(octn<oMin || oMax<octn) continue;
 		
 		// check if there are any runs to process
 		printf("Processing octet '%s' at division %i...\n",octit->octName().c_str(),octit->divlevel);

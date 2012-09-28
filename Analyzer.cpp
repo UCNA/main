@@ -184,6 +184,32 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	}
 }
 
+void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
+	int octMax = streamInteractor::popInt(stack);
+	int octMin = streamInteractor::popInt(stack);
+	std::string inPath = getEnvSafe("UCNA_ANA_PLOTS");
+	std::string outPath = inPath+"/OctetAsym_Offic/Range_"+itos(octMin)+"-"+itos(octMax);
+	
+	if(true) {
+		OutputManager OM("ThisNameIsNotUsedAnywhere",inPath);
+		BetaDecayAnalyzer AA(&OM,"OctetAsym_Offic");
+		AA.plotPath = AA.dataPath = AA.rootPath = outPath;
+		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600,true,octMin,octMax);
+	}
+	
+	if(true) {
+		OutputManager OM("CorrectedAsym",outPath+"/CorrectAsym/");
+		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
+			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), outPath+"/OctetAsym_Offic");
+			AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+			OAdat.addPlugin(AAdat);
+			AAdat->anChoice = a;
+			doFullCorrections(*AAdat,OM);
+		}
+		OM.write();
+	}
+}
+
 void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
 	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/20120810/");
 	G4toPMT g2p;
@@ -227,7 +253,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	std::string sim = "Sim0823_4x";
 	//std::string sim = "SimPen";
 	if(true) {
-		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_Old_"+sim+"/");
+		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_"+sim+"/");
 		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
 					getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim, true, false);
 		//return;
@@ -267,7 +293,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		OMTest.printCanvas("BG_Components_ComboW");
 		return;
 	}
-		
+	
 	if(false) {
 		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
 		NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
@@ -334,7 +360,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
 	
 	//spectrumGenTest();
-		
+	
 	/*
 	 OutputManager OMLS("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorr");
 	 LEDScanScanner LSS;
@@ -342,7 +368,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	 //std::vector<RunNum> bruns = selectRuns(16097, 16216, "beta");
 	 LSS.addRuns(bruns);
 	 PMT_LED_Correlations(OMLS,LSS);
-	 exit(0);	
+	 exit(0);
 	 */
 }
 
@@ -405,7 +431,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	PMapR.addChoice(&nPEPlot,"npe");
 	PMapR.addChoice(&exitMenu,"x");
 	
-	// postprocessing/plots routines	
+	// postprocessing/plots routines
 	inputRequester plotGMS("Plot GMS corrections",&mi_PlotGMS);
 	plotGMS.addArg("Start Run");
 	plotGMS.addArg("End Run");
@@ -413,12 +439,16 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	inputRequester octetProcessor("Process Octet",&mi_processOctet);
 	octetProcessor.addArg("Octet number");
+	inputRequester octetRange("Process Octet Range",&mi_anaOctRange);
+	octetRange.addArg("Start octet","0");
+	octetRange.addArg("end octet","1000");
 	
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
 	PostRoutines.addChoice(&plotGMS);
 	PostRoutines.addChoice(&octetProcessor,"oct");
-	PostRoutines.addChoice(&exitMenu,"x");	
+	PostRoutines.addChoice(&octetRange,"rng");
+	PostRoutines.addChoice(&exitMenu,"x");
 	
 	// sources
 	inputRequester postSources("Fit source data",&mi_PostprocessSources);

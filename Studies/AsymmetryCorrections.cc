@@ -7,6 +7,7 @@
 #include <TRandom.h>
 #include <stdio.h>
 #include <cassert>
+#include <TLatex.h>
 #include "SMExcept.hh"
 
 TRandom3 acRndSrc;
@@ -48,6 +49,10 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	double emin = 275;
 	double emax = 625;
 	TF1 lineFit("lineFit","pol0",emin,emax);
+	TLatex lx;
+	char tmp[1024];
+	lx.SetTextColor(2);
+	lx.SetTextSize(0.04);
 	
 	std::vector<AsymCorr*> ctable;
 	ctable.push_back(new AsymCorr("Delta_2_0_"+ctos(choiceLetter(AA.anChoice))));
@@ -83,6 +88,8 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	
 	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
 	AA.hAsym->Draw();
+	sprintf(tmp,"#splitline{A' = %.5f #pm %.5f,}{#chi^{2}/ndf = %.1f/%i}",lineFit.GetParameter(0),lineFit.GetParError(0),lineFit.GetChisquare(),lineFit.GetNDF());
+	lx.DrawLatex(100,-0.06,tmp);
 	AA.myA->printCanvas("hAsym_A1");
 	
 	// apply each correction
@@ -112,6 +119,8 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	
 	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
 	AA.hAsym->Draw();
+	sprintf(tmp,"#splitline{A_{0} = %.5f #pm %.5f,}{#chi^{2}/ndf = %.1f/%i}",lineFit.GetParameter(0),lineFit.GetParError(0),lineFit.GetChisquare(),lineFit.GetNDF());
+	lx.DrawLatex(100,-0.06,tmp);
 	AA.myA->printCanvas("hAsym_A3");
 	
 	double statw = 0;
@@ -216,7 +225,7 @@ void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string&
 				for(unsigned int b=0; b<800; b+=10) {
 					double e = b+5.;
 					double dA = g->Eval(e);
-					fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,dA,fabs(dA*0.30));
+					fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,dA,fabs(dA*0.25));
 				}
 				fclose(f);
 			}
