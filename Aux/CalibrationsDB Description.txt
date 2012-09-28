@@ -260,6 +260,7 @@ CREATE TABLE analysis_results (
 	ana_choice ENUM('A','B','C','D','E','F','G','H'),	# ``analysis choice''
 	side ENUM('East','West','Both'),		# event side of result
 	afp ENUM('On','Off','Other','On2Off','Off2On'),	# AFP state for result
+	gate_valve ENUM('Open','Closed'),		# gate valve for specifying background runs
 	value DOUBLE,							# result value
 	err DOUBLE,								# result uncertainty
 	cut_spec_id INT UNSIGNED,				# ID for cut specification

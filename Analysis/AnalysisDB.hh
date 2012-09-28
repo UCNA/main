@@ -60,6 +60,7 @@ public:
 	AnalysisChoice anach;	//< ``analysis choice'' used
 	Side s;					//< side for result
 	AFPState afp;			//< AFP state for result
+	GVState gv;				//< gate valve state for FG/BG
 	double value;			//< value of result
 	double err;				//< uncertainty on result
 	unsigned int csid;		//< cut specification ID

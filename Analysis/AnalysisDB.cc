@@ -1,7 +1,7 @@
 #include "AnalysisDB.hh"
 
 AnaResult::AnaResult(const std::string& auth): arid(0), author(auth), timestamp(time(NULL)),
-startRun(0), endRun(0), anach(ANCHOICE_C), s(BOTH), afp(AFP_OTHER), value(0), err(0), csid(0) { }
+startRun(0), endRun(0), anach(ANCHOICE_C), s(BOTH), afp(AFP_OTHER), gv(GV_OPEN), value(0), err(0), csid(0) { }
 
 std::string AnaResult::atypeWord(AnaType t) { return t==ANA_ASYM?"Asymmetry":"Counts"; }
 std::string AnaResult::dsourceWord(DataSource d) { return d==REAL_DATA?"Data":d==G4_DATA?"G4":"Pen"; }
@@ -55,8 +55,8 @@ unsigned int AnalysisDB::uploadCutSpec(AnaCutSpec& c) {
 unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
 	printf("Uploading analysis result:\n");
 	r.toStringmap().display();
-	sprintf(query,"INSERT INTO analysis_results(author,date,type,source,start_run,end_run,grouping,event_type,ana_choice,side,afp,value,err,cut_spec_id) \
-			VALUES ('%s',FROM_UNIXTIME(%u),'%s','%s',%i,%i,'%s','%s','%c',%s,'%s',%f,%f,%u)",
+	sprintf(query,"INSERT INTO analysis_results(author,date,type,source,start_run,end_run,grouping,event_type,ana_choice,side,afp,gate_valve,value,err,cut_spec_id) \
+			VALUES ('%s',FROM_UNIXTIME(%u),'%s','%s',%i,%i,'%s','%s','%c',%s,'%s','%s',%f,%f,%u)",
 			r.author.c_str(),
 			(unsigned int)r.timestamp,
 			AnaResult::atypeWord(r.anatp).c_str(),
@@ -68,6 +68,7 @@ unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
 			choiceLetter(r.anach),
 			dbSideName(r.s),
 			afpWords(r.afp).c_str(),
+			gvWords(r.gv).c_str(),
 			r.value,
 			r.err,
 			r.csid);
@@ -105,7 +106,7 @@ void AnalysisDB::deleteCutSpec(unsigned int csid) {
 
 AnaResult AnalysisDB::getAnaResult(unsigned int arid) {
 	//                    0      1    2    3      4         5       6          7          8    9   10    11  12
-	sprintf(query,"SELECT author,date,type,source,start_run,end_run,event_type,ana_choice,side,afp,value,err,cut_spec_id \
+	sprintf(query,"SELECT author,date,type,source,start_run,end_run,event_type,ana_choice,side,afp,gate_valve,value,err,cut_spec_id \
 			FROM analysis_results WHERE analsysis_results_id = %i",arid);
 	TSQLRow* r = getFirst();
 	if(!r) {
@@ -126,9 +127,10 @@ AnaResult AnalysisDB::getAnaResult(unsigned int arid) {
 	a.anach = AnalysisChoice(fieldAsString(r,7)[0]-'A'+1);
 	a.s = strToSide(fieldAsString(r,8));
 	a.afp = strToAfp(fieldAsString(r,9));
-	a.value = fieldAsFloat(r,10);
-	a.err = fieldAsFloat(r,11);
-	a.csid = fieldAsInt(r,12);
+	a.gv = strToGV(fieldAsString(r,10));
+	a.value = fieldAsFloat(r,11);
+	a.err = fieldAsFloat(r,12);
+	a.csid = fieldAsInt(r,13);
 	delete(r);
 	return a;
 }
@@ -157,6 +159,7 @@ std::vector<AnaResult> AnalysisDB::findMatching(const AnaResult& A) {
 	qry += " AND ana_choice = '"+ctos(choiceLetter(A.anach))+"'";
 	qry += " AND side = "; qry += dbSideName(A.s);
 	qry += " AND afp = '"; qry += afpWords(A.afp)+"'";
+	qry += " AND gate_valve = '"; qry += gvWords(A.gv)+"'";
 	qry += " AND event_type = '"+A.typeSetString()+"'";
 	if(A.startRun)
 		qry += " AND start_run = "+itos(A.startRun);

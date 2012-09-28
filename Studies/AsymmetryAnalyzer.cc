@@ -25,8 +25,8 @@ OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500), anChoice
 			}
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
 				qEnergySpectra[s][p][t] = registerCoreHist("hEnergy_"+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
-																"Type "+itos(t)+" Events Energy",
-																nEnergyBins, 0, energyMax, s);
+														   "Type "+itos(t)+" Events Energy",
+														   nEnergyBins, 0, energyMax, s);
 				qEnergySpectra[s][p][t]->setAxisTitle(X_DIRECTION,"Energy [keV]");
 				qEnergySpectra[s][p][t]->setRangeUser(0,800);
 			}
@@ -227,7 +227,7 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 	c.emax = 670;
 	c.radius = 50.;
 	ARtot.csid = ADB->uploadCutSpec(c);
-
+	
 	// raw counts asymmetry
 	ARtot.anatp = AnaResult::ANA_ASYM;
 	double cts[2][2];
@@ -242,10 +242,6 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 		}
 	}
 	
-	// RWP:
-	// Ar = (1-sqrt(S))/(1+sqrt(S))
-	// S = (<R1><R2>)/(<R3><R4>) with the <R> being the average of the rates then the statistical uncertainty is :
-	// dA = (sqrt(S)) / (1+sqrt(S))^2 sqrt(sum (dR/R)^2)
 	double S = (cts[EAST][AFP_OFF]*cts[WEST][AFP_ON])/(cts[EAST][AFP_ON]*cts[WEST][AFP_OFF]);
 	ARtot.value = (1-sqrt(S))/(1+sqrt(S));
 	ARtot.err = 0;
@@ -262,24 +258,28 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-				ARtot.s = s;
-				ARtot.afp = afp;
-				ARtot.etypes.clear();
-				ARtot.etypes.insert(tp);
-				
-				// delete old
-				std::vector<AnaResult> oldr = ADB->findMatching(ARtot);
-				for(unsigned int i=0; i<oldr.size(); i++)
-					ADB->deleteAnaResult(oldr[i].arid);
-				
-				TH1* h = (TH1F*)qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[GV_OPEN];
-				int b0 = h->FindBin(c.emin+0.5);
-				int b1 = h->FindBin(c.emax-0.5);
-				
-				Double_t ierr;
-				ARtot.value = h->IntegralAndError(b0,b1,ierr);
-				ARtot.err = ierr;
-				ADB->uploadAnaResult(ARtot);
+				for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
+					ARtot.s = s;
+					ARtot.afp = afp;
+					ARtot.gv = gv;
+					ARtot.etypes.clear();
+					ARtot.etypes.insert(tp);
+					
+					// delete old
+					std::vector<AnaResult> oldr = ADB->findMatching(ARtot);
+					for(unsigned int i=0; i<oldr.size(); i++)
+						ADB->deleteAnaResult(oldr[i].arid);
+					
+					TH1* h = (TH1F*)qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[gv];
+					int b0 = h->FindBin(c.emin+0.5);
+					int b1 = h->FindBin(c.emax-0.5);
+					
+					Double_t ierr;
+					double gvscale = gv==GV_OPEN?1.0:myA->totalTime[afp][GV_OPEN][BOTH]/myA->totalTime[afp][GV_CLOSED][BOTH];
+					ARtot.value = h->IntegralAndError(b0,b1,ierr)*gvscale;
+					ARtot.err = ierr*gvscale;
+					ADB->uploadAnaResult(ARtot);
+				}
 			}
 		}
 	}
@@ -304,7 +304,7 @@ void AsymmetryAnalyzer::makePlots() {
 	
 	hSuperSum->Draw();
 	printCanvas("SuperSum");
-		
+	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++)
 		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][t], qEnergySpectra[WEST][nBetaTubes][t], true, "Energy");
 }

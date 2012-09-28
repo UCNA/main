@@ -103,6 +103,10 @@ enum GVState {
 
 /// iteration to next GV state
 inline GVState& operator++(GVState& a) { return a = GVState(a+1); }
+/// string for GV state
+std::string gvWords(GVState gv);
+/// convert string to GV state
+GVState strToGV(const std::string& s);
 
 /// SCS geometry for a run
 enum RunGeometry {
