@@ -12,11 +12,43 @@
 class AsymCorr {
 public:
 	/// constructor with name to look up in Aux/Corrections
-	AsymCorr(const std::string& nm);
+	AsymCorr(const std::string& nm): name(nm) {}
+	/// destructor
+	virtual ~AsymCorr() {}
+	
+	/// get correction at energy
+	virtual double getCor(double e) = 0;
+	/// get uncertainty at energy
+	virtual double getUnc(double e) = 0;
 	
 	std::string name;	//< correction name
+};
+
+class AsymCorrFile: public AsymCorr {
+public:
+	/// constructor
+	AsymCorrFile(const std::string& nm);
+	/// get correction at energy
+	virtual double getCor(double KE) { return gCor.Eval(KE); }
+	/// get uncertainty at energy
+	virtual double getUnc(double KE) { return gUnc.Eval(KE); }
+protected:
 	TGraph gCor;		//< amount of correction
 	TGraph gUnc;		//< uncertainty
+};
+
+/// energy independent asymmetry correction
+class ConstAsymCorr: public AsymCorr {
+public:
+	/// constructor
+	ConstAsymCorr(const std::string& nm, double c, double e): AsymCorr(nm), corr(c), uncert(e) {}
+	/// get correction at energy
+	virtual double getCor(double KE) { return corr; }
+	/// get uncertainty at energy
+	virtual double getUnc(double KE) { return uncert; }
+protected:
+	double corr;
+	double uncert;
 };
 
 /// do corrections to asymmetry

@@ -207,6 +207,7 @@ void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
 			doFullCorrections(*AAdat,OM);
 		}
 		OM.write();
+		OM.setWriteRoot(true);
 	}
 }
 
@@ -259,9 +260,17 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		//return;
 	}
 	
+	if(false) {
+		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_SelfCorr/");
+		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,
+					getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim, true, false);
+		return;
+	}
+	
 	if(true) {
 		OutputManager OM("CorrectedAsym",getEnvSafe("UCNA_ANA_PLOTS")+"/test/CorrectAsym_"+sim+"/");
 		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
+			if(a!=ANCHOICE_C) continue;
 			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
 			AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
 			OAdat.addPlugin(AAdat);

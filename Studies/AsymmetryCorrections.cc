@@ -14,7 +14,7 @@ TRandom3 acRndSrc;
 
 //-------------------------------------------------------------//
 
-AsymCorr::AsymCorr(const std::string& nm): name(nm) {
+AsymCorrFile::AsymCorrFile(const std::string& nm): AsymCorr(nm) {
 	std::string fname = getEnvSafe("UCNA_AUX")+"/Corrections/"+nm+".txt";
 	FILE* f = fopen(fname.c_str(),"r");
 	if(!f) {
@@ -46,29 +46,38 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	AA.calculateResults();
 	AA.myA->defaultCanvas->cd();
 	
-	double emin = 275;
-	double emax = 625;
+	double emin = 230;
+	double emax = 660;
 	TF1 lineFit("lineFit","pol0",emin,emax);
 	TLatex lx;
 	char tmp[1024];
 	lx.SetTextColor(2);
 	lx.SetTextSize(0.04);
 	
+	RunNum R0 = AA.myA->runCounts.counts.begin()->first;
+	RunNum R1 = AA.myA->runCounts.counts.rbegin()->first;
+	
 	std::vector<AsymCorr*> ctable;
-	ctable.push_back(new AsymCorr("Delta_2_0_"+ctos(choiceLetter(AA.anChoice))));
-	ctable.push_back(new AsymCorr("Delta_2_1_"+ctos(choiceLetter(AA.anChoice))));
-	ctable.push_back(new AsymCorr("Delta_2_2_"+ctos(choiceLetter(AA.anChoice))));
-	ctable.push_back(new AsymCorr("Delta_2_3_"+ctos(choiceLetter(AA.anChoice))));
-	ctable.push_back(new AsymCorr("Delta_3_"+ctos(choiceLetter(AA.anChoice))));
-	ctable.push_back(new AsymCorr("MuonEffic"));
-	ctable.push_back(new AsymCorr("PedShifts"));
-	ctable.push_back(new AsymCorr("GainFlucts"));
-	ctable.push_back(new AsymCorr("EnergyLinearityUncertainty_2010"));
-	ctable.push_back(new AsymCorr("NGBG"));
-	ctable.push_back(new AsymCorr("MWPCeffic"));
-	ctable.push_back(new AsymCorr("MagF"));
-	ctable.push_back(new AsymCorr("Radiative_h-g"));
-	ctable.push_back(new AsymCorr("RecoilOrder"));
+	ctable.push_back(new AsymCorrFile("Delta_2_0_"+ctos(choiceLetter(AA.anChoice))));
+	ctable.push_back(new AsymCorrFile("Delta_2_1_"+ctos(choiceLetter(AA.anChoice))));
+	ctable.push_back(new AsymCorrFile("Delta_2_2_"+ctos(choiceLetter(AA.anChoice))));
+	ctable.push_back(new AsymCorrFile("Delta_2_3_"+ctos(choiceLetter(AA.anChoice))));
+	ctable.push_back(new AsymCorrFile("Delta_3_"+ctos(choiceLetter(AA.anChoice))));
+	ctable.push_back(new AsymCorrFile("MuonEffic"));
+	ctable.push_back(new AsymCorrFile("PedShifts"));
+	ctable.push_back(new AsymCorrFile("GainFlucts"));
+	ctable.push_back(new AsymCorrFile("EnergyLinearityUncertainty_2010"));
+	ctable.push_back(new AsymCorrFile("NGBG"));
+	ctable.push_back(new AsymCorrFile("MWPCeffic"));
+	ctable.push_back(new AsymCorrFile("MagF"));
+	ctable.push_back(new AsymCorrFile("Radiative_h-g"));
+	ctable.push_back(new AsymCorrFile("RecoilOrder"));
+	if(R0==14077 && R1==14782)
+		ctable.push_back(new ConstAsymCorr("Polarization",0.0044,0.00549));
+	else if(R0==14888 && R1==16216)
+		ctable.push_back(new ConstAsymCorr("Polarization",0.0099,0.00636));
+	else
+		ctable.push_back(new ConstAsymCorr("Polarization",0.0072,0.0057));
 	
 	// initial beta/2 correction
 	for(int b=1; b<=AA.hAsym->GetNbinsX(); b++) {
@@ -91,12 +100,14 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	sprintf(tmp,"#splitline{A' = %.5f #pm %.5f,}{#chi^{2}/ndf = %.1f/%i}",lineFit.GetParameter(0),lineFit.GetParError(0),lineFit.GetChisquare(),lineFit.GetNDF());
 	lx.DrawLatex(100,-0.06,tmp);
 	AA.myA->printCanvas("hAsym_A1");
+	printf("\n*** Uncorrected %s ***\n",tmp);
+	OM.addObject(AA.hAsym->Clone(("hAsym_Uncorrected_"+ctos(choiceLetter(AA.anChoice))).c_str()));
 	
 	// apply each correction
 	for(unsigned int i=0; i<ctable.size(); i++) {
 		for(int b=1; b<=AA.hAsym->GetNbinsX(); b++) {
 			double e = AA.hAsym->GetBinCenter(b);
-			double c = 1+ctable[i]->gCor.Eval(e);
+			double c = 1+ctable[i]->getCor(e);
 			if(!(1e-1 < c && c <1e1)) continue;
 			AA.hAsym->SetBinContent(b, AA.hAsym->GetBinContent(b)*c);
 			AA.hAsym->SetBinError(b, AA.hAsym->GetBinError(b)*fabs(c));
@@ -104,8 +115,8 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	}
 	
 	// integrate errors
-	int b0 = AA.hAsym->FindBin(emin);
-	int b1 = AA.hAsym->FindBin(emax);
+	int b0 = AA.hAsym->FindBin(emin+0.5);
+	int b1 = AA.hAsym->FindBin(emax-0.5);
 	
 	// root average fit
 	AA.hAsym->Fit(&lineFit,"R");
@@ -122,6 +133,8 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	sprintf(tmp,"#splitline{A_{0} = %.5f #pm %.5f,}{#chi^{2}/ndf = %.1f/%i}",lineFit.GetParameter(0),lineFit.GetParError(0),lineFit.GetChisquare(),lineFit.GetNDF());
 	lx.DrawLatex(100,-0.06,tmp);
 	AA.myA->printCanvas("hAsym_A3");
+	printf("*** Corrected %s ***\n",tmp);
+	OM.addObject(AA.hAsym->Clone(("hAsym_Corrected_"+ctos(choiceLetter(AA.anChoice))).c_str()));
 	
 	double statw = 0;
 	double mu = 0;
@@ -133,8 +146,8 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 		statw += 1.0/(err*err);
 		double e = AA.hAsym->GetBinCenter(b);
 		for(unsigned int i=0; i<ctable.size(); i++) {
-			sumc[i] += ctable[i]->gCor.Eval(e)/(err*err);
-			sumcerr[i] += ctable[i]->gUnc.Eval(e)/(err*err);
+			sumc[i] += ctable[i]->getCor(e)/(err*err);
+			sumcerr[i] += ctable[i]->getUnc(e)/(err*err);
 		}
 	}
 	mu /= statw;
@@ -142,7 +155,7 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 		sumc[i]/=statw;
 		sumcerr[i]/=statw;
 	}
-	printf("\n\nSTATISTICS: %.6f +- %.6f\n",mu,1./sqrt(statw));
+	printf("\n\n%i-%i STATISTICS: %.6f +- %.6f\n",R0,R1,mu,1./sqrt(statw));
 	Stringmap m3;
 	m3.insert("anChoice",ctos(choiceLetter(AA.anChoice)));
 	for(unsigned int i=0; i<ctable.size(); i++) {
@@ -159,8 +172,13 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	for(unsigned int i=TYPE_III_EVENT+1; i<ctable.size(); i++)
 		systot += sumcerr[i]*sumcerr[i];
 	systot = sqrt(systot);
+	double corrtot = 0;
+	for(unsigned int i=0; i<ctable.size(); i++)
+		corrtot += sumc[i];
+
 	m3.insert("sysTot",systot);
-	printf("SYSTEMATICS TOTAL = +- %.3f %%\n\n",100*systot);
+	m3.insert("corrTot",corrtot);
+	printf("\nCORRECTIONS TOTAL = %.3f +- %.3f %%\n\n",100*corrtot,100*systot);
 	OM.qOut.insert("systematics",m3);
 }
 

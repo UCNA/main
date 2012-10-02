@@ -223,8 +223,8 @@ void AsymmetryAnalyzer::uploadAnaResults() {
 	}
 	
 	AnaCutSpec c;
-	c.emin = 220;
-	c.emax = 670;
+	c.emin = 230;
+	c.emax = 660;
 	c.radius = 50.;
 	ARtot.csid = ADB->uploadCutSpec(c);
 	

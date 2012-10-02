@@ -63,7 +63,7 @@ def compare_corrections(basedir,fin):
 	myticks = [ graph.axis.tick.tick(n+1,label=a) for (n,a) in enumerate(ancs) ]	
 	gdA=graph.graphxy(width=10,height=10,
 					  x=graph.axis.lin(title="Analysis Choice",manualticks=myticks,min=0.5,max=len(ancs)+0.5,parter=None),
-					  y=graph.axis.lin(title="Extracted $A_0$",min=-.124,max=-.118),
+					  y=graph.axis.lin(title="Extracted $A_0$",min=-.125,max=-.115),
 					  key = graph.key.key(pos="bl"))
 	setTexrunner(gdA)
 
@@ -81,4 +81,8 @@ def compare_corrections(basedir,fin):
 if __name__=="__main__":
 	#compare_anchoices(os.environ["UCNA_ANA_PLOTS"]+"/test/Anchoices/",os.environ["UCNA_ANA_PLOTS"]+"/test/Anchoices_SimMagF/")
 	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym_Sim0823_4x/","CorrectedAsym.txt")
-	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym_SimPen/","CorrectedAsym.txt")
+	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_0-16/CorrectAsym/","CorrectedAsym.txt")
+	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_17-1000/CorrectAsym/","CorrectedAsym.txt")
+	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_0-1000/CorrectAsym/","CorrectedAsym.txt")
+
+	#compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym_SimPen/","CorrectedAsym.txt")
