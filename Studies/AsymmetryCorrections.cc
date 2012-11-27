@@ -14,8 +14,8 @@ TRandom3 acRndSrc;
 
 //-------------------------------------------------------------//
 
-AsymCorrFile::AsymCorrFile(const std::string& nm): AsymCorr(nm) {
-	std::string fname = getEnvSafe("UCNA_AUX")+"/Corrections/"+nm+".txt";
+AsymCorrFile::AsymCorrFile(const std::string& nm, const std::string& basepath): AsymCorr(nm) {
+	std::string fname = basepath+"/"+nm+".txt";
 	FILE* f = fopen(fname.c_str(),"r");
 	if(!f) {
 		SMExcept e("fileMissing");
@@ -41,13 +41,15 @@ AsymCorrFile::AsymCorrFile(const std::string& nm): AsymCorr(nm) {
 	printf("Loaded %i points for correction '%s'\n",gCor.GetN(),name.c_str());
 }
 
-void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
+void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcBase) {
 	
 	AA.calculateResults();
+	AA.hCxn = (TH1F*)AA.hAsym->Clone("hCxn");
+	AA.hCxn->Scale(0);
 	AA.myA->defaultCanvas->cd();
 	
-	double emin = 230;
-	double emax = 660;
+	double emin = 220;
+	double emax = 670;
 	TF1 lineFit("lineFit","pol0",emin,emax);
 	TLatex lx;
 	char tmp[1024];
@@ -58,11 +60,12 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	RunNum R1 = AA.myA->runCounts.counts.rbegin()->first;
 	
 	std::vector<AsymCorr*> ctable;
-	ctable.push_back(new AsymCorrFile("Delta_2_0_"+ctos(choiceLetter(AA.anChoice))));
-	ctable.push_back(new AsymCorrFile("Delta_2_1_"+ctos(choiceLetter(AA.anChoice))));
-	ctable.push_back(new AsymCorrFile("Delta_2_2_"+ctos(choiceLetter(AA.anChoice))));
-	ctable.push_back(new AsymCorrFile("Delta_2_3_"+ctos(choiceLetter(AA.anChoice))));
-	ctable.push_back(new AsymCorrFile("Delta_3_"+ctos(choiceLetter(AA.anChoice))));
+	if(!mcBase.size()) mcBase = getEnvSafe("UCNA_AUX")+"/Corrections/";
+	ctable.push_back(new AsymCorrFile("Delta_2_0_"+ctos(choiceLetter(AA.anChoice)),mcBase));
+	ctable.push_back(new AsymCorrFile("Delta_2_1_"+ctos(choiceLetter(AA.anChoice)),mcBase));
+	ctable.push_back(new AsymCorrFile("Delta_2_2_"+ctos(choiceLetter(AA.anChoice)),mcBase));
+	ctable.push_back(new AsymCorrFile("Delta_2_3_"+ctos(choiceLetter(AA.anChoice)),mcBase));
+	ctable.push_back(new AsymCorrFile("Delta_3_"+ctos(choiceLetter(AA.anChoice)),mcBase));
 	ctable.push_back(new AsymCorrFile("MuonEffic"));
 	ctable.push_back(new AsymCorrFile("PedShifts"));
 	ctable.push_back(new AsymCorrFile("GainFlucts"));
@@ -70,14 +73,20 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	ctable.push_back(new AsymCorrFile("NGBG"));
 	ctable.push_back(new AsymCorrFile("MWPCeffic"));
 	ctable.push_back(new AsymCorrFile("MagF"));
-	ctable.push_back(new AsymCorrFile("Radiative_h-g"));
-	ctable.push_back(new AsymCorrFile("RecoilOrder"));
 	if(R0==14077 && R1==14782)
 		ctable.push_back(new ConstAsymCorr("Polarization",0.0044,0.00549));
 	else if(R0==14888 && R1==16216)
 		ctable.push_back(new ConstAsymCorr("Polarization",0.0099,0.00636));
 	else
-		ctable.push_back(new ConstAsymCorr("Polarization",0.0072,0.0057));
+		ctable.push_back(new ConstAsymCorr("Polarization",0.0044*.59+.0099*.41,0.0057));
+	ctable.push_back(new AsymCorrFile("Radiative_h-g"));
+	ctable.push_back(new AsymCorrFile("RecoilOrder"));
+	
+	AA.hAsym->GetYaxis()->SetRangeUser(-0.1,0);
+	AA.hAsym->SetTitle("Raw Asymmetry");
+	AA.hAsym->Draw();
+	AA.myA->printCanvas("RawAsym");
+	AA.hAsym->GetFunction("asymFit")->SetBit(TF1::kNotDraw);
 	
 	// initial beta/2 correction
 	for(int b=1; b<=AA.hAsym->GetNbinsX(); b++) {
@@ -86,32 +95,60 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 		AA.hAsym->SetBinContent(b, AA.hAsym->GetBinContent(b)*c);
 		AA.hAsym->SetBinError(b, AA.hAsym->GetBinError(b)*c);
 	}
-	AA.hAsym->Fit(&lineFit,"R");
+	AA.hAsym->Fit(&lineFit,"NR");
 	Stringmap m1;
 	m1.insert("anChoice",ctos(choiceLetter(AA.anChoice)));
 	m1.insert("A0",lineFit.GetParameter(0));
 	m1.insert("dA0",lineFit.GetParError(0));
 	m1.insert("chi2",lineFit.GetChisquare());
 	m1.insert("ndf",lineFit.GetNDF());
+	m1.insert("eMin",emin);
+	m1.insert("eMax",emax);
 	OM.qOut.insert("rawFit",m1);
 	
 	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
+	AA.hAsym->SetTitle("Uncorrected Asymmetry");
 	AA.hAsym->Draw();
 	sprintf(tmp,"#splitline{A' = %.5f #pm %.5f,}{#chi^{2}/ndf = %.1f/%i}",lineFit.GetParameter(0),lineFit.GetParError(0),lineFit.GetChisquare(),lineFit.GetNDF());
-	lx.DrawLatex(100,-0.06,tmp);
+	//lx.DrawLatex(100,-0.06,tmp);
 	AA.myA->printCanvas("hAsym_A1");
 	printf("\n*** Uncorrected %s ***\n",tmp);
 	OM.addObject(AA.hAsym->Clone(("hAsym_Uncorrected_"+ctos(choiceLetter(AA.anChoice))).c_str()));
 	
 	// apply each correction
-	for(unsigned int i=0; i<ctable.size(); i++) {
-		for(int b=1; b<=AA.hAsym->GetNbinsX(); b++) {
-			double e = AA.hAsym->GetBinCenter(b);
+	
+	for(int b=1; b<=AA.hAsym->GetNbinsX(); b++) {
+		double e = AA.hAsym->GetBinCenter(b);
+		double cTot = 0;
+		double cErr = 0;
+		Stringmap m;
+		m.insert("KE",e);
+		m.insert("anChoice",ctos(choiceLetter(AA.anChoice)));
+		m.insert("Araw",AA.hAsym->GetBinContent(b));
+		for(unsigned int i=0; i<ctable.size(); i++) {
 			double c = 1+ctable[i]->getCor(e);
-			if(!(1e-1 < c && c <1e1)) continue;
+			if(!(0.02 < c && c < 50.)) continue;
 			AA.hAsym->SetBinContent(b, AA.hAsym->GetBinContent(b)*c);
 			AA.hAsym->SetBinError(b, AA.hAsym->GetBinError(b)*fabs(c));
+			m.insert(ctable[i]->name,ctable[i]->getCor(e));
+			m.insert("d_"+ctable[i]->name,ctable[i]->getUnc(e));
+			if(i>=ctable.size()-2) continue; // exclude theory corrections from reported total
+			if(i>=ctable.size()-3) continue; // exclude polarization from reported total
+			cTot += ctable[i]->getCor(e);
+			if(i <= TYPE_III_EVENT) cErr += ctable[i]->getUnc(e);
+			if(i == TYPE_III_EVENT) {
+				m.insert("Delta_2",cTot);
+				m.insert("d_Delta_2",cErr);
+				cErr *= cErr;
+			}
+			if(i > TYPE_III_EVENT) cErr += pow(ctable[i]->getUnc(e),2);
 		}
+		m.insert("cTot",cTot);
+		m.insert("cErr",cErr);
+		m.insert("A0",AA.hAsym->GetBinContent(b));
+		OM.qOut.insert("corrPoint",m);
+		AA.hCxn->SetBinContent(b,cTot);
+		AA.hCxn->SetBinError(b,sqrt(cErr));
 	}
 	
 	// integrate errors
@@ -119,7 +156,7 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	int b1 = AA.hAsym->FindBin(emax-0.5);
 	
 	// root average fit
-	AA.hAsym->Fit(&lineFit,"R");
+	AA.hAsym->Fit(&lineFit,"NR");
 	Stringmap m2;
 	m2.insert("anChoice",ctos(choiceLetter(AA.anChoice)));
 	m2.insert("A0",lineFit.GetParameter(0));
@@ -129,13 +166,15 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	OM.qOut.insert("correctedFit",m2);
 	
 	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
+	AA.hAsym->SetTitle("Corrected Asymmetry");
 	AA.hAsym->Draw();
 	sprintf(tmp,"#splitline{A_{0} = %.5f #pm %.5f,}{#chi^{2}/ndf = %.1f/%i}",lineFit.GetParameter(0),lineFit.GetParError(0),lineFit.GetChisquare(),lineFit.GetNDF());
-	lx.DrawLatex(100,-0.06,tmp);
+	//lx.DrawLatex(100,-0.06,tmp);
 	AA.myA->printCanvas("hAsym_A3");
 	printf("*** Corrected %s ***\n",tmp);
 	OM.addObject(AA.hAsym->Clone(("hAsym_Corrected_"+ctos(choiceLetter(AA.anChoice))).c_str()));
 	
+	// manual bins averaging
 	double statw = 0;
 	double mu = 0;
 	std::vector<double> sumc(ctable.size());
@@ -175,7 +214,7 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 	double corrtot = 0;
 	for(unsigned int i=0; i<ctable.size(); i++)
 		corrtot += sumc[i];
-
+	
 	m3.insert("sysTot",systot);
 	m3.insert("corrTot",corrtot);
 	printf("\nCORRECTIONS TOTAL = %.3f +- %.3f %%\n\n",100*corrtot,100*systot);
@@ -186,7 +225,7 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM) {
 
 //-------------------------------------------------------------//
 
-void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin, bool writeAux, bool oldCorr) {
+void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin, const std::string& outDir, bool oldCorr) {
 	for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_E; ++a) {
 		OctetAnalyzer OAdat(&OM, "DataCorrector", datin);
 		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
@@ -233,8 +272,8 @@ void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string&
 			OAsim.printCanvas(sname);
 			
 			// write correction file
-			if(writeAux) {
-				FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/"+sname+".txt").c_str(),"w");
+			if(outDir.size()) {
+				FILE* f = fopen((outDir+"/"+sname+".txt").c_str(),"w");
 				if(i<=TYPE_III_EVENT+1)
 					fprintf(f,"# MC Backscattering Correction Delta_{2,%i} for Analysis Choice %c\n",i-1,choiceLetter(a));
 				else

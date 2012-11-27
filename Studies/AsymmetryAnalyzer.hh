@@ -30,10 +30,11 @@ public:
 	unsigned int nEnergyBins;		//< number of bins for energy histograms
 	double energyMax;				//< energy range for energy histograms
 	
-	TH1F* hAsym;						//< asymmetry
-	TH1F* hTpAsym[TYPE_III_EVENT+1];	//< asymmetry by event type
+	TH1F* hAsym;											//< asymmetry
+	TH1F* hTpAsym[TYPE_III_EVENT+1];		//< asymmetry by event type
 	TH1F* hInstAsym;					//< instrumental asymmetry
-	TH1F* hSuperSum;					//< super-sum spectrum
+	TH1F* hSuperSum[2];					//< super-sum spectrum for FG/BG
+	TH1F* hCxn;			//< applied asymmetry correction
 	TH1F* hEvtSS[TYPE_III_EVENT+1];		//< super-sum for each event type
 	
 	quadHists* qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
@@ -45,7 +46,7 @@ public:
 protected:
 	
 	/// fit asymmetry over given range
-	void fitAsym(float fmin, float fmax, unsigned int color, AnaResult AR, bool avg = false);
+	void fitAsym(float fmin, float fmax, unsigned int color, bool avg = false);
 	/// fit instrumental asymmetry over given range
 	void fitInstAsym(float fmin=200, float fmax=600, unsigned int color = 2);
 	/// various beta spectrum endpoint fits

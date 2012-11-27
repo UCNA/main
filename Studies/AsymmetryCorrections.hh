@@ -4,6 +4,7 @@
 #include "SimAsymmetryAnalyzer.hh"
 #include "BetaDecayAnalyzer.hh"
 #include "OutputManager.hh"
+#include "PathUtils.hh"
 #include <TGraph.h>
 #include <TGraphErrors.h>
 #include <string>
@@ -27,7 +28,7 @@ public:
 class AsymCorrFile: public AsymCorr {
 public:
 	/// constructor
-	AsymCorrFile(const std::string& nm);
+	AsymCorrFile(const std::string& nm, const std::string& basePath = getEnvSafe("UCNA_AUX")+"/Corrections/");
 	/// get correction at energy
 	virtual double getCor(double KE) { return gCor.Eval(KE); }
 	/// get uncertainty at energy
@@ -52,7 +53,7 @@ protected:
 };
 
 /// do corrections to asymmetry
-void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM);
+void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcBase = "");
 
 /// systematic errors table generator
 class ErrTables {
@@ -85,7 +86,7 @@ protected:
 };
 
 /// calculate MC-based corrections given data, MC filenames
-void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin, bool writeAux = false, bool oldCorr = false);
+void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin, const std::string& outDir = "", bool oldCorr = false);
 
 /// comparison between two MCs
 void compareMCs(OutputManager& OM, const std::string& sim0, const std::string& sim1, const std::string& fOut = "");

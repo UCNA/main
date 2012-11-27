@@ -31,6 +31,10 @@ ifdef UNBLINDED
 	CXXFLAGS += -DUNBLINDED
 endif
 
+ifdef PUBLICATION_PLOTS
+	CXXFLAGS += -DPUBLICATION_PLOTS
+endif
+
 #
 # things to build
 #

@@ -55,6 +55,8 @@ unsigned int AnalysisDB::uploadCutSpec(AnaCutSpec& c) {
 unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
 	printf("Uploading analysis result:\n");
 	r.toStringmap().display();
+	r.value = r.value==r.value && fabs(r.value) < FLT_MAX?r.value:0;
+	r.err = r.err==r.err && fabs(r.err) < FLT_MAX?r.err:0;
 	sprintf(query,"INSERT INTO analysis_results(author,date,type,source,start_run,end_run,grouping,event_type,ana_choice,side,afp,gate_valve,value,err,cut_spec_id) \
 			VALUES ('%s',FROM_UNIXTIME(%u),'%s','%s',%i,%i,'%s','%s','%c',%s,'%s','%s',%f,%f,%u)",
 			r.author.c_str(),

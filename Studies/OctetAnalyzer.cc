@@ -306,25 +306,26 @@ void sqrtHist(TH1* h) {
 	}
 }
 
-TH1* OctetAnalyzerPlugin::calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg) {
+TH1* OctetAnalyzerPlugin::calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, GVState gv) {
 	assert(qEast && qWest);
-	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[fg]->Clone("SuperSum_intermediate");
-	hR->Multiply(qWest->fgbg[AFP_OFF]->h[fg]);
-	hR->Scale(1.0/(myA->totalTime[AFP_ON][fg][EAST]*myA->totalTime[AFP_OFF][fg][WEST]));
+	assert(gv <= GV_OPEN);
+	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[gv]->Clone("SuperSum_intermediate");
+	hR->Multiply(qWest->fgbg[AFP_OFF]->h[gv]);
+	hR->Scale(1.0/(myA->totalTime[AFP_ON][gv][EAST]*myA->totalTime[AFP_OFF][gv][WEST]));
 	
-	TH1* hSS = (TH1*)qEast->fgbg[AFP_OFF]->h[fg]->Clone(hname.c_str());
-	hSS->Multiply(qWest->fgbg[AFP_ON]->h[fg]);
-	hSS->Scale(1.0/(myA->totalTime[AFP_OFF][fg][EAST]*myA->totalTime[AFP_ON][fg][WEST]));
+	TH1* hSS = (TH1*)qEast->fgbg[AFP_OFF]->h[gv]->Clone(hname.c_str());
+	hSS->Multiply(qWest->fgbg[AFP_ON]->h[gv]);
+	hSS->Scale(1.0/(myA->totalTime[AFP_OFF][gv][EAST]*myA->totalTime[AFP_ON][gv][WEST]));
 	
 	sqrtHist(hR);
 	sqrtHist(hSS);
 	hSS->Add(hR);
-	hSS->Scale(0.5);
+	hSS->Scale(1.0/hSS->GetBinWidth(1));
 	
 	hSS->SetTitle((qEast->title+" SuperSum").c_str());
 	hSS->SetLineColor(1);
 	hSS->SetLineStyle(1);
-	hSS->GetXaxis()->SetTitle(qEast->fgbg[AFP_ON]->h[fg]->GetXaxis()->GetTitle());
+	hSS->GetXaxis()->SetTitle(qEast->fgbg[AFP_ON]->h[gv]->GetXaxis()->GetTitle());
 	
 	delete(hR);
 	return (TH1*)myA->addObject(hSS);

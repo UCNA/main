@@ -14,7 +14,7 @@ TF1 AsymmetryAnalyzer::asymmetryFit = TF1("asymFit",&asymmetryFitFunc,0,neutronB
 TF1 AsymmetryAnalyzer::averagerFit = TF1("averagerFit","pol0",0,neutronBetaEp);
 
 AsymmetryAnalyzer::AsymmetryAnalyzer(OctetAnalyzer* OA):
-OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500), anChoice(ANCHOICE_C) {
+OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500), hAsym(NULL), hCxn(NULL), anChoice(ANCHOICE_C) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			if(t==TYPE_II_EVENT || t==TYPE_III_EVENT) {
@@ -61,12 +61,12 @@ AnaResult AsymmetryAnalyzer::getResultBase() const {
 	return AR;
 }
 
-void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, AnaResult AR, bool avg) {
+void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, bool avg) {
 	Stringmap m;
 	TF1* fitter = avg?&averagerFit:&asymmetryFit;
 	fitter->SetParameter(0,A0_PDG);
 	fitter->SetLineColor(color);
-	hAsym->Fit(fitter,"Q+","",fmin,fmax);
+	hAsym->Fit(fitter,"Q","",fmin,fmax);
 	m.insert("A0_fit",fitter->GetParameter(0));
 	m.insert("dA0",fitter->GetParError(0));
 	m.insert("A0_chi2",fitter->GetChisquare());
@@ -78,14 +78,14 @@ void AsymmetryAnalyzer::fitAsym(float fmin, float fmax, unsigned int color, AnaR
 	myA->qOut.insert("asymmetry",m);
 	
 	// save results
-	AR.anatp = AnaResult::ANA_ASYM;
-	AR.value = fitter->GetParameter(0);
-	AR.err = fitter->GetParError(0);
+	ARtot.anatp = AnaResult::ANA_ASYM;
+	ARtot.value = fitter->GetParameter(0);
+	ARtot.err = fitter->GetParError(0);
 	AnaCutSpec c;
 	c.emin = fmin;
 	c.emax = fmax;
 	c.radius = 50.;
-	asymFits.push_back(AR);
+	asymFits.push_back(ARtot);
 	asymCuts.push_back(c);
 }
 
@@ -178,7 +178,8 @@ void AsymmetryAnalyzer::calculateResults() {
 	// calculate SR and SS
 	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
 	hInstAsym = (TH1F*)calculateSR("Total_Instrumental_Asym",qTotalSpectrum[EAST],qTotalSpectrum[WEST],true,true);
-	hSuperSum = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
+	for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv)
+		hSuperSum[gv] = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST],gv);
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 		hTpAsym[tp] = (TH1F*)calculateSR("Asymmetry_Type_"+itos(tp),
 										 qEnergySpectra[tp==TYPE_II_EVENT?WEST:EAST][nBetaTubes][tp],
@@ -191,10 +192,11 @@ void AsymmetryAnalyzer::calculateResults() {
 	}
 	
 	// perform data fits
-	fitAsym(200,675,1,ARtot,true);	// match Robby's analysis
+	fitAsym(200,675,1,true);	// match Robby's analysis
 	asymFits.pop_back(); asymCuts.pop_back();
-	fitAsym(50,800,7,ARtot);
-	fitAsym(225,675,6,ARtot);
+	fitAsym(50,800,7);
+	fitAsym(225,675,6);
+	fitAsym(0,1000,7);
 	fitInstAsym();
 	endpointFits();
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -302,7 +304,7 @@ void AsymmetryAnalyzer::makePlots() {
 	hInstAsym->Draw();
 	printCanvas("InstAsym");
 	
-	hSuperSum->Draw();
+	hSuperSum[GV_OPEN]->Draw();
 	printCanvas("SuperSum");
 	
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++)
@@ -320,7 +322,7 @@ void AsymmetryAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 	dat.hAsym->Draw("SAME HIST E1");
 	printCanvas("DataComparison/Asymmetry");
 	
-	drawHistoPair(dat.hSuperSum,hSuperSum);
+	drawHistoPair(dat.hSuperSum[GV_OPEN],hSuperSum[GV_OPEN]);
 	printCanvas("DataComparison/SuperSum");
 	double evtscale = dat.hEvtSS[TYPE_0_EVENT]->Integral()/hEvtSS[TYPE_0_EVENT]->Integral();
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {

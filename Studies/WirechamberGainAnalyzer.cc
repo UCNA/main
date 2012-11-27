@@ -204,6 +204,13 @@ void AnodeGainAnalyzer::makePlots() {
 	}
 }
 
+TH1* addSlices(const std::vector<TH1F*>& hSlices, const std::string& nm) {
+	TH1* hSlice0 = (TH1*)hSlices[1]->Clone(nm.c_str());
+	for(unsigned int i=2; i<hSlices.size(); i++)
+		hSlice0->Add(hSlices[i]);
+	return hSlice0;
+}
+
 void AnodeGainAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 	// re-cast to correct type
 	AnodeGainAnalyzer& dat = *(AnodeGainAnalyzer*)AP;
@@ -235,14 +242,27 @@ void AnodeGainAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 		}
 		
 		// Type 0 upper energy anode slices
-		unsigned int i0 = 1;
-		for(unsigned int i=i0+1; i<hSlices[s][TYPE_0_EVENT].size(); i++) {
-			hSlices[s][TYPE_0_EVENT][i0]->Add(hSlices[s][TYPE_0_EVENT][i]);
-			assert(i<dat.hSlices[s][TYPE_0_EVENT].size());
-			dat.hSlices[s][TYPE_0_EVENT][i0]->Add(dat.hSlices[s][TYPE_0_EVENT][i]);
-		}
-		drawHistoPair(dat.hSlices[s][TYPE_0_EVENT][i0], hSlices[s][TYPE_0_EVENT][i0]);
+		TH1* hSlice0sim = addSlices(hSlices[s][TYPE_0_EVENT],"Slice0sim");
+		TH1* hSlice0dat = addSlices(dat.hSlices[s][TYPE_0_EVENT],"Slice0dat");
+		drawHistoPair(hSlice0dat, hSlice0sim);
 		printCanvas(sideSubst("DataComparison/AnodeSpec_%c",s));
+		
+		WirechamberSimTypeID* W = (WirechamberSimTypeID*)myA->getPlugin("wirechamberTypeID");
+		if(W) {
+			TH1* hSimII = addSlices(sliceTH2(*(TH2*)W->anodeNormCoords[s][TYPE_II_EVENT]->h[GV_OPEN],X_DIRECTION),"simII");
+			TH1* hSimIII = addSlices(sliceTH2(*(TH2*)W->anodeNormCoords[s][TYPE_III_EVENT]->h[GV_OPEN],X_DIRECTION),"simIII");
+			hSimII->SetLineColor(2);
+			hSimIII->SetLineColor(4);
+			double snorm = (dat.norm23[s]->h[GV_OPEN]->Integral()/(hSimII->Integral()+hSimIII->Integral()));
+			hSimII->Scale(snorm);
+			hSimIII->Scale(snorm);
+			dat.norm23[s]->h[GV_OPEN]->SetLineColor(1);
+			dat.norm23[s]->h[GV_OPEN]->Draw();
+			hSimII->Draw("HIST Same");
+			hSimIII->Draw("HIST Same");
+			drawVLine(0, myA->defaultCanvas, 1);
+			printCanvas(sideSubst("DataComparison/Sep23_%c",s));
+		}
 	}
 }
 

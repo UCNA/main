@@ -164,11 +164,6 @@ def gen_cathcal_set(conn,r0,r1,cr0,cr1):
 					gid = upload_graph(conn,"Cathode %s%s %i"%(s,d,w.n),c)
 					set_cathshape_graph(conn,csid,gid)
 
-def musigma(l):
-	mu = sum(l)/len(l)
-	s = sqrt(sum([x*x for x in l])/len(l)-mu*mu)/sqrt(len(l))
-	return (mu,s)
-
 def PlotCathShapes(basepath):
 	CF = CathFile(basepath+"/MWPCCal.txt")
 	caths = CF.hitdists.keys()

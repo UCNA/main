@@ -6,20 +6,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
-
+#include <errno.h>
+#include <string.h>
 
 bool fileExists(std::string f) {
-	std::string s = "test -r '";
-	s += f;
-	s += "'";
-	return !system(s.c_str());
+	return !system(("test -r '" + f + "'").c_str());
 }
 
 bool dirExists(std::string d) {
-	std::string s = "test -d '";
-	s += d;
-	s += "'";
-	return !system(s.c_str());
+	return !system(("test -d '" + d + "'").c_str());
 }
 
 void makePath(std::string p, bool forFile) {
@@ -39,7 +34,8 @@ void makePath(std::string p, bool forFile) {
 			if(err || !dirExists(thepath)) {
 				SMExcept e("badPath");
 				e.insert("pathName",thepath);
-				e.insert("errnum",err);
+				e.insert("errnum",errno);
+				e.insert("errname",strerror(errno));
 				throw(e);
 			}
 		}

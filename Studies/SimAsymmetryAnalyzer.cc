@@ -13,14 +13,14 @@ SimAsymmetryAnalyzer::SimAsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlug
 	myA->ignoreMissingHistos = true;
 	
 	qMissedSpectrum = registerCoreHist("MissedSpectrum","Missing Events Energy Spectrum",
-									   nEnergyBins, 0, energyMax, BOTH);
+								nEnergyBins, 0, energyMax, BOTH);
 	qMissedSpectrum->setAxisTitle(X_DIRECTION,"Energy [keV]");
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			
 			TProfile pBCTTemplate(("pBcT_Type_"+itos(t)).c_str(),
-								  ("Type "+itos(t)+" Beta Cos Theta").c_str(),
-								  nEnergyBins,0,energyMax);
+							  ("Type "+itos(t)+" Beta Cos Theta").c_str(),
+							  nEnergyBins,0,energyMax);
 			qBCT[s][t] = registerCoreHist(pBCTTemplate,s);
 			qBCT[s][t]->setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
 			qBCT[s][t]->setAxisTitle(Y_DIRECTION,"<#beta cos #theta>");
@@ -29,8 +29,8 @@ SimAsymmetryAnalyzer::SimAsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlug
 			qBCT[s][t]->setRangeUser(0,800);
 			
 			TProfile pBetaTemplate(("pBeta_Type_"+itos(t)).c_str(),
-								   ("Type "+itos(t)+" #beta").c_str(),
-								   nEnergyBins,0,energyMax);
+							   ("Type "+itos(t)+" #beta").c_str(),
+							   nEnergyBins,0,energyMax);
 			qBeta[s][t] = registerCoreHist(pBetaTemplate,s);
 			qBeta[s][t]->setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
 			qBeta[s][t]->setAxisTitle(Y_DIRECTION,"<#beta>");
@@ -39,8 +39,8 @@ SimAsymmetryAnalyzer::SimAsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlug
 			qBeta[s][t]->setRangeUser(0,800);
 			
 			TProfile pCosthTemplate(("pCosth_Type_"+itos(t)).c_str(),
-									("Type "+itos(t)+" cos #theta").c_str(),
-									nEnergyBins,0,energyMax);
+							    ("Type "+itos(t)+" cos #theta").c_str(),
+							    nEnergyBins,0,energyMax);
 			qCosth[s][t] = registerCoreHist(pCosthTemplate,s);
 			qCosth[s][t]->setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
 			qCosth[s][t]->setAxisTitle(Y_DIRECTION,"<cos #theta>");
@@ -49,8 +49,8 @@ SimAsymmetryAnalyzer::SimAsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlug
 			qCosth[s][t]->setRangeUser(0,800);
 			
 			TProfile pAsymAccTemplate(("pAsymAcc_Type_"+itos(t)).c_str(),
-									  ("Type "+itos(t)+" Asymmetry Acceptance").c_str(),
-									  nEnergyBins,0,energyMax);
+								 ("Type "+itos(t)+" Asymmetry Acceptance").c_str(),
+								 nEnergyBins,0,energyMax);
 			qAsymAcc[s][t] = registerCoreHist(pAsymAccTemplate,s);
 			qAsymAcc[s][t]->setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
 			qAsymAcc[s][t]->setAxisTitle(Y_DIRECTION,"<A(E,#theta)>");
@@ -60,7 +60,7 @@ SimAsymmetryAnalyzer::SimAsymmetryAnalyzer(OctetAnalyzer* OA): OctetAnalyzerPlug
 			
 			
 			qWrongSide[s][t] = registerCoreHist("hWrongSide_"+itos(t),"Wrong-side ID events",
-												nEnergyBins, 0, energyMax, s);
+										 nEnergyBins, 0, energyMax, s);
 			qWrongSide[s][t]->setAxisTitle(X_DIRECTION,"Reconstructed Energy [keV]");
 			qWrongSide[s][t]->setDrawRange(0,false);
 			qWrongSide[s][t]->setRangeUser(0,800);
@@ -171,9 +171,9 @@ std::vector<TH1*> SimAsymmetryAnalyzer::calculateCorrectionsOld(AsymmetryAnalyze
 		
 		for(AFPState a = AFP_OFF; a<=AFP_ON; ++a) {
 			unmix(Asim.qEnergySpectra[EAST][nBetaTubes][t]->fgbg[a]->h[GV_OPEN],
-				  Asim.qEnergySpectra[WEST][nBetaTubes][t]->fgbg[a]->h[GV_OPEN],
-				  qMisCorr[EAST]->fgbg[a]->h[GV_OPEN],
-				  qMisCorr[WEST]->fgbg[a]->h[GV_OPEN]);
+				 Asim.qEnergySpectra[WEST][nBetaTubes][t]->fgbg[a]->h[GV_OPEN],
+				 qMisCorr[EAST]->fgbg[a]->h[GV_OPEN],
+				 qMisCorr[WEST]->fgbg[a]->h[GV_OPEN]);
 		}
 		// at this point, all events for this type should be assigned to the correct side; re-calculate intermediate asymmetry
 		Asim.calcSuperCombos();
@@ -216,7 +216,7 @@ std::vector<TH1*> SimAsymmetryAnalyzer::calculateCorrectionsOld(AsymmetryAnalyze
 	for(int b=1; b<=asymStages.back()->GetNbinsX(); b++) {
 		double e0 = asymStages.back()->GetBinCenter(b);
 		asymStages.back()->SetBinContent(b, asymStages.back()->GetBinContent(b) *
-										 (beta(e0)/2.) / qBCTsum[EAST]->fgbg[AFP_OFF]->h[GV_OPEN]->GetBinContent(b));
+								   (beta(e0)/2.) / qBCTsum[EAST]->fgbg[AFP_OFF]->h[GV_OPEN]->GetBinContent(b));
 	}
 	
 	return asymStages;
@@ -278,9 +278,9 @@ std::vector<TH1*> SimAsymmetryAnalyzer::calculateCorrections(AsymmetryAnalyzer& 
 		
 		for(AFPState a = AFP_OFF; a<=AFP_ON; ++a) {
 			unmix(Adat.qEnergySpectra[EAST][nBetaTubes][t]->fgbg[a]->h[GV_OPEN],
-				  Adat.qEnergySpectra[WEST][nBetaTubes][t]->fgbg[a]->h[GV_OPEN],
-				  qMisCorr[EAST]->fgbg[a]->h[GV_OPEN],
-				  qMisCorr[WEST]->fgbg[a]->h[GV_OPEN]);
+				 Adat.qEnergySpectra[WEST][nBetaTubes][t]->fgbg[a]->h[GV_OPEN],
+				 qMisCorr[EAST]->fgbg[a]->h[GV_OPEN],
+				 qMisCorr[WEST]->fgbg[a]->h[GV_OPEN]);
 		}
 		// at this point, all events for this type should be assigned to the correct side; re-calculate intermediate asymmetry
 		Adat.calcSuperCombos();
@@ -296,8 +296,8 @@ std::vector<TH1*> SimAsymmetryAnalyzer::calculateCorrections(AsymmetryAnalyzer& 
 				for(int b=1; b<=hDat->GetNbinsX(); b++) {
 					double e0 = hDat->GetBinCenter(b);
 					hDat->SetBinContent(b, hDat->GetBinContent(b) *
-										(1-correctedAsymmetry(e0,(a==AFP_ON?-1:1)*(s==EAST?-0.5:0.5))) /
-										(1-(a==AFP_ON?-1:1)*pAsAc->GetBinContent(b)));
+									(1-correctedAsymmetry(e0,(a==AFP_ON?-1:1)*(s==EAST?-0.5:0.5))) /
+									(1-(a==AFP_ON?-1:1)*pAsAc->GetBinContent(b)));
 				}
 			}
 		}

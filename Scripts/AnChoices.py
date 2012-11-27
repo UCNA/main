@@ -1,8 +1,22 @@
 #!/usr/bin/python
 
 from Asymmetries import *
+from PyxUtils import *
+import copy
 
-
+class AsymCorrFile(QFile):
+	def __init__(self,fname):
+		QFile.__init__(self,fname)
+		
+		self.cxns = {}
+		for p in self.dat.get("corrPoint",[]):
+			if p.getFirst("anChoice") != 'C':
+				continue
+			p.loadFloats(["KE","cTot","cErr"])
+			self.cxns.setdefault("tot",[]).append((p.KE,p.cTot,p.cErr))
+			for k in p.dat.keys():
+				if p.dat.has_key("d_"+k):
+					self.cxns.setdefault(k,[]).append((p.KE,p.getFirstF(k),p.getFirstF("d_"+k)))
 
 def compare_anchoices(datf, simf):
 	gdat = []
@@ -58,9 +72,10 @@ def compare_corrections(basedir,fin):
 	rawdat = [anchoiceFit(f) for f in q.dat["rawFit"]]
 	corrdat = [anchoiceFit(f) for f in q.dat["correctedFit"]]
 	
-	ancs = ["A","B","C","D","E","F","G","H","I","J","K"]
-	ancs = ancs[:4]
-	myticks = [ graph.axis.tick.tick(n+1,label=a) for (n,a) in enumerate(ancs) ]	
+	ancs = ["A","D","B","C","E","F","G","H","I","J","K"]
+	ancs = ancs[1:4]
+	anclabs = {"B":"0+I","C":"0+I+II/III","D":"0"}
+	myticks = [ graph.axis.tick.tick(n+1,label=anclabs[a]) for (n,a) in enumerate(ancs) ]
 	gdA=graph.graphxy(width=10,height=10,
 					  x=graph.axis.lin(title="Analysis Choice",manualticks=myticks,min=0.5,max=len(ancs)+0.5,parter=None),
 					  y=graph.axis.lin(title="Extracted $A_0$",min=-.125,max=-.115),
@@ -78,11 +93,56 @@ def compare_corrections(basedir,fin):
 
 	gdA.writetofile(basedir+"/Asymmetries.pdf")
 
+	A0s = [g[1] for g in gdat]
+	mu,sigma = musigma(A0s)
+	dmax = max([abs(a-mu) for a in A0s])
+	print "mu,sigma,dmax=",(mu,sigma,dmax)
+
+def plot_A_corrs(basedir,fin):
+	
+	AC = AsymCorrFile(basedir+"/"+fin)
+	
+	ygridpainter = graph.axis.painter.regular(gridattrs=[attr.changelist([style.linestyle.dashed, style.linestyle.dotted])])
+	
+	for ctp in ["Delta_2","Delta_3"]:
+		
+		ccol = ctp
+		ctit = "Backscatter"
+		if ctp=="Delta_3":
+			ccol += "_C"
+			ctit = "Angle"
+		
+		gdA=graph.graphxy(width=12,height=8,
+					   x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
+					   y=graph.axis.lin(title=ctit+" Correction [\\%]",min=-5,max=5,painter=ygridpainter),
+					   key = graph.key.key(pos="bl"))
+		setTexrunner(gdA)
+		
+		
+		gdat = [(p[0],100.*p[1],abs(100.*p[2])) for p in AC.cxns[ccol] if 75 < p[0] < 780]
+		gdat.sort()
+		area = errorBand(gdA,gdat,0,1,2)
+		gdA.fill(area, [deco.filled([color.rgb(0.0,1.0,0.0),color.transparency(0.5)])])
+		
+		gdA.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
+				 [graph.style.line(lineattrs=[style.linewidth.THick]), ])
+
+		gdA.writetofile(basedir+"/"+ctp+".pdf")
+
+
 if __name__=="__main__":
+	
+	#plot_A_corrs(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_0-1000/CorrectAsym/","CorrectedAsym.txt")
+	plot_A_corrs(os.environ["UCNA_ANA_PLOTS"]+"/test/MCCors/thinfoil/","test.txt")
+	exit(0)
+	
 	#compare_anchoices(os.environ["UCNA_ANA_PLOTS"]+"/test/Anchoices/",os.environ["UCNA_ANA_PLOTS"]+"/test/Anchoices_SimMagF/")
-	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym_Sim0823_4x/","CorrectedAsym.txt")
+
+	#compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym_Sim0823_4x/","CorrectedAsym.txt")
 	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_0-16/CorrectAsym/","CorrectedAsym.txt")
 	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_17-1000/CorrectAsym/","CorrectedAsym.txt")
 	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_0-1000/CorrectAsym/","CorrectedAsym.txt")
 
 	#compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym_SimPen/","CorrectedAsym.txt")
+
+	

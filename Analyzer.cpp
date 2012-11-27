@@ -126,22 +126,30 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	
 	//const std::string simOutputDir=outputDir+"_Sim0823_4x";
 	//const std::string simOutputDir=outputDir+"_SimMagF_MWPCthresh";
-	const std::string simOutputDir=outputDir+"_SimMagF_4x";
+	//const std::string simOutputDir=outputDir+"_SimMagF_4x";
 	//const std::string simOutputDir=outputDir+"_SimPen";
+	//const std::string simOutputDir=outputDir+"_fid45";
+	const std::string simOutputDir=outputDir+"_thinfoil";
 	
 	//std::string simFile="/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_";
-	std::string simFile="/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_";
+	//std::string simFile="/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_";
+	//std::string simFile="/home/mmendenhall/geant4/output/thinFoil_neutronBetaUnpol/analyzed_";
+	std::string simFile="/home/mmendenhall/geant4/output/endcap_180_150_neutronBetaUnpol/analyzed_";
 	
 	/////////// Geant4 MagF
-	unsigned int nTot = 104;
-	unsigned int stride = 14;
+	//unsigned int nTot = 104;
+	//unsigned int stride = 14;
 	
-	/////////// Geant4 0823
+	/////////// Geant4 0823, thinfoil
 	//unsigned int nTot = 520;
 	//unsigned int stride = 73;
 	
-	double simFactor = 4.0;
-	bool doPlots = true;
+	/////////// endcap_180_150
+	unsigned int nTot = 492;
+	unsigned int stride = 73;
+	
+	double simFactor = 1.0;
+	bool doPlots = false;
 	
 	BetaDecayAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
@@ -188,11 +196,12 @@ void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octMax = streamInteractor::popInt(stack);
 	int octMin = streamInteractor::popInt(stack);
 	std::string inPath = getEnvSafe("UCNA_ANA_PLOTS");
-	std::string outPath = inPath+"/OctetAsym_Offic/Range_"+itos(octMin)+"-"+itos(octMax);
+	std::string datset = "OctetAsym_Offic_datFid45";
+	std::string outPath = inPath+"/"+datset+"/Range_"+itos(octMin)+"-"+itos(octMax);
 	
 	if(true) {
 		OutputManager OM("ThisNameIsNotUsedAnywhere",inPath);
-		BetaDecayAnalyzer AA(&OM,"OctetAsym_Offic");
+		BetaDecayAnalyzer AA(&OM,datset);
 		AA.plotPath = AA.dataPath = AA.rootPath = outPath;
 		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600,true,octMin,octMax);
 	}
@@ -200,7 +209,7 @@ void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
 	if(true) {
 		OutputManager OM("CorrectedAsym",outPath+"/CorrectAsym/");
 		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
-			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), outPath+"/OctetAsym_Offic");
+			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), outPath+"/"+datset);
 			AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
 			OAdat.addPlugin(AAdat);
 			AAdat->anChoice = a;
@@ -222,7 +231,7 @@ void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
 	OM.write();
 }
 
-void mi_sourcelog(std::deque<std::string>&, std::stack<std::string>&) { uploadRunSources(); }
+void mi_sourcelog(std::deque<std::string>&, std::stack<std::string>&) { uploadRunSources("UCNA Run Log 2012.txt"); }
 
 void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
 	float Ep = streamInteractor::popFloat(stack);
@@ -232,6 +241,11 @@ void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
 }
 
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
+	
+	if(false) {
+		paperDataPlot();
+		return;
+	}
 	
 	if(false) {
 		//OutputManager OMdat("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/Anchoices/");
@@ -247,27 +261,42 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		std::string sim = "SimMagF_4x";
 		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCChanges_"+sim+"/");
 		compareMCs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Sim0823_4x/OctetAsym_Offic_Sim0823_4x",
-				   getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,"MagF");
+				 getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,"MagF");
 		//return;
 	}
 	
-	std::string sim = "Sim0823_4x";
+	//std::string sim = "Sim0823_4x";
 	//std::string sim = "SimPen";
-	if(true) {
-		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_"+sim+"/");
-		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
-					getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim, true, false);
-		//return;
-	}
+	std::string sim = "thinfoil";
 	
 	if(false) {
-		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_SelfCorr/");
-		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,
-					getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim, true, false);
+		// MC correction for data set
+		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_"+sim+"/");
+		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
+				  getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,
+				  getEnvSafe("UCNA_AUX")+"/Corrections/", false);
+		//return;
+	}
+	
+	if(true) {
+		// MC self-correction
+		sim = "thinfoil";
+		std::string simOutNm = getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim;
+		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors/"+sim+"/");
+		calcMCCorrs(OM, simOutNm, simOutNm,getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors/"+sim+"/");
+		
+		AnalysisChoice a = ANCHOICE_C;
+		OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), simOutNm);
+		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+		OAdat.addPlugin(AAdat);
+		AAdat->anChoice = a;
+		doFullCorrections(*AAdat,OM,OM.basePath);
+		
+		OM.write();
 		return;
 	}
 	
-	if(true) {
+	if(false) {
 		OutputManager OM("CorrectedAsym",getEnvSafe("UCNA_ANA_PLOTS")+"/test/CorrectAsym_"+sim+"/");
 		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
 			if(a!=ANCHOICE_C) continue;
@@ -388,6 +417,11 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	gStyle->SetNumberContours(255);
 	gStyle->SetOptStat("e");
 	TCanvas defaultCanvas;
+#ifdef PUBLICATION_PLOTS
+	gStyle->SetOptStat("");
+	makeGrayscalepalette();
+	defaultCanvas.SetGrayscale(true);
+#endif
 	defaultCanvas.SetFillColor(0);
 	defaultCanvas.SetCanvasSize(300,300);
 	

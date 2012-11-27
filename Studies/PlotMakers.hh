@@ -77,4 +77,7 @@ void refitXeAnode(std::string datname);
 /// generate asymmetry spectra for each analysis choice
 void calcAnalysisChoices(OutputManager& OM, const std::string& inflname);
 
+/// paper data / asymmetry plot
+void paperDataPlot();
+
 #endif

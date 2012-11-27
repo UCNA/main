@@ -19,6 +19,7 @@
 #include "PostOfficialAnalyzer.hh"
 #include "BetaDecayAnalyzer.hh"
 #include "AnodePositionAnalyzer.hh"
+#include "AsymmetryCorrections.hh"
 #include <TColor.h>
 
 
@@ -257,6 +258,7 @@ TH2F* PosPlotter::makeHisto(const std::string& nm, const std::string& title) {
 	TH2F* interpogrid = OM->registeredTH2F(nm,title,nbin,-60,60,nbin,-60,60);
 	interpogrid->GetXaxis()->SetTitle("x Position [mm]");
 	interpogrid->GetYaxis()->SetTitle("y Position [mm]");
+	interpogrid->GetYaxis()->SetTitleOffset(1.2);
 	return interpogrid;
 }
 
@@ -272,7 +274,7 @@ void PosPlotter::npePlot(PMTCalibrator* PCal) {
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			
 			TH2F* interpogrid = makeHisto(sideSubst("%c",s)+itos(t+1)+"_nPE",
-										  (t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" PE per MeV");
+									(t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" PE per MeV");
 			interpogrid->SetAxisRange(0,250,"Z");
 			if(t==nBetaTubes)
 				interpogrid->SetAxisRange(0,500,"Z");
@@ -296,7 +298,7 @@ void PosPlotter::npeGradPlot(PMTCalibrator* PCal) {
 	for(Side s = EAST; s<=WEST; ++s) {
 		for(int t=0; t<=nBetaTubes; t++) {
 			TH2F* interpogrid = makeHisto(sideSubst("%c",s)+itos(t+1)+"_Grad",
-										  (t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" Light Transport Gradient");
+									(t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" Light Transport Gradient");
 			interpogrid->SetAxisRange(0,10,"Z");
 			
 			float gradsum = 0;
@@ -581,5 +583,72 @@ void calcAnalysisChoices(OutputManager& OM, const std::string& inflname) {
 	}
 }
 
+//-------------------------------------------------------------//
+
+void paperDataPlot() {
+	
+	OutputManager OM("PlotData",getEnvSafe("UCNA_ANA_PLOTS")+"/Paper/");
+	
+	std::vector<std::string> rPaths;
+	rPaths.push_back(getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/Range_0-16");
+	rPaths.push_back(getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/Range_17-1000");
+	
+	std::vector<double> rWeights;
+	rWeights.push_back(0.59);
+	rWeights.push_back(0.41);
+	
+	std::vector<AsymmetryAnalyzer*> rAsyms;
+	
+	double tWeight = 0;
+	for(unsigned int n=0; n<rPaths.size(); n++) {
+		OctetAnalyzer* OAdat = new OctetAnalyzer(&OM, "DataCorrector", rPaths[n]+"/OctetAsym_Offic");
+		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(OAdat);
+		OAdat->addPlugin(AAdat);
+		AAdat->anChoice = ANCHOICE_C;
+		doFullCorrections(*AAdat,OM);
+		
+		// weighted asymmetry sum
+		AAdat->hAsym->Scale(rWeights[n]);
+		for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv)
+			AAdat->hSuperSum[GV_OPEN]->SetBit(TH1::kIsAverage);
+		AAdat->hCxn->SetBit(TH1::kIsAverage);
+		if(n>0) {
+			AAdat->hAsym->Add(rAsyms.back()->hAsym);
+			AAdat->hCxn->Add(AAdat->hCxn,rAsyms.back()->hCxn,rWeights[n],tWeight);
+			for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv)
+				AAdat->hSuperSum[gv]->Add(AAdat->hSuperSum[gv],rAsyms.back()->hSuperSum[gv],rWeights[n],tWeight);
+		}
+		tWeight += rWeights[n];
+		rAsyms.push_back(AAdat);
+	}
+	
+	AsymmetryAnalyzer* AA = rAsyms.back();
+	
+	// simulation data for comparison
+	OctetAnalyzer* OAsim = new OctetAnalyzer(&OM, "DataCorrector", getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Sim0823_4x/OctetAsym_Offic_Sim0823_4x");
+	AsymmetryAnalyzer* AAsim = new AsymmetryAnalyzer(OAsim);
+	OAsim->addPlugin(AAsim);
+	AAsim->anChoice = ANCHOICE_C;
+	doFullCorrections(*AAsim,OM);
+	AAsim->hSuperSum[GV_OPEN]->Scale(AA->hSuperSum[GV_OPEN]->Integral()/AAsim->hSuperSum[GV_OPEN]->Integral());
+	
+	// save data points to file
+	for(int b = 1; b <= AA->hAsym->GetNbinsX(); b++) {
+		Stringmap m;
+		double e0 = AA->hAsym->GetBinCenter(b);
+		if(e0>800) continue;
+		m.insert("KE",e0);
+		m.insert("A0",AA->hAsym->GetBinContent(b));
+		m.insert("dA0",AA->hAsym->GetBinError(b));
+		m.insert("corr",AA->hCxn->GetBinContent(b));
+		m.insert("dcorr",AA->hCxn->GetBinError(b));
+		m.insert("ssfg",AA->hSuperSum[GV_OPEN]->GetBinContent(b));
+		m.insert("ssMC",AAsim->hSuperSum[GV_OPEN]->GetBinContent(b));
+		m.insert("ssbg",AA->hSuperSum[GV_CLOSED]->GetBinContent(b));
+		OM.qOut.insert("asymplot",m);
+	}
+	
+	OM.write();
+}
 
 

@@ -2,7 +2,9 @@
 
 from QFile import *
 from PyxUtils import *
+from pyx import pattern
 from math import *
+from LinFitter import *
 import os
 
 class enhist(KVMap):
@@ -11,6 +13,11 @@ class enhist(KVMap):
 		self.loadFloats(["counts","mean","normcounts","rms","sim","type"])
 		self.type = int(self.type)
 		self.sim = int(self.sim)
+
+class asymplot(KVMap):
+	def __init__(self,m=KVMap()):
+		self.dat = m.dat
+		self.loadFloats(["A0","dA0","corr","dcorr","ssbg","ssfg","ssMC","KE"])
 
 class MCCompFile(QFile):
 	def __init__(self,fname):
@@ -25,6 +32,116 @@ class MCCompFile(QFile):
 			self.equench[(m.sim,m.type)] = m
 
 
+def errorBand(gdat,nx,ny,ndy):
+	gwid = 12
+	g0 = graph.graphxy(width=gwid,height=0.2*gwid,
+				    x=graph.axis.lin(title="Reconstructed Energy [keV]",min=0,max=800),
+				    y=graph.axis.lin(title="Decay Rate [Hz/keV]",min=-5,max=5),)
+	d1 = g0.plot(graph.data.points([(g[nx],g[ny]-g[ndy]) for g in gdat],x=1,y=2), [graph.style.line()])
+	d2 = g0.plot(graph.data.points([(g[nx],g[ny]+g[ndy]) for g in gdat],x=1,y=2), [graph.style.line()])
+	g0.finish()
+	p1 = d1.path
+	p2 = d2.path
+	
+	area = (p1 << p2.reversed())
+	#area[-1].close()
+
+	return area
+
+
+
+def paperFig1():
+	pdat = [asymplot(a) for a in QFile(os.environ["UCNA_ANA_PLOTS"]+"/Paper/PlotData.txt").dat["asymplot"]]
+
+	xrange = (0,800)
+	gwid = 12
+	
+	gCorr=graph.graphxy(width=gwid,height=0.2*gwid,
+							  x=graph.axis.lin(title="Reconstructed Energy [keV]",min=xrange[0],max=xrange[1]),
+							  y=graph.axis.lin(title="\\% Corr.",min=-5,max=5),
+						key = graph.key.key(pos="tl"))
+	setTexrunner(gCorr)
+	
+	gAsym=graph.graphxy(width=gwid,height=0.4*gwid,ypos=gCorr.height+0.5,
+						x=graph.axis.linkedaxis(gCorr.axes["x"]),
+						y=graph.axis.lin(title="$A_0$",min=-0.14,max=-0.10),
+						key = graph.key.key(pos="tr"))
+	setTexrunner(gAsym)
+	
+	gSpec=graph.graphxy(width=gwid,height=0.5*gwid,ypos=gCorr.height+gAsym.height+1.0,
+							 x=graph.axis.linkedaxis(gCorr.axes["x"]),
+							 y=graph.axis.lin(title="Decay Rate [Hz/keV]",min=0,max=0.065),
+							 key = graph.key.key(pos="tr"))
+	setTexrunner(gSpec)
+	
+	cnvs = canvas.canvas()
+	cnvs.insert(gCorr)
+	cnvs.insert(gAsym)
+	cnvs.insert(gSpec)
+
+	gSpec.plot(graph.data.points([(p.KE,p.ssfg) for p in pdat],x=1,y=2,title="Data"),
+			   [graph.style.symbol(symbol.circle,size=0.1),])
+	gSpec.plot(graph.data.points([(p.KE,p.ssMC) for p in pdat],x=1,y=2,title="Geant4 MC"),
+			 [graph.style.line(),])
+	gSpec.plot(graph.data.points([(p.KE,p.ssbg) for p in pdat],x=1,y=2,title="Background"),
+			   [graph.style.symbol(symbol.circle,size=0.1,symbolattrs=[deco.filled]),])
+	
+	pdat = [p for p in pdat if p.KE > 60]
+	
+	area = errorBand([(p.KE,100.*p.corr,100.*p.dcorr) for p in pdat],0,1,2)
+	#gCorr.fill(area, [deco.filled([color.gray(0.8)])])
+	gCorr.fill(area, [pattern.hatched(0.10,-45)])
+	gCorr.fill(area, [pattern.hatched(0.10,45)])
+	
+	gCorr.plot(graph.data.points([(p.KE,100.*p.corr,100.*p.dcorr) for p in pdat],x=1,y=2,dy=3,title=None),
+			 [graph.style.line(lineattrs=[style.linewidth.THick]), ]) #[graph.style.symbol(symbol.circle,size=0.1), ]) #graph.style.errorbar()])
+	for y in [-2.5,0,2.5]:
+		gCorr.plot(graph.data.points([(0,y),(800,y)],x=1,y=2,title=None), [graph.style.line([style.linestyle.dashed])])
+
+	if False:
+		d = gCorr.plot(graph.data.points([(p.KE,100.*p.dcorr) for p in pdat],x=1,y=2,title=None),
+				 [graph.style.line()])
+		
+		gCorr.finish()
+		p = d.path
+
+		pa = gCorr.xgridpath(100)
+		pb = gCorr.xgridpath(750)
+		p0 = gCorr.ygridpath(0)
+		(splita,), (splitpa,) = p.intersect(pa)
+		(splitb,), (splitpb,) = p.intersect(pb)
+		splitp0a = p0.intersect(pa)[1][0]
+		splitp0b = p0.intersect(pb)[1][0]
+		
+		area = (pa.split([splitp0a,splitpa])[1] <<
+			   p.split([splita, splitb])[1] <<
+			   pb.split([splitp0b,splitpb])[1].reversed())
+		area[-1].close()
+		gCorr.stroke(area, [deco.filled([color.gray(0.8)])])
+	
+	gAsym.plot(graph.data.points([(p.KE,p.A0,p.dA0) for p in pdat],x=1,y=2,dy=3,title=None),
+			   [graph.style.errorbar(), graph.style.symbol(symbol.circle,size=0.1,symbolattrs=[deco.filled([color.gray(1.0)])])])
+	A0 = -0.11954
+	gAsym.plot(graph.data.points([(220,A0),(670,A0)],x=1,y=2,title=None), [graph.style.line([style.linewidth.THIck])])
+	
+	# different fit ranges
+	for (e0,e1) in [(220,670),]+[(200-10*x,700+10*x) for x in range(11)]:
+		LF = LinearFitter(terms=[polyterm(0)])
+		fdat = [(p.KE,p.A0,p.dA0) for p in pdat if e0 < p.KE < e1]
+		LF.fit(fdat,cols=(0,1,2),errorbarWeights=True)
+		print "<A0> [%i,%i] ="%(e0,e1),LF.coeffs[0],"chi^2/ndf =",LF.ssResids(),len(fdat)-1
+
+	cnvs.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Paper/Fig1.pdf")
+
+	if False:
+		fgtot = bgtot = 0
+		for p in pdat:
+				if 100 < p.KE and p.KE < 800:
+				    print p.KE,p.ssbg,p.ssfg,p.ssfg/p.ssbg
+				if True or (220 < p.KE and p.KE < 670):
+					fgtot += p.ssfg
+					bgtot += p.ssbg
+		print "\n\n",fgtot,bgtot,fgtot/bgtot
 
 
 def G4_Pen_Compare():
@@ -85,4 +202,5 @@ def G4_Pen_Compare():
 
 
 if __name__=="__main__":
-	G4_Pen_Compare()
+	#G4_Pen_Compare()
+	paperFig1()

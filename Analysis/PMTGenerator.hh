@@ -36,12 +36,13 @@ public:
 		
 	float x,y;						//< event hit position in scintillator (projected back to decay trap)
 	float xw,yw;					//< wirechamber hit offset from source position
-	float evtm;						//< event time during run
+	float evtm;					//< event time during run
 	float presmear;					//< nPE/keV already smeared in input spectrum
 	float dgain;					//< gain at first photomultiplier stage (smears single-PE resolution)
 	float pedcorr;					//< pedestal noise correlation
 	float crosstalk;				//< inter-channel noise crosstalk
 	float xscatter;					//< "extra" proportional random scatter
+	float trigThreshScale;			//< ADC scaling factor for trigger efficiency (to test efficiency changes)
 	
 	unsigned int nTrigs;			//< number of individual PMTs triggered
 	bool pmtTriggered[nBetaTubes];	//< whether each PMT triggered above threshold

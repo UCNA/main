@@ -8,7 +8,7 @@
 TRandom3 PMTGenerator::sim_rnd_source;
 
 PMTGenerator::PMTGenerator(Side s, float xx, float yy):
-x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), dgain(16.0), pedcorr(0.2), crosstalk(0.010), xscatter(0.), mySide(s) { }
+x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), dgain(16.0), pedcorr(0.2), crosstalk(0.010), xscatter(0.), trigThreshScale(1.0), mySide(s) { }
 
 void PMTGenerator::setCalibrator(PMTCalibrator* P) { 
 	assert(P);
@@ -111,7 +111,7 @@ unsigned int PMTGenerator::triggers() {
 	nTrigs = 0;
 	unsigned int nZero = 0;
 	for(unsigned int t=0; t<nBetaTubes; t++) {
-		pmtTriggered[t] = sim_rnd_source.Uniform(0.0,1.0) < currentCal->trigEff(mySide,t,sevt.adc[t]);
+		pmtTriggered[t] = sim_rnd_source.Uniform(0.0,1.0) < currentCal->trigEff(mySide,t,sevt.adc[t]*trigThreshScale);
 		if(sevt.adc[t] == 0) nZero++;
 		if(pmtTriggered[t]) nTrigs++;
 	}

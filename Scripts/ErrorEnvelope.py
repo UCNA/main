@@ -14,7 +14,7 @@ def calEnvelope(E,year=2010):
 	l = (E-limdat[year][i][0])/(limdat[year][i+1][0]-limdat[year][i][0])
 	return (1-l)*limdat[year][i][1]+l*limdat[year][i+1][1]
 
-def plot_Cal_Uncertainty(g,title=None,st=[graph.style.line([style.linestyle.dashed])],year=2010):
+def plot_Cal_Uncertainty(g,title=None,st=[graph.style.line([style.linestyle.dotted])],year=2010):
 	"""Plot energy uncertainty envelope."""
 	g.plot(graph.data.points(limdat[year],x=1,y=2,title=title),st)
 	g.plot(graph.data.points([ (x[0],-x[1]) for x in limdat[year]],x=1,y=2,title=None),st)
@@ -24,15 +24,15 @@ def plotAllErrors(outpath,year,s="Both",t=4):
 	
 	yrange = 15
 
-	g=graph.graphxy(width=45,height=15,
-			x=graph.axis.lin(title="Expected E$_{vis}$ [keV]",min=0,max=1300),
+	g=graph.graphxy(width=30,height=10,
+			x=graph.axis.lin(title="Expected E$_{vis}$ [keV]",min=0,max=1500),
 			y=graph.axis.lin(title="Reconstructed E$_{vis}$ Error [keV]",min=-yrange,max=yrange),
-			key = graph.key.key(pos="tr"))
+			key = graph.key.key(pos="br"))
 	if s=="Both":
 		g.texrunner.set(lfs='foils17pt')
 	
 	# plot error envelope
-	plot_Cal_Uncertainty(g,"Provisional Envelope 2010",[graph.style.line([style.linestyle.dashed,style.linewidth.THick])],year=year)
+	plot_Cal_Uncertainty(g,"Uncertainty Envelope",[graph.style.line([style.linestyle.dotted,style.linewidth.THick])],year=year)
 
 	# gather source data from calibration runs
 	conn = open_connection()
@@ -63,7 +63,7 @@ def plotAllErrors(outpath,year,s="Both",t=4):
 		for l in gdat:
 			hErr.fill(l[1],10)
 		g.plot(graph.data.points(hErr.lineData(yoff=x0),x=2,y=1,title="%s: $%.1f\\pm%.1f$keV"%(peakNames[k],hErr.avg(),hErr.rms())), [graph.style.line([scols[k],style.linewidth.THIck]),])
-		g.plot(graph.data.points([[x0,-30],[x0,30]],x=1,y=2,title=None), [graph.style.line([scols[k],style.linestyle.dashed]),])
+		g.plot(graph.data.points([[x0,-30],[x0,30]],x=1,y=2,title=None), [graph.style.line([scols[k],style.linestyle.dotted]),])
 	
 	if s != "Both":
 		g.writetofile(outpath+"/CalErrors_%i_%s_%i.pdf"%(year,s,t))
@@ -80,6 +80,8 @@ if __name__=="__main__":
 	os.system("mkdir -p %s"%outpath)
 		
 	plotAllErrors(outpath,2010)
+	exit(0)
+	
 	for s in ["East","West"]:
 		for t in range(5):
 			plotAllErrors(outpath,2010,s,t)

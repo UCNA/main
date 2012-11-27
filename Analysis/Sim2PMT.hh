@@ -84,7 +84,7 @@ public:
 	bool weightAsym;			//< whether to weight simulated events by beta asymmetry
 	
 	double eQ[2];				//< Scintillator quenched energy [keV]
-	double eDep[2];				//< Scintillator deposited energy [keV[
+	double eDep[2];				//< Scintillator deposited energy [keV]
 	double eW[2];				//< Wirechamber active volume deposited energy [keV]
 	double scintPos[2][3];		//< hit position in scintillator [mm in decay trap]
 	double mwpcPos[2][3];		//< hit position in MWPC
@@ -114,7 +114,8 @@ public:
 	
 	unsigned int nSimmed;		//< number of events simulated since scan start
 	double nCounted;			//< physics-weighted number of counted events
-	double mwpcThresh[2];		//< MWPC trigger threshold on each side
+	double mwpcThresh[2];		//< MWPC trigger 50% threshold on each side
+	double mwpcWidth[2];			//< MWPC threshold width
 	double mwpcAccidentalProb;	//< probability of MWPC accidental triggers
 	
 protected:

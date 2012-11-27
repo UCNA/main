@@ -119,10 +119,12 @@ def plotWilkinsonCorrs(fin,outpath):
 			return x*(782.6+511.)-511.
 		gluck_da = [ [gluckx2E(0.4),0.03/1.66],[gluckx2E(0.5),0.01/6.55],[gluckx2E(0.6),0.01/8.08],
 						[gluckx2E(0.7),0.01/8.90],[gluckx2E(0.8),0.01/9.41],[gluckx2E(0.9),0.01/9.76]]
-		#def beta(x):
-		#	return sqrt(x*x+2*511*x)/(511+x)
-		#gluck_da = [ [d[0],beta(d[0])*d[1]] for d in gluck_da]
-		gWCA.plot(graph.data.points(gluck_da,x=1,y=2,title='Gl\\"uck 1992 $\\delta \\alpha_e$ table'),[graph.style.symbol(symbolattrs=[rgb.green])])
+
+		gluck_hmg = [ [gluckx2E(0.4),0.005/1.731],[gluckx2E(0.5),0.014/6.961],[gluckx2E(0.6),0.013/8.553],
+				   [gluckx2E(0.7),0.011/9.383],[gluckx2E(0.8),0.009/9.884],[gluckx2E(0.9),0.008/10.214]]
+
+		#gWCA.plot(graph.data.points(gluck_da,x=1,y=2,title='Gl\\"uck 1992 $\\delta \\alpha_e$ table'),[graph.style.symbol(symbolattrs=[rgb.green])])
+		gWCA.plot(graph.data.points(gluck_hmg,x=1,y=2,title='Gl\\"uck private communication'),[graph.style.symbol(symbolattrs=[rgb.green])])
 	gWCA.writetofile(outpath+"/A_Rad_Corrections.pdf")
 
 	################

@@ -9,6 +9,27 @@ def setTexrunner(g,opt='foils17pt'):
 		g.texrunner.set(lfs=opt)
 	except:
 		pass
+
+# error band path
+def errorBand(g,gdat,nx,ny,ndy,xerr=False):
+	
+	g0=graph.graphxy(width=g.width,height=g.height,
+				  x=graph.axis.linkedaxis(g.axes["x"]),
+				  y=graph.axis.linkedaxis(g.axes["y"]))
+	d1,d2 = (None,None)
+	if xerr:
+		d1 = g0.plot(graph.data.points([(g[nx]-g[ndy],g[ny]) for g in gdat],x=1,y=2), [graph.style.line()])
+		d2 = g0.plot(graph.data.points([(g[nx]+g[ndy],g[ny]) for g in gdat],x=1,y=2), [graph.style.line()])
+	else:
+		d1 = g0.plot(graph.data.points([(g[nx],g[ny]-g[ndy]) for g in gdat],x=1,y=2), [graph.style.line()])
+		d2 = g0.plot(graph.data.points([(g[nx],g[ny]+g[ndy]) for g in gdat],x=1,y=2), [graph.style.line()])
+	g0.finish()
+	p1 = d1.path
+	p2 = d2.path
+	
+	area = (p1 << p2.reversed())
+	
+	return area
 		
 # variable size circles
 class varCircle(graph.style.symbol):
