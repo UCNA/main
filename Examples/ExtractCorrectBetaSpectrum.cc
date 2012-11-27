@@ -9,7 +9,7 @@
 #include <fstream>
 #include <string>
 <<<<<<< HEAD
-#include "Studies/BetaSpectrum.hh" 
+#include "Physics/BetaSpectrum.hh" 
 //#include "ucnG4_dev/include/bmPrimaryGeneratorAction.hh"
 =======
 #include "BetaSpectrum.hh"

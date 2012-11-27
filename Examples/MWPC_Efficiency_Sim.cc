@@ -141,9 +141,9 @@ void processSimulation() {
 		hDeltaAsym.back()->SetTitle("Asymmetry % Change");
 		hDeltaAsym.back()->GetXaxis()->SetTitle("Energy [keV]");
 		
-		hDeltaSpectrum.push_back((TH1*)AAs[i]->myAsym->hSuperSum->Clone(("hSS_"+itos(i)).c_str()));
-		hDeltaSpectrum.back()->Add(AAs[0]->myAsym->hSuperSum,-1.0);
-		hDeltaSpectrum.back()->Divide(AAs[0]->myAsym->hSuperSum);
+		hDeltaSpectrum.push_back((TH1*)AAs[i]->myAsym->hSuperSum[GV_OPEN]->Clone(("hSS_"+itos(i)).c_str()));
+		hDeltaSpectrum.back()->Add(AAs[0]->myAsym->hSuperSum[GV_OPEN],-1.0);
+		hDeltaSpectrum.back()->Divide(AAs[0]->myAsym->hSuperSum[GV_OPEN]);
 		hDeltaSpectrum.back()->Scale(-100.0);
 		hDeltaSpectrum.back()->SetTitle("Type 0 % Inefficiency");
 		hDeltaSpectrum.back()->SetLineColor( (i%6)+1 );
