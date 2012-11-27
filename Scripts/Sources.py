@@ -242,6 +242,8 @@ class LinearityCurve:
 		for k in pks:
 			gdat = [ (l.adc*l.gms,self.fitter(l.adc*l.gms),l.sim.erecon*l.eta) for l in pks[k] if l.adc > 0]
 			gdat = [ (x,100.0*(y-yexp)/yexp) for (x,yexp,y) in gdat ]
+			if not gdat:
+				continue
 			self.gResid.plot(graph.data.points(gdat,x=1,y=2,title=None),
 				[graph.style.symbol(symbol.circle,size=0.1,symbolattrs=[cP[k],])])
 		self.gResid.plot(graph.data.function("y(x)=0.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
@@ -307,10 +309,12 @@ class LinearityCurve:
 		# plot
 		combodat = []
 		for k in pks.keys():
-			#		  0         1            2        3                                          4     5         6          7             8
+			#		0         1            2        3                                          4     5         6          7             8
 			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.denwidth,q.sim.enwidth,q.sim.denwidth,q) for q in pks[k]]
 			gdat = [ g for g in gdat if 0 < g[5] < 1000 and 0 < g[7] < 1000]
 			combodat += gdat
+			if not gdat:
+				continue
 			self.gEn.plot(graph.data.points(gdat,x=2,y=3,title=peakNames[k]), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRes.plot(graph.data.points(gdat,x=2,y=4,title=None), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=3,size=5,title=None), [ varCircle(symbolattrs=[cP[k]]),])
@@ -327,14 +331,16 @@ class LinearityCurve:
 		######
 		# Fit widths
 		######
-		combodat = [g for g in combodat if 1/1.25 < g[5]/g[7] < 1.25 and g[-1].src.radius() <= 45. ]
+		cselect = [g for g in combodat if 1/1.25 < g[5]/g[7] < 1.25 and g[-1].src.radius() <= 45. ]
+		if not cselect:
+			cselect = [g for g in combodat if 1/10 < g[5]/g[7] < 10 and g[-1].src.radius() <= 45. ]
 		self.LFwid = LinearFitter(terms=[polyterm(1)])
-		self.LFwid.fit(combodat,cols=(7,5))
-		wxmax = max([g[7] for g in combodat])
-		for g in combodat:
+		self.LFwid.fit(cselect,cols=(7,5))
+		wxmax = max([g[7] for g in cselect])
+		for g in cselect:
 			if not 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2:
 				print "--> Check width",g[-1].src.run,g[-1].uid
-		self.LFwid.fit([g for g in combodat if 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2],cols=(7,5))
+		self.LFwid.fit([g for g in cselect if 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2],cols=(7,5))
 		self.gWidth.plot(graph.data.points(self.LFwid.fitcurve(0,wxmax),x=1,y=2,title="$y=%.3f \\cdot x$"%self.LFwid.coeffs[0]),
 			[graph.style.line(lineattrs=[style.linestyle.dashed,rgb.red]),])
 				
@@ -482,6 +488,11 @@ cal_2011 = [
 			(	19505,	19544),															# Cd/In only
 			(	19823,	19863,	19858,	19583,	100000,		2710,	2713,		61)		# 
 			]
+
+cal_2012 = [
+		  (		21087,	21098,	21094,	21087,	100000,		3146,	3149,		61),		# Bi/Ce/Sn only
+		  (		21299,	21328,	21314,	21274,	100000,		3302,	3305,		61)		# Thanksgiving; first Cs137
+		  ]
 			
 			
 	
@@ -498,14 +509,14 @@ if __name__=="__main__":
 	conn = open_connection() # connection to calibrations DB
 	replace = True	# whether to replace previous calibration data
 	
-	for c in cal_2010:
+	for c in cal_2012[-1:]:
 	
 		# gather source data from calibration runs
 		rlist = range(c[0],c[1]+1)
 		slines = gather_peakdat(conn,rlist)
 		
-		plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
-		continue
+		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
+		#continue
 		
 		# make new calibrations set
 		ecid = None
@@ -520,7 +531,11 @@ if __name__=="__main__":
 					LC.fitLinearity(slines)
 					if LC.cnvs:
 						LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
+				#try:
 				LC.plot_erecon(slines)
+				#except:
+				#	print "*** FAIL plot_erecon ***"
+			
 				if ecid and t<4:
 					LC.dbUpload(conn,ecid,c[5+sn])
 				if not LC.cnvs:

@@ -203,7 +203,7 @@ CREATE TABLE sources (
 	x_width DOUBLE,							# 1 sigma x position width
 	y_width DOUBLE,							# 1 sigma y position width
 	counts DOUBLE,							# number of event counts
-	sourcetype ENUM('Cd109','Cd113m','Ce139','In114','In114E','In114W','Sn113','Bi207'),	# type of source
+	sourcetype ENUM('Cd109','Cd113m','Ce139','In114','In114E','In114W','Sn113','Bi207','Cs137'),	# type of source
 	INDEX(run_number), INDEX(source_id)
 );
 

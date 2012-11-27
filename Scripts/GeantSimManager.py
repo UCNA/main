@@ -26,6 +26,7 @@ class GeantSimManager:
 			self.settings["fieldmapcmd"] = "/detector/fieldmapfile "+fmap
 		self.settings["physlist"] = "livermore"
 		self.settings["scintstep"] = "1.0 mm"
+		self.settings["ana_args"] = ""
 		self.settings["extra_cmds"] = ""
 		
 		self.settings["vis_cmd"] = ""
@@ -248,12 +249,11 @@ class GeantSimManager:
 			anafiles = anafiles[6:]
 			print "\n----- %s ------"%outlist_name
 			os.system("cat "+outlist_name)
-			allpts = ""
 			if self.settings["generator"] in ["neutronBetaUnpol","eGunRandMomentum","eGun"]:
-				allpts = " y"
+				self.settings["ana_args"] += " saveall"
 			analyzer_bin = self.g4_bindir+"/"+self.settings["analyzer"]
 			if nMin <= nanalyzed <= nMax:
-				jobsout.write("%s %s %s/analyzed_%i.root%s\n"%(analyzer_bin,outlist_name,self.g4_out_dir,nanalyzed,allpts))
+				jobsout.write("%s %s %s/analyzed_%i.root%s\n"%(analyzer_bin,outlist_name,self.g4_out_dir,nanalyzed,self.settings["ana_args"]))
 			nanalyzed += 1
 		jobsout.close()
 		print "\n----- %s ------"%resim_jobfile
@@ -302,20 +302,32 @@ if __name__ == "__main__":
 		#betaSim.launch_sims(nEvents=1e7,nClusters=104,hours_old=0)
 		betaSim.launch_postanalyzer()
 	
-	####################				
+	# thin foils
+	if 0:
+		betaSim = GeantSimManager("endcap_180_150",geometry="thinFoil")
+		betaSim.settings["physlist"]="livermore"
+		betaSim.set_generator("neutronBetaUnpol")
+		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
+		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
+		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
+		#betaSim.launch_sims(nEvents=5e7,nClusters=520,hours_old=100*24)
+		betaSim.launch_postanalyzer()
+
+	####################
 	# calibration sources
 	####################
 	
-	# sources ["Bi207","Sn113","Ce139","Cd109","In114E","In114W","Cd113m"] 1e6 each
+	# sources ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"] 1e6 each
 	if 0:
-		for g in ["Bi207","Sn113","Ce139"]:
-			sourceSim = GeantSimManager("20120823",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
+		for g in ["Sn113","Ce139","Cd109","Cs137","In114E","In114W"]:
+			sourceSim = GeantSimManager("thinfoil",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt",geometry="thinFoil")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.settings["sourceScan"]=80.
 			sourceSim.settings["extra_cmds"] += "/detector/sourcefoilthick 9.5 um\n"
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
+			sourceSim.settings["ana_args"] += " undead"
 			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
+			#sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
 			sourceSim.launch_postanalyzer()
 	
 	if 0:
@@ -335,7 +347,7 @@ if __name__ == "__main__":
 	#			"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
 	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
 	####################
-	if 1:
+	if 0:
 		for g in [ "Xe133_3-2+", "Xe135_11-2-", "Xe137_7-2-" ]:
 			sourceSim = GeantSimManager("20120917",vacuum="1.e-3 torr")
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
@@ -372,13 +384,15 @@ if __name__ == "__main__":
 	####################				
 	# isotropic line
 	####################
-	if 0:
-		for l in [100,150,200,300,400,600,800]:
+	if 1:
+		for l in [56.7,]:
 			iline = GeantSimManager("IsotLine")
 			iline.set_generator("eGunRandMomentum")
 			iline.settings["positioner"] = "Fixed"
 			iline.settings["gunenergy"] = l
-			iline.launch_sims(nEvents=1e5,nClusters=9,hours_old=16)
+			iline.settings["ana_args"] += " undead saveall"
+			iline.settings["sourceholderpos"] = "0 0 0 m"
+			iline.launch_sims(nEvents=1e6,nClusters=36,hours_old=0)
 			iline.launch_postanalyzer()
 		
 	####################				
