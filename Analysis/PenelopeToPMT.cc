@@ -47,9 +47,11 @@ void PenelopeToPMT::setReadpoints() {
 }
 
 void PenelopeToPMT::calcReweight() {
-	Sim2PMT::calcReweight();
+	physicsWeight = 1.0;
+	//Sim2PMT::calcReweight();
 	// remove baked-in asymmetry and spectrum corrections
-	physicsWeight /= (1.0+correctedAsymmetry(ePrim,-costheta))*spectrumCorrectionFactor(ePrim);
+	//if(afp != AFP_OTHER)
+	//	physicsWeight /= (1.0+correctedAsymmetry(ePrim,-costheta))*spectrumCorrectionFactor(ePrim);
 }
 
 void PenelopeToPMT::doUnits() {
@@ -63,7 +65,7 @@ void PenelopeToPMT::doUnits() {
 		eDep[s] = fEdep[s]*0.001;
 		eQ[s] = fEquench[s];
 		eW[s] = (fEW[s]+0.5*(fEMWPCDead[s][0]+fEMWPCDead[s][1]))*0.001;
-		time[s] = fTime[s]*1e-9; // conver from nanoseconds to seconds
+		time[s] = fTime[s]*1e-9; // convert from nanoseconds to seconds
 		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
 			scintPos[s][d] = mwpcPos[s][d];	// fake scintillator pos from MWPC
 	}

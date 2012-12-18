@@ -173,7 +173,7 @@ public:
 class BetaDecayTrans: public TransitionBase {
 public:
 	/// constructor
-	BetaDecayTrans(NucLevel& f, NucLevel& t);
+	BetaDecayTrans(NucLevel& f, NucLevel& t, bool pstrn = false, unsigned int forbidden = 0);
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>& v);
 	/// display transition line info
@@ -184,8 +184,8 @@ public:
 protected:
 	/// evaluate beta spectrum probability
 	double evalBeta(double* x, double*);
-	/// TF1 for beta spectrum
-	TF1 betaTF1;
+	BetaSpectrumGenerator BSG;	//< spectrum shape generator
+	TF1 betaTF1;				//< TF1 for beta spectrum shape
 };
 
 /// Decay system

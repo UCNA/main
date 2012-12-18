@@ -108,10 +108,6 @@ private:
 	/// print what the particle gun is set up to do
 	void displayGunStatus();
 	
-	/// Cd113 Metastable 11/2-, 14.1year HL
-	void Cd113mSourceGenerator(G4Event* anEvent);
-	/// In114, based on NuDat 2.6
-	void In114SourceGenerator(G4Event* anEvent);
 	/// approximation for neutron capture on Cu gammas, based on probabilities in Robby's eLog 134
 	void nCaptureCuGammas(G4Event* anEvent, SurfaceAssembly* S);
 	/// approximation for neutron capture on Fe gammas

@@ -4,6 +4,7 @@
 #include "TSpectrumUtils.hh"
 #include "GraphicsUtils.hh"
 #include "G4toPMT.hh"
+#include "PenelopeToPMT.hh"
 #include "PathUtils.hh"
 #include "SourceDBSQL.hh"
 #include "CalDBSQL.hh"
@@ -376,16 +377,20 @@ void reSource(RunNum rn) {
 		// fit simulated source data with same parameters
 		Source simSource = it->second.mySource;	
 		Sim2PMT* g2p = NULL;
-		std::string g4dat = "/home/mmendenhall/geant4/output/FixGeom_";
+		std::string g4dat = "/data2/mmendenhall/G4Out/2010/FixGeom_";
 		printf("Loading source simulation data...\n");
 		if(simSource.t=="Bi207" || simSource.t=="Ce139" || simSource.t=="Sn113")
-			g4dat = "/home/mmendenhall/geant4/output/20120823_";
+			g4dat = "/data2/mmendenhall/G4Out/2010/20120823_";
 		if(rn > 20200) {
 			g4dat = "/home/mmendenhall/geant4/output/thinfoil_";
 			//if(simSource.t=="Bi207")
 			//	g4dat = "/home/mmendenhall/geant4/output/thinfl_nobo_";
 		}
-		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
+		if(simSource.t=="Bi207") {
+			g2p = new PenelopeToPMT();
+			g2p->addFile("/home/ucna/penelope_output/bi_2011/event_*.root");
+		}
+		else if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
 		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W" || simSource.t=="Cs137") {
 			g2p = new G4toPMT();
 			std::string simdat = g4dat + simSource.t + "/analyzed_*.root";
