@@ -29,30 +29,34 @@ def plotWilkinsonCorrs(fin,outpath):
 	# individual spectrum shape corrections
 	##############
 	
-	gWC=graph.graphxy(width=24,height=10,
+	gWC=graph.graphxy(width=24,height=12,
 			x=graph.axis.lin(title="Energy [keV]",min=0,max=ep*1.25),
 			#y=graph.axis.log(title="Spectrum Correction",min=5e-6,max=0.5),
 			y=graph.axis.log(title="Spectrum Correction",min=5e-6),
 			key = graph.key.key(pos="mr"))
 	setTexrunner(gWC)
 
-	gdat = [ [	c.energy,		# 0
+	gdat = [ [	c.energy,			# 0
 				c.F0m1,			# 1
-				abs(c.L0m1),	# 2
+				abs(c.L0m1),		# 2
 				-c.Qm1,			# 3
 				c.RVm1,			# 4
 				c.RAm1,			# 5
-				abs(c.BiRWM),	# 6
-				-c.VCm1,		# 7
-				-c.ACm1,		# 8
-				c.g,			# 9
-				0.000401,		# 10
-				0.0004*(1+0.2*sin(c.energy/30)) ] for c in corrs]
+				abs(c.BiRWM),		# 6
+				-c.VCm1,			# 7
+				-c.ACm1,			# 8
+				c.g,				# 9
+				0.000401,			# 10
+				0.0004*(1+0.2*sin(c.energy/30)), # 11
+				-c.Cm1,			# 12
+				c.Rm1			# 13
+			] for c in corrs]
 				
 	gWC.plot(graph.data.points(gdat,x=1,y=2,title="$F_0-1$"),[graph.style.line([style.linewidth.Thick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=10,title="$g$"),[graph.style.line([rgb.green,style.linestyle.dashdotted,style.linewidth.THick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=6,title="$R^A-1$"),[graph.style.line([rgb.red,style.linestyle.dotted,style.linewidth.THick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=5,title="$R^V-1$"),[graph.style.line([rgb.red,style.linestyle.dashed,style.linewidth.THick])])
+	gWC.plot(graph.data.points(gdat,x=1,y=14,title="$R-1$"),[graph.style.line([rgb.red,style.linestyle.dashdotted,style.linewidth.thick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=7,title="$|R+{\\rm WM}|$"),[graph.style.line([rgb.red,style.linewidth.THick])])
 	
 	gWC.plot(graph.data.points(gdat,x=1,y=11,title="$J(Z)-1$"),[graph.style.line([rgb(0.7,0.,0.7),style.linestyle.dashdotted,style.linewidth.thick])])
@@ -61,6 +65,7 @@ def plotWilkinsonCorrs(fin,outpath):
 	gWC.plot(graph.data.points(gdat,x=1,y=3,title="$1-Q$"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=8,title="$1-{^VC}$"),[graph.style.line([rgb.blue,style.linestyle.dashed,style.linewidth.Thick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=9,title="$1-{^AC}$"),[graph.style.line([rgb.blue,style.linestyle.dotted,style.linewidth.Thick])])
+	gWC.plot(graph.data.points(gdat,x=1,y=13,title="$1-C$"),[graph.style.line([rgb.blue,style.linestyle.dashdotted,style.linewidth.thick])])
 	gWC.plot(graph.data.points(gdat,x=1,y=4,title="$L_0-1$"),[graph.style.line([style.linestyle.dashed,style.linewidth.Thick])])
 	
 	gWC.writetofile(outpath+"/WilkinsonCorrs_%i_%i_%f.pdf"%(A,Z,ep))
@@ -76,6 +81,8 @@ def plotWilkinsonCorrs(fin,outpath):
 	setTexrunner(gSpec)
 	gdat = [[c.energy,c.S0,c.S] for c in corrs]
 	gdat.sort()
+	print "Uncorrected beta energy:",sum([g[0]*g[1] for g in gdat])/sum([g[1] for g in gdat])
+	print "Average beta energy:",sum([g[0]*g[2] for g in gdat])/sum([g[2] for g in gdat])
 	snorm = sum([g[1] for g in gdat])/sum([g[2] for g in gdat])
 	gdat = [g+[g[2]*snorm,] for g in gdat]
 	if 1/1.2 < snorm < 1.2:
@@ -160,7 +167,7 @@ def plotWilkinsonCorrs(fin,outpath):
 	gT.writetofile(outpath+"/GardnerTensor.pdf")
 		
 if __name__ == "__main__":						  
-	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
-					   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
-	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_137_55_4173.txt",
+	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
 	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_137_55_513.97.txt",
+					   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
