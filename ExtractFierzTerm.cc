@@ -276,14 +276,14 @@ void output_histogram(string filename, TH1F* h, double ax, double ay)
 int main(int argc, char *argv[]) {
 	
 	// Geant4 MC data scanner object
-	//G4toPMT G2P;
-	PenelopeToPMT G2P;
+	G4toPMT G2P;
+	//PenelopeToPMT G2P;
 
 	// use data from these MC files (most recent unpolarized beta decay, includes Fermi function spectrum correction)
 	// note wildcard * in filename; MC output is split up over many files, but G2P will TChain them together
-	G2P.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root"); // standard final Penelope
+	//G2P.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root"); // standard final Penelope
 	//G2P.addFile("/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_*.root"); // magnetic wiggles Monte Carlo
-	//G2P.addFile("/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_*.root"); // standard final Monte Carlo 
+	G2P.addFile("/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_*.root"); // standard final Monte Carlo 
 	//G2P.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/geant4/output/Baseline_20110826_neutronBetaUnpol_geomC/analyzed_*.root");

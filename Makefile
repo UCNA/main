@@ -67,6 +67,9 @@ UCNAnalyzer: Analyzer.cpp libUCNA.a
 ExtractFierzTerm: ExtractFierzTerm.cc libUCNA.a
 	$(CXX) $(CXXFLAGS) ExtractFierzTerm.cc $(LDFLAGS) -o ExtractFierzTerm
 	
+AsymmetryFierzTerm: AsymmetryFierzTerm.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) AsymmetryFierzTerm.cc $(LDFLAGS) -o AsymmetryFierzTerm
+
 examples: $(ExampleObjs)
 
 
