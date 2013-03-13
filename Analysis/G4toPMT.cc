@@ -38,17 +38,17 @@ void G4toPMT::doUnits() {
 			scintPos[s][d] *= wcPosConversion*flip;
 		}
 		
+		const int ID_scint[2] = {0,10};
+		const int ID_dscint[2] = {1,11};
+		const int ID_DF[2] = {5,15};
+		const int ID_WinOut[2] = {3,13};
+		const int ID_WinIn[2] = {4,14};
+		//const int ID_mwpc[2] = {6,16};
+		const int ID_wires[2] = {7,27};
+		const int ID_deadmwpc[2] = {8,18};
+		const int ID_kevlar[2] = {9,19};
+		
 		if(extended) {
-			const int ID_scint[2] = {0,10};
-			const int ID_dscint[2] = {1,11};
-			const int ID_DF[2] = {5,15};
-			const int ID_WinOut[2] = {3,13};
-			const int ID_WinIn[2] = {4,14};
-			//const int ID_mwpc[2] = {6,16};
-			const int ID_wires[2] = {7,27};
-			const int ID_deadmwpc[2] = {8,18};
-			const int ID_kevlar[2] = {9,19};
-			
 			edepDeadScint[s] = eDepSD[ID_dscint[s]];
 			edepWinOut[s]= eDepSD[ID_WinIn[s]];
 			edepWinIn[s] = eDepSD[ID_WinOut[s]];

@@ -58,7 +58,7 @@ protected:
 void reSource(RunNum rn);
 
 /// upload sources from run log
-void uploadRunSources();
+void uploadRunSources(const std::string& rlogname = "UCNA Run Log.txt");
 
 
 #endif

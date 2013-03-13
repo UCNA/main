@@ -8,8 +8,8 @@
 #include <stdlib.h>
 
 ProcessedDataScanner::ProcessedDataScanner(const std::string& treeName, bool withCalibrators):
-RunSetScanner(treeName,withCalibrators), redoPositions(false), runClock(0),
-physicsWeight(1.0), anChoice(ANCHOICE_A), fiducialRadius(50.0) { }
+RunSetScanner(treeName,withCalibrators), redoPositions(false), runClock(0), EvnbGood(true), BkhfGood(true),
+physicsWeight(1.0), anChoice(ANCHOICE_A), fiducialRadius(45.0) { }
 
 Stringmap ProcessedDataScanner::evtInfo() {
 	Stringmap m;

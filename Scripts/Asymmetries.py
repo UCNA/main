@@ -604,8 +604,9 @@ def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
 
 if __name__=="__main__":
 	
-	#backscatterFracTable("OctetAsym_Offic_SimMagF")
-	#exit(0)
+	backscatterFracTable("OctetAsym_Offic_Sim0823_4x")
+	backscatterFracTable("OctetAsym_Offic_SimPen")
+	exit(0)
 	
 	if 0:
 		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_SimMagF/")

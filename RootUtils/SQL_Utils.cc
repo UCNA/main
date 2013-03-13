@@ -34,7 +34,11 @@ SQLHelper::SQLHelper(const std::string& dbnm,
 void SQLHelper::execute() {
 	if(res) delete(res);
 	res = NULL;
-	db->Exec(query);
+	if(!db->Exec(query)) {
+		SMExcept e("DBExecFail");
+		e.insert("query",query);
+		throw(e);
+	}
 }
 
 void SQLHelper::Query() { 
@@ -43,6 +47,11 @@ void SQLHelper::Query() {
 	} else {
 		if(res) delete(res);
 		res = db->Query(query);
+		if(db->GetErrorCode()) {
+			SMExcept e("DBQueryFail");
+			e.insert("query",query);
+			throw(e);
+		}
 	}
 }
 

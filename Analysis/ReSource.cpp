@@ -4,6 +4,7 @@
 #include "TSpectrumUtils.hh"
 #include "GraphicsUtils.hh"
 #include "G4toPMT.hh"
+#include "PenelopeToPMT.hh"
 #include "PathUtils.hh"
 #include "SourceDBSQL.hh"
 #include "CalDBSQL.hh"
@@ -37,7 +38,12 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 		nBins = 100;
 		eMin = -20;
 		eMax = 300;
+	} else if(mySource.t == "Cs137") {
+		eMax = 1500;
+		pkMin = 400;
+		nSigma = 1.0;
 	}
+	
 	
 	// set up histograms
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
@@ -363,7 +369,7 @@ void reSource(RunNum rn) {
 		SourceDBSQL::getSourceDBSQL()->clearPeaks(it->second.mySource.sID);
 		
 		// fit source peaks
-		it->second.dbgplots = PCal.isRefRun() || it->second.mySource.t=="Bi207" || it->second.mySource.t=="Cd109";
+		it->second.dbgplots = PCal.isRefRun() || it->second.mySource.t=="Bi207" || it->second.mySource.t=="Cd109" || it->second.mySource.t=="Cs137";
 		it->second.simMode = false;
 		it->second.findSourcePeaks(P->totalTime[BOTH]);
 		it->second.calcPMTcorr();
@@ -371,14 +377,25 @@ void reSource(RunNum rn) {
 		// fit simulated source data with same parameters
 		Source simSource = it->second.mySource;	
 		Sim2PMT* g2p = NULL;
-		std::string g4dat = "/home/mmendenhall/geant4/output/FixGeom_";
+		std::string g4dat = "/data2/mmendenhall/G4Out/2010/FixGeom_";
 		printf("Loading source simulation data...\n");
 		if(simSource.t=="Bi207" || simSource.t=="Ce139" || simSource.t=="Sn113")
-			g4dat = "/home/mmendenhall/geant4/output/20120823_";
-		if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
-		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W") {
+			g4dat = "/data2/mmendenhall/G4Out/2010/20120823_";
+		if(rn > 20200) {
+			g4dat = "/home/mmendenhall/geant4/output/thinfoil_";
+			//if(simSource.t=="Bi207")
+			//	g4dat = "/home/mmendenhall/geant4/output/thinfl_nobo_";
+		}
+		if(simSource.t=="Bi207") {
+			g2p = new PenelopeToPMT();
+			g2p->addFile("/home/ucna/penelope_output/bi_2011/event_*.root");
+		}
+		else if(simSource.t=="Ce139" || simSource.t=="Sn113" || simSource.t=="Bi207" ||
+		   simSource.t=="Cd109" || simSource.t=="In114E" || simSource.t=="In114W" || simSource.t=="Cs137") {
 			g2p = new G4toPMT();
-			g2p->addFile(g4dat + simSource.t + "/analyzed_*.root");
+			std::string simdat = g4dat + simSource.t + "/analyzed_*.root";
+			printf("Loading data from '%s'\n",simdat.c_str());
+			g2p->addFile(simdat);
 		} else if(simSource.t=="Cd113m") {
 			/*
 			 G4toPMT* cd109 = new G4toPMT();
@@ -429,8 +446,11 @@ void reSource(RunNum rn) {
 				
 				RS.hTubes[t][tp]->SetLineColor(4);
 				it->second.hTubes[t][tp]->SetLineColor(2);
-				//RS.hTubes[t][tp]->GetSumw2()->Set(0);
-				
+#ifdef PUBLICATION_PLOTS
+				RS.hTubes[t][tp]->GetSumw2()->Set(0);
+				RS.hTubes[t][tp]->SetLineColor(1);
+				it->second.hTubes[t][tp]->SetLineColor(1);
+#endif
 				hToPlot.push_back(RS.hTubes[t][tp]);
 				hToPlot.push_back(it->second.hTubes[t][tp]);
 				TM.defaultCanvas->SetLogy(true);
@@ -466,13 +486,13 @@ void reSource(RunNum rn) {
 	delete(P);
 }
 
-void uploadRunSources() {
+void uploadRunSources(const std::string& rlogname) {
 	
 	std::vector<std::string> sources[2];
 	std::string l;
 	
-	printf("Loading run log...\n");
-	std::ifstream fin("Aux/UCNA Run Log.txt");
+	printf("Loading run log '%s'...\n",rlogname.c_str());
+	std::ifstream fin((getEnvSafe("UCNA_AUX")+"/"+rlogname).c_str());
 	
 	while (fin.good()) {
 		
@@ -549,8 +569,8 @@ void uploadRunSources() {
 						sources[s].push_back("In114W");
 					else if(*it == "Ce")
 						sources[s].push_back("Ce139");
-					else if(*it == "Cs137")
-						sources[s].push_back("Ce137");
+					else if(*it == "Cs")
+						sources[s].push_back("Cs137");
 				}
 			}
 		}

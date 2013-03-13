@@ -247,7 +247,10 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 		dets[EAST].mwpc.fWindowThick=dets[WEST].mwpc.fWindowThick=25*um;
 		trap.fWindowThick=2.5*um;
 	} else if(sGeometry=="siDet") {
-		
+	
+	} else if(sGeometry=="thinFoil") {
+		trap.fWindowThick=0.180*um;
+		trap.fCoatingThick=0.150*um;
 	} else {
 		SMExcept e("UnknownGeometry");
 		e.insert("name",sGeometry);

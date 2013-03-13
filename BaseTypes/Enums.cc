@@ -69,6 +69,14 @@ AFPState strToAfp(const std::string& s) {
 	return s=="On"?AFP_ON:s=="Off"?AFP_OFF:s=="On2Off"?AFP_ON2OFF:s=="Off2On"?AFP_OFF2ON:AFP_OTHER;
 }
 
+std::string gvWords(GVState gv) {
+	return gv==GV_OPEN?"Open":gv==GV_CLOSED?"Closed":"Other";
+}
+
+GVState strToGV(const std::string& s) {
+	return s=="Open"?GV_OPEN:s=="Closed"?GV_CLOSED:GV_OTHER;
+}
+
 //---------------------------------------
 
 RunGeometry whichGeometry(RunNum rn) {
@@ -102,7 +110,7 @@ std::string geomName(RunGeometry g) {
 }
 
 char choiceLetter(AnalysisChoice a) {
-	return (ANCHOICE_A <= a)?'A'+(a-ANCHOICE_A):'0';
+	return (ANCHOICE_A <= a && a <= ANCHOICE_Z)?'A'+(a-ANCHOICE_A):'0';
 }
 
 

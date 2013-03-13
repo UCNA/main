@@ -4,6 +4,7 @@
 #include "SimAsymmetryAnalyzer.hh"
 #include "BetaDecayAnalyzer.hh"
 #include "OutputManager.hh"
+#include "PathUtils.hh"
 #include <TGraph.h>
 #include <TGraphErrors.h>
 #include <string>
@@ -12,15 +13,47 @@
 class AsymCorr {
 public:
 	/// constructor with name to look up in Aux/Corrections
-	AsymCorr(const std::string& nm);
+	AsymCorr(const std::string& nm): name(nm) {}
+	/// destructor
+	virtual ~AsymCorr() {}
+	
+	/// get correction at energy
+	virtual double getCor(double e) = 0;
+	/// get uncertainty at energy
+	virtual double getUnc(double e) = 0;
 	
 	std::string name;	//< correction name
+};
+
+class AsymCorrFile: public AsymCorr {
+public:
+	/// constructor
+	AsymCorrFile(const std::string& nm, const std::string& basePath = getEnvSafe("UCNA_AUX")+"/Corrections/");
+	/// get correction at energy
+	virtual double getCor(double KE) { return gCor.Eval(KE); }
+	/// get uncertainty at energy
+	virtual double getUnc(double KE) { return gUnc.Eval(KE); }
+protected:
 	TGraph gCor;		//< amount of correction
 	TGraph gUnc;		//< uncertainty
 };
 
+/// energy independent asymmetry correction
+class ConstAsymCorr: public AsymCorr {
+public:
+	/// constructor
+	ConstAsymCorr(const std::string& nm, double c, double e): AsymCorr(nm), corr(c), uncert(e) {}
+	/// get correction at energy
+	virtual double getCor(double KE) { return corr; }
+	/// get uncertainty at energy
+	virtual double getUnc(double KE) { return uncert; }
+protected:
+	double corr;
+	double uncert;
+};
+
 /// do corrections to asymmetry
-void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM);
+void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcBase = "");
 
 /// systematic errors table generator
 class ErrTables {
@@ -53,6 +86,9 @@ protected:
 };
 
 /// calculate MC-based corrections given data, MC filenames
-void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin);
+void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin, const std::string& outDir = "", bool oldCorr = false);
+
+/// comparison between two MCs
+void compareMCs(OutputManager& OM, const std::string& sim0, const std::string& sim1, const std::string& fOut = "");
 
 #endif

@@ -203,7 +203,7 @@ CREATE TABLE sources (
 	x_width DOUBLE,							# 1 sigma x position width
 	y_width DOUBLE,							# 1 sigma y position width
 	counts DOUBLE,							# number of event counts
-	sourcetype ENUM('Cd109','Cd113m','Ce139','In114','In114E','In114W','Sn113','Bi207'),	# type of source
+	sourcetype ENUM('Cd109','Cd113m','Ce139','In114','In114E','In114W','Sn113','Bi207','Cs137'),	# type of source
 	INDEX(run_number), INDEX(source_id)
 );
 
@@ -243,7 +243,7 @@ CREATE TABLE cut_spec (
 	energy_max DOUBLE,		# maximum energy
 	radius DOUBLE,			# event radius
 	positioning ENUM('plain','rotated'),	# what type of positining scheme is used
-	INDEX(cut_spec_id), INDEX(energy_min,energy_max,radius)
+	INDEX(cut_spec_id), INDEX(energy_min,energy_max,radius,positioning)
 );
 
 # generic analysis results
@@ -255,14 +255,16 @@ CREATE TABLE analysis_results (
 	source ENUM('Data','G4','Pen'),			# data or MC source
 	start_run INT UNSIGNED,					# run range start for result
 	end_run INT UNSIGNED,					# run range end for result
+	grouping ENUM('run','pair','quartet','octet'),	# octet grouping level
 	event_type SET('0','I','II','III'),		# event type used for result
 	ana_choice ENUM('A','B','C','D','E','F','G','H'),	# ``analysis choice''
 	side ENUM('East','West','Both'),		# event side of result
 	afp ENUM('On','Off','Other','On2Off','Off2On'),	# AFP state for result
+	gate_valve ENUM('Open','Closed'),		# gate valve for specifying background runs
 	value DOUBLE,							# result value
 	err DOUBLE,								# result uncertainty
 	cut_spec_id INT UNSIGNED,				# ID for cut specification
-	INDEX(author), INDEX(type,event_type,side,afp), INDEX(start_run,end_run), INDEX(date), INDEX(cut_spec_id)
+	INDEX(author), INDEX(type,event_type,side,afp), INDEX(start_run,end_run), INDEX(date), INDEX(cut_spec_id), INDEX(grouping)
 );
 
 # permissions

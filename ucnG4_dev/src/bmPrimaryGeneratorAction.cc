@@ -54,13 +54,12 @@
 #include <bitset>  // djaffe 2aug06
 
 namespace CLHEP {}
-using namespace CLHEP; 
+using namespace CLHEP;
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 //for beta spectrum
 TF1* funcBetaSpectrum = NULL;
-TF1* funcHeavyBeta = NULL;
 
 double rand_outof_list(const double* line, const double* weight, const int npoints, int& selected) {
 	// build cumulative list
@@ -69,7 +68,7 @@ double rand_outof_list(const double* line, const double* weight, const int npoin
 		division[i+1] = division[i]+weight[i];
 	// pick selected line
 	std::vector<double>::iterator itsel = std::upper_bound(division.begin(),division.end(),division.back()*G4UniformRand());
-	selected = int(itsel-division.begin())-1;	
+	selected = int(itsel-division.begin())-1;
 	assert(0<=selected && selected<npoints);
 	return line[selected];
 }
@@ -80,7 +79,7 @@ void RandomizeMomentum(G4ThreeVector& mom) {
 	G4double costheta = 2.0*G4UniformRand()-1.0;
 	G4double sintheta = sqrt(1.0-costheta*costheta);
 	mom.set(cos(phi)*sintheta,sin(phi)*sintheta,costheta);
-}  
+}
 
 /// generate a random position in a disk
 void diskRandom(G4double radius, G4double& x, G4double& y) {
@@ -153,8 +152,8 @@ throwEvents(const std::vector<NucDecayEvent>& evts, G4Event* anEvent) {
 
 void bmPrimaryGeneratorAction::
 throwElectronsAndGammas(const std::vector<G4double>& electrons,
-						const std::vector<G4double>& gammas,
-						G4Event* anEvent) {
+				    const std::vector<G4double>& gammas,
+				    G4Event* anEvent) {
 	
 	
 	G4cout << "Throwing " << electrons.size() << " electrons and " << gammas.size() << " gammas." << G4endl;
@@ -174,7 +173,7 @@ throwElectronsAndGammas(const std::vector<G4double>& electrons,
 	
 	// generate photons
 	particleGun->SetParticleDefinition(particleTable->FindParticle("gamma"));
-	for(std::vector<G4double>::const_iterator it = gammas.begin(); it != gammas.end(); it++) {	
+	for(std::vector<G4double>::const_iterator it = gammas.begin(); it != gammas.end(); it++) {
 		G4cout << "\tgamma = " << *it/keV << "keV" << G4endl;
 		RandomizeMomentum(direction);
 		particleGun->SetParticleEnergy(*it);
@@ -204,53 +203,6 @@ void bmPrimaryGeneratorAction::throwGammaAt(SurfaceSeg* S, double eGamma, G4Even
 	particleGun->GeneratePrimaryVertex(anEvent);
 }
 
-// lines based on NuDat 2.6
-void bmPrimaryGeneratorAction::Cd113mSourceGenerator(G4Event* anEvent) {
-	
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	
-	funcHeavyBeta->FixParameter(0,585.7);
-	funcHeavyBeta->FixParameter(1,113.);
-	funcHeavyBeta->FixParameter(2,49.);
-	electrons.push_back(funcHeavyBeta->GetRandom()*keV);
-	
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
-void bmPrimaryGeneratorAction::In114SourceGenerator(G4Event* anEvent) {
-	
-	G4double gunEnergy;
-	
-	std::vector<G4double> electrons;
-	std::vector<G4double> gammas;
-	int selected(-1);
-	
-	if(G4UniformRand() < 0.5) {
-		// 5+ decay to:				114Cd ------------	or 1+ state ------------------
-		const double line190[] =	{725.24,	558.43,	190.27,	189.44,	186.03,	162.33};
-		const double branch190[] =	{3.2,		3.2,	15.56,	6.71,	31.9,	40.1};
-		gunEnergy = rand_outof_list(line190, branch190, 6, selected)*keV;
-		if(selected < 3)
-			gammas.push_back(gunEnergy);
-		else
-			electrons.push_back(gunEnergy);
-		// auger K
-		if(selected >= 2 && G4UniformRand() < 0.0598/0.94)
-			electrons.push_back(20.1*keV);
-	} else {
-		// 1+ state 1988.7keV beta decay to 114Sn
-		if(G4UniformRand() < 0.9936*0.94) {
-			funcHeavyBeta->FixParameter(0,1988.7);
-			funcHeavyBeta->FixParameter(1,114.);
-			funcHeavyBeta->FixParameter(2,50.);
-			electrons.push_back(funcHeavyBeta->GetRandom()*keV);
-		}
-	}
-	
-	throwElectronsAndGammas(electrons,gammas,anEvent);
-}
-
 void bmPrimaryGeneratorAction::nCaptureCuGammas(G4Event* anEvent, SurfaceAssembly* S) {
 	int selected(-1);
 	G4double gunEnergy;
@@ -260,7 +212,7 @@ void bmPrimaryGeneratorAction::nCaptureCuGammas(G4Event* anEvent, SurfaceAssembl
 	static const double Cu63Branch[]= {100,	72.51,	48.9,	45.32,	27.0,	23.56,	17.82};		// 335.11%
 	static const double Cu65Lines[] = {186,	465,	386,	6601,	6680,	89,		5245};
 	static const double Cu65Branch[]= {100,	54.39,	46.34,	35.1,	33.6,	26.59,	17.8};		// 313.82%
-
+	
 	// capture probability on each isotope,
 	// weighted by isotope abundance, capture cross section, and total gamma intensity
 	static const double p63 = 69.17*4.52*std::accumulate(Cu63Branch,Cu63Branch+7,0.);
@@ -296,8 +248,6 @@ bmPrimaryGeneratorAction::bmPrimaryGeneratorAction(bmDetectorConstruction* myDC)
 	// beta spectra TF1s
 	funcBetaSpectrum = new TF1("funcBetaSpectrum",genericBetaSpectrum,0,3000,1);
 	funcBetaSpectrum->SetNpx(3000);
-	funcHeavyBeta = new TF1("funcHeavyBeta",heavyBetaSpectrum,0,5000,3);
-	funcHeavyBeta->SetNpx(500);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -336,7 +286,7 @@ void bmPrimaryGeneratorAction::selectVertex() {
 	}
 	static ConeFrustum scintSurf(G4ThreeVector(0.,0.,2.2*m),0,exitR,0,false);
 	static ConeFrustum twall(G4ThreeVector(),myDetector->trap.fIRtrap,myDetector->trap.fIRtrap,3.0*m,true);
-
+	
 	if(positioner=="Fixed") {
 		// fixed position set from macro file
 		vertex_position = position_saved;
@@ -390,7 +340,7 @@ void bmPrimaryGeneratorAction::selectVertex() {
 		vertex_position += twall.snorm * G4UniformRand() * (myDetector->trap.decayTube_Wall);	// uniform within trap wall
 	} else if(positioner=="EndcapEdge") {
 		randomCylPosition(G4ThreeVector(0.,0.,(1.5*m-1.*mm)*(1-2*(G4UniformRand()<0.5))),
-						  myDetector->trap.fIRtrap+2.5*mm,1.*mm,vertex_position);
+					   myDetector->trap.fIRtrap+2.5*mm,1.*mm,vertex_position);
 	} else if(positioner=="SpectrometerVolumeUniform") {
 		// uniform fill of (visible) spectrometer volume, for Xe
 		randomTubePosition(G4ThreeVector(0,0,0), 7.5*cm, 2.17*m, vertex_position);
@@ -410,7 +360,7 @@ void bmPrimaryGeneratorAction::selectVertex() {
 void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	
 	std::bitset<32> a ( (long) 0);
-	//use the UI fRunNumber in bmAnalysisManager which got set 
+	//use the UI fRunNumber in bmAnalysisManager which got set
 	//in bmRunAction, instead of the GEANT4 default RunID
 	std::bitset<32> run ( gbmAnalysisManager->GetRunNumber() );
 	std::bitset<32> evt ( anEvent->GetEventID() );
@@ -421,7 +371,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	//   cout<<hostname<<endl;
 	
 	//this is the "host id", unique for each host
-	std::bitset<32> site ( (long) gethostid() ) ; 
+	std::bitset<32> site ( (long) gethostid() ) ;
 	
 	for ( int i = 32-1-1; i >= 0 ; i-- ) {
 		if ( run.test(i) ) a.set(31-1-i) ;
@@ -431,7 +381,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	std::bitset<32> seed = (a^site)^evt ;
 	
 	// set highest bit to zero to avoid negative seed
-	if ( seed.test(31) ) seed.reset(31) ; 
+	if ( seed.test(31) ) seed.reset(31) ;
 	
 	long myseed = seed.to_ulong();
 	
@@ -456,10 +406,9 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	
 	selectVertex();
 	G4cout << "Event vertex " << vertex_position/m << G4endl;
-		
-	if(gunType=="Cd113m") {
-		Cd113mSourceGenerator(anEvent);
-	} else if (gunType=="nCaptCu" || gunType=="nCaptH" || gunType=="nCaptFe") {
+	if (gunType=="In114E" || gunType=="In114W") gunType="In114m";
+	
+	if (gunType=="nCaptCu" || gunType=="nCaptH" || gunType=="nCaptFe") {
 		static SurfaceAssembly gammaTargets = SurfaceAssembly(G4ThreeVector());
 		if(!gammaTargets.getArea()) {
 			for(Side s = EAST; s <= WEST; ++s) {
@@ -482,8 +431,6 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 			while(!evts.size())
 				NDL.getGenerator("Al28").genDecayChain(evts);
 		}
-	} else if (gunType=="In114" || gunType=="In114E" || gunType=="In114W") {
-		In114SourceGenerator(anEvent);
 	} else if (gunType=="endpoint" || gunType=="neutronBetaUnpol") {
 		double eOrig = particleGun->GetParticleEnergy();
 		if(gunType=="neutronBetaUnpol") {
@@ -517,7 +464,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		displayGunStatus();
 		particleGun->GeneratePrimaryVertex(anEvent);
 	} else if (gunType=="eGun") {
-		//for both eGun generator, assume gun energy is set by the   
+		//for both eGun generator, assume gun energy is set by the
 		//standard gun energy command!!!
 		particleGun->SetParticleMomentumDirection(G4ThreeVector(0,0,1));
 		displayGunStatus();
@@ -531,7 +478,7 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		e.insert("name",gunType);
 		throw(e);
 	}
-
+	
 	throwEvents(evts,anEvent);
 	
 	//now fill the primary tree here

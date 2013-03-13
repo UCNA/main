@@ -10,6 +10,12 @@ from bisect import bisect
 def unifrange(xmin,xmax,npts):
 	return [ xmin + float(i)/float(npts-1)*(xmax-xmin) for i in range(npts)]
 
+# mean and standard deviation
+def musigma(l):
+	mu = sum(l)/len(l)
+	s = sqrt(sum([x*x for x in l])/len(l)-mu*mu)/sqrt(len(l))
+	return (mu,s)
+
 # LaTeX formatting for polynomial term
 def latexPoly(varname,n):
 	if n==0:

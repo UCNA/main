@@ -49,6 +49,9 @@ public:
 	EventType fType;			//< analysis event type
 	Float_t fProbIII;			//< probability of Type III backscatter
 	Side fSide;					//< analysis event side
+	Int_t EvnbGood;			//< Event number header good
+	Int_t BkhfGood;		//< Block header good
+		
 	UInt_t fTaggedBack[2];		//< whether event was tagged by the muon backing veto on each side
 	double physicsWeight;		//< event spectrum re-weighting factor
 	

@@ -48,12 +48,19 @@ public:
 		G4_DATA,			//< Geant4 MC
 		PEN_DATA			//< Penelope MC
 	} datp;					//< data/MC source for analysis
+	enum RunGrouping {
+		GROUP_RUN=0,		//< single run (or grouped runs with same purpose)
+		GROUP_PAIR=1,		//< AFP On/Off pulse pair
+		GROUP_QUARTET=2,	//< A or B pair of pulse pairs
+		GROUP_OCTET=3		//< A->B or B->A octet
+	} grouping;
 	RunNum startRun;		//< start of run range analyzed
 	RunNum endRun;			//< end of run range analyzed
 	std::set<EventType> etypes;	//< event types considered
 	AnalysisChoice anach;	//< ``analysis choice'' used
 	Side s;					//< side for result
 	AFPState afp;			//< AFP state for result
+	GVState gv;				//< gate valve state for FG/BG
 	double value;			//< value of result
 	double err;				//< uncertainty on result
 	unsigned int csid;		//< cut specification ID
@@ -64,6 +71,8 @@ public:
 	static AnaType strToAtype(const std::string& str);
 	/// words for data source
 	static std::string dsourceWord(DataSource d);
+	/// words for octet grouping
+	static std::string groupWord(RunGrouping g);
 	/// data type from word
 	static DataSource strToDsource(const std::string& str);
 };

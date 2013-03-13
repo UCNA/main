@@ -54,7 +54,7 @@ public:
 	fgbgPair* norm23[2];						//< "normalized" Type II, III anode signals by [side]
 	
 	std::vector<TH1F*> hSlices[2][TYPE_III_EVENT+1];	//< fit anode spectrum "slices"
-	TGraphErrors* gAnode[2][TYPE_III_EVENT+1];			//< anode energy distribution fit
+	TGraphErrors* gAnode[2][TYPE_III_EVENT+1];		//< anode energy distribution fit
 };
 
 /// analyzer plugin for evaluating simulated Type II/III MWPC energy deposition split

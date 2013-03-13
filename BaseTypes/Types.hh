@@ -50,11 +50,19 @@ public:
 	inline void operator+= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] += bt[s]; }
 	/// subtract another blinded time
 	inline void operator-= (const BlindTime& bt) { for(Side s=EAST; s<=NOSIDE; ++s) t[s] -= bt[s]; }
+#ifdef UNBLINDED
+#warning "***UNBLINDED*** times in use"
+	/// access blinded times for side
+	Float_t& operator[](Side s) { assert(s<=NOSIDE); return t[BOTH]; }
+	/// const blinded times access
+	Float_t operator[](Side s) const { assert(s<=NOSIDE); return t[BOTH]; }
+#else
 	/// access blinded times for side
 	Float_t& operator[](Side s) { assert(s<=NOSIDE); return t[s]; }
 	/// const blinded times access
 	Float_t operator[](Side s) const { assert(s<=NOSIDE); return t[s]; }
-	
+#endif
+protected:
 	Float_t t[4];	//< blinded timings for each side
 };
 /// add blinded times

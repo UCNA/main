@@ -28,6 +28,9 @@ void PostOfficialAnalyzer::setReadpoints() {
 	Tch->SetBranchAddress("TimeW",&runClock[WEST]);
 	runClock[BOTH]=runClock[NOSIDE]=0.0;
 	
+	Tch->Branch("EvnbGood",&EvnbGood);
+	Tch->Branch("BkhfGood",&BkhfGood);
+
 	for(Side s=EAST; s<=WEST; ++s) {
 		
 		// wirechamber planes

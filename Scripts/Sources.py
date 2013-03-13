@@ -122,7 +122,7 @@ def delete_ALL_calibrations(conn):
 			
 class SourceDatDirectory:
 	"""Class for locating source cal output files"""
-	def __init__(self,bp="../Plots/LivermoreSources/"):
+	def __init__(self,bp="../../Plots/LivermoreSources/"):
 		self.basepath = bp
 		self.runpaths = {}
 		self.rundat = {}
@@ -242,6 +242,8 @@ class LinearityCurve:
 		for k in pks:
 			gdat = [ (l.adc*l.gms,self.fitter(l.adc*l.gms),l.sim.erecon*l.eta) for l in pks[k] if l.adc > 0]
 			gdat = [ (x,100.0*(y-yexp)/yexp) for (x,yexp,y) in gdat ]
+			if not gdat:
+				continue
 			self.gResid.plot(graph.data.points(gdat,x=1,y=2,title=None),
 				[graph.style.symbol(symbol.circle,size=0.1,symbolattrs=[cP[k],])])
 		self.gResid.plot(graph.data.function("y(x)=0.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
@@ -307,10 +309,12 @@ class LinearityCurve:
 		# plot
 		combodat = []
 		for k in pks.keys():
-			#		  0         1            2        3                                          4     5         6          7             8
+			#		0         1            2        3                                          4     5         6          7             8
 			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.denwidth,q.sim.enwidth,q.sim.denwidth,q) for q in pks[k]]
 			gdat = [ g for g in gdat if 0 < g[5] < 1000 and 0 < g[7] < 1000]
 			combodat += gdat
+			if not gdat:
+				continue
 			self.gEn.plot(graph.data.points(gdat,x=2,y=3,title=peakNames[k]), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRes.plot(graph.data.points(gdat,x=2,y=4,title=None), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=3,size=5,title=None), [ varCircle(symbolattrs=[cP[k]]),])
@@ -327,14 +331,16 @@ class LinearityCurve:
 		######
 		# Fit widths
 		######
-		combodat = [g for g in combodat if 1/1.25 < g[5]/g[7] < 1.25 and g[-1].src.radius() <= 45. ]
+		cselect = [g for g in combodat if 1/1.25 < g[5]/g[7] < 1.25 and g[-1].src.radius() <= 45. ]
+		if not cselect:
+			cselect = [g for g in combodat if 1/10 < g[5]/g[7] < 10 and g[-1].src.radius() <= 45. ]
 		self.LFwid = LinearFitter(terms=[polyterm(1)])
-		self.LFwid.fit(combodat,cols=(7,5))
-		wxmax = max([g[7] for g in combodat])
-		for g in combodat:
+		self.LFwid.fit(cselect,cols=(7,5))
+		wxmax = max([g[7] for g in cselect])
+		for g in cselect:
 			if not 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2:
 				print "--> Check width",g[-1].src.run,g[-1].uid
-		self.LFwid.fit([g for g in combodat if 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2],cols=(7,5))
+		self.LFwid.fit([g for g in cselect if 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2],cols=(7,5))
 		self.gWidth.plot(graph.data.points(self.LFwid.fitcurve(0,wxmax),x=1,y=2,title="$y=%.3f \\cdot x$"%self.LFwid.coeffs[0]),
 			[graph.style.line(lineattrs=[style.linestyle.dashed,rgb.red]),])
 				
@@ -384,6 +390,7 @@ class LinearityCurve:
 		except:
 			print "Tube calibration upload failed!"
 			delete_graph(conn,lgid)
+			raw_input("Press enter to acknowledge and continue...")
 		
 def makeCalset(conn,r0,r1,rgms,posmap,replace=False):
 	"""Set calibration definition for range of runs in calibration DB."""
@@ -457,13 +464,13 @@ def plotBackscatters(conn,rlist):
 # calibration definitions:
 #				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
 cal_2010 = [
-			(	13883,	13894,	13890,	13879,	13964,		94,		97,			147 ),	# 63 0 first usable? data + little Xe
-			(	14104,	14116,	14111,	14077,	14380,		144,	147,		147 ),	# 63 1	Columbus Day weekend + big Xe
-			(	14383,	14394,	14390,	14383,	14507,		212,	215,		147 ),	# 63 2 Oct. 15-21 week
-			(	14516,	14530,	14524,	14513,	14667,		268,	271,		147 ),	# 63 3 Oct. 22-24 weekend
-			(	14736,	14746,	14743,	14688,	14994,		330,	333,		147 ),	# 63 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
-			(	15645,	15662,	15653,	15084,	15915,		437,	440,		151 ),	# 65 5 Nov. 22-29 Thanksgiving Week
-			(	15916,	15939,	15931,	15916,	100000,		553,	555,		151 )	# 65 6 Post-Thanksgiving
+			(	13883,	13894,	13890,	13879,	13964,		94,		97,			161 ),	# 63 0 first usable? data + little Xe
+			(	14104,	14116,	14111,	14077,	14380,		144,	147,		161 ),	# 63 1	Columbus Day weekend + big Xe
+			(	14383,	14394,	14390,	14383,	14507,		212,	215,		161 ),	# 63 2 Oct. 15-21 week
+			(	14516,	14530,	14524,	14513,	14667,		268,	271,		161 ),	# 63 3 Oct. 22-24 weekend
+			(	14736,	14746,	14743,	14688,	14994,		330,	333,		161 ),	# 63 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
+			(	15645,	15662,	15653,	15084,	15915,		437,	440,		164 ),	# 65/151 5 Nov. 22-29 Thanksgiving Week
+			(	15916,	15939,	15931,	15916,	100000,		553,	555,		164 )	# 65 6 Post-Thanksgiving
 			]
 			
 cal_2011 = [
@@ -481,6 +488,11 @@ cal_2011 = [
 			(	19505,	19544),															# Cd/In only
 			(	19823,	19863,	19858,	19583,	100000,		2710,	2713,		61)		# 
 			]
+
+cal_2012 = [
+		  (		21087,	21098,	21094,	21087,	100000,		3146,	3149,		61),		# Bi/Ce/Sn only
+		  (		21299,	21328,	21314,	21274,	100000,		3302,	3305,		61)		# Thanksgiving; first Cs137
+		  ]
 			
 			
 	
@@ -497,35 +509,36 @@ if __name__=="__main__":
 	conn = open_connection() # connection to calibrations DB
 	replace = True	# whether to replace previous calibration data
 	
-	for c in cal_2010:
+	for c in cal_2012[-1:]:
 	
-		if True:
-			# gather source data from calibration runs
-			rlist = range(c[0],c[1]+1)
-			slines = gather_peakdat(conn,rlist)
+		# gather source data from calibration runs
+		rlist = range(c[0],c[1]+1)
+		slines = gather_peakdat(conn,rlist)
+		
+		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
+		#continue
+		
+		# make new calibrations set
+		ecid = None
+		if True and len(c)>2:
+			ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
+		
+		# fit linearity curves for each PMT
+		for (sn,s) in enumerate(["East","West"]):
+			for t in range(5):
+				LC = LinearityCurve(s,t)
+				if t<4:
+					LC.fitLinearity(slines)
+					if LC.cnvs:
+						LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
+				#try:
+				LC.plot_erecon(slines)
+				#except:
+				#	print "*** FAIL plot_erecon ***"
 			
-			#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
-			#continue
-			
-			# make new calibrations set
-			# ecid = None
-			if True and len(c)>2:
-				ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
-			
-			# fit linearity curves for each PMT
-			for (sn,s) in enumerate(["East","West"]):
-				for t in range(5):
-					LC = LinearityCurve(s,t)
-					if t<4:
-						LC.fitLinearity(slines)
-						if LC.cnvs:
-							LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
-					LC.plot_erecon(slines)
-					if ecid and t<4:
-						LC.dbUpload(conn,ecid,c[5+sn])
-					if not LC.cnvs:
-							continue
-					LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
-					LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
-		else:
-			pass
+				if ecid and t<4:
+					LC.dbUpload(conn,ecid,c[5+sn])
+				if not LC.cnvs:
+						continue
+				LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
+				LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))

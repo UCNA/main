@@ -19,6 +19,7 @@
 #include "PostOfficialAnalyzer.hh"
 #include "BetaDecayAnalyzer.hh"
 #include "AnodePositionAnalyzer.hh"
+#include "AsymmetryCorrections.hh"
 #include <TColor.h>
 
 
@@ -179,23 +180,25 @@ void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM) {
 	}
 }
 
-void makeCorrectionsFile(int A, int Z, double Endpt) {
+void makeCorrectionsFile(int A, int Z, double Endpt, double M2_F, double M2_GT) {
 	
 	std::string fout = getEnvSafe("UCNA_ANA_PLOTS")+"/SpectrumCorrection/SpectrumCorrection_";
 	fout += itos(A)+"_"+itos(Z)+"_"+dtos(Endpt)+".txt";
 	
-	double R = pow(A,1./3.)*neutron_R0;
-	double W0 = (Endpt+m_e)/m_e;
-	double M0 = fabs(Z)*proton_M0+(A-fabs(Z))*neutron_M0;
-	
+	BetaSpectrumGenerator BSG(A,Z,Endpt);
+	BSG.M2_F = M2_F;
+	BSG.M2_GT = M2_GT;
+		
 	QFile Q;
 	Stringmap sm;
 	sm.insert("A",A);
 	sm.insert("Z",Z);
 	sm.insert("endpt",Endpt);
-	sm.insert("W0",W0);
-	sm.insert("R",R);
-	sm.insert("M0",M0);
+	sm.insert("W0",BSG.W0);
+	sm.insert("R",BSG.R);
+	sm.insert("M0",BSG.M0);
+	sm.insert("M2_F",BSG.M2_F);
+	sm.insert("M2_GT",BSG.M2_GT);
 	Q.insert("decayInfo",sm);
 	
 	for(double e = 0.5; e < Endpt; e+=1.) {
@@ -204,22 +207,24 @@ void makeCorrectionsFile(int A, int Z, double Endpt) {
 		m.insert("energy",e);
 		m.insert("W",W);
 		m.insert("beta",beta(e));
-		m.insert("F0m1",WilkinsonF0(Z,W,R)-1.0);
-		m.insert("L0m1",WilkinsonL0(Z,W,R)-1.0);
-		m.insert("RVm1",WilkinsonRV(W,W0,M0)-1.0);
-		m.insert("RAm1",WilkinsonRA(W,W0,M0)-1.0);
-		m.insert("BiRWM",Bilenkii_1958_11(W));
-		m.insert("VCm1",WilkinsonVC(Z,W,W0,R)-1.0);
-		m.insert("ACm1",WilkinsonAC(Z,W,W0,R)-1.0);
-		m.insert("Qm1",WilkinsonQ(Z,W,W0,M0)-1.0);
-		m.insert("g",Wilkinson_g(W,W0));
+		m.insert("F0m1",WilkinsonF0(Z,W,BSG.R)-1.0);
+		m.insert("L0m1",WilkinsonL0(Z,W,BSG.R)-1.0);
+		m.insert("RVm1",WilkinsonRV(W,BSG.W0,BSG.M0)-1.0);
+		m.insert("RAm1",WilkinsonRA(W,BSG.W0,BSG.M0)-1.0);
+		m.insert("Rm1",CombinedR(W,M2_F,M2_GT,BSG.W0,BSG.M0)-1.0);
+		m.insert("BiRWM",Bilenkii59_RWM(W));
+		m.insert("VCm1",WilkinsonVC(Z,W,BSG.W0,BSG.R)-1.0);
+		m.insert("ACm1",WilkinsonAC(Z,W,BSG.W0,BSG.R)-1.0);
+		m.insert("Cm1",CombinedC(Z,W,M2_F,M2_GT,BSG.W0,BSG.R)-1.0);
+		m.insert("Qm1",WilkinsonQ(Z,W,BSG.W0,BSG.M0)-1.0);
+		m.insert("g",Wilkinson_g(W,BSG.W0));
 		m.insert("gS",Sirlin_g(e,Endpt));
-		m.insert("hmg",shann_h_minus_g(W,W0));
+		m.insert("hmg",shann_h_minus_g(W,BSG.W0));
 		m.insert("h",shann_h(e,Endpt));
 		m.insert("RWM",WilkinsonACorrection(W));
-		m.insert("S0",plainPhaseSpace(W,W0));
-		m.insert("S",correctedBetaSpectrum(e,A,Z,Endpt));
-		m.insert("dSm1",spectrumCorrectionFactor(e,A,Z,Endpt)-1.0);
+		m.insert("S0",plainPhaseSpace(W,BSG.W0));
+		m.insert("S",BSG.decayProb(e));
+		m.insert("dSm1",BSG.spectrumCorrectionFactor(W)-1.0);
 		m.insert("A0",plainAsymmetry(e,0.5));
 		m.insert("A",correctedAsymmetry(e,0.5));
 		m.insert("dAm1",asymmetryCorrectionFactor(e)-1);
@@ -257,6 +262,7 @@ TH2F* PosPlotter::makeHisto(const std::string& nm, const std::string& title) {
 	TH2F* interpogrid = OM->registeredTH2F(nm,title,nbin,-60,60,nbin,-60,60);
 	interpogrid->GetXaxis()->SetTitle("x Position [mm]");
 	interpogrid->GetYaxis()->SetTitle("y Position [mm]");
+	interpogrid->GetYaxis()->SetTitleOffset(1.2);
 	return interpogrid;
 }
 
@@ -272,7 +278,7 @@ void PosPlotter::npePlot(PMTCalibrator* PCal) {
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			
 			TH2F* interpogrid = makeHisto(sideSubst("%c",s)+itos(t+1)+"_nPE",
-										  (t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" PE per MeV");
+									(t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" PE per MeV");
 			interpogrid->SetAxisRange(0,250,"Z");
 			if(t==nBetaTubes)
 				interpogrid->SetAxisRange(0,500,"Z");
@@ -296,7 +302,7 @@ void PosPlotter::npeGradPlot(PMTCalibrator* PCal) {
 	for(Side s = EAST; s<=WEST; ++s) {
 		for(int t=0; t<=nBetaTubes; t++) {
 			TH2F* interpogrid = makeHisto(sideSubst("%c",s)+itos(t+1)+"_Grad",
-										  (t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" Light Transport Gradient");
+									(t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" Light Transport Gradient");
 			interpogrid->SetAxisRange(0,10,"Z");
 			
 			float gradsum = 0;
@@ -344,41 +350,47 @@ void PosPlotter::etaPlot(PositioningCorrector* P, double axisRange) {
 //-------------------------------------------------------------//
 
 void showSimSpectrum(const std::string& nm, OutputManager& OM, NucDecayLibrary& NDL, PMTCalibrator& PCal) {
-	double emax = 1000;
-	int nbins = 1000;
+	double emax = 1600;
+	int nbins = 1600;
 	NucDecaySystem& NDS = NDL.getGenerator(nm);
 	NDS.display(true);
+	PMTGenerator PGen;
+	PGen.setCalibrator(&PCal);
+	PGen.setSide(EAST);
 	
 	TH1F* hSpec = OM.registeredTH1F("hSpec","",nbins,0,emax);
+	TH1F* hBlurd = OM.registeredTH1F("hBlurd","",nbins/5,0,emax);
+
 	std::vector<NucDecayEvent> v;
-	for(unsigned int i=0; i<1e7; i++) {
+	unsigned int npts = 0;
+	unsigned int nToGen = 5e5;
+	while(npts<nToGen) {
+		if(!(npts%(nToGen/20))) { printf("*"); fflush(stdout); npts++; }
 		v.clear();
 		NDS.genDecayChain(v);
-		for(std::vector<NucDecayEvent>::iterator it = v.begin(); it < v.end(); it++)
-			if(it->d == D_ELECTRON)
+		double eQ = 0;
+		for(std::vector<NucDecayEvent>::iterator it = v.begin(); it < v.end(); it++) {
+			if(it->d == D_ELECTRON) {
 				hSpec->Fill(it->E);
+				if(plRndSrc.Uniform()<0.5)
+					eQ += it->E;
+			}
+		}
+		if(eQ) {
+			ScintEvent sevt = PGen.generate(eQ);
+			if(PGen.triggered()) {
+				hBlurd->Fill(sevt.energy.x);
+				npts++;
+			}
+		}
 	}
+	printf(" Done.\n");
 	OM.defaultCanvas->SetLogy(true);
 	hSpec->Draw();
 	OM.printCanvas(nm+"_GenSpectrum");
-	
-	std::string g4dat = "/home/mmendenhall/geant4/output/20120810_";
-	G4toPMT g2p;
-	g2p.addFile(g4dat + nm + "/analyzed_*.root");
-	
-	if(!g2p.getnFiles()) return;
-	
-	g2p.setCalibrator(PCal);
-	TH1F* hSim = OM.registeredTH1F("hSim","",240,0,1200);
-	hSim->GetXaxis()->SetTitle("Energy [keV]");
-	g2p.startScan();
-	while(g2p.nextPoint() && g2p.nCounted < 1.e6)
-		if(g2p.fPID == PID_BETA)
-			hSim->Fill(g2p.getEtrue());
-	hSim->Scale(1.0/hSim->GetMaximum());
-	hSim->Draw();
 	OM.defaultCanvas->SetLogy(false);
-	OM.printCanvas(nm+"_SimSpectrum");
+	hBlurd->Draw();
+	OM.printCanvas(nm+"_DetResponse");
 }
 
 void compareXenonSpectra() {
@@ -448,7 +460,7 @@ void decomposeXenon(RunNum rn, bool includeFast) {
 	std::vector<TH1F*> hIsot;
 	LinHistCombo LHC;
 	for(unsigned int i=0; i<isots.size(); i++) {
-		std::string g4dat = "/home/mmendenhall/geant4/output/20120917_";
+		std::string g4dat = "/data2/mmendenhall/G4Out/2010/20120917_";
 		G4SegmentMultiplier g2p(SC);
 		g2p.addFile(g4dat + isots[i] + "/analyzed_*.root");
 		assert(g2p.getnFiles());
@@ -581,5 +593,72 @@ void calcAnalysisChoices(OutputManager& OM, const std::string& inflname) {
 	}
 }
 
+//-------------------------------------------------------------//
+
+void paperDataPlot() {
+	
+	OutputManager OM("PlotData",getEnvSafe("UCNA_ANA_PLOTS")+"/Paper/");
+	
+	std::vector<std::string> rPaths;
+	rPaths.push_back(getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/Range_0-16");
+	rPaths.push_back(getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/Range_17-1000");
+	
+	std::vector<double> rWeights;
+	rWeights.push_back(0.59);
+	rWeights.push_back(0.41);
+	
+	std::vector<AsymmetryAnalyzer*> rAsyms;
+	
+	double tWeight = 0;
+	for(unsigned int n=0; n<rPaths.size(); n++) {
+		OctetAnalyzer* OAdat = new OctetAnalyzer(&OM, "DataCorrector", rPaths[n]+"/OctetAsym_Offic");
+		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(OAdat);
+		OAdat->addPlugin(AAdat);
+		AAdat->anChoice = ANCHOICE_C;
+		doFullCorrections(*AAdat,OM);
+		
+		// weighted asymmetry sum
+		AAdat->hAsym->Scale(rWeights[n]);
+		for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv)
+			AAdat->hSuperSum[GV_OPEN]->SetBit(TH1::kIsAverage);
+		AAdat->hCxn->SetBit(TH1::kIsAverage);
+		if(n>0) {
+			AAdat->hAsym->Add(rAsyms.back()->hAsym);
+			AAdat->hCxn->Add(AAdat->hCxn,rAsyms.back()->hCxn,rWeights[n],tWeight);
+			for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv)
+				AAdat->hSuperSum[gv]->Add(AAdat->hSuperSum[gv],rAsyms.back()->hSuperSum[gv],rWeights[n],tWeight);
+		}
+		tWeight += rWeights[n];
+		rAsyms.push_back(AAdat);
+	}
+	
+	AsymmetryAnalyzer* AA = rAsyms.back();
+	
+	// simulation data for comparison
+	OctetAnalyzer* OAsim = new OctetAnalyzer(&OM, "DataCorrector", getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Sim0823_4x/OctetAsym_Offic_Sim0823_4x");
+	AsymmetryAnalyzer* AAsim = new AsymmetryAnalyzer(OAsim);
+	OAsim->addPlugin(AAsim);
+	AAsim->anChoice = ANCHOICE_C;
+	doFullCorrections(*AAsim,OM);
+	AAsim->hSuperSum[GV_OPEN]->Scale(AA->hSuperSum[GV_OPEN]->Integral()/AAsim->hSuperSum[GV_OPEN]->Integral());
+	
+	// save data points to file
+	for(int b = 1; b <= AA->hAsym->GetNbinsX(); b++) {
+		Stringmap m;
+		double e0 = AA->hAsym->GetBinCenter(b);
+		if(e0>800) continue;
+		m.insert("KE",e0);
+		m.insert("A0",AA->hAsym->GetBinContent(b));
+		m.insert("dA0",AA->hAsym->GetBinError(b));
+		m.insert("corr",AA->hCxn->GetBinContent(b));
+		m.insert("dcorr",AA->hCxn->GetBinError(b));
+		m.insert("ssfg",AA->hSuperSum[GV_OPEN]->GetBinContent(b));
+		m.insert("ssMC",AAsim->hSuperSum[GV_OPEN]->GetBinContent(b));
+		m.insert("ssbg",AA->hSuperSum[GV_CLOSED]->GetBinContent(b));
+		OM.qOut.insert("asymplot",m);
+	}
+	
+	OM.write();
+}
 
 

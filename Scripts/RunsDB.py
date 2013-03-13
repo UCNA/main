@@ -218,29 +218,39 @@ def fillRunsDB(runs,rmin=0,rmax=100000):
 					cmd += f+","
 				cmd = cmd[:-1]+")\n\tVALUES ("
 				for f in fields:
-					cmd += "'%s',"%str(rdata[f]).strip()
+					cmd += "'%s',"%str(rdata[f]).strip().strip("'")
 				cmd = cmd[:-1]+")"
 				
 			print cmd
 			conn.execute (cmd)
 
 				
-def fillRunGroups():
+def fillRunGroups(fname="../Aux/UCNA Run Log.txt"):
 	conn = open_connection()
-	conn.execute("DELETE FROM run_group WHERE 1")
 	cycs = {}
-	runs = load_mylog()
-	for rn in runs:
+	runs = load_mylog(fname)
+	rlist = runs.keys()
+	rlist.sort()
+	conn.execute("DELETE FROM run_group WHERE %i <= start_run AND end_run <= %i"%(rlist[0],rlist[-1]))
+	for rn in rlist:
 		cycs.setdefault(runs[rn].cname,[]).append(runs[rn].runNum)
 	for c in cycs:
 		cycs[c].sort()
 		print c,cycs[c]
 		conn.execute("INSERT INTO run_group(start_run,end_run,name) VALUES (%i,%i,'%s')"%(cycs[c][0],cycs[c][-1],c))
 	
-if __name__=="__main__":   
-	al = load_runlog("/data/ucnadata/midfiles_2010/runlog.txt")
-	ml = load_mylog()
-	runs = merge_runlogs(ml,al)
-	fillRunsDB(runs,rmin=13500,rmax=16300)
-	fillRunGroups()
-	
+if __name__=="__main__":
+	if 0:
+		al = load_runlog("/data/ucnadata/midfiles_2010/runlog.txt")
+		ml = load_mylog()
+		runs = merge_runlogs(ml,al)
+		fillRunsDB(runs,rmin=13500,rmax=16300)
+		fillRunGroups()
+
+	if 1:
+		al = load_runlog("/data/ucnadata/midfiles/runlog.txt")
+		ml = load_mylog("../Aux/UCNA Run Log 2012.txt")
+		runs = merge_runlogs(ml,al)
+		fillRunsDB(runs)
+		fillRunGroups("../Aux/UCNA Run Log 2012.txt")
+

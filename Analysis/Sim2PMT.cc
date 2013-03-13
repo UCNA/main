@@ -40,7 +40,12 @@ SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
 nSimmed(0), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
-		mwpcThresh[s] = 0.02;
+		mwpcThresh[s] = 0;
+		mwpcWidth[s] = 0;
+		//mwpcThresh[s] = (s==EAST?0.98:0.10); // 2010 based on Sn ineffic
+		//mwpcThresh[s] = (s==EAST?0.95:0.67); // similar to 2009 Geom D?
+		//mwpcThresh[s] = 1.3; // extra high
+		//mwpcWidth[s] = 0.15;
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 			for(unsigned int c = 0; c < kMaxCathodes; c++)
 				cathodes[s][d][c] = 0;
@@ -61,7 +66,7 @@ Stringmap Sim2PMT::evtInfo() {
 void Sim2PMT::calcReweight() {
 	physicsWeight = 1.0;
 	if(weightAsym && (afp==AFP_ON || afp==AFP_OFF))
-		physicsWeight *= (1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_ON?1:-1)))*spectrumCorrectionFactor(ePrim);
+		physicsWeight *= (1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_ON?1:-1)))*neutronSpectrumCorrectionFactor(ePrim);
 	if(fakeClip) {
 		const double R = 70.*sqrt(0.6); // wirechamber entrance window radius, projected back to decay trap
 		// event origin distance from edge
@@ -139,7 +144,7 @@ void Sim2PMT::classifyEvent() {
 	primSide = costheta>0?WEST:EAST;
 	
 	for(Side s = EAST; s <= WEST; ++s) {
-		passesMWPC[s] = (mwpcEnergy[s] > mwpcThresh[s]);		
+		passesMWPC[s] = (mwpcEnergy[s] > mc_rnd_source.Gaus(mwpcThresh[s],mwpcWidth[s]));
 		is2fold[s] = passesMWPC[s] && passesScint[s];
 	}
 	

@@ -102,6 +102,21 @@ double WilkinsonGammaMagSquaredApprox(double Z, double W, unsigned int N) {
 			   -(2.*N+1.)*log(a));	
 }
 
+double F_approx(double W, double Z, double R, bool fullterms) {
+	if(W<=1) return 1;
+	double F = 1;
+	double p = sqrt(W*W-1.);
+	double azn = alpha*Z;
+	double x = 11./4.-gamma_euler-log(2*p*R);
+	F += azn*(M_PI*W/p);
+	if(!fullterms) return F;
+	azn *= alpha*Z;
+	F += azn*(x+M_PI*M_PI*W*W/(3.*p*p));
+	azn *= alpha*Z;
+	F += azn*(M_PI*W/p*x);
+	return F<20?F:20;
+}
+
 // F0 = 2/(1+WilkinsonGamma) * F
 double WilkinsonF0(double Z, double W, double R, unsigned int N) {
 	if(W<=1) return 0;
@@ -126,7 +141,11 @@ double WilkinsonRA(double W, double W0, double M) {
 			+88./(9.*M*M)*W*W);
 }
 
-double Bilenkii_1958_11(double W) {
+double CombinedR(double W, double M2_F, double M2_GT, double W0, double M) {
+	return (M2_F*WilkinsonRV(W,W0,M)+lambda*lambda*M2_GT*WilkinsonRA(W,W0,M))/(M2_F+lambda*lambda*M2_GT);
+}
+
+double Bilenkii59_RWM(double W) {
 	const double mu = 2.792847356-(-1.91304273);
 	return (-2.*lambda*(lambda+mu)*beta_W0
 			+2.*(5.*lambda*lambda+2.*lambda*mu+1.)*W
@@ -223,6 +242,10 @@ double WilkinsonAC(double Z, double W, double W0, double R) {
 			-4.*R*R/9.*W*W);
 }
 
+double CombinedC(double Z, double W, double M2_F, double M2_GT, double W0, double R) {
+	return (M2_F*WilkinsonVC(Z,W,W0,R)+lambda*lambda*M2_GT*WilkinsonAC(Z,W,W0,R))/(M2_F+lambda*lambda*M2_GT);
+}
+
 double WilkinsonQ(double, double W, double W0, double M) {
 	double B = (1.-lambda)/(1.+3.*lambda*lambda);
 	return 1.-M_PI*alpha/(M*sqrt(W*W-1))*(1+B*(W0-W)/(3.*W));
@@ -282,24 +305,100 @@ double Wilkinson_g(double W,double W0) {
 }
 
 
-double spectrumCorrectionFactor(double KE,int A, int Z, double ep) {
+double neutronSpectrumCorrectionFactor(double KE) {
 	double W = (KE+m_e)/m_e;
-	double W0 = (ep+m_e)/m_e;
-	double R = pow(A,1./3.)*neutron_R0;
-	double M0 = fabs(Z)*proton_M0+(A-fabs(Z))*neutron_M0;
-	double c = WilkinsonF0(Z,W,R);
-	c *= WilkinsonL0(Z,W,R);
-	c *= (1.+Wilkinson_g(W,W0));
-	c *= (1.+Bilenkii_1958_11(W));
-	c *= WilkinsonQ(Z,W,W0,M0);
+	double c = WilkinsonF0(1,W,neutron_R0);	// Fermi function Coulomb
+	c *= WilkinsonL0(1,W,neutron_R0);		// Nonzero charge radius
+	c *= WilkinsonQ(1,W,beta_W0,proton_M0);	// Coulomb effect on recoil
+	c *= (1.+Wilkinson_g(W,beta_W0));		// outer radiative corrections
+	c *= (1.+Bilenkii59_RWM(W));			// recoil + WM for free neutron
 	return c;
 }
 
-double correctedBetaSpectrum(double KE, int A, int Z, double ep) {
+double neutronCorrectedBetaSpectrum(double KE) {
 	double W = (KE+m_e)/m_e;
-	double W0 = (ep+m_e)/m_e;
-	return plainPhaseSpace(W,W0)*spectrumCorrectionFactor(KE,A,Z,ep);
+	return plainPhaseSpace(W,beta_W0)*neutronSpectrumCorrectionFactor(KE);
 }
+
+double Davidson_C1T(double W, double W0, double Z, double R) {
+	double p = sqrt(W*W-1);
+	double y = alpha*Z*W/p;
+	double a2Z2 = alpha*alpha*Z*Z;
+	double S0 = sqrt(1-a2Z2);
+	double S1 = sqrt(4-a2Z2);
+	const double C = pow(TMath::Gamma(0.25),2)/sqrt(8*M_PI*M_PI*M_PI); // "Gauss number"
+	double sm = 0;
+	for(unsigned int n=1; n<10; n++) sm += 1/(n*(n*n+y*y));
+	double A = ( (S1+2)/(2*S0+2) * pow(12*TMath::Gamma(2.*S0+1.)/TMath::Gamma(2.*S1+1.),2) *
+			  pow(2*p*R,a2Z2/2) * (pow(1-a2Z2/4,2)+y*y) * (1-a2Z2*C/2+a2Z2*y*y*sm/2) );
+	
+	return (1+S0)*((W0-W)*(W0-W)+A*(W*W-1))/24;
+}
+
+double Langer_Cs137_C2T(double W, double W0) {
+	const double k = 0.030;
+	return (W0-W)*(W0-W)+k*(W*W-1);
+}
+
+double Behrens_l2(double W, double W0, double Z, double R) {
+	double p = sqrt(W*W-1);
+	double y = alpha*Z*W/p;
+	double a2Z2 = alpha*alpha*Z*Z;
+	double S0 = sqrt(1-a2Z2);
+	double S1 = sqrt(4-a2Z2);
+	const double C = pow(TMath::Gamma(0.25),2)/sqrt(8*M_PI*M_PI*M_PI); // "Gauss number"
+	double sm = 0;
+	for(unsigned int n=1; n<10; n++) sm += 1/(n*(n*n+y*y));
+	return ( (S1+2)/(2*S0+2) * pow(12*TMath::Gamma(2.*S0+1.)/TMath::Gamma(2.*S1+1.),2) *
+		   pow(2*p*R,a2Z2/2) * (pow(1-a2Z2/4,2)+y*y) * (1-a2Z2*C/2+a2Z2*y*y*sm/2) );
+}
+
+double Behrens_Cs137_C(double W, double W0) {
+	double q2 = (W0-W)*(W0-W);
+	double p2 = W*W-1;
+	double l2 = Behrens_l2(W,W0,56,pow(137,1./3.)*neutron_R0);
+	double a1 = 0.000346865*q2 + 0.00331725*l2*p2 - 0.000050327*q2*W + 0.000155636*l2*p2*W + 0.000114834*q2/W;
+	double a2 = -0.00427141*q2 - 0.00645269*l2*p2 + 0.000063321*q2*W - 0.000913829*l2*p2*W - 0.000566409*q2/W + 0.0000576232*l2*p2/W;
+	double a3 =   0.0131499*q2 + 0.00313793*l2*p2 + 0.00151806*q2*W  + 0.000741562*l2*p2*W - 0.000865957*q2/W - 0.000272219*l2*p2/W;
+	double x = 1.07;
+	return a1+a2*x+a3*x*x;
+}
+
+//-----------------------------------------------------//
+
+BetaSpectrumGenerator::BetaSpectrumGenerator(double a, double z, double ep): A(a), Z(z), EP(ep),
+W0((EP+m_e)/m_e), R(pow(A,1./3.)*neutron_R0), M0(fabs(Z)*proton_M0+(A-fabs(Z))*neutron_M0),
+forbidden(0), M2_F(0), M2_GT(1) { }
+
+double BetaSpectrumGenerator::spectrumCorrectionFactor(double W) const {
+	double c = WilkinsonF0(Z,W,R);	// Fermi function Coulomb
+	c *= WilkinsonL0(Z,W,R);			// Nonzero charge radius
+	c *= WilkinsonQ(Z,W,W0,M0);		// Coulomb effect on recoil
+	c *= (1.+Wilkinson_g(W,W0));		// outer radiative corrections
+	if(A==1 && Z==1) {
+		c *= (1.+Bilenkii59_RWM(W));	// recoil + WM for free neutron
+	} else {
+		c *= CombinedC(Z,W,M2_F,M2_GT,W0,R);	// electron/nucleon wavefunction convolution
+		c *= CombinedR(W,M2_F,M2_GT,W0,M0);	// recoil
+	}
+	// first forbidden Axial-Vector decays
+	if(forbidden==1 && M2_GT>0 && M2_F==0)
+		c *= Davidson_C1T(W, W0, Z, R);
+	// Cs137 second-forbidden decay
+	if(forbidden==2 && A==137)
+		c *= Behrens_Cs137_C(W, W0);
+		//c *= Langer_Cs137_C2T(W, W0);
+	
+	return c;
+}
+
+double BetaSpectrumGenerator::decayProb(double KE) const {
+	double W = (KE+m_e)/m_e;
+	return plainPhaseSpace(W,W0)*spectrumCorrectionFactor(W);
+}
+
+//-----------------------------------------------------//
+
 
 double shann_h_minus_g(double W, double W0) {
 	if(W>=W0 || W<=1)

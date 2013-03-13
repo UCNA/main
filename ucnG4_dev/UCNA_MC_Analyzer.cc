@@ -50,6 +50,7 @@ void UCNA_MC_Analyzer::processTrack() {
 	
 	// detector ID numbers
 	const int ID_scint[2] = {0,10};
+	const int ID_dscint[2] = {1,11};
 	const int ID_mwpc[2] = {6,16};
 	const int ID_deadmwpc[2] = {8,18};
 	const int ID_winOut[2] = {3,13};
@@ -92,7 +93,7 @@ void UCNA_MC_Analyzer::processTrack() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		
 		// scintillator deposited energy, position, hit time
-		if(detectorID==ID_scint[s]) {
+		if(detectorID==ID_scint[s] || (undeadLayer && detectorID==ID_dscint[s])) {
 			Edep[s] += trackinfo->Edep;
 			EdepQ[s] += trackinfo->EdepQuenched;
 			for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
@@ -130,9 +131,9 @@ void UCNA_MC_Analyzer::processEvent() {
 	// normalize position variables
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
-			if(EdepQ[s]>0) {
+			if(Edep[s]>0) {
 				ScintPos[s][d] /= Edep[s];
-				ScintPosSigma[s][d] = sqrt(ScintPosSigma[s][d]/EdepQ[s]-ScintPos[s][d]*ScintPos[s][d]);
+				ScintPosSigma[s][d] = sqrt(ScintPosSigma[s][d]/Edep[s]-ScintPos[s][d]*ScintPos[s][d]);
 			}
 			if(fMWPCEnergy[s] > 0) {
 				MWPCPos[s][d] /= fMWPCEnergy[s];
@@ -145,12 +146,23 @@ void UCNA_MC_Analyzer::processEvent() {
 int main(int argc, char** argv) {
 	
 	if(argc<3) {
-		cout<<"Syntax: "<<argv[0]<<" <filename containing list of raw root files> <output root file name> [save all evts]"<<endl;
+		cout<<"Syntax: "<<argv[0]<<" <filename containing list of raw root files> <output root file name> [saveall|undead]"<<endl;
 		exit(1);
 	}
 	
 	UCNA_MC_Analyzer UMA(argv[2]);
-	UMA.saveAllEvents = (argc==4);
+	
+	for(unsigned int i=3; i<argc; i++) {
+		if(std::string(argv[i])=="saveall") {
+			UMA.saveAllEvents = true;
+		} else if(std::string(argv[i])=="undead") {
+			UMA.undeadLayer = true;
+		} else {
+			cout<<"Unknown argument: "<<argv[0]<<endl;
+			exit(1);
+		}
+	}
+	
 	UMA.analyzeFileList(argv[1]);
 	
 	return 0;

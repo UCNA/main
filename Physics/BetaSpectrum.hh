@@ -21,6 +21,7 @@ const double beta_W0 = (neutronBetaEp+m_e)/m_e;	//< beta spectrum endpoint, ``na
 const double neutron_R0 = 0.0025896*1.2;		//< neutron and proton radius approximation in ``natural'' units
 const double proton_M0 = m_p/m_e;				//< proton mass, ``natural'' units
 const double neutron_M0 = m_n/m_e;				//< neutron mass, ``natural'' units
+const double gamma_euler = 0.577215;			//< Euler's constant
 
 // NOTE: functions of W are using Wilkinson's ``natural'' units for energy, W=(KE+m_e)/m_e
 
@@ -45,12 +46,18 @@ double WilkinsonL0(double Z, double W, double R = neutron_R0);
 double WilkinsonRV(double W, double W0=beta_W0, double M=proton_M0);
 /// R(W,W0,M) as parametrized in [2], phase space correction for nuclear recoil, Axial Vector part
 double WilkinsonRA(double W, double W0=beta_W0, double M=proton_M0);
-/// correction to spectrum shape from recoil, weak magnetism according to Bilenkii 1958, eq. 11
-double Bilenkii_1958_11(double W);
+/// Combined Vector/Axial-Vector nuclear recoil correction to spectrum shape
+double CombinedR(double W, double M2_F, double M2_GT, double W0=beta_W0, double M=proton_M0);
+
+/// correction to spectrum shape from recoil + weak magnetism according to Bilenkii 1959, eq. 11, after factoring out (1+3*lambda^2)
+double Bilenkii59_RWM(double W);
+
 /// Wilkinson ^VC(Z,W) as in [2] nucleon/lepton wavefunction convolution correction, Vector part
 double WilkinsonVC(double Z, double W, double W0=beta_W0, double R=neutron_R0);
 /// Wilkinson ^AC(Z,W) as in [2], nucleon/lepton wavefunction convolution correction, axial part
 double WilkinsonAC(double Z, double W, double W0=beta_W0, double R=neutron_R0);
+/// Combined Vector/Axial-Vector C
+double CombinedC(double Z, double W, double M2_F, double M2_GT, double W0=beta_W0, double R=neutron_R0);
 
 /// Wilkinson Q(Z,W,M) as in [0], nucleon recoil effect on Coulomb corrections
 double WilkinsonQ(double Z,double W,double W0=beta_W0,double M=proton_M0);
@@ -60,10 +67,41 @@ double Sirlin_g(double KE,double KE0,double m=m_e);
 /// Wilkinson g: Sirlin g + fix for logarithm divergence [5]
 double Wilkinson_g(double W,double W0=beta_W0);
 
-/// combined spectrum correction factor
-double spectrumCorrectionFactor(double KE,int A = 1, int Z = 1, double ep = neutronBetaEp);
-/// corrected beta spectrum
-double correctedBetaSpectrum(double KE, int A = 1, int Z = 1, double ep = neutronBetaEp);
+/// shape factor for first forbidden Tensor/Axial decays, per J. Davidson, Phys. Rev. 82(1) p. 48, 1951
+double Davidson_C1T(double W, double W0, double Z, double R);
+/// shape factor for Cs137 second forbidden beta decay, per L.M. Langer and R.J.D. Moffat,  Phys. Rev. 82(5), p. 635, 1951
+double Langer_Cs137_C2T(double W, double W0);
+/// shape factor for Cs137 second forbidden beta decay, per H. Behrens and P. Christmas, Nucl. Phys. A399, pp. 131-140, 1938
+double Behrens_Cs137_C(double W, double W0);
+
+/// combined spectrum correction factor for unpolarized neutron beta decay
+double neutronSpectrumCorrectionFactor(double KE);
+/// corrected beta spectrum for unpolarized neutron beta decay
+double neutronCorrectedBetaSpectrum(double KE);
+
+/// beta decay spectrum calculating class
+class BetaSpectrumGenerator {
+public:
+	/// constructor
+	BetaSpectrumGenerator(double a, double z, double ep);
+	
+	/// shape correction to basic phase space
+	double spectrumCorrectionFactor(double W) const;
+	
+	/// decay probability at given KE
+	double decayProb(double KE) const;
+	
+	double A;			//< number of nucleons
+	double Z;			//< number of protons
+	double EP;		//< endpoint kinetic energy, keV
+	double W0;		//< endpoint total energy, m_e*c^2
+	double R;			//< effective nuclear radius
+	double M0;		//< nuclear mass, m_e*c^2
+	unsigned int forbidden;	//< "forbidden" level of decay
+	double M2_F;		//< |M_F|^2 Fermi decay matrix element
+	double M2_GT;		//< |M_GT|^2 Gamov-Teller decay matrix element
+};
+
 
 //-------------- A corrections ------------------
 

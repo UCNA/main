@@ -51,7 +51,7 @@ void dumpPosmap(std::string basepath, unsigned int pnum);
 void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM);
 
 /// generate a file with spectrum correction factors
-void makeCorrectionsFile(int A = 1, int Z = 1, double Endpt = neutronBetaEp);
+void makeCorrectionsFile(int A = 1, int Z = 1, double Endpt = neutronBetaEp, double M2_F = 1., double M2_GT = 3.);
 
 /// make plots for simulated source spectrum
 void showSimSpectrum(const std::string& nm, OutputManager& OM, NucDecayLibrary& NDL, PMTCalibrator& PCal);
@@ -76,5 +76,8 @@ void refitXeAnode(std::string datname);
 
 /// generate asymmetry spectra for each analysis choice
 void calcAnalysisChoices(OutputManager& OM, const std::string& inflname);
+
+/// paper data / asymmetry plot
+void paperDataPlot();
 
 #endif

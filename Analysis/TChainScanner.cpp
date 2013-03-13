@@ -5,7 +5,7 @@
 
 TChainScanner::TChainScanner(const std::string& treeName): nEvents(0), nFiles(0), Tch(new TChain(treeName.c_str())),
 currentEvent(0), noffset(0), nLocalEvents(0) {
-	Tch->SetMaxVirtualSize(100000000);
+	Tch->SetMaxVirtualSize(10000000);
 }
 
 
@@ -61,7 +61,7 @@ void TChainScanner::SetBranchAddress(const std::string& bname, void* bdata) {
 void TChainScanner::speedload(unsigned int e) {
 	if(e < noffset || e-noffset >= nLocalEvents) {
 		Tch->LoadTree(e);
-		Tch->GetTree()->SetMaxVirtualSize(10000000);
+		Tch->GetTree()->SetMaxVirtualSize(1000000);
 		//Tch->GetTree()->LoadBaskets();
 		nLocalEvents = Tch->GetTree()->GetEntries();
 		noffset = Tch->GetChainOffset();

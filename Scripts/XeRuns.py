@@ -203,9 +203,9 @@ def data_v_sim(rmin,rmax,nrings):
 
 if __name__ == "__main__":
 	
-	#XeTimeEvolution(14283,14333,15)
+	XeTimeEvolution(14283,14333,11)
 	#XeTimeEvolution(15992,16077,15)
-	#exit(0)
+	exit(0)
 	
 	#data_v_sim(14282,14347,12)
 	#exit(0)
@@ -215,7 +215,7 @@ if __name__ == "__main__":
 	#exit(0)
 	
 	conn = open_connection()
-	#conn = None
+	conn = None
 	for rn in range(14282,14347+1):
 	#for rn in range(15991,16077+1):
 		XeGainTweak(rn,conn,15)

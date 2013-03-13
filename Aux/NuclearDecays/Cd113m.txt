@@ -1,0 +1,15 @@
+#####
+# Cd113 11/2- metastable decay
+# Data from Jean Blachot, Nuclear Data Sheets 111, 1471 (2010)
+#####
+
+level:	nm = 113.48.1	E = 263.73	hl = 4.43e8		jpi = 11/2-
+level:	nm = 113.48.0	E = 0.0 		hl = 2.2e23		jpi = 1/2+
+
+level:	nm = 113.49.0	E = -321.97	hl = -1			jpi = 9/2+
+
+# internal conversion to ground state
+gamma:	from = 113.48.1	to = 113.48.0	Igamma = 0.0267	CE_K = 0.415	CE_L = 0.317	CE_M = 0.0666	CE_N = 0.01095
+
+# beta decay to In113; average energy 185.4(19)
+beta:	from = 113.48.1		to = 113.49.0	I = 99.977

@@ -8,6 +8,9 @@ parent(NULL), writeRootOnDestruct(false) {
 	// set up output canvas	
 	defaultCanvas->SetFillColor(0);
 	defaultCanvas->SetCanvasSize(300,300);
+#ifdef PUBLICATION_PLOTS
+	defaultCanvas->SetGrayscale(true);
+#endif
 	
 	basePath = plotPath = dataPath = rootPath = bp;
 	setName(nm);

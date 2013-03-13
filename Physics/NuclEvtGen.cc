@@ -197,23 +197,22 @@ void ConversionGamma::scale(double s) {
 
 //-----------------------------------------
 
-BetaDecayTrans::BetaDecayTrans(NucLevel& f, NucLevel& t):
-TransitionBase(f,t), betaTF1((f.name+"-"+t.name+"_Beta").c_str(),this,&BetaDecayTrans::evalBeta,0,1,0) {
+BetaDecayTrans::BetaDecayTrans(NucLevel& f, NucLevel& t, bool pstrn, unsigned int forbidden):
+TransitionBase(f,t), positron(pstrn), BSG(to.A,to.Z*(positron?-1:1),from.E-to.E),
+betaTF1((f.name+"-"+t.name+"_Beta").c_str(),this,&BetaDecayTrans::evalBeta,0,1,0) {
+	BSG.forbidden = forbidden;
 	betaTF1.SetNpx(1000);
 	betaTF1.SetRange(0,from.E-to.E);
-	positron = false;
 }
 
 void BetaDecayTrans::run(std::vector<NucDecayEvent>& v) {
 	NucDecayEvent evt;
-	evt.d = D_ELECTRON;
+	evt.d = positron?D_POSITRON:D_ELECTRON;
 	evt.E = betaTF1.GetRandom();
 	v.push_back(evt);
 }
 
-double BetaDecayTrans::evalBeta(double* x, double*) {
-	return correctedBetaSpectrum(x[0],to.A,to.Z*(positron?-1:1),from.E-to.E);
-}
+double BetaDecayTrans::evalBeta(double* x, double*) { return BSG.decayProb(x[0]); }
 
 //-----------------------------------------
 
@@ -276,9 +275,11 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 	// set up beta decays
 	std::vector<Stringmap> betatrans = Q.retrieve("beta");
 	for(std::vector<Stringmap>::iterator it = betatrans.begin(); it != betatrans.end(); it++) {
-		BetaDecayTrans* BD = new BetaDecayTrans(levels[levIndex(it->getDefault("from",""))],levels[levIndex(it->getDefault("to",""))]);
+		BetaDecayTrans* BD = new BetaDecayTrans(levels[levIndex(it->getDefault("from",""))],
+										levels[levIndex(it->getDefault("to",""))],
+										it->getDefault("positron",0),
+										it->getDefault("forbidden",0));
 		BD->Itotal = it->getDefault("I",0)/100.0;
-		BD->positron = it->getDefault("positron",0);
 		addTransition(BD);
 	}
 	

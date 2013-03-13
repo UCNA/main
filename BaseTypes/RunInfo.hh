@@ -16,7 +16,7 @@ public:
 	/// constructor
 	RunInfo(RunNum r = 0): StringmapProvider(), runNum(r), slowDaq(0), groupName("0 Unknown"),
 	type(UNKNOWN_RUN), octet(0), triad(TRIAD_NONE), gvState(GV_OTHER), afpState(AFP_OTHER), runGeometry(GEOMETRY_OTHER), runQuality(DQ_UNKNOWN),
-	roleName("Unknown"), startTime(0), scsField(0), comments("") { }
+	roleName("Unknown"), startTime(0), liveTime(0), wallTime(0), scsField(0), comments("") { }
 	
 	/// print summary info
 	void display() const {
@@ -28,7 +28,7 @@ public:
 	Int_t slowDaq;				//< SlowDAQ run number
 	std::string groupName;		//< name for this run's group
 	
-	RunType type;				//< what type of run this is
+	RunType type;			//< what type of run this is
 	OctetType octet;			//< what octet stage this run is
 	TriadType triad;			//< what type of triad this belongs to
 	GVState gvState;			//< state of gate valve during run
@@ -37,6 +37,8 @@ public:
 	DataQuality runQuality;		//< quality of data for this run
 	std::string roleName;		//< name of this run's role
 	Float_t startTime;			//< absolute start time of run
+	BlindTime liveTime;	//< fiducial time for run
+	BlindTime wallTime;	//< wall clock time for run
 	
 	Float_t scsField;			//< field in SCS spectrometer
 	std::string comments;		//< run log comments about this run
@@ -54,6 +56,8 @@ protected:
 		ri.insert("GV_State",int(gvState));
 		ri.insert("Octet",int(octet));
 		ri.insert("Triad",int(triad));
+		ri.insert("liveTime",liveTime[BOTH]);
+		ri.insert("wallTime",wallTime[BOTH]);
 		return ri;
 	}
 };
