@@ -1,29 +1,58 @@
-/// \file DataScannerExample.cc example code for using MC simulation data
+// UCNA includes
 #include "G4toPMT.hh"
 #include "PenelopeToPMT.hh"
 #include "CalDBSQL.hh"
+
+// ROOT includes
 #include <TH1F.h>
 #include <TLegend.h>
 //#include <TFitResult.h> // v5.27
 #include <TF1.h>
 
+// c++ includes
 #include <iostream>
 #include <fstream>
 #include <string>
 
+// c includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
-double min_E = 150;
-double max_E = 600;
-//static double expected_fierz = 0.6540;	// full range
-static double expected_fierz = 0.6111;		// for range 150 - 600
-//static double expected_gluck = 11.8498;     // for range 150 - 600
-static unsigned nToSim = 1E4;				// how many triggering events to simulate
-static double loading_prob = 40; 		// ucn loading probability (percent)
-static int bins = 150;						// replace with value from data or smoothing fit
+
+///
+/// physical constants
+///
+const double    pi          = 3.1415926535;         /// pi
+const double    alpha       = 1/137.035999;         /// fine-structure constant
+const double    a2pi        = alpha/(2*pi);         /// alpha over 2pi
+const double    m_e         = 510.9988484;          /// electron mass       (14)
+const double    m_p         = 938272.046;           /// proton mass         (21)
+const double    m_n         = 939565.378;           /// neutron mass        (21)
+const double    mu_p        = 2.792846;             /// proton moment       (7)
+const double    mu_n        = -1.9130427;           /// neutron moment      (5)
+const double    muV         = mu_p - mu_n;          /// nucleon moment      (9)
+const double    Q           = 782.344;              /// end point KE        (30)
+const double    E0          = m_e + Q;              /// end point E         (30)
+const double    L           = -1.27590;             /// gA/gV               (450)
+const double    M           = 1 + 3*L*L;            /// matrix element
+const double    I_0         = 1.63632;              /// 0th moment          (25)
+const double    I_1         = 1.07017;              /// 1st moment          (15)
+const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
+
+
+///
+/// settings
+///
+double min_E = 220;
+double max_E = 670;
+//static double expected_fierz = 0.6540;	/// full range
+//static double expected_fierz = 0.6111;	/// for range 150 - 600
+//static double expected_gluck = 11.8498;   /// for range 150 - 600
+static double expected_fierz = 0.6111;		/// for range 150 - 600
+static unsigned nToSim = 1E5;				/// how many triggering events to simulate
+static double loading_prob = 40; 			/// ucn loading probability (percent)
+static int bins = 150;						/// replace with value from data or smoothing fit
 //double scale_x = 1.015;
 double scale_x = 1.0;
 
@@ -92,10 +121,33 @@ double theoretical_fierz_spectrum(double *x, double*p) {
 }
 
 
+/// beta spectrum with little b term
+double beta_spectrum(const double *val, const double *par) {
+	const double K = val[0];                    /// kinetic energy
+	const double b = par[0];                    /// Fierz parameter
+	if (K <= 0 or K >= Q)
+		return 0;                               /// zero outside range
+
+	const double E = K + m_e;                   /// electron energy
+	const double e = Q - K;                     /// neutrino energy
+	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
+	const double x = m_e/E;                     /// Fierz term
+	const double f = (1 + b*x)/(1 + b*x_1);     /// Fierz factor
+	const double k = 1.3723803E-11;             /// normalization factor
+	const double P = k*p*e*e*E*f;               /// the output PDF value
+
+	return P;
+}
+
+double evaluate_expected_fierz(double _min, double _max) {
+	
+}
+
+
 unsigned deg = 4;
 double mc_model(double *x, double*p) {
     double _exp = 0;
-    double _x = x[0] / electron_mass;
+    double _x = x[0] / m_e;
     for (int i = deg; i >= 0; i--)
         _exp = p[i] + _x * _exp;
     return TMath::Exp(_exp);
@@ -114,7 +166,7 @@ void normalize(TH1F* hist, double min, double max) {
 }
 
 
-// S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
+/// S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
 TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
     TH1F *super_ratio_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_ratio_histogram->GetNbinsX();
@@ -132,7 +184,6 @@ TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
 }
 
 
-// S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
 TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
     TH1F *super_sum_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_sum_histogram->GetNbinsX();
@@ -346,7 +397,7 @@ int main(int argc, char *argv[]) {
 	int n = tchain->GetEntries();
 	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
 
-	//tchain->SetBranchStatus("*",0);
+	tchain->SetBranchStatus("*",0);
     //tchain->SetBranchStatus("Sis00", 1);
 
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
@@ -580,7 +631,7 @@ int main(int argc, char *argv[]) {
 
 	// fit the Fierz ratio 
 	char fit_str[1024];
-    sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", electron_mass, electron_mass, expected_fierz);
+    sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", m_e, m_e, expected_fierz);
     TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
     fierz_fit->SetParameter(0,0);
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
