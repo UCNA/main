@@ -20,7 +20,7 @@ double min_E = 150;
 double max_E = 600;
 //static double expected_fierz = 0.6540;	// full range
 static double expected_fierz = 0.6111;		// for range 150 - 600
-static double expected_gluck = 11.8498;     // for range 150 - 600
+//static double expected_gluck = 11.8498;     // for range 150 - 600
 static unsigned nToSim = 5E7;				// how many triggering events to simulate
 static double loading_prob = 40; 		// ucn loading probability (percent)
 static int bins = 150;						// replace with value from data or smoothing fit
@@ -372,19 +372,13 @@ int main(int argc, char *argv[]) {
 			printf("\tprimary KE=%g, cos(theta)=%g\n",G2P.ePrim,G2P.costheta);
 			#endif 
 
-            /*
-            double energy = G2P.ePrim + electron_mass;
-            double fierz_weight = electron_mass / energy;
-            if (nSimmed % 2)
-                mc.fierz_histogram->Fill(G2P.getEtrue(), fierz_weight);
-            else
-                */
-            
+
+			// fill with loading efficiency 
+			bool load = (nSimmed % 100 < loading_prob);
+
+			// calculate the energy with a distortion factor
 			double energy = scale_x * G2P.getEtrue();
-            if (nSimmed % 100 > loading_prob) // redo with real loading eff.
-                mc.sm_histogram[s][0]->Fill(energy, 1);
-            else
-                mc.sm_histogram[s][1]->Fill(energy, 1);
+            mc.sm_histogram[s][load]->Fill(energy, 1);
 
 			nSimmed++;
 		}
