@@ -21,7 +21,7 @@ double max_E = 600;
 //static double expected_fierz = 0.6540;	// full range
 static double expected_fierz = 0.6111;		// for range 150 - 600
 //static double expected_gluck = 11.8498;     // for range 150 - 600
-static unsigned nToSim = 5E7;				// how many triggering events to simulate
+static unsigned nToSim = 1E4;				// how many triggering events to simulate
 static double loading_prob = 40; 		// ucn loading probability (percent)
 static int bins = 150;						// replace with value from data or smoothing fit
 //double scale_x = 1.015;
@@ -118,7 +118,7 @@ void normalize(TH1F* hist, double min, double max) {
 TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
     TH1F *super_ratio_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_ratio_histogram->GetNbinsX();
-	std::cout << "bins " << bins;
+	std::cout << "Number of bins " << bins << std::endl;
     for (int bin = 1; bin < bins+2; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
@@ -298,12 +298,13 @@ int main(int argc, char *argv[]) {
 	// note wildcard * in filename; MC output is split up over many files, but G2P will TChain them together
 	//G2P.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root"); // standard final Penelope
 	//G2P.addFile("/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_*.root"); // magnetic wiggles Monte Carlo
-	G2P.addFile("/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_*.root"); // standard final Monte Carlo 
+	//G2P.addFile("/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_*.root"); // standard final Monte Carlo 
 	//G2P.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/geant4/output/Baseline_20110826_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined");
     //G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
+	G2P.addFile("/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_*.root");
 	
 	// PMT Calibrator loads run-specific energy calibrations info for selected run (14111)
 	// and uses default Calibrations DB connection to most up-to-date though possibly unstable "mpm_debug"
@@ -337,12 +338,16 @@ int main(int argc, char *argv[]) {
 	// if you really want this to be random, you will need to seed rand() with something other than default
 	// note that it can take many seconds to load the first point of a scan (loading file segment into memory), but will go much faster afterwards.
 	G2P.startScan(false);
+	std::cout << "Finished scan." << std::endl;
 
 	srand ( time(NULL) );
 
 	TChain* tchain = G2P.getChain();  // can be used to for GetEntries()
 	int n = tchain->GetEntries();
 	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
+
+	//tchain->SetBranchStatus("*",0);
+    //tchain->SetBranchStatus("Sis00", 1);
 
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	while(G2P.nextPoint()) { // will stop 
@@ -369,7 +374,7 @@ int main(int argc, char *argv[]) {
 				   G2P.wires[s][Y_DIRECTION].center, (unsigned)G2P.getAFP());
 
 			// print out event primary info, only available in simulation
-			printf("\tprimary KE=%g, cos(theta)=%g\n",G2P.ePrim,G2P.costheta);
+			printf("\tprimary KE=%g, cos(theta)=%g\n", G2P.ePrim, G2P.costheta);
 			#endif 
 
 
