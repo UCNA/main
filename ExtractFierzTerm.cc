@@ -27,6 +27,7 @@ static int bins = 150;						// replace with value from data or smoothing fit
 //double scale_x = 1.015;
 double scale_x = 1.0;
 
+
 class FierzHistogram {
   public: 
     double minBin;
@@ -70,6 +71,7 @@ class FierzHistogram {
     }
 };
 
+
 // ug. needs to be static
 FierzHistogram mc(0,1500,bins);
 
@@ -89,6 +91,7 @@ double theoretical_fierz_spectrum(double *x, double*p) {
     return rv;
 }
 
+
 unsigned deg = 4;
 double mc_model(double *x, double*p) {
     double _exp = 0;
@@ -98,15 +101,18 @@ double mc_model(double *x, double*p) {
     return TMath::Exp(_exp);
 }
 
+
 void normalize(TH1F* hist) {
     hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
 }
+
 
 void normalize(TH1F* hist, double min, double max) {
 	int intmin = hist->FindBin(min);
 	int intmax = hist->FindBin(max);
 	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(intmin, intmax)));
 }
+
 
 // S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
 TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
@@ -124,6 +130,7 @@ TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
     }
     return super_ratio_histogram;
 }
+
 
 // S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
 TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
@@ -150,6 +157,7 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
     return super_sum_histogram;
 }
 
+
 TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
     TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
@@ -169,6 +177,7 @@ TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
     return asymmetry_histogram;
 }
 
+
 TH1F* compute_rate_function(TH1F* rate_histogram[2][2], 
                             double (*rate_function)(double r[2][2]))
 {
@@ -185,6 +194,7 @@ TH1F* compute_rate_function(TH1F* rate_histogram[2][2],
     }
     return out_histogram;
 }
+
 
 TH1F* compute_rate_function(TH1F* rate_histogram[2][2], 
                             double (*rate_function)(double r[2][2]),
@@ -214,6 +224,7 @@ TH1F* compute_rate_function(TH1F* rate_histogram[2][2],
     return out_histogram;
 }
 
+
 /*
 TH1F* compute_rate_error_function(TH1F* rate_histogram[2][2], 
                                   double (*rate_error_function)(double r[2][2])) 
@@ -229,6 +240,7 @@ TH1F* compute_rate_error_function(TH1F* rate_histogram[2][2],
     return out_histogram;
 }
 */
+
 
 double bonehead_sum(double r[2][2]) {
     return r[0][0] + r[0][1] + r[1][0] + r[1][1];
@@ -246,6 +258,7 @@ double super_ratio_asymmetry(double r[2][2]) {
     return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
 }
 
+
 /*
 double super_sum_error(double r[2][2]) {
     double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
@@ -255,6 +268,7 @@ double super_sum_error(double r[2][2]) {
     //return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
 }
 */
+
 
 using namespace std;
 void output_histogram(string filename, TH1F* h, double ax, double ay)
@@ -272,6 +286,7 @@ void output_histogram(string filename, TH1F* h, double ax, double ay)
 	}
 	ofs.close();
 }
+
 
 int main(int argc, char *argv[]) {
 	
