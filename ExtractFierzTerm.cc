@@ -46,13 +46,13 @@ const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
 ///
 double min_E = 220;
 double max_E = 670;
-//static double expected_fierz = 0.6540;	/// full range
+static double expected_fierz = 0.6540;		/// full range
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
-static double expected_fierz = 0.6111;		/// for range 150 - 600
 static unsigned nToSim = 1E5;				/// how many triggering events to simulate
 static double loading_prob = 40; 			/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
+static int integral_size = 1000;
 //double scale_x = 1.015;
 double scale_x = 1.0;
 
@@ -94,9 +94,9 @@ class FierzHistogram {
     }
 
     void normalizeHistogram(TH1F* hist, double min, double max) {
-		int intmin = hist->FindBin(min);
-		int intmax = hist->FindBin(max);
-        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(intmin, intmax)));
+		int _min = hist->FindBin(min);
+		int _max = hist->FindBin(max);
+        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
     }
 };
 
@@ -133,14 +133,27 @@ double beta_spectrum(const double *val, const double *par) {
 	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
 	const double x = m_e/E;                     /// Fierz term
 	const double f = (1 + b*x)/(1 + b*x_1);     /// Fierz factor
-	const double k = 1.3723803E-11;             /// normalization factor
+	const double k = 1.3723803E-11/Q;           /// normalization factor
 	const double P = k*p*e*e*E*f;               /// the output PDF value
 
 	return P;
 }
 
-double evaluate_expected_fierz(double _min, double _max) {
-	
+
+/// beta spectrum with little b term
+double fierz_beta_spectrum(const double *val, const double *par) {
+	const double K = val[0];                    /// kinetic energy
+	if (K <= 0 or K >= Q)
+		return 0;                               /// zero outside range
+
+	const double E = K + m_e;                   /// electron energy
+	const double e = Q - K;                     /// neutrino energy
+	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
+	const double x = m_e/E;                     /// Fierz term
+	const double k = 1.3723803E-11/Q;           /// normalization factor
+	const double P = k*p*e*e*E*x;               /// the output PDF value
+
+	return P;
 }
 
 
@@ -160,9 +173,25 @@ void normalize(TH1F* hist) {
 
 
 void normalize(TH1F* hist, double min, double max) {
-	int intmin = hist->FindBin(min);
-	int intmax = hist->FindBin(max);
-	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(intmin, intmax)));
+	int _min = hist->FindBin(min);
+	int _max = hist->FindBin(max);
+	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
+}
+
+
+double evaluate_expected_fierz(double min, double max) {
+    TH1D *h1 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
+    TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
+	for (int i = 0; i < integral_size; i++)
+	{
+		double K = min + double(i)*(max-min)/integral_size;
+		double b = 0;
+		double y1 = fierz_beta_spectrum(&K, 0);
+		double y2 = beta_spectrum(&K, &b);
+		h1->SetBinContent(K, y1);
+		h2->SetBinContent(K, y2);
+	}
+	return h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
 }
 
 
@@ -339,7 +368,10 @@ void output_histogram(string filename, TH1F* h, double ax, double ay)
 }
 
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) 
+{
+	expected_fierz = evaluate_expected_fierz(min_E, max_E);
+	std::cout << "Expected Fierz " << expected_fierz << "\n";
 	
 	// Geant4 MC data scanner object
 	G4toPMT G2P;
@@ -397,7 +429,7 @@ int main(int argc, char *argv[]) {
 	int n = tchain->GetEntries();
 	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
 
-	tchain->SetBranchStatus("*",0);
+	//tchain->SetBranchStatus("*",0);
     //tchain->SetBranchStatus("Sis00", 1);
 
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
