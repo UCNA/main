@@ -359,7 +359,7 @@ int main(int argc, char *argv[]) {
 
 			// skip non-triggering events, or those outside 50mm position cut (you could add your own custom cuts here, if you cared)
 			//if(tp>=TYPE_I_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
-			if(tp>=TYPE_I_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
+			if (tp >= TYPE_I_EVENT or !G2P.passesPositionCut(s) or G2P.fSide != s)
 				continue;
 			
 			// print out event info, (simulated) reconstructed true energy and position, comparable to values in data
@@ -380,17 +380,17 @@ int main(int argc, char *argv[]) {
             else
                 */
             
-            //if (G2P.afp == AFP_ON)
+			double energy = scale_x * G2P.getEtrue();
             if (nSimmed % 100 > loading_prob) // redo with real loading eff.
-                mc.sm_histogram[s][0]->Fill(scale_x * G2P.getEtrue(), 1);
+                mc.sm_histogram[s][0]->Fill(energy, 1);
             else
-                mc.sm_histogram[s][1]->Fill(scale_x * G2P.getEtrue(), 1);
+                mc.sm_histogram[s][1]->Fill(energy, 1);
 
 			nSimmed++;
 		}
 		
 		// break when enough data has been generated.
-		if(nSimmed>=nToSim)
+		if(nSimmed >= nToSim)
 			break;
 	}
     
