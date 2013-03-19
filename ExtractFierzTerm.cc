@@ -49,7 +49,7 @@ double max_E = 670;
 static double expected_fierz = 0.6540;		/// full range
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
-static unsigned nToSim = 1E4;				/// how many triggering events to simulate
+static unsigned nToSim = 1E5;				/// how many triggering events to simulate
 static double loading_prob = 40; 			/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
 static int integral_size = 1000;
@@ -241,7 +241,8 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
 TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
     TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
-    for (int bin = 1; bin < bins+2; bin++) {
+    for (int bin = 1; bin < bins+2; bin++) 
+	{
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
@@ -249,10 +250,41 @@ TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
         double sqrt_super_ratio = TMath::Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
         if ( TMath::IsNaN(sqrt_super_ratio) ) 
             sqrt_super_ratio = 0;
-        double asymmetry = (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
+		double denom = 1 + sqrt_super_ratio;
+        double asymmetry = (1 - sqrt_super_ratio) / denom;
+		double sqrt_inverse_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]);
+		double asymmetry_error = sqrt_inverse_sum * sqrt_super_ratio / (denom * denom);  
         asymmetry_histogram->SetBinContent(bin, asymmetry);
-        printf("Setting bin content for super sum bin %d, to %f\n", bin, asymmetry);
-        asymmetry_histogram->SetBinError(bin, 0.0);
+        asymmetry_histogram->SetBinError(bin, asymmetry_error);
+        //printf("Setting bin content for asymmetry bin %d, to %f\n", bin, asymmetry);
+    }
+    return asymmetry_histogram;
+}
+
+
+TH1F* compute_corrected_asymmetry(TH1F* rate_histogram[2][2] ) {
+    TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
+    int bins = asymmetry_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+2; bin++) 
+	{
+        double r[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+        double sqrt_super_ratio = TMath::Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
+        if ( TMath::IsNaN(sqrt_super_ratio) ) 
+            sqrt_super_ratio = 0;
+		double denom = 1 + sqrt_super_ratio;
+        double asymmetry = (1 - sqrt_super_ratio) / denom;
+		double sqrt_inverse_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]);
+		double asymmetry_error = sqrt_inverse_sum * sqrt_super_ratio / (denom * denom);  
+		double K = asymmetry_histogram->GetBinCenter(bin);
+		double E = K + m_e;                   /// electron energy
+		double p = sqrt(E*E - m_e*m_e);       /// electron momentum
+		double beta = p / E;				  /// v/c
+        asymmetry_histogram->SetBinContent(bin, -2*asymmetry/beta);
+        asymmetry_histogram->SetBinError(bin, asymmetry_error);
+        //printf("Setting bin content for corrected asymmetry bin %d, to %f\n", bin, asymmetry);
     }
     return asymmetry_histogram;
 }
@@ -439,11 +471,11 @@ int main(int argc, char *argv[])
 	tchain->SetBranchStatus("primTheta",1);
 	tchain->SetBranchStatus("primKE",1);
 	tchain->SetBranchStatus("primPos",1);
-	//tchain->SetBranchStatus("EdepSD",1);
-	//tchain->SetBranchStatus("thetaInSD",1);
-	//tchain->SetBranchStatus("thetaOutSD",1);
-	//tchain->SetBranchStatus("keInSD",1);
-	//tchain->SetBranchStatus("keOutSD",1);
+	tchain->SetBranchStatus("EdepSD",1);
+	tchain->SetBranchStatus("thetaInSD",1);
+	tchain->SetBranchStatus("thetaOutSD",1);
+	tchain->SetBranchStatus("keInSD",1);
+	tchain->SetBranchStatus("keOutSD",1);
 	//G2P.setReadpoints();
 
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
@@ -452,7 +484,7 @@ int main(int argc, char *argv[])
 		//G2P.nextPoint();
 
 		// perform energy calibrations/simulations to fill class variables with correct values for this simulated event
-		G2P.recalibrateEnergy();
+		//G2P.recalibrateEnergy();
 		
 		// check the event characteristics on each side
 		for(Side s = EAST; s <= WEST; ++s) {
@@ -614,7 +646,9 @@ int main(int argc, char *argv[])
     canvas->SaveAs(super_ratio_pdf_filename);
 
     // compute and plot the super ratio asymmetry 
-    TH1F *asymmetry_histogram = compute_asymmetry(ucna_data_histogram);
+    TH1F *asymmetry_histogram = compute_corrected_asymmetry(ucna_data_histogram);
+	asymmetry_histogram->SetMaximum(0);
+	asymmetry_histogram->SetMinimum(-0.2);
     asymmetry_histogram->Draw();
     TString asymmetry_pdf_filename = "/data/kevinh/mc/asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
