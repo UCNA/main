@@ -6,7 +6,6 @@
 // ROOT includes
 #include <TH1F.h>
 #include <TLegend.h>
-//#include <TFitResult.h> // v5.27
 #include <TF1.h>
 
 // c++ includes
@@ -585,7 +584,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	#define EVENT_TYPE 0 
+	#define EVENT_TYPE -1 
     TH1F *ucna_data_histogram[2][2] = {
 	#if EVENT_TYPE == 0
         {
@@ -598,11 +597,15 @@ int main(int argc, char *argv[])
 	#endif
 	#if EVENT_TYPE == -1
         {
-            (TH1F*)ucna_data_tfile->Get("Combined_Events_E010"),
-            (TH1F*)ucna_data_tfile->Get("Combined_Events_E110")
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E010"),
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E110")
+            (TH1F*)ucna_data_tfile->Get("hTotalEvents_E_Off;1"),
+            (TH1F*)ucna_data_tfile->Get("hTotalEvents_E_On;1"),
         }, {
-            (TH1F*)ucna_data_tfile->Get("Combined_Events_W010"),
-            (TH1F*)ucna_data_tfile->Get("Combined_Events_W110")
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W010"),
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W110")
+            (TH1F*)ucna_data_tfile->Get("hTotalEvents_W_Off;1"),
+            (TH1F*)ucna_data_tfile->Get("hTotalEvents_W_On;1"),
         }
 	#endif
     };
@@ -664,14 +667,14 @@ int main(int argc, char *argv[])
 
 	// compute chi squared
     double chisq = A_fierz_fit->GetChisquare();
-    double N = A_fierz_fit->GetNDF();
+    double NDF = A_fierz_fit->GetNDF();
 	char A_str[1024];
 	sprintf(A_str, "A = %1.3f #pm %1.3f", A_fierz_fit->GetParameter(0), A_fierz_fit->GetParError(0));
 	char A_b_str[1024];
 	sprintf(A_b_str, "b = %1.3f #pm %1.3f", A_fierz_fit->GetParameter(1), A_fierz_fit->GetParError(1));
 	char A_b_chisq_str[1024];
-    printf("Chi^2 / ( N - 1) = %f / %f = %f\n", chisq, N-1, chisq/(N-1));
-	sprintf(A_b_chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(N-1));
+    printf("Chi^2 / ( NDF - 1) = %f / %f = %f\n", chisq, NDF-1, chisq/(NDF-1));
+	sprintf(A_b_chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(NDF-1));
 
 	// draw the ratio plot
 	asymmetry_histogram->SetStats(0);
@@ -759,12 +762,12 @@ int main(int argc, char *argv[])
 
 	// compute chi squared
     chisq = fierz_fit->GetChisquare();
-    N = fierz_fit->GetNDF();
+    NDF = fierz_fit->GetNDF();
 	char b_str[1024];
 	sprintf(b_str, "b = %1.3f #pm %1.3f", fierz_fit->GetParameter(0), fierz_fit->GetParError(0));
 	char chisq_str[1024];
-    printf("Chi^2 / ( N - 1) = %f / %f = %f\n", chisq, N-1, chisq/(N-1));
-	sprintf(chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(N-1));
+    printf("Chi^2 / ( NDF - 1) = %f / %f = %f\n", chisq, NDF-1, chisq/(NDF-1));
+	sprintf(chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(NDF-1));
 
 	// draw the ratio plot
 	fierz_ratio_histogram->SetStats(0);
