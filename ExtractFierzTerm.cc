@@ -207,7 +207,7 @@ TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
         super_ratio_histogram->SetBinContent(bin, super_ratio);
-        super_ratio_histogram->SetBinError(bin, 0.01);
+        super_ratio_histogram->SetBinError(bin, 0.01);   // TODO compute correctly!!
     }
     return super_ratio_histogram;
 }
@@ -429,8 +429,8 @@ int main(int argc, char *argv[])
 	int n = tchain->GetEntries();
 	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
 
-	//tchain->SetBranchStatus("*",0);
-    //tchain->SetBranchStatus("Sis00", 1);
+	tchain->SetBranchStatus("*",0);
+	G2P.setReadpoints();
 
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	while(G2P.nextPoint()) { // will stop 

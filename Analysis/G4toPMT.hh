@@ -12,10 +12,10 @@ public:
 	/// unit conversions
 	virtual void doUnits();
 		
-protected:
 	/// set read points for input tree
 	virtual void setReadpoints();
 	
+protected:
 	bool extended;			//< whether to read in additional variables
 	double eDepSD[N_SD];		//< energy deposition array
 	double thetaInSD[N_SD];	//< entrance angle array
