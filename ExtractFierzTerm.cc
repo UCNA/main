@@ -46,10 +46,10 @@ const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
 ///
 double min_E = 220;
 double max_E = 670;
-static double expected_fierz = 0.6540;		/// full range
+static double expected_fierz = 0.6540;		/// full range (will get overwritten) 
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
-static unsigned nToSim = 1E5;				/// how many triggering events to simulate
+static unsigned nToSim = 1E4;				/// how many triggering events to simulate
 static double loading_prob = 40; 			/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
 static int integral_size = 1000;
@@ -283,7 +283,7 @@ TH1F* compute_corrected_asymmetry(TH1F* rate_histogram[2][2] ) {
 		double p = sqrt(E*E - m_e*m_e);       /// electron momentum
 		double beta = p / E;				  /// v/c
         asymmetry_histogram->SetBinContent(bin, -2*asymmetry/beta);
-        asymmetry_histogram->SetBinError(bin, asymmetry_error);
+        asymmetry_histogram->SetBinError(bin, 2*asymmetry_error/beta);
         //printf("Setting bin content for corrected asymmetry bin %d, to %f\n", bin, asymmetry);
     }
     return asymmetry_histogram;
@@ -506,7 +506,6 @@ int main(int argc, char *argv[])
 			printf("\tprimary KE=%g, cos(theta)=%g\n", G2P.ePrim, G2P.costheta);
 			#endif 
 
-
 			// fill with loading efficiency 
 			bool load = (nSimmed % 100 < loading_prob);
 
@@ -525,17 +524,14 @@ int main(int argc, char *argv[])
 	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
 
     mc.sm_super_sum_histogram = compute_super_sum(mc.sm_histogram);
-    //normalize(mc.sm_super_sum_histogram);
     normalize(mc.sm_super_sum_histogram, min_E, max_E);
 
     mc.fierz_super_sum_histogram = compute_super_sum(mc.fierz_histogram);
-    //normalize(mc.fierz_super_sum_histogram);
     normalize(mc.fierz_super_sum_histogram, min_E, max_E);
 
     for (int side = 0; side < 2; side++)
-        for (int spin = 0; spin < 2; spin++) {
-            //normalize(mc.fierz_histogram[side][spin]);
-            //normalize(mc.sm_histogram[side][spin]);
+        for (int spin = 0; spin < 2; spin++)
+		{
             normalize(mc.fierz_histogram[side][spin], min_E, max_E);
             normalize(mc.sm_histogram[side][spin], min_E, max_E);
         }
@@ -589,18 +585,26 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	#define EVENT_TYPE 0 
     TH1F *ucna_data_histogram[2][2] = {
+	#if EVENT_TYPE == 0
         {
-            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E010"),
-            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E110")
             (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_E_Off"),
             (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_E_On")
         }, {
-            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W010"),
-            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W110")
             (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_W_Off"),
             (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_W_On")
         }
+	#endif
+	#if EVENT_TYPE == -1
+        {
+            (TH1F*)ucna_data_tfile->Get("Combined_Events_E010"),
+            (TH1F*)ucna_data_tfile->Get("Combined_Events_E110")
+        }, {
+            (TH1F*)ucna_data_tfile->Get("Combined_Events_W010"),
+            (TH1F*)ucna_data_tfile->Get("Combined_Events_W110")
+        }
+	#endif
     };
     //printf("Number of bins in data %d\n", ucna_data_histogram->GetNbinsX());
 
@@ -610,14 +614,14 @@ int main(int argc, char *argv[])
         // normalize after background subtraction
         background_histogram->Draw("");
     */
-    //normalize(ucna_data_histogram[0][0]);
-	for (int i = 0; i < 2; i++)
-		for (int j = 0; j < 2; j++)
+
+	for (int side = 0; side < 2; side++)
+		for (int spin = 0; spin < 2; spin++)
 		{
 			std::cout << "Number of entries in (" 
-					  << i << ", " << j << ") is "
-					  << (int)ucna_data_histogram[i][j]->GetEntries() << std::endl;
-			if (ucna_data_histogram[i][j] == NULL)
+					  << side << ", " << spin << ") is "
+					  << (int)ucna_data_histogram[side][spin]->GetEntries() << std::endl;
+			if (ucna_data_histogram[side][spin] == NULL)
 			{
 				puts("histogram is null. Aborting...");
 				exit(1);
@@ -647,16 +651,49 @@ int main(int argc, char *argv[])
 
     // compute and plot the super ratio asymmetry 
     TH1F *asymmetry_histogram = compute_corrected_asymmetry(ucna_data_histogram);
+
+	// fit the Fierz term from the asymmetry
+	char A_fit_str[1024];
+    sprintf(A_fit_str, "[0]/(1+[1]*(%f/(%f+x)))", m_e, m_e);
+    TF1 *A_fierz_fit = new TF1("A_fierz_fit", A_fit_str, min_E, max_E);
+    A_fierz_fit->SetParameter(-.12,0);
+    A_fierz_fit->SetParameter(1,0);
+	asymmetry_histogram->Fit(A_fierz_fit, "Sr");
 	asymmetry_histogram->SetMaximum(0);
 	asymmetry_histogram->SetMinimum(-0.2);
+
+	// compute chi squared
+    double chisq = A_fierz_fit->GetChisquare();
+    double N = A_fierz_fit->GetNDF();
+	char A_str[1024];
+	sprintf(A_str, "A = %1.3f #pm %1.3f", A_fierz_fit->GetParameter(0), A_fierz_fit->GetParError(0));
+	char A_b_str[1024];
+	sprintf(A_b_str, "b = %1.3f #pm %1.3f", A_fierz_fit->GetParameter(1), A_fierz_fit->GetParError(1));
+	char A_b_chisq_str[1024];
+    printf("Chi^2 / ( N - 1) = %f / %f = %f\n", chisq, N-1, chisq/(N-1));
+	sprintf(A_b_chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(N-1));
+
+	// draw the ratio plot
+	asymmetry_histogram->SetStats(0);
     asymmetry_histogram->Draw();
+
+	// draw a legend on the plot
+    TLegend* asym_legend = new TLegend(0.3,0.85,0.6,0.65);
+    asym_legend->AddEntry(asymmetry_histogram, "Asymmetry data", "l");
+    asym_legend->AddEntry(A_fierz_fit, "Fierz term fit", "l");
+    asym_legend->AddEntry((TObject*)0, A_str, "");
+    asym_legend->AddEntry((TObject*)0, A_b_str, "");
+    asym_legend->AddEntry((TObject*)0, A_b_chisq_str, "");
+    asym_legend->SetTextSize(0.03);
+    asym_legend->SetBorderSize(0);
+    asym_legend->Draw();
+
     TString asymmetry_pdf_filename = "/data/kevinh/mc/asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
 
     // Compute the super sums
     TH1F *super_sum_histogram = compute_super_sum(ucna_data_histogram);
 	std::cout << "Number of super sum entries " << (int)super_sum_histogram->GetEntries() << std::endl;
-    //normalize(super_sum_histogram);
     normalize(super_sum_histogram, min_E, max_E);
     super_sum_histogram->SetLineColor(2);
 	super_sum_histogram->SetStats(0);
@@ -673,7 +710,7 @@ int main(int argc, char *argv[])
     mc.sm_super_sum_histogram->SetMarkerStyle(4);
     mc.sm_super_sum_histogram->Draw("same p0");
 
-    // lets make a pretty legend
+    // make a pretty legend
     TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
     legend->AddEntry(super_sum_histogram, "Type 0 supersum", "l");
     legend->AddEntry(mc.sm_super_sum_histogram, "Monte Carlo supersum", "p");
@@ -703,7 +740,6 @@ int main(int argc, char *argv[])
 		double y = mc.sm_super_sum_histogram->GetBinError(bin);
 		fierz_ratio_histogram->SetBinError(bin, Z*TMath::Sqrt(x*x/X/X + y*y/Y/Y));
 	}
-    //fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
 	std::cout << super_sum_histogram->GetNbinsX() << std::endl;
@@ -722,8 +758,8 @@ int main(int argc, char *argv[])
 		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
 
 	// compute chi squared
-    double chisq = fierz_fit->GetChisquare();
-    double N = fierz_fit->GetNDF();
+    chisq = fierz_fit->GetChisquare();
+    N = fierz_fit->GetNDF();
 	char b_str[1024];
 	sprintf(b_str, "b = %1.3f #pm %1.3f", fierz_fit->GetParameter(0), fierz_fit->GetParError(0));
 	char chisq_str[1024];
