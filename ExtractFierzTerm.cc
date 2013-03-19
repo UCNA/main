@@ -49,7 +49,7 @@ double max_E = 670;
 static double expected_fierz = 0.6540;		/// full range
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
-static unsigned nToSim = 1E5;				/// how many triggering events to simulate
+static unsigned nToSim = 1E4;				/// how many triggering events to simulate
 static double loading_prob = 40; 			/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
 static int integral_size = 1000;
@@ -430,7 +430,21 @@ int main(int argc, char *argv[])
 	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
 
 	tchain->SetBranchStatus("*",0);
-	G2P.setReadpoints();
+	tchain->SetBranchStatus("EdepQ",1);
+	tchain->SetBranchStatus("Edep",1);
+	tchain->SetBranchStatus("MWPCEnergy",1);
+	tchain->SetBranchStatus("ScintPos",1);
+	tchain->SetBranchStatus("MWPCPos",1);
+	tchain->SetBranchStatus("time",1);
+	tchain->SetBranchStatus("primTheta",1);
+	tchain->SetBranchStatus("primKE",1);
+	tchain->SetBranchStatus("primPos",1);
+	//tchain->SetBranchStatus("EdepSD",1);
+	//tchain->SetBranchStatus("thetaInSD",1);
+	//tchain->SetBranchStatus("thetaOutSD",1);
+	//tchain->SetBranchStatus("keInSD",1);
+	//tchain->SetBranchStatus("keOutSD",1);
+	//G2P.setReadpoints();
 
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	while(G2P.nextPoint()) { // will stop 
