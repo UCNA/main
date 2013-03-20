@@ -100,7 +100,7 @@ class FierzHistogram {
 };
 
 
-// ug. needs to be static
+/// ug. needs to be static
 FierzHistogram mc(0,1500,bins);
 
 /**
@@ -179,7 +179,7 @@ void normalize(TH1F* hist, double min, double max) {
 
 
 double evaluate_expected_fierz(double min, double max) {
-    TH1D *h1 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
+    TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
     TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
 	for (int i = 0; i < integral_size; i++)
 	{
