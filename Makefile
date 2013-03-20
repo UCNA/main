@@ -39,7 +39,7 @@ endif
 # things to build
 #
 
-VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/:Physics/:Examples/
+VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/:Physics/:Examples/:Fierz/
 
 Physics = BetaSpectrum.o ElectronBindingEnergy.o NuclEvtGen.o
 
@@ -73,10 +73,10 @@ UCNAnalyzer: Analyzer.cpp libUCNA.a
 	$(CXX) $(CXXFLAGS) Analyzer.cpp $(LDFLAGS) -o UCNAnalyzer
 
 ExtractFierzTerm: ExtractFierzTerm.cc libUCNA.a
-	$(CXX) $(CXXFLAGS) ExtractFierzTerm.cc $(LDFLAGS) -o ExtractFierzTerm
+	$(CXX) $(CXXFLAGS) Fierz/ExtractFierzTerm.cc $(LDFLAGS) -o ExtractFierzTerm
 	
 AsymmetryFierzTerm: AsymmetryFierzTerm.cc libUCNA.a
-	$(CXX) $(CXXFLAGS) AsymmetryFierzTerm.cc $(LDFLAGS) -o AsymmetryFierzTerm
+	$(CXX) $(CXXFLAGS) Fierz/AsymmetryFierzTerm.cc $(LDFLAGS) -o AsymmetryFierzTerm
 
 examples: $(ExampleObjs)
 
