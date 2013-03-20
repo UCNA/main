@@ -43,9 +43,9 @@ const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
 ///
 /// settings
 ///
-double min_E = 220;
-double max_E = 670;
-static double expected_fierz = 0.6540;		/// full range (will get overwritten) 
+double min_E = 230;
+double max_E = 660;
+double expected_fierz = 0.6540;				/// full range (will get overwritten) 
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
 static unsigned nToSim = 1E4;				/// how many triggering events to simulate
@@ -107,7 +107,8 @@ FierzHistogram mc(0,1500,bins);
  * x[0] : kenetic energy
  * p[0] : b, fierz term
  */
-double theoretical_fierz_spectrum(double *x, double*p) {
+double theoretical_fierz_spectrum(double *x, double*p) 
+{
     double rv = 0;
     //unsigned n = mc.sm_histogram->FindBin(p[3]*x[0]*x[0] + p[2]*x[0] - p[1]);        
     unsigned n = mc.sm_super_sum_histogram->FindBin(p[2]*x[0] - p[1]);        
@@ -121,34 +122,38 @@ double theoretical_fierz_spectrum(double *x, double*p) {
 
 
 /// beta spectrum with little b term
-double beta_spectrum(const double *val, const double *par) {
+double fierz_beta_spectrum(const double *val, const double *par) 
+{
 	const double K = val[0];                    /// kinetic energy
-	const double b = par[0];                    /// Fierz parameter
 	if (K <= 0 or K >= Q)
 		return 0;                               /// zero outside range
 
+	const double b = par[0];                    /// Fierz parameter
+	const int n = par[1];                    	/// Fierz exponent
 	const double E = K + m_e;                   /// electron energy
 	const double e = Q - K;                     /// neutrino energy
 	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
-	const double x = m_e/E;                     /// Fierz term
+	const double x = pow(m_e/E,n);              /// Fierz term
 	const double f = (1 + b*x)/(1 + b*x_1);     /// Fierz factor
 	const double k = 1.3723803E-11/Q;           /// normalization factor
-	const double P = k*p*e*e*E*f;               /// the output PDF value
+	const double P = k*p*e*e*E*f*x;             /// the output PDF value
 
 	return P;
 }
 
 
 /// beta spectrum with little b term
-double fierz_beta_spectrum(const double *val, const double *par) {
+double beta_spectrum(const double *val, const double *par) 
+{
 	const double K = val[0];                    /// kinetic energy
+	const int n = par[0];                    	/// Fierz exponent
 	if (K <= 0 or K >= Q)
 		return 0;                               /// zero outside range
 
 	const double E = K + m_e;                   /// electron energy
-	const double e = Q - K;                     /// neutrino energy
-	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
-	const double x = m_e/E;                     /// Fierz term
+	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum 
+	const double e = (Q - K) / Q;               /// reduced neutrino energy
+	const double x = pow(m_e/E,n);              /// Fierz term
 	const double k = 1.3723803E-11/Q;           /// normalization factor
 	const double P = k*p*e*e*E*x;               /// the output PDF value
 
@@ -157,7 +162,8 @@ double fierz_beta_spectrum(const double *val, const double *par) {
 
 
 unsigned deg = 4;
-double mc_model(double *x, double*p) {
+double mc_model(double *x, double*p) 
+{
     double _exp = 0;
     double _x = x[0] / m_e;
     for (int i = deg; i >= 0; i--)
@@ -166,27 +172,31 @@ double mc_model(double *x, double*p) {
 }
 
 
-void normalize(TH1F* hist) {
+void normalize(TH1F* hist) 
+{
     hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
 }
 
 
-void normalize(TH1F* hist, double min, double max) {
+void normalize(TH1F* hist, double min, double max) 
+{
 	int _min = hist->FindBin(min);
 	int _max = hist->FindBin(max);
 	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
 }
 
 
-double evaluate_expected_fierz(double min, double max) {
+double evaluate_expected_fierz(double min, double max) 
+{
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
     TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
 	for (int i = 0; i < integral_size; i++)
 	{
 		double K = min + double(i)*(max-min)/integral_size;
-		double b = 0;
-		double y1 = fierz_beta_spectrum(&K, 0);
-		double y2 = beta_spectrum(&K, &b);
+		double par1[2] = {0, 1};
+		double par2[2] = {0, 0};
+		double y1 = fierz_beta_spectrum(&K, par1);
+		double y2 = fierz_beta_spectrum(&K, par2);
 		h1->SetBinContent(K, y1);
 		h2->SetBinContent(K, y2);
 	}
@@ -195,7 +205,8 @@ double evaluate_expected_fierz(double min, double max) {
 
 
 /// S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
-TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
+TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) 
+{
     TH1F *super_ratio_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_ratio_histogram->GetNbinsX();
 	std::cout << "Number of bins " << bins << std::endl;
@@ -212,7 +223,8 @@ TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
 }
 
 
-TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
+TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) 
+{
     TH1F *super_sum_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_sum_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) {
@@ -230,14 +242,14 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
 
         printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
         super_sum_histogram->SetBinContent(bin, super_sum);
-        //super_sum_histogram->SetBinError(bin, TMath::Sqrt(super_sum));
         super_sum_histogram->SetBinError(bin, super_sum*rel_error);
     }
     return super_sum_histogram;
 }
 
 
-TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
+TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) 
+{
     TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) 
@@ -261,7 +273,8 @@ TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
 }
 
 
-TH1F* compute_corrected_asymmetry(TH1F* rate_histogram[2][2] ) {
+TH1F* compute_corrected_asymmetry(TH1F* rate_histogram[2][2] ) 
+{
     TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) 

@@ -16,8 +16,8 @@
 #include <time.h>
 
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
-double min_E = 220;
-double max_E = 670;
+double min_E = 230;
+double max_E = 660;
 //static double expected_fierz = 0.6540;	// full range
 //static double expected_fierz = 0.6111;		// for range 150 - 600
 //static double expected_gluck = 11.8498;     // for range 150 - 600
