@@ -248,7 +248,7 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2])
 }
 
 
-TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) 
+TH1F* compute_asymmetry(TH1F* rate_histogram[2][2]) 
 {
     TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
@@ -335,11 +335,12 @@ TH1F* compute_rate_function(TH1F* rate_histogram[2][2],
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
                 e[side][spin] = rate_histogram[side][spin]->GetBinError(bin);
             }
-        double value = 0;
-        double error = 0; 
 
+        double value = 0;
         if (rate_function)
             value = rate_function(r);
+
+        double error = 0; 
         if (error_function)
             error = error_function(e);
 
@@ -547,7 +548,6 @@ int main(int argc, char *argv[])
             normalize(mc.sm_histogram[side][spin], min_E, max_E);
         }
 
-
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
 
 	mc.fierz_super_sum_histogram->SetStats(0);
@@ -592,11 +592,18 @@ int main(int argc, char *argv[])
 	if (ucna_data_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
-		std::cout << "File not found." << std::endl;
+		std::cout << "Data file not found." << std::endl;
 		exit(1);
 	}
 
-    TH1F *ucna_correction_histogram = (TH1F*)ucna_data_tfile->Get("Delta_3_C");
+	TFile* ucna_correction_tfile = new TFile("Fierz/tree.root");
+	if (ucna_correction_tfile->IsZombie())
+	{
+		//printf("File "+beta_filename+"not found.\n");
+		std::cout << "Correction file not found." << std::endl;
+		exit(1);
+	}
+
 	#define EVENT_TYPE -1 
     TH1F *ucna_data_histogram[2][2] = {
 	#if EVENT_TYPE == 0
@@ -644,7 +651,26 @@ int main(int argc, char *argv[])
 			}
 		}
 
-	
+	/*
+    TH1F *ucna_correction_histogram = (TH1F*)ucna_correction_histogram->Get("Delta_3_C");
+	if (not ucna_correction_histogram)
+	{
+		puts("Correction histogram is null. Aborting...");
+		exit(1);
+	}
+	*/
+    TH1F *ucna_correction_histogram = new TH1F(*ucna_data_histogram[0][0]);
+	/*
+	while (tfile has more entries)
+	{
+        double bin = (ucna_correction_file->GetBinContent(bin);
+        double correction = ucna_correction_histogram->GetBinContent(bin);
+        printf("Setting bin content for correction bin %d, to %f\n", bin, correction);
+        super_sum_histogram->SetBinContent(bin, correction);
+        super_sum_histogram->SetBinError(bin, correction_error);
+    }
+	*/
+
     /*
     TF1 *fit = new TF1("fierz_fit", theoretical_fierz_spectrum, 0, 1000, 3);
     fit->SetParameter(0,0.0);
