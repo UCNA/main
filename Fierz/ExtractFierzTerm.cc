@@ -273,7 +273,7 @@ TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] )
 }
 
 
-TH1F* compute_corrected_asymmetry(TH1F* rate_histogram[2][2] ) 
+TH1F* compute_corrected_asymmetry(TH1F* rate_histogram[2][2], TH1F* correction) 
 {
     TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
@@ -296,6 +296,7 @@ TH1F* compute_corrected_asymmetry(TH1F* rate_histogram[2][2] )
 		double beta = p / E;				  /// v/c
         asymmetry_histogram->SetBinContent(bin, -2*asymmetry/beta);
         asymmetry_histogram->SetBinError(bin, 2*asymmetry_error/beta);
+        asymmetry_histogram->Multiply(correction);
         //printf("Setting bin content for corrected asymmetry bin %d, to %f\n", bin, asymmetry);
     }
     return asymmetry_histogram;
@@ -492,9 +493,6 @@ int main(int argc, char *argv[])
 
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	while(G2P.nextPoint()) { // will stop 
-		// load next point. If end of data is reached, this will loop back and start at the beginning again.
-		//G2P.nextPoint();
-
 		// perform energy calibrations/simulations to fill class variables with correct values for this simulated event
 		//G2P.recalibrateEnergy();
 		
@@ -532,6 +530,7 @@ int main(int argc, char *argv[])
 		if(nSimmed >= nToSim)
 			break;
 	}
+	//mc.WriteTFile("/data/kevinh/mc/mc.root");
     
 	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
 
@@ -597,6 +596,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+    TH1F *ucna_correction_histogram = (TH1F*)ucna_data_tfile->Get("Delta_3_C");
 	#define EVENT_TYPE -1 
     TH1F *ucna_data_histogram[2][2] = {
 	#if EVENT_TYPE == 0
@@ -666,7 +666,7 @@ int main(int argc, char *argv[])
     canvas->SaveAs(super_ratio_pdf_filename);
 
     // compute and plot the super ratio asymmetry 
-    TH1F *asymmetry_histogram = compute_corrected_asymmetry(ucna_data_histogram);
+    TH1F *asymmetry_histogram = compute_corrected_asymmetry(ucna_data_histogram, ucna_correction_histogram);
 
 	// fit the Fierz term from the asymmetry
 	char A_fit_str[1024];
