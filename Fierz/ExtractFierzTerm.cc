@@ -7,6 +7,7 @@
 #include <TH1F.h>
 #include <TLegend.h>
 #include <TF1.h>
+#include <TNtuple.h>
 
 // c++ includes
 #include <iostream>
@@ -492,6 +493,16 @@ int main(int argc, char *argv[])
 	tchain->SetBranchStatus("keOutSD",1);
 	//G2P.setReadpoints();
 
+
+	TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
+	if (mc_tfile->IsZombie())
+	{
+		//printf("File "+beta_filename+"not found.\n");
+		std::cout << "Can't mac MC file" << std::endl;
+		exit(1);
+	}
+	TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
+
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	while(G2P.nextPoint()) { // will stop 
 		// perform energy calibrations/simulations to fill class variables with correct values for this simulated event
@@ -524,6 +535,8 @@ int main(int argc, char *argv[])
 			double energy = scale_x * G2P.getEtrue();
             mc.sm_histogram[s][load]->Fill(energy, 1);
 
+			tntuple->Fill(s, load, energy);
+
 			nSimmed++;
 		}
 		
@@ -534,6 +547,10 @@ int main(int argc, char *argv[])
 	//mc.WriteTFile("/data/kevinh/mc/mc.root");
     
 	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
+
+	tntuple->SetDirectory(mc_tfile);
+	tntuple->Write();
+	mc_tfile->Close();
 
     mc.sm_super_sum_histogram = compute_super_sum(mc.sm_histogram);
     normalize(mc.sm_super_sum_histogram, min_E, max_E);
