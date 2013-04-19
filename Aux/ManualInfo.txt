@@ -25,7 +25,6 @@ Cut_ClusterEvt:		start = 60.e-6	end = 10	runStart = 13000	runEnd = 100000
 15311_timecut:		start = 0	end = 150	reason = clean_trap
 15448_timecut:		start = 0	end = 150	reason = clean_trap
 
-
 ######
 # wirechamber cuts
 ######
@@ -101,3 +100,7 @@ Cut_TDC_Scint_E_3:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
 
 Cut_TDC_Scint_E_Selftrig:	start = 2900	end = 4080	runStart = 19823	runEnd = 19960
 Cut_TDC_Scint_W_Selftrig:	start = 3050	end = 4080	runStart = 19823	runEnd = 19960
+
+### 2012 ###
+Cut_TDC_Scint_E_Selftrig:	start = 2850	end = 4080	runStart = 20121	runEnd = 100000
+Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 20121	runEnd = 100000
