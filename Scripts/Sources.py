@@ -491,7 +491,11 @@ cal_2011 = [
 
 cal_2012 = [
 		  (		21087,	21098,	21094,	21087,	100000,		3146,	3149,		61),		# Bi/Ce/Sn only
-		  (		21299,	21328,	21314,	21274,	100000,		3302,	3305,		61)		# Thanksgiving; first Cs137
+		  (		21299,	21328,	21314,	21274,	100000,		3302,	3305,		61),		# Thanksgiving; first Cs137
+		  (		21679,	21718,	21687,	21679,	100000,		4149,	4151,		61),		# Dec. 6 weekend betas
+		  (		21914,	21939,	21921,	21914,	100000,		4193,	4196,		61),		# Dec. 12
+		  (		22215,	22238,	22222,	22004,	100000,		4292,	4295,		61),
+		  (		22294,	22306),															# Jan. 11 Bi/Ce/Sn
 		  ]
 			
 			
@@ -520,7 +524,7 @@ if __name__=="__main__":
 		
 		# make new calibrations set
 		ecid = None
-		if True and len(c)>2:
+		if True and len(c)>=8:
 			ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
 		
 		# fit linearity curves for each PMT
