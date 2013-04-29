@@ -1,31 +1,61 @@
-/// \file DataScannerExample.cc example code for using MC simulation data
+// UCNA includes
 #include "G4toPMT.hh"
 #include "PenelopeToPMT.hh"
 #include "CalDBSQL.hh"
+
+// ROOT includes
 #include <TH1F.h>
 #include <TLegend.h>
-//#include <TFitResult.h> // v5.27
 #include <TF1.h>
+#include <TNtuple.h>
 
+// c++ includes
 #include <iostream>
 #include <fstream>
 #include <string>
 
+// c includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
-double min_E = 150;
-double max_E = 600;
-//static double expected_fierz = 0.6540;	// full range
-static double expected_fierz = 0.6111;		// for range 150 - 600
-static double expected_gluck = 11.8498;     // for range 150 - 600
-static unsigned nToSim = 5E7;				// how many triggering events to simulate
-static double loading_prob = 40; 		// ucn loading probability (percent)
-static int bins = 150;						// replace with value from data or smoothing fit
+
+///
+/// physical constants
+///
+const double    pi          = 3.1415926535;         /// pi
+const double    alpha       = 1/137.035999;         /// fine-structure constant
+const double    a2pi        = alpha/(2*pi);         /// alpha over 2pi
+const double    m_e         = 510.9988484;          /// electron mass       (14)
+const double    m_p         = 938272.046;           /// proton mass         (21)
+const double    m_n         = 939565.378;           /// neutron mass        (21)
+const double    mu_p        = 2.792846;             /// proton moment       (7)
+const double    mu_n        = -1.9130427;           /// neutron moment      (5)
+const double    muV         = mu_p - mu_n;          /// nucleon moment      (9)
+const double    Q           = 782.344;              /// end point KE        (30)
+const double    E0          = m_e + Q;              /// end point E         (30)
+const double    L           = -1.27590;             /// gA/gV               (450)
+const double    M           = 1 + 3*L*L;            /// matrix element
+const double    I_0         = 1.63632;              /// 0th moment          (25)
+const double    I_1         = 1.07017;              /// 1st moment          (15)
+const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
+
+
+///
+/// settings
+///
+double min_E = 230;
+double max_E = 660;
+double expected_fierz = 0.6540;				/// full range (will get overwritten) 
+//static double expected_fierz = 0.6111;	/// for range 150 - 600
+//static double expected_gluck = 11.8498;   /// for range 150 - 600
+static unsigned nToSim = 1E4;				/// how many triggering events to simulate
+static double loading_prob = 40; 			/// ucn loading probability (percent)
+static int bins = 150;						/// replace with value from data or smoothing fit
+static int integral_size = 1000;
 //double scale_x = 1.015;
 double scale_x = 1.0;
+
 
 class FierzHistogram {
   public: 
@@ -64,20 +94,22 @@ class FierzHistogram {
     }
 
     void normalizeHistogram(TH1F* hist, double min, double max) {
-		int intmin = hist->FindBin(min);
-		int intmax = hist->FindBin(max);
-        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(intmin, intmax)));
+		int _min = hist->FindBin(min);
+		int _max = hist->FindBin(max);
+        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
     }
 };
 
-// ug. needs to be static
+
+/// ug. needs to be static
 FierzHistogram mc(0,1500,bins);
 
 /**
  * x[0] : kenetic energy
  * p[0] : b, fierz term
  */
-double theoretical_fierz_spectrum(double *x, double*p) {
+double theoretical_fierz_spectrum(double *x, double*p) 
+{
     double rv = 0;
     //unsigned n = mc.sm_histogram->FindBin(p[3]*x[0]*x[0] + p[2]*x[0] - p[1]);        
     unsigned n = mc.sm_super_sum_histogram->FindBin(p[2]*x[0] - p[1]);        
@@ -89,30 +121,96 @@ double theoretical_fierz_spectrum(double *x, double*p) {
     return rv;
 }
 
+
+/// beta spectrum with little b term
+double fierz_beta_spectrum(const double *val, const double *par) 
+{
+	const double K = val[0];                    /// kinetic energy
+	if (K <= 0 or K >= Q)
+		return 0;                               /// zero outside range
+
+	const double b = par[0];                    /// Fierz parameter
+	const int n = par[1];                    	/// Fierz exponent
+	const double E = K + m_e;                   /// electron energy
+	const double e = Q - K;                     /// neutrino energy
+	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
+	const double x = pow(m_e/E,n);              /// Fierz term
+	const double f = (1 + b*x)/(1 + b*x_1);     /// Fierz factor
+	const double k = 1.3723803E-11/Q;           /// normalization factor
+	const double P = k*p*e*e*E*f*x;             /// the output PDF value
+
+	return P;
+}
+
+
+/// beta spectrum with little b term
+double beta_spectrum(const double *val, const double *par) 
+{
+	const double K = val[0];                    /// kinetic energy
+	const int n = par[0];                    	/// Fierz exponent
+	if (K <= 0 or K >= Q)
+		return 0;                               /// zero outside range
+
+	const double E = K + m_e;                   /// electron energy
+	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum 
+	const double e = (Q - K) / Q;               /// reduced neutrino energy
+	const double x = pow(m_e/E,n);              /// Fierz term
+	const double k = 1.3723803E-11/Q;           /// normalization factor
+	const double P = k*p*e*e*E*x;               /// the output PDF value
+
+	return P;
+}
+
+
 unsigned deg = 4;
-double mc_model(double *x, double*p) {
+double mc_model(double *x, double*p) 
+{
     double _exp = 0;
-    double _x = x[0] / electron_mass;
+    double _x = x[0] / m_e;
     for (int i = deg; i >= 0; i--)
         _exp = p[i] + _x * _exp;
     return TMath::Exp(_exp);
 }
 
-void normalize(TH1F* hist) {
+
+void normalize(TH1F* hist) 
+{
     hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
 }
 
-void normalize(TH1F* hist, double min, double max) {
-	int intmin = hist->FindBin(min);
-	int intmax = hist->FindBin(max);
-	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(intmin, intmax)));
+
+void normalize(TH1F* hist, double min, double max) 
+{
+	int _min = hist->FindBin(min);
+	int _max = hist->FindBin(max);
+	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
 }
 
-// S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
-TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
+
+double evaluate_expected_fierz(double min, double max) 
+{
+    TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
+    TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
+	for (int i = 0; i < integral_size; i++)
+	{
+		double K = min + double(i)*(max-min)/integral_size;
+		double par1[2] = {0, 1};
+		double par2[2] = {0, 0};
+		double y1 = fierz_beta_spectrum(&K, par1);
+		double y2 = fierz_beta_spectrum(&K, par2);
+		h1->SetBinContent(K, y1);
+		h2->SetBinContent(K, y2);
+	}
+	return h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
+}
+
+
+/// S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
+TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) 
+{
     TH1F *super_ratio_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_ratio_histogram->GetNbinsX();
-	std::cout << "bins " << bins;
+	std::cout << "Number of bins " << bins << std::endl;
     for (int bin = 1; bin < bins+2; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
@@ -120,13 +218,14 @@ TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) {
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
         super_ratio_histogram->SetBinContent(bin, super_ratio);
-        super_ratio_histogram->SetBinError(bin, 0.01);
+        super_ratio_histogram->SetBinError(bin, 0.01);   // TODO compute correctly!!
     }
     return super_ratio_histogram;
 }
 
-// S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
-TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
+
+TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) 
+{
     TH1F *super_sum_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = super_sum_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) {
@@ -144,16 +243,18 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) {
 
         printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
         super_sum_histogram->SetBinContent(bin, super_sum);
-        //super_sum_histogram->SetBinError(bin, TMath::Sqrt(super_sum));
         super_sum_histogram->SetBinError(bin, super_sum*rel_error);
     }
     return super_sum_histogram;
 }
 
-TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
+
+TH1F* compute_asymmetry(TH1F* rate_histogram[2][2]) 
+{
     TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
-    for (int bin = 1; bin < bins+2; bin++) {
+    for (int bin = 1; bin < bins+2; bin++) 
+	{
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
@@ -161,13 +262,47 @@ TH1F* compute_asymmetry(TH1F* rate_histogram[2][2] ) {
         double sqrt_super_ratio = TMath::Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
         if ( TMath::IsNaN(sqrt_super_ratio) ) 
             sqrt_super_ratio = 0;
-        double asymmetry = (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
+		double denom = 1 + sqrt_super_ratio;
+        double asymmetry = (1 - sqrt_super_ratio) / denom;
+		double sqrt_inverse_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]);
+		double asymmetry_error = sqrt_inverse_sum * sqrt_super_ratio / (denom * denom);  
         asymmetry_histogram->SetBinContent(bin, asymmetry);
-        printf("Setting bin content for super sum bin %d, to %f\n", bin, asymmetry);
-        asymmetry_histogram->SetBinError(bin, 0.0);
+        asymmetry_histogram->SetBinError(bin, asymmetry_error);
+        //printf("Setting bin content for asymmetry bin %d, to %f\n", bin, asymmetry);
     }
     return asymmetry_histogram;
 }
+
+
+TH1F* compute_corrected_asymmetry(TH1F* rate_histogram[2][2], TH1F* correction) 
+{
+    TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
+    int bins = asymmetry_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+2; bin++) 
+	{
+        double r[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+        double sqrt_super_ratio = TMath::Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
+        if ( TMath::IsNaN(sqrt_super_ratio) ) 
+            sqrt_super_ratio = 0;
+		double denom = 1 + sqrt_super_ratio;
+        double asymmetry = (1 - sqrt_super_ratio) / denom;
+		double sqrt_inverse_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]);
+		double asymmetry_error = sqrt_inverse_sum * sqrt_super_ratio / (denom * denom);  
+		double K = asymmetry_histogram->GetBinCenter(bin);
+		double E = K + m_e;                   /// electron energy
+		double p = sqrt(E*E - m_e*m_e);       /// electron momentum
+		double beta = p / E;				  /// v/c
+        asymmetry_histogram->SetBinContent(bin, -2*asymmetry/beta);
+        asymmetry_histogram->SetBinError(bin, 2*asymmetry_error/beta);
+        asymmetry_histogram->Multiply(correction);
+        //printf("Setting bin content for corrected asymmetry bin %d, to %f\n", bin, asymmetry);
+    }
+    return asymmetry_histogram;
+}
+
 
 TH1F* compute_rate_function(TH1F* rate_histogram[2][2], 
                             double (*rate_function)(double r[2][2]))
@@ -186,6 +321,7 @@ TH1F* compute_rate_function(TH1F* rate_histogram[2][2],
     return out_histogram;
 }
 
+
 TH1F* compute_rate_function(TH1F* rate_histogram[2][2], 
                             double (*rate_function)(double r[2][2]),
                             double (*error_function)(double r[2][2])) 
@@ -200,11 +336,12 @@ TH1F* compute_rate_function(TH1F* rate_histogram[2][2],
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
                 e[side][spin] = rate_histogram[side][spin]->GetBinError(bin);
             }
-        double value = 0;
-        double error = 0; 
 
+        double value = 0;
         if (rate_function)
             value = rate_function(r);
+
+        double error = 0; 
         if (error_function)
             error = error_function(e);
 
@@ -213,6 +350,7 @@ TH1F* compute_rate_function(TH1F* rate_histogram[2][2],
     }
     return out_histogram;
 }
+
 
 /*
 TH1F* compute_rate_error_function(TH1F* rate_histogram[2][2], 
@@ -230,6 +368,7 @@ TH1F* compute_rate_error_function(TH1F* rate_histogram[2][2],
 }
 */
 
+
 double bonehead_sum(double r[2][2]) {
     return r[0][0] + r[0][1] + r[1][0] + r[1][1];
 }
@@ -246,6 +385,7 @@ double super_ratio_asymmetry(double r[2][2]) {
     return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
 }
 
+
 /*
 double super_sum_error(double r[2][2]) {
     double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
@@ -255,6 +395,7 @@ double super_sum_error(double r[2][2]) {
     //return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
 }
 */
+
 
 using namespace std;
 void output_histogram(string filename, TH1F* h, double ax, double ay)
@@ -273,15 +414,19 @@ void output_histogram(string filename, TH1F* h, double ax, double ay)
 	ofs.close();
 }
 
-int main(int argc, char *argv[]) {
+
+int main(int argc, char *argv[]) 
+{
+	expected_fierz = evaluate_expected_fierz(min_E, max_E);
+	std::cout << "Expected Fierz " << expected_fierz << "\n";
 	
 	// Geant4 MC data scanner object
-	//G4toPMT G2P;
-	PenelopeToPMT G2P;
+	G4toPMT G2P;
+	//PenelopeToPMT G2P;
 
 	// use data from these MC files (most recent unpolarized beta decay, includes Fermi function spectrum correction)
 	// note wildcard * in filename; MC output is split up over many files, but G2P will TChain them together
-	G2P.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root"); // standard final Penelope
+	//G2P.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root"); // standard final Penelope
 	//G2P.addFile("/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_*.root"); // magnetic wiggles Monte Carlo
 	//G2P.addFile("/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_*.root"); // standard final Monte Carlo 
 	//G2P.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
@@ -289,6 +434,7 @@ int main(int argc, char *argv[]) {
 	//G2P.addFile("/home/mmendenhall/geant4/output/Baseline_20110826_neutronBetaUnpol_geomC/analyzed_*.root");
 	//G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined");
     //G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
+	G2P.addFile("/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_*.root");
 	
 	// PMT Calibrator loads run-specific energy calibrations info for selected run (14111)
 	// and uses default Calibrations DB connection to most up-to-date though possibly unstable "mpm_debug"
@@ -322,6 +468,7 @@ int main(int argc, char *argv[]) {
 	// if you really want this to be random, you will need to seed rand() with something other than default
 	// note that it can take many seconds to load the first point of a scan (loading file segment into memory), but will go much faster afterwards.
 	G2P.startScan(false);
+	std::cout << "Finished scan." << std::endl;
 
 	srand ( time(NULL) );
 
@@ -329,13 +476,37 @@ int main(int argc, char *argv[]) {
 	int n = tchain->GetEntries();
 	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
 
+	tchain->SetBranchStatus("*",0);
+	tchain->SetBranchStatus("EdepQ",1);
+	tchain->SetBranchStatus("Edep",1);
+	tchain->SetBranchStatus("MWPCEnergy",1);
+	tchain->SetBranchStatus("ScintPos",1);
+	tchain->SetBranchStatus("MWPCPos",1);
+	tchain->SetBranchStatus("time",1);
+	tchain->SetBranchStatus("primTheta",1);
+	tchain->SetBranchStatus("primKE",1);
+	tchain->SetBranchStatus("primPos",1);
+	tchain->SetBranchStatus("EdepSD",1);
+	tchain->SetBranchStatus("thetaInSD",1);
+	tchain->SetBranchStatus("thetaOutSD",1);
+	tchain->SetBranchStatus("keInSD",1);
+	tchain->SetBranchStatus("keOutSD",1);
+	//G2P.setReadpoints();
+
+
+	TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
+	if (mc_tfile->IsZombie())
+	{
+		//printf("File "+beta_filename+"not found.\n");
+		std::cout << "Can't mac MC file" << std::endl;
+		exit(1);
+	}
+	TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
+
 	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
 	while(G2P.nextPoint()) { // will stop 
-		// load next point. If end of data is reached, this will loop back and start at the beginning again.
-		//G2P.nextPoint();
-
 		// perform energy calibrations/simulations to fill class variables with correct values for this simulated event
-		G2P.recalibrateEnergy();
+		//G2P.recalibrateEnergy();
 		
 		// check the event characteristics on each side
 		for(Side s = EAST; s <= WEST; ++s) {
@@ -344,7 +515,7 @@ int main(int argc, char *argv[]) {
 
 			// skip non-triggering events, or those outside 50mm position cut (you could add your own custom cuts here, if you cared)
 			//if(tp>=TYPE_I_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
-			if(tp>=TYPE_I_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
+			if (tp >= TYPE_I_EVENT or !G2P.passesPositionCut(s) or G2P.fSide != s)
 				continue;
 			
 			// print out event info, (simulated) reconstructed true energy and position, comparable to values in data
@@ -354,49 +525,45 @@ int main(int argc, char *argv[]) {
 				   G2P.wires[s][Y_DIRECTION].center, (unsigned)G2P.getAFP());
 
 			// print out event primary info, only available in simulation
-			printf("\tprimary KE=%g, cos(theta)=%g\n",G2P.ePrim,G2P.costheta);
+			printf("\tprimary KE=%g, cos(theta)=%g\n", G2P.ePrim, G2P.costheta);
 			#endif 
 
-            /*
-            double energy = G2P.ePrim + electron_mass;
-            double fierz_weight = electron_mass / energy;
-            if (nSimmed % 2)
-                mc.fierz_histogram->Fill(G2P.getEtrue(), fierz_weight);
-            else
-                */
-            
-            //if (G2P.afp == AFP_ON)
-            if (nSimmed % 100 > loading_prob) // redo with real loading eff.
-                mc.sm_histogram[s][0]->Fill(scale_x * G2P.getEtrue(), 1);
-            else
-                mc.sm_histogram[s][1]->Fill(scale_x * G2P.getEtrue(), 1);
+			// fill with loading efficiency 
+			bool load = (nSimmed % 100 < loading_prob);
+
+			// calculate the energy with a distortion factor
+			double energy = scale_x * G2P.getEtrue();
+            mc.sm_histogram[s][load]->Fill(energy, 1);
+
+			tntuple->Fill(s, load, energy);
 
 			nSimmed++;
 		}
 		
 		// break when enough data has been generated.
-		if(nSimmed>=nToSim)
+		if(nSimmed >= nToSim)
 			break;
 	}
+	//mc.WriteTFile("/data/kevinh/mc/mc.root");
     
 	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
 
+	tntuple->SetDirectory(mc_tfile);
+	tntuple->Write();
+	mc_tfile->Close();
+
     mc.sm_super_sum_histogram = compute_super_sum(mc.sm_histogram);
-    //normalize(mc.sm_super_sum_histogram);
     normalize(mc.sm_super_sum_histogram, min_E, max_E);
 
     mc.fierz_super_sum_histogram = compute_super_sum(mc.fierz_histogram);
-    //normalize(mc.fierz_super_sum_histogram);
     normalize(mc.fierz_super_sum_histogram, min_E, max_E);
 
     for (int side = 0; side < 2; side++)
-        for (int spin = 0; spin < 2; spin++) {
-            //normalize(mc.fierz_histogram[side][spin]);
-            //normalize(mc.sm_histogram[side][spin]);
+        for (int spin = 0; spin < 2; spin++)
+		{
             normalize(mc.fierz_histogram[side][spin], min_E, max_E);
             normalize(mc.sm_histogram[side][spin], min_E, max_E);
         }
-
 
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
 
@@ -442,22 +609,42 @@ int main(int argc, char *argv[]) {
 	if (ucna_data_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
-		std::cout << "File not found." << std::endl;
+		std::cout << "Data file not found." << std::endl;
 		exit(1);
 	}
 
+	TFile* ucna_correction_tfile = new TFile("Fierz/tree.root");
+	if (ucna_correction_tfile->IsZombie())
+	{
+		//printf("File "+beta_filename+"not found.\n");
+		std::cout << "Correction file not found." << std::endl;
+		exit(1);
+	}
+
+	#define EVENT_TYPE -1 
     TH1F *ucna_data_histogram[2][2] = {
+	#if EVENT_TYPE == 0
         {
-            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E010"),
-            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E110")
             (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_E_Off"),
             (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_E_On")
         }, {
-            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W010"),
-            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W110")
             (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_W_Off"),
             (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_W_On")
         }
+	#endif
+	#if EVENT_TYPE == -1
+        {
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E010"),
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E110")
+            (TH1F*)ucna_data_tfile->Get("hTotalEvents_E_Off;1"),
+            (TH1F*)ucna_data_tfile->Get("hTotalEvents_E_On;1"),
+        }, {
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W010"),
+            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W110")
+            (TH1F*)ucna_data_tfile->Get("hTotalEvents_W_Off;1"),
+            (TH1F*)ucna_data_tfile->Get("hTotalEvents_W_On;1"),
+        }
+	#endif
     };
     //printf("Number of bins in data %d\n", ucna_data_histogram->GetNbinsX());
 
@@ -467,21 +654,40 @@ int main(int argc, char *argv[]) {
         // normalize after background subtraction
         background_histogram->Draw("");
     */
-    //normalize(ucna_data_histogram[0][0]);
-	for (int i = 0; i < 2; i++)
-		for (int j = 0; j < 2; j++)
+
+	for (int side = 0; side < 2; side++)
+		for (int spin = 0; spin < 2; spin++)
 		{
 			std::cout << "Number of entries in (" 
-					  << i << ", " << j << ") is "
-					  << (int)ucna_data_histogram[i][j]->GetEntries() << std::endl;
-			if (ucna_data_histogram[i][j] == NULL)
+					  << side << ", " << spin << ") is "
+					  << (int)ucna_data_histogram[side][spin]->GetEntries() << std::endl;
+			if (ucna_data_histogram[side][spin] == NULL)
 			{
 				puts("histogram is null. Aborting...");
 				exit(1);
 			}
 		}
 
-	
+	/*
+    TH1F *ucna_correction_histogram = (TH1F*)ucna_correction_histogram->Get("Delta_3_C");
+	if (not ucna_correction_histogram)
+	{
+		puts("Correction histogram is null. Aborting...");
+		exit(1);
+	}
+	*/
+    TH1F *ucna_correction_histogram = new TH1F(*ucna_data_histogram[0][0]);
+	/*
+	while (tfile has more entries)
+	{
+        double bin = (ucna_correction_file->GetBinContent(bin);
+        double correction = ucna_correction_histogram->GetBinContent(bin);
+        printf("Setting bin content for correction bin %d, to %f\n", bin, correction);
+        super_sum_histogram->SetBinContent(bin, correction);
+        super_sum_histogram->SetBinError(bin, correction_error);
+    }
+	*/
+
     /*
     TF1 *fit = new TF1("fierz_fit", theoretical_fierz_spectrum, 0, 1000, 3);
     fit->SetParameter(0,0.0);
@@ -503,15 +709,50 @@ int main(int argc, char *argv[]) {
     canvas->SaveAs(super_ratio_pdf_filename);
 
     // compute and plot the super ratio asymmetry 
-    TH1F *asymmetry_histogram = compute_asymmetry(ucna_data_histogram);
+    TH1F *asymmetry_histogram = compute_corrected_asymmetry(ucna_data_histogram, ucna_correction_histogram);
+
+	// fit the Fierz term from the asymmetry
+	char A_fit_str[1024];
+    sprintf(A_fit_str, "[0]/(1+[1]*(%f/(%f+x)))", m_e, m_e);
+    TF1 *A_fierz_fit = new TF1("A_fierz_fit", A_fit_str, min_E, max_E);
+    A_fierz_fit->SetParameter(-.12,0);
+    A_fierz_fit->SetParameter(1,0);
+	asymmetry_histogram->Fit(A_fierz_fit, "Sr");
+	asymmetry_histogram->SetMaximum(0);
+	asymmetry_histogram->SetMinimum(-0.2);
+
+	// compute chi squared
+    double chisq = A_fierz_fit->GetChisquare();
+    double NDF = A_fierz_fit->GetNDF();
+	char A_str[1024];
+	sprintf(A_str, "A = %1.3f #pm %1.3f", A_fierz_fit->GetParameter(0), A_fierz_fit->GetParError(0));
+	char A_b_str[1024];
+	sprintf(A_b_str, "b = %1.3f #pm %1.3f", A_fierz_fit->GetParameter(1), A_fierz_fit->GetParError(1));
+	char A_b_chisq_str[1024];
+    printf("Chi^2 / ( NDF - 1) = %f / %f = %f\n", chisq, NDF-1, chisq/(NDF-1));
+	sprintf(A_b_chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(NDF-1));
+
+	// draw the ratio plot
+	asymmetry_histogram->SetStats(0);
     asymmetry_histogram->Draw();
+
+	// draw a legend on the plot
+    TLegend* asym_legend = new TLegend(0.3,0.85,0.6,0.65);
+    asym_legend->AddEntry(asymmetry_histogram, "Asymmetry data", "l");
+    asym_legend->AddEntry(A_fierz_fit, "Fierz term fit", "l");
+    asym_legend->AddEntry((TObject*)0, A_str, "");
+    asym_legend->AddEntry((TObject*)0, A_b_str, "");
+    asym_legend->AddEntry((TObject*)0, A_b_chisq_str, "");
+    asym_legend->SetTextSize(0.03);
+    asym_legend->SetBorderSize(0);
+    asym_legend->Draw();
+
     TString asymmetry_pdf_filename = "/data/kevinh/mc/asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
 
     // Compute the super sums
     TH1F *super_sum_histogram = compute_super_sum(ucna_data_histogram);
 	std::cout << "Number of super sum entries " << (int)super_sum_histogram->GetEntries() << std::endl;
-    //normalize(super_sum_histogram);
     normalize(super_sum_histogram, min_E, max_E);
     super_sum_histogram->SetLineColor(2);
 	super_sum_histogram->SetStats(0);
@@ -528,7 +769,7 @@ int main(int argc, char *argv[]) {
     mc.sm_super_sum_histogram->SetMarkerStyle(4);
     mc.sm_super_sum_histogram->Draw("same p0");
 
-    // lets make a pretty legend
+    // make a pretty legend
     TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
     legend->AddEntry(super_sum_histogram, "Type 0 supersum", "l");
     legend->AddEntry(mc.sm_super_sum_histogram, "Monte Carlo supersum", "p");
@@ -558,7 +799,6 @@ int main(int argc, char *argv[]) {
 		double y = mc.sm_super_sum_histogram->GetBinError(bin);
 		fierz_ratio_histogram->SetBinError(bin, Z*TMath::Sqrt(x*x/X/X + y*y/Y/Y));
 	}
-    //fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.6,1.6); // Set the range
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
 	std::cout << super_sum_histogram->GetNbinsX() << std::endl;
@@ -566,7 +806,7 @@ int main(int argc, char *argv[]) {
 
 	// fit the Fierz ratio 
 	char fit_str[1024];
-    sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", electron_mass, electron_mass, expected_fierz);
+    sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", m_e, m_e, expected_fierz);
     TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
     fierz_fit->SetParameter(0,0);
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
@@ -577,13 +817,13 @@ int main(int argc, char *argv[]) {
 		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
 
 	// compute chi squared
-    double chisq = fierz_fit->GetChisquare();
-    double N = fierz_fit->GetNDF();
+    chisq = fierz_fit->GetChisquare();
+    NDF = fierz_fit->GetNDF();
 	char b_str[1024];
 	sprintf(b_str, "b = %1.3f #pm %1.3f", fierz_fit->GetParameter(0), fierz_fit->GetParError(0));
 	char chisq_str[1024];
-    printf("Chi^2 / ( N - 1) = %f / %f = %f\n", chisq, N-1, chisq/(N-1));
-	sprintf(chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(N-1));
+    printf("Chi^2 / ( NDF - 1) = %f / %f = %f\n", chisq, NDF-1, chisq/(NDF-1));
+	sprintf(chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(NDF-1));
 
 	// draw the ratio plot
 	fierz_ratio_histogram->SetStats(0);
