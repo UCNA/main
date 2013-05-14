@@ -188,7 +188,7 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			sprintf(query,
-					"SELECT signal,norm FROM posmap_points WHERE posmap_set_id = %i AND side = %s AND quadrant = %i ORDER BY pixel_id ASC",
+					"SELECT `signal`,norm FROM posmap_points WHERE posmap_set_id = %i AND side = %s AND quadrant = %i ORDER BY pixel_id ASC",
 					psid,dbSideName(s),t);
 			Query();
 			if(!res) {
