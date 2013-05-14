@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
 	if (mc_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
-		std::cout << "Can't mac MC file" << std::endl;
+		std::cout << "Can't make MC file" << std::endl;
 		exit(1);
 	}
 	TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
@@ -550,13 +550,18 @@ int main(int argc, char *argv[])
 
 	tntuple->SetDirectory(mc_tfile);
 	tntuple->Write();
-	mc_tfile->Close();
 
     mc.sm_super_sum_histogram = compute_super_sum(mc.sm_histogram);
     normalize(mc.sm_super_sum_histogram, min_E, max_E);
+	mc.sm_super_sum_histogram->SetDirectory(mc_tfile);
+	mc.sm_super_sum_histogram->Write();
 
     mc.fierz_super_sum_histogram = compute_super_sum(mc.fierz_histogram);
     normalize(mc.fierz_super_sum_histogram, min_E, max_E);
+	mc.fierz_super_sum_histogram->SetDirectory(mc_tfile);
+	mc.fierz_super_sum_histogram->Write();
+
+	mc_tfile->Close();
 
     for (int side = 0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++)
