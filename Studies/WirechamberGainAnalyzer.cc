@@ -527,8 +527,9 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 			
 			// divide histograms
 			TGraphAsymmErrors* gPIII = new TGraphAsymmErrors(hBoth->GetNbinsX());
-			hBoth->GetSumw2()->Set(NULL);
-			v3[ne]->GetSumw2()->Set(NULL);
+			// set sumw2 array to zero length (clears the error bars); otherwise, BayesDivide will not work
+			hBoth->GetSumw2()->Set(0);
+			v3[ne]->GetSumw2()->Set(0);
 			gPIII->BayesDivide(v3[ne],hBoth);
 			
 			
