@@ -61,7 +61,7 @@ Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o \
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
-ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm \
+ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm CombinedAbFit \
 	QCalc MC_Comparisons MWPC_Efficiency_Sim FierzOctetAnalyzer OctetAnalyzerExample
 
 all: UCNAnalyzer
@@ -77,6 +77,9 @@ ExtractFierzTerm: ExtractFierzTerm.cc libUCNA.a
 	
 AsymmetryFierzTerm: AsymmetryFierzTerm.cc libUCNA.a
 	$(CXX) $(CXXFLAGS) Fierz/AsymmetryFierzTerm.cc $(LDFLAGS) -o AsymmetryFierzTerm
+
+CombinedAbFit: CombinedAbFit.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Fierz/CombinedAbFit.cc $(LDFLAGS) -o CombinedAbFit
 
 examples: $(ExampleObjs)
 

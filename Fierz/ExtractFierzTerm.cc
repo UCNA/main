@@ -49,7 +49,7 @@ double max_E = 660;
 double expected_fierz = 0.6540;				/// full range (will get overwritten) 
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
-static unsigned nToSim = 1E4;				/// how many triggering events to simulate
+static unsigned nToSim = 2.5e7;				/// how many triggering events to simulate
 static double loading_prob = 40; 			/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
 static int integral_size = 1000;
@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
 	if (mc_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
-		std::cout << "Can't mac MC file" << std::endl;
+		std::cout << "Can't make MC file" << std::endl;
 		exit(1);
 	}
 	TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
@@ -550,13 +550,18 @@ int main(int argc, char *argv[])
 
 	tntuple->SetDirectory(mc_tfile);
 	tntuple->Write();
-	mc_tfile->Close();
 
     mc.sm_super_sum_histogram = compute_super_sum(mc.sm_histogram);
     normalize(mc.sm_super_sum_histogram, min_E, max_E);
+	mc.sm_super_sum_histogram->SetDirectory(mc_tfile);
+	mc.sm_super_sum_histogram->Write();
 
     mc.fierz_super_sum_histogram = compute_super_sum(mc.fierz_histogram);
     normalize(mc.fierz_super_sum_histogram, min_E, max_E);
+	mc.fierz_super_sum_histogram->SetDirectory(mc_tfile);
+	mc.fierz_super_sum_histogram->Write();
+
+	//mc_tfile->Close();
 
     for (int side = 0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++)
@@ -613,6 +618,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/*
 	TFile* ucna_correction_tfile = new TFile("Fierz/tree.root");
 	if (ucna_correction_tfile->IsZombie())
 	{
@@ -620,6 +626,7 @@ int main(int argc, char *argv[])
 		std::cout << "Correction file not found." << std::endl;
 		exit(1);
 	}
+	*/
 
 	#define EVENT_TYPE -1 
     TH1F *ucna_data_histogram[2][2] = {
@@ -676,7 +683,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	*/
-    TH1F *ucna_correction_histogram = new TH1F(*ucna_data_histogram[0][0]);
+    //TH1F *ucna_correction_histogram = new TH1F(*ucna_data_histogram[0][0]);
 	/*
 	while (tfile has more entries)
 	{
@@ -709,9 +716,10 @@ int main(int argc, char *argv[])
     canvas->SaveAs(super_ratio_pdf_filename);
 
     // compute and plot the super ratio asymmetry 
-    TH1F *asymmetry_histogram = compute_corrected_asymmetry(ucna_data_histogram, ucna_correction_histogram);
+    //TH1F *asymmetry_histogram = compute_corrected_asymmetry(ucna_data_histogram, ucna_correction_histogram);
 
 	// fit the Fierz term from the asymmetry
+	/*
 	char A_fit_str[1024];
     sprintf(A_fit_str, "[0]/(1+[1]*(%f/(%f+x)))", m_e, m_e);
     TF1 *A_fierz_fit = new TF1("A_fierz_fit", A_fit_str, min_E, max_E);
@@ -720,8 +728,10 @@ int main(int argc, char *argv[])
 	asymmetry_histogram->Fit(A_fierz_fit, "Sr");
 	asymmetry_histogram->SetMaximum(0);
 	asymmetry_histogram->SetMinimum(-0.2);
+	*/
 
 	// compute chi squared
+	/*
     double chisq = A_fierz_fit->GetChisquare();
     double NDF = A_fierz_fit->GetNDF();
 	char A_str[1024];
@@ -731,12 +741,14 @@ int main(int argc, char *argv[])
 	char A_b_chisq_str[1024];
     printf("Chi^2 / ( NDF - 1) = %f / %f = %f\n", chisq, NDF-1, chisq/(NDF-1));
 	sprintf(A_b_chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(NDF-1));
+	*/
 
 	// draw the ratio plot
-	asymmetry_histogram->SetStats(0);
-    asymmetry_histogram->Draw();
+	//asymmetry_histogram->SetStats(0);
+    //asymmetry_histogram->Draw();
 
 	// draw a legend on the plot
+	/*
     TLegend* asym_legend = new TLegend(0.3,0.85,0.6,0.65);
     asym_legend->AddEntry(asymmetry_histogram, "Asymmetry data", "l");
     asym_legend->AddEntry(A_fierz_fit, "Fierz term fit", "l");
@@ -746,6 +758,7 @@ int main(int argc, char *argv[])
     asym_legend->SetTextSize(0.03);
     asym_legend->SetBorderSize(0);
     asym_legend->Draw();
+	*/
 
     TString asymmetry_pdf_filename = "/data/kevinh/mc/asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
@@ -811,14 +824,17 @@ int main(int argc, char *argv[])
     fierz_fit->SetParameter(0,0);
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
 
+	fierz_ratio_histogram->SetDirectory(mc_tfile);
+	fierz_ratio_histogram->Write();
+
 	// A fit histogram for output to gnuplot
     TH1F *fierz_fit_histogram = new TH1F(*super_sum_histogram);
 	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
 		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
 
 	// compute chi squared
-    chisq = fierz_fit->GetChisquare();
-    NDF = fierz_fit->GetNDF();
+    double chisq = fierz_fit->GetChisquare();
+    double NDF = fierz_fit->GetNDF();
 	char b_str[1024];
 	sprintf(b_str, "b = %1.3f #pm %1.3f", fierz_fit->GetParameter(0), fierz_fit->GetParError(0));
 	char chisq_str[1024];
