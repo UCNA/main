@@ -477,11 +477,13 @@ void ErrTables::NGBGTable(double EScale, double dEScale, double WScale, double d
 			// calculate scaling between On/Off
 			double afpScale[2][2];
 			for(Side s = EAST; s <= WEST; ++s) {
-				afpScale[s][2] = 0;
+				double sumScale = 0;
+				for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
+					afpScale[s][afp] = rAFP[afp]*acRndSrc.Gaus(1.0,dAFPfrac);
+					sumScale += afpScale[s][afp];
+				}
 				for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
-					afpScale[s][2] += (afpScale[s][afp] = rAFP[afp]*acRndSrc.Gaus(1.0,dAFPfrac));
-				for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
-					afpScale[s][afp] /= afpScale[s][2];
+					afpScale[s][afp] /= sumScale;
 			}
 			// asymmetry + background
 			double Rp = ((S[EAST][AFP_OFF]->Eval(e)+NGBG*afpScale[EAST][AFP_OFF]*sideScale[EAST]) *
