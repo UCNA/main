@@ -49,7 +49,7 @@ double max_E = 660;
 double expected_fierz = 0.6540;				/// full range (will get overwritten) 
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
-static unsigned nToSim = 1E5;				/// how many triggering events to simulate
+static unsigned nToSim = 2.5e7;				/// how many triggering events to simulate
 static double loading_prob = 40; 			/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
 static int integral_size = 1000;
@@ -823,6 +823,9 @@ int main(int argc, char *argv[])
     TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
     fierz_fit->SetParameter(0,0);
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
+
+	fierz_ratio_histogram->SetDirectory(mc_tfile);
+	fierz_ratio_histogram->Write();
 
 	// A fit histogram for output to gnuplot
     TH1F *fierz_fit_histogram = new TH1F(*super_sum_histogram);
