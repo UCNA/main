@@ -2375,17 +2375,12 @@
 
 ### B->A ###
 
-#
-# TODO: check paper log... what's happening here?
-#
-
 *22821	B1
 *22822	B2
 *22823	B2
 *22824	B3
 *22825	B4
 *22826	B5
-*22827	B5
 *22829	B6
 *22830	B7
 *22831	B8
@@ -2400,6 +2395,7 @@
 *22839	A4
 *22840	A5
 *22841	A6
+# 7 hour beam out; melt & refreeze
 *22844	A7
 *22845	A8
 *22846	A9
@@ -2424,7 +2420,8 @@
 *22861	A12
 
 *22862	B1
-*22863	B2
+*22863	B2	# beam out at end of run
+# proceeding at reduced rate after tune lurch
 *22864	B3
 *22865	B4
 *22866	B5
