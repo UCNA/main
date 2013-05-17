@@ -21,8 +21,14 @@ ChrisGainStabilizer::ChrisGainStabilizer(RunNum myRun, CalDB* cdb, LinearityCorr
 GainStabilizer(myRun, cdb, myCorrecter) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
-			pulserPeak[s][t] = CDB->getRunMonitor(rn,LCor->sensorNames[s][t],"Chris_peak");
-			pulser0[s][t] = CDB->getRunMonitorStart(LCor->rGMS,LCor->sensorNames[s][t],"Chris_peak");
+			try {
+				pulserPeak[s][t] = CDB->getRunMonitor(rn,LCor->sensorNames[s][t],"Chris_peak");
+				pulser0[s][t] = CDB->getRunMonitorStart(LCor->rGMS,LCor->sensorNames[s][t],"Chris_peak");
+			} catch (const Stringmap& e) {
+				pulserPeak[s][t] = NULL;
+				pulser0[s][t] = 0;
+				e.display();
+			}
 			if(!pulser0[s][t] || !pulserPeak[s][t])
 				printf("*** Missing Chris Pulser data to calibrate %i%c%i! ***\n",rn,sideNames(s),t);
 		}
