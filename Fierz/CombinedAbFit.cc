@@ -7,6 +7,9 @@
 #include <TH1F.h>
 #include <TLegend.h>
 #include <TF1.h>
+#include <TVirtualFitter.h>
+#include <TList.h>
+#include <TStyle.h>
 
 // c++ includes
 #include <iostream>
@@ -82,6 +85,35 @@ void compute_fit(TH1F* histogram, TF1* fierz_fit)
 
 
 
+double my2Dfunc(double *x, double *par) {
+	double *p1 = &par[0];
+	double *p2 = &par[5];
+	return 0;
+}
+
+
+
+// data need to be globals to be visible by fcn 
+
+vector<double> energy;        
+vector<double> values;        
+vector<double> errors;        
+
+void myFcn(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
+{
+	int n = energy.size();
+	double chi2 = 0; 
+	double chi,	x; 
+	for (int i = 0; i <n; ++i ) { 
+		x = energy[i];
+		chi = (values[i] - my2Dfunc(&x,p)) / errors[i];
+		chi2 += chi*chi; 
+	}
+	fval = chi2; 
+}
+
+
+
 int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio) 
 { 
 	double iniParams[10] = { 100, 6., 2., 7., 3, 100, 12., 3., 11., 2. };
@@ -89,42 +121,40 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 	TF1 * func = new TF1("func", my2Dfunc, min_E, max_E, 10);
 	func->SetParameters(iniParams);
 
-	if (true) { 
+	//if (true) { 
 		// fill data structure for fit (coordinates + values + errors) 
 		std::cout << "Do global fit" << std::endl;
 		// fit now all the function together
 
 		// fill data structure for fit (coordinates + values + errors) 
-		TAxis *xaxis1  = h1->GetXaxis();
-		TAxis *xaxis2  = h2->GetXaxis();
+		TAxis *xaxis1  = asymmetry->GetXaxis();
+		TAxis *xaxis2  = fierz_ratio->GetXaxis();
 
-		int nbinX1 = h1->GetNbinsX(); 
-		int nbinX2 = h2->GetNbinsX(); 
+		int nbinX1 = asymmetry->GetNbinsX(); 
+		int nbinX2 = fierz_ratio->GetNbinsX(); 
 
 		/// reset data structure
-		coords = std::vector<std::pair<double,double> >();
-		values = std::vector<double>();
-		errors = std::vector<double>();
+		energy = vector<double>();
+		values = vector<double>();
+		errors = vector<double>();
 
 
-		for (int ix = 1; ix <= nbinX1; ++ix) { 
-			for (int iy = 1; iy <= nbinY1; ++iy) { 
-				if ( h1->GetBinContent(ix,iy) > 0 ) { 
-					coords.push_back( std::make_pair(xaxis1->GetBinCenter(ix), yaxis1->GetBinCenter(iy) ) );
-					values.push_back( h1->GetBinContent(ix,iy) );
-					errors.push_back( h1->GetBinError(ix,iy) );
-				}
+		for (int ix = 1; ix <= nbinX1; ++ix)
+			if (asymmetry->GetBinContent(ix) > 0)
+			{
+				energy.push_back( xaxis1->GetBinCenter(ix) );
+				values.push_back( asymmetry->GetBinContent(ix) );
+				errors.push_back( asymmetry->GetBinError(ix) );
 			}
-		}
-		for (int ix = 1; ix <= nbinX2; ++ix) { 
-			for (int iy = 1; iy <= nbinY2; ++iy) { 
-				if ( h2->GetBinContent(ix,iy) > 0 ) { 
-					coords.push_back( std::make_pair(xaxis2->GetBinCenter(ix), yaxis2->GetBinCenter(iy) ) );
-					values.push_back( h2->GetBinContent(ix,iy) );
-					errors.push_back( h2->GetBinError(ix,iy) );
-				}
+
+		for (int ix = 1; ix <= nbinX2; ++ix)
+			if (fierz_ratio->GetBinContent(ix) > 0)
+			{
+				energy.push_back( xaxis2->GetBinCenter(ix) );
+				values.push_back( fierz_ratio->GetBinContent(ix) );
+				errors.push_back( fierz_ratio->GetBinError(ix) );
 			}
-		}
+
 
 		TVirtualFitter::SetDefaultFitter("Minuit");
 		TVirtualFitter * minuit = TVirtualFitter::Fitter(0,10);
@@ -157,20 +187,22 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 		func->SetParameters(minParams);
 		func->SetParErrors(parErrors);
 		func->SetChisquare(chi2);
-		int ndf = coords.size()-nvpar;
+		int ndf = energy.size()-nvpar;
 		func->SetNDF(ndf);
 
-		std::cout << "Chi2 Fit = " << chi2 << " ndf = " << ndf << "  " << func->GetNDF() << std::endl;
+		cout << "Chi2 Fit = " << chi2 << " ndf = " << ndf << "  " << func->GetNDF() << endl;
 
 		// add to list of functions
-		h1->GetListOfFunctions()->Add(func);
-		h2->GetListOfFunctions()->Add(func);
+		asymmetry->GetListOfFunctions()->Add(func);
+		fierz_ratio->GetListOfFunctions()->Add(func);
+	/*
 	}
 	else {     
 		// fit independently
-		h1->Fit(func);
-		h2->Fit(func);
+		asymmetry->Fit(func);
+		fierz_ratio->Fit(func);
 	}
+	*/
 
 
 
@@ -181,18 +213,18 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 	gStyle->SetStatY(0.6);
 
 	c1->cd(1);
-	h1->Draw();
-	func->SetRange(xlow1,ylow1,xup1,yup1);
+	asymmetry->Draw();
+	func->SetRange(min_E, max_E);
 	func->DrawCopy("cont1 same");
 	c1->cd(2);
-	h1->Draw("lego");
+	asymmetry->Draw("lego");
 	func->DrawCopy("surf1 same");
 	c1->cd(3);
-	func->SetRange(xlow2,ylow2,xup2,yup2);
-	h2->Draw();
+	func->SetRange(min_E, max_E);
+	fierz_ratio->Draw();
 	func->DrawCopy("cont1 same");
 	c1->cd(4);
-	h2->Draw("lego");
+	fierz_ratio->Draw("lego");
 	gPad->SetLogz();
 	func->Draw("surf1 same");
 
@@ -265,6 +297,7 @@ int main(int argc, char *argv[]) {
 
 
 
+#if 0
 // --------------------------------------------------
 //
 // Root example
@@ -511,3 +544,4 @@ int TwoHistoFit2D(bool global = true) {
 
 	return 0; 
 }
+#endif
