@@ -80,6 +80,128 @@ void compute_fit(TH1F* histogram, TF1* fierz_fit)
 }
 
 
+
+
+int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio) 
+{ 
+	double iniParams[10] = { 100, 6., 2., 7., 3, 100, 12., 3., 11., 2. };
+	// create fit function
+	TF1 * func = new TF1("func", my2Dfunc, min_E, max_E, 10);
+	func->SetParameters(iniParams);
+
+	if (true) { 
+		// fill data structure for fit (coordinates + values + errors) 
+		std::cout << "Do global fit" << std::endl;
+		// fit now all the function together
+
+		// fill data structure for fit (coordinates + values + errors) 
+		TAxis *xaxis1  = h1->GetXaxis();
+		TAxis *xaxis2  = h2->GetXaxis();
+
+		int nbinX1 = h1->GetNbinsX(); 
+		int nbinX2 = h2->GetNbinsX(); 
+
+		/// reset data structure
+		coords = std::vector<std::pair<double,double> >();
+		values = std::vector<double>();
+		errors = std::vector<double>();
+
+
+		for (int ix = 1; ix <= nbinX1; ++ix) { 
+			for (int iy = 1; iy <= nbinY1; ++iy) { 
+				if ( h1->GetBinContent(ix,iy) > 0 ) { 
+					coords.push_back( std::make_pair(xaxis1->GetBinCenter(ix), yaxis1->GetBinCenter(iy) ) );
+					values.push_back( h1->GetBinContent(ix,iy) );
+					errors.push_back( h1->GetBinError(ix,iy) );
+				}
+			}
+		}
+		for (int ix = 1; ix <= nbinX2; ++ix) { 
+			for (int iy = 1; iy <= nbinY2; ++iy) { 
+				if ( h2->GetBinContent(ix,iy) > 0 ) { 
+					coords.push_back( std::make_pair(xaxis2->GetBinCenter(ix), yaxis2->GetBinCenter(iy) ) );
+					values.push_back( h2->GetBinContent(ix,iy) );
+					errors.push_back( h2->GetBinError(ix,iy) );
+				}
+			}
+		}
+
+		TVirtualFitter::SetDefaultFitter("Minuit");
+		TVirtualFitter * minuit = TVirtualFitter::Fitter(0,10);
+		for (int i = 0; i < 10; ++i) {  
+			minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 0.01, 0,0);
+		}
+		minuit->SetFCN(myFcn);
+
+		double arglist[100];
+		arglist[0] = 0;
+		// set print level
+		minuit->ExecuteCommand("SET PRINT",arglist,2);
+
+		// minimize
+		arglist[0] = 5000; // number of function calls
+		arglist[1] = 0.01; // tolerance
+		minuit->ExecuteCommand("MIGRAD",arglist,2);
+
+		//get result
+		double minParams[10];
+		double parErrors[10];
+		for (int i = 0; i < 10; ++i) {  
+			minParams[i] = minuit->GetParameter(i);
+			parErrors[i] = minuit->GetParError(i);
+		}
+		double chi2, edm, errdef; 
+		int nvpar, nparx;
+		minuit->GetStats(chi2,edm,errdef,nvpar,nparx);
+
+		func->SetParameters(minParams);
+		func->SetParErrors(parErrors);
+		func->SetChisquare(chi2);
+		int ndf = coords.size()-nvpar;
+		func->SetNDF(ndf);
+
+		std::cout << "Chi2 Fit = " << chi2 << " ndf = " << ndf << "  " << func->GetNDF() << std::endl;
+
+		// add to list of functions
+		h1->GetListOfFunctions()->Add(func);
+		h2->GetListOfFunctions()->Add(func);
+	}
+	else {     
+		// fit independently
+		h1->Fit(func);
+		h2->Fit(func);
+	}
+
+
+
+	// Create a new canvas.
+	TCanvas * c1 = new TCanvas("c1","Two HIstogram Fit example",100,10,900,800);
+	c1->Divide(2,2);
+	gStyle->SetOptFit();
+	gStyle->SetStatY(0.6);
+
+	c1->cd(1);
+	h1->Draw();
+	func->SetRange(xlow1,ylow1,xup1,yup1);
+	func->DrawCopy("cont1 same");
+	c1->cd(2);
+	h1->Draw("lego");
+	func->DrawCopy("surf1 same");
+	c1->cd(3);
+	func->SetRange(xlow2,ylow2,xup2,yup2);
+	h2->Draw();
+	func->DrawCopy("cont1 same");
+	c1->cd(4);
+	h2->Draw("lego");
+	gPad->SetLogz();
+	func->Draw("surf1 same");
+
+	return 0; 
+}
+
+
+
+
 int main(int argc, char *argv[]) {
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
 
