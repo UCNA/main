@@ -1,0 +1,122 @@
+############### October 2011 ################
+
+###  Mis-tuned AFP means these early beta runs are garbage (other data problems too)
+>> October 7 Xenon Depol Beta Bad Polarization
+	16581-16583	Xe
+	16606-16754 Bad AFP betas
+
+### PMT W2 is dead
+>> October 19 Xenon 16983-17078	Xe
+>> October 23-24 Beta Decay 17125-17222
+>> October 24 Calibrations
+	old Xe 17224-17230
+	Ce,Sn,Bi 17233-17249
+>> October 26 Beta Decay 17274-17297
+### Bi pulser W1 fallen off; MWPC WX16 wire dead
+>> November 3 Sources Ce,Sn,Bi 17359-17387
+>> November 4-7 Beta Decay 17388-17509
+>> November 7 Calibrations Ce,Sn,Bi 17517-17527
+>> November 8 Xenon 17561-17734
+>> November 11-13 Beta Decay 17735-17862
+>> November 13 Sources Ce,Sn,Bi 17871-17941
+>> November 14 Long Source Runs 17942-17946
+>> November 15 Long Source Runs 17948-17955
+>> November 18 Sources with Cd,Cd113m,Ce,Bi 18020-18055
+### all PMTs now working
+>> November 30 Xenon, tiny amount 18081-18090
+>> December 2 Bucking Coil Scans 18102-18116
+>> December 3-5 Beta Decay 18119-18340
+>> December 7 Source Calibrations with In114,Cd,Ce,Sn,Bi 18357-18386
+### AFP quenched down; SCS re-ramped
+>> December 10 Xenon 18390-18413
+### down for week due to AFP quench, fill valve failure
+>> December 17-20 Snow Days Beta 18432-18616
+>> December 20 Calibrations Ce,Sn,Bi,Cd113,In,Cd  18617-18640
+>> December 21 Beta Decay 18658-18683
+
+################ January 2012 ###############
+
+>> January 11 Xenon and Sources
+	Xe 18712-18744
+	Ce,Sn,Bi,Cd113,In,Cd 18745-18768
+>> January 13-16 Beta Decay 18801-18994
+>> January 18-19 Beta Decay 19023-19046
+>> January 19-20 Beta Decay 19050-19073
+>> January 20-23 Beta Decay 19076-19201
+>> January 23 Sources Cd113,In,Cd,Ce,Sn,Bi 19203-19239
+>> February 10 Sources Ce,Sn,Bi,Cd113,In,Cd 19347-19377
+>> February 11-13 Beta Decay 19380-19485
+>> February 14 Sources 19505-19544
+>> February 16 Xenon and Betas
+	# 19583-19588 Xe runs too long for analyzer
+	Xe 19589-19606
+	Betas 19616-19639
+>> February 17-21 Presidents Day Weekend Betas 19643-19820
+>> February 21 Source Calibration 19823-19863
+>> February 22 Xenon, Long Sn
+	Xe 19873-19898
+	Sn 19899-19960
+>> February 24 Tiny Beta 19961-19966 B1-B6
+
+############### September 2012 #################
+
+>> September 9-10 First beta runs 20121-20169
+# thin Be trap windows have been installed on 9/14
+>> September 15 thin windows beta 20216-20264
+>> October 12-16 Source Calibrations, Betas
+	Ce,Sn,Bi 20515-20527
+	Long runs 20528-20531
+	Betas 20542-20741
+>> October 20 Betas (unattended) 20782-20805
+>> October 20 Calibrations
+	20min Ce,Sn,Bi 20818-20828
+	long centered 20831-20837
+>> November 2 Calibrations, Beta
+	# ugly PMT pedestals; probably not a useful calibration; failed to get beta data.
+	Ce,Sn,Bi 20901-20911
+	long centered 20913-20917
+>> November 4 Beta 20975-20993 aborted due to pressure in vacuum
+
+>> November 16-19 Calibrations, Beta
+	# running with isobutane in the wirechambers
+	Bi,Ce,Sn 21087-21099
+	Beta 21100-21237	A12
+>> November 20-26 Thanksgiving
+	# running with isobutane in the wirechambers
+	long centered Cd Cs In 21274-21298
+	Cd,Cs,In,Sn,Ce,Bi 21299-21328
+	Betas 21333-21435
+	# E MWPC tripping; reduced to 2600V
+	Betas 21439-21595
+	Xenon 21596-21605
+	# SCS Quench!
+	# field off after SCS quench: Xe 21607...21623
+	# pumping out Xe a week later: 21625...21628
+
+
+>> December 7-10 Calibration & Betas
+	Sources 21679-21718
+	Betas 21719-21863
+>> December 12 Sources
+	betas 21890-21913
+	sources 21914-21939
+	betas 21942-21965
+>> Dec. 13 Daytime Xe 21966-22003
+>> December 14-18 Year End Betas
+	betas 22023-22214
+	sources 22215-22238
+
+############## January 2013 ################
+
+>> January 11-14 Betas
+	sources 22294-22306
+	betas 22311-22436
+	sources 22437-22462
+>> January 17-22 MLK Betas 22511-22731
+>> January 25-28 Betas
+	sources 22767-22793
+	betas 22794-22922
+	long centered Sn runs 22924-22930
+>> January 30 Xenon 22961-22979
+>> January 30 and Feb 1 Betas 22994-23043
+>> February 2-4 Weekend Betas 23059-23173

@@ -493,7 +493,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid) {
 	Query();
 	if(!res) {
 		SMExcept e("missingGraph");
-		e.insert("graph_id",gid);
+		e.insert("graph_id",itos(gid));
 		throw(e);
 	}
 	TSQLRow* r;
@@ -505,7 +505,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid) {
 	unsigned int npts = gdata[0].size();
 	if(!npts) {
 		SMExcept e("missingGraphData");
-		e.insert("graph_id",gid);
+		e.insert("graph_id",itos(gid));
 		throw(e);
 	}
 	if(npts == 1) {
@@ -531,7 +531,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 	Query();
 	if(!res) {
 		SMExcept e("missingGraph");
-		e.insert("graph_id",gid);
+		e.insert("graph_id",itos(gid));
 		throw(e);
 	}
 	TSQLRow* r = res->Next();
@@ -542,7 +542,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 	}
 	if(!r) {
 		SMExcept e("missingGraphData");
-		e.insert("graph_id",gid);
+		e.insert("graph_id",itos(gid));
 		throw(e);
 	}
 	float tstart = fieldAsFloat(r);
@@ -560,7 +560,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 	}
 	if(!r) {
 		SMExcept e("missingGraphData");
-		e.insert("graph_id",gid);
+		e.insert("graph_id",itos(gid));
 		throw(e);
 	}
 	float tend = fieldAsFloat(r);
@@ -581,7 +581,7 @@ TGraphErrors* CalDBSQL::getGraph(unsigned int gid, RunNum rn) {
 	unsigned int npts = gdata[0].size();
 	if(!npts) {
 		SMExcept e("missingGraphData");
-		e.insert("graph_id",gid);
+		e.insert("graph_id",itos(gid));
 		throw(e);
 	}
 	if(npts == 1) {

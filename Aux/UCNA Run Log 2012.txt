@@ -129,21 +129,21 @@
 # thin Be trap windows have been installed on 9/14
 
 ### B->A ###
-### borked octetoid ###
-20203	B1
-20204	B2
-20205	B3
-20206	B4
+### borked octetoid --- something wrong ###
+#20203	B1
+#20204	B2
+#20205	B3
+#20206	B4
 
 ### B->A ###
-
-20209	B1
-20210	B2
-20211	B3
-20212	B4
-20213	B5
-20214	B6
-20215	B7			# aborted to check flipper tune
+#
+#20209	B1
+#20210	B2
+#20211	B3
+#20212	B4
+#20213	B5
+#20214	B6
+#20215	B7			# aborted to check flipper tune
 
 ### B->A ###
 
@@ -261,9 +261,9 @@
 *20559	B6
 *20560	B7
 *20561	B8
-*20562	B9
-*20563	B10		# W 2-fold triggers stopped; bad run; jiggled wires...
-*20564	B11
+#20562	B9
+#20563	B10		# W 2-fold triggers stopped; bad run; jiggled wires...
+#20564	B11
 
 ### B->A ###
 
@@ -276,7 +276,7 @@
 *20579	B7
 *20580	B8
 *20581	B9
-# ... something bad ...
+# ... a few bad runs ... fixed and restarted running
 *20592	B10
 *20593	B11
 *20594	B12
@@ -483,24 +483,25 @@
 *20837	SourcesCal		# 2.5in
 @sources
 
-### B->A ### unattended, probably borked
-
-*20876	B1
-*20877	B2
-*20878	B3
-*20879	B4
-*20880	B5
-*20881	B6
-*20882	B7
-*20883	B8
-*20884	B9
-*20885	B10
-*20886	B11
-*20887	B12
+### B->A ###
+# unattended octet, all messed up.
+#20876	B1
+#20877	B2
+#20878	B3
+#20879	B4
+#20880	B5
+#20881	B6
+#20882	B7
+#20883	B8
+#20884	B9
+#20885	B10
+#20886	B11
+#20887	B12
 
 #######################
 @cycle November 2 Calibrations, Beta
 #######################
+# ugly PMT pedestals; probably not a useful calibration; failed to get beta data.
 
 @sources Ce
 *20901	SourcesCal		# 0.0in
@@ -622,26 +623,28 @@
 *21119	A7
 *21121	A8
 *21122	A9
-*21123	A10
-*21124	A11
-*21125	A12
+
+############### E trigger rate drops out; DAQ problem.
+#21123	A10
+#21124	A11
+#21125	A12
 
 # melt & refreeze
 
 ### B-> ###
-
-*21126	B1
-*21127	B2
-*21128	B3
-*21129	B4
-*21130	B5
-*21131	B6
-*21132	B7
-*21133	B8
-*21134	B9
-*21135	B10
-*21136	B11
-*21137	B12
+# still E trigger rate dropout; DAQ problem.
+#21126	B1
+#21127	B2
+#21128	B3
+#21129	B4
+#21130	B5
+#21131	B6
+#21132	B7
+#21133	B8
+#21134	B9
+#21135	B10
+#21136	B11
+#21137	B12
 
 ### A->B ###
 
@@ -684,10 +687,10 @@
 *21172	A9
 *21173	A10
 *21174	A11
-*21175	A12
+#21175	A12	# beam out --- no H-GX
 
-*21176	B1
-*21177	B2
+#21176	B1		# beam out --- no H-GX
+*21177	B2		# no H-GX for first 20 mins
 *21178	B3
 *21179	B4
 *21180	B5
@@ -2372,17 +2375,12 @@
 
 ### B->A ###
 
-#
-# TODO: check paper log... what's happening here?
-#
-
 *22821	B1
 *22822	B2
 *22823	B2
 *22824	B3
 *22825	B4
 *22826	B5
-*22827	B5
 *22829	B6
 *22830	B7
 *22831	B8
@@ -2397,6 +2395,7 @@
 *22839	A4
 *22840	A5
 *22841	A6
+# 7 hour beam out; melt & refreeze
 *22844	A7
 *22845	A8
 *22846	A9
@@ -2421,7 +2420,8 @@
 *22861	A12
 
 *22862	B1
-*22863	B2
+*22863	B2	# beam out at end of run
+# proceeding at reduced rate after tune lurch
 *22864	B3
 *22865	B4
 *22866	B5
