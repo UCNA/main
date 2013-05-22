@@ -10,6 +10,7 @@
 #include <TVirtualFitter.h>
 #include <TList.h>
 #include <TStyle.h>
+#include <TApplication.h>
 
 // c++ includes
 #include <iostream>
@@ -96,7 +97,7 @@ double asymmetry_fit_func(double *x, double *par)
 
 
 
-double fierz_ratio_fit_func(double *x, double *par)
+double fierzratio_fit_func(double *x, double *par)
 {
 	double b = par[1];
 	double E = x[0];
@@ -108,30 +109,45 @@ double fierz_ratio_fit_func(double *x, double *par)
 
 // data need to be globals to be visible by fcn 
 
-vector<double> energy;        
-vector<double> values;        
-vector<double> errors;        
+vector<double> asymmetry_energy;        
+vector<double> asymmetry_values;        
+vector<double> asymmetry_errors;        
+vector<double> fierzratio_energy;        
+vector<double> fierzratio_values;        
+vector<double> fierzratio_errors;        
 
 
 
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
-	int n = energy.size();
 	double chi2 = 0; 
-	double chi,	E[1]; 
+	double chi,	E; 
+
+	int n = asymmetry_energy.size();
 	for (int i = 0; i < n; ++i ) { 
-		E[0] = energy[i];
-		chi = (values[i] - asymmetry_fit_func(E,p)) / errors[i];
-		chi2 += chi*chi; 
-		chi = (values[i] - fierz_ratio_fit_func(E,p)) / errors[i];
-		chi2 += chi*chi; 
+		E = asymmetry_energy[i];
+		if (min_E < E and E < max_E)
+		{
+			chi = (asymmetry_values[i] - asymmetry_fit_func(&E,p)) / asymmetry_errors[i];
+			chi2 += chi*chi; 
+		}
+	}
+
+	n = fierzratio_energy.size();
+	for (int i = 0; i < n; ++i ) { 
+		E = fierzratio_energy[i];
+		if (min_E < E and E < max_E)
+		{
+			//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,p)) / fierzratio_errors[i];
+			//chi2 += chi*chi; 
+		}
 	}
 	fval = chi2; 
 }
 
 
 
-int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio) 
+int combined_fit(TH1F* asymmetry, TH1F* fierzratio) 
 { 
 	double iniParams[2] = { -0.12, 0 };
 	// create fit function
@@ -145,30 +161,33 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 
 		// fill data structure for fit (coordinates + values + errors) 
 		TAxis *xaxis1  = asymmetry->GetXaxis();
-		TAxis *xaxis2  = fierz_ratio->GetXaxis();
+		TAxis *xaxis2  = fierzratio->GetXaxis();
 
 		int nbinX1 = asymmetry->GetNbinsX(); 
-		int nbinX2 = fierz_ratio->GetNbinsX(); 
+		int nbinX2 = fierzratio->GetNbinsX(); 
 
 		/// reset data structure
-		energy = vector<double>();
-		values = vector<double>();
-		errors = vector<double>();
+		asymmetry_energy = vector<double>();
+		asymmetry_values = vector<double>();
+		asymmetry_errors = vector<double>();
+		fierzratio_energy = vector<double>();
+		fierzratio_values = vector<double>();
+		fierzratio_errors = vector<double>();
 
 		for (int ix = 1; ix <= nbinX1; ++ix)
 			if (asymmetry->GetBinContent(ix) > 0)
 			{
-				energy.push_back( xaxis1->GetBinCenter(ix) );
-				values.push_back( asymmetry->GetBinContent(ix) );
-				errors.push_back( asymmetry->GetBinError(ix) );
+				asymmetry_energy.push_back( xaxis1->GetBinCenter(ix) );
+				asymmetry_values.push_back( asymmetry->GetBinContent(ix) );
+				asymmetry_errors.push_back( asymmetry->GetBinError(ix) );
 			}
 
 		for (int ix = 1; ix <= nbinX2; ++ix)
-			if (fierz_ratio->GetBinContent(ix) > 0)
+			if (fierzratio->GetBinContent(ix) > 0)
 			{
-				energy.push_back( xaxis2->GetBinCenter(ix) );
-				values.push_back( fierz_ratio->GetBinContent(ix) );
-				errors.push_back( fierz_ratio->GetBinError(ix) );
+				fierzratio_energy.push_back( xaxis2->GetBinCenter(ix) );
+				fierzratio_values.push_back( fierzratio->GetBinContent(ix) );
+				fierzratio_errors.push_back( fierzratio->GetBinError(ix) );
 			}
 
 
@@ -185,8 +204,8 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 		minuit->ExecuteCommand("SET PRINT",arglist,1);
 
 		// minimize
-		arglist[0] = 5000; // number of function calls
-		arglist[1] = 0.01; // tolerance
+		arglist[0] = 50000; // number of function calls
+		arglist[1] = 0.001; // tolerance
 		minuit->ExecuteCommand("MIGRAD",arglist,2);
 
 		//get result
@@ -203,20 +222,21 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 		func->SetParameters(minParams);
 		func->SetParErrors(parErrors);
 		func->SetChisquare(chi2);
-		int ndf = energy.size()-nvpar;
+		int ndf = asymmetry_energy.size()-nvpar;
 		func->SetNDF(ndf);
 
 		cout << "Chi2 Fit = " << chi2 << " ndf = " << ndf << "  " << func->GetNDF() << endl;
 
 		// add to list of functions
 		asymmetry->GetListOfFunctions()->Add(func);
-		fierz_ratio->GetListOfFunctions()->Add(func);
+		fierzratio->GetListOfFunctions()->Add(func);
+		
 	/*
 	}
 	else {     
 		// fit independently
 		asymmetry->Fit(func);
-		fierz_ratio->Fit(func);
+		fierzratio->Fit(func);
 	}
 	*/
 
@@ -237,12 +257,13 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 	func->DrawCopy("surf1 same");
 	c1->cd(3);
 	func->SetRange(min_E, max_E);
-	fierz_ratio->Draw();
+	fierzratio->Draw();
 	func->DrawCopy("cont1 same");
 	c1->cd(4);
-	fierz_ratio->Draw("lego");
+	fierzratio->Draw("lego");
 	gPad->SetLogz();
 	func->Draw("surf1 same");
+
 
 	return 0; 
 }
@@ -251,7 +272,8 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 
 
 int main(int argc, char *argv[]) {
-    TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
+	TApplication app("Combined Fit", &argc, argv);
+    //TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
 
 	//asym_histogram->SetStats(0);
     //asym_histogram->SetLineColor(3);
@@ -280,6 +302,7 @@ int main(int argc, char *argv[]) {
     TH1F *supersum_histogram = 
             (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
 
+	/*
 	// fit the Fierz ratio 
 	char fit_str[1024];
     sprintf(fit_str, "[0]/(1+[1]*(%f/(%f+x)))", electron_mass, electron_mass);
@@ -289,10 +312,12 @@ int main(int argc, char *argv[]) {
 	asymmetry_histogram->Fit(fierz_fit, "Sr");
 
 	compute_fit(asymmetry_histogram, fierz_fit);
+	*/
 
 	combined_fit(asymmetry_histogram, supersum_histogram);
 
 
+	/*
 	// A fit histogram for output to gnuplot
     TH1F *fierz_fit_histogram = new TH1F(*asymmetry_histogram);
 	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
@@ -309,6 +334,10 @@ int main(int argc, char *argv[]) {
 	//output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
 	//output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
 	//output_histogram("/data/kevinh/mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
+
+	*/
+
+	app.Run();
 
 	return 0;
 }
