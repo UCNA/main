@@ -112,6 +112,8 @@ vector<double> energy;
 vector<double> values;        
 vector<double> errors;        
 
+
+
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
 	int n = energy.size();
@@ -133,7 +135,7 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 { 
 	double iniParams[2] = { -0.12, 0 };
 	// create fit function
-	TF1 * func = new TF1("func", combined_chi2, min_E, max_E, 2);
+	TF1 * func = new TF1("func", asymmetry_fit_func, min_E, max_E, 2);
 	func->SetParameters(iniParams);
 
 	//if (true) { 
