@@ -825,10 +825,6 @@ int main(int argc, char *argv[])
 	std::cout << super_sum_histogram->GetNbinsX() << std::endl;
 	std::cout << mc.sm_super_sum_histogram->GetNbinsX() << std::endl;
 	
-	fierz_ratio_histogram->SetDirectory(ratio_tfile);
-	fierz_ratio_histogram->Write();
-	ratio_tfile->Close();
-
 
 	// fit the Fierz ratio 
 	char fit_str[1024];
@@ -875,6 +871,11 @@ int main(int argc, char *argv[])
 	output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
 	output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
 	output_histogram("/data/kevinh/mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
+
+
+	fierz_ratio_histogram->SetDirectory(ratio_tfile);
+	fierz_ratio_histogram->Write();
+	//ratio_tfile->Close();
 
 
 	return 0;
