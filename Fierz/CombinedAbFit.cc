@@ -24,7 +24,7 @@
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
 double min_E = 230;
 double max_E = 660;
-//static double expected_fierz = 0.6540;	// full range
+static double expected_fierz = 0.6540;	// full range
 //static double expected_fierz = 0.6111;		// for range 150 - 600
 //static double expected_gluck = 11.8498;     // for range 150 - 600
 //static unsigned nToSim = 5E7;				// how many triggering events to simulate
@@ -85,10 +85,23 @@ void compute_fit(TH1F* histogram, TF1* fierz_fit)
 
 
 
-double my2Dfunc(double *x, double *par) {
-	double *p1 = &par[0];
-	double *p2 = &par[5];
-	return 0;
+double asymmetry_fit_func(double *x, double *par)
+{
+	double A = par[0];
+	double b = par[1];
+	double E = x[0];
+
+	return A * (1 + b * electron_mass / E);
+}
+
+
+
+double fierz_ratio_fit_func(double *x, double *par)
+{
+	double b = par[1];
+	double E = x[0];
+
+	return (1 + b * electron_mass / E) / (1 + b * expected_fierz);
 }
 
 
@@ -99,14 +112,16 @@ vector<double> energy;
 vector<double> values;        
 vector<double> errors;        
 
-void myFcn(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
+void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
 	int n = energy.size();
 	double chi2 = 0; 
-	double chi,	x; 
+	double chi,	E; 
 	for (int i = 0; i <n; ++i ) { 
-		x = energy[i];
-		chi = (values[i] - my2Dfunc(&x,p)) / errors[i];
+		E = energy[i];
+		chi = (values[i] - asymmetry_fit_func(&E,p)) / errors[i];
+		chi2 += chi*chi; 
+		chi = (values[i] - fierz_ratio_fit_func(&E,p)) / errors[i];
 		chi2 += chi*chi; 
 	}
 	fval = chi2; 
@@ -116,9 +131,9 @@ void myFcn(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, 
 
 int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio) 
 { 
-	double iniParams[10] = { 100, 6., 2., 7., 3, 100, 12., 3., 11., 2. };
+	double iniParams[2] = { -0.12, 0 };
 	// create fit function
-	TF1 * func = new TF1("func", my2Dfunc, min_E, max_E, 10);
+	TF1 * func = new TF1("func", combined_chi2, min_E, max_E, 2);
 	func->SetParameters(iniParams);
 
 	//if (true) { 
@@ -138,7 +153,6 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 		values = vector<double>();
 		errors = vector<double>();
 
-
 		for (int ix = 1; ix <= nbinX1; ++ix)
 			if (asymmetry->GetBinContent(ix) > 0)
 			{
@@ -157,11 +171,11 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 
 
 		TVirtualFitter::SetDefaultFitter("Minuit");
-		TVirtualFitter * minuit = TVirtualFitter::Fitter(0,10);
+		TVirtualFitter * minuit = TVirtualFitter::Fitter(0,2);
 		for (int i = 0; i < 10; ++i) {  
 			minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 0.01, 0,0);
 		}
-		minuit->SetFCN(myFcn);
+		minuit->SetFCN(combined_chi2);
 
 		double arglist[100];
 		arglist[0] = 0;
@@ -174,9 +188,9 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 		minuit->ExecuteCommand("MIGRAD",arglist,2);
 
 		//get result
-		double minParams[10];
-		double parErrors[10];
-		for (int i = 0; i < 10; ++i) {  
+		double minParams[2];
+		double parErrors[2];
+		for (int i = 0; i < 2; ++i) {  
 			minParams[i] = minuit->GetParameter(i);
 			parErrors[i] = minuit->GetParError(i);
 		}
