@@ -417,6 +417,7 @@ void output_histogram(string filename, TH1F* h, double ax, double ay)
 
 int main(int argc, char *argv[]) 
 {
+	TH1::AddDirectory(kFALSE);
 	expected_fierz = evaluate_expected_fierz(min_E, max_E);
 	std::cout << "Expected Fierz " << expected_fierz << "\n";
 	
@@ -560,7 +561,7 @@ int main(int argc, char *argv[])
 	mc.fierz_super_sum_histogram->SetDirectory(mc_tfile);
 	mc.fierz_super_sum_histogram->Write();
 
-	mc_tfile->Close();
+	//mc_tfile->Close();
 
     for (int side = 0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++)
