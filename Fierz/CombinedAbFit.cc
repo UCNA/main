@@ -116,12 +116,12 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 {
 	int n = energy.size();
 	double chi2 = 0; 
-	double chi,	E; 
-	for (int i = 0; i <n; ++i ) { 
-		E = energy[i];
-		chi = (values[i] - asymmetry_fit_func(&E,p)) / errors[i];
+	double chi,	E[1]; 
+	for (int i = 0; i < n; ++i ) { 
+		E[0] = energy[i];
+		chi = (values[i] - asymmetry_fit_func(E,p)) / errors[i];
 		chi2 += chi*chi; 
-		chi = (values[i] - fierz_ratio_fit_func(&E,p)) / errors[i];
+		chi = (values[i] - fierz_ratio_fit_func(E,p)) / errors[i];
 		chi2 += chi*chi; 
 	}
 	fval = chi2; 
@@ -172,15 +172,15 @@ int combined_fit(TH1F* asymmetry, TH1F* fierz_ratio)
 
 		TVirtualFitter::SetDefaultFitter("Minuit");
 		TVirtualFitter * minuit = TVirtualFitter::Fitter(0,2);
-		for (int i = 0; i < 10; ++i) {  
-			minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 0.01, 0,0);
+		for (int i = 0; i < 2; ++i) {  
+			minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 0.01, 0, 0);
 		}
 		minuit->SetFCN(combined_chi2);
 
 		double arglist[100];
 		arglist[0] = 0;
 		// set print level
-		minuit->ExecuteCommand("SET PRINT",arglist,2);
+		minuit->ExecuteCommand("SET PRINT",arglist,1);
 
 		// minimize
 		arglist[0] = 5000; // number of function calls
@@ -287,6 +287,9 @@ int main(int argc, char *argv[]) {
 	asymmetry_histogram->Fit(fierz_fit, "Sr");
 
 	compute_fit(asymmetry_histogram, fierz_fit);
+
+	combined_fit(asymmetry_histogram, super_sum_histogram);
+
 
 	// A fit histogram for output to gnuplot
     TH1F *fierz_fit_histogram = new TH1F(*asymmetry_histogram);
