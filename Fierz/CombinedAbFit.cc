@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
 
 	compute_fit(asymmetry_histogram, fierz_fit);
 
-	combined_fit(asymmetry_histogram, super_sum_histogram);
+	combined_fit(asymmetry_histogram, supersum_histogram);
 
 
 	// A fit histogram for output to gnuplot
