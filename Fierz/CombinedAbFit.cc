@@ -124,23 +124,19 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 	double chi,	E; 
 
 	int n = asymmetry_energy.size();
-	for (int i = 0; i < n; ++i ) { 
+	for (int i = 0; i < n; ++i )
+	{
 		E = asymmetry_energy[i];
-		if (min_E < E and E < max_E)
-		{
-			chi = (asymmetry_values[i] - asymmetry_fit_func(&E,p)) / asymmetry_errors[i];
-			chi2 += chi*chi; 
-		}
+		chi = (asymmetry_values[i] - asymmetry_fit_func(&E,p)) / asymmetry_errors[i];
+		chi2 += chi*chi; 
 	}
+	cout << "chi2 = " << chi2 << endl;
 
 	n = fierzratio_energy.size();
 	for (int i = 0; i < n; ++i ) { 
 		E = fierzratio_energy[i];
-		if (min_E < E and E < max_E)
-		{
-			//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,p)) / fierzratio_errors[i];
-			//chi2 += chi*chi; 
-		}
+		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,p)) / fierzratio_errors[i];
+		//chi2 += chi*chi; 
 	}
 	fval = chi2; 
 }
@@ -149,7 +145,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 int combined_fit(TH1F* asymmetry, TH1F* fierzratio) 
 { 
-	double iniParams[2] = { -0.12, 0 };
+	double iniParams[2] = { -0.15, 0 };
 	// create fit function
 	TF1 * func = new TF1("func", asymmetry_fit_func, min_E, max_E, 2);
 	func->SetParameters(iniParams);
@@ -175,20 +171,23 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 		fierzratio_errors = vector<double>();
 
 		for (int ix = 1; ix <= nbinX1; ++ix)
-			if (asymmetry->GetBinContent(ix) > 0)
+		{
+			double E = xaxis1->GetBinCenter(ix);
+			if (min_E < E and E < max_E)
 			{
-				asymmetry_energy.push_back( xaxis1->GetBinCenter(ix) );
+				asymmetry_energy.push_back( E );
 				asymmetry_values.push_back( asymmetry->GetBinContent(ix) );
 				asymmetry_errors.push_back( asymmetry->GetBinError(ix) );
+				cout << xaxis1->GetBinCenter(ix) << endl;
 			}
+		}
 
 		for (int ix = 1; ix <= nbinX2; ++ix)
-			if (fierzratio->GetBinContent(ix) > 0)
-			{
-				fierzratio_energy.push_back( xaxis2->GetBinCenter(ix) );
-				fierzratio_values.push_back( fierzratio->GetBinContent(ix) );
-				fierzratio_errors.push_back( fierzratio->GetBinError(ix) );
-			}
+		{
+			fierzratio_energy.push_back( xaxis2->GetBinCenter(ix) );
+			fierzratio_values.push_back( fierzratio->GetBinContent(ix) );
+			fierzratio_errors.push_back( fierzratio->GetBinError(ix) );
+		}
 
 
 		TVirtualFitter::SetDefaultFitter("Minuit");
@@ -295,12 +294,23 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+    TFile *fierzratio_data_tfile = new TFile(
+		"Fierz/mc.root");
+	if (fierzratio_data_tfile->IsZombie())
+	{
+		std::cout << "File not found." << std::endl;
+		exit(1);
+	}
+
     TH1F *asymmetry_histogram = 
             (TH1F*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
     //printf("Number of bins in data %d\n", ucna_data_histogram->GetNbinsX());
 
     TH1F *supersum_histogram = 
             (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
+
+    TH1F *fierzratio_histogram = 
+            (TH1F*)fierzratio_data_tfile->Get("Total_Events_SuperSum");
 
 	/*
 	// fit the Fierz ratio 
@@ -314,7 +324,7 @@ int main(int argc, char *argv[]) {
 	compute_fit(asymmetry_histogram, fierz_fit);
 	*/
 
-	combined_fit(asymmetry_histogram, supersum_histogram);
+	combined_fit(asymmetry_histogram, fierzratio_histogram);
 
 
 	/*

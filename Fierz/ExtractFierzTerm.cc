@@ -49,7 +49,7 @@ double max_E = 660;
 double expected_fierz = 0.6540;				/// full range (will get overwritten) 
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
-static unsigned nToSim = 2.5e7;				/// how many triggering events to simulate
+static unsigned nToSim = 2.5e4;				/// how many triggering events to simulate
 static double loading_prob = 40; 			/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
 static int integral_size = 1000;
@@ -544,7 +544,6 @@ int main(int argc, char *argv[])
 		if(nSimmed >= nToSim)
 			break;
 	}
-	//mc.WriteTFile("/data/kevinh/mc/mc.root");
     
 	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
 
@@ -561,7 +560,7 @@ int main(int argc, char *argv[])
 	mc.fierz_super_sum_histogram->SetDirectory(mc_tfile);
 	mc.fierz_super_sum_histogram->Write();
 
-	//mc_tfile->Close();
+	mc_tfile->Close();
 
     for (int side = 0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++)
@@ -795,8 +794,17 @@ int main(int argc, char *argv[])
     TString super_sum_pdf_filename = "/data/kevinh/mc/super_sum_data.pdf";
     canvas->SaveAs(super_sum_pdf_filename);
 
+	TFile* ratio_tfile = new TFile("Fierz/ratio.root", "recreate");
+	if (ratio_tfile->IsZombie())
+	{
+		//printf("File "+beta_filename+"not found.\n");
+		std::cout << "Can't recreate MC file" << std::endl;
+		exit(1);
+	}
+
     // compute little b factor
     TH1F *fierz_ratio_histogram = new TH1F(*super_sum_histogram);
+	fierz_ratio_histogram->SetName("fierz_ratio_histogram");
     //fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
     int bins = super_sum_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+1; bin++) {
@@ -816,6 +824,11 @@ int main(int argc, char *argv[])
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
 	std::cout << super_sum_histogram->GetNbinsX() << std::endl;
 	std::cout << mc.sm_super_sum_histogram->GetNbinsX() << std::endl;
+	
+	fierz_ratio_histogram->SetDirectory(ratio_tfile);
+	fierz_ratio_histogram->Write();
+	ratio_tfile->Close();
+
 
 	// fit the Fierz ratio 
 	char fit_str[1024];
@@ -823,9 +836,6 @@ int main(int argc, char *argv[])
     TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
     fierz_fit->SetParameter(0,0);
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
-
-	fierz_ratio_histogram->SetDirectory(mc_tfile);
-	fierz_ratio_histogram->Write();
 
 	// A fit histogram for output to gnuplot
     TH1F *fierz_fit_histogram = new TH1F(*super_sum_histogram);
@@ -865,6 +875,7 @@ int main(int argc, char *argv[])
 	output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
 	output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
 	output_histogram("/data/kevinh/mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
+
 
 	return 0;
 }
