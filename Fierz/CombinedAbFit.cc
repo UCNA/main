@@ -22,10 +22,32 @@
 #include <stdlib.h>
 #include <time.h>
 
+///
+/// physical constants
+///
+const double    pi          = 3.1415926535;         /// pi
+const double    alpha       = 1/137.035999;         /// fine-structure constant
+const double    a2pi        = alpha/(2*pi);         /// alpha over 2pi
+const double    m_e         = 510.9988484;          /// electron mass       (14)
+const double    m_p         = 938272.046;           /// proton mass         (21)
+const double    m_n         = 939565.378;           /// neutron mass        (21)
+const double    mu_p        = 2.792846;             /// proton moment       (7)
+const double    mu_n        = -1.9130427;           /// neutron moment      (5)
+const double    muV         = mu_p - mu_n;          /// nucleon moment      (9)
+const double    Q           = 782.344;              /// end point KE        (30)
+const double    E0          = m_e + Q;              /// end point E         (30)
+const double    L           = -1.27590;             /// gA/gV               (450)
+const double    M           = 1 + 3*L*L;            /// matrix element
+const double    I_0         = 1.63632;              /// 0th moment          (25)
+const double    I_1         = 1.07017;              /// 1st moment          (15)
+const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
+
+
 static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
 double min_E = 230;
 double max_E = 660;
 static double expected_fierz = 0.6540;	// full range
+static int integral_size = 1000;
 //static double expected_fierz = 0.6111;		// for range 150 - 600
 //static double expected_gluck = 11.8498;     // for range 150 - 600
 //static unsigned nToSim = 5E7;				// how many triggering events to simulate
@@ -52,6 +74,47 @@ int output_histogram(string filename, TH1F* h, double ax, double ay)
 	return 0;
 }
 #endif
+
+
+/// beta spectrum with little b term
+double fierz_beta_spectrum(const double *val, const double *par) 
+{
+	const double K = val[0];                    /// kinetic energy
+	if (K <= 0 or K >= Q)
+		return 0;                               /// zero outside range
+
+	const double b = par[0];                    /// Fierz parameter
+	const int n = par[1];                    	/// Fierz exponent
+	const double E = K + m_e;                   /// electron energy
+	const double e = Q - K;                     /// neutrino energy
+	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
+	const double x = pow(m_e/E,n);              /// Fierz term
+	const double f = (1 + b*x)/(1 + b*x_1);     /// Fierz factor
+	const double k = 1.3723803E-11/Q;           /// normalization factor
+	const double P = k*p*e*e*E*f*x;             /// the output PDF value
+
+	return P;
+}
+
+
+
+double evaluate_expected_fierz(double min, double max) 
+{
+    TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
+    TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
+	for (int i = 0; i < integral_size; i++)
+	{
+		double K = min + double(i)*(max-min)/integral_size;
+		double par1[2] = {0, 1};
+		double par2[2] = {0, 0};
+		double y1 = fierz_beta_spectrum(&K, par1);
+		double y2 = fierz_beta_spectrum(&K, par2);
+		h1->SetBinContent(K, y1);
+		h2->SetBinContent(K, y2);
+	}
+	return h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
+}
+
 
 
 void compute_fit(TH1F* histogram, TF1* fierz_fit) 
@@ -130,13 +193,13 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 		chi = (asymmetry_values[i] - asymmetry_fit_func(&E,p)) / asymmetry_errors[i];
 		chi2 += chi*chi; 
 	}
-	cout << "chi2 = " << chi2 << endl;
+	//cout << "chi2 = " << chi2 << endl;
 
 	n = fierzratio_energy.size();
 	for (int i = 0; i < n; ++i ) { 
 		E = fierzratio_energy[i];
-		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,p)) / fierzratio_errors[i];
-		//chi2 += chi*chi; 
+		chi = (fierzratio_values[i] - fierzratio_fit_func(&E,p)) / fierzratio_errors[i];
+		chi2 += chi*chi; 
 	}
 	fval = chi2; 
 }
@@ -146,9 +209,12 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 int combined_fit(TH1F* asymmetry, TH1F* fierzratio) 
 { 
 	double iniParams[2] = { -0.15, 0 };
+	const char * iniParamNames[2] = { "A", "b" };
 	// create fit function
 	TF1 * func = new TF1("func", asymmetry_fit_func, min_E, max_E, 2);
 	func->SetParameters(iniParams);
+	for (int i = 0; i < 2; i++)
+		func->SetParName(i, iniParamNames[i]);
 
 	//if (true) { 
 		// fill data structure for fit (coordinates + values + errors) 
@@ -184,9 +250,13 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 
 		for (int ix = 1; ix <= nbinX2; ++ix)
 		{
-			fierzratio_energy.push_back( xaxis2->GetBinCenter(ix) );
-			fierzratio_values.push_back( fierzratio->GetBinContent(ix) );
-			fierzratio_errors.push_back( fierzratio->GetBinError(ix) );
+			double E = xaxis2->GetBinCenter(ix);
+			if (min_E < E and E < max_E)
+			{
+				fierzratio_energy.push_back( E );
+				fierzratio_values.push_back( fierzratio->GetBinContent(ix) );
+				fierzratio_errors.push_back( fierzratio->GetBinError(ix) );
+			}
 		}
 
 
@@ -251,17 +321,21 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 	asymmetry->Draw();
 	func->SetRange(min_E, max_E);
 	func->DrawCopy("cont1 same");
+	/*
 	c1->cd(2);
 	asymmetry->Draw("lego");
 	func->DrawCopy("surf1 same");
+	*/
 	c1->cd(3);
 	func->SetRange(min_E, max_E);
 	fierzratio->Draw();
 	func->DrawCopy("cont1 same");
+	/*
 	c1->cd(4);
 	fierzratio->Draw("lego");
 	gPad->SetLogz();
 	func->Draw("surf1 same");
+	*/
 
 
 	return 0; 
@@ -272,6 +346,7 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 
 int main(int argc, char *argv[]) {
 	TApplication app("Combined Fit", &argc, argv);
+	expected_fierz = evaluate_expected_fierz(min_E, max_E);
     //TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
 
 	//asym_histogram->SetStats(0);
@@ -295,7 +370,7 @@ int main(int argc, char *argv[]) {
 	}
 
     TFile *fierzratio_data_tfile = new TFile(
-		"Fierz/mc.root");
+		"Fierz/ratio.root");
 	if (fierzratio_data_tfile->IsZombie())
 	{
 		std::cout << "File not found." << std::endl;
@@ -310,7 +385,7 @@ int main(int argc, char *argv[]) {
             (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
 
     TH1F *fierzratio_histogram = 
-            (TH1F*)fierzratio_data_tfile->Get("Total_Events_SuperSum");
+            (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
 
 	/*
 	// fit the Fierz ratio 
@@ -351,255 +426,3 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
-
-
-
-
-#if 0
-// --------------------------------------------------
-//
-// Root example
-// + Example to fit two histograms at the same time 
-// Author: Rene Brun
-
-#include "TH2D.h"
-#include "TF2.h"
-#include "TCanvas.h"
-#include "TStyle.h"
-#include "TRandom3.h"
-#include "TVirtualFitter.h"
-#include "TList.h"
-
-#include <vector>
-#include <map>
-#include <iostream>
-
-double gauss2D(double *x, double *par) {
-	double z1 = double((x[0]-par[1])/par[2]);
-	double z2 = double((x[1]-par[3])/par[4]);
-	return par[0]*exp(-0.5*(z1*z1+z2*z2));
-}   
-
-double my2Dfunc(double *x, double *par) {
-	double *p1 = &par[0];
-	double *p2 = &par[5];
-	return gauss2D(x,p1) + gauss2D(x,p2);
-}
-
-
-
-// data need to be globals to be visible by fcn 
-
-std::vector<std::pair<double, double> > coords;        
-std::vector<double > values;        
-std::vector<double > errors;        
-
-void myFcn(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
-{
-	int n = coords.size();
-	double chi2 = 0; 
-	double tmp,x[2]; 
-	for (int i = 0; i <n; ++i ) { 
-		x[0] = coords[i].first;
-		x[1] = coords[i].second;
-		tmp = ( values[i] - my2Dfunc(x,p))/errors[i];
-		chi2 += tmp*tmp; 
-	}
-	fval = chi2; 
-}
-TRandom3 rndm; 
-void FillHisto(TH2D * h, int n, double * p) { 
-
-
-	const double mx1 = p[1]; 
-	const double my1 = p[3]; 
-	const double sx1 = p[2]; 
-	const double sy1 = p[4]; 
-	const double mx2 = p[6]; 
-	const double my2 = p[8]; 
-	const double sx2 = p[7]; 
-	const double sy2 = p[9]; 
-	//const double w1 = p[0]*sx1*sy1/(p[5]*sx2*sy2); 
-	const double w1 = 0.5; 
-
-	double x, y; 
-	for (int i = 0; i < n; ++i) {
-		// generate randoms with larger gaussians
-		rndm.Rannor(x,y);
-
-		double r = rndm.Rndm(1);
-		if (r < w1) { 
-			x = x*sx1 + mx1; 
-			y = y*sy1 + my1; 
-		}
-		else { 
-			x = x*sx2 + mx2; 
-			y = y*sy2 + my2; 
-		}      
-		h->Fill(x,y);
-
-	}
-}
-
-
-
-
-int TwoHistoFit2D(bool global = true) { 
-
-	// create two histograms 
-
-	int nbx1 = 50;
-	int nby1 = 50;
-	int nbx2 = 50;
-	int nby2 = 50;
-	double xlow1 = 0.; 
-	double ylow1 = 0.; 
-	double xup1 = 10.; 
-	double yup1 = 10.; 
-	double xlow2 = 5.; 
-	double ylow2 = 5.; 
-	double xup2 = 20.; 
-	double yup2 = 20.; 
-
-	TH2D * h1 = new TH2D("h1","core",nbx1,xlow1,xup1,nby1,ylow1,yup1);
-	TH2D * h2 = new TH2D("h2","tails",nbx2,xlow2,xup2,nby2,ylow2,yup2);
-
-	double iniParams[10] = { 100, 6., 2., 7., 3, 100, 12., 3., 11., 2. };
-	// create fit function
-	TF2 * func = new TF2("func",my2Dfunc,xlow2,xup2,ylow2,yup2, 10);
-	func->SetParameters(iniParams);
-
-	// fill Histos
-	int n1 = 1000000;
-	int n2 = 1000000; 
-	//  h1->FillRandom("func", n1);
-	//h2->FillRandom("func",n2);
-	FillHisto(h1,n1,iniParams);
-	FillHisto(h2,n2,iniParams);
-
-	// scale histograms to same heights (for fitting)
-	double dx1 = (xup1-xlow1)/double(nbx1); 
-	double dy1 = (yup1-ylow1)/double(nby1);
-	double dx2 = (xup2-xlow2)/double(nbx2);
-	double dy2 = (yup2-ylow2)/double(nby2);
-	//   h1->Sumw2();
-	//   h1->Scale( 1.0 / ( n1 * dx1 * dy1 ) );
-	// scale histo 2 to scale of 1 
-	h2->Sumw2();
-	h2->Scale(  ( double(n1) * dx1 * dy1 )  / ( double(n2) * dx2 * dy2 ) );
-
-
-	if (global) { 
-		// fill data structure for fit (coordinates + values + errors) 
-		std::cout << "Do global fit" << std::endl;
-		// fit now all the function together
-
-		// fill data structure for fit (coordinates + values + errors) 
-		TAxis *xaxis1  = h1->GetXaxis();
-		TAxis *yaxis1  = h1->GetYaxis();
-		TAxis *xaxis2  = h2->GetXaxis();
-		TAxis *yaxis2  = h2->GetYaxis();
-
-		int nbinX1 = h1->GetNbinsX(); 
-		int nbinY1 = h1->GetNbinsY(); 
-		int nbinX2 = h2->GetNbinsX(); 
-		int nbinY2 = h2->GetNbinsY(); 
-
-		/// reset data structure
-		coords = std::vector<std::pair<double,double> >();
-		values = std::vector<double>();
-		errors = std::vector<double>();
-
-
-		for (int ix = 1; ix <= nbinX1; ++ix) { 
-			for (int iy = 1; iy <= nbinY1; ++iy) { 
-				if ( h1->GetBinContent(ix,iy) > 0 ) { 
-					coords.push_back( std::make_pair(xaxis1->GetBinCenter(ix), yaxis1->GetBinCenter(iy) ) );
-					values.push_back( h1->GetBinContent(ix,iy) );
-					errors.push_back( h1->GetBinError(ix,iy) );
-				}
-			}
-		}
-		for (int ix = 1; ix <= nbinX2; ++ix) { 
-			for (int iy = 1; iy <= nbinY2; ++iy) { 
-				if ( h2->GetBinContent(ix,iy) > 0 ) { 
-					coords.push_back( std::make_pair(xaxis2->GetBinCenter(ix), yaxis2->GetBinCenter(iy) ) );
-					values.push_back( h2->GetBinContent(ix,iy) );
-					errors.push_back( h2->GetBinError(ix,iy) );
-				}
-			}
-		}
-
-		TVirtualFitter::SetDefaultFitter("Minuit");
-		TVirtualFitter * minuit = TVirtualFitter::Fitter(0,10);
-		for (int i = 0; i < 10; ++i) {  
-			minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 0.01, 0,0);
-		}
-		minuit->SetFCN(myFcn);
-
-		double arglist[100];
-		arglist[0] = 0;
-		// set print level
-		minuit->ExecuteCommand("SET PRINT",arglist,2);
-
-		// minimize
-		arglist[0] = 5000; // number of function calls
-		arglist[1] = 0.01; // tolerance
-		minuit->ExecuteCommand("MIGRAD",arglist,2);
-
-		//get result
-		double minParams[10];
-		double parErrors[10];
-		for (int i = 0; i < 10; ++i) {  
-			minParams[i] = minuit->GetParameter(i);
-			parErrors[i] = minuit->GetParError(i);
-		}
-		double chi2, edm, errdef; 
-		int nvpar, nparx;
-		minuit->GetStats(chi2,edm,errdef,nvpar,nparx);
-
-		func->SetParameters(minParams);
-		func->SetParErrors(parErrors);
-		func->SetChisquare(chi2);
-		int ndf = coords.size()-nvpar;
-		func->SetNDF(ndf);
-
-		std::cout << "Chi2 Fit = " << chi2 << " ndf = " << ndf << "  " << func->GetNDF() << std::endl;
-
-		// add to list of functions
-		h1->GetListOfFunctions()->Add(func);
-		h2->GetListOfFunctions()->Add(func);
-	}
-	else {     
-		// fit independently
-		h1->Fit(func);
-		h2->Fit(func);
-	}
-
-
-
-	// Create a new canvas.
-	TCanvas * c1 = new TCanvas("c1","Two HIstogram Fit example",100,10,900,800);
-	c1->Divide(2,2);
-	gStyle->SetOptFit();
-	gStyle->SetStatY(0.6);
-
-	c1->cd(1);
-	h1->Draw();
-	func->SetRange(xlow1,ylow1,xup1,yup1);
-	func->DrawCopy("cont1 same");
-	c1->cd(2);
-	h1->Draw("lego");
-	func->DrawCopy("surf1 same");
-	c1->cd(3);
-	func->SetRange(xlow2,ylow2,xup2,yup2);
-	h2->Draw();
-	func->DrawCopy("cont1 same");
-	c1->cd(4);
-	h2->Draw("lego");
-	gPad->SetLogz();
-	func->Draw("surf1 same");
-
-	return 0; 
-}
-#endif
