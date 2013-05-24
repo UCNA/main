@@ -2,6 +2,7 @@
 #include <cassert>
 #include <stdlib.h>
 #include <time.h>
+#include <SMExcept.hh>
 
 TChainScanner::TChainScanner(const std::string& treeName): nEvents(0), nFiles(0), Tch(new TChain(treeName.c_str())),
 currentEvent(0), noffset(0), nLocalEvents(0) {
@@ -13,8 +14,9 @@ int TChainScanner::addFile(const std::string& filename) {
 	unsigned int oldEvents = nEvents;
 	int nfAdded = Tch->Add(filename.c_str());
 	if(!nfAdded) {
-		printf("*** No such file: '%s'\n",filename.c_str());
-		return 0;
+		SMExcept e("missingFiles");
+		e.insert("fileName",filename);
+		throw e;
 	}
 	nEvents = Tch->GetEntries();
 	nnEvents.push_back(nEvents-oldEvents);
