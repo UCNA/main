@@ -1,12 +1,13 @@
 
 
-#####
+######
 # generic beam cuts
 ######
 
 Cut_BeamBurst:		start = 0.05	end = 10	runStart = 13000	runEnd = 100000
 Cut_ClusterEvt:		start = 60.e-6	end = 10	runStart = 13000	runEnd = 100000
-
+Cut_GVMon:		minCounts = 5	overTime = 5	runStart = 13000	runEnd = 16300
+Cut_GVMon:		minCounts = 50	overTime = 5	runStart = 16500	runEnd = 100000
 
 ######
 # cut unwanted run times

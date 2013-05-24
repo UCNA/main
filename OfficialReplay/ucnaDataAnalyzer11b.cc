@@ -47,7 +47,7 @@ void ucnaDataAnalyzer11b::analyze() {
 	quickAnalyzerSummary();
 }
 
-void ucnaDataAnalyzer11b::loadCut(CutVariable& c, const std::string& cutName) {
+Stringmap ucnaDataAnalyzer11b::loadCut(const std::string& cutName) {
 	std::vector<Stringmap> v = ManualInfo::MI.getInRange(cutName,rn);
 	if(!v.size()) {
 		SMExcept e("missingCut");
@@ -55,29 +55,40 @@ void ucnaDataAnalyzer11b::loadCut(CutVariable& c, const std::string& cutName) {
 		e.insert("runNum",rn);
 		throw(e);
 	}
-	c.R = RangeCut(v[0]);
+	return v[0];
+}
+
+void ucnaDataAnalyzer11b::loadRangeCut(CutVariable& c, const std::string& cutName) {
+	c.R = RangeCut(loadCut(cutName));
 	printf("Loaded cut %s/%i = (%g,%g)\n",cutName.c_str(),rn,c.R.start,c.R.end);
 }
 
 void ucnaDataAnalyzer11b::loadCuts() {
 	for(Side s = EAST; s <= WEST; ++s) {
-		loadCut(fMWPC_anode[s], sideSubst("Cut_MWPC_%c_Anode",s));
-		loadCut(fCathMax[s],sideSubst("Cut_MWPC_%c_CathMax",s));
-		loadCut(fCathSum[s],sideSubst("Cut_MWPC_%c_CathSum",s));
-		loadCut(fCathMaxSum[s],sideSubst("Cut_MWPC_%c_CathMaxSum",s));
-		loadCut(fBacking_tdc[s], sideSubst("Cut_TDC_Back_%c",s));
-		loadCut(fDrift_tac[s], sideSubst("Cut_ADC_Drift_%c",s));
-		loadCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c_Selftrig",s));
+		loadRangeCut(fMWPC_anode[s], sideSubst("Cut_MWPC_%c_Anode",s));
+		loadRangeCut(fCathMax[s],sideSubst("Cut_MWPC_%c_CathMax",s));
+		loadRangeCut(fCathSum[s],sideSubst("Cut_MWPC_%c_CathSum",s));
+		loadRangeCut(fCathMaxSum[s],sideSubst("Cut_MWPC_%c_CathMaxSum",s));
+		loadRangeCut(fBacking_tdc[s], sideSubst("Cut_TDC_Back_%c",s));
+		loadRangeCut(fDrift_tac[s], sideSubst("Cut_ADC_Drift_%c",s));
+		loadRangeCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c_Selftrig",s));
 		ScintSelftrig[s] = fScint_tdc[s][nBetaTubes].R;
-		loadCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c",s));
+		loadRangeCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c",s));
 		for(unsigned int t=0; t<nBetaTubes; t++)
-			loadCut(fScint_tdc[s][t], sideSubst("Cut_TDC_Scint_%c_",s)+itos(t));
+			loadRangeCut(fScint_tdc[s][t], sideSubst("Cut_TDC_Scint_%c_",s)+itos(t));
 	}
-	loadCut(fTop_tdc[EAST], "Cut_TDC_Top_E");
-	loadCut(fBeamclock,"Cut_BeamBurst");
-	loadCut(fWindow,"Cut_ClusterEvt");
+	loadRangeCut(fTop_tdc[EAST], "Cut_TDC_Top_E");
+	loadRangeCut(fBeamclock,"Cut_BeamBurst");
+	loadRangeCut(fWindow,"Cut_ClusterEvt");
 	if(ignore_beam_out)
 		fBeamclock.R.end = FLT_MAX;
+	
+	// GV monitor rate cut
+	Stringmap gvm = loadCut("Cut_GVMon");
+	gvMonChecker = RollingWindow((int)gvm.getDefault("minCounts",5),gvm.getDefault("overTime",5));
+	printf("GV Monitor Rate Cut: expect %i counts (x10 prescaling) in %.1f s\n",gvMonChecker.nMax,gvMonChecker.lMax);
+	
+	// manually excluded times
 	manualCuts = ManualInfo::MI.getRanges(itos(rn)+"_timecut");
 	if(manualCuts.size())
 		printf("Manually cutting %i time ranges...\n",(int)manualCuts.size());

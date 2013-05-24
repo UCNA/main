@@ -165,8 +165,10 @@ protected:
 	bool prevPassedCuts;					//< whether passed cuts on previous event
 	bool prevPassedGVRate;					//< whether passed GV rate on previous event
 	
+	/// load a cut
+	Stringmap loadCut(const std::string& cutName);
 	/// load a cut range for a CutVariable
-	void loadCut(CutVariable& c, const std::string& cutName);
+	void loadRangeCut(CutVariable& c, const std::string& cutName);
 	/// load all cuts for run
 	void loadCuts();
 	
