@@ -266,6 +266,7 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 			minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 0.01, 0, 0);
 		}
 		minuit->SetFCN(combined_chi2);
+		minuit->SetErrorDef(1);	// 1 for chi^2
 
 		double arglist[100];
 		arglist[0] = 0;
@@ -291,10 +292,10 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 		func->SetParameters(minParams);
 		func->SetParErrors(parErrors);
 		func->SetChisquare(chi2);
-		int ndf = asymmetry_energy.size()-nvpar;
+		int ndf = asymmetry_energy.size() + fierzratio_energy.size()- nvpar;
 		func->SetNDF(ndf);
 
-		cout << "Chi2 Fit = " << chi2 << " ndf = " << ndf << "  " << func->GetNDF() << endl;
+		cout << "chi^2 = " << chi2 << ", ndf = " << ndf << ", chi^2/ndf = " << chi2/ndf << endl;
 
 		// add to list of functions
 		asymmetry->GetListOfFunctions()->Add(func);
