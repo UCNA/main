@@ -208,24 +208,24 @@
 @cycle October 12-16 Source Calibrations, Betas
 #######################
 
-@sources Ce
+@sources Bi
 *20515	SourcesCal		# 0.0in
-@sources E Ce Sn
+@sources E Bi Ce
 *20516	SourcesCal		# 0.5in
-@sources Ce Sn
+@sources Bi Ce
 *20517	SourcesCal		# 1.0in
-@sources E Ce Sn Bi
+@sources E Bi Ce Sn
 *20519	SourcesCal		# 1.5in
-@sources Ce Sn Bi
+@sources Bi Ce Sn
 *20520	SourcesCal		# 2.0in
 *20522	SourcesCal		# 2.5in
 *20523	SourcesCal		# 3.0in
-@sources E Sn Bi
+@sources E Ce Sn
 *20524	SourcesCal		# 3.5in
-@sources Sn Bi
+@sources Ce Sn
 *20525	SourcesCal		# 4.0in
 *20526	SourcesCal		# 4.5in
-@sources Bi
+@sources Sn
 *20527	SourcesCal		# 5.0in
 @sources
 

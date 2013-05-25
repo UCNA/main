@@ -12,6 +12,7 @@
 	old Xe 17224-17230
 	Ce,Sn,Bi 17233-17249
 >> October 26 Beta Decay 17274-17297
+### PMT W2 repaired
 ### Bi pulser W1 fallen off; MWPC WX16 wire dead
 >> November 3 Sources Ce,Sn,Bi 17359-17387
 >> November 4-7 Beta Decay 17388-17509
