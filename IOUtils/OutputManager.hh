@@ -60,15 +60,6 @@ public:
 		if(defaultCanvas && !parent) delete(defaultCanvas); 
 	}
 	
-	/// attach a sub-output to this one
-	virtual void attach(OutputManager* S) {
-		printf("OutputManager '%s' attached to '%s'\n",S->name.c_str(),name.c_str());
-		subouts.push_back(S);
-	}
-		
-	/// data entries to include in parent's output
-	virtual Stringmap finalWords() { return forParent; }
-	
 	/// generate a TH1F registered with this runs output objects list
 	TH1F* registeredTH1F(std::string hname, std::string htitle, unsigned int nbins, float x0, float x1);
 	/// generate a TH2F registered with this runs output objects list
@@ -88,7 +79,6 @@ public:
 
 	QFile qOut;					//< QFile output
 	TFile* rootOut;				//< ROOT file output
-	Stringmap forParent;		//< items to include in parent's output
 	TCanvas* defaultCanvas;		//< canvas for drawing plots
 	OutputManager* parent;		//< parent output manager
 	std::string basePath;		//< general output path
@@ -104,8 +94,6 @@ protected:
 	virtual void setName(std::string nm);
 	/// write output ROOT file; WARNING: THIS DELETES ALL REGISTERED ITEMS; do last if you reference these.
 	void writeROOT();
-	
-	std::vector<OutputManager*> subouts;	//< output subdirectories
 };
 
 #endif

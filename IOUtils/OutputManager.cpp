@@ -60,15 +60,7 @@ void OutputManager::warn(WarningLevel l, std::string descrip, Stringmap M) {
 }
 
 void OutputManager::write(std::string outName) {
-	
-	// record subout info
-	for(std::vector<OutputManager*>::iterator it = subouts.begin(); it != subouts.end(); it++) {
-		Stringmap m = (*it)->finalWords();
-		if(m.size())
-			qOut.insert((*it)->name,m);
-	}
-	
-	// write run data file
+	// write text data file
 	if(qOut.size()) {
 		makePath(dataPath+"/"+outName,true);
 		if(outName.size())
