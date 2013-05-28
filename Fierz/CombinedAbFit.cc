@@ -311,34 +311,6 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 	*/
 
 
-
-	// Create a new canvas.
-	TCanvas * c1 = new TCanvas("c1","Two HIstogram Fit example",100,10,900,800);
-	c1->Divide(2,2);
-	gStyle->SetOptFit();
-	gStyle->SetStatY(0.6);
-
-	c1->cd(1);
-	asymmetry->Draw();
-	func->SetRange(min_E, max_E);
-	func->DrawCopy("cont1 same");
-	/*
-	c1->cd(2);
-	asymmetry->Draw("lego");
-	func->DrawCopy("surf1 same");
-	*/
-	c1->cd(3);
-	func->SetRange(min_E, max_E);
-	fierzratio->Draw();
-	func->DrawCopy("cont1 same");
-	/*
-	c1->cd(4);
-	fierzratio->Draw("lego");
-	gPad->SetLogz();
-	func->Draw("surf1 same");
-	*/
-
-
 	return func; 
 }
 
@@ -405,6 +377,7 @@ int main(int argc, char *argv[]) {
 					  supersum_histogram->FindBin(max_E));
 	double full_int = supersum_histogram->Integral();
 	double N = entries * part_int / full_int;
+	cout << "The energy range is " << min_E << " - " << max_E << " keV" << endl;
 	cout << "Number of counts in full data is " << (int)entries << endl;
 	cout << "Number of counts in energy range is " <<  (int)N << endl;
 	cout << "The expected statistical error for A in this range is " << 2.7 / sqrt(N) << endl;
@@ -432,6 +405,32 @@ int main(int argc, char *argv[]) {
 	//output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
 	//output_histogram("/data/kevinh/mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
 
+	*/
+
+	// Create a new canvas.
+	TCanvas * c1 = new TCanvas("c1","Two HIstogram Fit example",100,10,900,800);
+	c1->Divide(2,2);
+	gStyle->SetOptFit();
+	gStyle->SetStatY(0.6);
+
+	c1->cd(1);
+	asymmetry_histogram->Draw();
+	func->SetRange(min_E, max_E);
+	func->DrawCopy("cont1 same");
+	/*
+	c1->cd(2);
+	asymmetry->Draw("lego");
+	func->DrawCopy("surf1 same");
+	*/
+	c1->cd(3);
+	func->SetRange(min_E, max_E);
+	fierzratio_histogram->Draw();
+	func->DrawCopy("cont1 same");
+	/*
+	c1->cd(4);
+	fierzratio->Draw("lego");
+	gPad->SetLogz();
+	func->Draw("surf1 same");
 	*/
 
 	app.Run();
