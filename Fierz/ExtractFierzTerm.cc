@@ -49,7 +49,7 @@ double max_E = 660;
 double expected_fierz = 0.6540;				/// full range (will get overwritten) 
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
-static unsigned nToSim = 2.5e4;				/// how many triggering events to simulate
+static unsigned nToSim = 5e7;				/// how many triggering events to simulate
 static double loading_prob = 40; 			/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
 static int integral_size = 1000;
@@ -136,7 +136,7 @@ double fierz_beta_spectrum(const double *val, const double *par)
 	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
 	const double x = pow(m_e/E,n);              /// Fierz term
 	const double f = (1 + b*x)/(1 + b*x_1);     /// Fierz factor
-	const double k = 1.3723803E-11/Q;           /// normalization factor
+	const double k = 1.3723803e-11/Q;           /// normalization factor
 	const double P = k*p*e*e*E*f*x;             /// the output PDF value
 
 	return P;
@@ -234,7 +234,8 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2])
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
-        double rel_error = TMath::Sqrt( 1/(r[0][0] + r[1][0]) + 1/(r[1][1] * r[0][1]));
+        //double rel_error = TMath::Sqrt( 1/(r[0][0] + r[1][0]) + 1/(r[1][1] * r[0][1]));
+        double rel_error = TMath::Sqrt( 1/r[0][0] + 1/r[1][0] + 1/r[1][1]) * r[0][1]);
         if ( TMath::IsNaN(super_sum)) 
             super_sum = 0;
 
@@ -417,6 +418,7 @@ void output_histogram(string filename, TH1F* h, double ax, double ay)
 
 int main(int argc, char *argv[]) 
 {
+	TH1::AddDirectory(kFALSE);
 	expected_fierz = evaluate_expected_fierz(min_E, max_E);
 	std::cout << "Expected Fierz " << expected_fierz << "\n";
 	
@@ -546,6 +548,7 @@ int main(int argc, char *argv[])
 	}
     
 	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
+	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
 
 	tntuple->SetDirectory(mc_tfile);
 	tntuple->Write();
@@ -560,7 +563,7 @@ int main(int argc, char *argv[])
 	mc.fierz_super_sum_histogram->SetDirectory(mc_tfile);
 	mc.fierz_super_sum_histogram->Write();
 
-	mc_tfile->Close();
+	//mc_tfile->Close();
 
     for (int side = 0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++)
