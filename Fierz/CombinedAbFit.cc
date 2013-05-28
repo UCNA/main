@@ -205,7 +205,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 
 
-int combined_fit(TH1F* asymmetry, TH1F* fierzratio) 
+TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio) 
 { 
 	double iniParams[2] = { -0.15, 0 };
 	const char * iniParamNames[2] = { "A", "b" };
@@ -296,6 +296,7 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 
 		cout << "chi^2 = " << chi2 << ", ndf = " << ndf << ", chi^2/ndf = " << chi2/ndf << endl;
 
+
 		// add to list of functions
 		asymmetry->GetListOfFunctions()->Add(func);
 		fierzratio->GetListOfFunctions()->Add(func);
@@ -338,7 +339,7 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 	*/
 
 
-	return 0; 
+	return func; 
 }
 
 
@@ -379,15 +380,10 @@ int main(int argc, char *argv[]) {
 
     TH1F *asymmetry_histogram = 
             (TH1F*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
-    printf("Number of counts in data %f\n", asymmetry_histogram->GetEntries());
-
     TH1F *supersum_histogram = 
             (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
-    printf("Number of counts in data %f\n", supersum_histogram->GetEntries());
-
     TH1F *fierzratio_histogram = 
             (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
-    printf("Number of counts in data %f\n", supersum_histogram->GetEntries());
 
 	/*
 	// fit the Fierz ratio 
@@ -401,8 +397,22 @@ int main(int argc, char *argv[]) {
 	compute_fit(asymmetry_histogram, fierz_fit);
 	*/
 
-	combined_fit(asymmetry_histogram, fierzratio_histogram);
+	TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram);
 
+	double entries = supersum_histogram->GetEffectiveEntries();
+	double part_int = supersum_histogram->Integral(
+					  supersum_histogram->FindBin(min_E),
+					  supersum_histogram->FindBin(max_E));
+	double full_int = supersum_histogram->Integral();
+	double N = entries * part_int / full_int;
+	cout << "Number of counts in full data is " << (int)entries << endl;
+	cout << "Number of counts in energy range is " <<  (int)N << endl;
+	cout << "The expected statistical error for A in this range is " << 2.7 / sqrt(N) << endl;
+	cout << "The actual statistical error for A in this range is " << func->GetParError(0) << endl;
+	cout << "The ratio for A error is " << func->GetParError(0) * sqrt(N) / 2.7 << endl;
+	cout << "The expected statistical error for b in this range is " << 14.8 / sqrt(N) << endl;
+	cout << "The actual statistical error for b in this range is " << func->GetParError(1) << endl;
+	cout << "The ratio for b error is " << func->GetParError(1) * sqrt(N) / 14.8 << endl;
 
 	/*
 	// A fit histogram for output to gnuplot
