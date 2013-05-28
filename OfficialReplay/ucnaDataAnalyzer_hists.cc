@@ -494,8 +494,8 @@ void ucnaDataAnalyzer11b::locateSourcePositions() {
 		
 		// extract located peaks into source positions vector
 		// drop peaks past expected number of sources
-		Float_t* xPos = TS.GetPositionX();
-		Float_t* yPos = TS.GetPositionY();
+		TSpectrum_Data_t* xPos = TS.GetPositionX();
+		TSpectrum_Data_t* yPos = TS.GetPositionY();
 		std::vector<Source> foundSources;
 		for(unsigned int i=0; i<npks; i++) {
 			if(i>=expectedSources.size())
