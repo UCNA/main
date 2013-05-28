@@ -14,12 +14,18 @@ std::vector<TSpectrumPeak> tspectrumSearch(TH1F* hin, float sigma, float thresh)
 	return vx;
 }
 
+#ifdef TSPECTRUM_USES_DOUBLE
+typedef Double_t TSpectrum_Data_t;
+#else
+typedef Float_t TSpectrum_Data_t;
+#endif
+
 std::vector<float> tspectrumSearch(TH1F* hin, TH1F** hout, float sigma, float thresh) {
 	
 	// temporary data arrays
 	unsigned int nbins = hin->GetNbinsX();
-	float* datin = new float[nbins];
-	float* datout = new float[nbins];
+	TSpectrum_Data_t* datin = new TSpectrum_Data_t[nbins];
+	TSpectrum_Data_t* datout = new TSpectrum_Data_t[nbins];
 	for(unsigned int i=0; i<nbins; i++)
 		datin[i] = hin->GetBinContent(i+1);
 	

@@ -433,16 +433,22 @@ void ucnaDataAnalyzer11b::muonVetoAccidentals() {
 // comparison to sort sources by x position in descending order
 bool sortSourceXPos(Source a, Source b) { return a.x < b.x; }
 
-// allocate a 2D float** array
-float** allocArray(unsigned int nx, unsigned int ny) {
-	float** a = new float*[nx];
+#ifdef TSPECTRUM_USES_DOUBLE
+typedef Double_t TSpectrum_Data_t;
+#else
+typedef Float_t TSpectrum_Data_t;
+#endif
+
+// allocate a 2D TSpectrum_Data_t** array
+TSpectrum_Data_t** allocTSpectrumArray(unsigned int nx, unsigned int ny) {
+	TSpectrum_Data_t** a = new TSpectrum_Data_t*[nx];
 	for(unsigned int i=0; i<nx; i++)
-		a[i] = new float[ny];
+		a[i] = new TSpectrum_Data_t[ny];
 	return a;
 }
 
-// delete a 2D float** array
-void deleteArray(float** a, unsigned int nx) {
+// delete a 2D TSpectrum_Data_t** array
+void deleteTSpectrumArray(TSpectrum_Data_t** a, unsigned int nx) {
 	for(unsigned int i=0; i<nx; i++)
 		delete[](a[i]);
 	delete[](a);
@@ -464,8 +470,8 @@ void ucnaDataAnalyzer11b::locateSourcePositions() {
 			continue;
 		
 		// convert hit position histogram to float** array
-		float** zout = allocArray(nbins,nbins);
-		float** historray = allocArray(nbins,nbins);
+		TSpectrum_Data_t** zout = allocTSpectrumArray(nbins,nbins);
+		TSpectrum_Data_t** historray = allocTSpectrumArray(nbins,nbins);
 		for(unsigned int x=0; x<nbins; x++)
 			for(unsigned int y=0; y<nbins; y++)
 				historray[x][y] = hHitPos[s]->GetBinContent(x+1,y+1);
@@ -538,8 +544,8 @@ void ucnaDataAnalyzer11b::locateSourcePositions() {
 			SourceDBSQL::getSourceDBSQL()->addSource(*it);
 		}
 		
-		deleteArray(historray,nbins);
-		deleteArray(zout,nbins);
+		deleteTSpectrumArray(historray,nbins);
+		deleteTSpectrumArray(zout,nbins);
 	}
 }
 

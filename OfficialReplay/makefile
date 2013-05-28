@@ -10,6 +10,10 @@ INCLUDEPATH   = -I./ -I../IOUtils -I../RootUtils -I../BaseTypes -I../Detectors -
 CXXFLAGS      = -O3 -Wall -fPIC $(ROOTCFLAGS) $(INCLUDEPATH)
 LDFLAGS       = -L.. -lUCNA $(ROOTLIBS) $(ROOTGLIBS) -lSpectrum -lstdc++ -lz
 
+ifdef TSPECTRUM_USES_DOUBLE
+	CXXFLAGS += -DTSPECTRUM_USES_DOUBLE
+endif
+
 ANA_OBJS      = ManualInfo.o ucnaDataAnalyzer_hists.o ucnaDataAnalyzer_tree.o ucnaDataAnalyzer_peds.o
 
 all: ucnaDataAnalyzer11b
