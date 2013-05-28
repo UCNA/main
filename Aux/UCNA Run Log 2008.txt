@@ -1,0 +1,4593 @@
+#####################
+# UCNA Run Data Log #
+#####################
+#
+#	--- file format description ---
+#
+#	Run lines start with a '*', of the form:
+#		*[Run Number] [Run Type]
+#
+#	Data run types (may be optionally followed by a slow daq run number):
+#
+#		BgOff/BgOn	background with flipper off/on
+#		BetaOff/BetaOn	beta decay with flipper off/on
+#		A1...A12,B1...B12	data octet segments
+#
+#	Calibration run types:		
+#		SourcesCal		Source calibration
+#		LEDCal	V_E V_W		LED calibration run, with E and W LED voltages
+#		Misc			Miscellaneous run (see comments)
+#		
+#
+#	Lines starting with an '@' specify properties of all the following runs
+#	(until over-written by another '@' line), e.g. '@scs 0.97' specifies an
+#	SCS field of 0.97T for all runs until the next '@scs' line.
+#	@ types are:
+#		@scs %f			SCS field in tesla
+#		@cycle	<Name>		start a contiguous group of runs to be analyzed togetherl resets @cal to 0
+#		@cal %i			run number for the Sn source run to be used for GMS/energy calibration
+#		@sources <Sources>	sources in holder, Left to Right in wirechamber Y position (from Sn Bi Sr85 Sr90 Cd In)
+#		@LED	<E>	<W>	LED voltages on E and W sides
+#		@linearity t1 t2 t3 t4	Linearity correction for 4 beta tubes (x_i -> x_i^t_i)
+#	All other lines (those not starting with a '*' or an '@') are comments.
+#
+
+############
+# 2007 Run #
+############
+
+@linearity E	1	1	1	1
+@linearity W	1	1	1	1
+
+##########
+@cycle 2007 Beta Decay 1
+##########
+@cal 6471
+@scs 0.500000
+@sources Sn
+
+*6471	SourcesCal
+*6475	SourcesCal	10027
+*6476	SourcesCal
+*6477	SourcesCal	10029
+*6480	SourcesCal	10033
+*6481	SourcesCal	10034
+*6483	SourcesCal	10036
+*6486	SourcesCal	10038
+*6487	SourcesCal	10039
+*6488	SourcesCal	10040
+*6490	SourcesCal	10042
+
+
+##########
+@cycle 2007 Beta Decay 2
+##########
+@cal 6509
+@scs 0.000000
+*6495	BgOff
+@scs 0.500000
+
+*6497	SourcesCal	10047
+*6499	SourcesCal	10048
+*6500	SourcesCal	10049
+*6501	SourcesCal	10051
+*6503	SourcesCal	10052
+*6509	SourcesCal
+
+*6510	BetaOff	10056
+*6511	BgOff	10057
+*6512	BetaOff	10058
+*6513	BetaOff	10059
+
+
+##########
+@cycle 2007 Beta Decay 3
+##########
+@cal 6522
+
+*6522	SourcesCal
+*6523	BgOff
+*6524	BgOff
+*6525	BgOff
+
+
+##########
+@cycle 2007 Beta Decay 4
+##########
+@cal 6556
+@scs 1.000000
+
+*6555	SourcesCal
+*6556	SourcesCal
+
+*6572	BetaOff	10082
+*6573	BgOff	10083
+*6574	BetaOn	10084
+*6575	BgOn	10085
+*6576	BetaOn	10086
+*6577	BgOn	10087
+*6578	BetaOff	10088
+*6579	BgOff	10089
+*6581	BetaOn	10090
+*6582	BgOn	10091
+*6584	BetaOff	10092
+*6586	BgOff	10093
+*6587	BetaOn	10094
+*6588	BgOn	10095
+*6589	BetaOff	10096
+*6590	BgOff	10097
+
+
+##########
+@cycle 2007 Beta Decay 5
+##########
+@cal 6601
+
+*6591	BetaOn	10098
+*6592	BgOn	10099
+*6593	BetaOff	10100
+*6594	BetaOff	10102
+*6595	BgOff	10103
+*6596	BetaOn	10104
+*6597	BgOn	10105
+*6598	BetaOff	10106
+*6599	BgOff	10107
+
+*6601	SourcesCal	10109
+
+*6602	BetaOn	10110
+*6604	BgOn	10112
+*6605	BgOff	10113
+*6606	BetaOff	10114
+*6608	BgOn	10116
+*6609	BetaOn	10117
+*6610	DepolOn	10118
+*6611	BgOff	10119
+*6612	BetaOff	10120
+*6613	DepolOn
+
+
+##########
+@cycle 2007 Beta Decay 6
+##########
+@cal 6633
+
+*6622	BgOff	10125
+*6623	BetaOff	10126
+*6624	DepolOn	10127
+*6625	BgOn	10128
+*6626	BetaOn	10129
+*6627	DepolOn	10130
+*6628	BgOff	10131
+*6629	BetaOff	10132
+*6631	BgOn	10134
+*6632	BetaOn	10135
+
+*6633	SourcesCal	10136
+
+*6634	BgOn	10137
+*6635	BetaOn	10138
+*6636	DepolOn	10139
+*6637	BgOff	10140
+*6638	BetaOff	10141
+*6639	DepolOn	10142
+*6640	BgOn	10143
+*6641	BetaOn	10144
+*6642	DepolOn	10145
+*6643	BgOff	10146
+*6645	BetaOff	10147
+*6646	DepolOn	10148
+*6647	BgOn	10149
+*6648	BetaOn	10150
+*6649	DepolOn	10151
+*6650	BgOff	10152
+*6651	BetaOff	10153
+*6652	DepolOn	10154
+*6654	BgOff	10157
+*6655	BgOff	10158
+*6656	BgOff	10158
+
+
+
+##########
+@cycle 2007 Beta Decay 7
+##########
+@cal 6662
+
+*6657	BgOn	10159
+*6658	BetaOn	10160
+*6659	DepolOn	10161
+*6660	BgOff	10162
+*6661	BetaOff	10163
+
+*6662	SourcesCal	10165
+
+*6663	BgOn	10166
+*6664	BetaOn	10167
+*6665	DepolOn	10168
+*6667	BgOff	10169
+*6669	BetaOff	10171
+*6670	DepolOn	10172
+*6671	BgOn	10173
+*6672	BetaOn	10174
+*6673	DepolOn	10175
+*6674	BgOff	10176
+*6675	BetaOff	10177
+*6676	DepolOn	10178
+*6677	BgOn	10179
+*6678	BetaOn	10180
+*6679	DepolOn	10181
+*6680	BgOff	10182
+*6681	BetaOff	10183
+*6682	DepolOn	10184
+*6683	BgOn	10185
+*6684	BetaOn	10186
+*6685	DepolOn	10187
+*6686	BgOff	10188
+*6687	BetaOff	10189
+*6688	DepolOn	10190
+
+
+##########
+@cycle 2007 End-of-run Source Calibrations
+##########
+
+@cal 0
+@scs 0.000000
+*6692	Misc
+@scs 1.000000
+*6718	SourcesCal
+@cal 6723
+
+*6719	SourcesCal
+*6720	SourcesCal
+*6721	SourcesCal
+*6722	SourcesCal
+*6723	SourcesCal
+*6724	SourcesCal
+*6725	SourcesCal
+*6726	SourcesCal
+*6727	SourcesCal
+*6728	SourcesCal
+*6729	SourcesCal
+*6730	SourcesCal
+*6731	SourcesCal
+
+
+
+
+
+
+
+
+
+############
+# 2008 Run #
+############
+
+########
+# GEOMETRY A: 0.7u mylar, 0.3u Be, 25u wirechamber windows
+########
+
+##########
+@cycle June Pre-run source calibrations at varying SCS fields
+##########
+##  We are missing the GMS LED on the W side
+
+@cal 0
+@sources Sn Bi
+*7234	SourcesCal
+
+@scs 0.500000
+*7235	SourcesCal
+*7236	SourcesCal
+*7237	SourcesCal
+@sources Sn Bi Cd
+*7238	SourcesCal
+*7239	SourcesCal
+@sources Sn
+*7240	SourcesCal
+*7241	BgOff	#  BG run
+
+@scs 1.000000
+@sources Sn
+*7244	SourcesCal
+*7245	SourcesCal
+*7246	SourcesCal
+*7247	SourcesCal
+*7248	SourcesCal
+*7249	SourcesCal
+@sources Sn Bi
+*7250	SourcesCal
+*7251	SourcesCal
+*7252	SourcesCal
+*7253	SourcesCal
+*7254	SourcesCal
+*7255	SourcesCal
+@sources Sn Bi Cd
+*7256	SourcesCal
+@sources W Sn Bi
+*7257	SourcesCal
+@sources Sn Bi Cd
+*7258	SourcesCal
+*7259	SourcesCal
+*7260	SourcesCal
+*7261	SourcesCal
+*7262	SourcesCal
+*7263	SourcesCal
+*7264	SourcesCal
+*7265	SourcesCal
+*7266	BgOff	#  BG run
+
+# field ramped down; only dominant-rate Sn source locatable
+@sources Sn
+
+@scs 0.100000
+*7269	SourcesCal
+
+@scs 0.050000
+@sources 
+*7271	SourcesCal
+*7272	SourcesCal
+
+##########
+@cycle checking the newly installed Sn source
+##########
+
+@cal 7320
+@scs 0.98
+@sources Sn
+
+*7318	SourcesCal
+*7319	SourcesCal
+*7320	SourcesCal
+*7321	SourcesCal
+*7322	BgOff
+*7323	BgOff
+*7332	Misc		# EX mid  dead?
+
+
+
+
+##########
+@cycle First Beta Decay!!!
+##########
+
+*7336	BetaOff	#  Beta Decay, beam low (~2.14Hz)
+*7337	Misc	#  Background; odd rate/GMS dropout... don't use
+
+*7341	BetaOff	#  Really short Beta Decay run (~2.71Hz)
+*7342	BetaOff	#  OK looking short Beta Decay run (~2.88Hz)
+*7343	Misc	#  Beta decay, GMS/DAQ dropouts! (~2.84Hz)
+*7346	BetaOn	#  Nice longer beta-decay run, flipper ON (~2.28Hz)
+
+*7352	Misc	#  Beta-decay run, DAQ glitch, GMS Bad, NEGATIVE decay rate!
+*7353	Misc	#  BG run, Beam off for first half, W MWPC dead, NO GOOD!
+*7354	BgOff	#  OK Background run
+
+
+
+
+##########
+@cycle July 11 LED Linearity Calibration Runs
+##########
+@cal 0
+@scs 0.000000
+
+*7454	LEDCal
+*7455	LEDCal
+*7456	LEDCal
+*7457	LEDCal
+*7458	LEDCal
+*7459	LEDCal
+*7460	Pedestals
+
+
+
+
+##########
+@cycle July 15-16 Sn,Bi,Sr source runs
+##########
+
+# decay trap not in
+# 2 Sn sources, Sr85 and Bi
+
+
+@cal 0
+@scs 1.00
+
+# "Source holder pointed up"
+@sources E Sn Sn Sr85
+@sources W Sn Sn Sr85
+*7551	SourcesCal 
+@sources E Sn Sn Sr85 Bi
+@sources W Sn Sn Sr85 Bi
+*7552	SourcesCal
+@sources E Sn Sn Sr85 Bi 
+*7553	SourcesCal 
+@sources E Sn Sr85 Sn Bi
+*7554	SourcesCal
+@sources E Sn Sr85
+@sources W Sn
+*7555	SourcesCal
+@sources Sn 
+*7556	SourcesCal 
+*7557	SourcesCal 
+*7558	BgOff
+*7560	SourcesCal
+@sources E Sn Sr85
+@sources W Sn
+*7561	SourcesCal
+@sources Sn Sr85
+*7562	SourcesCal
+@sources Sn Sr85 Bi
+*7563	SourcesCal
+@sources E Sn Sr85 Sn Bi
+@sources W Sn Sn Sr85 Bi
+*7564	SourcesCal 
+*7565	SourcesCal
+
+# "Source holder pointed down"
+@sources Sn Sn Sr85
+*7575	SourcesCal 
+@sources Sn Sn Sr85 Bi
+*7576	SourcesCal 
+*7577	SourcesCal 
+*7578	SourcesCal 
+@sources E Sn Sr85 Bi
+@sources W Sn Sn Sr85 Bi
+*7579	SourcesCal 
+*7580	BgOff
+@sources Sn
+*7581	SourcesCal 
+*7582	SourcesCal 
+@sources Sn Sr85
+*7583	SourcesCal 
+@sources Sn Sr85 Bi
+*7584	SourcesCal 
+@sources Sn Sn Sr85 Bi
+*7585	SourcesCal 
+*7586	SourcesCal
+*7587	Misc		#  Asymmetry Run
+*7588	Misc		#  Asymmetry Run
+
+@sources Sn 
+
+
+
+
+#########################################
+#					#
+#  12 segment data cycle:		#
+#					#
+#	A1	Background Off		#
+#	A2	Beta Off		#
+#	A3	Depol Off->On		#
+#	A4	Background On		#
+#	A5	Beta On			#
+#	A6	Depol On->Off		#
+#					#
+#	B1	Background On		#
+#	B2	Beta On			#
+#	B3	Depol On->Off		#
+#	B4	Background Off		#
+#	B5	Beta Off		#
+#	B6	Depol Off->On		#
+#					#
+#########################################
+
+##########
+@cycle July 19-20 High current beta decay!
+##########
+
+@cal 7676
+@scs 0.98
+
+*7662	B1  
+*7663	B2
+*7664	B3 
+*7665	B1
+*7666	B2		# Flapper dies at end
+*7667	B2
+*7668	B3
+*7669	B4
+*7670	B5
+*7671	B6 
+
+######### B->A #########
+
+*7672	B1  
+*7673	B2
+*7674	B3
+*7675	B4
+
+*7676	SourcesCal
+
+*7675	B4		# GV monitor gain glitches
+*7678	B5		# slight beam glitches
+*7679	B6 
+
+*7680	A1
+*7681	A2	10368
+*7682	A3
+*7683	A4		#  Gain shifts in GV, SW mons
+*7684	A5	10369
+*7685	A6
+
+######### B->A #########
+
+*7686	B1  
+*7687	B2	10370	#  "LED shifted on this run"
+*7688	B3
+*7689	B4  
+*7690	B5	10371
+*7691	B6  
+
+#*7692	BgOn	#  oops! wrong flipper state
+*7693	A1  
+*7694	A2	10373	# EY-3.93 wire died
+*7695	A3 
+*7701	A4
+*7702	A5	10374
+*7703	A6
+
+######### A->A #########
+@cal 7721
+
+*7704	A1
+*7705	A2
+*7706	A3
+*7707	A4  
+*7708	A5	10376	#  beam died early
+*7709	A5	10376
+*7710	A6
+
+*7711	A1
+*7712	A2	10378	# beam died at end
+*7713	A3
+*7714	A4  
+*7715	A5	10379	#  flapper died
+*7716	A5	10380
+*7717	A6
+
+######### A->B #########
+
+*7721	SourcesCal
+
+*7720	A1
+*7723	A2	10381
+*7724	A3 
+*7725	A4 
+*7726	A5	10382
+*7727	A6
+
+*7728	B1 
+*7729	B2	10383
+*7730	B3
+*7731	B4
+*7732	B5	10384
+*7733	B6
+
+# dying beam runs
+7734	BgOn	#  beam died
+7735	BgOn	#  
+7736	BetaOn	10385	#  accelerator down
+
+... Sn calibration runs
+
+
+
+
+##########
+@cycle July 24 Sn Source Position Scan
+##########
+
+@cal 0
+@scs 0.97
+
+@sources E
+@sources W Sn
+*7777	SourcesCal	#  Sn Cal, micrometer 0 turns (all the way out)
+*7778	SourcesCal	#  Sn Cal, 1 turn
+*7779	SourcesCal	#  Sn Cal, 2 turns
+*7780	SourcesCal	#  Sn Cal, 3 turns
+*7781	SourcesCal	#  Sn Cal, 4 turns
+@sources Sn
+*7782	SourcesCal	#  Sn Cal, 5 turns
+*7783	SourcesCal	#  Sn Cal, 6 turns
+*7784	SourcesCal	#  Sn Cal, 7 turns
+*7785	SourcesCal	#  Sn Cal, 8 turns
+*7786	SourcesCal	#  Sn Cal, 9 turns
+*7787	SourcesCal	#  Sn Cal, 10 turns (all the way in)
+@sources E
+@sources W Sn
+*7788	SourcesCal	#  Sn Cal, 2.5 turns
+*7789	SourcesCal	#  Sn Cal, 1.5 turns
+*7790	SourcesCal	#  Sn Cal, 0.5 turns
+
+@sources Sn
+
+
+##########
+@cycle July 24 Morning Beta Decay
+##########
+
+@cal 7721
+
+######### B->B #########
+
+*7829	B1	#  bonus background run!
+*7830	B1 
+*7831	B2	10399
+*7832	B3
+*7833	B4
+*7834	B5	10400	# (some dropout)
+*7835	B6 
+*7836	B1
+*7837	B2	10401
+*7838	B3
+*7839	B4
+*7840	B5	10402	# (tiny dropout)
+*7841	B6
+
+
+##########
+@cycle July 25 Calibrations
+#########
+
+*7852	LEDCal	7.2	7.0
+*7853	LEDCal	7.1	6.9
+*7854	LEDCal	7.0	6.8
+*7855	LEDCal	6.9	6.75
+*7856	LEDCal	7.05	6.85
+
+##########
+@cycle July 25-26 Weekend Beta Decay
+##########
+
+@cal 7890
+
+7850	SourcesCal	# Sn source wirechamber test
+
+######### A->B #########
+
+*7865	A1 
+*7866	A2	10411
+*7867	A3
+*7868	A4
+*7869	A5	10412
+*7870	A6
+*7872	B1
+*7873	B2	10413
+*7874	B3
+*7875	B4
+*7876	B5	10415
+*7877	B6
+
+######### B->A #########
+
+*7878	B1
+*7879	B2	10416
+*7880	B3
+*7881	B4
+*7882	B5	10417
+*7883	B6
+*7884	A1 
+*7885	A2	10419
+*7886	A3
+*7887	A4 
+*7888	A5	10420
+*7889	A6
+
+######### B->A #########
+
+*7890	SourcesCal
+
+*7891	B1 
+*7892	B2	10421	#  beam died
+*7893	B2	10422
+*7894	B3
+*7895	B4
+*7896	B5	10423
+*7897	B6
+*7898	A1
+*7899	A2	10424
+*7901	A3
+*7902	A4 
+*7903	A5	10425
+*7904	A6 
+
+@cal 7905
+*7905	SourcesCal
+
+######### A->B #########
+
+@cal 7890
+
+*7912	A1
+*7913	A2	10432
+*7914	A3
+*7915	A4 
+*7916	A5	10433	#  Accelerator down
+*7917	A5	10434
+*7918	A6
+*7920	B1
+*7921	B2	10435
+*7922	B3
+*7926	B4	10438 
+*7927	B5	10439
+*7928	B6
+
+
+
+
+##########
+@cycle July 26-28 Weekend Beta Decay
+##########
+
+#########################################
+#					#
+#  introduced new quartet ordering:	#
+#  24 segment data cycle		#
+#					#
+#	A1	Background Off		#
+#	A2	Beta Off		#
+#	A3	Depol Off->On		#
+#	A4	Background On		#
+#	A5	Beta On			#
+#	A6	Depol On->Off		#
+#	A7	Beta On			#
+#	A8	Depol On->Off		#
+#	A9	Background On		#
+#	A10	Beta Off		#
+#	A11	Depol Off->On		#
+#	A12	Background Off		#
+#					#
+#	B1	Background On		#
+#	B2	Beta On			#
+#	B3	Depol On->Off		#
+#	B4	Background Off		#
+#	B5	Beta Off		#
+#	B6	Depol Off->On		#
+#	B7	Beta Off		#
+#	B8	Depol Off->On		#
+#	B9	Background Off		#
+#	B10	Beta On			#
+#	B11	Depol On->Off		#
+#	B12	Background On		#
+#					#
+#  + SourcesCal, LED scans, etc.	#
+#					#
+#########################################
+
+######### A->B #########
+@cal 7957
+
+*7929	A1 
+*7930	A2	10440
+*7931	A3
+*7932	A4
+*7933	A5	10441
+*7934	A6
+*7935	A7	10442
+*7936	A8 
+*7937	A9
+*7938	A10	10443
+*7939	A11 
+*7940	A12
+
+*7941	B1 
+*7942	B2	10444
+*7943	B3
+*7944	B4 
+*7945	B5	10445	#  ended by beam off, ~25min
+*7946	B5	10446	#  flapper OPEN
+*7947	B5	10447	#  ~30min
+*7948	B6
+*7949	B7	10448 
+*7950	B8
+*7951	B9
+*7952	B10	10449	# beam off at end of run
+*7955	B11	#  special calibration depol run
+*7956	B12
+
+*7957	SourcesCal
+
+# new B->A, crapped
+#*7958	BgOn	# 
+#*7959	BetaOn	10451	#  flapper sticking; left open
+#*7960	BetaOn	10452	#  4000L dewar empty
+#*7964	BgOn	#  beam-off background
+
+@cal 0
+*7965	SourcesCal	#  Sn source in while magnet ramping down
+
+
+
+
+##########
+@cycle July 28 Day Sn Source Position Calibration
+##########
+@sources E
+@sources W Sn
+*7970	SourcesCal	#  Sn Cal, "out" but visible in W (micrometer @ 3:00)
+@sources
+*7971	SourcesCal	#  Sn Cal, actually fully out (micrometer @ 4:15) --- Sn not visible
+@sources Sn
+*7972	SourcesCal	#  Sn Cal, in, rotated (micrometer @ 4:15) -- spot low
+*7973	SourcesCal	#  Sn Cal, normal in (micrometer @ 3:00)
+@sources 
+*7974	SourcesCal	#  Sn Cal, check repeatability of fully out 7971
+*7975	SourcesCal	#  Sn Cal, back to old out position
+*7976	SourcesCal	#  Sn Cal, back to old out position
+
+
+@sources Sn
+
+##########
+@cycle July 28-29 Night Beta Decay
+##########
+
+######### B->A #########
+@cal 7973
+
+*8007	B1
+*8008	B2	10464
+*8010	B3
+*8011	B4 
+*8012	B5	10465
+*8013	B6
+*8022	B7	10470
+*8023	B8		#  depol calibration
+*8024	B9
+*8025	B10	10470
+*8026	B11
+*8027	B12 
+
+
+##############################################
+############# Shutdown Period ################
+##############################################
+
+
+
+
+##########
+@cycle Aug 22-24 Weekend Beta Decay
+##########
+
+@cal 8226
+
+*8226	SourcesCal
+
+*8261	A1
+*8262	A2	10553	#  ~10 minutes useful
+*8263	A2	10554
+*8266	A3
+*8267	A4
+*8268	A5	10555	#  ~17 minutes, flapper problem
+*8269	A5	10556
+*8270	A6		#  depol calibration
+*8271	A7	10557
+*8272	A8		#  depol calibration
+*8273	A9
+*8274	A10	10558
+*8275	A11		#  depol calibration
+*8276	A12
+
+######### B->A #########
+
+*8277	B1
+*8278	B2	10559
+*8279	B3		#  depol calibration
+*8280	B4
+*8281	B5	10560	#  disk error death
+*8282	B5	10561
+*8283	B6		#  depol calibration, left running too long
+*8284	B7	10562	#  stopped early, beam down
+*8285	B7	10563
+*8286	B8		#  depol calibration
+*8287	B9		#  accidentally stopped early
+*8289	B9
+*8290	B10	10564
+*8291	B11		#  depol calib
+*8292	B12
+
+*8296	A1
+*8298	A2	10566
+*8299	A3		#  normal depol
+*8300	A4
+*8301	A5	10568	#  stopped accidentally after 10min
+*8302	A5	10569
+*8303	A6		#  normal depol
+*8304	A7	10570
+*8305	A7	10571	#  second half beta run
+*8306	A8		#  normal depol
+*8307	A9
+*8308	A10	10572
+*8309	A11		#  normal depol
+*8310	A12
+
+
+######### B->A #########
+
+*8311	B1
+*8312	B2	10573
+*8313	B3		#  normal depol
+*8314	B4
+*8315	B5	10574
+*8316	B6		#  normal depol
+
+##
+# double quench. flipper is broken. :(
+#
+# *8347	BgOff	# 	\ W Muon drift tubes
+# *8348	BetaOff	#  [15]	/ HV was off
+# *8349	BgOff	# 
+# *8350	BetaOff	#  [16]
+##
+
+*8351	B9 
+*8354	B9 
+*8355	B7
+
+# flipper fixed! :)
+
+*8374	B8		#  last ~15 min are background
+*8375	B10	10596
+*8376	B11		#  normal depol
+*8377	B12
+
+*8379	A1
+*8380	A2	10597
+*8381	A3		#  normal depol
+*8382	A4
+*8383	A5	10598
+*8384	A6
+
+*8385	BgOn		#  Beam off BG
+
+
+
+
+##########
+@cycle Aug 25-26 Night Beta Decay
+##########
+
+@cal 8431
+
+*8404	A7	10600
+*8405	A7	10601 
+*8406	A8 
+*8407	A9
+*8421	A10	10602
+*8422	A11		#  normal depol
+*8423	A12
+
+
+######### A->B #########
+
+*8424	A1
+*8427	A2	10606
+*8428	A3		#  normal depol
+
+*8429	BgOn		#  extra background
+*8431	SourcesCal
+@cal 8432
+*8432	SourcesCal
+
+*8436	A4 
+*8437	A5		#  beam glitched
+*8438	A5
+*8439	A6
+*8440	A7	10609
+*8441	A8 
+*8442	A9
+*8443	A10	10610
+*8444	A11 
+*8445	A12
+
+*8446	B1 
+*8447	B2
+*8448	B3
+*8449	B4
+*8450	B5	10611
+*8451	B6
+*8452	B7	10612
+*8453	B8
+*8454	B9
+*8455	B10	10613
+*8456	B11
+*8458	B12
+
+*8459	BgOn
+
+
+
+##########
+#@cycle Aug 27 W Beta Tubes Screwed Up
+##########
+#
+# *8460	SourcesCal		#  Sn Cal, W Scints screwed up
+# *8461	SourcesCal		#  Sn Cal, W Scints screwed up
+# *8463	SourcesCal		#  Sn Cal, W Scints screwed up
+#
+# *8464	Misc		# GV Closed, flapper open source lifetime
+#
+# *8471	BgOn 
+# *8472	BetaOn
+# *8473	BetaOn		#  ---> W MWPC trip at end <---
+# *8474	BetaOn 
+# *8475	BetaOn 
+# *8476	DepolOn
+# 
+# *8479	BgOff 
+# *8480	BetaOff
+# *8481	DepolOff
+# 
+# *8482	BetaOff
+# *8483	DepolOff 
+# *8484	BgOff
+# 
+# *8486	BetaOn
+# *8489	BetaOn
+# *8490	DepolOn 
+# *8492	BgOn 
+#
+# *8493	BgOff 
+# *8494	BetaOff
+# *8495	DepolOff 
+#
+###########
+
+
+
+##########
+@cycle Aug 28-29 Night Beta Decay
+##########
+
+######### B->A #########
+
+@cal 8513
+*8513	SourcesCal
+
+*8517	B1
+*8518	B2
+*8520	B4 
+*8521	B5	#  cut short
+*8522	B5	10623
+*8523	B7	10624
+*8524	B9 
+*8525	B10	10625
+*8527	B10	10627 
+*8528	B11 
+*8529	B12
+
+*8532	A1
+*8533	A2	10628
+*8534	A2	10628
+*8535	A3
+*8536	A4 
+*8537	A5	10629
+*8538	A6
+
+##
+# cut off short, replaced later
+#*8539	A7	10630	#  lost beam after 25min
+#*8540	A8
+#*8541	A9 
+##
+
+
+##########
+@cycle August 29 Calibrations
+##########
+
+*8559	SourcesCal		# while SCS is ramping
+*8560	SourcesCal		# while SCS is ramping
+
+
+
+##########
+@cycle August 29 - September 2 Labor Day Weekend Beta Decay
+##########
+
+@cal 8561
+*8561	SourcesCal
+
+*8562	A7	10633	#  stopped after 10min to check production
+*8563	A7	10634
+*8564	A8
+*8565	A9
+*8566	A10
+*8567	A11	10633
+*8568	A12
+
+######### B->A #########
+
+*8569	B1
+*8570	B2	10636
+*8571	B3
+*8572	B4
+*8573	B5	10637
+*8574	B6
+*8575	B7	10638	# beam died after 40 minutes
+*8576	B7	10640
+*8577	B8
+*8578	B9
+*8579	B10	10641
+*8580	B11
+*8581	B12
+
+*8582	A1
+*8583	A2
+*8584	A3
+*8585	A4 
+*8586	A5	10643
+*8587	A6		# daq stopped a few seconds late (GV opened for next run)
+*8588	A7	10644
+*8589	A8
+*8590	A9
+*8591	A10
+*8592	A11
+*8593	A12
+
+######### B->A #########
+
+@cal 8616
+
+*8594	B1
+*8595	B2
+*8596	B3
+*8597	B4
+*8598	B5	10637
+*8599	B6		# depol holding shortened 140s->40s
+*8600	B7	10648
+*8601	B8
+*8602	B9
+*8603	B10
+*8604	B11
+*8605	B12
+
+*8606	A1
+*8607	A2	10649
+*8608	A3
+*8609	A4		# W drift tube flakey 
+*8610	A5	10650
+*8611	A6
+*8612	A4		# A4 repeat
+*8613	A7	10651
+*8614	A8
+*8615	A9
+
+*8616	SourcesCal
+
+*8617	A10	10652
+*8618	A11
+*8619	A12
+
+######### A->B #########
+
+@cal 8627
+
+*8620	A1
+*8621	A2
+*8622	A3
+*8623	A4
+*8624	A5		# run cut off at 55min due to beam loss
+
+*8627	SourcesCal
+# skipped A6 depol run
+
+*8631	A7		# lost beam at ~10min
+*8632	A7		# W Drift Tube flakey
+*8633	A8
+*8634	A9
+*8635	A10
+*8636	A11
+*8637	A12
+
+*8638	B1
+*8639	B2	10658
+*8640	B3
+*8641	B4
+*8643	B5
+*8644	B6
+*8646	B7	10660	# TDC bimodal at end of run?
+*8647	B7		# switcher & west muon tubes checked for 6 mins
+*8648	B8
+*8649	B9		# W mu noisy	
+*8650	B10		# W mu being fixed
+*8651	B10
+*8652	B11
+*8653	B12
+
+######### A->B #########
+
+*8654	A1
+*8655	A2
+*8656	A3
+*8667	A4
+*8658	A5		# TDC bimodal
+*8659	A6
+*8660	A7
+*8661	A8
+*8662	A9
+*8663	A10		# stopped after 40min to test realtime current monitor
+*8664	A10
+*8665	A11
+*8666	A12
+
+@cal 8688
+
+*8667	B1
+*8668	B2
+*8669	B3
+*8670	B4
+*8671	B5
+*8672	B6
+*8673	B7
+*8674	B8
+*8675	B9
+*8676	B10
+*8677	B11
+*8678	B12
+
+######### B->A #########
+
+*8679	B1
+*8680	B2
+*8681	B3
+*8682	B4
+*8683	B5
+*8684	B6
+*8685	B7
+*8686	B8
+*8687	B9
+
+*8688	SourcesCal
+
+*8690	B10
+*8691	B11
+*8692	B12
+
+*8693	A1
+*8694	A2
+*8695	A3
+*8696	A4
+*8697	A5
+*8698	A6
+*8699	A7
+*8700	A8
+*8701	A9
+*8702	A10		# logger dead near end of run
+*8703	A11
+*8704	A12
+
+######### B->A #########
+
+*8705	B1
+*8706	B2
+*8707	B3
+*8708	B4
+*8709	B5
+*8710	B6
+*8711	B7		# logger crashed
+*8712	B8
+*8713	B9
+*8714	B10	10675
+*8715	B11
+*8716	B12
+
+*8717	A1
+*8718	A2	10676
+*8719	A3
+*8720	A4
+*8721	A5	10677
+*8722	A6
+*8723	A7	10678
+*8724	A8
+*8725	A9
+*8726	A10
+*8727	A11
+*8728	A12
+
+
+
+
+
+##########
+@cycle September 2-3 Night Beta Decay
+##########
+
+######### A->B #########
+
+@cal 8729
+*8729 SourcesCal
+
+*8732	A1
+*8733	A2	10681	# MWPC trip after 30min
+*8736	A2
+*8737	A3	
+*8738	A4		# "note: be careful analyzing this run; total dead time during this run (no triggers)"
+*8740	A5
+*8741	A6
+*8742	A7
+*8743	A8
+*8744	A9
+*8745	A10
+*8746	A11
+*8747	A12
+
+*8748	B1
+*8749	B2	10685
+*8750	B
+*8751	B4
+*8752	B5	10686
+*8753	B6
+*8754	B7	10687
+*8755	B8
+*8756	B9
+*8757	B10	10688
+*8758	B11
+*8759	B12
+
+
+
+##########
+@cycle September 5 Evening Calibrations
+##########
+
+# lost scope channel, FIFO to tripping West PMT2;
+# changed PMT amps on W2, W4; need to re-calibrate
+
+@cal 0
+@LED	7.22	6.98
+
+*8806 SourcesCal
+*8807 LEDCal	7.14	6.90
+*8808 LEDCal	7.06	6.82
+*8809 LEDCal	6.98	6.75
+*8810 LEDCal	6.90	6.67
+*8811 LEDCal	6.82	6.59
+
+
+
+
+##########
+@cycle September 5-6 Weekend Beta Decay
+##########
+
+@cal 8855
+
+######### B->A #########
+
+*8812	B1
+*8814	B2
+*8815	B3
+*8816	B4
+*8817	B5
+*8818	B6
+*8819	B7
+*8820	B8
+*8821	B9
+*8822	B10	10696	# stopped due to beam problems
+*8824	B10	10697	# still some beam problems
+*8825	B11
+*8826	B12
+
+*8827	A1
+*8828	A2
+*8829	A3	
+*8832	A4
+*8833	A5
+*8834	A6
+*8835	A7
+*8836	A8
+*8837	A9
+*8838	A10
+*8839	A11
+*8840	A12
+
+######### A->B #########
+
+*8841	A1
+*8842	A2
+*8843	A3	
+*8844	A4
+*8845	A5	10703
+*8846	A6
+*8847	A7	10704
+*8848	A8
+*8849	A9
+*8850	A10
+*8851	A11
+*8852	A12
+
+*8853	B1
+*8854	B2		# beam stopped after 40min
+
+*8855	SourcesCal
+
+*8856	B2
+*8857	B3
+*8858	B4
+*8859	B5
+*8860	B6
+*8861	B7
+*8862	B8
+*8863	B9
+
+*8864	B10
+#*8865	B11		# beam died before run started :(
+*8866	B12		# beam is down for hours
+
+*8867	SourcesCal		# beam off
+*8868	SourcesCal		# E LED reduced 7.22->7.14V to prevent ADC overflow on E2,E4
+*8869	SourcesCal		# long, 30min
+
+########
+# AFP quench
+# ...beam shutdown period
+# ...getting flipper back online
+########
+
+##########
+@cycle September 20 Calibrations
+##########
+
+#Sn source in
+#something is borked with the W PMTs
+
+*8883	LEDCal	7.14	6.90
+*8884	LEDCal	7.22	6.98
+*8885	LEDCal	7.06	6.82
+*8886	LEDCal	6.98	6.75
+
+
+##########
+@cycle September 22 Calibrations
+##########
+
+*8948	LEDCal	7.14	6.90
+*8949	LEDCal	7.22	6.98
+*8950	LEDCal	6.98	6.82
+*8951	LEDCal	6.90	6.67
+*8952	LEDCal	6.90	6.67
+*8953	LEDCal	7.06	6.82
+*8954	LEDCal	6.98	6.75
+*8955	SourcesCal
+
+
+##########
+@cycle September 24 Calibrations
+##########
+
+#*8956	LEDCal	7.22	6.98
+#*8957	LEDCal	7.06	6.82
+
+
+##########
+@cycle September 24 Morning Beta Decay
+##########
+
+######### B->A #########
+
+*8984	B1
+*8985	B2
+*8986	B3
+*8987	B4
+*8988	B5
+*8989	B6
+*8990	B7
+*8991	B8
+*8992	B9
+*8993	B10
+
+#*8998	LEDCal	6.98	6.75
+*8999	SourcesCal		# also LEDCal	7.14	6.90
+
+##########
+@cycle September 24-25 Night Beta Decay
+##########
+
+
+*9003	B10
+*9004	B11
+*9005	B12
+
+*9006	A1
+*9007	A2
+*9008	A3	
+*9009	A4
+*9010	A5
+*9011	A6
+*9012	A7
+*9013	A8
+*9014	A9
+*9015	A10
+*9016	A11
+*9017	A12
+
+######### B->A #########
+
+*9018	B1
+*9019	B2
+*9020	B3
+*9021	B4
+*9022	B5
+*9023	B6
+*9024	B7
+*9025	B8
+?*9026	B9		# AFP chiller broke, bad run
+?*9027	B10		# AFP chiller broke, bad run
+*9028	B11
+*9029	B12
+
+##########
+@cycle September 25-26 Night Beta Decay
+##########
+
+*9030 SourcesCal
+*9032 SourcesCal		# long
+
+# aborted previous B->A because of chiller problems
+
+######### A->B #########
+
+@cal 9032
+
+*9033	A1
+*9036	A2
+*9037	A3	
+*9038	A4
+*9039	A5
+*9040	A6
+*9041	A7
+*9042	A8
+*9043	A9
+*9044	A10
+*9045	A11
+*9046	A12
+
+*9047	B1
+# delays from DAQ crash
+*9052	B2
+*9053	B3
+*9054	B4
+*9055	B5
+*9056	B6
+
+# beam off
+
+
+
+##########
+@cycle September 26-29 Weekend Beta Decay
+##########
+
+*9058	LEDCal	7.14	6.90
+*9059	LEDCal	7.22	6.98
+*9060	LEDCal	7.06	6.82
+*9061	LEDCal	6.98	6.75
+*9062	LEDCal	6.90	6.75
+*9063	LEDCal	6.82	7.06
+*9064	SourcesCal
+
+
+
+*9066	B7
+*9067	B8
+*9068	B9
+*9069	B10
+*9070	B11
+*9071	B12
+
+######### A->B #########
+
+*9072	A1
+*9073	A2
+*9074	A3	
+*9075	A4
+*9076	A5
+*9077	A6
+*9078	A7
+*9079	A8
+*9080	A9
+*9081	A10
+*9082	A11
+*9083	A12
+
+*9084	B1
+*9085	B2
+*9086	B3
+*9087	B4
+#*9088	B5		# junked, beam tripping
+*9090	B5		# 23 minutes until beam tripped
+#changed beam structure
+
+*9094	B4
+*9095	B5
+*9096	B6		# depol reload calibration
+*9097	B6		# 100s "pre-load"
+*9098	B7
+*9099	B8
+*9100	B9
+*9101	B10
+*9102	B11
+*9103	B12
+
+######### A->B #########
+
+*9104	A1
+*9105	A2		# stopped after 26min to reload analyzer
+*9105	A2
+*9107	A3	
+*9108	A4
+*9109	A5		# stopped after 26min to reload analyzer
+*9110	A5
+*9111	A6
+*9113	A7
+*9114	A8
+*9115	A9
+*9116	A10
+*9117	A11
+*9118	A12
+
+*9119 SourcesCal
+
+*9120	B1
+*9121	B2
+*9122	B3
+*9123	B4
+*9124	B5
+*9125	B6
+*9126	B7
+*9127	B8
+*9128	B9
+*9129	B10
+*9130	B11
+*9131	B12
+
+######### A->B #########
+
+*9132	A1
+*9133	A2
+*9134	A3	
+*9135	A4
+*9136	A5
+*9137	A6
+*9138	A7
+*9139	A8
+*9140	A9
+*9141	A10
+*9142	A11
+*9143	A12
+
+*9144	B1
+*9145	B2
+*9146	B3
+*9147	B4
+*9148	B5
+*9149	B6
+*9150	B7
+*9151	B8
+*9152	B9
+*9153	B10
+*9154	B11
+*9155	B12
+
+######### A->B #########
+
+*9156	A1
+*9157	A2	10780
+*9158	A3
+# W tracking TDC is 10x noisier than usual; DC offset problem resolved.	
+*9160	A4		# Careful! change in W Tracking TDC rel. to beta run
+*9161	A5
+*9162	A6
+*9163	A7
+*9164	A8
+*9172	A9
+*9173	A10
+*9174	A11
+*9175	A12
+*9176	B1
+*9179	B2
+*9180	B3
+*9181	B4
+*9182	B5
+*9183	B6
+*9184	B7
+*9185	B8
+*9186	B9
+*9187	B10
+*9188	B11
+*9189	B12
+
+
+
+##########
+@cycle October 1-2 Night Source Calibrations
+##########
+
+############
+# GEOMETRY B: 0.7+12.5u mylar, 0.3u Be, 25u wirechamber windows
+############
+
+@cal 0
+
+# position scan with sources
+# Sr is hard to see, often missed
+
+# y ~ 0
+@sources E Sn Sr85 Bi
+@sources W Sn Sr85
+*9220	SourcesCal
+@sources Sn Sr85 Bi
+*9221	SourcesCal
+*9222	SourcesCal
+*9223	SourcesCal
+@sources E Sn
+@sources W
+*9226	SourcesCal
+@sources Sn
+*9227	SourcesCal
+*9228	SourcesCal
+@sources Sn Sr85 Bi
+*9229	SourcesCal
+# y ~ 0.5
+*9230	SourcesCal
+*9231	SourcesCal
+@sources Sn Sr85
+*9232	SourcesCal
+@sources Sn
+*9233	SourcesCal
+*9234	SourcesCal
+# y ~ -0.5
+@sources Sn Sr85 Bi
+*9235	SourcesCal
+*9236	SourcesCal
+@sources Sn Sr85
+*9237	SourcesCal
+@sources Sn
+*9238	SourcesCal
+*9239	SourcesCal
+
+# all 3 sources in
+@sources Sn Sr85 Bi
+*9259	SourcesCal
+*9260	SourcesCal
+*9261	SourcesCal
+*9262	SourcesCal
+*9263	SourcesCal
+*9264	SourcesCal
+
+@sources
+*9265	BgOff
+
+# Use two Sn113 and one Bi207 sources. 12.7 micron mylar tapped on two
+# of the sources to study the energy loss and backscattering.
+#
+#    |Sn|         N
+#     Sn       W <^> E
+#     Bi|
+#
+
+@sources Sn Sn Bi
+*9274	SourcesCal
+*9275	SourcesCal
+
+
+
+##########
+@cycle October 3-6 Weekend Beta Decay
+##########
+
+######### A->B #########
+
+@sources Sn
+*9329	SourcesCal	# ugly, misaligned
+*9351	SourcesCal
+
+
+*9356	A2
+*9357	A1
+*9358	A3		# garbage, since follows a BG run instead of a Beta run
+*9359	A4
+*9360	A5
+*9361	A6
+*9362	A7
+*9363	A8
+*9364	A9
+#*9365	A10		# DAQ problem after ~40 mins
+*9370	A10
+*9371	A11
+*9372	A12
+
+*9373	B1
+*9374	B2	10798
+*9375	B3
+*9376	B4
+*9377	B5	10799
+*9378	B6
+*9379	B7	10800
+*9380	B8
+*9382	B9
+*9383	B10	10801
+*9384	B11
+*9385	B12
+
+######### B->A #########
+
+*9386	B1
+*9387	B2	10802
+*9388	B3
+*9389	B4
+*9390	B5	10803
+*9392	B6
+*9393	B7	10804
+*9394	B8
+*9395	B9
+*9396	B10	10805
+*9397	B11
+*9398	B12
+
+# flapper efficiency seems low, flapper tuning during BG run 9398
+
+*9399	A1
+*9400	A2	10807
+*9401	A3
+
+# DAQ event misalignment! these runs craptified!
+#*9402	A4
+#*9403	A5	10808
+#*9404	A6
+#*9405	A7	10809
+
+*9409	A4
+*9410	A5	10810
+*9411	A6
+*9412	A7	10811
+*9413	A8
+*9414	A9
+*9415	A10	10812
+*9416	A11
+*9417	A12
+
+##########
+@cycle October 4 Evening LED scan
+##########
+
+*9420	LEDCal	7.14	6.98
+*9421	LEDCal	7.06	6.90
+*9422	LEDCal	6.98	6.82
+*9423	LEDCal	6.90	6.75
+*9424	LEDCal	6.82	6.67
+*9425	LEDCal	6.75	6.59
+
+*9427	SourcesCal		# source moving at end
+
+##########
+@cycle October 4-5 Night Beta Decay
+##########
+
+######### B->A #########
+
+*9428	B1		# accidentally stopped early
+*9429	B1
+*9430	B2
+*9431	B3
+*9432	B4
+*9433	B5	10816
+*9434	B6
+*9435	B7	10817
+*9436	B8
+*9437	B9
+*9438	B10	10818
+*9439	B11
+*9440	B12
+
+*9441	A1
+*9442	A2	10819
+*9443	A3
+*9444	A4
+#*9445	A5	10820	# misalignment! trashed!
+*9446	A5	10821	# beam off after 50min
+*9447	A5	10822	# 20min long
+*9448	A6
+*9449	A7	10823
+*9450	A8
+*9451	A9
+*9452	A10	10824
+*9453	A11
+*9454	A12
+
+######### A->B #########
+
+*9455	A1
+*9456	A2	10825
+*9457	A3
+*9458	A4
+*9459	A5	10826
+*9460	A6
+*9461	A7	10827
+*9462	A8
+*9463	A9
+*9464	A10	10828
+*9465	A11
+*9466	A12
+
+*9467	B1
+*9468	B2	10829
+*9469	B3
+*9470	B4
+*9471	B5	10830
+*9472	B6
+*9473	B7	10831	# stopped after 50min, beam down
+*9474	B7	10831		
+*9475	B8
+*9476	B9
+*9477	B10	10832
+*9478	B11	
+*9479	B12
+
+*9480 SourcesCal
+
+# E Ref PMT threshold raised to reduce noise
+# LED voltage lowered to avoid clipping
+
+*9482	SourcesCal
+*9483	SourcesCal
+
+
+
+##########
+@cycle October 6 Morning LED Calibrations
+##########
+
+*9490 LEDCal	7.14	6.98
+*9491 LEDCal	7.06	6.90
+*9492 LEDCal	6.98	6.82
+*9493 LEDCal	6.90	6.75
+*9494 LEDCal	6.82	6.67
+*9495 LEDCal	6.75	6.59
+*9496 LEDCal	6.67	6.51
+
+
+##########
+@cycle October 6 Morning Beta Decay
+##########
+
+######### B->A #########
+
+# LED voltages mis-set from previous scan
+@LED	6.67	6.51
+
+*9497	B1
+*9498	B2	10834
+*9499	B3
+
+# LEDs reset to normal
+@LED	7.06	6.90
+
+*9501	B4
+*9502	B5	10835
+*9503	B6
+*9504	B7	10836		
+*9505	B8
+*9506	B9
+*9507	B10	10837	# only ~45min long
+*9508	B11	
+*9509	B12
+
+*9510 SourcesCal
+
+
+
+##########
+@cycle October 6-7 Night Beta Decay
+##########
+
+*9514	A1
+*9515	A2
+*9516	A3
+*9517	A4
+*9518	A5	10840
+*9519	A6
+*9521	A7	10841
+*9524	A8
+*9525	A9
+*9527	A10	10843
+*9528	A11
+*9529	A12
+
+######### A->B #########
+
+*9530	A1
+*9531	A2	10844
+*9532	A3
+
+## beam problems ##
+
+*9535 SourcesCal
+
+*9560	A4
+*9561	A5	10846
+*9562	A6
+*9563	A7	10847
+*9564	A8
+*9565	A9
+*9566	A10	10848
+*9567	A11
+*9568	A12
+
+*9569 SourcesCal
+
+
+
+##########
+@cycle October 7-8 night Beta Decay
+##########
+
+*9576	B1
+*9577	B2	10849
+*9578	B3
+*9579	B4
+*9580	B5	10850
+*9581	B6
+*9582	B7	10851	# event misalignment after 30min
+*9584	B7		# ~30min run	
+*9585	B8
+*9586	B9
+*9589	B10	10855
+*9590	B11	
+*9592	B12
+
+######### B->A #########
+## lots of misalignment happening.... ##
+
+@cal 9620
+
+*9593	B1		# event misalignment warning at end of run
+*9594	B2	10856	# event misalignment after ~7min
+*9596	B2	10858	# event misalignment after ~12min
+*9597	B2	10859	# event misalignment after ~14min
+*9598	B2	10860	# event misalignment after ~13.5min
+*9599	B2	10861	# event misalignment after ~14:09min
+*9600	B2	10862	# ~15min long
+*9601	B3
+*9602	B4		# event misalignment after ~9min
+*9603	B4		# ~4min long
+*9604	B5	10863	# event misalignment after ~7min
+*9605	B5	10864	# event misalignment after ~12min
+*9606	B5	10865	# event misalignment after ~15min
+*9607	B5	10866	# event misalignment after ~14min
+*9608	B5	10867	# ~12min long
+*9610	B5	10869
+*9611	B6
+
+## lost beam ##
+
+##########
+@cycle October 8 Morning Calibrations
+##########
+
+@cal 9620
+
+*9612	LEDCal	7.14	6.98
+*9613	LEDCal	7.06	6.90
+*9615	LEDCal	6.98	6.82
+*9616	LEDCal	6.90	6.75
+*9617	LEDCal	6.82	6.67
+*9618	LEDCal	6.75	6.59
+*9619	LEDCal	6.67	6.51
+
+*9620 SourcesCal
+
+
+
+
+##########
+@cycle October 8 Evening Beta Decay
+##########
+
+@cal 9620
+
+*9630	B7	
+*9631	B8
+*9632	B9
+*9633	B10
+*9634	B11	
+*9635	B12
+
+
+
+##########
+@cycle October 10-14 Columbus Day Weekend Beta Decay
+##########
+
+@sources Sn
+
+@cal 9636
+
+*9636 SourcesCal		# ~25min
+
+*9652	A1
+*9653	A2	10873
+*9654	A3
+*9655	A4
+*9656	A5	10874
+*9657	A6
+*9658	A7	10875
+*9659	A8
+*9660	A9
+*9661	A10	10876
+*9662	A11
+*9663	A12
+
+######### A->B #########
+
+@cal 9690
+
+*9664	A1
+*9665	A2	10877	# fire alarmed!
+*9666	A2	10878
+*9667	A3
+*9668	A4
+*9669	A5	10879
+*9670	A6
+*9671	A7	10880
+*9672	A8
+*9673	A9
+*9674	A10	10881
+*9675	A11
+*9676	A12
+
+*9677	B1
+*9678	B2	10882
+*9679	B3
+*9680	B4
+*9681	B5	10883
+*9682	B6
+*9683	B7	10884		
+*9684	B8
+*9685	B9
+*9686	B10	10885	# beam down after ~50min
+*9687	B10	10886
+*9688	B11	
+*9689	B12
+
+*9690 SourcesCal
+
+######### A->B #########
+
+@cal 9712
+
+*9700	A1
+*9701	A2	10887
+*9702	A3
+*9703	A4
+*9704	A5	10888
+*9705	A6
+*9706	A7	10889
+*9707	A8
+*9708	A9
+*9709	A10	10890
+*9710	A11
+*9711	A12
+
+*9712 SourcesCal
+
+*9717	B1
+*9718	B2	10891
+*9719	B3
+*9720	B4
+*9721	B5	10892
+*9722	B6
+*9723	B7	10893		
+*9724	B8
+*9725	B9
+*9726	B10	10894
+*9727	B11	
+*9728	B12
+
+######### A->B #########
+
+*9729	A1
+*9730	A2	10895
+*9731	A3
+*9732	A4
+*9733	A5	10896
+*9734	A6
+*9735	A7	10897
+*9736	A8
+*9737	A9
+*9738	A10	10898
+*9739	A11
+*9740	A12
+
+*9741	B1
+*9742	B2	10899
+*9743	B3
+*9744	B4
+*9745	B5	10900
+*9746	B6
+*9747	B7	10901		
+*9748	B8
+*9749	B9
+*9750	B10	10902
+*9751	B11	
+*9752	B12
+
+######### B->A #########
+
+@cal 9773
+
+*9753	B1
+*9754	B2	10903
+*9755	B3
+*9756	B4
+*9757	B5	10904
+*9758	B6
+*9759	B7	10905		
+*9766	B8
+*9768	B9
+*9769	B10	10906
+*9770	B11	
+*9771	B12
+
+*9773 SourcesCal
+
+*9775	A1
+*9776	A2	10907
+*9777	A3
+*9778	A4
+*9779	A5	10908
+*9780	A6
+*9781	A7	10909
+*9782	A8
+*9783	A9
+*9784	A10	10910
+*9785	A11
+*9786	A12
+
+######### B->A #########
+
+*9787	B1
+*9788	B2	10911
+*9789	B3
+*9790	B4
+*9791	B5	10912
+*9792	B6
+*9793	B7	10913
+*9794	B8
+*9795	B9
+*9796	B10	10914
+*9797	B11	
+*9798	B12
+
+### some accidental B's
+# *9799	B1
+# *9800	B2	10915
+# *9801	B3
+###
+
+*9802	A1
+*9803	A2	10916
+*9804	A3
+*9805	A4
+*9806	A5	10917
+*9807	A6
+*9808	A7	10918	# disk full, stopped early
+*9809	A7	10919
+*9810	A8
+*9811	A9
+*9812	A10	10920
+*9813	A11
+*9814	A12
+
+######### A->B #########
+
+@cal 9840
+
+*9815	A1
+*9816	A2	10921
+*9817	A3
+*9818	A4
+# *9819	A5	10922	# event misaligned! trash!
+*9820	A5	10923
+*9821	A6
+*9822	A7	10919
+*9823	A8
+*9824	A9
+*9825	A10	10925
+*9826	A11
+*9827	A12
+
+*9828	B1
+*9829	B2	10926
+*9830	B3
+*9831	B4
+*9832	B5	10927
+*9833	B6
+*9834	B7	10928
+*9835	B8
+*9836	B9
+*9837	B10	10929
+*9838	B11
+*9839	B12
+
+*9840	SourcesCal
+
+######### A->B #########
+
+*9843	A1
+*9844	A2	10930
+*9845	A3
+*9846	A4
+*9847	A5	10931
+*9848	A6
+*9849	A7	10932
+*9850	A8
+*9851	A9
+*9852	A10	10933
+*9853	A11
+*9854	A12
+
+*9855	B1
+*9856	B2	10934
+*9857	B3
+*9858	B4
+*9859	B5	10935
+*9860	B6
+*9861	B7	10936
+
+
+
+
+##########
+@cycle October 23 LED Scans
+##########
+
+@cal 9870
+*9870	SourcesCal
+
+*9871	LEDCal	7.14	6.98
+*9872	LEDCal	7.06	6.90
+*9873	LEDCal	6.98	6.82
+*9874	LEDCal	6.90	6.75
+*9875	LEDCal	6.82	6.67
+*9876	LEDCal	6.75	6.59
+*9877	LEDCal	6.67	6.51
+*9878	SourcesCal
+
+
+
+##########
+@cycle October 24 LED Scans
+##########
+
+@cal 9934
+
+*9927	LEDCal	7.14	6.98
+*9928	LEDCal	7.06	6.90
+*9929	LEDCal	6.98	6.82
+*9930	LEDCal	6.90	6.75
+*9931	LEDCal	6.82	6.67
+*9932	LEDCal	6.75	6.59
+*9933	LEDCal	6.67	6.51
+
+
+
+##########
+@cycle October 24-27 Weekend Beta Decay
+##########
+
+######### A->B #########
+
+@cal 9934
+
+*9934	SourcesCal
+
+*9943	A1
+*9945	A2	10949	# event misalignment!
+*9946	A2	10950
+*9947	A3
+*9948	A4
+*9949	A5		# event misalignment, 20min
+*9950	A5		# event misalignment, 30min
+*9951	A5
+*9952	A6
+*9954	A7
+*9955	A8
+*9956	A9
+*9957	A10		# event misalignment, 36min
+*9958	A10
+*9959	A11
+*9960	A12
+
+@cal 9978
+
+*9961	B1
+*9962	B2
+*9963	B3
+*9964	B4
+*9965	B5		# misaligned for last minute; 7min run
+*9966	B5		# beam off after 30min
+*9967	B5
+*9968	B6
+*9969	B7		# misaligned last few seconds; 40min good data
+*9970	B7
+*9971	B8
+*9972	B9
+*9973	B10		# misaligned after 10min
+*9974	B10		# beam off for last ~3min
+*9976	B11		# misalignment at end of run
+*9977	B12
+
+*9978	SourcesCal
+
+# X-Y magnet steering re-tuned by CCR
+
+######### A->B #########
+
+# warning: bits of Sn source visible throughout octet
+
+# *9979	A1		# Sn still in acceptance
+*9981	A1		# event misalignment after 6min
+*9982	A1
+*9983	A2		# 10min gap in beam
+*9984	A3
+*9985	A4
+*9986	A5
+*9987	A6
+*9988	A7
+*9989	A8
+*9990	A9
+*9991	A10
+*9992	A11
+*9993	A12
+
+*9994	B1
+*9995	B2
+*9996	B3
+*9997	B4
+*9998	B5
+*9999	B6
+#*10000	B7		# beam down after ~25min
+#*10001	B8		# beam still down
+
+# beam down for a while
+
+@cal 10002
+
+*10002	SourcesCal		# 1:22 hours
+*10003	Misc		# source removed background
+
+*10004	B7	10976
+*10005	B8
+*10006	B9
+*10007	B10	10977
+*10008	B11
+*10009	B12
+
+######### B->A #########
+
+*10010	B1
+*10011	B2	10978
+*10012	B3
+*10013	B4
+*10014	B5	10979
+*10015	B6
+*10016	B7	10980
+*10017	B8
+*10018	B9
+*10019	B10
+*10020	B11
+*10022	B12
+
+*10023	SourcesCal
+
+*10025	A1
+*10026	A2	10982
+*10027	A3
+*10028	A4
+*10029	A5	10983
+*10030	A6
+*10031	A7	10984
+*10032	A8
+*10033	A9
+*10034	A10	10985
+*10035	A11
+*10036	A12
+
+######### A->B #########
+
+*10037	A1
+*10038	A2	10986
+*10039	A3
+*10040	A4
+*10041	A5	10987
+*10042	A6
+#*10043	A7	10988	# doubled LED peaks in WQADCsum and E GMSref, possibly due to temperature change in area
+*10044	A7	10989
+*10045	A8
+*10046	A9
+*10047	A10	10990
+*10048	A11
+*10049	A12
+
+*10050	B1
+*10051	B2	10991
+*10052	B3
+*10053	B4
+*10054	B5	10992
+*10055	B6
+*10056	B7	10993
+*10057	B8
+*10058	B9
+*10059	B10	10994
+*10060	B11
+*10061	B12
+
+######### B->A #########
+
+*10062	B1
+*10063	B2	10995
+*10064	B3
+*10065	B4
+*10066	B5	10996
+*10067	B6
+*10068	B7	10997
+*10069	B8
+*10070	B9
+
+
+##########
+@cycle October 28 Calibrations
+##########
+
+*10078	SourcesCal
+*10079	SourcesCal
+*10080	SourcesCal
+*10081	SourcesCal
+*10082	SourcesCal
+*10083	SourcesCal
+
+*10089	LEDCal	7.06	6.90
+*10090	LEDCal	7.14	6.98
+*10091	LEDCal	6.98	6.82
+*10092	LEDCal	6.90	6.75
+*10093	LEDCal	6.82	6.67
+*10094	LEDCal	6.75	6.59
+*10095	LEDCal	6.67	6.51
+
+##########
+@cycle October 29-30 Night Beta Decay
+##########
+
+######### A->B #########
+
+*10109 SourcesCal
+
+*10111	A1
+*10112	A2	11007
+#*10113	A3		# junk --- depol program borked
+*10114	A4
+*10115	A5	11008
+*10116	A6
+*10117	A7	11009
+*10118	A8
+*10119	A9
+*10120	A10	11010	# ~10min beam dropout
+*10121	A11
+*10122	A12
+
+*10123	B1
+*10124	B2	11011
+*10125	B3
+*10126	B4
+*10127	B5	11012	# lost beam after 55min
+*10128	B5	11013
+*10129	B6
+*10130	B7	11014	# lost beam after 56min
+*10131	B7	11015
+*10132	B8
+*10133	B9
+*10134	B10	11016
+*10135	B11
+*10136	B12
+
+##########
+@cycle October 30 Sn Calibrations
+##########
+
+@sources Sn
+*10137 SourcesCal
+*10138 SourcesCal
+*10139 SourcesCal
+*10140 SourcesCal
+*10141 SourcesCal
+*10142 SourcesCal
+*10143 SourcesCal
+*10144 SourcesCal
+*10145 SourcesCal
+*10146 SourcesCal
+*10147 SourcesCal
+*10148 SourcesCal
+
+##########
+@cycle October 30-31 Night Beta Decay
+##########
+
+######### B->A #########
+
+*10147	B1
+*10148	B2	11018
+*10149	B3
+*10150	B4
+*10151	B5
+*10152	B6
+*10153	B7		# stopped early to check analyzer
+*10154	B7
+*10155	B8
+*10156	B9
+*10157	B10	11016
+*10159	B11
+*10160	B12
+
+*10161	A1
+*10162	A2	11022
+*10163	A3
+*10164	A4
+*10165	A5	11023
+*10166	A6
+*10167	A7	11024
+*10168	A8
+*10169	A9
+*10170	A10	11025
+*10171	A11
+*10172	A12
+
+
+
+##########
+@cycle October 31 - November 3 Weekend Beta Decay
+##########
+
+######### A->B #########
+@sources
+
+*10200	A1
+*10201	A2		# stopped by beam trip
+*10202	A2
+*10203	A3
+*10204	A4
+*10205	A5
+*10206	A6
+*10207	A7
+*10208	A8
+*10209	A9
+*10210	A10	11033
+*10211	A11
+*10212	A12
+
+*10213	B1
+*10214	B2	11034
+*10215	B3
+*10216	B4
+*10217	B5	11035
+*10218	B6
+*10219	B7	11036
+*10220	B8
+*10221	B9
+*10222	B10	11037
+*10223	B11
+*10224	B12
+
+######### A->B #########
+
+*10225	A1
+*10226	A2	11038
+*10227	A3
+*10228	A4
+*10229	A5	11039
+*10230	A6
+*10231	A7	11040
+*10232	A8
+*10233	A9
+#*10234	A10	11041	# junk, beam tripped
+
+@sources Sn
+*10235 SourcesCal
+
+*10236	A10	11042
+*10237	A11
+*10238	A12
+
+*10239	B1
+*10240	B2	11043
+*10241	B3
+*10242	B4
+*10243	B5	11044
+*10244	B6
+*10245	B7	11045
+*10246	B8
+*10247	B9
+*10248	B10	11046
+*10249	B11
+*10250	B12
+
+######### B->A #########
+
+*10251	B1
+*10252	B2	11047
+*10253	B3
+*10254	B4
+*10255	B5	11048
+*10256	B6
+*10257	B7	11049	# stopped due to beam off
+*10258	B7	11050
+*10259	B8
+*10260	B9
+*10261	B10	11051
+*10262	B11
+*10263	B12
+
+*10264	A1
+*10265	A2	11052	# lost beam after 40min
+*10266	A2	11053	# lost beam after 5min
+*10267	A2	11054
+*10268	A3
+*10269	A4
+*10270	A5	11055
+*10271	A6
+*10272	A7	11056	# beam glitch during run
+*10273	A8
+*10274	A9
+*10275	A10	11057
+*10276	A11
+*10277	A12
+
+@sources Sn
+*10278 SourcesCal
+@sources
+
+######### B->A #########
+
+*10280	B1
+*10281	B2	11058
+*10282	B3
+*10283	B4
+*10284	B5	11059
+*10285	B6
+*10286	B7	11060
+*10287	B8
+*10288	B9
+*10289	B10	11061
+*10290	B11
+*10291	B12
+
+*10292	A1
+*10293	A2	11062
+#*10294	A3		# labview borked, redo
+*10295	A2	11064	# re-loading for depol run
+*10296	A3
+*10297	A4
+*10298	A5	11065
+*10299	A6
+*10300	A7	11066
+*10301	A8
+*10302	A9
+*10303	A10	11067
+*10304	A11
+*10305	A12
+
+######### B->A #########
+
+*10306	B1
+*10307	B1		# oops, B1 again
+*10308	B2
+#*10309	B3		# lost beam, redo
+*10310	B3
+*10311	B4
+*10312	B5
+*10313	B6
+*10314	B7
+*10315	B8
+*10317	B9
+*10318	B10	11072
+*10320	B11
+*10321	B12
+
+*10322	A1
+*10323	A2	11073
+*10324	A3
+*10325	A4
+*10326	A5	11074
+*10327	A6
+*10328	A7	11075
+*10329	A8
+*10330	A9
+*10331	A10
+*10332	A11
+*10333	A12
+
+##########
+@cycle November 3 Calibrations before opening detector
+##########
+
+# Sn source is in
+
+*10334	LEDCal	7.05	6.98
+*10335	LEDCal	7.14	6.98
+*10336	LEDCal	7.06	6.90
+*10337	LEDCal	6.98	6.82
+*10338	LEDCal	6.90	6.75
+*10339	LEDCal	6.82	6.67
+*10340	LEDCal	7.14	6.98
+
+
+
+##########
+@cycle November 3-4 Night UCN Induced Background measurements
+##########
+
+# beta blocker installed
+
+*10346	Misc		#GV Open; W MWPC sparked after 22min
+*10347	Misc		#GV Closed
+*10349	Misc		#GV Open
+*10350	Misc		#GV Closed
+*10351	Misc		#GV Open
+*10352	Misc		#GV Closed
+*10353	Misc		#GV Open
+*10354	Misc		#GV Closed
+*10355	Misc		#5min load, 15min hold
+*10356	Misc		#5min load, 20min hold
+*10357	Misc		#5min load, 20min hold
+*10358	Misc		#GV Open
+*10359	Misc		#GV Closed
+*10360	Misc		#Beam off BG, GV closed
+
+##########
+@cycle November 5 Morning UCN Induced Background measurements
+##########
+
+# beta blocker installed on W side
+
+*10369	Misc		#GV Open
+*10370	Misc		#GV Closed
+*10371	Misc		#GV Open
+*10372	Misc		#GV Closed
+*10373	Misc		#GV Open
+*10374	Misc		#GV Closed
+*10375	Misc		#GV Open
+
+
+
+
+
+
+
+
+
+#############
+# GEOMETRY C: 0.7u mylar, 0.3u Be, 6u wirechamber windows 
+#############
+
+@sources Cd Sn
+
+##########
+@cycle November 8-10 Weekend Beta Decay
+##########
+
+######### A->B #########
+
+*10404	A1
+*10405	A2
+*10406	A3
+*10407	A4
+*10408	A5
+*10409	A6
+*10410	A7
+*10411	A8
+*10412	A9
+*10413	A10
+*10414	A11
+*10415	A12
+
+*10416	B1
+*10417	B2
+*10418	B3
+*10419	B4
+*10420	B5
+*10421	B6
+*10422	B7
+*10423	B8
+*10424	B9
+*10425	B10
+*10426	B11
+*10427	B12		# lost beam after ~7min
+
+## LED voltage scan ##
+
+*10433	LEDCal	7.14	6.98
+*10434	LEDCal	7.06	6.90
+*10435	LEDCal	6.98	6.82
+*10436	LEDCal	6.90	6.75
+*10437	LEDCal	6.82	6.67
+*10438	LEDCal	6.75	6.59
+*10439	LEDCal	6.67	6.51
+
+######### A->B #########
+
+*10440	A1
+*10441	A2
+*10442	A3
+*10443	A4
+*10445	A5
+*10446	A6
+*10447	A7
+*10448	A8
+*10449	A9
+*10450	A10	11113
+*10451	A11
+*10452	A12
+
+# beam-on-target restrictions require changing to 10s between bursts
+
+*10453	B1
+*10454	B2	11114
+*10455	B3
+*10458	B4		# lost beam after 7min
+*10459	B5	11115
+*10460	B6
+*10461	B7	11116
+*10462	B8
+*10463	B9
+*10464	B10	11117
+*10465	B11
+*10466	B12
+
+*10467 SourcesCal
+
+######### A->B #########
+
+*10469	A1
+*10470	A2	11118
+*10471	A3
+*10472	A4
+*10473	A5	11119
+*10474	A6
+*10475	A7	11120
+*10476	A8
+*10477	A9
+*10478	A10	11121
+*10479	A11
+*10480	A12
+
+*10481	B1
+*10482	B2	11122
+*10483	B3
+*10484	B4
+*10485	B5	11123
+*10486	B6
+*10487	B7	11124
+*10488	B8
+*10489	B9		# wirechambers tripped
+*10490	B9		# thought wirechambers tripped when they didn't
+*10491	B9		# tripped again
+*10492	B10	11127	# misalignment after 58min
+*10493	B11
+*10494	B12
+
+######### B->A #########
+
+*10495 SourcesCal
+
+*10497	B1
+*10498	B2	11128
+*10499	B3
+*10500	B4
+*10501	B5	11129
+*10502	B6
+*10503	B7	11130
+*10504	B8
+*10505	B9
+*10506	B10	11131
+*10507	B11
+*10508	B12
+
+*10509	A1
+*10512	A2	11134
+*10513	A3
+*10514	A4
+*10515	A5	11135
+*10516	A6
+*10517	A7	11136
+*10518	A8
+*10519	A9
+*10520	A10	11137
+*10521	A11
+*10522	A12
+
+
+
+##########
+@cycle November 10 Evening PMT recalibration & source lifetime
+##########
+# new PMT HV settings
+*10528	SourcesCal
+## source lifetime tests ##
+10529...10532
+
+##########
+@cycle November 10-11 Night Beta Decay
+##########
+
+######### B->A #########
+
+*10533	B1
+*10535	B2		# event misalignment after 26min
+*10536	B2
+#10537	Misc		# swap E,W anode ADC to check ADC
+*10538	B3
+*10539	B4
+#10540	B5		# misaligned!
+#10541	B5		# misaligned!
+#10542	B5		# stopped to reset DAQ
+#10543	B5		# misaligned!
+#10544	B5		# ?
+*10545	B5	11146	# finally!
+*10546	B6
+*10547	B7	11147
+*10548	B8
+*10549	B9
+*10550	B10	11148
+*10551	B11
+*10552	B12
+
+
+*10553	A1
+*10554	A2	11149
+*10555	A3
+*10556	A4
+*10557	A5	11150
+*10558	A6
+##
+#*10559	A7	11151	# disk full, 20mins
+#*10561	A7	11153
+#*10562	A8
+#*10563	A9
+#*10564	A10		# flapper failures, analysis problems\
+##
+
+
+
+##########
+@cycle November 11-12 Night Beta Decay
+##########
+
+*10580	A7	11159
+*10581	A8
+*10582	A9
+*10583	A10	11160
+*10584	A11
+*10585	A12
+
+######### A->B #########
+
+*10586	A1
+*10587	A2	11161
+*10588	A3
+*10589	A4
+*10590	A5	11162
+*10591	A6
+*10592	A7	11163	# 50min before beam off
+*10593	A8
+*10594	A9
+*10595	A10
+*10596	A11
+*10597	A12
+
+*10598	B1
+*10599	B2	11165
+*10600	B3
+*10601	B4
+*10602	B5	11166
+*10603	B6
+*10604	B7
+*10605	B8
+*10606	B9
+*10607	B10
+*10608	B11
+*10609	B12
+
+
+
+
+##########
+@cycle November 12 Evening Source Calibrations
+##########
+*10613	SourcesCal
+
+
+
+
+##########
+@cycle November 14 Beta Decay
+##########
+
+*10669	SourcesCal
+*10670	SourcesCal
+
+*10671	LEDCal	7.14	6.98
+*10672	LEDCal	7.06	6.90
+*10673	LEDCal	6.98	6.82
+*10674	LEDCal	6.90	6.75
+*10675	LEDCal	6.82	6.67
+*10676	LEDCal	6.75	6.59
+*10677	LEDCal	6.67	6.51
+
+
+######### A->B #########
+
+*10687	A1
+*10688	A2	11170
+*10689	A3
+*10690	A4
+*10691	A5	11171
+*10692	A6
+*10693	A7	11172
+*10694	A8
+*10695	A9
+*10696	A10	11173
+*10697	A11
+*10699	A12
+
+##
+#*10700	B1
+#*10701	B2	11174
+#*10702	B3		# lost beam, needs restart
+#
+#*10704	B1
+#*10705	B2		# misalignment & beam lost
+##
+
+
+
+##########
+@cycle November 21-22 Night Beta Decay
+##########
+
+*10717	SourcesCal
+*10718	SourcesCal
+
+######### A->B #########
+
+##
+#*10738	A1
+#*10739	A2		# misalignment!
+##
+
+*10748	A1
+*10749	A2
+*10750	A3
+*10751	A4
+*10752	A5		# misalignment!
+*10753	A5	11187
+*10754	A6
+*10755	A7	11187	# module problems... beam off after 20min
+
+# beam down
+# depol data seems odd, could be H-GX signal problems with beam
+
+
+
+##########
+@cycle November 22 Night Beta Decay
+##########
+
+@sources Cd Sn
+
+*10757	SourcesCal
+*10758	SourcesCal	# ended misaligned
+*10759	SourcesCal
+
+@cal 10757
+
+replaced SIS3600 module, but that didn't fix the misalignment problems...
+
+*10771	A7	11188	# misaligned after 17min
+*10772	A7	11188
+*10773	A8
+*10774	A9		# ended misaligned
+#*10775	A10	11189	# misaligned after 48min
+#*10776	A10	11189
+
+## beam outage ##
+
+## LED scans ##
+# Sn Source at center
+
+*10808	LEDCal	7.06	6.90
+*10809	LEDCal	7.14	6.98
+*10811	LEDCal	6.98	6.82
+*10812	LEDCal	6.90	6.75
+*10813	LEDCal	6.82	6.67
+*10814	LEDCal	6.75	6.59
+*10815	LEDCal	6.67	6.51
+*10816	LEDCal	7.06	6.90
+
+@LED	7.06	6.90
+
+##########
+@cycle November 25-26 Night Beta Decay
+##########
+
+*10832 SourcesCal
+
+######### A->B #########
+
+# *10846	A1		# unpaired discard
+
+## re-adjusted W2 PMT HV after tripping ##
+## doing shorter (40min beta, 8min bg) runs to finish A->B tonight
+
+@cal 10876
+
+*10849	A1
+*10850	A2
+*10851	A3
+*10852	A4
+*10853	A5	11194	# misalignment after 10min
+*10854	A5	11194
+*10855	A6
+*10856	A7	11195
+*10857	A8
+*10858	A9
+*10859	A10	11196
+*10860	A11
+*10861	A12
+
+*10862	B1
+*10863	B2
+*10864	B3
+*10865	B4
+*10866	B5
+*10867	B6
+*10868	B7
+*10869	B8
+*10870	B9
+*10871	B10
+*10872	B11
+*10873	B12
+
+
+
+##########
+@cycle November 26 Morning Calibrations
+##########
+
+*10875	SourcesCal	# misalignment after 6min
+*10876	SourcesCal	# misalignment after 45min
+
+@cal 10876
+
+*10877	LEDCal	7.06	6.90
+*10878	LEDCal	6.98	6.82
+*10879	LEDCal	6.90	6.74
+*10880	LEDCal	6.82	6.66
+*10881	LEDCal	6.74	6.58
+*10882	LEDCal	6.66	6.50	# LED peak too low to see in GMS
+*10883	LEDCal	7.14	6.98
+*10884	LEDCal	7.06	6.90
+
+@LED 7.06	6.90
+
+
+##########
+@cycle November 26 - December 1 Thanksgiving Weekend Beta Decay
+##########
+
+@cal 10876
+
+######### B->A #########
+
+*10890	B1
+*10891	B2	11204
+*10892	B3
+*10893	B4
+*10894	B5		# misalignment after 21min
+*10895	B5		# missing beam ~8min
+*10896	B6
+*10897	B7
+*10898	B7
+*10899	B8
+*10900	B9
+*10901	B10		# misalignment after 2min; good misalignment test run
+*10902	B10
+*10903	B10
+*10904	B11
+*10905	B12
+
+@cal 10936
+
+*10906	A1
+*10907	A2
+*10908	A2
+*10909	A2
+*10910	A3
+*10911	A4
+*10912	A5		# Extra A5 due to shift-change confusion
+*10913	A5
+*10914	A6
+*10915	A7	11211	#stopped on Logger failure
+*10916	A7	11211
+*10917	A8
+*10918	A9
+*10919	A10	11212
+*10920	A11
+*10921	A12
+
+######### B->A #########
+
+*10922	B1
+*10923	B2
+*10924	B3
+*10925	B4
+*10926	B5
+*10927	B6
+*10928	B7
+*10929	B8
+*10930	B9
+*10931	B10	11216
+*10932	B11
+*10933	B12
+
+*10936 SourcesCal
+
+*10937	A1
+*10938	A2	11217	# stopped at 45min; this and prev. runs have low W backing PMT signal
+*10940	A3
+*10941	A4
+*10942	A5	11218
+*10943	A6
+*10944	A7	11219
+*10945	A8
+*10946	A9
+*10947	A10	11220
+*10948	A11
+*10949	A12
+
+######### B->A #########
+
+*10950	B1
+*10951	B2		# wierd beta PMT peaks
+*10954	B2	11222
+*10955	B3
+*10956	B4
+*10957	B5	11223
+*10958	B6
+*10959	B7	11224
+*10960	B8
+*10961	B9
+*10962	B10	11225
+*10963	B11
+*10964	B12
+
+*10965	A1
+*10966	A2	11226	# ran out of disk
+*10967	A2	11227
+*10968	A3
+*10969	A4
+*10970	A5	11228
+*10971	A6
+*10973	A7	11230
+*10974	A8
+*10975	A9
+*10976	A10	11231
+*10977	A11
+*10978	A12
+
+######### A->B #########
+
+*10986	A1
+*10987	A2	11232
+*10991	A3
+*10992	A4
+*10993	A5	11233
+*10994	A6
+*10995	A7	11234
+*10996	A8
+*10997	A9
+*10998	A10	11235
+*10999	A11
+*11000	A12
+
+*11004	SourcesCal
+
+# beam off ~4hrs
+
+*11006	B1
+*11007	B2
+*11008	B3
+
+#*11009	B4
+#*11010	B5
+#*11011	B5
+
+# beam off ~5hrs
+
+*11012	B4
+*11013	B5	11239
+*11014	B6
+*11015	B7	11240
+*11016	B8
+*11017	B9
+*11018	B10	11241
+*11019	B11
+*11020	B12
+
+######### B->A #########
+
+*11021	B1
+*11022	B2	11242
+*11023	B3
+*11024	B4
+*11025	B5	11243
+*11026	B6
+*11027	B7	11244
+*11028	B8
+*11029	B9
+*11030	B10	11245
+*11031	B11
+*11032	B12
+
+*11033	A1
+*11034	A2	11246
+*11035	A3
+*11036	A4
+*11037	A5	11247
+*11038	A6
+*11039	A7	11248
+*11040	A8
+*11041	A9
+*11042	A10	11249
+*11043	A11
+*11044	A12
+
+*11045	SourcesCal
+
+######### B->A #########
+
+*11047	B1
+*11048	B2	11250
+*11049	B3
+*11050	B4
+*11051	B5	11251
+*11052	B6
+*11053	B7	11252
+*11054	B8
+*11055	B9
+*11056	B10	11253
+*11057	B11
+*11058	B12
+
+*11059	A1
+*11060	A2	11254
+*11061	A3
+*11062	A4
+*11063	A5	11255
+*11064	A6
+*11065	A7	11256
+*11066	A8
+*11067	A9
+*11068	A10	11257
+*11069	A11
+*11070	A12
+
+######### A->B #########
+
+*11071	A1
+*11072	A2	11258
+*11073	A3
+*11074	A4
+*11075	A5	11259
+*11076	A6
+*11077	A7	11260
+*11078	A8
+*11079	A9
+*11080	A10	11261
+*11081	A11
+*11082	A12
+
+*11083	B1
+*11084	B2	11262
+#*11085	B3		# junk; stopped too early
+*11087	B4
+*11088	B5	11263
+*11089	B6
+*11090	B7	11264
+*11091	B8
+*11092	B9
+*11093	B10	11265
+*11094	B11
+*11095	B12
+
+######### B->A #########
+
+#*11096	B1
+#*11097	B2
+
+## beam lost ##
+
+*11098	SourcesCal
+*11099	SourcesCal
+
+*11101	B1
+*11102	B2	11267
+*11103	B3
+*11104	B4
+*11105	B5	11268
+*11106	B6
+*11107	B7
+*11108	B8
+*11109	B9
+*11110	B10
+
+## beam lost ##
+
+
+
+##########
+@cycle December 1 Day E MWPC Biased source runs
+##########
+
+@sources Cd Sn
+
+*11111	SourcesCal
+*11112	SourcesCal
+*11113	SourcesCal
+*11114	SourcesCal
+*11115	SourcesCal
+*11116	SourcesCal		# source moving during run?
+*11117	SourcesCal
+*11118	SourcesCal
+*11119	SourcesCal
+*11120	SourcesCal
+*11121	SourcesCal		# source moving during run?
+*11122	SourcesCal
+*11123	SourcesCal
+*11124	SourcesCal
+*11125	SourcesCal
+*11126	SourcesCal
+*11127	SourcesCal
+*11128	SourcesCal
+
+
+
+##########
+@cycle December 2-3 Night Depolarization Measurements
+##########
+
+##########
+@cycle December 3-4 Night Calibrations and Depolarization
+##########
+
+# W2 tube is tripping again and burned out another amplifier
+
+*11162	LEDCal	7.06	6.90
+*11163	LEDCal	6.98	6.82
+*11164	LEDCal	6.90	6.74
+*11165	LEDCal	6.82	6.66
+*11166	LEDCal	6.74	6.58
+*11167	LEDCal	6.66	6.50
+*11168	LEDCal	7.14	6.98
+
+##########
+@cycle December 4 Pre-Ramp Calibrations
+##########
+
+@cal 0
+
+*11183	SourcesCal
+*11185	SourcesCal
+
+*11186	LEDCal	7.14	6.98
+*11187	LEDCal	7.06	6.90
+*11188	LEDCal	6.98	6.82
+*11189	LEDCal	6.90	6.74
+*11190	LEDCal	6.82	6.66
+*11191	LEDCal	6.74	6.58
+*11192	LEDCal	6.66	6.50
+
+##########
+@cycle December 4 Ramped down SCS
+##########
+
+# ramped down to low field; only Cd source is visible (dominant rate)
+@scs 0.04
+@sources Cd
+
+*11193	SourcesCal
+
+# moved E GMS PMT in its shield to get better gain
+*11194	SourcesCal
+
+# source out, ramping down SCS field, 4.94A->0A at 0.002 A/s
+*11198	Misc
+
+@scs 0.97
+
+
+##########
+@cycle December 4 Field-zero UCN background
+##########
+*11199	Misc
+*11200	Misc
+*11201	Misc
+*11202	Misc
+*11203	Misc
+*11204	Misc
+*11205	Misc
+*11206	Misc
+*11207	Misc
+*11208	Misc
+*11209	Misc
+*11200	Misc
+*11201	Misc
+*11202	Misc
+*11203	Misc
+*11204	Misc
+*11205	Misc
+*11206	Misc
+*11207	Misc
+*11208	Misc
+*11209	Misc
+*11210	Misc
+*11211	Misc
+*11212	Misc
+*11213	Misc
+*11214	Misc
+*11215	Misc
+*11216	Misc
+*11217	Misc
+*11218	Misc
+*11219	Misc
+*11220	Misc
+*11221	Misc
+*11222	Misc
+*11223	Misc
+*11224	Misc
+*11225	Misc
+*11226	Misc
+*11227	Misc
+*11228	Misc
+*11229	Misc
+*11230	Misc
+*11231	Misc
+*11232	Misc
+*11233	Misc
+*11234	Misc
+*11235	Misc
+*11236	Misc
+*11237	Misc
+*11238	Misc
+*11239	Misc
+*11240	Misc
+*11241	Misc
+*11242	Misc
+*11243	Misc
+*11244	Misc
+*11245	Misc
+*11246	Misc
+*11247	Misc
+*11248	Misc
+*11249	Misc
+*11250	Misc
+*11251	Misc
+*11252	Misc
+*11253	Misc
+*11254	Misc
+*11255	Misc
+*11256	Misc
+*11257	Misc
+*11258	Misc
+*11259	Misc
+*11260	Misc
+*11261	Misc
+*11262	Misc
+*11263	Misc
+*11264	Misc
+*11265	Misc
+*11266	Misc
+*11267	Misc
+*11268	Misc
+*11269	Misc
+*11270	Misc
+*11271	Misc
+*11272	Misc
+*11273	Misc
+*11274	Misc
+*11275	Misc
+*11276	Misc
+*11277	Misc
+*11278	Misc
+*11279	Misc
+
+##########
+@cycle December 7-8 Night Beam-On Backgrounds
+##########
+
+# GV Closed, Beam ON, Flipper off backgrounds
+
+*11293	BgOff
+*11294	BgOff
+*11295	BgOff
+*11296	BgOff
+*11297	BgOff
+*11298	BgOff
+*11299	BgOff
+*11302	BgOff
+*11303	BgOff
+*11305	BgOff
+*11306	BgOff
+
+##########
+@cycle December 8-9 Night Source Calibrations, Depol Measurements
+##########
+
+# vented SCS and disconnected from source
+# AFP now dumps into UCN Mon detector (formerly SCS Mon)
+
+@cal 0
+
+@sources In Sn Bi
+*11315	SourcesCal		# 0.75" in
+@sources In Sn
+*11316	SourcesCal		# 2.75" (In centered)
+
+#position scan
+@sources In Sn Bi
+*11319	SourcesCal		# 0.75" all the way in
+*11320	SourcesCal		# 1.5"
+*11321	SourcesCal		# 1.25"
+*11322	SourcesCal		# 2.25"
+@sources In Sn
+*11323	SourcesCal		# 2.75" In centered
+@sources E In Sn
+@sources W In
+*11324	SourcesCal		# 3.5"
+@sources In
+*11325	SourcesCal		# 4.25"
+*11326	SourcesCal		# 4.75"
+@sources
+*11327	SourcesCal		# 5.5" all the way out
+
+
+# Beam-OFF backgrounds
+*11355	BgOff
+*11356	BgOff			# W2 pedestal jumping
+*11359	BgOff			# stopped on E MWPC trip
+*11360	BgOff
+
+##########
+@cycle December 10 In Source Again
+##########
+
+@sources In Sn
+*11379	SourcesCal		# In centered
+
+##########
+@cycle December 11 Calibrations
+##########
+
+# sources .75" in
+@sources In Sn Bi
+*11380	SourcesCal
+
+# W cathode biased 100V (anode @ 2800V)
+
+*11381	SourcesCal
+
+# W cathode biased 200V (anode @ 2900V)
+
+*11382	SourcesCal
+
+
+# LED scan
+
+*11384	LEDCal	7.14	6.98
+*11385	LEDCal	7.06	6.90
+*11386	LEDCal	6.98	6.82
+*11387	LEDCal	6.90	6.74
+*11388	LEDCal	6.82	6.66
+*11389	LEDCal	6.74	6.58
+*11390	LEDCal	6.66	6.50
+
+
+
+
+
+
+
+
+
+#############
+# GEOMETRY D: Decay trap removed, 6u wirechamber windows
+#############
+
+##########
+@cycle December 12 Lots-O-Sources
+##########
+
+# PMT bucking coils were OFF for today's runs (oops)
+
+# watch out for bad W2 performance in earlier runs (pedestal shifting below 0)
+# and for W anode problems
+
+@sources E Sr85 Ce Bi
+@sources W Sr85 Sn Ce Bi
+*11393	SourcesCal
+
+@sources E Sn Sr85 Sn Ce Bi
+@sources W Sn Sn Sr85 Ce Bi
+
+*11394	SourcesCal 
+
+@sources E Sn Sr85 Sn Ce Bi
+@sources W Sn Sn Sr85 Ce Bi
+
+*11395	SourcesCal		# 0.75
+*11396	SourcesCal		# 0.75 (raised W2 gain x2)
+*11397	SourcesCal		# 0.75
+*11399	SourcesCal		# 0.75 (drift tubes turned on during run)
+*11400	SourcesCal		# 0.75
+
+@sources E Sr85 Ce Bi
+@sources W Sr85 Ce Bi
+
+*11406	SourcesCal		# 0.00
+
+
+
+# MWPC-W tripping, anode lowered to 2600V
+
+@sources E Sn Sr85 Sn Ce Bi
+@sources W Sn Sn Sr85 Ce
+*11411	SourcesCal		# 1.50
+*11412	SourcesCal		# 1.50
+
+@sources 
+*11413	SourcesCal		# 5.25
+*11414	SourcesCal		# 5.25
+
+@sources Sn
+*11415	SourcesCal		# 4.50
+
+# MWPC-W anode raised back to 2700V
+
+@sources E Sn Sr85 Sn
+@sources W Sn Sr85
+*11416	SourcesCal		# 3.75
+*11417	SourcesCal		# 3.75
+
+# W2 basline drift fixed
+
+*11419	SourcesCal		# 3.75
+*11421	SourcesCal		# 3.75
+*11423	SourcesCal		# 3.75
+
+@sources E Sn Sr85 Sn Ce
+@sources W Sn Sn Sr85 Ce
+*11429	SourcesCal		# 3.0
+*11430	SourcesCal		# 3.0
+*11436	SourcesCal		# 2.25
+*11437	SourcesCal		# 2.25
+
+@sources W Sn Sr85 Ce
+*11438	SourcesCal		# 2.25 up     
+*11442	SourcesCal		# 2.25 up  
+
+@sources E Sn Sr85 Sn Ce
+@sources W Sn Sn Sr85 Ce
+*11443	SourcesCal		# 2.25 down
+*11444	SourcesCal		# 2.25 down
+
+@sources Sn Sr85 Sn Ce
+*11445	SourcesCal		# 1.50 up
+*11446	SourcesCal		# 1.50 up
+
+@sources E Sn Sr85 Sn Ce Bi
+@sources W Sn Sn Sr85 Ce
+*11447	SourcesCal		# 1.50 down
+*11448	SourcesCal		# 1.50 down
+
+@sources Sr85 Ce Bi
+*11449	SourcesCal		# 0.75 up
+*11450	SourcesCal		# 0.75 up
+
+@sources E Sn Sr85 Sn Ce Bi
+@sources W Sn Sn Sr85 Ce Bi
+*11451	SourcesCal		# 0.75 down
+*11452	SourcesCal		# 0.75 down
+
+@sources Sr85 Ce Bi
+*11453	SourcesCal		# 0.00 up
+*11454	SourcesCal		# 0.00 up
+
+@sources Sn Ce Sn Bi
+*11455	SourcesCal		# 0.00 down
+*11456	SourcesCal		# 0.00 down
+
+@sources E Sn Sr85 Ce
+@sources W Sn Sr85
+*11457	SourcesCal		# 3.00 up 
+*11458	SourcesCal		# 3.00 up
+
+@sources Sn Sr85 Sn Ce
+*11459	SourcesCal		# 3.00 down
+*11460	SourcesCal		# 3.00 down
+
+@sources Sn Sr85
+*11461	SourcesCal		# 3.75 up
+*11462	SourcesCal		# 3.75 up
+
+@sources Sn Sn
+*11463	SourcesCal		# 3.75 down
+*11464	SourcesCal		# 3.75 down
+
+@sources
+*11465	SourcesCal		# 4.50 up
+
+
+##########
+@cycle December 13 Lots-O-Sources II
+##########
+
+
+# bucking coils now turned on
+@sources E Sn Sr85 Sn Ce Bi
+@sources W Sn Sn Sr85 Ce Bi
+*11468	SourcesCal		# 0.75
+*11469	SourcesCal		# 0.75
+@sources Sr85 Ce Bi
+*11470	SourcesCal		# 0.75 up
+*11471	SourcesCal		# 0.75 up
+@sources E Sn Sr85 Sn Ce
+@sources W Sn Sn Sr85 Ce
+*11472	SourcesCal		# 1.75 down
+
+# moving source to acceptance edge to look at acceptance cutoff
+@sources E Sn Ce Bi
+@sources W Sn Sn Sr85 Ce Bi
+*11473	SourcesCal		# 0.50 down
+*11474	SourcesCal		# 0.60 down
+
+
+
+# covering top of acceptance by tilting sources half-up (micrometer @ 11.25)
+@sources Sn Sr85 Sn Ce Bi
+*11477	SourcesCal		# 0.75
+@sources Sn Sr85 Sn Ce
+*11478	SourcesCal		# 1.50
+*11479	SourcesCal		# 1.50
+*11480	SourcesCal		# 2.25
+*11481	SourcesCal		# 2.25
+@sources Sn Sr85 Sn Ce Bi
+*11482	SourcesCal		# 0.75
+
+@sources E Sn Sr85 Sn Ce Bi
+@sources W Sn Sn Sr85 Ce Bi
+
+# E MWPC cathode biased to 100V, anode at 2800V
+*11483	SourcesCal		# 0.75
+*11484	SourcesCal		# 0.75
+
+
+# E MWPC cathode biased to 200V, anode at 2900V
+*11485	SourcesCal		# 0.75
+*11486	SourcesCal		# 0.75
+
+
+# LED Scan (Bucking coils On)
+*11487	LEDCal	7.14	6.98
+*11488	LEDCal	7.06	6.90
+*11489	LEDCal	6.98	6.82
+*11490	LEDCal	6.90	6.74
+*11491	LEDCal	6.82	6.66
+*11492	LEDCal	6.74	6.58
+*11493	LEDCal	6.66	6.50
+
+# LED Scan (Bucking coils Off)
+*11494	LEDCal	7.14	6.98
+*11495	LEDCal	7.06	6.90
+*11496	LEDCal	6.98	6.82
+*11497	LEDCal	6.90	6.74
+*11498	LEDCal	6.82	6.66
+*11499	LEDCal	6.74	6.58
+*11500	LEDCal	6.66	6.50
+
+# long background run, decay tube out
+# bucking coils back on, E MWPC cathode still at 200V, anode at 2900V
+# depol runs going on at same time on UCN monitors
+*11501	BgOff
+
+# SCS ramped down, everything turned off
+
+#################
+#   FIN  2008   #
+#################
+
+
+
+
+
+
+
+##########################
+# 2009
+##########################
+
+
+
+##########
+@cycle September 11 Pre-run Source Calibrations
+##########
+
+# sources scan across acceptance using load-lock holder with Bi,Ce,Sn
+
+@sources Bi Ce Sn
+*11948	SourcesCal	# ~ centered
+*11949	SourcesCal	# ~ +0.5"
+*11950	SourcesCal	# ~ +1.0"
+@sources Bi Ce
+*11951	SourcesCal	# ~ +1.5"
+*11952	SourcesCal	# ~ +2.0"
+@sources E Bi Ce
+@sources W Bi
+*11953	SourcesCal	# ~ +2.5"
+@sources Bi
+*11954	SourcesCal	# all the way in ~ +3.0"
+@sources Bi Ce Sn
+*11956	SourcesCal	# ~ centered
+*11957	SourcesCal	# ~ -0.5"
+*11958	SourcesCal	# ~ -1.0"
+@sources Ce Sn
+*11959	SourcesCal	# ~ -1.5"
+*11960	SourcesCal	# ~ -2.0"
+*11961	SourcesCal	# ~ -2.5"
+@sources Sn
+*11962	SourcesCal	# ~ -3.0"
+*11963	SourcesCal	# ~ -3.5"
+
+*11964  BgOff
+*11965  BgOff
+*11966  BgOff
+
+
+##########
+@cycle September 12 Rate Tests
+##########
+
+# Note: E wirechamber missing an X wire
+# Non-backing muon vetoes are turned off
+# GMS LED not working (E side fiber disconnected, voltages set wrong)
+# beam pulse T0 disconnected
+
+*11984 BetaOff		# GV open, flapper flapping, AFP & AFP power-supply off beta running
+*11985 BetaOff		# GV open, flapper flapping, AFP & AFP off but AFP power-supply on beta running
+*11986 BetaOff		# GV open, flapper flapping, AFP ramping beta running
+*11987 BetaOff		# GV open, flapper flapping, AFP on @ 96A beta running
+
+# beam pulse T0 connected
+# muon vetoes being turned on
+*11988 BetaOff		# GV open, flapper flapping, AFP on @ 96A beta running
+
+# GMS testing
+*11989 BetaOff
+*11990 BetaOff
+*11991 BetaOff
+*11994 BetaOff
+*11995 BetaOff
+
+# E LED fiber now plugged in; trying to set voltages right
+# LED pulser width set at 6.5ns
+# something is wrong with sis00 (bit 7 not being set for LED pulses)
+
+*11996 BetaOff		# 6.9,6.7
+*11997 BetaOff		# 6.4,6.2
+*11998 BetaOff		# 6.2,5.7
+*11999 BetaOff		# 5.8,5.0
+*12000 BetaOff		# 5.3,4.2	Visible, high on all but W2 (off-scale); getting low in ref. tube
+*12001 BetaOff		# 4.8,3.7	peak now visible in all tubes	
+
+# Raised W2 voltage 1535->1800V; lowered amplifier gain
+*12007 BetaOff
+
+##########
+@cycle September 13 Source Tests
+##########
+
+# W4 PMT HV scan --- varying W4 HV, adjusting amplifier to keep gain ~constant
+@sources Bi Ce Sn
+*12011 SourcesCal	# 1800V
+*12012 SourcesCal	# 1750V
+*12013 SourcesCal	# 1700V
+*12014 SourcesCal	# 1650V
+*12015 SourcesCal	# 1600V
+*12016 SourcesCal	# 1550V
+*12017 SourcesCal	# 1500V
+# W4 HV returned to 1800V after scan
+
+# sources-out backgrounds
+*12018  BgOff
+*12019  BgOff
+
+
+##########
+@cycle November 5 LED tests
+##########
+*12226	LEDCal	8.0	8.0	# LED attenuation scan, 40dB in 20 60s steps, 10ns width, 8V height
+*12227	LEDCal	8.0	8.0	# LED attenuation scan, 40dB in 20 60s steps, 25ns width, 8V height
+*12229	LEDCal	8.0	8.0	# LED attenuation scan, 40dB in 20 60s steps, 25ns width, 8V height, E ref PMT at 1800V
+
+# Nov. 6 day
+*12240	LEDCal	8.0	8.0	# LED scan, 30db in 2db x 60s, 25ns
+*12249	LEDCal	8.0	8.0	# LED scan, 30db in 1db x 60s, 25ns
+
+# Nov. 7 night
+*12250	LEDCal	8.0	8.0	# LED scan, 30db in 1db x 60s, 25ns --- just turned on LED Camac crate, warmup
+*12251	LEDCal	8.0	8.0	# LED scan, 30db in 1db x 60s, 25ns --- right after previous warmup run
+*12252	LEDCal	8.0	8.0	# LED scan, 30db in 0.5db x 60s, 25ns ; Camac died.
+*12253	LEDCal	8.0	8.0	# LED scan, 30db in 0.5db x 60s, 25ns ; Camac died half-way through
+
+##########
+@cycle November 8 Night Depol
+##########
+
+# bad SCS Mon gain:
+#*12291	A3			# Trapped lifetime, flipper load OFF, 3 cycles; E 2-fold trigger dead at start
+#*12292	A3			# Trapped lifetime, flipper load OFF, 4 cycles; muon veto accidentally off for ~30s
+#*12293	A3			# Trapped lifetime, flipper load ON, 7 cycles
+
+*12295	A3			# Trapped lifetime, flipper load ON, 7 cycles
+*12296	A3			# Drain Time, flipper load ON, 7 cycles
+*12297	A3			# Trapped lifetime, flipper load OFF, 8 cycles
+*12299	A3			# Drain Time, flipper load ON, 7 cycles
+*12300	A3			# Trapped lifetime, flipper load OFF, 7 cycles
+*12301	A3			# drain time, flipper load OFF, 7 cycles
+
+##########
+@cycle November 9 Calibrations
+##########
+
+# raised GMS LED rate to 50Hz
+*12306	LEDCal	8.0	8.0	# LED scan, 30db in 1db x 60s, 25ns pulse width
+@sources Bi Ce Sn
+*12307	SourcesCal	# ~ centered, LONG source run
+*12310	LEDCal	8.0	8.0	# LED scan, 30db in 0.5db x 60s, 25ns pulse width
+
+# source position/linearity scan (2-minute runs, ~0.5" spacing)
+@sources Bi
+*12311	SourcesCal	# all the way in (0")
+@sources E Bi Ce
+@sources W Bi
+*12312	SourcesCal
+@sources Bi Ce
+*12313	SourcesCal
+@sources E Bi Ce Sn
+@sources W Bi Ce
+*12314	SourcesCal
+@sources Bi Ce Sn
+*12315	SourcesCal
+*12316	SourcesCal	# approx. centered (2.5")
+*12317	SourcesCal
+@sources E Ce Sn
+@sources W Bi Ce Sn
+*12318	SourcesCal
+@sources Ce Sn
+*12319	SourcesCal
+*12320	SourcesCal
+@sources Sn
+*12321	SourcesCal
+@sources E
+@sources W Sn
+*12322	SourcesCal
+
+##########
+@cycle November 10 Depol and LED
+##########
+
+# these are really depol runs
+*12331	A3	8.0	8.0	# LED scan, 30db in 0.25db x 30s, 25ns pulse width
+*12332	A3	8.0	8.0	# LED scan, 30db in 0.25db x 30s, 25ns pulse width
+*12333	A3	8.0	8.0	# LED scan, 30db in 0.25db x 30s, 25ns pulse width
+
+#Nov. 11: beam died; one short beta test run
+*12335	A1
+
+*12388	A3
+*12389	A3
+
+##########
+@cycle November 20 Beta Decay
+##########
+
+######### A->B #########
+
+@sources Bi Ce Sn
+*12425	SourcesCal
+*12426	SourcesCal
+
+*12430	A1
+*12431	A2
+*12432	A3
+*12433	A4
+*12434	A5
+*12435	A6
+*12436	A7
+*12437	A8
+*12438	A9
+*12439	A10
+*12440	A11
+*12441	A12
+
+*12442	B1
+*12443	B2
+*12444	B3
+*12445	B4
+*12446	B5
+*12447	B6
+*12448	B7
+*12449	B8
+*12450	B9
+*12451	B10
+*12452	B11
+*12453	B12
+
+*12454	B5			# gratuitous beta decay until beam end
+
+
+##########
+@cycle November 20 Calibrations
+##########
+
+# source position scan, ~2min long runs, 0.5" shifts
+@sources Bi
+*12460	SourcesCal
+@sources E Bi Ce
+@sources W Bi
+*12461	SourcesCal
+@sources Bi Ce
+*12462	SourcesCal
+@sources E Bi Ce Sn
+@sources W Bi Ce
+*12463	SourcesCal
+@sources Bi Ce Sn
+*12464	SourcesCal
+*12465	SourcesCal
+*12466	SourcesCal
+@sources E Ce Sn
+@sources W Bi Ce Sn
+*12467	SourcesCal
+@sources Ce Sn
+*12468	SourcesCal
+*12469	SourcesCal
+@sources Sn
+*12470	SourcesCal
+*12471	SourcesCal
+@sources
+#*12472	SourcesCal		# no sources in
+#*12473	SourcesCal		# no sources in
+
+*12474	LEDCal	8.0	8.0	# bkg. + LED scans 30x 30s/1db
+
+
+
+
+##########
+@cycle November 20-23 Weekend Beta Decay
+##########
+
+######### A->B #########
+
+*12482	A1
+*12483	A2
+*12484	A3
+*12485	A4
+*12486	A5
+*12487	A6
+*12488	A7
+*12489	A8
+*12490	A9
+
+#*12491	A10			# rate gone
+# rate drop to GVMon=50Hz GV open
+# melt and refreezeÉ back to 130Hz
+
+*12494	A10
+*12495	A11
+*12496	A12
+
+# flapper test
+#*12497				# flapper flapping
+#*12408				# flapper open
+#flapping:open rates = 2.56:1
+
+*12499	B1
+*12500	B2
+*12501	B3
+*12502	B4
+*12503	B5
+*12504	B6
+*12505	B7
+*12506	B8
+*12507	B9
+*12508	B10
+*12509	B11
+*12510	B12
+
+######### A->B #########
+
+*12511	A1
+*12512	A2
+*12513	A3
+*12514	A4
+*12515	A5
+*12516	A6
+*12517	A7
+*12518	A8
+*12519	A9
+*12521	A10
+*12522	A10
+*12523	A11
+*12524	A12
+
+#*12525	B1
+#*12526	B2
+#*12527	B3
+#
+# flapper broken
+# running flapper open
+######### restarted B->A #########
+
+*12530	B1
+*12531	B2
+*12532	B3
+*12533	B4
+*12534	B5
+*12535	B6
+*12536	B7
+#fiddling with MWPC EX9 to no avail
+*12551	B7
+*12552	B8
+*12553	B9
+*12554	B10
+*12555	B11
+*12556	B12
+
+######### A->B #########
+
+*12557	A1
+*12558	A2
+*12559	A3
+*12560	A4
+*12561	A5
+*12562	A6
+*12563	A7
+*12564	A8
+*12565	A9
+*12566	A10			# stopped for beam outage
+*12567	A10
+*12568	A11
+*12569	A12
+
+*12570	B1
+*12571	B2
+*12572	B3
+*12573	B4
+*12574	B5			# stopped for "event counter issues" after 10min
+*12575	B5
+*12576	B6
+*12577	B7
+*12578	B8
+*12579	B9
+*12580	B10
+*12581	B11
+*12582	B12
+
+######### A->B #########
+
+*12583	A1
+*12584	A2
+*12585	A3
+*12586	A4
+*12587	A5
+*12588	A6
+
+#
+# É fixing flapper É
+# É fixing MWPC EX9 by voodoo É
+#
+
+*12590	LEDCal	8.0	8.0	# LED scan
+
+*12592	A7			# beam tripped
+*12593	A7			# remainder
+*12594	A8
+*12595	A9
+*12596	A10
+*12598	A11
+*12599	A12
+
+*12600	B1
+*12601	B2
+*12603	B3
+*12603	B4
+*12604	B5
+*12605	B6
+*12606	B7
+*12607	B8
+*12608	B9
+*12609	B10
+*12610	B11
+*12611	B12
+
+*12612	LEDCal	8.0	8.0	# Background/LED scans
+*12613	LEDCal	8.0	8.0	# after jiggling LED fibers
+
+##########
+@cycle November 23 Calibration Runs
+##########
+
+*12614	LEDCal	8.0	8.0	# background w/LED scans
+
+# source position scan, ~2min long runs, 0.5" shifts
+@sources Bi
+*12615	SourcesCal
+@sources E Bi Ce
+@sources W Bi
+*12616	SourcesCal
+@sources Bi Ce
+*12617	SourcesCal
+@sources E Bi Ce Sn
+@sources W Bi Ce
+*12618	SourcesCal
+@sources Bi Ce Sn
+*12619	SourcesCal
+*12620	SourcesCal
+*12621	SourcesCal
+@sources E Ce Sn
+@sources W Bi Ce Sn
+*12622	SourcesCal
+@sources Ce Sn
+*12623	SourcesCal
+*12624	SourcesCal
+@sources Sn
+*12625	SourcesCal
+*12626	SourcesCal
+@sources
+
+@sources Bi Ce Sn
+*12627	SourcesCal		# 40min source run, 3 sources centered
+*12628	SourcesCal		# 20min source run, 3 sources centered
+
+*12629	LEDCal	8.0	8.0	# background w/LED scans, during load-lock operation
+
+##########
+@cycle November 23-24 Beta Decay
+##########
+
+######### A->B #########
+
+*12633	A1
+*12634	A2
+*12635	A3
+*12636	A4
+*12637	A5
+*12638	A6
+*12639	A7
+*12640	A8
+*12641	A9
+# attempted to improve beam tune with magnet scan
+*12643	A10
+*12644	A11
+*12645	A12
+
+*12646	B1
+*12647	B2
+*12648	B3
+*12649	B4
+*12650	B5
+*12651	B6
+*12652	B7
+*12653	B8
+*12654	B9
+*12655	B10
+*12656	B11
+*12657	B12
+
+*12658	Misc			# Beam pattern width rate linearity scan, 220 to 20ns pattern width in 20ns steps
+
+##########
+@cycle November 24-25 Beta Decay
+##########
+
+######### A->B #########
+
+*12676	A1
+*12677	A2
+*12678	A3
+*12679	A4
+*12680	A5			# lost beam at end
+# beam off ~2.5hours
+*12681	A6
+*12682	A7
+*12683	A8
+*12684	A9			# Kevin attempted temporarily warming source to increase rate
+*12685	A10
+*12686	A11
+*12687	A12
+
+*12688	B1
+*12689	B2
+*12690	B3
+*12691	B4
+*12692	B5
+*12693	B6
+*12694	B7			# lost E 2-fold trigger rate some time after 15min
+*12695	B7			# remaining 30min of beta data
+*12696	B8
+*12697	B9
+*12698	B10
+*12699	B11
+*12700	B12
+
+*12701	Misc			# Flapper ratio, GV closed, flapping
+*12702	Misc			# Flapper ratio, GV closed, open
+*12702	Misc			# Flapper ratio, GV closed, Closed
+*12705	Misc			# Lifetime above flapper, GV closed, beam burst every 2min w/flapper flap
+
+##########
+@cycle November 25 Calibrations
+##########
+
+*12706	LEDCal	8.0	8.0	# background w/LED scans, last 10min junk with sources moving in
+
+# source position scan, ~2min long runs, 0.5" shifts
+@sources Bi
+*12707	SourcesCal
+@sources E Bi Ce
+@sources W Bi
+*12708	SourcesCal
+@sources Bi Ce
+*12709	SourcesCal
+@sources E Bi Ce Sn
+@sources W Bi Ce
+*12710	SourcesCal
+@sources Bi Ce Sn
+*12711	SourcesCal
+*12712	SourcesCal
+*12713	SourcesCal
+
+# Line B contamination alert, switch to long source run
+*12715	SourcesCal		# 30min source run, 3 sources centered
+# resume source scan
+
+@sources E Ce Sn
+@sources W Bi Ce Sn
+*12716	SourcesCal
+@sources Ce Sn
+*12717	SourcesCal
+*12718	SourcesCal
+@sources Sn
+*12719	SourcesCal
+*12720	SourcesCal
+@sources
+
+*12721	LEDCal	8.0	8.0	# background w/LED scans
+
