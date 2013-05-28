@@ -153,9 +153,9 @@ double asymmetry_fit_func(double *x, double *par)
 {
 	double A = par[0];
 	double b = par[1];
-	double E = x[0];
+	double E = x[0] + electron_mass;
 
-	return A * (1 + b * electron_mass / E);
+	return A / (1 + b * electron_mass / E);
 }
 
 
@@ -163,7 +163,7 @@ double asymmetry_fit_func(double *x, double *par)
 double fierzratio_fit_func(double *x, double *par)
 {
 	double b = par[1];
-	double E = x[0];
+	double E = x[0] + electron_mass;
 
 	return (1 + b * electron_mass / E) / (1 + b * expected_fierz);
 }
@@ -193,7 +193,6 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 		chi = (asymmetry_values[i] - asymmetry_fit_func(&E,p)) / asymmetry_errors[i];
 		chi2 += chi*chi; 
 	}
-	//cout << "chi2 = " << chi2 << endl;
 
 	n = fierzratio_energy.size();
 	for (int i = 0; i < n; ++i ) { 
@@ -244,7 +243,7 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 				asymmetry_energy.push_back( E );
 				asymmetry_values.push_back( asymmetry->GetBinContent(ix) );
 				asymmetry_errors.push_back( asymmetry->GetBinError(ix) );
-				cout << xaxis1->GetBinCenter(ix) << endl;
+				//cout << xaxis1->GetBinCenter(ix) << endl;
 			}
 		}
 
@@ -263,7 +262,7 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 		TVirtualFitter::SetDefaultFitter("Minuit");
 		TVirtualFitter * minuit = TVirtualFitter::Fitter(0,2);
 		for (int i = 0; i < 2; ++i) {  
-			minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 0.01, 0, 0);
+			minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1, 0, 0);
 		}
 		minuit->SetFCN(combined_chi2);
 		minuit->SetErrorDef(1);	// 1 for chi^2
@@ -274,8 +273,8 @@ int combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 		minuit->ExecuteCommand("SET PRINT",arglist,1);
 
 		// minimize
-		arglist[0] = 50000; // number of function calls
-		arglist[1] = 0.001; // tolerance
+		arglist[0] = 50; // number of function calls
+		arglist[1] = 0.1; // tolerance
 		minuit->ExecuteCommand("MIGRAD",arglist,2);
 
 		//get result
@@ -380,13 +379,15 @@ int main(int argc, char *argv[]) {
 
     TH1F *asymmetry_histogram = 
             (TH1F*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
-    //printf("Number of bins in data %d\n", ucna_data_histogram->GetNbinsX());
+    printf("Number of counts in data %f\n", asymmetry_histogram->GetEntries());
 
     TH1F *supersum_histogram = 
             (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
+    printf("Number of counts in data %f\n", supersum_histogram->GetEntries());
 
     TH1F *fierzratio_histogram = 
             (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
+    printf("Number of counts in data %f\n", supersum_histogram->GetEntries());
 
 	/*
 	// fit the Fierz ratio 

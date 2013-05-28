@@ -136,7 +136,7 @@ double fierz_beta_spectrum(const double *val, const double *par)
 	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
 	const double x = pow(m_e/E,n);              /// Fierz term
 	const double f = (1 + b*x)/(1 + b*x_1);     /// Fierz factor
-	const double k = 1.3723803E-11/Q;           /// normalization factor
+	const double k = 1.3723803e-11/Q;           /// normalization factor
 	const double P = k*p*e*e*E*f*x;             /// the output PDF value
 
 	return P;
@@ -234,7 +234,8 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2])
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
-        double rel_error = TMath::Sqrt( 1/(r[0][0] + r[1][0]) + 1/(r[1][1] * r[0][1]));
+        //double rel_error = TMath::Sqrt( 1/(r[0][0] + r[1][0]) + 1/(r[1][1] * r[0][1]));
+        double rel_error = TMath::Sqrt( 1/r[0][0] + 1/r[1][0] + 1/r[1][1]) * r[0][1]);
         if ( TMath::IsNaN(super_sum)) 
             super_sum = 0;
 
@@ -546,6 +547,7 @@ int main(int argc, char *argv[])
 			break;
 	}
     
+	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
 	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
 
 	tntuple->SetDirectory(mc_tfile);
