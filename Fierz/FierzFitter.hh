@@ -2,7 +2,6 @@
 #include "G4toPMT.hh"
 #include "PenelopeToPMT.hh"
 #include "CalDBSQL.hh"
-#include "FierzFitter.hh"
 
 // ROOT includes
 #include <TH1F.h>
@@ -23,6 +22,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#if 1
 ///
 /// physical constants
 ///
@@ -57,7 +57,6 @@ static int integral_size = 1000;
 //double scale_x = 1.015;
 //double scale_x = 1.0;
 
-#if 1
 using namespace std;
 int output_histogram(string filename, TH1F* h, double ax, double ay)
 {
@@ -313,128 +312,4 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 
 
 	return func; 
-}
-
-
-
-
-int main(int argc, char *argv[]) {
-	TApplication app("Combined Fit", &argc, argv);
-	expected_fierz = evaluate_expected_fierz(min_E, max_E);
-    //TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
-
-	//asym_histogram->SetStats(0);
-    //asym_histogram->SetLineColor(3);
-    //asym_histogram->Draw("");
-
-    TFile *asymmetry_data_tfile = new TFile(
-		"/home/mmendenhall/Plots/OctetAsym_Offic/Range_0-1000/CorrectAsym/CorrectedAsym.root");
-	if (asymmetry_data_tfile->IsZombie())
-	{
-		std::cout << "File not found." << std::endl;
-		exit(1);
-	}
-
-    TFile *ucna_data_tfile = new TFile(
-		"/home/mmendenhall/Plots/OctetAsym_Offic/OctetAsym_Offic.root");
-	if (ucna_data_tfile->IsZombie())
-	{
-		std::cout << "File not found." << std::endl;
-		exit(1);
-	}
-
-    TFile *fierzratio_data_tfile = new TFile(
-		"Fierz/ratio.root");
-	if (fierzratio_data_tfile->IsZombie())
-	{
-		std::cout << "File not found." << std::endl;
-		exit(1);
-	}
-
-    TH1F *asymmetry_histogram = 
-            (TH1F*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
-    TH1F *supersum_histogram = 
-            (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
-    TH1F *fierzratio_histogram = 
-            (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
-
-	/*
-	// fit the Fierz ratio 
-	char fit_str[1024];
-    sprintf(fit_str, "[0]/(1+[1]*(%f/(%f+x)))", electron_mass, electron_mass);
-    TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
-    fierz_fit->SetParameter(0,-0.12);
-    fierz_fit->SetParameter(1,0);
-	asymmetry_histogram->Fit(fierz_fit, "Sr");
-
-	compute_fit(asymmetry_histogram, fierz_fit);
-	*/
-
-	TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram);
-
-	double entries = supersum_histogram->GetEffectiveEntries();
-	double part_int = supersum_histogram->Integral(
-					  supersum_histogram->FindBin(min_E),
-					  supersum_histogram->FindBin(max_E));
-	double full_int = supersum_histogram->Integral();
-	double N = entries * part_int / full_int;
-	cout << "The energy range is " << min_E << " - " << max_E << " keV" << endl;
-	cout << "Number of counts in full data is " << (int)entries << endl;
-	cout << "Number of counts in energy range is " <<  (int)N << endl;
-	cout << "The expected statistical error for A in this range is " << 2.7 / sqrt(N) << endl;
-	cout << "The actual statistical error for A in this range is " << func->GetParError(0) << endl;
-	cout << "The ratio for A error is " << func->GetParError(0) * sqrt(N) / 2.7 << endl;
-	cout << "The expected statistical error for b in this range is " << 14.8 / sqrt(N) << endl;
-	cout << "The actual statistical error for b in this range is " << func->GetParError(1) << endl;
-	cout << "The ratio for b error is " << func->GetParError(1) * sqrt(N) / 14.8 << endl;
-
-	/*
-	// A fit histogram for output to gnuplot
-    TH1F *fierz_fit_histogram = new TH1F(*asymmetry_histogram);
-	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
-		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
-
-	
-
-	// output for root
-    TString pdf_filename = "/data/kevinh/mc/asymmetry_fierz_term_fit.pdf";
-    canvas->SaveAs(pdf_filename);
-
-	// output for gnuplot
-	//output_histogram("/data/kevinh/mc/super-sum-data.dat", super_sum_histogram, 1, 1000);
-	//output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
-	//output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
-	//output_histogram("/data/kevinh/mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
-
-	*/
-
-	// Create a new canvas.
-	TCanvas * c1 = new TCanvas("c1","Two HIstogram Fit example",100,10,900,800);
-	c1->Divide(2,2);
-	gStyle->SetOptFit();
-	gStyle->SetStatY(0.6);
-
-	c1->cd(1);
-	asymmetry_histogram->Draw();
-	func->SetRange(min_E, max_E);
-	func->DrawCopy("cont1 same");
-	/*
-	c1->cd(2);
-	asymmetry->Draw("lego");
-	func->DrawCopy("surf1 same");
-	*/
-	c1->cd(3);
-	func->SetRange(min_E, max_E);
-	fierzratio_histogram->Draw();
-	func->DrawCopy("cont1 same");
-	/*
-	c1->cd(4);
-	fierzratio->Draw("lego");
-	gPad->SetLogz();
-	func->Draw("surf1 same");
-	*/
-
-	app.Run();
-
-	return 0;
 }
