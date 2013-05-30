@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+/*
 ///
 /// physical constants
 ///
@@ -42,9 +43,8 @@ const double    M           = 1 + 3*L*L;            /// matrix element
 const double    I_0         = 1.63632;              /// 0th moment          (25)
 const double    I_1         = 1.07017;              /// 1st moment          (15)
 const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
+*/
 
-
-static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
 double min_E = 230;
 double max_E = 660;
 static double expected_fierz = 0.6540;	// full range
@@ -154,9 +154,9 @@ double asymmetry_fit_func(double *x, double *par)
 {
 	double A = par[0];
 	double b = par[1];
-	double E = x[0] + electron_mass;
+	double E = x[0] + m_e;
 
-	return A / (1 + b * electron_mass / E);
+	return A / (1 + b * m_e / E);
 }
 
 
@@ -164,9 +164,9 @@ double asymmetry_fit_func(double *x, double *par)
 double fierzratio_fit_func(double *x, double *par)
 {
 	double b = par[1];
-	double E = x[0] + electron_mass;
+	double E = x[0] + m_e;
 
-	return (1 + b * electron_mass / E) / (1 + b * expected_fierz);
+	return (1 + b * m_e / E) / (1 + b * expected_fierz);
 }
 
 
@@ -361,7 +361,7 @@ int main(int argc, char *argv[]) {
 	/*
 	// fit the Fierz ratio 
 	char fit_str[1024];
-    sprintf(fit_str, "[0]/(1+[1]*(%f/(%f+x)))", electron_mass, electron_mass);
+    sprintf(fit_str, "[0]/(1+[1]*(%f/(%f+x)))", m_e, m_e);
     TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
     fierz_fit->SetParameter(0,-0.12);
     fierz_fit->SetParameter(1,0);

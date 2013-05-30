@@ -44,19 +44,6 @@ const double    I_1         = 1.07017;              /// 1st moment          (15)
 const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
 
 
-static double electron_mass = 510.9989; 	// needed for the physics of Fierz interference
-double min_E = 230;
-double max_E = 660;
-static double expected_fierz = 0.6540;	// full range
-static int integral_size = 1000;
-//static double expected_fierz = 0.6111;		// for range 150 - 600
-//static double expected_gluck = 11.8498;     // for range 150 - 600
-//static unsigned nToSim = 5E7;				// how many triggering events to simulate
-//static double loading_prob = 40; 		// ucn loading probability (percent)
-//static int bins = 150;						// replace with value from data or smoothing fit
-//double scale_x = 1.015;
-//double scale_x = 1.0;
-
 using namespace std;
 int output_histogram(string filename, TH1F* h, double ax, double ay)
 {
@@ -153,9 +140,9 @@ double asymmetry_fit_func(double *x, double *par)
 {
 	double A = par[0];
 	double b = par[1];
-	double E = x[0] + electron_mass;
+	double E = x[0] + m_e;
 
-	return A / (1 + b * electron_mass / E);
+	return A / (1 + b * m_e / E);
 }
 
 
@@ -163,9 +150,9 @@ double asymmetry_fit_func(double *x, double *par)
 double fierzratio_fit_func(double *x, double *par)
 {
 	double b = par[1];
-	double E = x[0] + electron_mass;
+	double E = x[0] + m_e;
 
-	return (1 + b * electron_mass / E) / (1 + b * expected_fierz);
+	return (1 + b * m_e / E) / (1 + b * expected_fierz);
 }
 
 
