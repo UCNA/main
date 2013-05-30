@@ -188,11 +188,6 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 int main(int argc, char *argv[]) {
 	TApplication app("Combined Fit", &argc, argv);
 	expected_fierz = evaluate_expected_fierz(min_E, max_E, integral_size);
-    //TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
-
-	//asym_histogram->SetStats(0);
-    //asym_histogram->SetLineColor(3);
-    //asym_histogram->Draw("");
 
     TFile *asymmetry_data_tfile = new TFile(
 		"/home/mmendenhall/Plots/OctetAsym_Offic/Range_0-1000/CorrectAsym/CorrectedAsym.root");
@@ -224,18 +219,6 @@ int main(int argc, char *argv[]) {
             (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
     TH1F *fierzratio_histogram = 
             (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
-
-	/*
-	// fit the Fierz ratio 
-	char fit_str[1024];
-    sprintf(fit_str, "[0]/(1+[1]*(%f/(%f+x)))", m_e, m_e);
-    TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
-    fierz_fit->SetParameter(0,-0.12);
-    fierz_fit->SetParameter(1,0);
-	asymmetry_histogram->Fit(fierz_fit, "Sr");
-
-	compute_fit(asymmetry_histogram, fierz_fit);
-	*/
 
 	TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram);
 
