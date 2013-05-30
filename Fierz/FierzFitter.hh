@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#if 1
 ///
 /// physical constants
 ///
@@ -45,6 +44,7 @@ const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
 
 
 using namespace std;
+#if 0
 int output_histogram(string filename, TH1F* h, double ax, double ay)
 {
 	ofstream ofs;
@@ -85,7 +85,7 @@ double fierz_beta_spectrum(const double *val, const double *par)
 
 
 
-double evaluate_expected_fierz(double min, double max) 
+double evaluate_expected_fierz(double min, double max, int integral_size) 
 {
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
     TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
@@ -135,6 +135,8 @@ void compute_fit(TH1F* histogram, TF1* fierz_fit)
 
 
 
+double expected_fierz;
+
 
 double asymmetry_fit_func(double *x, double *par)
 {
@@ -159,6 +161,7 @@ double fierzratio_fit_func(double *x, double *par)
 
 // data need to be globals to be visible by fcn 
 
+/*
 vector<double> asymmetry_energy;        
 vector<double> asymmetry_values;        
 vector<double> asymmetry_errors;        
@@ -168,7 +171,7 @@ vector<double> fierzratio_errors;
 
 
 
-void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
+void combined_chi2(Int_t & , Double_t * , Double_t &fval, Double_t *p, Int_t )
 {
 	double chi2 = 0; 
 	double chi,	E; 
@@ -202,101 +205,92 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 	for (int i = 0; i < 2; i++)
 		func->SetParName(i, iniParamNames[i]);
 
-	//if (true) { 
-		// fill data structure for fit (coordinates + values + errors) 
-		std::cout << "Do global fit" << std::endl;
-		// fit now all the function together
+	// fill data structure for fit (coordinates + values + errors) 
+	std::cout << "Do global fit" << std::endl;
+	// fit now all the function together
 
-		// fill data structure for fit (coordinates + values + errors) 
-		TAxis *xaxis1  = asymmetry->GetXaxis();
-		TAxis *xaxis2  = fierzratio->GetXaxis();
+	// fill data structure for fit (coordinates + values + errors) 
+	TAxis *xaxis1  = asymmetry->GetXaxis();
+	TAxis *xaxis2  = fierzratio->GetXaxis();
 
-		int nbinX1 = asymmetry->GetNbinsX(); 
-		int nbinX2 = fierzratio->GetNbinsX(); 
+	int nbinX1 = asymmetry->GetNbinsX(); 
+	int nbinX2 = fierzratio->GetNbinsX(); 
 
-		/// reset data structure
-		asymmetry_energy = vector<double>();
-		asymmetry_values = vector<double>();
-		asymmetry_errors = vector<double>();
-		fierzratio_energy = vector<double>();
-		fierzratio_values = vector<double>();
-		fierzratio_errors = vector<double>();
+	/// reset data structure
+	asymmetry_energy = vector<double>();
+	asymmetry_values = vector<double>();
+	asymmetry_errors = vector<double>();
+	fierzratio_energy = vector<double>();
+	fierzratio_values = vector<double>();
+	fierzratio_errors = vector<double>();
 
-		for (int ix = 1; ix <= nbinX1; ++ix)
+	for (int ix = 1; ix <= nbinX1; ++ix)
+	{
+		double E = xaxis1->GetBinCenter(ix);
+		if (min_E < E and E < max_E)
 		{
-			double E = xaxis1->GetBinCenter(ix);
-			if (min_E < E and E < max_E)
-			{
-				asymmetry_energy.push_back( E );
-				asymmetry_values.push_back( asymmetry->GetBinContent(ix) );
-				asymmetry_errors.push_back( asymmetry->GetBinError(ix) );
-				//cout << xaxis1->GetBinCenter(ix) << endl;
-			}
+			asymmetry_energy.push_back( E );
+			asymmetry_values.push_back( asymmetry->GetBinContent(ix) );
+			asymmetry_errors.push_back( asymmetry->GetBinError(ix) );
+			//cout << xaxis1->GetBinCenter(ix) << endl;
 		}
+	}
 
-		for (int ix = 1; ix <= nbinX2; ++ix)
+	for (int ix = 1; ix <= nbinX2; ++ix)
+	{
+		double E = xaxis2->GetBinCenter(ix);
+		if (min_E < E and E < max_E)
 		{
-			double E = xaxis2->GetBinCenter(ix);
-			if (min_E < E and E < max_E)
-			{
-				fierzratio_energy.push_back( E );
-				fierzratio_values.push_back( fierzratio->GetBinContent(ix) );
-				fierzratio_errors.push_back( fierzratio->GetBinError(ix) );
-			}
+			fierzratio_energy.push_back( E );
+			fierzratio_values.push_back( fierzratio->GetBinContent(ix) );
+			fierzratio_errors.push_back( fierzratio->GetBinError(ix) );
 		}
-
-
-		TVirtualFitter::SetDefaultFitter("Minuit");
-		TVirtualFitter * minuit = TVirtualFitter::Fitter(0,2);
-		for (int i = 0; i < 2; ++i) {  
-			minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1, 0, 0);
-		}
-		minuit->SetFCN(combined_chi2);
-		minuit->SetErrorDef(1);	// 1 for chi^2
-
-		double arglist[100];
-		arglist[0] = 0;
-		// set print level
-		minuit->ExecuteCommand("SET PRINT",arglist,1);
-
-		// minimize
-		arglist[0] = 50; // number of function calls
-		arglist[1] = 0.1; // tolerance
-		minuit->ExecuteCommand("MIGRAD",arglist,2);
-
-		//get result
-		double minParams[2];
-		double parErrors[2];
-		for (int i = 0; i < 2; ++i) {  
-			minParams[i] = minuit->GetParameter(i);
-			parErrors[i] = minuit->GetParError(i);
-		}
-		double chi2, edm, errdef; 
-		int nvpar, nparx;
-		minuit->GetStats(chi2,edm,errdef,nvpar,nparx);
-
-		func->SetParameters(minParams);
-		func->SetParErrors(parErrors);
-		func->SetChisquare(chi2);
-		int ndf = asymmetry_energy.size() + fierzratio_energy.size()- nvpar;
-		func->SetNDF(ndf);
-
-		cout << "chi^2 = " << chi2 << ", ndf = " << ndf << ", chi^2/ndf = " << chi2/ndf << endl;
-
-
-		// add to list of functions
-		//asymmetry->GetListOfFunctions()->Add(func);
-		//fierzratio->GetListOfFunctions()->Add(func);
-		
-	/*
 	}
-	else {     
-		// fit independently
-		asymmetry->Fit(func);
-		fierzratio->Fit(func);
-	}
-	*/
 
+
+	TVirtualFitter::SetDefaultFitter("Minuit");
+	TVirtualFitter * minuit = TVirtualFitter::Fitter(0,2);
+	for (int i = 0; i < 2; ++i) {  
+		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1, 0, 0);
+	}
+	minuit->SetFCN(combined_chi2);
+	minuit->SetErrorDef(1);	// 1 for chi^2
+
+	double arglist[100];
+	arglist[0] = 0;
+	// set print level
+	minuit->ExecuteCommand("SET PRINT",arglist,1);
+
+	// minimize
+	arglist[0] = 50; // number of function calls
+	arglist[1] = 0.1; // tolerance
+	minuit->ExecuteCommand("MIGRAD",arglist,2);
+
+	//get result
+	double minParams[2];
+	double parErrors[2];
+	for (int i = 0; i < 2; ++i) {  
+		minParams[i] = minuit->GetParameter(i);
+		parErrors[i] = minuit->GetParError(i);
+	}
+	double chi2, edm, errdef; 
+	int nvpar, nparx;
+	minuit->GetStats(chi2,edm,errdef,nvpar,nparx);
+
+	func->SetParameters(minParams);
+	func->SetParErrors(parErrors);
+	func->SetChisquare(chi2);
+	int ndf = asymmetry_energy.size() + fierzratio_energy.size()- nvpar;
+	func->SetNDF(ndf);
+
+	cout << "chi^2 = " << chi2 << ", ndf = " << ndf << ", chi^2/ndf = " << chi2/ndf << endl;
+
+
+	// add to list of functions
+	//asymmetry->GetListOfFunctions()->Add(func);
+	//fierzratio->GetListOfFunctions()->Add(func);
+	
 
 	return func; 
 }
+*/
