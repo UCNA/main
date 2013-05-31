@@ -26,7 +26,6 @@
 
 double min_E = 220;
 double max_E = 670;
-static int integral_size = 1000;
 //static double expected_fierz = 0.6111;		// for range 150 - 600
 //static double expected_gluck = 11.8498;     // for range 150 - 600
 //static unsigned nToSim = 5E7;				// how many triggering events to simulate
@@ -63,7 +62,10 @@ vector<double> fierzratio_energy;
 vector<double> fierzratio_values;        
 vector<double> fierzratio_errors;        
 
-double expected_fierz;
+double expected_fierz_0_1;
+double expected_fierz_0_2;
+double expected_fierz_2_0;
+double expected_fierz_2_1;
 
 
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
@@ -82,7 +84,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 	n = fierzratio_energy.size();
 	for (int i = 0; i < n; ++i ) { 
-		double par[2] = {p[1],expected_fierz};
+		double par[2] = {p[1], expected_fierz_0_1};
 		E = fierzratio_energy[i];
 		chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
 		chi2 += chi*chi; 
@@ -196,7 +198,10 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2])
 
 int main(int argc, char *argv[]) {
 	TApplication app("Combined Fit", &argc, argv);
-	expected_fierz = evaluate_expected_fierz(min_E, max_E, integral_size);
+	expected_fierz_0_1 = evaluate_expected_fierz(0, 1, min_E, max_E);
+	expected_fierz_0_2 = evaluate_expected_fierz(0, 2, min_E, max_E);
+	expected_fierz_2_0 = evaluate_expected_fierz(2, 0, min_E, max_E);
+	expected_fierz_2_1 = evaluate_expected_fierz(2, 1, min_E, max_E);
 
     TFile *asymmetry_data_tfile = new TFile(
 		"/home/mmendenhall/Plots/OctetAsym_Offic/Range_0-1000/CorrectAsym/CorrectedAsym.root");
