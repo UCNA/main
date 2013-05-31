@@ -63,6 +63,7 @@ vector<double> fierzratio_energy;
 vector<double> fierzratio_values;        
 vector<double> fierzratio_errors;        
 
+double expected_fierz;
 
 
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
@@ -73,15 +74,17 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 	int n = asymmetry_energy.size();
 	for (int i = 0; i < n; ++i )
 	{
+		double par[2] = {p[0],p[1]};
 		E = asymmetry_energy[i];
-		chi = (asymmetry_values[i] - asymmetry_fit_func(&E,p)) / asymmetry_errors[i];
+		chi = (asymmetry_values[i] - asymmetry_fit_func(&E,par)) / asymmetry_errors[i];
 		chi2 += chi*chi; 
 	}
 
 	n = fierzratio_energy.size();
 	for (int i = 0; i < n; ++i ) { 
+		double par[2] = {p[1],expected_fierz};
 		E = fierzratio_energy[i];
-		chi = (fierzratio_values[i] - fierzratio_fit_func(&E,p)) / fierzratio_errors[i];
+		chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
 		chi2 += chi*chi; 
 	}
 	fval = chi2; 
@@ -232,27 +235,24 @@ int main(int argc, char *argv[]) {
 
 	TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram, cov);
 
-	cout << "COVARIANCE MATRIX cov(A,b) =\n";
+	cout << " COVARIANCE MATRIX cov(A,b) =\n";
 	for (int i = 0; i < 2; i++) {
-		cout << "   ";
 		for (int j = 0; j < 2; j++) {
-			cout << cov[i][j] << "\t";
+			cout << "\t\t" << cov[i][j];
 		}
 		cout << "\n";
 	}
 
-	//cout << "sigma A = sqrt(cov(A,A)) = " << sqrt(cov[0][0]) << endl;
-	//cout << "sigma b = sqrt(cov(b,b)) = " << sqrt(cov[1][1]) << endl;
-	cout << "The energy range is " << min_E << " - " << max_E << " keV" << endl;
-	cout << "Number of counts in full data is " << (int)entries << endl;
-	cout << "Number of counts in energy range is " <<  (int)N << endl;
-	cout << "The expected statistical error for A in this range is " << 2.7 / sqrt(N) << endl;
-	cout << "The actual statistical error for A in this range is " << func->GetParError(0) << endl;
-	cout << "The ratio for A error is " << func->GetParError(0) * sqrt(N) / 2.7 << endl;
-	cout << "The expected statistical error for b in this range is " << 14.8 / sqrt(N) << endl;
-	cout << "The actual statistical error for b in this range is " << func->GetParError(1) << endl;
-	cout << "The ratio for b error is " << func->GetParError(1) * sqrt(N) / 14.8 << endl;
-	cout << "cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
+	cout << " The energy range is " << min_E << " - " << max_E << " keV" << endl;
+	cout << " Number of counts in full data is " << (int)entries << endl;
+	cout << " Number of counts in energy range is " <<  (int)N << endl;
+	cout << " The expected statistical error for A in this range is " << 2.7 / sqrt(N) << endl;
+	cout << " The actual statistical error for A in this range is " << func->GetParError(0) << endl;
+	cout << " The ratio for A error is " << func->GetParError(0) * sqrt(N) / 2.7 << endl;
+	cout << " The expected statistical error for b in this range is " << 14.8 / sqrt(N) << endl;
+	cout << " The actual statistical error for b in this range is " << func->GetParError(1) << endl;
+	cout << " The ratio for b error is " << func->GetParError(1) * sqrt(N) / 14.8 << endl;
+	cout << " cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
 
 	/*
 	// A fit histogram for output to gnuplot
