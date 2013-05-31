@@ -12,6 +12,7 @@
 #include <TList.h>
 #include <TStyle.h>
 #include <TApplication.h>
+#include <TMatrixD.h>
 
 // C++ includes
 #include <iostream>
@@ -23,8 +24,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-double min_E = 230;
-double max_E = 660;
+double min_E = 220;
+double max_E = 670;
 static int integral_size = 1000;
 //static double expected_fierz = 0.6111;		// for range 150 - 600
 //static double expected_gluck = 11.8498;     // for range 150 - 600
@@ -88,14 +89,15 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 
 
-TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio) 
+TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2]) 
 { 
+	int nPar = 2;
 	double iniParams[2] = { -0.15, 0 };
 	const char * iniParamNames[2] = { "A", "b" };
 	// create fit function
-	TF1 * func = new TF1("func", asymmetry_fit_func, min_E, max_E, 2);
+	TF1 * func = new TF1("func", asymmetry_fit_func, min_E, max_E, nPar);
 	func->SetParameters(iniParams);
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < nPar; i++)
 		func->SetParName(i, iniParamNames[i]);
 
 	// fill data structure for fit (coordinates + values + errors) 
@@ -142,8 +144,8 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 
 
 	TVirtualFitter::SetDefaultFitter("Minuit");
-	TVirtualFitter * minuit = TVirtualFitter::Fitter(0,2);
-	for (int i = 0; i < 2; ++i) {  
+	TVirtualFitter * minuit = TVirtualFitter::Fitter(0,nPar);
+	for (int i = 0; i < nPar; ++i) {  
 		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1, 0, 0);
 	}
 	minuit->SetFCN(combined_chi2);
@@ -157,12 +159,12 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 	// minimize
 	arglist[0] = 50; // number of function calls
 	arglist[1] = 0.1; // tolerance
-	minuit->ExecuteCommand("MIGRAD",arglist,2);
+	minuit->ExecuteCommand("MIGRAD",arglist,nPar);
 
 	//get result
-	double minParams[2];
-	double parErrors[2];
-	for (int i = 0; i < 2; ++i) {  
+	double minParams[nPar];
+	double parErrors[nPar];
+	for (int i = 0; i < nPar; ++i) {  
 		minParams[i] = minuit->GetParameter(i);
 		parErrors[i] = minuit->GetParError(i);
 	}
@@ -176,8 +178,12 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 	int ndf = asymmetry_energy.size() + fierzratio_energy.size()- nvpar;
 	func->SetNDF(ndf);
 
-	cout << "chi^2 = " << chi2 << ", ndf = " << ndf << ", chi^2/ndf = " << chi2/ndf << endl;
+	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
+	for (int i = 0; i < nPar; i++)
+		for (int j = 0; j < nPar; j++)
+			cov[i][j] = minuit->GetCovarianceMatrixElement(i,j);
 
+	cout << "chi^2 = " << chi2 << ", ndf = " << ndf << ", chi^2/ndf = " << chi2/ndf << endl;
 
 	return func; 
 }
@@ -220,14 +226,23 @@ int main(int argc, char *argv[]) {
     TH1F *fierzratio_histogram = 
             (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
 
-	TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram);
-
+	double cov[2][2]; 
 	double entries = supersum_histogram->GetEffectiveEntries();
-	double part_int = supersum_histogram->Integral(
-					  supersum_histogram->FindBin(min_E),
-					  supersum_histogram->FindBin(max_E));
-	double full_int = supersum_histogram->Integral();
-	double N = entries * part_int / full_int;
+	double N = GetEntries(supersum_histogram, min_E, max_E);
+
+	TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram, cov);
+
+	cout << "COVARIANCE MATRIX cov(A,b) =\n";
+	for (int i = 0; i < 2; i++) {
+		cout << "   ";
+		for (int j = 0; j < 2; j++) {
+			cout << cov[i][j] << "\t";
+		}
+		cout << "\n";
+	}
+
+	//cout << "sigma A = sqrt(cov(A,A)) = " << sqrt(cov[0][0]) << endl;
+	//cout << "sigma b = sqrt(cov(b,b)) = " << sqrt(cov[1][1]) << endl;
 	cout << "The energy range is " << min_E << " - " << max_E << " keV" << endl;
 	cout << "Number of counts in full data is " << (int)entries << endl;
 	cout << "Number of counts in energy range is " <<  (int)N << endl;
@@ -237,6 +252,7 @@ int main(int argc, char *argv[]) {
 	cout << "The expected statistical error for b in this range is " << 14.8 / sqrt(N) << endl;
 	cout << "The actual statistical error for b in this range is " << func->GetParError(1) << endl;
 	cout << "The ratio for b error is " << func->GetParError(1) * sqrt(N) / 14.8 << endl;
+	cout << "cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
 
 	/*
 	// A fit histogram for output to gnuplot

@@ -294,3 +294,15 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio)
 	return func; 
 }
 */
+
+double GetEntries(TH1F* histogram, double min, double max)
+{
+	double entries = histogram->GetEffectiveEntries();
+	double part_int = histogram->Integral(
+					  histogram->FindBin(min),
+					  histogram->FindBin(max));
+	double full_int = histogram->Integral();
+	double N = entries * part_int / full_int;
+
+	return N;
+}
