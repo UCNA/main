@@ -107,14 +107,15 @@ double beta_spectrum(const double *val, const double *par)
 
 
 
-double evaluate_expected_fierz(double min, double max, int integral_size = 1234) 
+
+double evaluate_expected_fierz(double m, double n, double min, double max, int integral_size = 1234) 
 {
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
     TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
 	for (int i = 0; i < integral_size; i++)
 	{
 		double K = min + double(i)*(max-min)/integral_size;
-		double par1[2] = {0, 1};
+		double par1[2] = {m, n};
 		double par2[2] = {0, 0};
 		double y1 = beta_spectrum(&K, par1);
 		double y2 = beta_spectrum(&K, par2);
@@ -122,6 +123,13 @@ double evaluate_expected_fierz(double min, double max, int integral_size = 1234)
 		h2->SetBinContent(K, y2);
 	}
 	return h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
+}
+
+
+
+double evaluate_expected_fierz(double min, double max, int integral_size = 1234) 
+{
+	return evaluate_expected_fierz(0, 1, min, max, integral_size);
 }
 
 
