@@ -85,7 +85,29 @@ double fierz_beta_spectrum(const double *val, const double *par)
 
 
 
-double evaluate_expected_fierz(double min, double max, int integral_size) 
+/// beta spectrum with expected x^-n and beta^m
+double beta_spectrum(const double *val, const double *par) 
+{
+	const double K = val[0];                    	///< kinetic energy
+	if (K <= 0 or K >= Q)
+		return 0;                               	///< zero outside range
+
+	const int m = par[0];                    		///< beta exponent
+	const int n = par[1];                    		///< Fierz exponent
+	const double E = K + m_e;                   	///< electron energy
+	const double B = pow(1-m_e*m_e/E/E,(1+m)/2);  	///< beta power factor
+	const double x = E / m_e;                   	///< reduced electron energy
+	const double y = (Q - K) / m_e;             	///< reduced neutrino energy
+	const double z = pow(x,2-n);          			///< Fierz power term
+	const double k = 1.3723803E-11/Q;           	///< normalization factor
+	const double P = k*B*z*y*y;             		///< the output PDF value
+
+	return P;
+}
+
+
+
+double evaluate_expected_fierz(double min, double max, int integral_size = 1234) 
 {
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
     TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
@@ -94,8 +116,8 @@ double evaluate_expected_fierz(double min, double max, int integral_size)
 		double K = min + double(i)*(max-min)/integral_size;
 		double par1[2] = {0, 1};
 		double par2[2] = {0, 0};
-		double y1 = fierz_beta_spectrum(&K, par1);
-		double y2 = fierz_beta_spectrum(&K, par2);
+		double y1 = beta_spectrum(&K, par1);
+		double y2 = beta_spectrum(&K, par2);
 		h1->SetBinContent(K, y1);
 		h2->SetBinContent(K, y2);
 	}
