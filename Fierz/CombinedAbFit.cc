@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
 
 	// find the covariance matrix
 	double det = 0;
-	TMatrixD predicted_cov = predicted_cov_inv.Invert(&det);
+	TMatrixD p_cov = predicted_cov_inv.Invert(&det);
 
 	TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram, cov);
 
@@ -258,24 +258,31 @@ int main(int argc, char *argv[])
 		cout << "\n";
 	}
 
+	double sig_A = sqrt(cov[0][0]);
+	double sig_b = sqrt(cov[1][1]);
+
 	cout << " PREDICTED COVARIANCE MATRIX cov(A,b) =\n";
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 2; j++) {
-			cout << "\t\t" << predicted_cov[i][j];
+			cout << "\t\t" << p_cov[i][j];
 		}
 		cout << "\n";
 	}
 
+	double p_sig_A = sqrt(p_cov[0][0]);
+	double p_sig_b = sqrt(p_cov[1][1]);
+
 	cout << " The energy range is " << min_E << " - " << max_E << " keV" << endl;
 	cout << " Number of counts in full data is " << (int)entries << endl;
 	cout << " Number of counts in energy range is " <<  (int)N << endl;
-	cout << " The expected statistical error for A in this range is " << 2.7 / sqrt(N) << endl;
-	cout << " The actual statistical error for A in this range is " << func->GetParError(0) << endl;
-	cout << " The ratio for A error is " << func->GetParError(0) * sqrt(N) / 2.7 << endl;
-	cout << " The expected statistical error for b in this range is " << 14.8 / sqrt(N) << endl;
-	cout << " The actual statistical error for b in this range is " << func->GetParError(1) << endl;
-	cout << " The ratio for b error is " << func->GetParError(1) * sqrt(N) / 14.8 << endl;
-	cout << " cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
+	cout << " The expected statistical error for A in this range is " << p_sig_A << endl;
+	cout << " The actual statistical error for A in this range is " << sig_A << endl;
+	cout << " The ratio for A error is " << sig_A / p_sig_A << endl;
+	cout << " The expected statistical error for b in this range is " << p_sig_b << endl;
+	cout << " The actual statistical error for b in this range is " << sig_b << endl;
+	cout << " The ratio for b error is " << sig_b / p_sig_b << endl;
+	cout << " The expected cor(A,b) = " << p_cov[1][0] / p_sig_A / p_sig_b << endl;
+	cout << " The actual cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
 
 	/*
 	// A fit histogram for output to gnuplot
