@@ -195,16 +195,7 @@ int main(int argc, char *argv[])
 {
 	TApplication app("Combined Fit", &argc, argv);
 
-	for (int m = 0; m < 3; m++)
-		for (int n = 0; n < 3; n++)
-			expected[m][n] = evaluate_expected_fierz(m, n, min_E, max_E);
-	
-	double A = 0.12;
-	TMatrixD predicted_cov(2,2);
-	predicted_cov[0][0] = 0.25 * A * expected[2][0];
-	predicted_cov[1][0] = predicted_cov[0][1] = 0.25 * A * expected[2][1];
-	predicted_cov[1][1] = expected[0][1]*expected[0][1] - expected[0][2];
-
+	// load the files that contain our histograms
     TFile *asymmetry_data_tfile = new TFile(
 		"/home/mmendenhall/Plots/OctetAsym_Offic/Range_0-1000/CorrectAsym/CorrectedAsym.root");
 	if (asymmetry_data_tfile->IsZombie())
@@ -229,6 +220,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	// extract the histograms from the files
     TH1F *asymmetry_histogram = 
             (TH1F*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
     TH1F *supersum_histogram = 
@@ -240,12 +232,36 @@ int main(int argc, char *argv[])
 	double entries = supersum_histogram->GetEffectiveEntries();
 	double N = GetEntries(supersum_histogram, min_E, max_E);
 
+	// set all expectation values for this range
+	for (int m = 0; m < 3; m++)
+		for (int n = 0; n < 3; n++)
+			expected[m][n] = evaluate_expected_fierz(m, n, min_E, max_E);
+	
+	// find the predicted inverse covariance matrix for this range
+	double A = -0.12;
+	TMatrixD predicted_cov_inv(2,2);
+	predicted_cov_inv[0][0] = N * 0.25 * expected[2][0];
+	predicted_cov_inv[1][0] = predicted_cov_inv[0][1] = -N * 0.25 * A * expected[2][1];
+	predicted_cov_inv[1][1] = N * (expected[0][2] - expected[0][1]*expected[0][1]);
+
+	// find the covariance matrix
+	double det = 0;
+	TMatrixD predicted_cov = predicted_cov_inv.Invert(&det);
+
 	TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram, cov);
 
-	cout << " COVARIANCE MATRIX cov(A,b) =\n";
+	cout << " FIT COVARIANCE MATRIX cov(A,b) =\n";
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 2; j++) {
 			cout << "\t\t" << cov[i][j];
+		}
+		cout << "\n";
+	}
+
+	cout << " PREDICTED COVARIANCE MATRIX cov(A,b) =\n";
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 2; j++) {
+			cout << "\t\t" << predicted_cov[i][j];
 		}
 		cout << "\n";
 	}
