@@ -183,7 +183,9 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2])
 		for (int j = 0; j < nPar; j++)
 			cov[i][j] = minuit->GetCovarianceMatrixElement(i,j);
 
-	cout << "chi^2 = " << chi2 << ", ndf = " << ndf << ", chi^2/ndf = " << chi2/ndf << endl;
+	cout << endl;
+	cout << "    chi^2 = " << chi2 << ", ndf = " << ndf << ", chi^2/ndf = " << chi2/ndf << endl;
+	cout << endl;
 
 	return func; 
 }
@@ -239,21 +241,32 @@ int main(int argc, char *argv[])
 	
 	// find the predicted inverse covariance matrix for this range
 	double A = -0.12;
-	TMatrixD predicted_cov_inv(2,2);
-	predicted_cov_inv[0][0] = N * 0.25 * expected[2][0];
-	predicted_cov_inv[1][0] = predicted_cov_inv[0][1] = -N * 0.25 * A * expected[2][1];
-	predicted_cov_inv[1][1] = N * (expected[0][2] - expected[0][1]*expected[0][1]);
+	TMatrixD p_cov_inv(2,2);
+	p_cov_inv[0][0] = N * 0.25 * expected[2][0];
+	p_cov_inv[1][0] = p_cov_inv[0][1] = -N * 0.25 * A * expected[2][1];
+	p_cov_inv[1][1] = N * (expected[0][2] - expected[0][1]*expected[0][1]);
 
 	// find the covariance matrix
 	double det = 0;
-	TMatrixD p_cov = predicted_cov_inv.Invert(&det);
+	double p_var_A = 1 / p_cov_inv[0][0];
+	double p_var_b = 1 / p_cov_inv[1][1];
+	TMatrixD p_cov = p_cov_inv.Invert(&det);
 
+	// do the fitting
 	TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram, cov);
 
+	// output the data info
+	cout << " ENERGY RANGE:" << endl;
+	cout << "    Energy range is " << min_E << " - " << max_E << " keV" << endl;
+	cout << "    Number of counts in full data is " << (int)entries << endl;
+	cout << "    Number of counts in energy range is " <<  (int)N << endl;
+	cout << endl;
+
+	// output the details	
 	cout << " FIT COVARIANCE MATRIX cov(A,b) =\n";
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 2; j++) {
-			cout << "\t\t" << cov[i][j];
+			cout << "\t" << cov[i][j];
 		}
 		cout << "\n";
 	}
@@ -261,10 +274,11 @@ int main(int argc, char *argv[])
 	double sig_A = sqrt(cov[0][0]);
 	double sig_b = sqrt(cov[1][1]);
 
+	cout << endl;
 	cout << " PREDICTED COVARIANCE MATRIX cov(A,b) =\n";
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 2; j++) {
-			cout << "\t\t" << p_cov[i][j];
+			cout << "\t" << p_cov[i][j];
 		}
 		cout << "\n";
 	}
@@ -272,17 +286,22 @@ int main(int argc, char *argv[])
 	double p_sig_A = sqrt(p_cov[0][0]);
 	double p_sig_b = sqrt(p_cov[1][1]);
 
-	cout << " The energy range is " << min_E << " - " << max_E << " keV" << endl;
-	cout << " Number of counts in full data is " << (int)entries << endl;
-	cout << " Number of counts in energy range is " <<  (int)N << endl;
-	cout << " The expected statistical error for A in this range is " << p_sig_A << endl;
-	cout << " The actual statistical error for A in this range is " << sig_A << endl;
-	cout << " The ratio for A error is " << sig_A / p_sig_A << endl;
-	cout << " The expected statistical error for b in this range is " << p_sig_b << endl;
-	cout << " The actual statistical error for b in this range is " << sig_b << endl;
-	cout << " The ratio for b error is " << sig_b / p_sig_b << endl;
-	cout << " The expected cor(A,b) = " << p_cov[1][0] / p_sig_A / p_sig_b << endl;
-	cout << " The actual cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
+	cout << endl;
+	cout << " FOR UNCOMBINED FITS:\n";
+	cout << "    Expected statistical error for A in this range is without b is " 
+					<< sqrt(p_var_A) << endl;
+	cout << "    Expected statistical error for b in this range is without A is "
+					<< sqrt(p_var_b) << endl;
+	cout << endl;
+	cout << " FOR COMBINED FITS:\n";
+	cout << "    Expected statistical error for A in this range is " << p_sig_A << endl;
+	cout << "    Actual statistical error for A in this range is " << sig_A << endl;
+	cout << "    Ratio for A error is " << sig_A / p_sig_A << endl;
+	cout << "    Expected statistical error for b in this range is " << p_sig_b << endl;
+	cout << "    Actual statistical error for b in this range is " << sig_b << endl;
+	cout << "    Ratio for b error is " << sig_b / p_sig_b << endl;
+	cout << "    Expected cor(A,b) = " << p_cov[1][0] / p_sig_A / p_sig_b << endl;
+	cout << "    Actual cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
 
 	/*
 	// A fit histogram for output to gnuplot
