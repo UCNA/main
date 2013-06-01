@@ -24,15 +24,14 @@
 #include <stdlib.h>
 #include <time.h>
 
+
+// energy range from the 2013 paper
 double min_E = 220;
 double max_E = 670;
-//static double expected_fierz = 0.6111;		// for range 150 - 600
-//static double expected_gluck = 11.8498;     // for range 150 - 600
-//static unsigned nToSim = 5E7;				// how many triggering events to simulate
-//static double loading_prob = 40; 		// ucn loading probability (percent)
-//static int bins = 150;						// replace with value from data or smoothing fit
-//double scale_x = 1.015;
-//double scale_x = 1.0;
+
+// expected values (based on the energy range) need to be visible to the chi^2 code
+double expected[3][3];
+
 
 #if 1
 using namespace std;
@@ -62,10 +61,6 @@ vector<double> fierzratio_energy;
 vector<double> fierzratio_values;        
 vector<double> fierzratio_errors;        
 
-double expected_fierz_0_1;
-double expected_fierz_0_2;
-double expected_fierz_2_0;
-double expected_fierz_2_1;
 
 
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
@@ -84,7 +79,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 	n = fierzratio_energy.size();
 	for (int i = 0; i < n; ++i ) { 
-		double par[2] = {p[1], expected_fierz_0_1};
+		double par[2] = {p[1], expected[0][1]};
 		E = fierzratio_energy[i];
 		chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
 		chi2 += chi*chi; 
@@ -96,9 +91,11 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2]) 
 { 
+	// set up best guess
 	int nPar = 2;
-	double iniParams[2] = { -0.15, 0 };
+	double iniParams[2] = { -0.12, 0 };
 	const char * iniParamNames[2] = { "A", "b" };
+
 	// create fit function
 	TF1 * func = new TF1("func", asymmetry_fit_func, min_E, max_E, nPar);
 	func->SetParameters(iniParams);
@@ -116,7 +113,7 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2])
 	int nbinX1 = asymmetry->GetNbinsX(); 
 	int nbinX2 = fierzratio->GetNbinsX(); 
 
-	/// reset data structure
+	// reset data structure
 	asymmetry_energy = vector<double>();
 	asymmetry_values = vector<double>();
 	asymmetry_errors = vector<double>();
@@ -132,7 +129,6 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2])
 			asymmetry_energy.push_back( E );
 			asymmetry_values.push_back( asymmetry->GetBinContent(ix) );
 			asymmetry_errors.push_back( asymmetry->GetBinError(ix) );
-			//cout << xaxis1->GetBinCenter(ix) << endl;
 		}
 	}
 
@@ -147,18 +143,17 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2])
 		}
 	}
 
-
+	// set up the minuit fitter
 	TVirtualFitter::SetDefaultFitter("Minuit");
 	TVirtualFitter * minuit = TVirtualFitter::Fitter(0,nPar);
-	for (int i = 0; i < nPar; ++i) {  
+	for (int i = 0; i < nPar; ++i)
 		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1, 0, 0);
-	}
 	minuit->SetFCN(combined_chi2);
 	minuit->SetErrorDef(1);	// 1 for chi^2
 
+	// set print level
 	double arglist[100];
 	arglist[0] = 0;
-	// set print level
 	minuit->ExecuteCommand("SET PRINT",arglist,1);
 
 	// minimize
@@ -166,7 +161,7 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2])
 	arglist[1] = 0.1; // tolerance
 	minuit->ExecuteCommand("MIGRAD",arglist,nPar);
 
-	//get result
+	// get result
 	double minParams[nPar];
 	double parErrors[nPar];
 	for (int i = 0; i < nPar; ++i) {  
@@ -196,12 +191,19 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2])
 
 
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 	TApplication app("Combined Fit", &argc, argv);
-	expected_fierz_0_1 = evaluate_expected_fierz(0, 1, min_E, max_E);
-	expected_fierz_0_2 = evaluate_expected_fierz(0, 2, min_E, max_E);
-	expected_fierz_2_0 = evaluate_expected_fierz(2, 0, min_E, max_E);
-	expected_fierz_2_1 = evaluate_expected_fierz(2, 1, min_E, max_E);
+
+	for (int m = 0; m < 3; m++)
+		for (int n = 0; n < 3; n++)
+			expected[m][n] = evaluate_expected_fierz(m, n, min_E, max_E);
+	
+	double A = 0.12;
+	TMatrixD predicted_cov(2,2);
+	predicted_cov[0][0] = 0.25 * A * expected[2][0];
+	predicted_cov[1][0] = predicted_cov[0][1] = 0.25 * A * expected[2][1];
+	predicted_cov[1][1] = expected[0][1]*expected[0][1] - expected[0][2];
 
     TFile *asymmetry_data_tfile = new TFile(
 		"/home/mmendenhall/Plots/OctetAsym_Offic/Range_0-1000/CorrectAsym/CorrectedAsym.root");
