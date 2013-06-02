@@ -23,13 +23,16 @@ def dVdTau(gA,tau):
 
 def lambdaVudPlot(inColor = True):
 	
-	V0 = Vud_PDG-0.005
-	V1 = Vud_PDG+0.005
-	l0 = lambda_PDG-0.005
-	l1 = lambda_PDG+0.015
+	V0,V1 = (.969,.979)
+	#V0 = Vud_PDG-0.005
+	#V1 = Vud_PDG+0.005
+	l0,l1 = (1.265,1.285)
+	#l0 = lambda_PDG-0.005
+	#l1 = lambda_PDG+0.015
 	npts = 100
 	gPS=graph.graphxy(width=12,height=12,
-			   x=graph.axis.lin(title="$|\\lambda| \\equiv |g_A/g_V|$",min=l0,max=l1),
+			   x=graph.axis.lin(title="$|\\lambda| \\equiv |g_A/g_V|$",min=l0,max=l1,
+							parter=graph.axis.parter.linear(tickdists=[0.005,0.001])),
 			   y=graph.axis.lin(title="$V_{ud}$",min=V0,max=V1),
 			   key = graph.key.key(pos="bl"))
 	setTexrunner(gPS)
@@ -85,13 +88,13 @@ def lambdaVudPlot(inColor = True):
 			gPS.fill(area_UCNA, [pattern.hatched(0.10,45)])
 			gPS.fill(area_PDGtau, [pattern.hatched(0.07,90)])
 
-	gPS.text(9.0,6.5,"$0^+ \\rightarrow 0^+$")
+	gPS.text(9.0,6.8,"$0^+ \\rightarrow 0^+$")
 
 	tbox = text.text(0,0,"$\\tau_n$ PDG")
-	gPS.insert(tbox,[trafo.rotate(-52),trafo.translate(9.0,3.5)])
+	gPS.insert(tbox,[trafo.rotate(-52),trafo.translate(9.0,3.55)])
 	#gPS.text(9.5,2.5,"$\\tau_n$ PDG")
 
-	tbox = text.text(5.5, 1, "UCNA")
+	tbox = text.text(5.55, 1, "UCNA")
 	tpath = tbox.bbox().enlarged(0.2).path()
 	gPS.stroke(tpath,[deco.filled([color.rgb.white])])
 	gPS.insert(tbox)
@@ -101,10 +104,10 @@ def lambdaVudPlot(inColor = True):
 	c = canvas.canvas()
 	c.stroke(tpath,[deco.filled([color.rgb.white])])
 	c.insert(tbox)
-	gPS.insert(c,[trafo.rotate(90),trafo.translate(6.45,8.5)])
+	gPS.insert(c,[trafo.rotate(90),trafo.translate(6.50,8.5)])
 	
 	if False:
-		tbox = text.text(1.9, 1, r"PDG '12")
+		tbox = text.text(1.95, 1, r"PDG '12")
 		tpath = tbox.bbox().enlarged(0.2).path()
 		gPS.stroke(tpath,[deco.filled([color.rgb.white])])
 		gPS.insert(tbox)

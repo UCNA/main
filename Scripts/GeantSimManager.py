@@ -198,10 +198,6 @@ class GeantSimManager:
 			self.settings["jobcmd"] =  "mkdir -p %s\n"%self.g4_out_dir
 			self.settings["jobcmd"] += "mkdir -p %s\n"%self.g4_log_dir
 			self.settings["jobcmd"] += onejob+"\n"
-			#self.settings["jobcmd"] += "rsync -av -e ssh %s 'mmendenhall@ucn.krl.caltech.edu:%s/'\n"%(self.settings["outfile"],g4_out_dir)
-			#self.settings["jobcmd"] += "rm %s\n"%self.settings["outfile"]
-			#self.settings["jobcmd"] += "rsync -av -e ssh %s 'mmendenhall@ucn.krl.caltech.edu:%s/'\n"%(self.settings["joblog"],g4_log_dir)
-			#self.settings["jobcmd"] += "rm %s\n"%self.settings["joblog"]
 			open(os.path.expanduser(g4_sub_file),"w").write(open("GeantJobTemplate.sub","r").read()%self.settings)
 			subcmds.append("podsh submit --stageout='%s':'%s' %s"%(self.settings["joblog"],self.settings["joblog"],g4_sub_file))
 			
@@ -318,8 +314,8 @@ if __name__ == "__main__":
 	####################
 	
 	# sources ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"] 1e6 each
-	if 0:
-		for g in ["Sn113","Ce139","Cd109","Cs137","In114E","In114W"]:
+	if 1:
+		for g in ["In114E","In114W"]:
 			sourceSim = GeantSimManager("thinfoil",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt",geometry="thinFoil")
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.settings["sourceScan"]=80.
@@ -327,7 +323,7 @@ if __name__ == "__main__":
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 			sourceSim.settings["ana_args"] += " undead"
 			sourceSim.set_generator(g)
-			#sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
+			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
 			sourceSim.launch_postanalyzer()
 	
 	if 0:
@@ -384,7 +380,7 @@ if __name__ == "__main__":
 	####################				
 	# isotropic line
 	####################
-	if 1:
+	if 0:
 		for l in [56.7,]:
 			iline = GeantSimManager("IsotLine")
 			iline.set_generator("eGunRandMomentum")

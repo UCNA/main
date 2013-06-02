@@ -165,9 +165,30 @@ def plotWilkinsonCorrs(fin,outpath):
 	setTexrunner(gT)
 	gT.plot(graph.data.points([(c.energy,tensorCoeff(c.energy)) for c in corrs],x=1,y=2,title=None),[graph.style.line([style.linewidth.Thick])])
 	gT.writetofile(outpath+"/GardnerTensor.pdf")
-		
+
+
+def plot_hg_radiative(fin,outpath):
+	"""h-g radiative corrections for comparison with Albert's numbers"""
+	Q = QFile(fin)
+	ep = Q.getItemF("decayInfo","endpt")
+	corrs = [spectrumCorrs(m) for m in Q.dat["spectrumPoint"]]
+	ghg=graph.graphxy(width=24,height=16,
+			   x=graph.axis.lin(title="Energy [keV]",min=500,max=1300),
+			   y=graph.axis.lin(title="Relative Asymmetry Correction",min=0,max=0.003),
+			   key = graph.key.key(pos="mr"))
+	setTexrunner(ghg)
+
+	ghg.plot(graph.data.points([(c.energy+511,c.hmg) for c in corrs],x=1,y=2,title="Radiative $h - g$ (Shann/Sirlin)"),
+		    [graph.style.line([style.linewidth.Thick,rgb.blue])])
+
+	ghg.writetofile(outpath+"/Radiative_h-g.pdf")
+
+
 if __name__ == "__main__":						  
 	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
 	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
-	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_137_55_513.97.txt",
-					   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_137_55_513.97.txt",
+	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+
+	plot_hg_radiative(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
+			   				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")

@@ -176,6 +176,13 @@ def merge_runlogs(mylog,autolog):
 					
 	return runs
 
+# clear run range from DB
+def clearRunsDB(rmin,rmax):
+	conn = open_connection()
+	cmd = "SELECT COUNT(*) FROM run WHERE %i <= run_number AND run_number <= %i"%(rmin,rmax)
+	conn.execute(cmd)
+	print "Deleting",conn.fetchone()[0],"run entries in range",rmin,"to",rmax
+	conn.execute("DELETE FROM run WHERE %i <= run_number AND run_number <= %i"%(rmin,rmax))
 
 # update runs DB with run list
 def fillRunsDB(runs,rmin=0,rmax=100000):
@@ -246,11 +253,20 @@ if __name__=="__main__":
 		runs = merge_runlogs(ml,al)
 		fillRunsDB(runs,rmin=13500,rmax=16300)
 		fillRunGroups()
+		
+	if 0:
+		al = load_runlog("/data/ucnadata/midfiles/runlog.txt")
+		ml = load_mylog("../Aux/UCNA Run Log.txt")
+		runs = merge_runlogs(ml,al)
+		clearRunsDB(16500,19999)
+		fillRunsDB(runs,rmin=16500,rmax=19999)
+		fillRunGroups("../Aux/UCNA Run Log.txt")
 
 	if 1:
 		al = load_runlog("/data/ucnadata/midfiles/runlog.txt")
 		ml = load_mylog("../Aux/UCNA Run Log 2012.txt")
 		runs = merge_runlogs(ml,al)
+		clearRunsDB(20000,23200)
 		fillRunsDB(runs)
 		fillRunGroups("../Aux/UCNA Run Log 2012.txt")
 
