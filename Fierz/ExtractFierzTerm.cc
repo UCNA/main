@@ -2,6 +2,7 @@
 #include "G4toPMT.hh"
 #include "PenelopeToPMT.hh"
 #include "CalDBSQL.hh"
+#include "FierzFitter.hh"
 
 // ROOT includes
 #include <TH1F.h>
@@ -9,17 +10,18 @@
 #include <TF1.h>
 #include <TNtuple.h>
 
-// c++ includes
+// C++ includes
 #include <iostream>
 #include <fstream>
 #include <string>
 
-// c includes
+// C includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
 
+/*
 ///
 /// physical constants
 ///
@@ -39,6 +41,7 @@ const double    M           = 1 + 3*L*L;            /// matrix element
 const double    I_0         = 1.63632;              /// 0th moment          (25)
 const double    I_1         = 1.07017;              /// 1st moment          (15)
 const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
+*/
 
 
 ///
@@ -52,7 +55,6 @@ double expected_fierz = 0.6540;				/// full range (will get overwritten)
 static unsigned nToSim = 5e7;				/// how many triggering events to simulate
 static double loading_prob = 40; 			/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
-static int integral_size = 1000;
 //double scale_x = 1.015;
 double scale_x = 1.0;
 
@@ -122,6 +124,7 @@ double theoretical_fierz_spectrum(double *x, double*p)
 }
 
 
+/*
 /// beta spectrum with little b term
 double fierz_beta_spectrum(const double *val, const double *par) 
 {
@@ -160,6 +163,7 @@ double beta_spectrum(const double *val, const double *par)
 
 	return P;
 }
+*/
 
 
 unsigned deg = 4;
@@ -187,6 +191,7 @@ void normalize(TH1F* hist, double min, double max)
 }
 
 
+/*
 double evaluate_expected_fierz(double min, double max) 
 {
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
@@ -203,6 +208,7 @@ double evaluate_expected_fierz(double min, double max)
 	}
 	return h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
 }
+*/
 
 
 /// S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
@@ -235,7 +241,7 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2])
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
         //double rel_error = TMath::Sqrt( 1/(r[0][0] + r[1][0]) + 1/(r[1][1] * r[0][1]));
-        double rel_error = TMath::Sqrt( 1/r[0][0] + 1/r[1][0] + 1/r[1][1]) * r[0][1]);
+        double rel_error = TMath::Sqrt( 1/r[0][0] + 1/r[1][0] + 1/r[1][1] * r[0][1]);
         if ( TMath::IsNaN(super_sum)) 
             super_sum = 0;
 
@@ -813,11 +819,9 @@ int main(int argc, char *argv[])
     for (int bin = 1; bin < bins+1; bin++) {
 		double X = super_sum_histogram->GetBinContent(bin);
 		double Y = mc.sm_super_sum_histogram->GetBinContent(bin);
-		double Z = X/Y;
-		if (Y > 0)
-			fierz_ratio_histogram->SetBinContent(bin, X/Y);
-		else
-			fierz_ratio_histogram->SetBinContent(bin, 0);
+		double Z = Y > 0 ? X/Y : 0;
+
+		fierz_ratio_histogram->SetBinContent(bin, Z);
 
 		double x = super_sum_histogram->GetBinError(bin);
 		double y = mc.sm_super_sum_histogram->GetBinError(bin);

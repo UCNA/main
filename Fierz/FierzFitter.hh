@@ -90,10 +90,10 @@ double beta_spectrum(const double *val, const double *par)
 {
 	const double K = val[0];                    	///< kinetic energy
 	if (K <= 0 or K >= Q)
-		return 0;                               	///< zero outside range
+		return 0;                               	///< zero beyond endpoint
 
-	const int m = par[0];                    		///< beta exponent
-	const int n = par[1];                    		///< Fierz exponent
+	const double m = par[0];                    	///< beta exponent
+	const double n = par[1];                    	///< Fierz exponent
 	const double E = K + m_e;                   	///< electron energy
 	const double B = pow(1-m_e*m_e/E/E,(1+m)/2);  	///< beta power factor
 	const double x = E / m_e;                   	///< reduced electron energy
