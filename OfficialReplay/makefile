@@ -18,12 +18,13 @@ ANA_OBJS      = ManualInfo.o ucnaDataAnalyzer_hists.o ucnaDataAnalyzer_tree.o uc
 
 all: ucnaDataAnalyzer11b
 
-../libUCNA.a:
-	cd ..; make libUCNA.a
+libUCNA:
+	cd ..; ${MAKE} libUCNA.a
 
-ucnaDataAnalyzer11b: ucnaDataAnalyzer11b.cc ucnaDataAnalyzer11b.hh $(ANA_OBJS) ../libUCNA.a
+ucnaDataAnalyzer11b: ucnaDataAnalyzer11b.cc ucnaDataAnalyzer11b.hh $(ANA_OBJS) libUCNA
 	$(CXX) $(CXXFLAGS) ucnaDataAnalyzer11b.cc $(ANA_OBJS) $(LDFLAGS) -o ucnaDataAnalyzer11b
 
 clean:
 	@rm -f *.o *~
 	@rm -f ucnaDataAnalyzer11b
+	@cd ..; ${MAKE} clean
