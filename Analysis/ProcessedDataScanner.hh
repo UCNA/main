@@ -24,6 +24,8 @@ public:
 	virtual float radius2(Side s) const;
 	/// radius of event
 	virtual float radius(Side s) const { return sqrt(radius2(s)); }
+	/// MWPC charge cloud volume
+	virtual float mwpcCharge(Side s) const { return wires[s][X_DIRECTION].height*wires[s][X_DIRECTION].width + wires[s][Y_DIRECTION].height*wires[s][Y_DIRECTION].width; }
 	/// event energy
 	virtual float getEnergy() const { return scints[EAST].energy.x + scints[WEST].energy.x; }
 	/// get event true (reconstructed) energy
@@ -37,22 +39,22 @@ public:
 	
 	bool redoPositions;			//< whether to re-calibrate positions
 
-	ScintEvent scints[2];		//< readout point for scintillator data
-	Float_t led_pd[2];			//< readout point for reference photodiode
-	wireHit wires[2][2];		//< readout point for wirechamber data [side][plane]
-	float cathodes[2][2][kMaxCathodes];	//< readout point for pedestal-subtracted cathode values, [side][plane][cathode]
-	MWPCevent mwpcs[2];			//< readout point for mwpc data (anode & cathode sum)
-	Float_t mwpcEnergy[2];		//< calibrated wirechamber energy deposition on each side
+	ScintEvent scints[BOTH];	//< readout point for scintillator data
+	Float_t led_pd[BOTH];		//< readout point for reference photodiode
+	wireHit wires[BOTH][2];		//< readout point for wirechamber data [side][plane]
+	float cathodes[BOTH][2][kMaxCathodes];	//< readout point for pedestal-subtracted cathode values, [side][plane][cathode]
+	MWPCevent mwpcs[BOTH];		//< readout point for mwpc data (anode & cathode sum)
+	Float_t mwpcEnergy[BOTH];	//< calibrated wirechamber energy deposition on each side
 	BlindTime runClock;			//< time of current event since run start
 	
 	PID fPID;					//< analysis particle ID
 	EventType fType;			//< analysis event type
 	Float_t fProbIII;			//< probability of Type III backscatter
 	Side fSide;					//< analysis event side
-	Int_t EvnbGood;			//< Event number header good
-	Int_t BkhfGood;		//< Block header good
+	Int_t EvnbGood;				//< Event number header good
+	Int_t BkhfGood;				//< Block header good
 		
-	UInt_t fTaggedBack[2];		//< whether event was tagged by the muon backing veto on each side
+	UInt_t fTaggedBack[BOTH];	//< whether event was tagged by the muon backing veto on each side
 	double physicsWeight;		//< event spectrum re-weighting factor
 	
 	AnalysisChoice anChoice;	//< which analysis choice to use in identifying event types

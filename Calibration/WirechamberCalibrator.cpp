@@ -6,7 +6,7 @@
 
 #define kUndefinedPosition 666
 
-WirechamberCalibrator::WirechamberCalibrator(RunNum rn, CalDB* cdb): anodeP(cdb->getAnodePositioningCorrector(rn)) {
+WirechamberCalibrator::WirechamberCalibrator(RunNum rn, CalDB* cdb): sigma(5.90), anodeP(cdb->getAnodePositioningCorrector(rn)) {
 	assert(anodeP);
 	anodeP->setNormAvg();
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -139,6 +139,17 @@ Stringmap WirechamberCalibrator::wirecalSummary() const {
 	return m;
 }
 
+void WirechamberCalibrator::calcDoubletHitPos(wireHit& h, float x0, float x1, float y0, float y1) const {
+		float sclamp = exp(-2*(x1-x0)*(x1-x0)/(2*sigma*sigma));
+		if(y1<y0*sclamp) y1 = y0*sclamp;
+		
+		h.width = sigma;
+		h.rawCenter = h.center = (x0+x1)/2 + sigma*sigma/(x1-x0)*log(y1/y0);
+		const double sigma0 = sigma/fabs(x1-x0);
+		if(!(h.errflags & WIRES_SINGLET))
+			h.height = exp( pow(log(y1/y0)*sigma0,2)/2 + log(y0*y1)/2 + 1/(8*sigma0*sigma0) );
+}
+
 wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 										  std::vector<float>& wireValues, std::vector<float>& wirePeds) const {
 	
@@ -146,7 +157,6 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 	const unsigned int nWires = wirePos[s][d].size();
 	assert(wireValues.size()>=nWires);
 	float x1,x2,x3,y1,y2,y3;
-	const double sigma0 = 0.75;	//< typical event width in sire spacings
 	
 	std::vector<float> xs;
 	std::vector<float> ys;
@@ -158,6 +168,7 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 	h.maxWire = 0;
 	h.cathodeSum = 0;
 	h.multiplicity = 0;
+	h.height = 0;
 	h.errflags = 0;
 	h.maxValue = -1;
 	
@@ -210,16 +221,17 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 	
 	// no usable wires? There's no hit to reconstruct.
 	if(h.maxValue <= 0 || !xs.size()) {
-		h.center = h.width = 0;
+		h.center = h.width = h.height = 0;
 		return h;
 	}
 	// only one usable wire?
 	if(xs.size()==1) {
 		h.errflags |= WIRES_SINGLET;
 		h.rawCenter = h.center = xs[0];
+		h.height = ys[0];
 		return h;
 	}
-	// edge wire; reconstruct assuming fixed sigma0
+	// edge wire; reconstruct assuming fixed sigma
 	if(h.errflags & WIRES_EDGE) {
 		y1 = ys[maxn];
 		x1 = xs[maxn];
@@ -234,12 +246,11 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 		// isolated edge wire firing
 		if(y2 <= 0) {
 			h.errflags |= WIRES_SINGLET;
+			h.height = y1;
 			y2 = 1;
 		}
 		
-		h.width = sigma0*fabs(x2-x1);
-		float l = 0.5 + (log(y2)-log(y1))*sigma0*sigma0;
-		h.rawCenter = h.center = (1-l)*x1 + l*x2;
+		calcDoubletHitPos(h,x1,x2,y1,y2);
 		return h;
 	}
 	
@@ -262,6 +273,7 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 		h.errflags |= WIRES_SINGLET;
 		h.width = 0;
 		h.rawCenter = h.center = x2;
+		h.height = y2;
 		return h;
 	}
 	
@@ -272,15 +284,14 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 			x3 = x1;
 		}
 		h.errflags |= WIRES_DOUBLET;
-		h.width = sigma0*fabs(x3-x2);
-		float l = 0.5 + (log(y3)-log(y2))*sigma0*sigma0;
-		h.rawCenter = h.center = (1-l)*x2 + l*x3;
+		calcDoubletHitPos(h,x2,x3,y2,y3);
 		return h;
 	}
 	
 	// normal case: uniformly spaced wires; convert from parabola center to position based on fixed sigma0
 	if(fabs(dx1-dx2)<0.001) {
 		float x = (y3-y1)/(4.0*y2-2.0*(y1+y3));
+		float sigma0 = sigma/fabs(dx1);
 		float sigma2 = sigma0*sigma0;
 		float gx = (x<0?-1:x==0?0:1)*sigma2*log(( 2.0*exp(1.0/(2.0*sigma2))*fabs(x) + sqrt( 1.0 + 4.0*( exp(1.0/sigma2) - 1.0 )*x*x ) )/(1.0+2.0*fabs(x)));
 		h.rawCenter = h.center = x2+dx1*gx;
@@ -288,13 +299,14 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 		h.errflags |= WIRES_NONUNIF;
 	}
 	
-	// calculate gaussian center for non-uniform wires, width for all wires
+	// calculate gaussian center for non-uniform wires, width and height for all wires
 	y1 = log(y1);
 	y2 = log(y2);
 	y3 = log(y3);
 	float denom = x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2);
 	h.width = sqrt((x1-x2)*(x2-x3)*(x3-x1)/(-2*denom));
 	float gcenter = 0.5*(x1*x1*(y2-y3)  + x2*x2*(y3-y1) + x3*x3*(y1-y2)) / denom;
+	h.height = exp( ((x3-x2)*x3*x2*y1 - (x3-x1)*x3*x1*y2 + (x2-x1)*x2*x1*y3)/((x2-x1)*(x3-x1)*(x3-x2)) + gcenter*gcenter/(2*h.width*h.width) );
 	if(h.center == kUndefinedPosition)
 		h.rawCenter = h.center = gcenter;
 	

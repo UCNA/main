@@ -34,6 +34,7 @@ struct wireHit {
 	unsigned int multiplicity;	//< number of wires firing above threshold for this event
 	int errflags;				//< reconstruction error warnings
 	float rawCenter;			//< center position before energy-dependent tweaking
+	float height;				//< reconstructed amplitude of charge cloud
 };
 
 /// class for calibrating wirechamber data
@@ -52,7 +53,10 @@ public:
 	
 	/// calculate hit position from wire values array
 	wireHit calcHitPos(Side s, AxisDirection d, std::vector<float>& wireValues, std::vector<float>& wirePeds) const;
-
+	
+	/// special case for calculating hit position from two points
+	void calcDoubletHitPos(wireHit& h, float x0, float x1, float y0, float y1) const;
+	
 	/// fine-tweak hit position once energy is known
 	void tweakPosition(Side s, AxisDirection d, wireHit& h, double E) const;
 	
@@ -83,12 +87,14 @@ public:
 	/// Type II/III separation probability
 	static float sep23Prob(Side s, float Escint, float Emwpc);
 	
+	double sigma;	//< expected charge cloud width for default reconstruction, in same units as cathode positions
+	
 protected:
 	PositioningCorrector* anodeP;					//< anode calibration maps
-	float anodeGainCorr[2];							//< anode correction factor for each side
-	std::vector<CathSegCalibrator*> cathsegs[2][2];	//< cathode segments for each [side][plane]
-	std::vector<double> wirePos[2][2];				//< cathode wire positions on each plane
-	std::vector<double> domains[2][2];				//< dividing lines between ``domains'' of each wire
+	float anodeGainCorr[BOTH];						//< anode correction factor for each side
+	std::vector<CathSegCalibrator*> cathsegs[BOTH][2];	//< cathode segments for each [side][plane]
+	std::vector<double> wirePos[BOTH][2];				//< cathode wire positions on each plane
+	std::vector<double> domains[BOTH][2];				//< dividing lines between ``domains'' of each wire
 };
 
 
