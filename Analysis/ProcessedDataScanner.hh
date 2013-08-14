@@ -54,7 +54,7 @@ public:
 	Int_t EvnbGood;				//< Event number header good
 	Int_t BkhfGood;				//< Block header good
 		
-	UInt_t fTaggedBack[BOTH];	//< whether event was tagged by the muon backing veto on each side
+	Int_t fTaggedBack[BOTH];	//< whether event was tagged by the muon backing veto on each side
 	double physicsWeight;		//< event spectrum re-weighting factor
 	
 	AnalysisChoice anChoice;	//< which analysis choice to use in identifying event types

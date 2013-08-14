@@ -192,9 +192,9 @@ protected:
 	CutVariable fCathMax[2];//< min(max cathode each plane) for each side
 	CutVariable fCathMaxSum[2];	//< sum of max cathode from each plane for each side
 	Float_t fEMWPC[2];		//< reconstructed energy deposition in wirechamber
-	UInt_t fTaggedBack[2];	//< whether event was tagged by the muon backing veto on each side
-	UInt_t fTaggedDrift[2];	//< whether event was tagged by muon veto drift tubes on each side
-	UInt_t fTaggedTop[2];	//< whether event was tagged by top veto on each side (only meaningful on East)
+	Int_t fTaggedBack[2];	//< whether event was tagged by the muon backing veto on each side
+	Int_t fTaggedDrift[2];	//< whether event was tagged by muon veto drift tubes on each side
+	Int_t fTaggedTop[2];	//< whether event was tagged by top veto on each side (only meaningful on East)
 	Side fSide;				//< event primary scintillator side
 	EventType fType;		//< event backscatter type
 	PID fPID;				//< event particle ID
