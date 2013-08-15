@@ -115,7 +115,7 @@ std::string sm2insert(const Stringmap& m) {
 			svars += ",";
 			svals += ",";
 		}
-		svars += it->first;
+		svars += std::string("`")+it->first+"`";
 		svals += it->second;
 	}
 	return svars+") "+svals+")";
