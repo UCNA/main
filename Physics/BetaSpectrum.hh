@@ -15,7 +15,7 @@
 const double neutronBetaEp = 782.347;			//< neutron beta decay endpoint, keV
 const double m_e = 511.00;						//< electron mass, keV/c^2
 const double m_p = 938272.046;					//< proton mass, keV/c^2
-const double m_n = m_p-m_e-neutronBetaEp;		//< neutron mass, keV/c^2
+const double m_n = m_p+m_e+neutronBetaEp;		//< neutron mass, keV/c^2
 const double alpha = 1./137.036;				//< fine structure constant
 const double lambda = fabs(-1.2694);			//< +/-0.0028, PDG 2010 value, Wilkinson sign convention
 const double A0_PDG = -0.1173;					//< +/-0.0013, PDG 2010 value
