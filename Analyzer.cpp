@@ -71,7 +71,7 @@ void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	if(CalDBSQL::getCDB()->isValid(13883)) {
 		OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Posmap_"+itos(pmid));
 		PosPlotter PP(&OM);
-		PP.etaPlot(CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid));
+		PP.etaPlot(CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),0.7,1.6);
 	} else {
 		printf("Invalid CalDB!\n");
 	}
@@ -149,7 +149,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	unsigned int stride = 73;
 	
 	double simFactor = 1.0;
-	bool doPlots = false;
+	bool doPlots = true;
 	
 	BetaDecayAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	

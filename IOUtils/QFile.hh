@@ -27,6 +27,8 @@ public:
 	std::string getDefault(const std::string& s, const std::string& d) const;
 	/// return number of elements
 	unsigned int size() const { return dat.size(); }
+	/// return count of entries with key
+	unsigned int count(const std::string& s) const { return dat.count(s); }
 	/// serialize to a string
 	std::string toString() const;
 	

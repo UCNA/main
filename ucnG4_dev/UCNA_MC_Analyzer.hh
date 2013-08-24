@@ -15,7 +15,7 @@ public:
 	Double_t Edep[2];			//< scintillator deposited energy
 	Double_t EdepQ[2];			//< quenched energy in scintillator
 	Double_t MWPCPos[2][3];		//< MWPC deposited energy weighted position
-	Double_t ScintPos[2][3];		//< scintillator quenched energy weighted position	
+	Double_t ScintPos[2][3];		//< scintillator deposited energy weighted position	
 	Double_t MWPCPosSigma[2][3];	//< MWPC deposited energy weighted position variance
 	Double_t ScintPosSigma[2][3];	//< scintillator quenched energy weighted position variance
 	

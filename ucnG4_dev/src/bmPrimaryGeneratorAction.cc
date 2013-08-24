@@ -119,21 +119,6 @@ double genericBetaSpectrum(double* x, double *par) {
 	return plainPhaseSpace((KE+m_e)/m_e,(Q+m_e)/m_e);
 }
 
-double heavyBetaSpectrum(double* x, double* par) {
-	double KE = x[0];	// beta kinetic energy
-	double Q = par[0];	// spectrum endpoint
-	double A = par[1];	// nucleus A
-	double Z = par[2];	// nucleus Z
-	double W = (KE+m_e)/m_e;
-	double W0 = (Q+m_e)/m_e;
-	double R = pow(A,1./3.)*neutron_R0;
-	
-	// TODO: recoil/weak magnetism terms???
-	if(0<KE && KE<Q)
-		return plainPhaseSpace(W,W0)*WilkinsonF0(Z,W,R)*WilkinsonL0(Z,W,R)*(1.+Wilkinson_g(W,W0));
-	return 0;
-}
-
 void bmPrimaryGeneratorAction::
 throwEvents(const std::vector<NucDecayEvent>& evts, G4Event* anEvent) {
 	G4ThreeVector direction;

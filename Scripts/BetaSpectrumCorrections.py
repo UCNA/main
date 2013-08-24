@@ -29,11 +29,11 @@ def plotWilkinsonCorrs(fin,outpath):
 	# individual spectrum shape corrections
 	##############
 	
-	gWC=graph.graphxy(width=24,height=12,
-			x=graph.axis.lin(title="Energy [keV]",min=0,max=ep*1.25),
+	gWC=graph.graphxy(width=18,height=12,
+			x=graph.axis.lin(title="Energy [keV]",min=0,max=ep), #max=ep*1.25),
 			#y=graph.axis.log(title="Spectrum Correction",min=5e-6,max=0.5),
 			y=graph.axis.log(title="Spectrum Correction",min=5e-6),
-			key = graph.key.key(pos="mr"))
+			key = graph.key.key(pos="tc",columns=4))
 	setTexrunner(gWC)
 
 	gdat = [ [	c.energy,			# 0
@@ -51,24 +51,35 @@ def plotWilkinsonCorrs(fin,outpath):
 				-c.Cm1,			# 12
 				c.Rm1			# 13
 			] for c in corrs]
-				
-	gWC.plot(graph.data.points(gdat,x=1,y=2,title="$F_0-1$"),[graph.style.line([style.linewidth.Thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=10,title="$g$"),[graph.style.line([rgb.green,style.linestyle.dashdotted,style.linewidth.THick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=6,title="$R^A-1$"),[graph.style.line([rgb.red,style.linestyle.dotted,style.linewidth.THick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=5,title="$R^V-1$"),[graph.style.line([rgb.red,style.linestyle.dashed,style.linewidth.THick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=14,title="$R-1$"),[graph.style.line([rgb.red,style.linestyle.dashdotted,style.linewidth.thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=7,title="$|R+{\\rm WM}|$"),[graph.style.line([rgb.red,style.linewidth.THick])])
+			
+	gWC.plot(graph.data.points([(c.energy,c.F0m1) for c in corrs],x=1,y=2,title="$F_0-1$"),[graph.style.line([style.linewidth.THICk])])
+	gWC.plot(graph.data.points([(c.energy,abs(c.g)) for c in corrs],x=1,y=2,title="$|g \\alpha/2\\pi|$"),[graph.style.line([style.linestyle.dashed,style.linewidth.THick])])
+	gWC.plot(graph.data.points([(c.energy,abs(c.BiRWM)) for c in corrs],x=1,y=2,title="$|R+{\\rm WM}|$"),[graph.style.line([style.linestyle.dotted,style.linewidth.THIck])])
+	#gWC.plot(graph.data.points([(c.energy,-c.ACm1) for c in corrs],x=1,y=2,title="$1-{^AC}$"),[graph.style.line([style.linewidth.thick])])
+	#gWC.plot(graph.data.points([(c.energy,-c.VCm1) for c in corrs],x=1,y=2,title="$1-{^VC}$"),[graph.style.line([style.linestyle.dashdotted,style.linewidth.thick])])
+	gWC.plot(graph.data.points([(c.energy,-c.Cm1) for c in corrs],x=1,y=2,title="$1-C$"),[graph.style.line([style.linestyle.dashdotted,style.linewidth.thick])])
+	gWC.plot(graph.data.points([(c.energy,-c.L0m1) for c in corrs],x=1,y=2,title="$1-L_0$"),[graph.style.line([style.linestyle.dashed,style.linewidth.thick])])
+	gWC.plot(graph.data.points([(c.energy,-c.Qm1) for c in corrs],x=1,y=2,title="$1-Q$"),[graph.style.line([style.linestyle.dotted,style.linewidth.thick])])
 	
-	gWC.plot(graph.data.points(gdat,x=1,y=11,title="$J(Z)-1$"),[graph.style.line([rgb(0.7,0.,0.7),style.linestyle.dashdotted,style.linewidth.thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=12,title="$O[ K(\\alpha) ]$"),[graph.style.line([rgb(0.7,0.,0.7),style.linestyle.dotted,style.linewidth.thick])])
+
 	
-	gWC.plot(graph.data.points(gdat,x=1,y=3,title="$1-Q$"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=8,title="$1-{^VC}$"),[graph.style.line([rgb.blue,style.linestyle.dashed,style.linewidth.Thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=9,title="$1-{^AC}$"),[graph.style.line([rgb.blue,style.linestyle.dotted,style.linewidth.Thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=13,title="$1-C$"),[graph.style.line([rgb.blue,style.linestyle.dashdotted,style.linewidth.thick])])
-	gWC.plot(graph.data.points(gdat,x=1,y=4,title="$L_0-1$"),[graph.style.line([style.linestyle.dashed,style.linewidth.Thick])])
+	#gWC.plot(graph.data.points(gdat,x=1,y=10,title="$g$"),[graph.style.line([rgb.green,style.linestyle.dashdotted,style.linewidth.THick])])
+	#gWC.plot(graph.data.points(gdat,x=1,y=6,title="$R^A-1$"),[graph.style.line([rgb.red,style.linestyle.dotted,style.linewidth.THick])])
+	#gWC.plot(graph.data.points(gdat,x=1,y=5,title="$R^V-1$"),[graph.style.line([rgb.red,style.linestyle.dashed,style.linewidth.THick])])
+	#gWC.plot(graph.data.points(gdat,x=1,y=14,title="$R-1$"),[graph.style.line([rgb.red,style.linestyle.dashdotted,style.linewidth.thick])])
+	#gWC.plot(graph.data.points(gdat,x=1,y=7,title="$|R+{\\rm WM}|$"),[graph.style.line([rgb.red,style.linewidth.THick])])
+	
+	#gWC.plot(graph.data.points(gdat,x=1,y=11,title="$J(Z)-1$"),[graph.style.line([rgb(0.7,0.,0.7),style.linestyle.dashdotted,style.linewidth.thick])])
+	#gWC.plot(graph.data.points(gdat,x=1,y=12,title="$O[ K(\\alpha) ]$"),[graph.style.line([rgb(0.7,0.,0.7),style.linestyle.dotted,style.linewidth.thick])])
+	
+	#gWC.plot(graph.data.points(gdat,x=1,y=4,title="$1-Q$"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
+	#gWC.plot(graph.data.points(gdat,x=1,y=8,title="$1-{^VC}$"),[graph.style.line([rgb.blue,style.linestyle.dashed,style.linewidth.Thick])])
+	#gWC.plot(graph.data.points(gdat,x=1,y=9,title="$1-{^AC}$"),[graph.style.line([rgb.blue,style.linestyle.dotted,style.linewidth.Thick])])
+	#gWC.plot(graph.data.points(gdat,x=1,y=13,title="$1-C$"),[graph.style.line([rgb.blue,style.linestyle.dashdotted,style.linewidth.thick])])
+	#gWC.plot(graph.data.points(gdat,x=1,y=3,title="$L_0-1$"),[graph.style.line([style.linestyle.dashed,style.linewidth.Thick])])
 	
 	gWC.writetofile(outpath+"/WilkinsonCorrs_%i_%i_%f.pdf"%(A,Z,ep))
+	return
 	
 	###############
 	# spectrum shapes
@@ -184,11 +195,63 @@ def plot_hg_radiative(fin,outpath):
 	ghg.writetofile(outpath+"/Radiative_h-g.pdf")
 
 
+
+def thesisCorrsPlot(fin,outpath):
+	
+	Q = QFile(fin)
+	A = Q.getItemF("decayInfo","A")
+	Z = Q.getItemF("decayInfo","Z")
+	ep = Q.getItemF("decayInfo","endpt")
+	corrs = [spectrumCorrs(m) for m in Q.dat["spectrumPoint"]]
+		
+	##############
+	# Fine spectrum shape corrections
+	##############
+	
+	gWC=graph.graphxy(width=16,height=8,
+			x=graph.axis.lin(title="Energy [keV]",min=0,max=ep),
+			y=graph.axis.lin(title="Spectrum Correction"),
+			key = graph.key.key(pos="bc",columns=3))
+	setTexrunner(gWC)
+				
+	gWC.plot(graph.data.points([(c.energy,c.g) for c in corrs],x=1,y=2,title="$g \\alpha/2\\pi$"),[graph.style.line([style.linestyle.dashdotted,style.linewidth.THick])])
+
+	gWC.plot(graph.data.points([(c.energy,c.ACm1+c.L0m1) for c in corrs],x=1,y=2,title="${^AC}L_0-1$"),[graph.style.line([style.linewidth.Thick])])
+	gWC.plot(graph.data.points([(c.energy,c.VCm1+c.L0m1) for c in corrs],x=1,y=2,title="${^VC} L_0-1$"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
+	
+	gWC.writetofile(outpath+"/ThesisSpecCorr_%i_%i_%f.pdf"%(A,Z,ep))
+
+	###############
+	# spectrum shapes
+	###############
+	
+	gSpec=graph.graphxy(width=10,height=8,
+						x=graph.axis.lin(title="Energy [keV]",min=0,max=ep),
+						y=graph.axis.lin(title="Decay Rate",min=0,max=1.1),
+						key = graph.key.key(pos="bc"))
+	setTexrunner(gSpec)
+
+	gdat = [[c.energy,c.S0,c.S0*(1+c.F0m1)*(1+c.L0m1)*(1+c.VCm1)*(1+c.g)] for c in corrs]
+	gdat.sort()
+	print "Uncorrected beta energy:",sum([g[0]*g[1] for g in gdat])/sum([g[1] for g in gdat])
+	print "Average beta energy:",sum([g[0]*g[2] for g in gdat])/sum([g[2] for g in gdat])
+	vnorm = 1./max([g[1] for g in gdat])
+	snorm = sum([g[1] for g in gdat])/sum([g[2] for g in gdat])*vnorm
+	gdat = [ (g[0],g[1]*vnorm,g[2]*snorm) for g in gdat]
+	
+	gSpec.plot(graph.data.points(gdat,x=1,y=2,title="plain phase space"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
+	gSpec.plot(graph.data.points(gdat,x=1,y=3,title="corrected"),[graph.style.line([style.linewidth.Thick])])
+	gSpec.writetofile(outpath+"/Thesis_Spectrum_%i_%i_%f.pdf"%(A,Z,ep))
+
+
 if __name__ == "__main__":						  
-	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
-	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
+					   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
 	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_137_55_513.97.txt",
 	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
 
-	plot_hg_radiative(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
-			   				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+	#plot_hg_radiative(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
+	#		   				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+
+	#thesisCorrsPlot(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_135_55_915.txt",
+	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")

@@ -188,6 +188,7 @@ void makeCorrectionsFile(int A, int Z, double Endpt, double M2_F, double M2_GT) 
 	BetaSpectrumGenerator BSG(A,Z,Endpt);
 	BSG.M2_F = M2_F;
 	BSG.M2_GT = M2_GT;
+	if(A==1 && Z==1) { BSG.M2_F = 1; BSG.M2_GT = 3; } // neutron case
 		
 	QFile Q;
 	Stringmap sm;
@@ -217,10 +218,10 @@ void makeCorrectionsFile(int A, int Z, double Endpt, double M2_F, double M2_GT) 
 		m.insert("ACm1",WilkinsonAC(Z,W,BSG.W0,BSG.R)-1.0);
 		m.insert("Cm1",CombinedC(Z,W,M2_F,M2_GT,BSG.W0,BSG.R)-1.0);
 		m.insert("Qm1",WilkinsonQ(Z,W,BSG.W0,BSG.M0)-1.0);
-		m.insert("g",Wilkinson_g(W,BSG.W0));
-		m.insert("gS",Sirlin_g(e,Endpt));
-		m.insert("hmg",shann_h_minus_g(W,BSG.W0));
-		m.insert("h",shann_h(e,Endpt));
+		m.insert("g",Wilkinson_g_a2pi(W,BSG.W0,BSG.M0));
+		m.insert("gS",Sirlin_g_a2pi(e,Endpt));
+		m.insert("hmg",shann_h_minus_g_a2pi(W,BSG.W0));
+		m.insert("h",shann_h_a2pi(e,Endpt));
 		m.insert("RWM",WilkinsonACorrection(W));
 		m.insert("S0",plainPhaseSpace(W,BSG.W0));
 		m.insert("S",BSG.decayProb(e));
@@ -326,15 +327,20 @@ void PosPlotter::npeGradPlot(PMTCalibrator* PCal) {
 	}
 }
 
-void PosPlotter::etaPlot(PositioningCorrector* P, double axisRange) {
+void PosPlotter::etaPlot(PositioningCorrector* P, double z0, double z1) {
 	
 	SectorCutter& Sects = P->getSectors(EAST,0);
 	r0 = Sects.r;
 	
 	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<P->getNMaps(s); t++) {
-			TH2F* interpogrid = makeHisto(sideSubst("%c ",s)+itos(t+1), sideSubst("%s PMT ",s)+itos(t+1)+" Light Transport");
-			interpogrid->SetAxisRange(0,axisRange,"Z");
+			std::string hTitle = sideSubst("%s PMT ",s)+itos(t+1)+" Light Transport";
+			if(P->getNMaps(s) == 1) {
+				P->setNormAvg();
+				hTitle = sideSubst("%s MWPC Charge Scaling", s);
+			}
+			TH2F* interpogrid = makeHisto(sideSubst("%c ",s)+itos(t+1), hTitle);
+			interpogrid->SetAxisRange(z0,z1,"Z");
 			
 			startScan(interpogrid);
 			while(nextPoint())

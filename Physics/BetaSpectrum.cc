@@ -154,17 +154,18 @@ double Bilenkii59_RWM(double W) {
 
 double WilkinsonL0(double Z, double W, double R) {
 	// set up coeffs
-	std::vector<coeff1> ai[6];
-	std::vector<coeff1> aminus1;
-	std::map<double,std::vector<coeff1> > aiZ;
-	std::map<double,double> aminus1Z;
+	static std::vector<coeff1> ai[6];
+	static std::vector<coeff1> aminus1;
+	static std::map<double,std::vector<coeff1> > aiZ;
+	static std::map<double,double> aminus1Z;
+	
 	if(!ai[0].size()) {
 		aminus1.push_back(coeff1(1,0.115));
-		aminus1.push_back(coeff1(1,-1.8123));
-		aminus1.push_back(coeff1(1,8.2498));
-		aminus1.push_back(coeff1(1,-11.223));
-		aminus1.push_back(coeff1(1,-14.854));
-		aminus1.push_back(coeff1(1,32.086));
+		aminus1.push_back(coeff1(2,-1.8123));
+		aminus1.push_back(coeff1(3,8.2498));
+		aminus1.push_back(coeff1(4,-11.223));
+		aminus1.push_back(coeff1(5,-14.854));
+		aminus1.push_back(coeff1(6,32.086));
 		
 		ai[0].push_back(coeff1(1,-0.00062));
 		ai[1].push_back(coeff1(1,0.02482));
@@ -208,6 +209,7 @@ double WilkinsonL0(double Z, double W, double R) {
 		ai[4].push_back(coeff1(6,-305.6804));
 		ai[5].push_back(coeff1(6,1095.358));
 	}
+	
 	if(!aiZ.count(Z)) {
 		std::vector<coeff1> aiZi;
 		for(unsigned int i=0; i<6; i++)
@@ -220,12 +222,12 @@ double WilkinsonL0(double Z, double W, double R) {
 		return 0;
 	
 	double gm = WilkinsonGamma(Z);
-	double L0 = (1.+13.*(alpha*Z)*(alpha*Z)/60.+W*R*alpha*Z*(41.-26.*gm)/(15.*(2.*gm-1.))
+	double L0 = (1.+13.*(alpha*Z)*(alpha*Z)/60.-W*R*alpha*Z*(41.-26.*gm)/(15.*(2.*gm-1.))
 				 -alpha*Z*R*gm*(17.-2.*gm)/(30.*W*(2.*gm-1.))
 				 +aminus1Z[Z]*R/W+sumCoeffs(aiZ[Z],W*R)
 				 +0.41*(R-0.0164)*pow(alpha*Z,4.5) );
 	
-	return L0==L0?L0:0;
+	return L0==L0?L0*2./(1.+gm):0;
 }
 
 double WilkinsonVC(double Z, double W, double W0, double R) {
@@ -264,7 +266,7 @@ double SpenceL(double x, unsigned int N=20) {
 	return -s;
 }
 
-double Sirlin_g(double KE,double KE0,double m) {
+double Sirlin_g_a2pi(double KE,double KE0,double m) {
 	if(KE<=0 || KE>=KE0)
 		return 0;
 	double b = beta(KE,m);
@@ -278,7 +280,7 @@ double Sirlin_g(double KE,double KE0,double m) {
 			)*alpha/(2.*M_PI);
 }
 
-double shann_h(double KE, double KE0, double m) {
+double shann_h_a2pi(double KE, double KE0, double m) {
 	if(KE<=0 || KE>=KE0)
 		return 0;
 	double b = beta(KE,m);
@@ -291,12 +293,12 @@ double shann_h(double KE, double KE0, double m) {
 			)*alpha/(2.*M_PI);
 }
 
-double Wilkinson_g(double W,double W0) {
+double Wilkinson_g_a2pi(double W, double W0, double M) {
 	if(W>=W0 || W<=1)
 		return 0;
 	double b = sqrt(W*W-1)/W;
 	double athb = atanh(b);
-	double g = (3.*log(m_p/m_e)-3./4.
+	double g = (3.*log(M)-3./4.
 				+4.*(athb/b-1.)*((W0-W)/(3.*W)-3./2.+log(2))
 				+4./b*SpenceL(2.*b/(1.+b))
 				+athb/b*(2.*(1.+b*b)+(W0-W)*(W0-W)/(6.*W*W)-4.*athb)
@@ -307,11 +309,12 @@ double Wilkinson_g(double W,double W0) {
 
 double neutronSpectrumCorrectionFactor(double KE) {
 	double W = (KE+m_e)/m_e;
-	double c = WilkinsonF0(1,W,neutron_R0);	// Fermi function Coulomb
-	c *= WilkinsonL0(1,W,neutron_R0);		// Nonzero charge radius
-	c *= WilkinsonQ(1,W,beta_W0,proton_M0);	// Coulomb effect on recoil
-	c *= (1.+Wilkinson_g(W,beta_W0));		// outer radiative corrections
-	c *= (1.+Bilenkii59_RWM(W));			// recoil + WM for free neutron
+	double c = WilkinsonF0(1,W,neutron_R0);				// Fermi function Coulomb
+	c *= WilkinsonL0(1,W,neutron_R0);					// Nonzero charge radius
+	c *= CombinedC(1,W,1.,3.,beta_W0,neutron_R0);		// electron/nucleon nonzero size wavefunction convolution
+	c *= WilkinsonQ(1,W,beta_W0,proton_M0);				// Coulomb effect on recoil
+	c *= (1.+Wilkinson_g_a2pi(W,beta_W0));				// outer radiative corrections
+	c *= (1.+Bilenkii59_RWM(W));						// recoil + WM for free neutron
 	return c;
 }
 
@@ -371,15 +374,15 @@ W0((EP+m_e)/m_e), R(pow(A,1./3.)*neutron_R0), M0(fabs(Z)*proton_M0+(A-fabs(Z))*n
 forbidden(0), M2_F(0), M2_GT(1) { }
 
 double BetaSpectrumGenerator::spectrumCorrectionFactor(double W) const {
-	double c = WilkinsonF0(Z,W,R);	// Fermi function Coulomb
-	c *= WilkinsonL0(Z,W,R);			// Nonzero charge radius
-	c *= WilkinsonQ(Z,W,W0,M0);		// Coulomb effect on recoil
-	c *= (1.+Wilkinson_g(W,W0));		// outer radiative corrections
+	double c = WilkinsonF0(Z,W,R);			// Fermi function Coulomb
+	c *= WilkinsonL0(Z,W,R);				// Nonzero charge radius effect on Coulomb correction
+	c *= CombinedC(Z,W,M2_F,M2_GT,W0,R);	// electron/nucleon nonzero size wavefunction convolution
+	c *= WilkinsonQ(Z,W,W0,M0);				// Recoil effect on Coulomb correction (tiny tiny!)
+	c *= (1.+Wilkinson_g_a2pi(W,W0,M0));	// outer radiative corrections
 	if(A==1 && Z==1) {
-		c *= (1.+Bilenkii59_RWM(W));	// recoil + WM for free neutron
+		c *= (1.+Bilenkii59_RWM(W));		// recoil + WM for free neutron
 	} else {
-		c *= CombinedC(Z,W,M2_F,M2_GT,W0,R);	// electron/nucleon wavefunction convolution
-		c *= CombinedR(W,M2_F,M2_GT,W0,M0);	// recoil
+		c *= CombinedR(W,M2_F,M2_GT,W0,M0);	// recoil effect on phase space
 	}
 	// first forbidden Axial-Vector decays
 	if(forbidden==1 && M2_GT>0 && M2_F==0)
@@ -387,7 +390,6 @@ double BetaSpectrumGenerator::spectrumCorrectionFactor(double W) const {
 	// Cs137 second-forbidden decay
 	if(forbidden==2 && A==137)
 		c *= Behrens_Cs137_C(W, W0);
-		//c *= Langer_Cs137_C2T(W, W0);
 	
 	return c;
 }
@@ -400,7 +402,7 @@ double BetaSpectrumGenerator::decayProb(double KE) const {
 //-----------------------------------------------------//
 
 
-double shann_h_minus_g(double W, double W0) {
+double shann_h_minus_g_a2pi(double W, double W0) {
 	if(W>=W0 || W<=1)
 		return 0;
 	double b = sqrt(W*W-1)/W;

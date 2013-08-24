@@ -203,6 +203,8 @@ betaTF1((f.name+"-"+t.name+"_Beta").c_str(),this,&BetaDecayTrans::evalBeta,0,1,0
 	BSG.forbidden = forbidden;
 	betaTF1.SetNpx(1000);
 	betaTF1.SetRange(0,from.E-to.E);
+	if(from.jpi==to.jpi) { BSG.M2_F = 1; BSG.M2_GT = 0; }
+	else { BSG.M2_GT = 1; BSG.M2_F = 0; } // TODO not strictly true; need more general mechanism to fix
 }
 
 void BetaDecayTrans::run(std::vector<NucDecayEvent>& v) {
@@ -280,6 +282,10 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 										it->getDefault("positron",0),
 										it->getDefault("forbidden",0));
 		BD->Itotal = it->getDefault("I",0)/100.0;
+		if(it->count("M2_F") || it->count("M2_GT")) {
+			BD->BSG.M2_F = it->getDefault("M2_F",0);
+			BD->BSG.M2_GT = it->getDefault("M2_GT",0);
+		}
 		addTransition(BD);
 	}
 	

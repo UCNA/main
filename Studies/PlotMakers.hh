@@ -22,7 +22,7 @@ public:
 	/// plot normalized gradient of nPE
 	void npeGradPlot(PMTCalibrator* PCal);
 	/// plot light transport
-	void etaPlot(PositioningCorrector* P, double axisRange = 2.0);
+	void etaPlot(PositioningCorrector* P, double z0 = 0.0, double z1 = 2.0);
 	
 	float rscale; 		//< extra radius to plot beyond edge of measured area
 	unsigned int nbin;	//< number of position bins

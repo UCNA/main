@@ -180,11 +180,11 @@ public:
 	virtual void display(bool verbose = false) const { printf("Beta(%.1f) ",from.E-to.E); TransitionBase::display(verbose); }
 	
 	bool positron;		//< whether this is positron decay
-	
+	BetaSpectrumGenerator BSG;	//< spectrum shape generator
+
 protected:
 	/// evaluate beta spectrum probability
 	double evalBeta(double* x, double*);
-	BetaSpectrumGenerator BSG;	//< spectrum shape generator
 	TF1 betaTF1;				//< TF1 for beta spectrum shape
 };
 
