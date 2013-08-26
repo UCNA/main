@@ -7,7 +7,7 @@
 class bmWireVolumeConstruction: public MaterialUser {
 public:
 	/// constructor
-	bmWireVolumeConstruction(): anode_R(5*um), cathode_R(25*um), plating_thick(0.2*um), spacing(2.54*mm), NbOfWires(64), planeSpacing(1*cm) { }
+	bmWireVolumeConstruction(): anode_R(5*um), cathode_R(38*um), plating_thick(0.2*um), spacing(2.54*mm), NbOfWires(64), planeSpacing(1*cm) { }
 	
 	/// get width
 	G4double GetWidth() const { return 2*cm; }
