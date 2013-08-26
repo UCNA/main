@@ -30,5 +30,4 @@ def comp_md5(f1,f2):
 	print "\nMatching: %i"%nmatch
 
 if __name__ == "__main__":
-	#comp_md5("/home/mmendenhall/midfiles_2011_LANL_md5.txt","/home/mmendenhall/midfiles_2011_md5.txt")
-	comp_md5("/home/mmendenhall/midfiles_2011_LANL_md5.txt","/home/ucna/md5check_sum_ncsu_raw.txt")
+	comp_md5(os.environ["HOME"]+"/midfiles_2011_LANL_md5.txt",os.environ["HOME"]+"/md5check_sum_ncsu_raw.txt")
