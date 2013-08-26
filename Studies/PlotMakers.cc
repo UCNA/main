@@ -460,7 +460,7 @@ void decomposeXenon(RunNum rn, bool includeFast) {
 	std::vector<TH1F*> hIsot;
 	LinHistCombo LHC;
 	for(unsigned int i=0; i<isots.size(); i++) {
-		std::string g4dat = "/data2/mmendenhall/G4Out/2010/20120917_";
+		std::string g4dat = getEnvSafe("UCNA_SIM_PLOTS") + "/20120917_";
 		G4SegmentMultiplier g2p(SC);
 		g2p.addFile(g4dat + isots[i] + "/analyzed_*.root");
 		assert(g2p.getnFiles());
