@@ -3,7 +3,7 @@ The purpose of this file is to assist in downloading, compiling, and using the g
 Thanks to Michael Mendenhall for all your help in getting this up and running. I hope this helps others who are interested. Also feel free to make comments/suggestions for things I may have missed and also problems others run into. The more detailed this document becomes the better.
 
 Michael Brown
-August 2013
+August 2013 
 
 /////////////////////////////////
 ///////// Downloading ///////////
