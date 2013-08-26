@@ -40,10 +40,12 @@ public:
 	static G4Material* Brass;			//< brass for source holder
 	static G4Material* SS304;			//< 304 Stainless Steel
 	static G4Material* Kevlar;			//< kevlar for wirechamber window support strings
-	static G4Material* Mylar;			//< mylar for windows
+	static G4Material* Mylar;			//< material for windows (pre-2012/2013)
 	static G4Material* Polyethylene;	//< poly for collimator
-	static G4Material* WCPentane;		//< Wirechamber fill: (neo)pentane @ 100torr
-	static G4Material* WCNitrogen;		//< Wirechamber fill: Nitrogen @ 100torr
+	static G4Material* SixFSixF;            //< material for thin film windows in 2012/2013
+        static G4Material* WCPentane;		//< Wirechamber fill: (neo)pentane @ 100torr
+	static G4Material* WCButane;            //< Wirechamber fill: (iso)butane @ 100torr
+        static G4Material* WCNitrogen;		//< Wirechamber fill: Nitrogen @ 100torr
 	static G4Material* Sci;				//< scintillator material
 };
 
