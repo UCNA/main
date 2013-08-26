@@ -13,7 +13,9 @@ G4Material* MaterialUser::SS304 = NULL;
 G4Material* MaterialUser::Kevlar = NULL;
 G4Material* MaterialUser::Mylar = NULL;
 G4Material* MaterialUser::Polyethylene = NULL;
+G4Material* MaterialUser::SixFSixF = NULL;
 G4Material* MaterialUser::WCPentane = NULL;
+G4Material* MaterialUser::WCButane = NULL;
 G4Material* MaterialUser::WCNitrogen = NULL;
 G4Material* MaterialUser::Sci = NULL;
 
@@ -33,6 +35,7 @@ MaterialUser::MaterialUser() {
 	new G4Element(name="C",		symbol="C", z=6,  a=12.0107*g/mole);
 	new G4Element(name="N",		symbol="N", z=7,  a=14.0067*g/mole);
 	new G4Element(name="O",		symbol="O", z=8,  a=15.9994*g/mole);
+        new G4Element(name="F",         symbol="F", z=9,  a=18.9984*g/mole);
 	new G4Element(name="Al",	symbol="Al",z=13, a=26.9815*g/mole);
 	new G4Element(name="Cr",	symbol="Cr",z=24, a=51.9961*g/mole);
 	new G4Element(name="Fe",	symbol="Fe",z=26, a=55.845*g/mole);
@@ -70,13 +73,24 @@ MaterialUser::MaterialUser() {
 	Polyethylene = new G4Material("Polyethylene",0.95*g/cm3,2);
 	Polyethylene->AddElement(G4Element::GetElement("C"),nAtoms=2);
 	Polyethylene->AddElement(G4Element::GetElement("H"),nAtoms=4);
+
+	SixFSixF = new G4Material("6F6F",1.48*g/cm3,5);
+        SixFSixF->AddElement(G4Element::GetElement("N"),nAtoms=2);
+        SixFSixF->AddElement(G4Element::GetElement("C"),nAtoms=36);
+        SixFSixF->AddElement(G4Element::GetElement("H"),nAtoms=20);
+        SixFSixF->AddElement(G4Element::GetElement("O"),nAtoms=4);
+        SixFSixF->AddElement(G4Element::GetElement("F"),nAtoms=12); 	
 	
-	//Wirechamber fill: pentane @ 100torr
+	//Wirechamber fill: neopentane @ 100torr
 	double P_MWPC = 100*torr;
 	double T_MWPC = 298*kelvin;
-	WCPentane = new G4Material("Pentane",(72.17*mg)/(22.4*cm3)*P_MWPC/(760*torr)*(273.15*kelvin)/T_MWPC,2,kStateGas,T_MWPC,P_MWPC);
+	WCPentane = new G4Material("Pentane",(72.15*mg)/(22.4*cm3)*P_MWPC/(760*torr)*(273.15*kelvin)/T_MWPC,2,kStateGas,T_MWPC,P_MWPC);
 	WCPentane->AddElement(G4Element::GetElement("C"),nAtoms=5);
 	WCPentane->AddElement(G4Element::GetElement("H"),nAtoms=12);
+        //Wirechamber temporary fill: isobutane @ 100 torr (11/8/2012 - 11/29/2012)
+        WCButane = new G4Material("Butane",(58.12*mg)/(22.4*cm3)*P_MWPC/(760*torr)*(273.15*kelvin)/T_MWPC,2,kStateGas,T_MWPC,P_MWPC);
+        WCButane->AddElement(G4Element::GetElement("C"),nAtoms=4);
+        WCButane->AddElement(G4Element::GetElement("H"),nAtoms=10);
 	//Wirechamber fill: N2 @ 95torr
 	double P_N2 = P_MWPC - 5*torr;
 	WCNitrogen = new G4Material("MWPC_N2",(28*mg)/(22.4*cm3)*P_N2/(760*torr)*(273.15*kelvin)/T_MWPC,1,kStateGas,T_MWPC,P_N2);
