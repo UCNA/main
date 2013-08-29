@@ -229,13 +229,15 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 	// geometry-dependent settings
 	///////////////////////////////////////
 	G4cout<<"Using geometry '"<<sGeometry<<"' ..."<<G4endl;
-	if(sGeometry=="A"){
+	trap.fCoatingThick[EAST]=trap.fCoatingThick[WEST]=0.150*um;
+        trap.fWindowThick[EAST]=trap.fWindowThick[WEST]=0.50*um;
+        if(sGeometry=="A"){
 		// thick MWPC windows
 		dets[EAST].mwpc.fWindowThick=dets[WEST].mwpc.fWindowThick=25*um;
 	} else if(sGeometry=="B") {
 		// thick MWPC, decay trap windows
 		dets[EAST].mwpc.fWindowThick=dets[WEST].mwpc.fWindowThick=25*um;
-		trap.fWindowThick=(0.7+12.5)*um;
+		trap.fWindowThick[EAST]=trap.fWindowThick[WEST]=(0.7+12.5)*um;
 	} else if(sGeometry=="C") {
 		// "default" thin-windows configuration
 	} else if(sGeometry=="D") {
@@ -245,17 +247,13 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 	} else if(sGeometry=="2007") {
 		// thick windows
 		dets[EAST].mwpc.fWindowThick=dets[WEST].mwpc.fWindowThick=25*um;
-		trap.fWindowThick=2.5*um;
+		trap.fWindowThick[EAST]=trap.fWindowThick[WEST]=2.5*um;
 	} else if(sGeometry=="siDet") {
 	
-        } else if(sGeometry=="2011") {
-                trap.fWindowThick=0.5*um;
-                trap.fCoatingThick=0.15*um;
-
 	} else if(sGeometry=="thinFoil") {
-		trap.fWindowThick=0.180*um;
-		trap.fCoatingThick=0.150*um;
-                trap.fWindowMat=SixFSixF;
+		trap.fWindowThick[EAST]=0.130*um;
+                trap.fWindowThick[WEST]=0.180*um;
+		trap.fWindowMat=SixFSixF;
 	} else {
 		SMExcept e("UnknownGeometry");
 		e.insert("name",sGeometry);
