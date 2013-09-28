@@ -23,14 +23,14 @@ public:
 	virtual TGraph* getLinearity(RunNum rn, Side s, unsigned int t) { return constGraph(0.0,1.0); }
 	
 	/// get noise estimate calibration point ADC width
-	virtual float getNoiseWidth(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst("PMT_"+sideNames(s)+itos(t)).getDefault("noiseWidth",50); }
+	virtual float getNoiseWidth(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("noiseWidth",50); }
 	/// get noise estimate calibration point raw ADC value
-	virtual float getNoiseADC(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst("PMT_"+sideNames(s)+itos(t)).getDefault("noiseADC",400); }
+	virtual float getNoiseADC(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("noiseADC",400); }
 	
 	/// get energy calibration point ADC value
-	virtual float getEcalADC(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst("PMT_"+sideNames(s)+itos(t)).getDefault("ecalADC",500); }
+	virtual float getEcalADC(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("ecalADC",500); }
 	/// get energy calibration point visible energy
-	virtual float getEcalEvis(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst("PMT_"+sideNames(s)+itos(t)).getDefault("ecalEvis",500); }
+	virtual float getEcalEvis(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("ecalEvis",500); }
 	/// get energy calibration point x position
 	virtual float getEcalX(RunNum rn, Side s)  { return calfile.getFirst(sideSubst("PMT_%c",s)+"1").getDefault("ecalX",0); }
 	/// get energy calibration point y position

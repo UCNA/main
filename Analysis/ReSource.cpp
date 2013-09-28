@@ -318,7 +318,7 @@ void reSource(RunNum rn) {
 			m.insert("gms0_"+itos(t),PCal.getGMS0(s,t));
 			m.insert("gmsRel_"+itos(t),PCal.gmsFactor(s,t,0)/PCal.getGMS0(s,t));
 		}
-		TM.qOut.insert("BetaSc"+sideNames(s),m);
+		TM.qOut.insert(sideSubst("BetaSc%c",s),m);
 	}
 	
 	printf("Expecting %i sources...\n",(int)sources.size());
