@@ -114,12 +114,10 @@ bool G4SegmentMultiplier::nextPoint() {
 		rcurrent = rcurrent<SC.n?rcurrent:SC.n-1;
 		nrots = SC.ndivs[rcurrent]-1;
 		calcReweight();
-		nSimmed++;
 		nCounted+=simEvtCounts();
 	} else {
 		reverseCalibrate();
 		nrots--;
-		nSimmed++;
 		nCounted+=simEvtCounts();
 	}
 	return morePts || nrots;

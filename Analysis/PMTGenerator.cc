@@ -7,13 +7,60 @@
 
 TRandom3 PMTGenerator::sim_rnd_source;
 
+
+double TriggerProb::calcProb() {
+	float p0 = tubeProbs[0];
+	float p1 = tubeProbs[1];
+	float p2 = tubeProbs[2];
+	float p3 = tubeProbs[3];
+		
+	// prob 2 of 3 p1*(1-(1-p2)*(1-p3))+(1-p1)*p2*p3; :
+	float p2of3 = p1*p2 + p2*p3 + p3*p1 -2*p1*p2*p3;
+	
+	return p0*(1-(1-p1)*(1-p2)*(1-p3)) + (1-p0)*p2of3;
+}
+
+double TriggerProbMLP::unfold(double x) {
+	if(x<1e-6) x = 1e-6;
+	if(x>0.999999) x = 0.999999;
+	return atan(tan((x-0.5)*M_PI)/5.);
+}
+
+void TriggerProbMLP::condition(Double_t* aIn) {
+	unsigned int nn=nBetaTubes;
+	for(unsigned int t1=1; t1<nBetaTubes; t1++)
+		for(unsigned int t2=0; t2<t1; t2++)
+			aIn[nn++] = unfold(aIn[t1]*aIn[t2]);
+	for(unsigned int t=4; t<nBetaTubes; t++) aIn[t] = unfold(aIn[t]);
+}
+
+double TriggerProbMLP::calcProb() {
+	double p0 = TriggerProb::calcProb();
+	if(p0<0.005 || p0 > 0.99) return  p0;
+	condition(tubeProbs);
+	return TMLP->Evaluate(0,tubeProbs)+0.5;
+}
+	
+	
+	
+	
 PMTGenerator::PMTGenerator(Side s, float xx, float yy):
-x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), dgain(16.0), pedcorr(0.2), crosstalk(0.010), xscatter(0.), trigThreshScale(1.0), mySide(s) { }
+x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), dgain(16.0), pedcorr(0.2), crosstalk(0.010), xscatter(0.), trigThreshScale(1.0),
+currentCal(NULL), TProb(new TriggerProb()), mySide(s) {
+	for(Side s = EAST; s <= WEST; ++s)
+		for(unsigned int t=0; t<nBetaTubes; t++)
+			lightBal[s][t] = 1.;
+}
 
 void PMTGenerator::setCalibrator(PMTCalibrator* P) { 
 	assert(P);
 	currentCal = P;
 	setPosition(x,y,xw-x,yw-y);
+}
+
+void PMTGenerator::setTriggerProb(TriggerProb* TP) {
+	assert(TP);
+	TProb = TP;
 }
 
 void PMTGenerator::setPosition(float xx, float yy, float dxw, float dyw) {
@@ -28,6 +75,14 @@ void PMTGenerator::setPosition(float xx, float yy, float dxw, float dyw) {
 }
 
 void PMTGenerator::setSide(Side s) { mySide = s; }
+
+void PMTGenerator::setLightbal(Side s, float l1, float l2, float l3, float l4) {
+	assert(s==EAST || s==WEST);
+	lightBal[s][0] = l1;
+	lightBal[s][1] = l2;
+	lightBal[s][2] = l3;
+	lightBal[s][3] = l4;
+}
 
 void preuncorrelate(float* v, double a, unsigned int n = nBetaTubes) {
 	float d = (1.+(n-1)*a)*(1.-a);
@@ -49,6 +104,36 @@ void recorrelate(float* v, double a, unsigned int n = nBetaTubes) {
 	for(unsigned int i=0; i<n; i++)
 		v[i]=v2[i];
 }
+
+// input array of uncorrelated normalized (mu=0, sigma=1) random variables and desired correlation
+// re-correlates variables, applies optional final scaling
+void makeCorrelated(float* v, unsigned int n, float c, float* sigma = NULL) {
+	// calculate recorrelation matrix parameters
+	float a = sqrt(1+(n-1)*(n-1)-(n-1)*(n-2)*c + 2*(n-1)*sqrt((1-c)*(1+(n-1)*c)))/n;
+	float b = ( 2*c*(n-1) + (n-2)*(sqrt((1-c)*(1+(n-1)*c))-1) ) / (n*n*a);
+	
+	// apply recorrelation matrix
+	std::vector<float> v2(n);
+	for(unsigned int i=0; i<n; i++)
+		for(unsigned int j=0; j<n; j++)
+			v2[i] += v[j]*(i==j?a:b);
+	for(unsigned int i=0; i<n; i++)
+		v[i]=v2[i]*(sigma?sigma[i]:1);
+}
+
+// makes correlation "waves" where some events are 4-way correlated, others uncorrelated
+void makeCorrelated4(float* v, unsigned int n, float c, float* sigma = NULL) {
+	std::vector<float> v2(n);
+	if(PMTGenerator::sim_rnd_source.Uniform(0,1)<c) {
+		float r = PMTGenerator::sim_rnd_source.Gaus(0.,1.);
+		for(unsigned int i=0; i<n; i++) v2[i] = r;
+	} else {
+		for(unsigned int i=0; i<n; i++) v2[i] = v[i];
+	}
+	for(unsigned int i=0; i<n; i++)
+		v[i]=v2[i]*(sigma?sigma[i]:1);
+}
+
 
 ScintEvent PMTGenerator::generate(float en) {
 	if(en<=0) {
@@ -72,34 +157,34 @@ ScintEvent PMTGenerator::generate(float en) {
 			else
 				tubeRes[t] = 1.0/(1.0/tubeRes[t]-1.0/(tubeRes[t]+0.1));
 		}
-		nPE[t] = tubeRes[t];
+		nPE[t] = tubeRes[t]*lightBal[mySide][t];
 	}
-	preuncorrelate(nPE, crosstalk);
-	for(unsigned int t=0; t<nBetaTubes; t++)
-		nPE[t] = sim_rnd_source.PoissonD(dgain*sim_rnd_source.PoissonD(nPE[t]>0?nPE[t]:0))/dgain;
-	recorrelate(nPE, crosstalk);
+	//preuncorrelate(nPE, crosstalk);
+	for(unsigned int t=0; t<nBetaTubes; t++) {
+		nPE[t] = sim_rnd_source.PoissonD(nPE[t]>0?nPE[t]:0);				//< primary photoelectrons
+		nPE[t] = sim_rnd_source.PoissonD(dgain*(nPE[t]>0?nPE[t]:0))/dgain;	//< first gain stage electron multiplication
+	}
+	//recorrelate(nPE, crosstalk);
 	for(unsigned int t=0; t<nBetaTubes; t++)
 		sevt.tuben[t] = nPE[t]/tubeRes[t]*en;
 	
 	
-	// target pedestal noise widths squared
-	float pedw[nBetaTubes];
+	// correlated pedestal noise
+	float pedw[nBetaTubes]; // pedestal widths
+	float dped[nBetaTubes]; // noise term on each pedestal
 	for(unsigned int t=0; t<nBetaTubes; t++) {
-		pedw[t] = currentCal->getPedwidth(currentCal->sensorNames[mySide][t],evtm);
-		pedw[t] *= pedw[t];
+		pedw[t] = currentCal->getPedwidth(currentCal->sensorNames[mySide][t], evtm);
+		dped[t] = sim_rnd_source.Gaus(0.,1.);
 	}
-	preuncorrelate(pedw,pedcorr);
-	for(unsigned int t=0; t<nBetaTubes; t++)
-		pedw[t] = pedw[t]<0?0:sim_rnd_source.Gaus(0.,sqrt(pedw[t]));
-	recorrelate(pedw,pedcorr);
+	makeCorrelated(dped,nBetaTubes,pedcorr,pedw);
 	
 	for(unsigned int t=0; t<nBetaTubes; t++) {
 		// adc value
-		sevt.adc[t] = currentCal->invertCorrections(mySide,t,sevt.tuben[t].x,x,y,evtm); 
+		sevt.adc[t] = currentCal->invertCorrections(mySide, t, sevt.tuben[t].x, x, y, evtm);
 		// correlated pedestal noise
-		sevt.adc[t] += pedw[t];
+		sevt.adc[t] += dped[t];
 		// quantization noise
-		float pedx = currentCal->getPedestal(currentCal->sensorNames[mySide][t],evtm);
+		float pedx = currentCal->getPedestal(currentCal->sensorNames[mySide][t], evtm);
 		sevt.adc[t] = int(sevt.adc[t]+pedx+0.5)-pedx;
 	}
 	currentCal->calibrateEnergy(mySide, xw, yw, sevt, evtm, xscatter);
@@ -107,11 +192,11 @@ ScintEvent PMTGenerator::generate(float en) {
 }
 
 unsigned int PMTGenerator::triggers() {
-	
 	nTrigs = 0;
 	unsigned int nZero = 0;
 	for(unsigned int t=0; t<nBetaTubes; t++) {
-		pmtTriggered[t] = sim_rnd_source.Uniform(0.0,1.0) < currentCal->trigEff(mySide,t,sevt.adc[t]*trigThreshScale);
+		TProb->tubeProbs[t] = currentCal->trigEff(mySide,t,sevt.adc[t]*trigThreshScale);
+		pmtTriggered[t] = sim_rnd_source.Uniform(0.0,1.0) < TProb->tubeProbs[t];
 		if(sevt.adc[t] == 0) nZero++;
 		if(pmtTriggered[t]) nTrigs++;
 	}
@@ -122,5 +207,10 @@ unsigned int PMTGenerator::triggers() {
 		nTrigs = 0;
 	}
 	return nTrigs;
+}
+
+bool PMTGenerator::triggered() {
+	triggers();
+	return sim_rnd_source.Uniform(0.0,1.0) < TProb->calcProb();
 }
 

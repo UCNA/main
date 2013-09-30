@@ -29,11 +29,15 @@ public:
 	/// event energy
 	virtual float getEnergy() const { return scints[EAST].energy.x + scints[WEST].energy.x; }
 	/// get event true (reconstructed) energy
-	virtual float getEtrue();
+	virtual float getEtrue() const;
 	/// re-calibrate tube energy of currently loaded event
 	virtual void recalibrateEnergy();
 	/// whether event passes fiducia/position cut on side
 	virtual bool passesPositionCut(Side s);
+	/// whether event was simulated as triggering the given side
+	virtual bool Sis00_2fold(Side s) { return SIS00 & (1<<s); }
+	/// get trigger probability for individual PMT
+	virtual float probTrig(Side s, unsigned int t);
 	/// get info about current event
 	virtual Stringmap evtInfo();
 	
@@ -53,7 +57,8 @@ public:
 	Side fSide;					//< analysis event side
 	Int_t EvnbGood;				//< Event number header good
 	Int_t BkhfGood;				//< Block header good
-		
+	Int_t SIS00;				//< DAQ trigger bits
+	
 	Int_t fTaggedBack[BOTH];	//< whether event was tagged by the muon backing veto on each side
 	double physicsWeight;		//< event spectrum re-weighting factor
 	

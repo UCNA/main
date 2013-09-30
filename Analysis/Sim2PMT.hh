@@ -50,6 +50,8 @@ public:
 	
 	/// this does nothing for processed data
 	virtual void recalibrateEnergy() {}
+	/// overrides ProcessedDataScanner::startScan to clear simulation counters
+	virtual void startScan(bool startRandom = false);
 	/// overrides ProcessedDataScanner::nextPoint to insert reverse-calibrations, offsets
 	virtual bool nextPoint();
 	/// whether to count this event as successfully generated
@@ -60,12 +62,14 @@ public:
 	virtual Stringmap evtInfo();
 	
 	/// get true energy
-	virtual float getEtrue();
+	virtual float getEtrue() const;
 	/// primary event radius
 	virtual float primRadius() const { return sqrt(pow(primPos[X_DIRECTION],2)+pow(primPos[Y_DIRECTION],2)); }
 	
 	/// check whether this is simulated data
 	virtual bool isSimulated() const { return true; }
+	/// whether event was simulated as triggering the given side
+	virtual bool Sis00_2fold(Side s) { return PGen[s].triggered(); }
 	
 	/// return AFP state for data (note: may need to use physicsWeight for this to be meaningful)
 	virtual AFPState getAFP() const { return afp; }
@@ -112,7 +116,8 @@ public:
 	double cosThetaOutWinIn[2];	//< exit angle cosine from inner wirechamber window
 	double cosThetaOutScint[2];	//< exit angle cosine from scintillator
 	
-	unsigned int nSimmed;		//< number of events simulated since scan start
+	unsigned int nSimmed;		//< count of number of events simulated
+	unsigned int nToSim;		//< number of events to simulate
 	double nCounted;			//< physics-weighted number of counted events
 	double mwpcThresh[2];		//< MWPC trigger 50% threshold on each side
 	double mwpcWidth[2];			//< MWPC threshold width
@@ -121,6 +126,8 @@ public:
 protected:
 	/// perform unit conversions, etc.
 	virtual void doUnits() { assert(false); }
+	/// generate event time stamp
+	virtual void updateClock();
 	/// "reverse calibration" from simulated data
 	virtual void reverseCalibrate();
 	

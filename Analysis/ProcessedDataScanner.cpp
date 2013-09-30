@@ -8,8 +8,12 @@
 #include <stdlib.h>
 
 ProcessedDataScanner::ProcessedDataScanner(const std::string& treeName, bool withCalibrators):
-RunSetScanner(treeName,withCalibrators), redoPositions(false), runClock(0), EvnbGood(true), BkhfGood(true),
-physicsWeight(1.0), anChoice(ANCHOICE_A), fiducialRadius(45.0) { }
+RunSetScanner(treeName,withCalibrators), redoPositions(false), runClock(0), EvnbGood(true), BkhfGood(true), SIS00(0),
+physicsWeight(1.0), anChoice(ANCHOICE_A), fiducialRadius(45.0) {
+	for(Side s = EAST; s<=WEST; ++s)
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
+				wires[s][d].center = 0;
+}
 
 Stringmap ProcessedDataScanner::evtInfo() {
 	Stringmap m;
@@ -26,6 +30,12 @@ Stringmap ProcessedDataScanner::evtInfo() {
 		m.insert("y",wires[fSide][Y_DIRECTION].center);
 	}
 	return m;
+}
+
+float ProcessedDataScanner::probTrig(Side s, unsigned int t) {
+	assert(ActiveCal);
+	assert(s<=WEST && t<=nBetaTubes);
+	return ActiveCal->trigEff(s, t, scints[s].adc[0]);
 }
 
 void ProcessedDataScanner::recalibrateEnergy() {
@@ -49,7 +59,7 @@ bool ProcessedDataScanner::passesPositionCut(Side s) {
 	return radius(s)<fiducialRadius;
 }
 
-float ProcessedDataScanner::getEtrue() {
+float ProcessedDataScanner::getEtrue() const {
 	assert(ActiveCal);
 	return ActiveCal->Etrue(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
 }

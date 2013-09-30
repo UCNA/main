@@ -3,6 +3,7 @@
 #include "BetaSpectrum.hh"
 #include <cassert>
 #include <cmath>
+#include <climits>
 
 TRandom3 mc_rnd_source;	
 
@@ -37,7 +38,7 @@ void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
 SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
-nSimmed(0), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER) {
+nSimmed(0), nToSim(INT_MAX), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		mwpcThresh[s] = 0;
@@ -88,24 +89,28 @@ void Sim2PMT::setCalibrator(PMTCalibrator& PCal) {
 	evtRun = ActiveCal->rn;
 }
 
+void Sim2PMT::startScan(bool startRandom) {
+	nCounted = 0;
+	ProcessedDataScanner::startScan(startRandom);
+}
+
 bool Sim2PMT::nextPoint() {
 	bool np = ProcessedDataScanner::nextPoint();
 	reverseCalibrate();
 	calcReweight();
 	nSimmed++;
 	nCounted+=simEvtCounts();
-	return np;
+	return np && currentEvent < nToSim;
 }
+
+void Sim2PMT::updateClock() { runClock = mc_rnd_source.Uniform(0.,ActiveCal->totalTime); }
 
 void Sim2PMT::reverseCalibrate() {
 	
-	doUnits();
-	
 	assert(ActiveCal);
 	evtRun = ActiveCal->rn;
-	
-	// simulated event time stamp
-	runClock = mc_rnd_source.Uniform(0.,ActiveCal->totalTime);
+	updateClock();
+	doUnits();
 	
 	// apply position offsets; set wires position
 	if(SP) SP->applyOffset(*this);
@@ -172,7 +177,7 @@ void Sim2PMT::classifyEvent() {
 	if(fProbIII>0.5) fType=TYPE_III_EVENT;
 }
 
-float Sim2PMT::getEtrue() {
+float Sim2PMT::getEtrue() const {
 	if(fSide>WEST) return 0;
 	return PGen[fSide].getCalibrator()->Etrue(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
 }
