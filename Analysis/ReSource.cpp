@@ -20,6 +20,7 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 	
 	// source-dependent ranges
 	if(mySource.t == "Bi207") {
+		eMax = 1800;
 		pkMin = 200;
 		nSigma = 1.5;
 		addCorrFit(400,475);
@@ -27,28 +28,33 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 	} else if(mySource.t == "Sn113") {
 		nBins = 150;
 		eMin = -50;
-		eMax = 1000;
+		eMax = 600;
 		addCorrFit(300,450);
 	} else if(mySource.t == "Ce139") {
 		nBins = 100;
 		eMin = -20;
-		eMax = 500;
+		eMax = 300;
 		addCorrFit(70,140);
 	} else if (mySource.t == "Cd109") {
 		nBins = 100;
 		eMin = -20;
 		eMax = 300;
 	} else if(mySource.t == "Cs137") {
-		eMax = 1500;
+		eMax = 1200;
 		pkMin = 400;
 		nSigma = 1.0;
 	}
 	
 	
 	// set up histograms
+	hErec = OM->registeredTH1F(s.name()+"_Erec",mySource.lxname()+" energy spectrum",nBins,0,eMax);
+	hErec->GetXaxis()->SetTitle("Energy [keV]");
+	hErec->GetYaxis()->SetTitle("Event Rate [Hz/keV]");
+	hErec->GetYaxis()->SetTitleOffset(1.3);
+	hErec->Sumw2();
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
 		for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_III_EVENT; tp++) {
-			hTubes[t][tp] = OM->registeredTH1F(s.name()+(t==nBetaTubes?"_Combined":"_Tube_"+itos(t))+"_type_"+itos(tp),mySource.t+" energy spectrum",
+			hTubes[t][tp] = OM->registeredTH1F(s.name()+(t==nBetaTubes?"_Combined":"_Tube_"+itos(t))+"_type_"+itos(tp),mySource.lxname()+" energy spectrum",
 											   tp==TYPE_0_EVENT?nBins:nBins/4,eMin,eMax);
 			if(tp==TYPE_0_EVENT) hTubes[t][tp]->Sumw2();
 			hTubes[t][tp]->GetXaxis()->SetTitle("Scintillator Visible Energy [keV]");
@@ -57,7 +63,7 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 		}
 		hTubesRaw[t] = NULL;
 		if(t<nBetaTubes && !simMode) {
-			hTubesRaw[t] = OM->registeredTH1F(s.name()+"_"+itos(t)+"_ADC",mySource.t+" ADC spectrum",nBins,
+			hTubesRaw[t] = OM->registeredTH1F(s.name()+"_"+itos(t)+"_ADC",mySource.lxname()+" ADC spectrum",nBins,
 											  PCal?-PCal->invertCorrections(mySource.mySide, t, -eMin, mySource.x, mySource.y, 0.0):2*eMin,
 											  PCal?PCal->invertCorrections(mySource.mySide, t, eMax, mySource.x, mySource.y, 0.0):2*eMax);
 			hTubesRaw[t]->Sumw2();
@@ -76,6 +82,7 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 		hitPos[d] = OM->registeredTH1F(s.name()+"_hits_profile_"+itos(d),"Hit Positions",300,-10,10);
 		hitPos[d]->SetLineColor(2+2*d);
+		hitPos[d]->GetXaxis()->SetTitle("position [mm]");
 	}
 }
 
@@ -104,6 +111,7 @@ unsigned int ReSourcer::fill(const ProcessedDataScanner& P) {
 		if(PCal && !simMode && tp==TYPE_0_EVENT)
 			hTubesRaw[t]->Fill(P.scints[s].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock[BOTH]),P.physicsWeight);
 	}
+	hErec->Fill(P.getEtrue(),P.physicsWeight);
 	if(tp==TYPE_0_EVENT)
 		hTubes[nBetaTubes][tp]->Fill(P.scints[s].energy.x,P.physicsWeight);
 	else
@@ -138,6 +146,7 @@ void ReSourcer::findSourcePeaks(float runtime) {
 		if(hTubesRaw[t])
 			hTubesRaw[t]->Scale(1.0/(runtime*hTubesRaw[t]->GetBinWidth(1)));
 	}
+	hErec->Scale(1.0/(runtime*hErec->GetBinWidth(1)));
 	
 	// perform fits, draw histograms
 	float searchsigma;
@@ -325,8 +334,11 @@ void reSource(RunNum rn) {
 	
 	// all positions histogram
 	TH2F* hitPos[2];
-	for(Side s = EAST; s <= WEST; ++s)
+	for(Side s = EAST; s <= WEST; ++s) {
 		hitPos[s] = TM.registeredTH2F(sideSubst("HitPos_%c",s),sideSubst("%s Hit Positions",s),400,-65,65,400,-65,65);
+		hitPos[s]->GetXaxis()->SetTitle("x position [mm]");
+		hitPos[s]->GetYaxis()->SetTitle("y position [mm]");
+	}
 	
 	// collect source data points
 	P->startScan();
@@ -347,9 +359,11 @@ void reSource(RunNum rn) {
 	TM.defaultCanvas->SetLogy(false);
 	for(Side s = EAST; s <= WEST; ++s) {
 		hitPos[s]->Draw("Col");
+#ifndef PUBLICATION_PLOTS
 		for(std::vector<Source>::const_iterator it = expectedSources.begin(); it != expectedSources.end(); it++)
 			if(it->mySide==s)
 				drawEllipseCut(*it,4.0,it->name());
+#endif
 		TM.printCanvas(sideSubst("HitPos_%c",s));
 	}
 	
@@ -436,7 +450,9 @@ void reSource(RunNum rn) {
 		RS.calcPMTcorr();
 		
 		// plot data and MC together
-		TM.defaultCanvas->SetLeftMargin(1.25);
+		TM.defaultCanvas->cd();
+		TM.defaultCanvas->SetLeftMargin(2.0);
+		TM.defaultCanvas->SetRightMargin(0.05);
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			float simNorm = it->second.hTubes[t][TYPE_0_EVENT]->Integral()/RS.hTubes[t][TYPE_0_EVENT]->Integral();
 			for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_III_EVENT; tp++) {
@@ -478,7 +494,16 @@ void reSource(RunNum rn) {
 				}
 			}
 		}
-		
+		// data Erec spectrum
+		TM.defaultCanvas->SetLogy(false);
+#ifdef PUBLICATION_PLOTS
+		it->second.hErec->SetLineColor(1);
+		it->second.hErec->SetLineWidth(2);
+#endif
+		if(it->second.hErec->GetMaximum() < 0.51) it->second.hErec->GetYaxis()->SetRangeUser(0,0.51);
+		it->second.hErec->Draw();
+		it->second.hErec->Draw("HIST SAME");
+		TM.printCanvas(it->second.mySource.name()+"/Erecon");
 		
 	}
 	
