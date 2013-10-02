@@ -8,6 +8,6 @@ level:	nm = 109.47.0	E = 0.			hl = -1				jpi = 1/2-
 level:	nm = 109.47.1	E = 88.0341		hl = 39.6			jpi = 7/2+
 level:	nm = 109.48.0	E = 126.3		hl = 39.864e6		jpi = 5/2+
 
-gamma:	from = 109.47.1	to = 109.47.0	Igamma = 3.70	CE_K = 11.3~0.5	CE_L = 11.9~0.5@.63:5.48:6.11	CE_M = 2.41~0.11	CE_N = 0.43~0.22
+gamma:	from = 109.47.1	to = 109.47.0	Igamma = 3.70	CE_K = 11.3~0.5	CE_L = 11.9~0.5@.63:5.48:6.11	CE_M = 2.41~0.11	CE_N = 0.43~0.02
 ecapt:	from = 109.48.0
 AugerK:	Z = 47	ka1 = 56.1	ka2 = 29.8	kb3 = 4.80	kb1 = 9.2	kb2 = 2.31	Iauger = 20.8
