@@ -11,7 +11,7 @@
 double my_sinh(double x) { return (exp(x)-exp(-x))*0.5; }
 
 /// inverse hyperbolic tangent
-double atanh(double x) throw() { return 0.5*log((1.+x)/(1.-x)); }
+//double atanh(double x) throw() { return 0.5*log((1.+x)/(1.-x)); }
 
 /// struct for 1-index coefficients
 struct coeff1 {
