@@ -20,7 +20,7 @@ CXX = g++
 
 CXXFLAGS = -O3 -Wall -fPIC `root-config --cflags` -I. \
 	-IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics
-LDFLAGS =  -L. -lUCNA -lSpectrum `root-config --libs`
+LDFLAGS =  -L. -lUCNA -lSpectrum -lMLP `root-config --libs`
 
 ifdef PROFILER_COMPILE
 	CXXFLAGS += -pg
@@ -49,13 +49,13 @@ Physics = BetaSpectrum.o ElectronBindingEnergy.o NuclEvtGen.o
 
 Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
 		SectorCutter.o LinHistCombo.o Enums.o Types.o FloatErr.o SMExcept.o Octet.o SpectrumPeak.o Source.o \
-		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o RData.o EnumerationFitter.o
+		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o RData.o EnumerationFitter.o StyleSetup.o
 
 Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberCalibrator.o \
 		EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
 	
 Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT.o G4toPMT.o \
-		PenelopeToPMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
+		PenelopeToPMT.o LED2PMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
 
 Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o \
 	MuonAnalyzer.o PositionAnalyzer.o WirechamberGainAnalyzer.o BGDecayAnalyzer.o HighEnergyExcess.o \
@@ -110,6 +110,9 @@ FierzOctetAnalyzer: FierzOctetAnalyzer.cc libUCNA.a
 	
 MC_Comparisons: MC_Comparisons.cc libUCNA.a
 	$(CXX) $(CXXFLAGS) Examples/MC_Comparisons.cc $(LDFLAGS) -o MC_Comparisons
+
+GammaComptons: Studies/GammaComptons.cc libUCNA.a
+	$(CXX) $(CXXFLAGS) Studies/GammaComptons.cc $(LDFLAGS) -o GammaComptons
 
 ucnG4:
 	mkdir -p g4build/

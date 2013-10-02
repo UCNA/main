@@ -1,8 +1,7 @@
 #include <exception>
-#include <TStyle.h>
-#include <TROOT.h>
 #include <iostream>
 
+#include "StyleSetup.hh"
 #include "ControlMenu.hh"
 #include "PathUtils.hh"
 #include "GraphicsUtils.hh"
@@ -15,6 +14,7 @@
 #include "PMTGenerator.hh"
 #include "ReSource.hh"
 #include "G4toPMT.hh"
+#include "LED2PMT.hh"
 #include "PenelopeToPMT.hh"
 #include "LEDScans.hh"
 #include "NuclEvtGen.hh"
@@ -249,7 +249,109 @@ void mi_showGenerator(std::deque<std::string>&, std::stack<std::string>& stack) 
 	return;
 }
 
+void mi_makeSimSpectrum(std::deque<std::string>&, std::stack<std::string>& stack) {
+	float eMax = streamInteractor::popFloat(stack);
+	std::string simName = streamInteractor::popString(stack);
+	
+	RunNum rn = 16194;
+	
+	G4toPMT G2P;
+	std::string fPath = getEnvSafe("G4WORKDIR")+"/output/"+simName;
+	if(dirExists(fPath)) {
+		G2P.addFile(fPath+"/analyzed_*.root");
+	} else {
+		G2P.addFile(std::string("/data2/mmendenhall/G4Out/2010/")+simName+"/analyzed_*.root");
+	}
+	PMTCalibrator PCal(rn);
+	G2P.setCalibrator(PCal);
+	
+	OutputManager OM("SimSpectrum",getEnvSafe("UCNA_ANA_PLOTS")+"/SimSpectrum/");
+	TH1F* hSpec = OM.registeredTH1F("hSpec","EventSpectrum",200,0,eMax);
+	
+	G2P.startScan(false);
+	while(G2P.nextPoint()) {
+		if(G2P.fType >= TYPE_IV_EVENT) continue;
+		hSpec->Fill(G2P.getEtrue());
+	}
+	
+	double nOrigEvts = 3e6;
+	
+	hSpec->SetTitle(NULL);
+	hSpec->GetXaxis()->SetTitle("Energy [keV]");
+	hSpec->GetYaxis()->SetTitle("Events / keV / 1000 decays");
+	hSpec->GetYaxis()->SetTitleOffset(1.2);
+	hSpec->Scale(1.0e3/nOrigEvts/hSpec->GetBinWidth(1));
+	hSpec->Draw();
+	OM.printCanvas(simName);
+}
+
 void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
+	
+	if(false) {
+		// trigger efficiency check
+		PMTCalibrator PCal(16194);
+		for(unsigned int t=0; t<nBetaTubes; t++) {
+			for(double a = -20; a<=100; a+=5) {
+				printf("%i %.0f:\t%.2f\t%.2f\n",t,a,PCal.trigEff(WEST,t,a),PCal.invertCorrections(WEST, t, a, 0,0,0));
+			}
+		}
+		return;
+	}
+	
+	if(true) {
+		if(true) {
+			{
+				LEDAnalyzer LA("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorrDatNew");
+				LEDScanScanner LSS;
+				std::vector<RunNum> bruns = selectRuns(16193, 16216, "beta");
+				//std::vector<RunNum> bruns = selectRuns(16097, 16216, "beta");
+				LSS.addRuns(bruns);
+				//LSS.addRun(16194);
+				//LA.buildPerceptronTree();
+				LA.ScanData(LSS);
+				LA.CalcCorrelations();
+				//LA.CalcTrigEffic();
+				//LA.CalcLightBal();
+				LA.write();
+				//LA.setWriteRoot(true);
+			}
+			//OutputManager OM("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorrDatNew");
+			//makeMLPfit(OM);
+		}
+		if(false) {
+			LED2PMT L2P;
+
+			// load MultiLayerPerceptron trigger prob fit
+			TFile f((getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorrDatNew/PMTCorr.root").c_str(),"READ");
+			TMultiLayerPerceptron* TMLP[2];
+			TriggerProbMLP* TProb[2];
+			for(Side s = EAST; s <= WEST; ++s) {
+				TMLP[s] = (TMultiLayerPerceptron*)f.Get(sideSubst("TrigMLP_%c",s).c_str());
+				assert(TMLP[s]);
+				TMLP[s]->Print();
+				TProb[s] = new TriggerProbMLP(TMLP[s]);
+				L2P.PGen[s].setTriggerProb(TProb[s]);
+			}
+
+			L2P.nToSim = 60000;
+			L2P.PGen[EAST].crosstalk = L2P.PGen[WEST].crosstalk  = 0;
+			L2P.PGen[EAST].pedcorr = L2P.PGen[WEST].pedcorr  = 0.2;
+			L2P.PGen[EAST].setLightbal(EAST, 0.928815, 0.859369, 1.20333, 1.03771);
+			L2P.PGen[WEST].setLightbal(WEST, 0.935987, 1.04881, 1.07959, 0.941108);
+			PMTCalibrator PCal(16194);
+			L2P.setCalibrator(PCal);
+			LEDAnalyzer LA("PMTCorrSim",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorrSim_C0.2");
+			for(unsigned int i=0; i<9; i++)
+				LA.ScanData(L2P);
+			LA.CalcCorrelations();
+			LA.CalcTrigEffic();
+			LA.CalcLightBal();
+			LA.write();
+		}
+		return;
+	}
+	
+	
 	
 	if(false) {
 		paperDataPlot();
@@ -399,32 +501,11 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 	
 	
 	//spectrumGenTest();
-	
-	/*
-	 OutputManager OMLS("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorr");
-	 LEDScanScanner LSS;
-	 std::vector<RunNum> bruns = selectRuns(16193, 16216, "beta");
-	 //std::vector<RunNum> bruns = selectRuns(16097, 16216, "beta");
-	 LSS.addRuns(bruns);
-	 PMT_LED_Correlations(OMLS,LSS);
-	 exit(0);
-	 */
 }
 
 void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
-	gROOT->SetStyle("Plain");
-	gStyle->SetPalette(1);
-	gStyle->SetNumberContours(255);
-	gStyle->SetOptStat("e");
-	TCanvas defaultCanvas;
-#ifdef PUBLICATION_PLOTS
-	gStyle->SetOptStat("");
-	makeGrayscalepalette();
-	defaultCanvas.SetGrayscale(true);
-#endif
-	defaultCanvas.SetFillColor(0);
-	defaultCanvas.SetCanvasSize(300,300);
+	ROOTStyleSetup();
 	
 	inputRequester exitMenu("Exit Menu",&menutils_Exit);
 	inputRequester peek("Show stack",&menutils_PrintStack);
@@ -490,12 +571,17 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	inputRequester showGenerator("Event generator",&mi_showGenerator);
 	showGenerator.addArg("Generator name");
 	
+	inputRequester makeSimSpectrum("Sim Spectrum",&mi_makeSimSpectrum);
+	makeSimSpectrum.addArg("Sim name");
+	makeSimSpectrum.addArg("energy range");
+	
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
 	PostRoutines.addChoice(&plotGMS);
 	PostRoutines.addChoice(&octetProcessor,"oct");
 	PostRoutines.addChoice(&octetRange,"rng");
 	PostRoutines.addChoice(&showGenerator,"shg");
+	PostRoutines.addChoice(&makeSimSpectrum,"mks");
 	PostRoutines.addChoice(&exitMenu,"x");
 	
 	// sources
