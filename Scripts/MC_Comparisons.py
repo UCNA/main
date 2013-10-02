@@ -50,7 +50,7 @@ def errorBand(gdat,nx,ny,ndy):
 
 
 
-def paperFig1():
+def paperFig1(inColor=False):
 	pdat = [asymplot(a) for a in QFile(os.environ["UCNA_ANA_PLOTS"]+"/Paper/PlotData.txt").dat["asymplot"]]
 
 	xrange = (0,800)
@@ -78,23 +78,34 @@ def paperFig1():
 	cnvs.insert(gCorr)
 	cnvs.insert(gAsym)
 	cnvs.insert(gSpec)
-
+	
+	
+	specCircAttrs = None
+	bgCircAttrs = [deco.filled]
+	if inColor:
+		specCircAttrs = [color.rgb.blue]
+		bgCircAttrs += [color.rgb(0,0.7,0)]
+		
 	gSpec.plot(graph.data.points([(p.KE,p.ssfg) for p in pdat],x=1,y=2,title="Data"),
-			   [graph.style.symbol(symbol.circle,size=0.1),])
+			   [graph.style.symbol(symbol.circle,size=0.1,symbolattrs=specCircAttrs),])
 	gSpec.plot(graph.data.points([(p.KE,p.ssMC) for p in pdat],x=1,y=2,title="Geant4 MC"),
 			 [graph.style.line(),])
 	gSpec.plot(graph.data.points([(p.KE,p.ssbg) for p in pdat],x=1,y=2,title="Background"),
-			   [graph.style.symbol(symbol.circle,size=0.1,symbolattrs=[deco.filled]),])
+			   [graph.style.symbol(symbol.circle,size=0.1,symbolattrs=bgCircAttrs),])
 	
 	pdat = [p for p in pdat if p.KE > 60]
 	
 	area = errorBand([(p.KE,100.*p.corr,100.*p.dcorr) for p in pdat],0,1,2)
-	#gCorr.fill(area, [deco.filled([color.gray(0.8)])])
-	gCorr.fill(area, [pattern.hatched(0.10,-45)])
-	gCorr.fill(area, [pattern.hatched(0.10,45)])
+	asLineAttrs = [style.linewidth.THick]
+	if inColor:
+		gCorr.fill(area, [deco.filled([color.rgb(0.5,0.5,1)])])
+		asLineAttrs += [color.rgb.green]
+	else:
+		gCorr.fill(area, [pattern.hatched(0.10,-45)])
+		gCorr.fill(area, [pattern.hatched(0.10,45)])
 	
 	gCorr.plot(graph.data.points([(p.KE,100.*p.corr,100.*p.dcorr) for p in pdat],x=1,y=2,dy=3,title=None),
-			 [graph.style.line(lineattrs=[style.linewidth.THick]), ]) #[graph.style.symbol(symbol.circle,size=0.1), ]) #graph.style.errorbar()])
+			 [graph.style.line(asLineAttrs), ]) #[graph.style.symbol(symbol.circle,size=0.1), ]) #graph.style.errorbar()])
 	for y in [-2.5,0,2.5]:
 		gCorr.plot(graph.data.points([(0,y),(800,y)],x=1,y=2,title=None), [graph.style.line([style.linestyle.dashed])])
 
@@ -119,10 +130,19 @@ def paperFig1():
 		area[-1].close()
 		gCorr.stroke(area, [deco.filled([color.gray(0.8)])])
 	
+	
+	asymBarAttrs = None
+	asymCircAttrs = [deco.filled([color.gray(1.0)])]
+	asymFitAttrs = [style.linewidth.THIck]
+	if inColor:
+		asymBarAttrs = [color.rgb.blue]
+		asymCircAttrs += [color.rgb.blue]
+		asymFitAttrs += [color.rgb(0,0.7,0)]
+		
 	gAsym.plot(graph.data.points([(p.KE,p.A0,p.dA0) for p in pdat],x=1,y=2,dy=3,title=None),
-			   [graph.style.errorbar(), graph.style.symbol(symbol.circle,size=0.1,symbolattrs=[deco.filled([color.gray(1.0)])])])
+			   [graph.style.errorbar(errorbarattrs=asymBarAttrs), graph.style.symbol(symbol.circle,size=0.1,symbolattrs=asymCircAttrs)])
 	A0 = -0.11954
-	gAsym.plot(graph.data.points([(220,A0),(670,A0)],x=1,y=2,title=None), [graph.style.line([style.linewidth.THIck])])
+	gAsym.plot(graph.data.points([(220,A0),(670,A0)],x=1,y=2,title=None), [graph.style.line(asymFitAttrs)])
 	
 	# different fit ranges
 	for (e0,e1) in [(220,670),]+[(200-10*x,700+10*x) for x in range(11)]:
@@ -131,7 +151,7 @@ def paperFig1():
 		LF.fit(fdat,cols=(0,1,2),errorbarWeights=True)
 		print "<A0> [%i,%i] ="%(e0,e1),LF.coeffs[0],"chi^2/ndf =",LF.ssResids(),len(fdat)-1
 
-	cnvs.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Paper/Fig1.pdf")
+	cnvs.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Paper/Fig1_new.pdf")
 
 	if False:
 		fgtot = bgtot = 0
@@ -203,4 +223,4 @@ def G4_Pen_Compare():
 
 if __name__=="__main__":
 	#G4_Pen_Compare()
-	paperFig1()
+	paperFig1(True)

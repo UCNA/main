@@ -245,7 +245,7 @@ class GeantSimManager:
 			anafiles = anafiles[6:]
 			print "\n----- %s ------"%outlist_name
 			os.system("cat "+outlist_name)
-			if self.settings["generator"] in ["neutronBetaUnpol","eGunRandMomentum","eGun"]:
+			if self.settings["generator"] in ["neutronBetaUnpol"]: #,"eGunRandMomentum","eGun"]:
 				self.settings["ana_args"] += " saveall"
 			analyzer_bin = self.g4_bindir+"/"+self.settings["analyzer"]
 			if nMin <= nanalyzed <= nMax:
@@ -314,7 +314,7 @@ if __name__ == "__main__":
 	####################
 	
 	# sources ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"] 1e6 each
-	if 1:
+	if 0:
 		for g in ["In114E","In114W"]:
 			sourceSim = GeantSimManager("thinfoil",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt",geometry="thinFoil")
 			sourceSim.settings["physlist"]="livermore"
@@ -404,6 +404,22 @@ if __name__ == "__main__":
 		nCapt.set_generator("nCaptH",forcePositioner="ScintFace")
 		nCapt.launch_sims(nEvents=1e7,nClusters=36,hours_old=0)
 		nCapt.launch_postanalyzer()
+	
+	####################				
+	# gammas from sealed sources
+	####################
+	if 0:
+		for l in [100,200,300,400,600,800,1200,1600]:
+			gammaSim = GeantSimManager("SourceHolderGammas")
+			gammaSim.settings["physlist"]="livermore"
+			gammaSim.settings["particle"] = "gamma"
+			gammaSim.set_generator("eGunRandMomentum")
+			gammaSim.settings["positioner"] = "Fixed"
+			gammaSim.settings["gunenergy"] = l
+			gammaSim.settings["ana_args"] += " undead"
+			gammaSim.settings["sourceholderpos"] = "0 0 0 m"
+			gammaSim.launch_sims(nEvents=10e6,nClusters=12,hours_old=0)
+			gammaSim.launch_postanalyzer()
 
 	##################
 	# visualization test

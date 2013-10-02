@@ -77,7 +77,8 @@ class QFile(KVMap):
 			if not os.path.exists(fname):
 				print "No such file",fname
 				return
-			for l in [z.split(':') for z in open(fname).readlines()]:
+			fIn = open(fname).read().replace("\\\n",'')
+			for l in [z.split(':') for z in fIn.split("\n")]:
 				if len(l) < 2:
 					continue
 				self.dat[l[0]] = self.dat.get(l[0],[]) + [KVMap(l[1]),]

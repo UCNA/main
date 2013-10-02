@@ -366,10 +366,12 @@ class Anode_MC_Comparator(MC_Comparator):
 						  key = graph.key.key(pos="bl"))
 		setTexrunner(gAGC)
 		tpsymbs = {0:symbol.circle,1:symbol.triangle,2:symbol.plus}
+		sideStyles = {"East":[scols["East"]], "West":[scols["West"],deco.filled]}
 		for s in ["East","West"]:
 			for tp in range(2):
 				gtitle = s + " Type " + {0:"0",1:"I",2:"II/III"}[tp]
-				gAGC.plot(graph.data.points(gdat[(s[0],tp)],x=1,y=-1,title=gtitle),[graph.style.symbol(tpsymbs[tp],symbolattrs=[scols[s],])])
+				gAGC.plot(graph.data.points(gdat[(s[0],tp)],x=1,y=-1,title=gtitle),[graph.style.symbol(tpsymbs[tp],symbolattrs=sideStyles[s])])
+		print "Saving gain calibration plot..."
 		gAGC.writetofile(self.basedir+"/AnodeGainCal.pdf")
 
 		# side average values
@@ -423,7 +425,9 @@ def sep23effic(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation/"):
 
 if __name__ == "__main__":
 	
-	sep23effic(os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation_SimPen/")
+	anodeGainCal(None)
+	
+	#sep23effic(os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation_SimPen/")
 	
 	#conn = open_connection()
 	#anodeGainCal(conn)
