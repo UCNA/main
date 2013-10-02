@@ -117,6 +117,7 @@ void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const
 		int x0 = int(c-graphWidth);
 		int x1 = int(c+graphWidth);
 		TH1F* hdiv = registeredTH1F(mon_name+"_Mon_Div_"+itos(i),mon_name+" Pedestals",x1-x0,x0,x1);
+		hdiv->GetXaxis()->SetTitle("ADC Channel");
 		while(n<npts && n <= float((i+1)*npts)/float(ndivs)) {
 			hdiv->Fill(vdata[n]);
 			n++;

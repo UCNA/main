@@ -134,6 +134,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 		TLED->SetMaxVirtualSize(1000000);
 		TLED->Branch("EvtN",&currentEvent,"EvtN/I");
 		TLED->Branch("Time",&fTimeScaler[BOTH],"Time/F");
+		TLED->Branch("Sis00",&iSis00,"Sis00/I");
 		for(Side s = EAST; s <= WEST; ++s) {
 			TLED->Branch(sideSubst("Scint%c",s).c_str(),&sevt[s],
 						 "q1/F:q2/F:q3/F:q4/F:e1/F:de1/F:e2/F:de2/F:e3/F:de3/F:e4/F:de4/F:energy/F:denergy/F:nPE1/F:nPE2/F:nPE3/F:nPE4/F");

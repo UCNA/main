@@ -89,7 +89,11 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 			hTrigEffic[s][t][0]->SetLineColor(4);
 			hTrigEffic[s][t][1] = registeredTH1F(sideSubst("hTrigEfficTrig_%c",s)+itos(t),"Trigger Efficiency Events",100,-50,150);
 			hTrigEffic[s][t][1]->SetLineColor(2);
-			for(unsigned int i=0; i<nBiDivs; i++) {
+			hTrigEffic[s][t][1]->SetLineStyle(2);
+			for(unsigned int i=0; i<2; i++) {
+				hTrigEffic[s][t][i]->GetXaxis()->SetTitle("ADC channels above pedestal");
+			}
+ 			for(unsigned int i=0; i<nBiDivs; i++) {
 				hBiPulser[s][t].push_back(registeredTH1F(sideSubst("hPulserSpectrum_%c",s)+itos(t)+"_"+itos(i),"Bi Pulser Spectrum",
 														 200,100,sevt[s].adc[t]));
 				hBiPulser[s][t].back()->SetLineColor(t+1);

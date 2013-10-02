@@ -338,8 +338,8 @@ void ucnaDataAnalyzer11b::calcTrigEffic() {
 			efficfit.SetParLimits(2,0.1,1000.0);
 			efficfit.SetParLimits(3,0.75,1.0);
 			efficfit.SetLineColor(4);
-			gEffic.Fit(&efficfit,"QR+");
-			
+			//gEffic.Fit(&efficfit,"QR+");
+			gEffic.Fit(&efficfit,"QR");
 			
 			float_err trigef(efficfit.GetParameter(3),efficfit.GetParError(3));
 			float_err trigc(efficfit.GetParameter(0),efficfit.GetParError(0));
