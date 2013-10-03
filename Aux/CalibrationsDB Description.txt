@@ -26,8 +26,6 @@ CREATE TABLE tube_calibration (
 	INDEX (ecal_id)
 );
 
-CREATE TABLE kurie_cal (run_number INT UNSIGNED, side ENUM('East','West'), quadrant INT UNSIGNED, energy DOUBLE, adc DOUBLE, INDEX (run_number) );
-
 # extra final gain calibration tweaks
 CREATE TABLE gain_tweak (
 	gain_tweak_id SERIAL,

@@ -46,10 +46,6 @@ public:
 	virtual TGraph* getCo60(RunNum rn, Side s, unsigned int peakNum) = 0;
 	/// get muon peak history for given sensor
 	virtual TGraph* getMuonPeak(RunNum rn, const std::string& sensorName) = 0;
-	/// get kurie endpoint calibration energy for given run, side, PMT
-	virtual float getKurieEnergy(RunNum rn, Side s, unsigned int t) = 0;
-	/// get kurie endpoint calibration energy for given run, side, PMT
-	virtual float getKurieADC(RunNum rn, Side s, unsigned int t) = 0;
 	*/
 	
 	/// get GMS Cal run number
