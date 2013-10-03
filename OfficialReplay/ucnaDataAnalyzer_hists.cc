@@ -97,6 +97,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 				hBiPulser[s][t].push_back(registeredTH1F(sideSubst("hPulserSpectrum_%c",s)+itos(t)+"_"+itos(i),"Bi Pulser Spectrum",
 														 200,100,sevt[s].adc[t]));
 				hBiPulser[s][t].back()->SetLineColor(t+1);
+				hBiPulser[s][t].back()->GetXaxis()->SetTitle("ADC channels above pedestal");
 			}
 		}
 	}
@@ -140,7 +141,8 @@ void ucnaDataAnalyzer11b::fillEarlyHistograms() {
 		if(tbin<hBiPulser[EAST][0].size())
 			for(Side s = EAST; s <= WEST; ++s)
 				for(unsigned int t=0; t<nBetaTubes; t++)
-					hBiPulser[s][t][tbin]->Fill(sevt[s].adc[t]);
+					if(sevt[s].adc[t]>100)
+						hBiPulser[s][t][tbin]->Fill(sevt[s].adc[t]);
 	}
 	if(!fEvnbGood)
 		hEvnbFailRate->Fill(fTimeScaler[BOTH]);

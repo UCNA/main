@@ -23,6 +23,9 @@ nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevP
 }
 
 void ucnaDataAnalyzer11b::analyze() {
+	
+	defaultCanvas->cd();
+	
 	loadCuts();
 	setupOutputTree();
 	
@@ -426,6 +429,8 @@ bool ucnaDataAnalyzer11b::processEvent() {
 void ucnaDataAnalyzer11b::processBiPulser() {
 	
 	printf("\nFitting Bi Pulser...\n");
+	defaultCanvas->SetRightMargin(0.05);
+	defaultCanvas->SetLeftMargin(0.12);
 	TF1 gausFit("gasufit","gaus",1000,4000);
 	QFile pulseLocation(dataPath+"/Monitors/Run_"+itos(rn)+"/ChrisPulser.txt",false);
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -435,11 +440,17 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 			std::vector<double> dcenters;
 			std::vector<double> widths;
 			std::vector<double> dwidths;
-			for(unsigned int i=0; i<hBiPulser[s][t].size(); i++) {
+			const unsigned int nHists = (unsigned int)hBiPulser[s][t].size();
+			for(unsigned int i=0; i<nHists; i++) {
 				Stringmap m;
 				m.insert("side",ctos(sideNames(s)));
 				m.insert("tube",t);
 				m.insert("counts",hBiPulser[s][t][i]->GetEntries());
+				
+				// normalize histogram to rate [mHz/channel]
+				hBiPulser[s][t][i]->GetYaxis()->SetTitle("Event rate [mHz/ADC channel]");
+				hBiPulser[s][t][i]->GetYaxis()->SetTitleOffset(1.25);
+				hBiPulser[s][t][i]->Scale(1000.0/(hBiPulser[s][t][i]->GetBinWidth(1)*wallTime/nHists));
 				
 				// initial estimate of peak location: first high isolated peak scanning from right
 				int bmax = 0;
@@ -460,7 +471,7 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 				
 				// refined fit
 				if(!iterGaus(hBiPulser[s][t][i],&gausFit,3,bcenter,200,1.5)) {
-					times.push_back((i+0.5)*wallTime/hBiPulser[s][t].size());
+					times.push_back((i+0.5)*wallTime/nHists);
 					m.insert("time",times.back());
 					m.insert("height",gausFit.GetParameter(0));
 					m.insert("dheight",gausFit.GetParError(0));
