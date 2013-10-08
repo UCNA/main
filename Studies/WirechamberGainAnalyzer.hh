@@ -30,10 +30,10 @@ public:
 	/// fill histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	
-	fgbgPair* cathNorm[2][2][kMaxCathodes];		//< cathode normalization histograms by [side][plane][cathode]
+	fgbgPair* cathNorm[BOTH][2][kMaxCathodes];		//< cathode normalization histograms by [side][plane][cathode]
 };
 
-
+/// analyzer plugin for monitoring overall wirechamber gain
 class AnodeGainAnalyzer: public AnalyzerPlugin {
 public:
 	/// constructor
@@ -49,12 +49,12 @@ public:
 	/// MC/data comparison
 	virtual void compareMCtoData(AnalyzerPlugin* AP);
 	
-	fgbgPair* anodeCal[2][TYPE_III_EVENT+1];	//< anode energy spectrum binned by event energy by [side][type]
+	fgbgPair* anodeCal[BOTH][TYPE_III_EVENT+1];	//< anode energy spectrum binned by event energy by [side][type]
 	fgbgPair* anodeGaincorr;					//< average anode gain correction factor in use
-	fgbgPair* norm23[2];						//< "normalized" Type II, III anode signals by [side]
+	fgbgPair* norm23[BOTH];						//< "normalized" Type II, III anode signals by [side]
 	
-	std::vector<TH1F*> hSlices[2][TYPE_III_EVENT+1];	//< fit anode spectrum "slices"
-	TGraphErrors* gAnode[2][TYPE_III_EVENT+1];		//< anode energy distribution fit
+	std::vector<TH1F*> hSlices[BOTH][TYPE_III_EVENT+1];	//< fit anode spectrum "slices"
+	TGraphErrors* gAnode[BOTH][TYPE_III_EVENT+1];		//< anode energy distribution fit
 };
 
 /// analyzer plugin for evaluating simulated Type II/III MWPC energy deposition split
@@ -67,9 +67,20 @@ public:
 	/// generate Type II/III separation data
 	void make23SepInfo(OutputManager& OM);
 	
-	fgbgPair* anodeTypeID[2][TYPE_III_EVENT+1];		//< anode energy spectrum binned by event energy by [side][type]
-	fgbgPair* anodeNormCoords[2][TYPE_III_EVENT+1];	//< anode energy spectrum in cut-normalized coordinates by [side][type]
+	fgbgPair* anodeTypeID[BOTH][TYPE_III_EVENT+1];		//< anode energy spectrum binned by event energy by [side][type]
+	fgbgPair* anodeNormCoords[BOTH][TYPE_III_EVENT+1];	//< anode energy spectrum in cut-normalized coordinates by [side][type]
 };
 
+/// extract properties of wirechamber charge proxies
+class WirechamberChargeProxyAnalyzer: public AnalyzerPlugin {
+public:
+	/// constructor
+	WirechamberChargeProxyAnalyzer(RunAccumulator* RA);
+	/// fill histograms
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
+	
+	fgbgPair* cathsumVanode[BOTH];		//< cathode sum versus anode
+	fgbgPair* chargesizeVanode[BOTH];	//< fit charge cloud size vs. anode
+};
 
 #endif

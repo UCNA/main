@@ -188,7 +188,7 @@ void AnodeGainAnalyzer::makePlots() {
 				std::vector<TH1*> hToPlot;
 				for(unsigned int i=0; i<hSlices[s][tp].size(); i++)
 					hToPlot.push_back(hSlices[s][tp][i]);
-				drawSimulHistos(hToPlot);
+				drawSimulHistos(hToPlot, "L E0");
 				printCanvas(sideSubst("AnodeCal/hAnode_%c_",s)+itos(tp));
 			}
 			if(!gAnode[s][tp]) continue;
@@ -322,7 +322,10 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 		TH3F* hTpII = (TH3F*)(anodeTypeID[s][TYPE_II_EVENT]->h[GV_OPEN]);
 		unsigned int nx = hTpII->GetNbinsX();
 		gOptDiv.push_back(new TGraph(nx));
+#ifndef PUBLICATION_PLOTS
 		gOptDiv[s]->SetMarkerColor(2+2*s);
+#endif
+		gOptDiv[s]->SetMarkerStyle(s==EAST?24:26);
 		std::vector<TH2F*> v2 = sliceTH3(*hTpII,X_DIRECTION);
 		std::vector<TH2F*> v3 = sliceTH3(*(TH3F*)(anodeTypeID[s][TYPE_III_EVENT]->h[GV_OPEN]),X_DIRECTION);
 		for(unsigned int ne = 1; ne <= nx; ne++) {
@@ -353,15 +356,17 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 				for(int a = 0; a < nAngles; a++) {
 					double th = a*M_PI/nAngles-M_PI/2;
 					TH1* ap2 = projectTH2(*v2[ne],50,cos(th),sin(th));
-					ap2->SetLineColor(2);
 					ap2->SetTitle(("Optimized Type II/III separation, "+eRange).c_str());
 					ap2->GetXaxis()->SetTitle("MWPC Energy [keV]");
 					aProj2.push_back(ap2);
 					TH1* ap3 = projectTH2(*v3[ne],50,cos(th),sin(th));
-					ap3->SetLineColor(4);
 					ap3->SetTitle(("Optimized Type II/III separation, "+eRange).c_str());
 					ap3->GetXaxis()->SetTitle("MWPC Energy [keV]");
 					aProj3.push_back(ap3);
+#ifndef PUBLICATION_PLOTS
+					ap2->SetLineColor(2);
+					ap3->SetLineColor(4);
+#endif
 					double o,xdiv;
 					if(ap2->GetMaximumBin() <= ap3->GetMaximumBin())
 						histoverlap(*ap2, *ap3, o, xdiv);
@@ -405,14 +410,16 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 				//////////////////////////
 				
 				TH1D* ap2 = v2[ne]->ProjectionX();
-				ap2->SetLineColor(2);
 				ap2->SetTitle(("Optimized Type II/III separation, "+eRange).c_str());
 				ap2->GetXaxis()->SetTitle("MWPC Energy [keV]");
 				TH1D* ap3 = v3[ne]->ProjectionX();
-				ap3->SetLineColor(4);
 				ap3->SetTitle(("Optimized Type II/III separation, "+eRange).c_str());
 				ap3->GetXaxis()->SetTitle("MWPC Energy [keV]");
-				
+				ap3->SetLineStyle(2);
+#ifndef PUBLICATION_PLOTS
+				ap2->SetLineColor(2);
+				ap3->SetLineColor(4);
+#endif
 				// optimize separation point
 				TH1* hSep = histsep(*ap2,*ap3);
 				hSep->Scale(1.0/(ap2->Integral()+ap3->Integral()));
@@ -423,7 +430,9 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 				// fit minimum region with cubic for refined minimum
 				int bsep = hSep->GetMinimumBin();
 				double c = hSep->GetBinCenter(bsep);
-				TF1 minFit("minFit","pol3",c-1,c+1);
+				double w = 8000.0/(ap2->GetEntries()+ap3->GetEntries());
+				w = (w<3)?((w>1.)?w:1.):3.;
+				TF1 minFit("minFit","pol3",c-w,c+w);
 				hSep->Fit(&minFit,"WR");
 				double p1 = 3*minFit.GetParameter(3);
 				double p2 = 2*minFit.GetParameter(2);
@@ -435,7 +444,7 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 				if(1 < xdiv && xdiv < 9)
 					gOptDiv[s]->SetPoint(ne-1, 0.5*(e0+e1), xdiv);
 				else
-					gOptDiv[s]->SetPoint(ne-1,0,0);
+					gOptDiv[s]->SetPoint(ne-1,-1,-1);
 				
 				hSep->Draw();
 				drawVLine(xdiv,OM.defaultCanvas);
@@ -444,7 +453,7 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 				std::vector<TH1*> hToPlot;
 				hToPlot.push_back(ap2);
 				hToPlot.push_back(ap3);
-				drawSimulHistos(hToPlot);
+				drawSimulHistos(hToPlot,"H E0");
 				drawVLine(xdiv,OM.defaultCanvas);
 				OM.printCanvas(sideSubst("OptSeparation_%c_",s)+itos(ne));
 				
@@ -470,15 +479,15 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 	printf("\n\n///////////// Separation Cut Fit ////////////////\n\n");
 	gCombo->Fit(&cutFit,"RBME");
 	printf("%.2f + %.2f*exp(-Escint/%.1f)\n",cutFit.GetParameter(0),cutFit.GetParameter(1),cutFit.GetParameter(2));
-	gCombo->Draw("A*");
+	gCombo->Draw("AP");
 	gCombo->GetXaxis()->SetRangeUser(0.,700.);
 	gCombo->GetXaxis()->SetTitle("Scintillator Energy [keV]");
 	gCombo->GetYaxis()->SetRangeUser(0.,10.0);
 	gCombo->GetYaxis()->SetTitle("Optimum MWPC Cut [keV]");
 	gCombo->SetTitle("Type II/III Separation Cut");
 	gCombo->Draw("AP");
-	gOptDiv[EAST]->Draw("*");
-	gOptDiv[WEST]->Draw("*");
+	gOptDiv[EAST]->Draw("P");
+	gOptDiv[WEST]->Draw("P");
 	OM.printCanvas("OptCut");
 	
 	
@@ -597,3 +606,23 @@ void WirechamberSimTypeID::make23SepInfo(OutputManager& OM) {
 	}
 }
 
+
+//-----------------------------------------------------------
+
+
+
+WirechamberChargeProxyAnalyzer::WirechamberChargeProxyAnalyzer(RunAccumulator* RA): AnalyzerPlugin(RA,"wirechamberChargeProxy") {
+	TH2F hSumVAnTemplate("hSumVAnode","Cathode Sum vs. Anode",100,0,4000,100,0,10000);
+	TH2F hSizeVAnTemplate("hSizeVAnode","Cathode Chargecloud Size vs. Anode",100,0,4000,100,0,10000);
+	for(Side s = EAST; s <= WEST; ++s) {
+		cathsumVanode[s] = registerFGBGPair(hSumVAnTemplate, AFP_OTHER, s);
+		chargesizeVanode[s] = registerFGBGPair(hSizeVAnTemplate, AFP_OTHER, s);
+	}
+}
+
+void WirechamberChargeProxyAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+	const Side s = PDS.fSide;
+	if(!(PDS.fPID == PID_BETA && PDS.fType == TYPE_0_EVENT && (s==EAST||s==WEST) && PDS.passesPositionCut(s))) return;
+	((TH2F*)(cathsumVanode[s]->h[currentGV]))->Fill(PDS.mwpcs[s].anode, PDS.mwpcs[s].cathodeSum, PDS.wires[s][X_DIRECTION].height);
+
+}
