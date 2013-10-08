@@ -33,7 +33,7 @@ AsymCorrFile::AsymCorrFile(const std::string& nm, const std::string& basepath): 
 			gUnc.Set(p+1);
 			gUnc.SetPoint(p,0.5*(e0+e1),u);
 		} else {
-			int foo = fscanf(f,"%*c");
+			n = fscanf(f,"%*c");
 		}
 	}
 	fclose(f);
