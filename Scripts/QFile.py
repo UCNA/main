@@ -39,7 +39,9 @@ class KVMap:
 			return float(s)
 			
 	# set attributes for float values
-	def loadFloats(self,names):
+	def loadFloats(self,names=None):
+		if names is None:
+			names = self.dat.keys()
 		for nm in names:
 			self.__dict__[nm] = self.getFirstF(nm)
 	

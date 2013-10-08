@@ -149,7 +149,8 @@ def gen_cathcal_set(conn,r0,r1,cr0,cr1):
 	cathnorms = PlotCathNorm(basepath)
 	corrcurves = PlotCathShapes(basepath)
 	
-	#return
+	if not conn:
+		return
 	
 	for ccsid in find_cathcal_sets(conn,r0,r1):
 		delete_cathcal_set(conn,ccsid)
@@ -164,6 +165,7 @@ def gen_cathcal_set(conn,r0,r1,cr0,cr1):
 					gid = upload_graph(conn,"Cathode %s%s %i"%(s,d,w.n),c)
 					set_cathshape_graph(conn,csid,gid)
 
+# Cathode hit distribution correction factors
 def PlotCathShapes(basepath):
 	CF = CathFile(basepath+"/MWPCCal.txt")
 	caths = CF.hitdists.keys()
@@ -171,8 +173,10 @@ def PlotCathShapes(basepath):
 	corrcurves = {}
 	
 	lwidths = {0:[style.linewidth.thin],1:[style.linewidth.Thick]}
-	lstyles = {0:[],1:[style.linestyle.dashed],2:[style.linestyle.dotted]}
-	lcols = {0:[rgb.blue],1:[rgb.red]}
+	#lstyles = {0:[],1:[style.linestyle.dashed],2:[style.linestyle.dotted]}
+	lstyles = {0:[style.linestyle.dotted],1:[],3:[style.linestyle.dashed]}
+	#lcols = {0:[rgb.blue],1:[rgb.red]}
+	lcols = {0:[],1:[]}
 	
 	for k in caths:
 		print k
@@ -203,10 +207,11 @@ def PlotCathShapes(basepath):
 						  [graph.style.errorbar(errorbarattrs=lcols[n%2])])
 			gHitDist.plot(graph.data.points(zdat,x=1,y=3,dy=4,title=gtitle),
 						  [graph.style.line(lineattrs=lstyles[n/2]+lwidths[n%2]+lcols[n%2])])
-		try:
-			gHitDist.writetofile(basepath+"/HitDist_%s%s_%i.pdf"%k)
-		except:
-			print "******** PLOTTING ERROR! *********"
+		if False:
+			try:
+				gHitDist.writetofile(basepath+"/HitDist_%s%s_%i.pdf"%k)
+			except:
+				print "******** PLOTTING ERROR! *********"
 
 	# replacement for end wires; average distribution
 	avgcurves = {}
@@ -216,8 +221,8 @@ def PlotCathShapes(basepath):
 						
 			gAvgDist=graph.graphxy(width=15,height=10,
 								   x=graph.axis.lin(title="Scintillator Visible Energy [keV]",min=0,max=1000),
-								   y=graph.axis.lin(title="%s%s Average Coefficient"%(s,d),min=-0.2,max=0.2),
-								   key = graph.key.key(pos="bc",columns=nterms/2))
+								   y=graph.axis.lin(title="%s%s Average Coefficient"%(s,d),min=-0.1,max=0.2),
+								   key = graph.key.key(pos="bc",columns=3))
 			setTexrunner(gAvgDist)
 
 			avgcurves[(s,d)] = []
@@ -226,14 +231,18 @@ def PlotCathShapes(basepath):
 				avgcurves[(s,d)].append([])
 				for ne in range(len(corrcurves[(s,d,8)][nt])):
 					e = corrcurves[(s,d,8)][0][ne][0]
-					(mu,sg) = musigma([corrcurves[(s,d,i)][nt][ne][2] for i in range(16)[2:14]])
+					#(mu,sg) = musigma([corrcurves[(s,d,i)][nt][ne][2] for i in range(16)[2:14]])
+					(mu,sg) = musigma([corrcurves[(s,d,i)][nt][ne][2] for i in range(16)[3:13]])
 					avgcurves[(s,d)][-1].append([e,0,mu,sg*(ne%2)])
 				cavg[(s,d)].append(musigma([g[2] for g in avgcurves[(s,d)][-1]])[0])
 				gtitle = "$\\sin(%i\\pi x)$"%(2*(nt/2+1))
 				if nt%2:
 					gtitle = "$\\cos(%i\\pi x)$"%(2*(nt/2+1))
+				if nt not in [0,1,3]:
+					continue
 				gAvgDist.plot(graph.data.points(avgcurves[(s,d)][-1],x=1,y=3,dy=4,title=gtitle),
-							  [graph.style.line(lineattrs=lstyles[nt/2]+lwidths[nt%2]+lcols[nt%2]),
+							  #[graph.style.line(lineattrs=lstyles[nt/2]+lwidths[nt%2]+lcols[nt%2]),
+							  [graph.style.line(lineattrs=lstyles[nt]+lwidths[nt%2]+lcols[nt%2]),
 							   graph.style.errorbar(errorbarattrs=lcols[nt%2])])
 
 			gAvgDist.writetofile(basepath+"/HitDist_%s%s.pdf"%(s,d))
@@ -404,18 +413,21 @@ def sep23effic(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation/"):
 		gdat = [ (c.e0,c.e1,c.total,c.II/c.total,c.IIIx/c.total,c.III/c.total,c.IIx/c.total,0.5*(c.e0+c.e1)) for c in cdat if c.side==s ]
 		gdat.sort()
 		
-		g23=graph.graphxy(width=15,height=10,
-						   x=graph.axis.lin(title="Energy [keV]"),
+		g23=graph.graphxy(width=10,height=7,
+						   x=graph.axis.lin(title="Energy [keV]",min=0,max=700),
 						   y=graph.axis.lin(title="Fraction of II+III",min=0,max=1),
 						   key = graph.key.key(pos="tc",columns=2))
 		setTexrunner(g23)
 
 		print gdat
 		
-		g23.plot(graph.data.points(gdat,x=-1,y=4,title="II"),[graph.style.line(lineattrs=[rgb.red,])])
-		g23.plot(graph.data.points(gdat,x=-1,y=5,title="III*"),[graph.style.line(lineattrs=[rgb.blue,style.linestyle.dashed])])
-		g23.plot(graph.data.points(gdat,x=-1,y=6,title="III"),[graph.style.line(lineattrs=[rgb.blue,])])
-		g23.plot(graph.data.points(gdat,x=-1,y=7,title="II*"),[graph.style.line(lineattrs=[rgb.red,style.linestyle.dashed])])
+		iiCol,iiiCol = rgb.red,rgb.blue
+		iiCol,iiiCol = rgb.black,rgb.black
+		
+		g23.plot(graph.data.points(gdat,x=-1,y=4,title="II"),[graph.style.line(lineattrs=[iiCol,style.linestyle.dashed])])
+		g23.plot(graph.data.points(gdat,x=-1,y=5,title="III*"),[graph.style.line(lineattrs=[iiiCol,style.linestyle.dashdotted])])
+		g23.plot(graph.data.points(gdat,x=-1,y=6,title="III"),[graph.style.line(lineattrs=[iiiCol,style.linestyle.solid])])
+		g23.plot(graph.data.points(gdat,x=-1,y=7,title="II*"),[graph.style.line(lineattrs=[iiCol,style.linestyle.dotted])])
 		
 		g23.writetofile(basedir+"frac23_%s.pdf"%s)
 
@@ -425,10 +437,11 @@ def sep23effic(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation/"):
 
 if __name__ == "__main__":
 	
-	anodeGainCal(None)
+	#anodeGainCal(None)
 	
-	#sep23effic(os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation_SimPen/")
+	#sep23effic(os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation_Sim0823_4x/")
 	
 	#conn = open_connection()
 	#anodeGainCal(conn)
-	#gen_cathcal_set(conn,13000,100000,14264,16077)
+	conn = None
+	gen_cathcal_set(conn,13000,100000,14264,16077)

@@ -14,7 +14,7 @@ def unifrange(xmin,xmax,npts):
 def musigma(l):
 	mu = sum(l)/len(l)
 	s = sqrt(sum([x*x for x in l])/len(l)-mu*mu)/sqrt(len(l))
-	return (mu,s)
+	return [mu,s]
 
 # LaTeX formatting for polynomial term
 def latexPoly(varname,n):
