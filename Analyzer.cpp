@@ -285,20 +285,12 @@ void mi_makeSimSpectrum(std::deque<std::string>&, std::stack<std::string>& stack
 	OM.printCanvas(simName);
 }
 
-void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
+/// miscellaneous named routines not given separate menu items
+void mi_misc(std::deque<std::string>&, std::stack<std::string>& stack) {
 	
-	if(false) {
-		// trigger efficiency check
-		PMTCalibrator PCal(16194);
-		for(unsigned int t=0; t<nBetaTubes; t++) {
-			for(double a = -20; a<=100; a+=5) {
-				printf("%i %.0f:\t%.2f\t%.2f\n",t,a,PCal.trigEff(WEST,t,a),PCal.invertCorrections(WEST, t, a, 0,0,0));
-			}
-		}
-		return;
-	}
+	std::string rname = streamInteractor::popString(stack);
 	
-	if(true) {
+	if(rname == "led_pmt_corr") {
 		if(true) {
 			{
 				LEDAnalyzer LA("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorrDatNew");
@@ -348,17 +340,9 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 			LA.CalcLightBal();
 			LA.write();
 		}
-		return;
 	}
 	
-	
-	
-	if(false) {
-		paperDataPlot();
-		return;
-	}
-	
-	if(false) {
+	if(rname=="anchoices_penelope") {
 		//OutputManager OMdat("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/Anchoices/");
 		//calcAnalysisChoices(OMdat, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
 		//return;
@@ -368,28 +352,26 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		return;
 	}
 	
-	if(false) {
+	if(rname=="magf_mc_comparison") {
 		std::string sim = "SimMagF_4x";
 		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCChanges_"+sim+"/");
 		compareMCs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Sim0823_4x/OctetAsym_Offic_Sim0823_4x",
 				 getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,"MagF");
-		//return;
 	}
 	
-	//std::string sim = "Sim0823_4x";
+	std::string sim = "Sim0823_4x";
 	//std::string sim = "SimPen";
-	std::string sim = "thinfoil";
+	//std::string sim = "thinfoil";
 	
-	if(false) {
+	if(rname=="make_mc_correction") {
 		// MC correction for data set
 		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_"+sim+"/");
 		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
 				  getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,
 				  getEnvSafe("UCNA_AUX")+"/Corrections/", false);
-		//return;
 	}
 	
-	if(true) {
+	if(rname=="make_mc_self_correction") {
 		// MC self-correction
 		sim = "thinfoil";
 		std::string simOutNm = getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim;
@@ -404,10 +386,9 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		doFullCorrections(*AAdat,OM,OM.basePath);
 		
 		OM.write();
-		return;
 	}
 	
-	if(false) {
+	if(rname=="apply_mc_correction") {
 		OutputManager OM("CorrectedAsym",getEnvSafe("UCNA_ANA_PLOTS")+"/test/CorrectAsym_"+sim+"/");
 		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
 			if(a!=ANCHOICE_C) continue;
@@ -418,17 +399,13 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 			doFullCorrections(*AAdat,OM);
 		}
 		OM.write();
-		return;
 	}
 	
-	if(false) {
-		//refitXeAnode(getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Xenon_14282-14347_20/Xenon_14282-14347_20");
-		//return;
-		separate23("SimPen");
-		return;
+	if(rname=="sep_23") {
+		separate23(sim);
 	}
 	
-	if(false) {
+	if(rname=="fit_bg_excess") {
 		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
 		EnumerationFitter EF;
 		TGraphErrors* g = EF.loadFitFile("/home/mmendenhall/BGExcess_Combo_W.txt");
@@ -443,7 +420,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		return;
 	}
 	
-	if(false) {
+	if(rname=="make_errtables") {
 		ErrTables ET;
 		ET.gainfluctsTable(0.000125);
 		ET.pedShiftsTable(0.015);
@@ -452,7 +429,7 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		return;
 	}
 	
-	if(false) {
+	if(rname=="combo_ngbg_spectrum") {
 		OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
 		SimBetaDecayAnalyzer AH(&OM,"Combined");
 		
@@ -473,34 +450,34 @@ void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
 		AH.setWriteRoot(true);
 	}
 	
+	if(rname=="ngbg_spectra") {
+		//NGBGSpectra("EndcapEdge_nCaptH");
+		//NGBGSpectra("EndcapEdge_nCaptCu");
+		//NGBGSpectra("TrapWall_Cu66");
+		//NGBGSpectra("TrapWall_nCaptCu");
+		//NGBGSpectra("EntryPort_Al28");
+		//NGBGSpectra("EntryPort_nCaptAl");
+		NGBGSpectra("DetAl_nCaptAl");
+		NGBGSpectra("DetAl_nCaptAlGamma");
+		NGBGSpectra("ScintFace_nCaptH");
+	}
+	
+	if(rname=="wirechamber_cal") {
+		processWirechamberCal(14264,16077,20);
+	}
+	
+	if(rname=="decompose_xenon") {
+		//decomposeXenon(15991,true);
+		//decomposeXenon(14282,false);
+		//decomposeXenon(14347,false);
+		//decomposeXenon(17224,false);
+	}
+	
+	if(rname=="compare_xenon") {
+		compareXenonSpectra();
+	}
+	
 	return;
-	
-	//NGBGSpectra("EndcapEdge_nCaptH");
-	//NGBGSpectra("EndcapEdge_nCaptCu");
-	//NGBGSpectra("TrapWall_Cu66");
-	//NGBGSpectra("TrapWall_nCaptCu");
-	//NGBGSpectra("EntryPort_Al28");
-	//NGBGSpectra("EntryPort_nCaptAl");
-	NGBGSpectra("DetAl_nCaptAl");
-	NGBGSpectra("DetAl_nCaptAlGamma");
-	NGBGSpectra("ScintFace_nCaptH");
-	return;
-	
-	processWirechamberCal(14264,16077,20);
-	return;
-	
-	//decomposeXenon(15991,true);
-	//decomposeXenon(14282,false);
-	//decomposeXenon(14347,false);
-	//decomposeXenon(17224,false);
-	//return;
-	
-	compareXenonSpectra();
-	return;
-	
-	
-	
-	//spectrumGenTest();
 }
 
 void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
@@ -510,6 +487,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	inputRequester exitMenu("Exit Menu",&menutils_Exit);
 	inputRequester peek("Show stack",&menutils_PrintStack);
 	inputRequester doMisc("Misc",&mi_misc);
+	doMisc.addArg("routine","none");
 	
 	// selection utilities
 	NameSelector selectRuntype("Run Type");
