@@ -174,11 +174,11 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 			hAnode[s][1]->Fill(fMWPC_anode[s].val);
 			if(fPID==PID_BETA && fSide==s) {
 				hHitPos[s]->Fill(wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center);
-				for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
+				for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 					hHitsProfile[s][d]->Fill(wirePos[s][d].center);
+				}
 			}
 		}
-		
 		
 		// muon vetos
 		hBackTDC[s]->Fill(fBacking_tdc[s].val);
@@ -245,6 +245,13 @@ void ucnaDataAnalyzer11b::drawExclusionBlips(Int_t c) {
 			drawExcludedRegion(it->start[BOTH], it->end[BOTH], defaultCanvas,c,1001);
 }
 
+TH1* prepPosProfile(TH1* h, double tm) {
+		h->Scale(1.0/h->GetBinWidth(1)/tm);
+		h->GetYaxis()->SetTitle("event rate [Hz/mm]");
+		h->GetYaxis()->SetTitleOffset(1.5);
+		return h;
+}
+
 void ucnaDataAnalyzer11b::plotHistos() {
 	printf("\nMaking output plots...\n");
 	defaultCanvas->cd();
@@ -307,12 +314,14 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	
 	// 1-D hit positions
 	defaultCanvas->SetLogy(false);
+	defaultCanvas->SetLeftMargin(0.13);
+	defaultCanvas->SetRightMargin(0.04);
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 		hToPlot.clear();
 		for(Side s = EAST; s <= WEST; ++s)
-			hToPlot.push_back(hHitsProfile[s][d]);
+			hToPlot.push_back(prepPosProfile(hHitsProfile[s][d],totalTime[BOTH]));
 		drawSimulHistos(hToPlot);
-		printCanvas("Wirechamber/HitPos_"+std::string(d==X_DIRECTION?"x":"y"));
+		printCanvas("Wirechamber/HitPos_"+std::string(d==X_DIRECTION?"x":"y"));		
 	}
 	defaultCanvas->SetLogy(true);
 	

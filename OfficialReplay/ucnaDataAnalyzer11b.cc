@@ -2,6 +2,7 @@
 #include "strutils.hh"
 #include "ManualInfo.hh"
 #include "GraphicsUtils.hh"
+#include "StyleSetup.hh"
 #include "MultiGaus.hh"
 #include "SMExcept.hh"
 #include <stdio.h>
@@ -612,9 +613,7 @@ int main(int argc, char** argv) {
 		}
 	}
 	
-	gStyle->SetPalette(1);
-	gStyle->SetNumberContours(255);
-	gStyle->SetOptStat("e");
+	ROOTStyleSetup();
 	
 	std::string outDir = getEnvSafe("UCNAOUTPUTDIR");
 	

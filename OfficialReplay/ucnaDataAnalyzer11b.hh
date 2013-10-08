@@ -258,29 +258,29 @@ protected:
 	/// draw regions excluded by blip cuts
 	void drawExclusionBlips(Int_t c=4);
 	// histograms
-	TH1F* hCathMax[2][2];				//< cathode max, [side][cut]
-	TH1F* hCathMaxSum[2][2];			//< cathode max sum, [side][cut]
-	TH1F* hAnode[2][2];					//< anode, [side][cut]
-	TH1F* hCathSum[2][2];				//< cathode sum, [side][cut]
-	TH1F* hBackTDC[2];					//< backing TDC
-	TH1F* hBackADC[2][2];				//< backing ADC, [side][cut]
-	TH1F* hDriftTAC[2];					//< drift TAC [side]
-	TH1F* hTopTDC[2];					//< top TDC [side] (East only)
-	TH1F* hTopADC[2][2];				//< top ADC [side][cut] (East only)
-	TH1F* hScintTDC[2][nBetaTubes+1];	//< scintillator 2-of-4 TDC by [side][tube]
-	TH1F* hEtrue[2][5];					//< true energy, by [side][type]
-	TH1F* hTuben[2][nBetaTubes];		//< individual PMT visible energy
-	TH1F* hMonADC[kNumUCNMons];			//< UCN Monitor ADCs
-	TH1F* hMonRate[kNumUCNMons];		//< UCM Monitor rates
-	TH1F* hTypeRate[TYPE_IV_EVENT+1];	//< rate of event type for betas
-	TH1F* hSideRate[2][2];				//< rate for [side][muon/beta]
-	TH1F* hBkhfFailRate;				//< rate of bad Bkhf events
-	TH1F* hEvnbFailRate;				//< rate of bad Evnb events
-	TH1F* hHitsProfile[2][2];			//< 1D hit position histograms
-	TH2F* hHitPos[2];					//< hit position on each side, 2D
+	TH1F* hCathMax[2][2];						//< cathode max, [side][cut]
+	TH1F* hCathMaxSum[2][2];					//< cathode max sum, [side][cut]
+	TH1F* hAnode[2][2];							//< anode, [side][cut]
+	TH1F* hCathSum[2][2];						//< cathode sum, [side][cut]
+	TH1F* hBackTDC[2];							//< backing TDC
+	TH1F* hBackADC[2][2];						//< backing ADC, [side][cut]
+	TH1F* hDriftTAC[2];							//< drift TAC [side]
+	TH1F* hTopTDC[2];							//< top TDC [side] (East only)
+	TH1F* hTopADC[2][2];						//< top ADC [side][cut] (East only)
+	TH1F* hScintTDC[2][nBetaTubes+1];			//< scintillator 2-of-4 TDC by [side][tube]
+	TH1F* hEtrue[2][5];							//< true energy, by [side][type]
+	TH1F* hTuben[2][nBetaTubes];				//< individual PMT visible energy
+	TH1F* hMonADC[kNumUCNMons];					//< UCN Monitor ADCs
+	TH1F* hMonRate[kNumUCNMons];				//< UCM Monitor rates
+	TH1F* hTypeRate[TYPE_IV_EVENT+1];			//< rate of event type for betas
+	TH1F* hSideRate[2][2];						//< rate for [side][muon/beta]
+	TH1F* hBkhfFailRate;						//< rate of bad Bkhf events
+	TH1F* hEvnbFailRate;						//< rate of bad Evnb events
+	TH1F* hHitsProfile[2][2];					//< 1D hit position histograms [side][plane]
+	TH2F* hHitPos[2];							//< hit position on each side, 2D
 	TH1F* hTrigEffic[2][nBetaTubes][2];			//< trigger efficiency for [side][tube][all/trig]
 	std::vector<TH1*> hBiPulser[2][nBetaTubes];	//< Bi puser for [side][tube]
-	TH1F* hClusterTiming[2];			//< event cluster timing for [all/beta]
+	TH1F* hClusterTiming[2];					//< event cluster timing for [all/beta]
 };
 
 
