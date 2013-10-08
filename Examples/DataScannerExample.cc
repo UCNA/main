@@ -16,17 +16,14 @@ int main(int argc, char *argv[]) {
 	// set the data scanner to use this calibrator
 	G2P.setCalibrator(PCal);
 	
-	unsigned int nToSim = 50;	// how many triggering events to simulate
-	G2P.resetSimCounters();		// reset counters for how many (triggering) events have been simulated
+	G2P.nToSim = 50;	// how events to simulate
 	// start a scan over the data. Argument "true" means start at random offset in file instead of at beginning
 	// if you really want this to be random, you will need to seed rand() with something other than default
 	// note that it can take many seconds to load the first point of a scan (loading file segment into memory), but will go much faster afterwards.
 	G2P.startScan(true);
 	
-	while(true) {
-		// load next point. If end of data is reached, this will loop back and start at the beginning again.
-		G2P.nextPoint();
-		
+	// load next point. If end of data is reached, this will loop back and start at the beginning again.
+	while(G2P.nextPoint()) {
 		// do whatever analysis you want on this event.
 		
 		// check the event characteristics on each side
@@ -43,13 +40,7 @@ int main(int argc, char *argv[]) {
 			// print out event primary info, only available in simulation
 			printf("\tprimary KE=%g, cos(theta)=%g\n",G2P.ePrim,G2P.costheta);
 		}
-		
-		// break when enough data has been generated.
-		if(G2P.nSimmed>=nToSim)
-			break;
 	}
-	
-	
 	
 	return 0;
 }
