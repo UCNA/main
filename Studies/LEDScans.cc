@@ -96,7 +96,7 @@ LEDAnalyzer::LEDAnalyzer(std::string nm, std::string bp): OutputManager(nm,bp), 
 	hPed = registeredTH1F("hPed", "Pedestal Events", 250, -5, 20);
 	hAvgEnergy = registeredTH1F("hAvgEnergy", "Corrected Smoothed Energy", nbinsx*5, emin, emax);
 	
-	double rebin = 100;
+	double rebin = 10;
 	hE8 = registeredTH2F("hE8","corrected energy spread",nbinsx/rebin,emin,emax,nbinsy,-wmax/3,wmax/3);
 	pE8 = new TProfile("pE8","corrected energy spread",nbinsx/rebin,emin,emax);
 	
@@ -413,17 +413,17 @@ double CalcCorrelation(TGraph* wi, TGraph* wj, TGraph* wij, double x) {
 
 TGraphErrors* CorrelationGraph(TGraphErrors* wi, TGraphErrors* wj, TGraphErrors* wij) {
 	TGraphErrors* g = new TGraphErrors(wij->GetN());
-	for(unsigned int i=0; i<wij->GetN(); i++) {
+	for(int i=0; i<wij->GetN(); i++) {
 		double x,si,sj,sij;
 		wi->GetPoint(i,x,si);
 		wj->GetPoint(i,x,sj);
 		wij->GetPoint(i,x,sij);
-		g->SetPoint(i,x,(sij-si-sj)); ///(2*sqrt(si*sj)));
+		g->SetPoint(i,x,(sij-si-sj)*0.5); // /(2*sqrt(si*sj)));
 		
 		double ei = wi->GetErrorY(i);
 		double ej = wj->GetErrorY(i);
-		double eij = wij->GetErrorY(i);
-		g->SetPointError(i,0,sqrt(ei*ei+ej*ej));
+		//double eij = wij->GetErrorY(i);
+		g->SetPointError(i,0,sqrt(ei*ei+ej*ej)*0.5);
 	}
 	return g;
 }
@@ -436,6 +436,8 @@ void LEDAnalyzer::CalcCorrelations() {
 	pE0->Draw();
 	printCanvas("EnergyCorrection");
 	
+	defaultCanvas->SetLeftMargin(0.15);
+	
 	TGraphErrors* gE8W = TProfWidthSquared(*pE8);
 	
 	TF1 lineFit("lineFit","pol1",50,emax);
@@ -445,19 +447,17 @@ void LEDAnalyzer::CalcCorrelations() {
 	gE8W->SetMarkerStyle(7);
 	gE8W->SetTitle("Spread in E_{8} from LED scan");
 	gE8W->GetXaxis()->SetTitle("Energy [keV]");
-	gE8W->GetYaxis()->SetTitle("Width^{2} [kev^{2}]");
-	gE8W->GetYaxis()->SetTitleOffset(1.4);
+	gE8W->GetYaxis()->SetTitle("Width^{2} [keV^{2}]");
+	gE8W->GetYaxis()->SetTitleOffset(1.75);
 	gE8W->Draw("APZ");
-	lineFit.SetLineStyle(2);
-	lineFit.SetRange(0,emax);
-	lineFit.Draw("Same");
+	//lineFit.SetLineStyle(2);
+	//lineFit.SetRange(0,emax);
+	//lineFit.Draw("Same");
 	printCanvas("E8width");
 	
 	double w20 = gE8W->Eval(0);
 	double w2l = lineFit.Eval(0);
 	printf("Ped width kev^2: %.1f; Extrapolated 0 width kev^2: %.1f\n",w20,w2l);
-	
-	defaultCanvas->SetLeftMargin(0.15);
 	
 	// PMT width (and PMT sum width) graphs
 	TGraphErrors* gCP[2][nBetaTubes][nBetaTubes];
@@ -473,7 +473,7 @@ void LEDAnalyzer::CalcCorrelations() {
 			gCP[s][t][t]->SetMarkerStyle(7);
 			gCP[s][t][t]->SetTitle((sideSubst("PMT %c",s)+itos(t+1)).c_str());
 			gCP[s][t][t]->GetXaxis()->SetTitle("Energy [keV]");
-			gCP[s][t][t]->GetYaxis()->SetTitle("Width^{2} [kev^{2}]");
+			gCP[s][t][t]->GetYaxis()->SetTitle("Width^{2} [keV^{2}]");
 			gCP[s][t][t]->GetYaxis()->SetTitleOffset(1.8);
 			gCP[s][t][t]->Draw("APZ");
 			printCanvas(sideSubst("Width_%c",s)+itos(t+1));
@@ -486,7 +486,7 @@ void LEDAnalyzer::CalcCorrelations() {
 	}
 	
 	// pedestal correlations
-	printf("\n\n********* Pedestal Correlations ****************\n");
+	printf("\n\n************ Pedestal Correlations ****************\n");
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t1=0; t1<nBetaTubes; t1++) {
 			for(unsigned int t2=0; t2<t1; t2++) {
@@ -497,6 +497,16 @@ void LEDAnalyzer::CalcCorrelations() {
 				double c = (s2ij-s2i-s2j)/(2*sqrt(s2i*s2j));
 				printf("%c %i,%i %.2f,%.2f,%.2f c = %.2f\n",sideNames(s),t1,t2,s2i,s2j,s2ij,c);
 			}
+		}
+	}
+	printf("************ Cross-Side Correlations ****************\n");
+	for(unsigned int t1=0; t1<nBetaTubes; t1++) {
+		for(unsigned int t2=0; t2<nBetaTubes; t2++) {
+			double s2i = gCP[EAST][t1][t1]->Eval(0);
+			double s2j = gCP[WEST][t2][t2]->Eval(0);
+			double s2ij = gCPEW[t1][t2]->Eval(0);
+			double c = (s2ij-s2i-s2j)/(2*sqrt(s2i*s2j));
+			printf("E%i:W%i %.2f,%.2f,%.2f c = %.2f\n",t1,t2,s2i,s2j,s2ij,c);
 		}
 	}
 	
@@ -511,7 +521,7 @@ void LEDAnalyzer::CalcCorrelations() {
 				g->SetMarkerStyle(7);
 				g->GetXaxis()->SetTitle("Energy [keV]");
 				//g->GetYaxis()->SetTitle("Correlation");
-				g->GetYaxis()->SetTitle("Correlated Width [kev^{2}]");
+				g->GetYaxis()->SetTitle("Correlated Width^{2} [keV^{2}]");
 				g->GetYaxis()->SetTitleOffset(1.4);
 				g->GetYaxis()->SetRangeUser(0,800);
 				g->Draw("AP");
@@ -529,9 +539,9 @@ void LEDAnalyzer::CalcCorrelations() {
 			g->SetMarkerStyle(7);
 			g->GetXaxis()->SetTitle("Energy [keV]");
 			//g->GetYaxis()->SetTitle("Correlation");
-			g->GetYaxis()->SetTitle("Correlated Width [kev^{2}]");
+			g->GetYaxis()->SetTitle("Correlated Width^{2} [keV^{2}]");
 			g->GetYaxis()->SetTitleOffset(1.5);
-			g->GetYaxis()->SetRangeUser(0,800);
+			g->GetYaxis()->SetRangeUser(0,400);
 			g->Draw("AP");
 			if(!gAvg) gAvg = g;
 			else accumPoints(*gAvg,*g);
@@ -543,26 +553,28 @@ void LEDAnalyzer::CalcCorrelations() {
 	gAvg->SetTitle("average correlated width");
 	gAvg->SetMarkerStyle(7);
 	gAvg->GetXaxis()->SetTitle("Energy [keV]");
-	gAvg->GetYaxis()->SetTitle("Correlated Width [kev^{2}]");
+	gAvg->GetYaxis()->SetTitle("Correlated Width^{2} [keV^{2}]");
 	gAvg->GetYaxis()->SetTitleOffset(1.5);
-	gAvg->Draw("AP");
-	printCanvas("Correlations/Averaged");
+	gAvg->GetYaxis()->SetRangeUser(0,300);
+	gAvg->Draw("APZ");
+	printCanvas("Correlations/LED_Width_Avg");
 	
 	// fix LED width...
 	scale(*gAvg,-1.0);
 	accumPoints(*gE8W,*gAvg,false,true);
 	lineFit.SetLineStyle(1);
+	lineFit.SetLineWidth(2);
 	gE8W->Fit(&lineFit,"R");
 	gE8W->Draw("APZ");
 	gE8W->SetMarkerStyle(7);
-	gE8W->SetTitle("Spread in E_{8} from LED scan");
+	gE8W->SetTitle("Spread in E_{8} from LED scan, minus LED width");
 	gE8W->GetXaxis()->SetTitle("Energy [keV]");
-	gE8W->GetYaxis()->SetTitle("Width^{2} [kev^{2}]");
-	gE8W->GetYaxis()->SetTitleOffset(1.6);
+	gE8W->GetYaxis()->SetTitle("Width^{2} [keV^{2}]");
+	gE8W->GetYaxis()->SetTitleOffset(1.75);
 	gE8W->Draw("APZ");
-	lineFit.SetLineStyle(2);
-	lineFit.SetRange(0,emax);
-	lineFit.Draw("Same");
+	//lineFit.SetLineStyle(2);
+	//lineFit.SetRange(0,emax);
+	//lineFit.Draw("Same");
 	printCanvas("E8width_MinusLED");
 
 	
