@@ -7,6 +7,7 @@
 #include "TagCounter.hh"
 #include "ProcessedDataScanner.hh"
 #include "G4toPMT.hh"
+#include "Octet.hh"
 #include <TRandom3.h>
 
 class AnalyzerPlugin;
@@ -85,6 +86,8 @@ public:
 	
 	/// fill data from a ProcessedDataScanner
 	virtual void loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS);
+	/// load data from ProcessedDataScanner for FG and BG states
+	virtual void loadProcessedData(AFPState afp, ProcessedDataScanner& FG, ProcessedDataScanner& BG);
 	/// fill data from simulations
 	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim = 0, bool countAll = false);
 	/// load single current event from simulator
@@ -102,6 +105,7 @@ public:
 	GVState currentGV;				//< current foreground/background status during data scanning
 	bool needsSubtraction;			//< whether background subtraction is pending
 	bool isSimulated;				//< flag for whether this is based on simulated data
+	int depth;						//< octet division depth
 	
 	TagCounter<RunNum> runCounts;	//< type-0 event counts by run, for re-simulation
 	
@@ -173,5 +177,12 @@ public:
 	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
 	virtual void compareMCtoData(AnalyzerPlugin* AP) {}
 };
+
+/// process one pulse-pair worth of data
+unsigned int processPulsePair(RunAccumulator& RA, const Octet& PP);
+
+/// process a set of octets; return number of processed pulse-pairs
+unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& O, double replaceIfOlder = 0,
+						   bool doPlots = true, unsigned int oMin = 0, unsigned int oMax = 10000);
 
 #endif

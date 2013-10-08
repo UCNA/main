@@ -1,6 +1,7 @@
 #include "RunAccumulator.hh"
 #include "GraphUtils.hh"
 #include "SMExcept.hh"
+#include "PostOfficialAnalyzer.hh"
 
 TRandom3 RunAccumulator::rnd_source;
 
@@ -86,7 +87,7 @@ fgbgPair* RunAccumulator::cloneFGBGPair(const fgbgPair& p, const std::string& ne
 }
 
 RunAccumulator::RunAccumulator(OutputManager* pnt, const std::string& nm, const std::string& inflName):
-SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false) {
+SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false), depth(-1) {
 	
 	// initialize blind time to 0
 	zeroCounters();
@@ -370,6 +371,14 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 	PDS.writeCalInfo(qOut,"runcal");
 }
 
+void RunAccumulator::loadProcessedData(AFPState afp, ProcessedDataScanner& FG, ProcessedDataScanner& BG) {
+	assert(afp == AFP_OFF || afp == AFP_ON);
+	for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
+		ProcessedDataScanner& PDS = gv?FG:BG;
+		loadProcessedData(afp,gv,PDS);
+	}
+}
+
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
 	isSimulated = true;
 	setCurrentState(simData.getAFP(),GV_OPEN);
@@ -444,3 +453,75 @@ unsigned int RunAccumulator::simMultiRuns(Sim2PMT& simData, const TagCounter<Run
 	}
 	return nSimmed;
 }
+
+/* --------------------------------------------------- */
+
+
+unsigned int processPulsePair(RunAccumulator& RA, const Octet& PP) {
+	unsigned int nproc = 0;
+	std::vector<Octet> triads = PP.getSubdivs(3,false);
+	printf("Processing pulse pair for %s containing %i triads...\n",PP.octName().c_str(),int(triads.size()));
+	for(std::vector<Octet>::iterator sd = triads.begin(); sd != triads.end(); sd++) {
+		nproc++;
+		ProcessedDataScanner* PDSs[2] = {NULL,NULL};
+		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
+			PDSs[gv] = new PostOfficialAnalyzer(true);
+			PDSs[gv]->addRuns(sd->getAsymRuns(gv));
+		}
+		if(PDSs[0]->getnFiles()+PDSs[1]->getnFiles())
+			RA.loadProcessedData(sd->octAFPState(),*PDSs[1],*PDSs[0]);
+		delete(PDSs[0]);
+		delete(PDSs[1]);
+	}
+	return nproc;
+}
+
+unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, double replaceIfOlder, bool doPlots, unsigned int oMin, unsigned int oMax) {
+	
+	unsigned int nproc = 0;
+		
+	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
+		unsigned int octn = (unsigned int)(octit-Octs.begin());
+		if(octn<oMin || oMax<octn) continue;
+		
+		// check if there are any runs to process
+		printf("Processing octet '%s' at division %i...\n",octit->octName().c_str(),octit->divlevel);
+		if(!octit->getNRuns()) {
+			printf("\tThat was too easy (octet contained zero runs).\n");
+			continue;
+		}
+		RA.qOut.insert("Octet",octit->toStringmap());
+		
+		if(octit->divlevel<=2) {
+			// make sub-Analyzer for this octet, to load data if already available, otherwise re-process
+			RunAccumulator* subRA;
+			std::string inflname = RA.basePath+"/"+octit->octName()+"/"+octit->octName();
+			double fAge = fileAge(inflname+".root");
+			if(fileExists(inflname+".root") && fileExists(inflname+".txt") && fAge < replaceIfOlder) {
+				printf("Octet '%s' already scanned %.1fh ago; skipping\n",octit->octName().c_str(),fAge/3600);
+				subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),inflname);
+			} else {
+				subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),"");
+				subRA->depth = octit->divlevel;
+				nproc += processOctets(*subRA,octit->getSubdivs(octit->divlevel+1,false),replaceIfOlder, doPlots);
+			}
+			RA.addSegment(*subRA);
+			delete(subRA);
+		} else {
+			nproc += processPulsePair(RA,*octit);
+		}
+	}
+	
+	// make output for octet
+	if(RA.needsSubtraction)
+		RA.bgSubtractAll();
+	RA.calculateResults();
+	RA.uploadAnaResults();
+	if(doPlots)
+		RA.makePlots();
+	RA.write();
+	RA.setWriteRoot(true);
+	
+	return nproc;
+}
+

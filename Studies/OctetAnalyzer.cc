@@ -98,7 +98,7 @@ quadHists* OctetAnalyzer::cloneQuadHist(const quadHists* qh, const std::string& 
 }
 
 OctetAnalyzer::OctetAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
-RunAccumulator(pnt,nm,inflName), depth(-1), simPerfectAsym(false) { }
+RunAccumulator(pnt,nm,inflName), simPerfectAsym(false) { }
 
 void OctetAnalyzer::setFillPoints(AFPState afp, GVState gv) {
 	for(std::map<std::string,quadHists*>::iterator it = coreHists.begin(); it != coreHists.end(); it++)
@@ -115,15 +115,6 @@ const quadHists* OctetAnalyzer::getCoreHist(const std::string& qname) const {
 	std::map<std::string,quadHists*>::const_iterator it = coreHists.find(qname);
 	assert(it != coreHists.end());
 	return it->second;
-}
-
-void OctetAnalyzer::loadProcessedData(AFPState afp, ProcessedDataScanner& FG, ProcessedDataScanner& BG) {
-	assert(afp == AFP_OFF || afp == AFP_ON);
-	for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
-		ProcessedDataScanner& PDS = gv?FG:BG;
-		setFillPoints(afp,gv);
-		RunAccumulator::loadProcessedData(afp,gv,PDS);
-	}
 }
 
 void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
@@ -368,77 +359,4 @@ void OctetAnalyzerPlugin::drawQuadSides(quadHists* qhE, quadHists* qhW, bool com
 		}
 	}
 }
-
-
-/* --------------------------------------------------- */
-
-
-unsigned int processPulsePair(OctetAnalyzer& OA, const Octet& PP) {
-	unsigned int nproc = 0;
-	std::vector<Octet> triads = PP.getSubdivs(3,false);
-	printf("Processing pulse pair for %s containing %i triads...\n",PP.octName().c_str(),int(triads.size()));
-	for(std::vector<Octet>::iterator sd = triads.begin(); sd != triads.end(); sd++) {
-		nproc++;
-		ProcessedDataScanner* PDSs[2] = {NULL,NULL};
-		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
-			PDSs[gv] = new PostOfficialAnalyzer(true);
-			PDSs[gv]->addRuns(sd->getAsymRuns(gv));
-		}
-		if(PDSs[0]->getnFiles()+PDSs[1]->getnFiles())
-			OA.loadProcessedData(sd->octAFPState(),*PDSs[1],*PDSs[0]);
-		delete(PDSs[0]);
-		delete(PDSs[1]);
-	}
-	return nproc;
-}
-
-unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, double replaceIfOlder, bool doPlots, unsigned int oMin, unsigned int oMax) {
-	
-	unsigned int nproc = 0;
-		
-	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
-		unsigned int octn = (unsigned int)(octit-Octs.begin());
-		if(octn<oMin || oMax<octn) continue;
-		
-		// check if there are any runs to process
-		printf("Processing octet '%s' at division %i...\n",octit->octName().c_str(),octit->divlevel);
-		if(!octit->getNRuns()) {
-			printf("\tThat was too easy (octet contained zero runs).\n");
-			continue;
-		}
-		OA.qOut.insert("Octet",octit->toStringmap());
-		
-		if(octit->divlevel<=2) {
-			// make sub-Analyzer for this octet, to load data if already available, otherwise re-process
-			OctetAnalyzer* subOA;
-			std::string inflname = OA.basePath+"/"+octit->octName()+"/"+octit->octName();
-			double fAge = fileAge(inflname+".root");
-			if(fileExists(inflname+".root") && fileExists(inflname+".txt") && fAge < replaceIfOlder) {
-				printf("Octet '%s' already scanned %.1fh ago; skipping\n",octit->octName().c_str(),fAge/3600);
-				subOA = (OctetAnalyzer*)OA.makeAnalyzer(octit->octName(),inflname);
-			} else {
-				subOA = (OctetAnalyzer*)OA.makeAnalyzer(octit->octName(),"");
-				subOA->depth = octit->divlevel;
-				nproc += processOctets(*subOA,octit->getSubdivs(octit->divlevel+1,false),replaceIfOlder, doPlots);
-			}
-			OA.addSegment(*subOA);
-			delete(subOA);
-		} else {
-			nproc += processPulsePair(OA,*octit);
-		}
-	}
-	
-	// make output for octet
-	if(OA.needsSubtraction)
-		OA.bgSubtractAll();
-	OA.calculateResults();
-	OA.uploadAnaResults();
-	if(doPlots)
-		OA.makePlots();
-	OA.write();
-	OA.setWriteRoot(true);
-	
-	return nproc;
-}
-
 
