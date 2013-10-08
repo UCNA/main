@@ -7,18 +7,14 @@
 #include "GraphicsUtils.hh"
 #include "PositionResponse.hh"
 #include "BetaDecayAnalyzer.hh"
-#include "CathodeTweakAnalyzer.hh"
 #include "XenonAnalyzer.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "PlotMakers.hh"
 #include "PMTGenerator.hh"
 #include "ReSource.hh"
 #include "G4toPMT.hh"
-#include "LED2PMT.hh"
 #include "PenelopeToPMT.hh"
-#include "LEDScans.hh"
 #include "NuclEvtGen.hh"
-#include "EnumerationFitter.hh"
 #include "AsymmetryCorrections.hh"
 
 std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
@@ -285,209 +281,12 @@ void mi_makeSimSpectrum(std::deque<std::string>&, std::stack<std::string>& stack
 	OM.printCanvas(simName);
 }
 
-/// miscellaneous named routines not given separate menu items
-void mi_misc(std::deque<std::string>&, std::stack<std::string>& stack) {
-	
-	std::string rname = streamInteractor::popString(stack);
-	
-	if(rname == "led_pmt_corr") {
-		if(true) {
-			{
-				LEDAnalyzer LA("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorrDatNew");
-				LEDScanScanner LSS;
-				std::vector<RunNum> bruns = selectRuns(16193, 16216, "beta");
-				//std::vector<RunNum> bruns = selectRuns(16097, 16216, "beta");
-				LSS.addRuns(bruns);
-				//LSS.addRun(16194);
-				//LA.buildPerceptronTree();
-				LA.ScanData(LSS);
-				LA.CalcCorrelations();
-				//LA.CalcTrigEffic();
-				//LA.CalcLightBal();
-				LA.write();
-				//LA.setWriteRoot(true);
-			}
-			//OutputManager OM("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorrDatNew");
-			//makeMLPfit(OM);
-		}
-		if(false) {
-			LED2PMT L2P;
-
-			// load MultiLayerPerceptron trigger prob fit
-			TFile f((getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorrDatNew/PMTCorr.root").c_str(),"READ");
-			TMultiLayerPerceptron* TMLP[2];
-			TriggerProbMLP* TProb[2];
-			for(Side s = EAST; s <= WEST; ++s) {
-				TMLP[s] = (TMultiLayerPerceptron*)f.Get(sideSubst("TrigMLP_%c",s).c_str());
-				assert(TMLP[s]);
-				TMLP[s]->Print();
-				TProb[s] = new TriggerProbMLP(TMLP[s]);
-				L2P.PGen[s].setTriggerProb(TProb[s]);
-			}
-
-			L2P.nToSim = 60000;
-			L2P.PGen[EAST].crosstalk = L2P.PGen[WEST].crosstalk  = 0;
-			L2P.PGen[EAST].pedcorr = L2P.PGen[WEST].pedcorr  = 0.2;
-			L2P.PGen[EAST].setLightbal(EAST, 0.928815, 0.859369, 1.20333, 1.03771);
-			L2P.PGen[WEST].setLightbal(WEST, 0.935987, 1.04881, 1.07959, 0.941108);
-			PMTCalibrator PCal(16194);
-			L2P.setCalibrator(PCal);
-			LEDAnalyzer LA("PMTCorrSim",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorrSim_C0.2");
-			for(unsigned int i=0; i<9; i++)
-				LA.ScanData(L2P);
-			LA.CalcCorrelations();
-			LA.CalcTrigEffic();
-			LA.CalcLightBal();
-			LA.write();
-		}
-	}
-	
-	if(rname=="anchoices_penelope") {
-		//OutputManager OMdat("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/Anchoices/");
-		//calcAnalysisChoices(OMdat, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
-		//return;
-		std::string sim = "SimPen";
-		OutputManager OMsim("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/Anchoices_"+sim+"/");
-		calcAnalysisChoices(OMsim, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim);
-		return;
-	}
-	
-	if(rname=="magf_mc_comparison") {
-		std::string sim = "SimMagF_4x";
-		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCChanges_"+sim+"/");
-		compareMCs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Sim0823_4x/OctetAsym_Offic_Sim0823_4x",
-				 getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,"MagF");
-	}
-	
-	std::string sim = "Sim0823_4x";
-	//std::string sim = "SimPen";
-	//std::string sim = "thinfoil";
-	
-	if(rname=="make_mc_correction") {
-		// MC correction for data set
-		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_"+sim+"/");
-		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
-				  getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,
-				  getEnvSafe("UCNA_AUX")+"/Corrections/", false);
-	}
-	
-	if(rname=="make_mc_self_correction") {
-		// MC self-correction
-		sim = "thinfoil";
-		std::string simOutNm = getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim;
-		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors/"+sim+"/");
-		calcMCCorrs(OM, simOutNm, simOutNm,getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors/"+sim+"/");
-		
-		AnalysisChoice a = ANCHOICE_C;
-		OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), simOutNm);
-		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
-		OAdat.addPlugin(AAdat);
-		AAdat->anChoice = a;
-		doFullCorrections(*AAdat,OM,OM.basePath);
-		
-		OM.write();
-	}
-	
-	if(rname=="apply_mc_correction") {
-		OutputManager OM("CorrectedAsym",getEnvSafe("UCNA_ANA_PLOTS")+"/test/CorrectAsym_"+sim+"/");
-		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
-			if(a!=ANCHOICE_C) continue;
-			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
-			AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
-			OAdat.addPlugin(AAdat);
-			AAdat->anChoice = a;
-			doFullCorrections(*AAdat,OM);
-		}
-		OM.write();
-	}
-	
-	if(rname=="sep_23") {
-		separate23(sim);
-	}
-	
-	if(rname=="fit_bg_excess") {
-		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
-		EnumerationFitter EF;
-		TGraphErrors* g = EF.loadFitFile("/home/mmendenhall/BGExcess_Combo_W.txt");
-		TF1* f = EF.getFitter();
-		f->SetRange(0,g->GetN());
-		for(unsigned int i=0; i<EF.getNParams(); i++)
-			f->SetParLimits(i,0.,100.);
-		g->Fit(f,"R");
-		printf("Chi2/ndf = %g/%i\n",f->GetChisquare(),f->GetNDF());
-		g->Draw("A*");
-		OMTest.printCanvas("BG_Components_ComboW");
-		return;
-	}
-	
-	if(rname=="make_errtables") {
-		ErrTables ET;
-		ET.gainfluctsTable(0.000125);
-		ET.pedShiftsTable(0.015);
-		ET.muonVetoEfficTable(0.002);
-		ET.NGBGTable(0.99,0.08,0.48,0.09, 0.25);
-		return;
-	}
-	
-	if(rname=="combo_ngbg_spectrum") {
-		OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
-		SimBetaDecayAnalyzer AH(&OM,"Combined");
-		
-		SimBetaDecayAnalyzer AH1(&OM,"ScintFace_nCaptH",OM.basePath+"/ScintFace_nCaptH/ScintFace_nCaptH");
-		AH1.scaleData(0.126);
-		SimBetaDecayAnalyzer AH2(&OM,"DetAl_nCaptAl",OM.basePath+"/DetAl_nCaptAl/DetAl_nCaptAl");
-		AH2.scaleData(0.073);
-		SimBetaDecayAnalyzer AH3(&OM,"DetAl_nCaptAlGamma",OM.basePath+"/DetAl_nCaptAlGamma/DetAl_nCaptAlGamma");
-		AH3.scaleData(0.594);
-		
-		AH.addSegment(AH1);
-		AH.addSegment(AH2);
-		AH.addSegment(AH3);
-		
-		AH.calculateResults();
-		AH.makePlots();
-		AH.write();
-		AH.setWriteRoot(true);
-	}
-	
-	if(rname=="ngbg_spectra") {
-		//NGBGSpectra("EndcapEdge_nCaptH");
-		//NGBGSpectra("EndcapEdge_nCaptCu");
-		//NGBGSpectra("TrapWall_Cu66");
-		//NGBGSpectra("TrapWall_nCaptCu");
-		//NGBGSpectra("EntryPort_Al28");
-		//NGBGSpectra("EntryPort_nCaptAl");
-		NGBGSpectra("DetAl_nCaptAl");
-		NGBGSpectra("DetAl_nCaptAlGamma");
-		NGBGSpectra("ScintFace_nCaptH");
-	}
-	
-	if(rname=="wirechamber_cal") {
-		processWirechamberCal(14264,16077,20);
-	}
-	
-	if(rname=="decompose_xenon") {
-		//decomposeXenon(15991,true);
-		//decomposeXenon(14282,false);
-		//decomposeXenon(14347,false);
-		//decomposeXenon(17224,false);
-	}
-	
-	if(rname=="compare_xenon") {
-		compareXenonSpectra();
-	}
-	
-	return;
-}
-
 void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	ROOTStyleSetup();
 	
 	inputRequester exitMenu("Exit Menu",&menutils_Exit);
 	inputRequester peek("Show stack",&menutils_PrintStack);
-	inputRequester doMisc("Misc",&mi_misc);
-	doMisc.addArg("routine","none");
 	
 	// selection utilities
 	NameSelector selectRuntype("Run Type");
@@ -583,7 +382,6 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OM.addChoice(&uploadSources,"us");
 	OM.addChoice(&evis2etrue,"ev");
 	OM.addChoice(&radcor,"rc");
-	OM.addChoice(&doMisc,"msc");
 	OM.addChoice(&exitMenu,"x");
 	OM.addSynonym("x","exit");
 	OM.addSynonym("x","quit");

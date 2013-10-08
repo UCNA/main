@@ -49,7 +49,7 @@ Physics = BetaSpectrum.o ElectronBindingEnergy.o NuclEvtGen.o
 
 Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
 		SectorCutter.o LinHistCombo.o Enums.o Types.o FloatErr.o SMExcept.o Octet.o SpectrumPeak.o Source.o \
-		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o RData.o EnumerationFitter.o StyleSetup.o
+		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o EnumerationFitter.o StyleSetup.o
 
 Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberCalibrator.o \
 		EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
@@ -61,7 +61,7 @@ Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o \
 	MuonAnalyzer.o PositionAnalyzer.o WirechamberGainAnalyzer.o BGDecayAnalyzer.o HighEnergyExcess.o \
 	AsymmetryAnalyzer.o SimAsymmetryAnalyzer.o BetaDecayAnalyzer.o \
 	CathodeTweakAnalyzer.o PositionBinnedAnalyzer.o AnodePositionAnalyzer.o XenonAnalyzer.o \
-	PlotMakers.o LEDScans.o AsymmetryCorrections.o FierzFitter.o
+	PlotMakers.o AsymmetryCorrections.o FierzFitter.o
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
@@ -82,11 +82,11 @@ libUCNA.a: $(objects)
 	
 
 ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm CombinedAbFit \
-	FPNCalc MC_Comparisons MWPC_Efficiency_Sim FierzOctetAnalyzer OctetAnalyzerExample
+	FPNCalc  MWPC_Efficiency_Sim FierzOctetAnalyzer OctetAnalyzerExample
 
 examples: $(ExampleObjs)
 
-StandaloneObjs = GammaComptons BetaEndpoint
+StandaloneObjs = GammaComptons BetaEndpoint MC_Comparisons LEDScans MiscJunk
 
 standalone: $(StandaloneObjs)
 
