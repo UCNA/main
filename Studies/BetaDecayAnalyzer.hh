@@ -15,9 +15,6 @@ public:
 	BetaDecayAnalyzer(OutputManager* pnt, const std::string& nm = "BetaDecayAnalyzer", const std::string& inflName = "");
 	/// create a new instance of this object (cloning self settings) for given directory
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new BetaDecayAnalyzer(this,nm,inflname); }
-	/// get processed data location for background estimation
-	virtual std::string estimatorHistoLocation() const { return processedLocation; }
-	static std::string processedLocation;	//< processed data location for background estimation
 	
 	MuonAnalyzer* myMuons;			//< muons plugin
 	PositionAnalyzer* myPos;		//< positions plugin

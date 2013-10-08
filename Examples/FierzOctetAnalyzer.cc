@@ -96,8 +96,6 @@ void FierzAnalyzerPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 	printCanvas("DataComparison/Full_Energy_Asymmetry");
 }
 
-string FierzOctetAnalyzer::processedLocation = "";	// set this later depending on situtation
-
 FierzOctetAnalyzer::FierzOctetAnalyzer(OutputManager* pnt, const string& nm, const string& inflname): OctetAnalyzer(pnt,nm,inflname) {
 	addPlugin(myFierz = new FierzAnalyzerPlugin(this));
 }
@@ -116,7 +114,7 @@ int main(int argc, char *argv[]) {
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 
 	// after running once, we can use the results for errorbar estimation in low-count background bins on later scans
-	FierzOctetAnalyzer::processedLocation = OM.basePath+"/Fierz_Processed_Analysis/Fierz_Processed_Analysis";
+	RunAccumulator::processedLocation = OM.basePath+"/Fierz_Processed_Analysis/Fierz_Processed_Analysis";
 
 	if(string(argv[1])=="scan") {
 		
@@ -136,7 +134,7 @@ int main(int argc, char *argv[]) {
 	} else if(string(argv[1])=="sim") {
 		
 		// make another version of the analyzer, with a different output path for simulation, pointing to the data to clone
-		//FierzOctetAnalyzer OAE_Sim(&OM, "Full_Energy_Asymmetry_Example_Simulated", FierzOctetAnalyzer::processedLocation);
+		//FierzOctetAnalyzer OAE_Sim(&OM, "Full_Energy_Asymmetry_Example_Simulated", RunAccumulator::processedLocation);
 		FierzOctetAnalyzer OAE_Sim(&OM,"Fierz_Processed_Simulated");
 
 		// and set up a simulation data source from neutron beta decay simulation

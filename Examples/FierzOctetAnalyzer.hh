@@ -45,10 +45,6 @@ public:
 		return new FierzOctetAnalyzer(this,nm,inflname); 
 	}
 	
-	/// location of already-processed data (after first run) for errorbar estimation
-	virtual string estimatorHistoLocation() const { return FierzOctetAnalyzer::processedLocation; }
-	static string processedLocation;	//< set location here for already-processed files
-	
 	OctetAnalyzerPlugin* myFierz;
 };
 

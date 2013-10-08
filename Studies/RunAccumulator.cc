@@ -40,6 +40,8 @@ void fgbgPair::setAxisTitle(AxisDirection d, const std::string& ttl) {
 
 //------------------------------------------------------------------------
 
+std::string RunAccumulator::processedLocation = "";
+
 fgbgPair* RunAccumulator::registerFGBGPair(const std::string& hname, const std::string& title,
 										  unsigned int nbins, float xmin, float xmax, AFPState a, Side s) {
 	fgbgPair* p = new fgbgPair(hname,title,a,s);

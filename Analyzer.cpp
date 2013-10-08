@@ -151,7 +151,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	double simFactor = 1.0;
 	bool doPlots = true;
 	
-	BetaDecayAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
+	RunAccumulator::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
 	if(octn==1000) {
 		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));

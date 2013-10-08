@@ -127,7 +127,9 @@ public:
 	AnalyzerPlugin* getPlugin(const std::string& nm);
 	
 	/// location of errorbar estimates for low-rate histograms
-	virtual std::string estimatorHistoLocation() const { return ""; }
+	virtual std::string estimatorHistoLocation() const { return processedLocation; }
+	static std::string processedLocation;		//< processed data location global variable for background estimation
+
 	
 	std::map<std::string,fgbgPair*> fgbgHists;	//< background-subtractable quantities
 	float totalCounts[AFP_OTHER+1][2];			//< total type-0 event counts by [flipper][fg/bg], for re-simulation

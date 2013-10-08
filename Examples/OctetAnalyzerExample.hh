@@ -37,10 +37,6 @@ public:
 	/// cloning generator: just return another of the same subclass (with any settings you want to preserve)
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
 									   const std::string& inflname) { return new OctetAnalyzerExample(this,nm,inflname); }
-	
-	/// location of already-processed data (after first run) for errorbar estimation
-	virtual std::string estimatorHistoLocation() const { return OctetAnalyzerExample::processedLocation; }
-	static std::string processedLocation;	//< set location here for already-processed files
 
 	ExampleAnalyzerPlugin* myPlugin;	//< pointer to analyzer plugin
 };
