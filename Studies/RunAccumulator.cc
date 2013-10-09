@@ -139,10 +139,11 @@ void RunAccumulator::setCurrentState(AFPState afp, GVState gv) {
 	}
 }
 
-BlindTime RunAccumulator::getTotalTime(AFPState afp, bool fg) const {
+BlindTime RunAccumulator::getTotalTime(AFPState afp, GVState gv) const {
+	assert(gv==GV_OPEN || gv==GV_CLOSED);
 	if(afp==AFP_OTHER)
-		return totalTime[AFP_ON][fg]+totalTime[AFP_OFF][fg]+totalTime[AFP_OTHER][fg];
-	return totalTime[afp][fg];
+		return totalTime[AFP_ON][gv]+totalTime[AFP_OFF][gv]+totalTime[AFP_OTHER][gv];
+	return totalTime[afp][gv];
 }
 
 
@@ -287,7 +288,7 @@ void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor, 
 	for(std::map<std::string,fgbgPair*>::iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
 		if(!RefOA.hasFGBGPair(it->first)) continue;
 		const fgbgPair& qhRef = RefOA.getFGBGPair(it->first);
-		double bgRatio = RefOA.getTotalTime(it->second->afp,true)[it->second->mySide]/RefOA.getTotalTime(it->second->afp,false)[it->second->mySide];
+		double bgRatio = RefOA.getTotalTime(it->second->afp,GV_OPEN)[it->second->mySide]/RefOA.getTotalTime(it->second->afp,GV_CLOSED)[it->second->mySide];
 		for(unsigned int i=0; i<totalBins(it->second->h[0]); i++) {
 			double rootn = qhRef.h[0]->GetBinError(i)*sqrt(simfactor);		// root(bg counts) from ref histogram errorbars
 			double n = rootn*rootn;											// background counts from reference histogram

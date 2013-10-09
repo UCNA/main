@@ -41,18 +41,54 @@ void CathodeTweakAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weigh
 
 void CathodeTweakAnalyzer::makePlots() {
 	for(Side s = EAST; s <= WEST; ++s) {
+	
+		myA->defaultCanvas->SetRightMargin(0.14);
+		myA->defaultCanvas->SetLeftMargin(0.10);
+		
+		// normalize to rate per cm^2
+		double ascale = 10.*10.;
+		
 		TH2F* hPos = (TH2F*)hitPos[s]->h[GV_OPEN]->Clone();
-		hPos->Scale(10*M_PI*52*52/(hPos->GetXaxis()->GetBinWidth(1)*hPos->GetYaxis()->GetBinWidth(1)*hPos->Integral()));
-		hPos->SetMaximum(14);
+		hPos->Scale(ascale/(hPos->GetXaxis()->GetBinWidth(1)*hPos->GetYaxis()->GetBinWidth(1)*myA->getTotalTime(AFP_OTHER, GV_OPEN)[BOTH]));
+		hPos->SetMaximum(0.2);
 		hPos->Draw("COL Z");
 		printCanvas(sideSubst("hPos_%c",s));
-		delete hPos;
+		
 		
 		TH2F* hRaw = (TH2F*)hitPosRaw[s]->h[GV_OPEN]->Clone();
-		hRaw->Scale(10*M_PI*52*52/(hRaw->GetXaxis()->GetBinWidth(1)*hRaw->GetYaxis()->GetBinWidth(1)*hRaw->Integral()));
-		hRaw->SetMaximum(14);
+		hRaw->Scale(ascale/(hRaw->GetXaxis()->GetBinWidth(1)*hRaw->GetYaxis()->GetBinWidth(1)*myA->getTotalTime(AFP_OTHER, GV_OPEN)[BOTH]));
+		hRaw->SetMaximum(0.2);
 		hRaw->Draw("COL Z");
 		printCanvas(sideSubst("hPosRaw_%c",s));
+		
+		// profiles
+		myA->defaultCanvas->SetRightMargin(0.04);
+		myA->defaultCanvas->SetLeftMargin(0.12);
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+			
+			TH1* pPos = d==X_DIRECTION?hPos->ProjectionX():hPos->ProjectionY();
+			pPos->GetYaxis()->SetTitle("event rate [Hz/mm]");
+			pPos->GetYaxis()->SetTitleOffset(1.5);
+			pPos->Scale(1./ascale);
+			pPos->GetYaxis()->SetRangeUser(0,0.34);
+			pPos->Draw();
+			pPos->Draw("HIST SAME");
+			printCanvas(sideSubst("hPos_%c",s)+(d==X_DIRECTION?"X":"Y"));
+			
+			TH1* pRaw = d==X_DIRECTION?hRaw->ProjectionX():hRaw->ProjectionY();
+			pRaw->GetYaxis()->SetTitle("event rate [Hz/mm]");
+			pRaw->GetYaxis()->SetTitleOffset(1.5);
+			pRaw->Scale(1./ascale);
+			pRaw->GetYaxis()->SetRangeUser(0,0.34);
+			pRaw->Draw();
+			pRaw->Draw("HIST SAME");
+			printCanvas(sideSubst("hPosRaw_%c",s)+(d==X_DIRECTION?"X":"Y"));
+		
+			delete pPos;
+			delete pRaw;
+		}
+		
+		delete hPos;
 		delete hRaw;
 	}
 }

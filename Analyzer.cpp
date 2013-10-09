@@ -345,7 +345,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	octetRange.addArg("Start octet","0");
 	octetRange.addArg("end octet","1000");
 	
-	inputRequester showGenerator("Event generator",&mi_showGenerator);
+	inputRequester showGenerator("Event generator test",&mi_showGenerator);
 	showGenerator.addArg("Generator name");
 	
 	inputRequester makeSimSpectrum("Sim Spectrum",&mi_makeSimSpectrum);
@@ -354,10 +354,10 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
-	PostRoutines.addChoice(&plotGMS);
+	PostRoutines.addChoice(&plotGMS,"gms");
 	PostRoutines.addChoice(&octetProcessor,"oct");
 	PostRoutines.addChoice(&octetRange,"rng");
-	PostRoutines.addChoice(&showGenerator,"shg");
+	PostRoutines.addChoice(&showGenerator,"evg");
 	PostRoutines.addChoice(&makeSimSpectrum,"mks");
 	PostRoutines.addChoice(&exitMenu,"x");
 	

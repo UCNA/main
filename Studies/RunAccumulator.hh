@@ -74,7 +74,7 @@ public:
 	fgbgPair* cloneFGBGPair(const fgbgPair& p, const std::string& newName, const std::string& newTitle);
 
 	/// get total run time for given state
-	BlindTime getTotalTime(AFPState afp, bool fg) const;
+	BlindTime getTotalTime(AFPState afp, GVState gv) const;
 	/// get total counts for given state
 	float getTotalCounts(AFPState afp, GVState gv) const { return totalCounts[afp][gv]; }
 	/// get time contributed from given rumber
