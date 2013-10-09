@@ -28,6 +28,10 @@ void drawFiducialCuts(Int_t color = 6);
 void drawEllipseCut(Source E, Float_t nSigma, std::string label = "");
 /// draw vertical line marker
 void drawVLine(Float_t x, TVirtualPad* C, Int_t color = 4);
+/// draw horizontal line
+void drawHLine(Float_t y, TVirtualPad* C, Int_t color = 4);
+/// draw circle
+void drawCircle(float r, Int_t color = 1, Int_t lstyle = 1, float x0=0, float y0=0);
 /// draw shaded rectangle marker
 void drawExcludedRegion(Float_t x0, Float_t x1, TCanvas* C, Int_t color = 4, Int_t fill = 1001);
 /// draw sectors to current canvas

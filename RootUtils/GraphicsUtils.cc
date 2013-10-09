@@ -73,6 +73,14 @@ void drawHistoPair(TH1* hRed, TH1* hBlue, const std::string& opt, Int_t c1, Int_
 	drawSimulHistos(hToPlot,opt);
 }
 
+void drawCircle(float r, Int_t color, Int_t lstyle, float x0, float y0) {
+	TEllipse* e = new TEllipse(x0,y0,r,r);
+	e->SetFillStyle(0);
+	e->SetLineColor(color);
+	e->SetLineStyle(lstyle);
+	e->Draw();
+}
+
 void drawFiducialCuts(Int_t color) {
 	// decay tube (5")
 	TEllipse* e1 = new TEllipse(0,0,decay_tube_radius,decay_tube_radius);
@@ -89,6 +97,8 @@ void drawFiducialCuts(Int_t color) {
 	e2->SetLineStyle(2);
 	e2->Draw();
 }
+
+
 
 void drawEllipseCut(Source E, Float_t nSigma, std::string label) {
 	
@@ -117,6 +127,15 @@ void drawVLine(Float_t x, TVirtualPad* C, Int_t color) {
 		ymax = pow(10,ymax);
 	}
 	TLine* l = new TLine(x,ymin,x,ymax);
+	l->SetLineColor(color);
+	l->Draw();
+}
+
+void drawHLine(Float_t y, TVirtualPad* C, Int_t color) {
+	Double_t xmin,ymin,xmax,ymax;
+	C->Update();
+	C->GetRangeAxis(xmin,ymin,xmax,ymax);
+	TLine* l = new TLine(xmin,y,xmax,y);
 	l->SetLineColor(color);
 	l->Draw();
 }

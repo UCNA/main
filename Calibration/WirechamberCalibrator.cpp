@@ -1,5 +1,6 @@
 #include "WirechamberCalibrator.hh"
 #include "SMExcept.hh"
+#include "GraphicsUtils.hh"
 #include <cmath>
 #include <cassert>
 #include <algorithm>
@@ -150,11 +151,32 @@ void WirechamberCalibrator::calcDoubletHitPos(wireHit& h, float x0, float x1, fl
 			h.height = exp( pow(log(y1/y0)*sigma0,2)/2 + log(y0*y1)/2 + 1/(8*sigma0*sigma0) );
 }
 
+hitRecon calcTanCenter(double sm, double s0, double sp, double pm, double p0, double pp) {
+	static TF1* hTanFit = new TF1("hTanFit","[0]*(atan(([1]-x+0.5)/[2]) - atan(([1]-x-0.5)/[2])+(x==0)*0.5)",-1.5,1.5);
+	static TGraph* gpts = new TGraph(3);
+	gpts->SetPoint(0, -1, sm);
+	gpts->SetPoint(1, 0, s0);
+	gpts->SetPoint(2, 1, sp);
+	hTanFit->SetParameter(0, 1.0);
+	hTanFit->SetParameter(1, 0.0);
+	hTanFit->FixParameter(2, 1.0);
+	hTanFit->SetParameter(0, s0/hTanFit->Eval(0));
+	gpts->Fit(hTanFit,"QRN");
+	
+	hitRecon r;
+	r.c = hTanFit->GetParameter(1);
+	r.c = p0+(pp-p0)*r.c;
+	r.h = hTanFit->GetParameter(0);
+	r.w = hTanFit->GetParameter(2)*(pp-p0);
+	r.flags = 0;
+	return r;
+}
+
 wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
-										  std::vector<float>& wireValues, std::vector<float>& wirePeds) const {
+										  std::vector<float>& wireValues, std::vector<float>& wirePeds, hitRecon* hLorentzian) const {
 	
 	assert(s<=WEST && d<=Y_DIRECTION);
-	const unsigned int nWires = wirePos[s][d].size();
+	const unsigned int nWires = (unsigned int)wirePos[s][d].size();
 	assert(wireValues.size()>=nWires);
 	float x1,x2,x3,y1,y2,y3;
 	
@@ -201,7 +223,7 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 				continue;
 			h.maxValue = wireValues[c]*cnm;
 			h.maxWire = c;
-			maxn = xs.size()-1;
+			maxn = (int)xs.size()-1;
 		}
 	}
 	
@@ -214,7 +236,9 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 	if(maxn==0 || maxn==int(xs.size())-1)
 		h.errflags |= WIRES_EDGE;
 	
-	
+	if(hLorentzian)
+		hLorentzian->flags = 1;
+		
 	//---------------
 	// special cases: edge wires
 	//---------------
@@ -299,6 +323,12 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 		h.errflags |= WIRES_NONUNIF;
 	}
 	
+	// optional Lorentzian center reconstruction
+	if(hLorentzian) {
+		*hLorentzian = calcLorentzCenter(y1, y2, y3, x1, x2, x3);
+		hLorentzian->flags = 0;
+	}
+	
 	// calculate gaussian center for non-uniform wires, width and height for all wires
 	y1 = log(y1);
 	y2 = log(y2);
@@ -311,5 +341,25 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 		h.rawCenter = h.center = gcenter;
 	
 	return h;
+}
+
+hitRecon WirechamberCalibrator::calcLorentzCenter(double sm, double s0, double sp, double pm, double p0, double pp) {
+	hitRecon r;
+	double dnm = (pp-p0)*sp*s0 + (pm-pp)*sm*sp + (p0-pm)*s0*sm;
+	r.c = ( (pp*pp-p0*p0)*sp*s0 + (pm*pm-pp*pp)*sm*sp + (p0*p0-pm*pm)*s0*sm ) / (2*dnm);
+	double aL = (p0-pm)*(pp-pm)*(pp-p0)*sm*s0*sp / dnm;
+	r.w = sqrt(aL/s0 - (r.c-p0)*(r.c-p0));
+	r.h = aL/(r.w*r.w);
+	r.a = M_PI*aL/r.w;
+	r.flags = 0;
+	return r;
+}
+
+void WirechamberCalibrator::drawWires(Side s, AxisDirection p, TVirtualPad* C, Int_t color, AxisDirection onAxis) const {
+	assert(C);
+	assert(s<=WEST && p<=Y_DIRECTION);
+	for(std::vector<double>::const_iterator it = wirePos[s][p].begin(); it != wirePos[s][p].end(); it++)
+		if(onAxis==X_DIRECTION) drawVLine(*it,C,color);
+		else drawHLine(*it,C,color);
 }
 
