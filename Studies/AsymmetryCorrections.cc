@@ -1,6 +1,6 @@
 #include "AsymmetryCorrections.hh"
-#include "AsymmetryAnalyzer.hh"
-#include "SimAsymmetryAnalyzer.hh"
+#include "AsymmetryPlugin.hh"
+#include "SimAsymmetryPlugin.hh"
 #include "GraphUtils.hh"
 #include "PathUtils.hh"
 #include "BetaSpectrum.hh"
@@ -41,7 +41,7 @@ AsymCorrFile::AsymCorrFile(const std::string& nm, const std::string& basepath): 
 	printf("Loaded %i points for correction '%s'\n",gCor.GetN(),name.c_str());
 }
 
-void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcBase) {
+void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBase) {
 	
 	AA.calculateResults();
 	AA.hCxn = (TH1F*)AA.hAsym->Clone("hCxn");
@@ -228,15 +228,15 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcB
 void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin, const std::string& outDir, bool oldCorr) {
 	for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_E; ++a) {
 		OctetAnalyzer OAdat(&OM, "DataCorrector", datin);
-		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+		AsymmetryPlugin* AAdat = new AsymmetryPlugin(&OAdat);
 		AAdat->anChoice = a;
 		OAdat.addPlugin(AAdat);
 		
 		OctetAnalyzer OAsim(&OM, "Corr_Anchoice_"+ctos(choiceLetter(a)), simin);
-		AsymmetryAnalyzer* AAsim = new AsymmetryAnalyzer(&OAsim);
+		AsymmetryPlugin* AAsim = new AsymmetryPlugin(&OAsim);
 		AAsim->anChoice = a;
 		OAsim.addPlugin(AAsim);
-		SimAsymmetryAnalyzer* SAAsim = new SimAsymmetryAnalyzer(&OAsim);
+		SimAsymmetryPlugin* SAAsim = new SimAsymmetryPlugin(&OAsim);
 		OAsim.addPlugin(SAAsim);
 		
 		std::vector<TH1*> asymStages = oldCorr?SAAsim->calculateCorrectionsOld(*AAsim):SAAsim->calculateCorrections(*AAdat,*AAsim);
@@ -294,10 +294,10 @@ void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string&
 
 void compareMCs(OutputManager& OM, const std::string& sim0, const std::string& sim1, const std::string& fOut) {
 	OctetAnalyzer OA0(&OM, "DataCorrector", sim0);
-	AsymmetryAnalyzer* AA0 = new AsymmetryAnalyzer(&OA0);
+	AsymmetryPlugin* AA0 = new AsymmetryPlugin(&OA0);
 	OA0.addPlugin(AA0);
 	OctetAnalyzer OA1(&OM, "DataCorrector", sim1);
-	AsymmetryAnalyzer* AA1 = new AsymmetryAnalyzer(&OA1);
+	AsymmetryPlugin* AA1 = new AsymmetryPlugin(&OA1);
 	OA1.addPlugin(AA1);
 	
 	AA1->anChoice = AA0->anChoice;

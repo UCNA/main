@@ -58,9 +58,9 @@ Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAn
 		PenelopeToPMT.o LED2PMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
 
 Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o \
-	MuonAnalyzer.o PositionAnalyzer.o WirechamberGainAnalyzer.o BGDecayAnalyzer.o HighEnergyExcess.o \
-	AsymmetryAnalyzer.o SimAsymmetryAnalyzer.o BetaDecayAnalyzer.o \
-	CathodeTweakAnalyzer.o PositionBinnedAnalyzer.o AnodePositionAnalyzer.o XenonAnalyzer.o \
+	MuonPlugin.o PositionsPlugin.o WirechamberAnodePlugins.o BGDecayPlugin.o HighEnergyExcess.o \
+	AsymmetryPlugin.o SimAsymmetryPlugin.o BetaDecayAnalyzer.o \
+	CathodeTuningAnalyzer.o PositionBinnedPlugin.o AnodeGainMapPlugin.o XenonAnalyzer.o \
 	PlotMakers.o AsymmetryCorrections.o FierzFitter.o
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)

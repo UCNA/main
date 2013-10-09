@@ -206,7 +206,7 @@ void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
 		OutputManager OM("CorrectedAsym",outPath+"/CorrectAsym/");
 		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
 			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), outPath+"/"+datset);
-			AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+			AsymmetryPlugin* AAdat = new AsymmetryPlugin(&OAdat);
 			OAdat.addPlugin(AAdat);
 			AAdat->anChoice = a;
 			doFullCorrections(*AAdat,OM);

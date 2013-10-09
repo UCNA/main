@@ -2,24 +2,24 @@
 
 BetaDecayAnalyzer::BetaDecayAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
 OctetAnalyzer(pnt,nm,inflName) {
-	addPlugin(myMuons = new MuonAnalyzer(this));
-	addPlugin(myPos = new PositionAnalyzer(this));
-	addPlugin(myAG = new AnodeGainAnalyzer(this));
-	addPlugin(myCG = new CathodeGainAnalyzer(this));
-	addPlugin(myAsym = new AsymmetryAnalyzer(this));
-	//addPlugin(myHEE = new HighEnergyExcessAnalyzer(this));
+	addPlugin(myMuons = new MuonPlugin(this));
+	addPlugin(myPos = new PositionsPlugin(this));
+	addPlugin(myAG = new AnodeGainPlugin(this));
+	addPlugin(myCG = new CathodeGainPlugin(this));
+	addPlugin(myAsym = new AsymmetryPlugin(this));
+	//addPlugin(myHEE = new HighEnergyExcessPlugin(this));
 }
 
 //-----------------------------------------
 
 SimBetaDecayAnalyzer::SimBetaDecayAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
 OctetAnalyzer(pnt,nm,inflName) {
-	addPlugin(myPos = new PositionAnalyzer(this));
-	addPlugin(myAG = new AnodeGainAnalyzer(this));
-	addPlugin(myAsym = new AsymmetryAnalyzer(this));
+	addPlugin(myPos = new PositionsPlugin(this));
+	addPlugin(myAG = new AnodeGainPlugin(this));
+	addPlugin(myAsym = new AsymmetryPlugin(this));
 
-	addPlugin(mySimAsym = new SimAsymmetryAnalyzer(this));
-	addPlugin(mySimID = new WirechamberSimTypeID(this));
+	addPlugin(mySimAsym = new SimAsymmetryPlugin(this));
+	addPlugin(mySimID = new WirechamberSimBackscattersPlugin(this));
 }
 
 SegmentSaver* SimBetaDecayAnalyzer::makeAnalyzer(const std::string& nm, const std::string& inflname) {

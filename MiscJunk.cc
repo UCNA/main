@@ -5,7 +5,7 @@
 #include "PlotMakers.hh"
 #include "AsymmetryCorrections.hh"
 #include "EnumerationFitter.hh"
-#include "CathodeTweakAnalyzer.hh"
+#include "CathodeTuningAnalyzer.hh"
 
 int main(int argc, char *argv[]) {
 	
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 		
 		AnalysisChoice a = ANCHOICE_C;
 		OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), simOutNm);
-		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+		AsymmetryPlugin* AAdat = new AsymmetryPlugin(&OAdat);
 		OAdat.addPlugin(AAdat);
 		AAdat->anChoice = a;
 		doFullCorrections(*AAdat,OM,OM.basePath);
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
 			if(a!=ANCHOICE_C) continue;
 			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
-			AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+			AsymmetryPlugin* AAdat = new AsymmetryPlugin(&OAdat);
 			OAdat.addPlugin(AAdat);
 			AAdat->anChoice = a;
 			doFullCorrections(*AAdat,OM);

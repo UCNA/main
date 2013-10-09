@@ -1,7 +1,7 @@
 #ifndef ASYMMETRYCORRECTIONS_HH
 #define ASYMMETRYCORRECTIONS_HH 1
 
-#include "SimAsymmetryAnalyzer.hh"
+#include "SimAsymmetryPlugin.hh"
 #include "BetaDecayAnalyzer.hh"
 #include "OutputManager.hh"
 #include "PathUtils.hh"
@@ -53,7 +53,7 @@ protected:
 };
 
 /// do corrections to asymmetry
-void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcBase = "");
+void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBase = "");
 
 /// systematic errors table generator
 class ErrTables {

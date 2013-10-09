@@ -18,7 +18,7 @@
 #include "LinHistCombo.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "BetaDecayAnalyzer.hh"
-#include "AnodePositionAnalyzer.hh"
+#include "AnodeGainMapPlugin.hh"
 #include "AsymmetryCorrections.hh"
 #include <TColor.h>
 
@@ -569,7 +569,7 @@ void NGBGSpectra(std::string datname) {
 void separate23(std::string simName) {
 	OutputManager OM("23Separation",getEnvSafe("UCNA_ANA_PLOTS")+"/test/23Separation_"+simName+"/");
 	RunAccumulator RA(&OM, "RunAccumulator", getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+simName+"/OctetAsym_Offic_"+simName);
-	WirechamberSimTypeID* WS = new WirechamberSimTypeID(&RA);
+	WirechamberSimBackscattersPlugin* WS = new WirechamberSimBackscattersPlugin(&RA);
 	RA.addPlugin(WS);
 	WS->make23SepInfo(OM);
 	OM.write();
@@ -580,7 +580,7 @@ void separate23(std::string simName) {
 void refitXeAnode(std::string datname) {
 	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/test/");
 	RunAccumulator RA(&OM, "RunAccumulator", datname);
-	AnodePositionAnalyzer* AP = new AnodePositionAnalyzer(&RA,0);
+	AnodeGainMapPlugin* AP = new AnodeGainMapPlugin(&RA,0);
 	RA.addPlugin(AP);
 	AP->genAnodePosmap();
 }
@@ -590,7 +590,7 @@ void refitXeAnode(std::string datname) {
 void calcAnalysisChoices(OutputManager& OM, const std::string& inflname) {
 	for(AnalysisChoice ac = ANCHOICE_A; ac <= ANCHOICE_K; ++ac) {
 		OctetAnalyzer OA(&OM, "Anchoice_"+ctos(choiceLetter(ac)), inflname);
-		AsymmetryAnalyzer* AA = new AsymmetryAnalyzer(&OA);
+		AsymmetryPlugin* AA = new AsymmetryPlugin(&OA);
 		AA->anChoice = ac;
 		OA.addPlugin(AA);
 		OA.calculateResults();
@@ -613,12 +613,12 @@ void paperDataPlot() {
 	rWeights.push_back(0.59);
 	rWeights.push_back(0.41);
 	
-	std::vector<AsymmetryAnalyzer*> rAsyms;
+	std::vector<AsymmetryPlugin*> rAsyms;
 	
 	double tWeight = 0;
 	for(unsigned int n=0; n<rPaths.size(); n++) {
 		OctetAnalyzer* OAdat = new OctetAnalyzer(&OM, "DataCorrector", rPaths[n]+"/OctetAsym_Offic");
-		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(OAdat);
+		AsymmetryPlugin* AAdat = new AsymmetryPlugin(OAdat);
 		OAdat->addPlugin(AAdat);
 		AAdat->anChoice = ANCHOICE_C;
 		doFullCorrections(*AAdat,OM);
@@ -638,11 +638,11 @@ void paperDataPlot() {
 		rAsyms.push_back(AAdat);
 	}
 	
-	AsymmetryAnalyzer* AA = rAsyms.back();
+	AsymmetryPlugin* AA = rAsyms.back();
 	
 	// simulation data for comparison
 	OctetAnalyzer* OAsim = new OctetAnalyzer(&OM, "DataCorrector", getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Sim0823_4x/OctetAsym_Offic_Sim0823_4x");
-	AsymmetryAnalyzer* AAsim = new AsymmetryAnalyzer(OAsim);
+	AsymmetryPlugin* AAsim = new AsymmetryPlugin(OAsim);
 	OAsim->addPlugin(AAsim);
 	AAsim->anChoice = ANCHOICE_C;
 	doFullCorrections(*AAsim,OM);

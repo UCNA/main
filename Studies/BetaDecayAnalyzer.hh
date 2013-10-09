@@ -1,12 +1,13 @@
 #ifndef BETADECAYANALYZER_HH
 #define BETADECAYANALYZER_HH 1
 
-#include "MuonAnalyzer.hh"
-#include "PositionAnalyzer.hh"
-#include "WirechamberGainAnalyzer.hh"
-#include "AsymmetryAnalyzer.hh"
-#include "SimAsymmetryAnalyzer.hh"
-#include "HighEnergyExcess.hh"
+#include "MuonPlugin.hh"
+#include "PositionsPlugin.hh"
+#include "WirechamberAnodePlugins.hh"
+#include "CathodeTuningAnalyzer.hh"
+#include "AsymmetryPlugin.hh"
+#include "SimAsymmetryPlugin.hh"
+#include "HighEnergyExcessPlugin.hh"
 
 /// analyzer for beta decay data
 class BetaDecayAnalyzer: public OctetAnalyzer {
@@ -16,12 +17,12 @@ public:
 	/// create a new instance of this object (cloning self settings) for given directory
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new BetaDecayAnalyzer(this,nm,inflname); }
 	
-	MuonAnalyzer* myMuons;			//< muons plugin
-	PositionAnalyzer* myPos;		//< positions plugin
-	AnodeGainAnalyzer* myAG;		//< wirechamber anode gain plugin
-	CathodeGainAnalyzer* myCG;		//< wirechamber cathode gain plugin
-	AsymmetryAnalyzer* myAsym;		//< asymmetry plugin
-	//HighEnergyExcessAnalyzer* myHEE;	//< high energy excess events
+	MuonPlugin* myMuons;			//< muons plugin
+	PositionsPlugin* myPos;		//< positions plugin
+	AnodeGainPlugin* myAG;		//< wirechamber anode gain plugin
+	CathodeGainPlugin* myCG;		//< wirechamber cathode gain plugin
+	AsymmetryPlugin* myAsym;		//< asymmetry plugin
+	//HighEnergyExcessPlugin* myHEE;	//< high energy excess events
 };
 
 /// analyzer for beta decay simulation
@@ -32,13 +33,13 @@ public:
 	/// create a new instance of this object (cloning self settings) for given directory
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname);
 	
-	MuonAnalyzer* myMuons;				//< muons plugin
-	PositionAnalyzer* myPos;			//< positions plugin
-	AnodeGainAnalyzer* myAG;			//< wirechamber anode gain plugin
-	AsymmetryAnalyzer* myAsym;			//< asymmetry plugin
+	MuonPlugin* myMuons;				//< muons plugin
+	PositionsPlugin* myPos;			//< positions plugin
+	AnodeGainPlugin* myAG;			//< wirechamber anode gain plugin
+	AsymmetryPlugin* myAsym;			//< asymmetry plugin
 
-	SimAsymmetryAnalyzer* mySimAsym;	//< simulated asymmetry plugin
-	WirechamberSimTypeID* mySimID;		//< simulated Type II/III separation
+	SimAsymmetryPlugin* mySimAsym;	//< simulated asymmetry plugin
+	WirechamberSimBackscattersPlugin* mySimID;		//< simulated Type II/III separation
 };
 
 #endif
