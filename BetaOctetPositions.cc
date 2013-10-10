@@ -1,28 +1,47 @@
 #include "StyleSetup.hh"
 #include "PathUtils.hh"
 #include "CathodeTuningAnalyzer.hh"
+#include "OctetSimuCloneManager.hh"
 
 int main(int argc, char *argv[]) {
 	
 	assert(argc >= 2);
 	int octn = atoi(argv[1]);
-	
 	ROOTStyleSetup();
-	const std::string outputDir="BetaOctetPositions";
-	bool doPlots = false;
-	RunAccumulator::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
 	
-	if(octn==1000) {
-		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
-		CathodeTuningAnalyzer AA(&OM,outputDir);
-		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600);
+	OctetSimuCloneManager OSCM("BetaOctetPositions");
+	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
+	
+	// simulations input setup
+	OSCM.simFile="/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_";
+	OSCM.simFactor = 1.0;
+	OSCM.nTot = 520;
+	OSCM.stride = 73;
+
+	const std::string simOutputDir=OSCM.outputDir+"_Sim0823";
+	
+	if(octn < 0) {
+	
+		SimCathodeTuningAnalyzer CTA_Sim(&OM,simOutputDir);
+		if(octn==-1000) OSCM.combineSims(CTA_Sim);
+		else OSCM.simOct(CTA_Sim,-octn-1);
+	
 	} else {
-		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),octn);
-		if(!oct.getNRuns()) return -1;
-		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir);
-		CathodeTuningAnalyzer AA(&OM,oct.octName());
-		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false),0*24*3600, doPlots);
+		CathodeTuningAnalyzer CTA(&OM,OSCM.outputDir);
+		if(octn>=1000) {
+			if(octn==1000) OSCM.combineOcts(CTA);
+			else if(octn==1001) {
+				ROOTStyleSetup(false);
+				CathodeTuningAnalyzer CTA(&OM,OSCM.outputDir,RunAccumulator::processedLocation);
+				processCathNorm(*CTA.myCG);
+			} else if(octn==1002) {
+				// load data and simulation to compare hit distribution shape around each cathode
+				CathodeTuningAnalyzer CTAdat(&OM,OSCM.outputDir,RunAccumulator::processedLocation);
+				SimCathodeTuningAnalyzer CTsim(&OM,"NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/"+simOutputDir+"/"+simOutputDir);
+				processCathTweak(*CTAdat.myCT,*CTsim.myCT);
+			}
+		} else OSCM.scanOct(CTA, octn);
 	}
-	
+
 	return 0;
 }

@@ -39,8 +39,8 @@ void drawSectors(const SectorCutter& S, int color = 2);
 /// label SectorCutter sectors on current canvas
 void labelSectors(const SectorCutter& S, int color = 2);
 
-/// set up grayscale figures color palette
-void makeGrayscalepalette();
+/// set up grayscale figures color palette, black-to-white by default, or inverted
+void makeGrayscalepalette(bool b2w = true);
 
 #endif
 

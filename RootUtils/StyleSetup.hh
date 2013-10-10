@@ -4,7 +4,7 @@
 #include <TStyle.h>
 #include <TROOT.h>
 
-void ROOTStyleSetup();
+void ROOTStyleSetup(bool b2w = true);
 
 #endif
 

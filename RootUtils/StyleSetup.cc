@@ -1,7 +1,7 @@
 #include "StyleSetup.hh"
 #include "GraphicsUtils.hh"
 
-void ROOTStyleSetup() {
+void ROOTStyleSetup(bool b2w) {
 	gROOT->SetStyle("Plain");
 	gStyle->SetPalette(1);
 	gStyle->SetNumberContours(255);
@@ -9,7 +9,7 @@ void ROOTStyleSetup() {
 	TCanvas* defaultCanvas = new TCanvas();
 #ifdef PUBLICATION_PLOTS
 	gStyle->SetOptStat("");
-	makeGrayscalepalette();
+	makeGrayscalepalette(b2w);
 	defaultCanvas->SetGrayscale(true);
 #endif
 	defaultCanvas->SetFillColor(0);

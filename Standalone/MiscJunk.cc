@@ -134,10 +134,6 @@ int main(int argc, char *argv[]) {
 		NGBGSpectra("ScintFace_nCaptH");
 	}
 	
-	if(rname=="wirechamber_cal") {
-		processWirechamberCal(14264,16077,20);
-	}
-	
 	if(rname=="decompose_xenon") {
 		//decomposeXenon(15991,true);
 		//decomposeXenon(14282,false);

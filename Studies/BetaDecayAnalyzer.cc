@@ -5,7 +5,7 @@ OctetAnalyzer(pnt,nm,inflName) {
 	addPlugin(myMuons = new MuonPlugin(this));
 	addPlugin(myPos = new PositionsPlugin(this));
 	addPlugin(myAG = new AnodeGainPlugin(this));
-	addPlugin(myCG = new CathodeGainPlugin(this));
+	//addPlugin(myCG = new CathodeGainPlugin(this));
 	addPlugin(myAsym = new AsymmetryPlugin(this));
 	//addPlugin(myHEE = new HighEnergyExcessPlugin(this));
 }

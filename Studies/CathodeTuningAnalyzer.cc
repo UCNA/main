@@ -42,10 +42,10 @@ CathodeGainPlugin::CathodeGainPlugin(RunAccumulator* RA): AnalyzerPlugin(RA,"cat
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(unsigned int c=0; c < kMaxCathodes; c++) {
 				TH2F hCathNormTemplate((std::string("hCathNorm_")+(d==X_DIRECTION?"x_":"y_")+itos(c)).c_str(),
-									   "Normalized Cathode",101,-1.0,1.0,100,0,5);
+									   "Normalized Cathode",601,-6.0,6.0,100,0,4);
 				cathNorm[s][d][c] = registerFGBGPair(hCathNormTemplate,AFP_OTHER,s);
-				cathNorm[s][d][c]->setAxisTitle(X_DIRECTION,"Normalized Position");
-				cathNorm[s][d][c]->setAxisTitle(Y_DIRECTION,"Normalized Cathode");
+				cathNorm[s][d][c]->setAxisTitle(X_DIRECTION,"normalized position");
+				cathNorm[s][d][c]->setAxisTitle(Y_DIRECTION,"normalized cathode/anode");
 			}
 		}
 	}
@@ -54,17 +54,14 @@ CathodeGainPlugin::CathodeGainPlugin(RunAccumulator* RA): AnalyzerPlugin(RA,"cat
 void CathodeGainPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	const Side s = PDS.fSide;
 	if(!(PDS.fPID == PID_BETA && (s==EAST||s==WEST))) return;
-	if(PDS.fType == TYPE_0_EVENT && PDS.mwpcs[s].anode < 1000) { // avoid most massively clipped events
+	if(PDS.fType == TYPE_0_EVENT && PDS.mwpcs[s].anode < 1000) { // avoid most massively clipped events.
 		unsigned int n;
 		float c;
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].center,n,c);
 			assert(n<kMaxCathodes);
-			((TH2F*)cathNorm[s][d][n]->h[currentGV])->Fill(c,PDS.cathodes[s][d][n]/PDS.mwpcs[s].anode,weight);
-			if(n>0 && c<0)
-				((TH2F*)cathNorm[s][d][n-1]->h[currentGV])->Fill(c+1,PDS.cathodes[s][d][n-1]/PDS.mwpcs[s].anode,weight);
-			if(n<kMaxCathodes-1 && c>0)
-				((TH2F*)cathNorm[s][d][n+1]->h[currentGV])->Fill(c-1,PDS.cathodes[s][d][n+1]/PDS.mwpcs[s].anode,weight);
+			for(int i=0; i<kMaxCathodes; i++)
+				((TH2F*)cathNorm[s][d][i]->h[currentGV])->Fill(c+(int(n)-i),PDS.cathodes[s][d][i]/PDS.mwpcs[s].anode,weight);
 		}
 	}
 }
@@ -180,6 +177,11 @@ RunAccumulator(pnt,nm,inflName) {
 	addPlugin(myCT = new CathodeTweakPlugin(this));
 }
 
+SimCathodeTuningAnalyzer::SimCathodeTuningAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
+RunAccumulator(pnt,nm,inflName) {
+	addPlugin(myCT = new CathodeTweakPlugin(this));
+}
+
 //-----------------------------------------------------------
 
 
@@ -193,7 +195,12 @@ void processCathNorm(CathodeGainPlugin& CGA) {
 	TF1 fLowCX("fLowCX","pol2",-0.6,-0.4);
 	TF1 fHighCX("fHiCX","pol2",0.4,0.6);
 	TF1 fCathCenter("fCathCenter","gaus",-0.3,0.3);
-	fCathCenter.SetLineColor(2);
+	fCathCenter.SetLineColor(1);
+	fLowCX.SetLineColor(0);
+	fHighCX.SetLineColor(0);
+	
+	OM.defaultCanvas->SetLeftMargin(0.14);
+	OM.defaultCanvas->SetRightMargin(0.04);
 	
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
@@ -215,8 +222,8 @@ void processCathNorm(CathodeGainPlugin& CGA) {
 				
 				// fit gaussian centers vs normalized position, at crossover points and center
 				slicefits[1]->Fit(&fLowCX,"QR");
-				slicefits[1]->Fit(&fCathCenter,"QR");
-				slicefits[1]->Fit(&fHighCX,"QR");
+				slicefits[1]->Fit(&fCathCenter,"QR+");
+				slicefits[1]->Fit(&fHighCX,"QR+");
 				
 				// write fits output
 				Stringmap m;
@@ -238,22 +245,28 @@ void processCathNorm(CathodeGainPlugin& CGA) {
 				OM.qOut.insert("cathnorm_fits",m);
 				
 				// plot results
+				std::string cname = sideSubst("%c",s)+(d==X_DIRECTION?"x":"y")+itos(c+1);
+				hCathNorm->GetYaxis()->SetTitleOffset(1.35);
+				hCathNorm->SetTitle(("Cathode "+cname).c_str());
+				hCathNorm->GetXaxis()->SetRangeUser(-3, 3);
 				hCathNorm->Draw("Col");
 				slicefits[1]->Draw("Same");
-				OM.printCanvas(sideSubst("Cathodes/Center_%c",s)+(d==X_DIRECTION?"x":"y")+itos(c));
+				OM.printCanvas("Cathodes/Center_"+cname);
 			}
 		}
 	}
+	
+	OM.write();
 }
 
-
-void processWirechamberCal(CathodeTuningAnalyzer& WCdat, CathodeTuningAnalyzer& WCsim) {
+void processCathTweak(CathodeTweakPlugin& CTDat, CathodeTweakPlugin& CTSim) {
 	
-	RunNum r1 = WCdat.runCounts.counts.begin()->first;
-	RunNum r2 = WCdat.runCounts.counts.rbegin()->first;
+	RunNum r1 = CTDat.myA->runCounts.counts.begin()->first;
+	RunNum r2 = CTDat.myA->runCounts.counts.rbegin()->first;
 	OutputManager OM("MWPCCal",getEnvSafe("UCNA_ANA_PLOTS")+"/WirechamberCal/"+itos(r1)+"-"+itos(r2)+"/");
-	OM.qOut.transfer(WCdat.qOut,"runcal");
+	OM.qOut.transfer(CTDat.myA->qOut,"runcal");
 	
+	// construct fourier series TF1 fit function
 	const unsigned int nterms = 3;
 	std::string fser = "[0]";
 	for(unsigned int n=1; n<nterms; n++)
@@ -265,25 +278,20 @@ void processWirechamberCal(CathodeTuningAnalyzer& WCdat, CathodeTuningAnalyzer& 
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(unsigned int c=0; c<kMaxCathodes; c++) {
 				
-				////////////////////
-				// cathode positioning distributions by energy
-				////////////////////
+				TH2* hCathHitposDat =  (TH2*)CTDat.cathHitpos[s][d][c]->h[GV_OPEN];
+				TH2* hCathHitposSim =  (TH2*)CTSim.cathHitpos[s][d][c]->h[GV_OPEN];
 				
+				// cathode event fractions, simulation vs data
 				CathodeSeg cs;
 				cs.s = s;
 				cs.d = d;
 				cs.i = c;
-				
-				TH2* hCathHitposDat =  (TH2*)WCdat.myCT->cathHitpos[s][d][c]->h[GV_OPEN];
-				TH2* hCathHitposSim =  (TH2*)WCsim.myCT->cathHitpos[s][d][c]->h[GV_OPEN];
-				
-				// cathode event fractions
 				double nDat = hCathHitposDat->Integral();
 				double nSim = hCathHitposSim->Integral();
 				cs.fill_frac = nDat/nSim;
 				OM.qOut.insert("cathseg",cathseg2sm(cs));
 				
-				// determine energy re-binning
+				// determine variable energy bin size re-binning based on available statistics
 				std::vector<TH1F*> hEnDats = sliceTH2(*hCathHitposDat,Y_DIRECTION);
 				std::vector<TH1F*> hEnSims = sliceTH2(*hCathHitposSim,Y_DIRECTION);
 				std::vector<float> enCounts;
@@ -291,7 +299,7 @@ void processWirechamberCal(CathodeTuningAnalyzer& WCdat, CathodeTuningAnalyzer& 
 					enCounts.push_back(hEnDats[i]->Integral());
 				std::vector<unsigned int> part = equipartition(enCounts, 80);
 				
-				// fit each energy range
+				// fit each energy range with Fourier series
 				std::vector<TH1*> hToPlot;
 				for(unsigned int i = 0; i < part.size()-1; i++) {
 					// accumulate over energy range
@@ -354,7 +362,7 @@ void processWirechamberCal(CathodeTuningAnalyzer& WCdat, CathodeTuningAnalyzer& 
 					OM.qOut.insert("hitdist",ff);
 				}
 				drawSimulHistos(hToPlot);
-				OM.printCanvas(sideSubst("Cathodes/Positions_%c",s)+(d==X_DIRECTION?"x":"y")+itos(c));
+				OM.printCanvas(sideSubst("CathTweak/Positions_%c",s)+(d==X_DIRECTION?"x":"y")+itos(c));
 			}
 		}
 	}
@@ -363,11 +371,11 @@ void processWirechamberCal(CathodeTuningAnalyzer& WCdat, CathodeTuningAnalyzer& 
 	OM.setWriteRoot(true);
 }
 
-void processWirechamberCal(RunNum r0, RunNum r1, unsigned int nrings) {
-	std::string basePath = getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/";
-	OutputManager OM("NameUnused",basePath);
-	std::string readname = itos(r0)+"-"+itos(r1)+"_"+itos(nrings);
-	CathodeTuningAnalyzer WCdat(&OM, "NameUnused", basePath+"/Xenon_"+readname+"/Xenon_"+readname);
-	CathodeTuningAnalyzer WCsim(&OM, "NameUnused", basePath+"/SimXe_"+readname+"/SimXe_"+readname);
-	processWirechamberCal(WCdat,WCsim);
-}
+//void processWirechamberCal(RunNum r0, RunNum r1, unsigned int nrings) {
+//	std::string basePath = getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/";
+//	OutputManager OM("NameUnused",basePath);
+//	std::string readname = itos(r0)+"-"+itos(r1)+"_"+itos(nrings);
+//	CathodeTuningAnalyzer WCdat(&OM, "NameUnused", basePath+"/Xenon_"+readname+"/Xenon_"+readname);
+//	CathodeTuningAnalyzer WCsim(&OM, "NameUnused", basePath+"/SimXe_"+readname+"/SimXe_"+readname);
+//	processWirechamberCal(WCdat,WCsim);
+//}

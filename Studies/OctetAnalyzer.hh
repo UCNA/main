@@ -71,10 +71,6 @@ public:
 	virtual void loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS) { setFillPoints(afp,gv); RunAccumulator::loadProcessedData(afp, gv, PDS); }
 	/// load simulation data
 	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim = 0, bool countAll = false);
-	/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs
-	unsigned int simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor = 1., double replaceIfOlder = 0., bool doPlots = true);
-	
-	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
 	
 private:
 	

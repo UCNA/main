@@ -86,8 +86,6 @@ public:
 	
 	/// fill data from a ProcessedDataScanner
 	virtual void loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS);
-	/// load data from ProcessedDataScanner for FG and BG states
-	virtual void loadProcessedData(AFPState afp, ProcessedDataScanner& FG, ProcessedDataScanner& BG);
 	/// fill data from simulations
 	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim = 0, bool countAll = false);
 	/// load single current event from simulator
@@ -119,6 +117,8 @@ public:
 	virtual void uploadAnaResults();
 	/// make plots from each plugin
 	virtual void makePlots();
+	/// run calculations and plots, save output files
+	virtual void makeOutput(bool doPlots = true);
 	/// MC/Data comparison plots/calculations from each plugin
 	virtual void compareMCtoData(RunAccumulator& OAdata);
 	/// add an analyzer plugin
@@ -135,6 +135,17 @@ public:
 	float totalCounts[AFP_OTHER+1][2];			//< total type-0 event counts by [flipper][fg/bg], for re-simulation
 	BlindTime totalTime[AFP_OTHER+1][2]; 		//< total time for [flipper][fg/bg]
 	TagCounter<RunNum> runTimes;				//< time spent on each run
+	
+	/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs
+	unsigned int simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor = 1., double replaceIfOlder = 0., bool doPlots = true);
+	/// merge every subdirectory of basePath containing analyzed data
+	unsigned int mergeDir();
+	/// merge simulations, checking match against data
+	void mergeSims(const std::string& basedata, RunAccumulator* origRA=NULL);
+	/// merge individual analyzed octets
+	void mergeOcts(const std::vector<Octet>& Octs);
+	
+	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
 	
 protected:
 	

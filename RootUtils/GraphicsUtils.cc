@@ -189,11 +189,14 @@ void labelSectors(const SectorCutter& S, int color) {
 	}
 }
 
-void makeGrayscalepalette() {
+void makeGrayscalepalette(bool b2w) {
 	const unsigned int ncol = 256;
 	Int_t cnum[ncol];
-	for(unsigned int i=0; i<ncol; i++)
-		cnum[i] = TColor::GetColor(float(i)/float(ncol-1),float(i)/float(ncol-1),float(i)/float(ncol-1));
+	for(unsigned int i=0; i<ncol; i++) {
+		float l = float(i)/float(ncol-1);
+		l = b2w?l:1-l;
+		cnum[i] = TColor::GetColor(l,l,l);
+	}
 	gStyle->SetPalette(ncol,cnum);
 	gStyle->SetNumberContours(64);	
 }

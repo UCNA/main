@@ -18,9 +18,9 @@ public:
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new BetaDecayAnalyzer(this,nm,inflname); }
 	
 	MuonPlugin* myMuons;			//< muons plugin
-	PositionsPlugin* myPos;		//< positions plugin
-	AnodeGainPlugin* myAG;		//< wirechamber anode gain plugin
-	CathodeGainPlugin* myCG;		//< wirechamber cathode gain plugin
+	PositionsPlugin* myPos;			//< positions plugin
+	AnodeGainPlugin* myAG;			//< wirechamber anode gain plugin
+	//CathodeGainPlugin* myCG;		//< wirechamber cathode gain plugin
 	AsymmetryPlugin* myAsym;		//< asymmetry plugin
 	//HighEnergyExcessPlugin* myHEE;	//< high energy excess events
 };
@@ -33,10 +33,10 @@ public:
 	/// create a new instance of this object (cloning self settings) for given directory
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname);
 	
-	MuonPlugin* myMuons;				//< muons plugin
+	MuonPlugin* myMuons;			//< muons plugin
 	PositionsPlugin* myPos;			//< positions plugin
 	AnodeGainPlugin* myAG;			//< wirechamber anode gain plugin
-	AsymmetryPlugin* myAsym;			//< asymmetry plugin
+	AsymmetryPlugin* myAsym;		//< asymmetry plugin
 
 	SimAsymmetryPlugin* mySimAsym;	//< simulated asymmetry plugin
 	WirechamberSimBackscattersPlugin* mySimID;		//< simulated Type II/III separation

@@ -57,7 +57,7 @@ Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberC
 Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT.o G4toPMT.o \
 		PenelopeToPMT.o LED2PMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
 
-Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o \
+Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o OctetSimuCloneManager.o \
 	MuonPlugin.o PositionsPlugin.o WirechamberAnodePlugins.o BGDecayPlugin.o HighEnergyExcessPlugin.o \
 	AsymmetryPlugin.o SimAsymmetryPlugin.o BetaDecayAnalyzer.o \
 	CathodeTuningAnalyzer.o PositionBinnedPlugin.o AnodeGainMapPlugin.o XenonAnalyzer.o \

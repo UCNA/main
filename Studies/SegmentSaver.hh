@@ -42,6 +42,7 @@ public:
 	
 	bool ignoreMissingHistos;	//< whether to quietly ignore missing histograms in input file
 	
+	
 	// ----- Subclass me! ----- //
 	
 	/// create a new instance of this object (cloning self settings) for given directory

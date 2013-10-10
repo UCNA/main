@@ -60,12 +60,20 @@ public:
 	CathodeTweakPlugin* myCT;		//< cathode position tweaking
 };
 
+/// comparison analyzer for simulation
+class SimCathodeTuningAnalyzer: public RunAccumulator {
+public:
+	/// constructor
+	SimCathodeTuningAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "");
+	/// create a new instance of this analyzer
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new SimCathodeTuningAnalyzer(this,nm,inflname); }
+	
+	CathodeTweakPlugin* myCT;		//< cathode position tweaking
+};
+
 /// fit/plot CathodeGainPlugin histograms
 void processCathNorm(CathodeGainPlugin& CGA);
-
-/// process wirechamber calibration data
-void processWirechamberCal(CathodeTuningAnalyzer& WCdat, CathodeTuningAnalyzer& WCsim);
-/// process wirechamber calibration data from Xenon posmap specified by run range, nrings
-void processWirechamberCal(RunNum r0, RunNum r1, unsigned int nrings);
+/// fit/plot CathodeTweakPlugin cathode shape correction data
+void processCathTweak(CathodeTweakPlugin& CTDat, CathodeTweakPlugin& CTSim);
 
 #endif
