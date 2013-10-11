@@ -10,17 +10,14 @@ struct CathodeSeg {
 	Side s;					//< side
 	AxisDirection d;		//< plane measuring direction
 	unsigned int i;			//< cathode number
-	float_err height;		//< normalized height
-	float_err width;		//< width
-	float_err center;		//< measured center
-	float_err max;			//< maximum normalized value
-	float fill_frac;		//< proportion of expected events
+	float n_exp;			//< expected number from data
+	float n_obs;			//< observed number from simulation
+	float dndx_lo;			//< dn/dx at low edge, observed, normalized corrected position
+	float dndx_hi;			//< dn/dx at high edge, observed, normalized corrected position
 	float pos;				//< cathode position
 };
 /// convert cathode segment to Stringmap
 Stringmap cathseg2sm(const CathodeSeg& c);
-/// convert Stringmap to CathodeSeg
-CathodeSeg sm2cathseg(const Stringmap& m);
 
 /// analyzer plugin for wirechamber position/calibration analysis
 class CathodeGainPlugin: public AnalyzerPlugin {
@@ -29,8 +26,13 @@ public:
 	CathodeGainPlugin(RunAccumulator* RA);
 	/// fill histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
+	/// fit cathode shapes
+	virtual void calculateResults();
+	/// make output plots
+	virtual void makePlots();
 	
-	fgbgPair* cathNorm[BOTH][2][kMaxCathodes];		//< cathode normalization histograms by [side][plane][cathode]
+	fgbgPair* cathNorm[BOTH][2][kMaxCathodes];				//< cathode normalization histograms by [side][plane][cathode]
+	std::vector<TH1D*> slicefits[BOTH][2][kMaxCathodes];	//< Gaussian fit parameters for cathode response shape at each position
 };
 
 /// analyzer plugin for wirechamber position/calibration analysis
@@ -71,8 +73,6 @@ public:
 	CathodeTweakPlugin* myCT;		//< cathode position tweaking
 };
 
-/// fit/plot CathodeGainPlugin histograms
-void processCathNorm(CathodeGainPlugin& CGA);
 /// fit/plot CathodeTweakPlugin cathode shape correction data
 void processCathTweak(CathodeTweakPlugin& CTDat, CathodeTweakPlugin& CTSim);
 

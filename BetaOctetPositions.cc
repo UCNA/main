@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 	int octn = atoi(argv[1]);
 	ROOTStyleSetup();
 	
-	OctetSimuCloneManager OSCM("BetaOctetPositions");
+	OctetSimuCloneManager OSCM("BetaOctetPositions_NewNorm");
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 	
 	// simulations input setup
@@ -18,7 +18,11 @@ int main(int argc, char *argv[]) {
 	OSCM.nTot = 520;
 	OSCM.stride = 73;
 
-	const std::string simOutputDir=OSCM.outputDir+"_Sim0823";
+	//const std::string simOutputDir=OSCM.outputDir+"_Sim0823";
+	const std::string simOutputDir="BetaOctetPositions_Sim0823";
+	
+	WirechamberCalibrator::calibrateCathodes = true;
+	ProcessedDataScanner::redoPositions = true;
 	
 	if(octn < 0) {
 	
@@ -29,12 +33,9 @@ int main(int argc, char *argv[]) {
 	} else {
 		CathodeTuningAnalyzer CTA(&OM,OSCM.outputDir);
 		if(octn>=1000) {
+			ROOTStyleSetup(false);
 			if(octn==1000) OSCM.combineOcts(CTA);
-			else if(octn==1001) {
-				ROOTStyleSetup(false);
-				CathodeTuningAnalyzer CTA(&OM,OSCM.outputDir,RunAccumulator::processedLocation);
-				processCathNorm(*CTA.myCG);
-			} else if(octn==1002) {
+			else if(octn==1002) {
 				// load data and simulation to compare hit distribution shape around each cathode
 				CathodeTuningAnalyzer CTAdat(&OM,OSCM.outputDir,RunAccumulator::processedLocation);
 				SimCathodeTuningAnalyzer CTsim(&OM,"NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/"+simOutputDir+"/"+simOutputDir);

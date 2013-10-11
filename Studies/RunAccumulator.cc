@@ -481,7 +481,7 @@ void RunAccumulator::mergeOcts(const std::vector<Octet>& Octs) {
 	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
 		std::string inflname = basePath+"/"+octit->octName()+"/"+octit->octName();
 		if(!inflExists(inflname)) {
-				printf("Octet '%s' missing!\n",octit->octName().c_str());
+				printf("Octet '%s' missing!\n",inflname.c_str());
 				continue;
 		}
 		SegmentSaver* subRA = makeAnalyzer(octit->octName(),inflname);

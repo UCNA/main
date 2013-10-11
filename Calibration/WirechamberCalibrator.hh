@@ -103,6 +103,8 @@ public:
 	/// draw wire positions on plot
 	void drawWires(Side s, AxisDirection p, TVirtualPad* C, Int_t color = 4, AxisDirection onAxis=X_DIRECTION) const;
 	
+	/// turn on/off cathode shape calibrations (for baseline comparison)
+	static bool calibrateCathodes;
 	
 protected:
 	PositioningCorrector* anodeP;						//< anode calibration maps

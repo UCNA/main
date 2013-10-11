@@ -10,29 +10,12 @@ Stringmap cathseg2sm(const CathodeSeg& c) {
 	m.insert("side",sideSubst("%c",c.s));
 	m.insert("plane",c.d==X_DIRECTION?"x":"y");
 	m.insert("i",c.i);
-	m.insert("max",c.max.x);
-	m.insert("d_max",c.max.err);
-	m.insert("height",c.height.x);
-	m.insert("d_height",c.height.err);
-	m.insert("width",c.width.x);
-	m.insert("d_width",c.width.err);
-	m.insert("center",c.center.x);
-	m.insert("d_center",c.center.x);
 	m.insert("position",c.pos);
-	m.insert("fill_frac",c.fill_frac);
+	m.insert("n_exp",c.n_exp);
+	m.insert("n_obs",c.n_obs);
+	m.insert("dndx_lo",c.dndx_lo);
+	m.insert("dndx_hi",c.dndx_hi);
 	return m;
-}
-
-CathodeSeg sm2cathseg(const Stringmap& m) {
-	CathodeSeg c;
-	c.s=(m.getDefault("side","E")=="E")?EAST:WEST;
-	c.d=m.getDefault("plane","x")=="x"?X_DIRECTION:Y_DIRECTION;
-	c.i=m.getDefault("i",0);
-	c.pos=m.getDefault("position",0);
-	c.height=float_err(m.getDefault("height",0),m.getDefault("d_height",0));
-	c.width=float_err(m.getDefault("width",0),m.getDefault("d_width",0));
-	c.center=float_err(m.getDefault("center",0),m.getDefault("d_center",0));
-	return c;
 }
 
 //---------------------------------------------------
@@ -42,7 +25,7 @@ CathodeGainPlugin::CathodeGainPlugin(RunAccumulator* RA): AnalyzerPlugin(RA,"cat
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(unsigned int c=0; c < kMaxCathodes; c++) {
 				TH2F hCathNormTemplate((std::string("hCathNorm_")+(d==X_DIRECTION?"x_":"y_")+itos(c)).c_str(),
-									   "Normalized Cathode",601,-6.0,6.0,100,0,4);
+									   "Normalized Cathode",601,-6.0,6.0,100,-0.5,4);
 				cathNorm[s][d][c] = registerFGBGPair(hCathNormTemplate,AFP_OTHER,s);
 				cathNorm[s][d][c]->setAxisTitle(X_DIRECTION,"normalized position");
 				cathNorm[s][d][c]->setAxisTitle(Y_DIRECTION,"normalized cathode/anode");
@@ -61,7 +44,83 @@ void CathodeGainPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 			PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].center,n,c);
 			assert(n<kMaxCathodes);
 			for(int i=0; i<kMaxCathodes; i++)
-				((TH2F*)cathNorm[s][d][i]->h[currentGV])->Fill(c+(int(n)-i),PDS.cathodes[s][d][i]/PDS.mwpcs[s].anode,weight);
+				((TH2F*)cathNorm[s][d][i]->h[currentGV])->Fill(c+(int(n)-i),PDS.cathodes[s][d][i]*PDS.ActiveCal->getCathNorm(s,d,i)/PDS.mwpcs[s].anode,weight);
+		}
+	}
+}
+
+void CathodeGainPlugin::calculateResults() {
+
+	TF1 fLowCX("fLowCX","pol2",-0.6,-0.4);
+	TF1 fHighCX("fHiCX","pol2",0.4,0.6);
+	TF1 fCathCenter("fCathCenter","gaus",-0.3,0.3);
+	fCathCenter.SetLineColor(1);
+	fLowCX.SetLineColor(0);
+	fHighCX.SetLineColor(0);
+	
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+			for(unsigned int c=0; c<kMaxCathodes; c++) {
+			
+				// cathode/anode vs normalized position TH2
+				TH2* hCathNorm =  (TH2*)cathNorm[s][d][c]->h[GV_OPEN];
+				
+				// fit each position slice with a gaussian
+				// (better than TProfile for rejecting far-from-center events)
+				TObjArray sls;
+				hCathNorm->FitSlicesY(0, 0, -1, 0, "QNR", &sls);
+				sls.SetOwner(kFALSE);
+				for(int i=0; i<sls.GetEntriesFast(); i++) {
+					myA->addObject(sls[i]);
+					slicefits[s][d][c].push_back((TH1D*)sls[i]);
+				}
+				
+				// fit gaussian centers vs normalized position, at crossover points and center
+				slicefits[s][d][c][1]->Fit(&fLowCX,"QR");
+				slicefits[s][d][c][1]->Fit(&fCathCenter,"QR+");
+				slicefits[s][d][c][1]->Fit(&fHighCX,"QR+");
+				
+				// write fits output
+				Stringmap m;
+				m.insert("side",sideSubst("%c",s));
+				m.insert("plane",d==X_DIRECTION?"x":"y");
+				m.insert("cathode",c);
+				m.insert("height",fCathCenter.GetParameter(0));
+				m.insert("d_height",fCathCenter.GetParError(0));
+				m.insert("center",fCathCenter.GetParameter(1));
+				m.insert("d_center",fCathCenter.GetParError(1));
+				m.insert("width",fCathCenter.GetParameter(2));
+				m.insert("d_width",fCathCenter.GetParError(2));
+				for(unsigned int i=0; i<3; i++) {
+					m.insert("cx_lo_a"+itos(i),fLowCX.GetParameter(i));
+					m.insert("d_cx_lo_a"+itos(i),fLowCX.GetParError(i));
+					m.insert("cx_hi_a"+itos(i),fHighCX.GetParameter(i));
+					m.insert("d_cx_hi_a"+itos(i),fHighCX.GetParError(i));
+				}
+				myA->qOut.insert("cathnorm_fits",m);
+			}
+		}
+	}
+}
+
+void CathodeGainPlugin::makePlots() {
+	myA->defaultCanvas->SetLeftMargin(0.14);
+	myA->defaultCanvas->SetRightMargin(0.04);
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+			for(unsigned int c=0; c<kMaxCathodes; c++) {
+				std::string cname = sideSubst("%c",s)+(d==X_DIRECTION?"x":"y")+itos(c+1);
+				TH2* hCathNorm =  (TH2*)cathNorm[s][d][c]->h[GV_OPEN];
+				hCathNorm->GetYaxis()->SetTitleOffset(1.35);
+				hCathNorm->SetTitle(("Cathode "+cname).c_str());
+				hCathNorm->GetXaxis()->SetRangeUser(-3, 3);
+				hCathNorm->Draw("Col");
+				if(slicefits[s][d][c].size()>=2) {
+					slicefits[s][d][c][1]->SetLineColor(0);
+					slicefits[s][d][c][1]->Draw("Same");
+				}
+				printCanvas("Cathodes/Center_"+cname);
+			}
 		}
 	}
 }
@@ -184,81 +243,6 @@ RunAccumulator(pnt,nm,inflName) {
 
 //-----------------------------------------------------------
 
-
-void processCathNorm(CathodeGainPlugin& CGA) {
-
-	RunNum r1 = CGA.myA->runCounts.counts.begin()->first;
-	RunNum r2 = CGA.myA->runCounts.counts.rbegin()->first;
-	OutputManager OM("CathNorm",getEnvSafe("UCNA_ANA_PLOTS")+"/WirechamberCal/"+itos(r1)+"-"+itos(r2)+"/");
-	OM.qOut.transfer(CGA.myA->qOut,"runcal");
-	
-	TF1 fLowCX("fLowCX","pol2",-0.6,-0.4);
-	TF1 fHighCX("fHiCX","pol2",0.4,0.6);
-	TF1 fCathCenter("fCathCenter","gaus",-0.3,0.3);
-	fCathCenter.SetLineColor(1);
-	fLowCX.SetLineColor(0);
-	fHighCX.SetLineColor(0);
-	
-	OM.defaultCanvas->SetLeftMargin(0.14);
-	OM.defaultCanvas->SetRightMargin(0.04);
-	
-	for(Side s = EAST; s <= WEST; ++s) {
-		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
-			for(unsigned int c=0; c<kMaxCathodes; c++) {
-			
-				// cathode/anode vs normalized position TH2
-				TH2* hCathNorm =  (TH2*)CGA.cathNorm[s][d][c]->h[GV_OPEN];
-				
-				// fit each position slice with a gaussian
-				// (better than TProfile for rejecting far-from-center events)
-				TObjArray sls;
-				hCathNorm->FitSlicesY(0, 0, -1, 0, "QNR", &sls);
-				sls.SetOwner(kFALSE);
-				std::vector<TH1D*> slicefits;
-				for(int i=0; i<sls.GetEntriesFast(); i++) {
-					OM.addObject(sls[i]);
-					slicefits.push_back((TH1D*)sls[i]);
-				}
-				
-				// fit gaussian centers vs normalized position, at crossover points and center
-				slicefits[1]->Fit(&fLowCX,"QR");
-				slicefits[1]->Fit(&fCathCenter,"QR+");
-				slicefits[1]->Fit(&fHighCX,"QR+");
-				
-				// write fits output
-				Stringmap m;
-				m.insert("side",sideSubst("%c",s));
-				m.insert("plane",d==X_DIRECTION?"x":"y");
-				m.insert("cathode",c);
-				m.insert("height",fCathCenter.GetParameter(0));
-				m.insert("d_height",fCathCenter.GetParError(0));
-				m.insert("center",fCathCenter.GetParameter(1));
-				m.insert("d_center",fCathCenter.GetParError(1));
-				m.insert("width",fCathCenter.GetParameter(2));
-				m.insert("d_width",fCathCenter.GetParError(2));
-				for(unsigned int i=0; i<3; i++) {
-					m.insert("cx_lo_a"+itos(i),fLowCX.GetParameter(i));
-					m.insert("d_cx_lo_a"+itos(i),fLowCX.GetParError(i));
-					m.insert("cx_hi_a"+itos(i),fHighCX.GetParameter(i));
-					m.insert("d_cx_hi_a"+itos(i),fHighCX.GetParError(i));
-				}
-				OM.qOut.insert("cathnorm_fits",m);
-				
-				// plot results
-				std::string cname = sideSubst("%c",s)+(d==X_DIRECTION?"x":"y")+itos(c+1);
-				hCathNorm->GetYaxis()->SetTitleOffset(1.35);
-				hCathNorm->SetTitle(("Cathode "+cname).c_str());
-				hCathNorm->GetXaxis()->SetRangeUser(-3, 3);
-				hCathNorm->Draw("Col");
-				slicefits[1]->Draw("Same");
-				OM.printCanvas("Cathodes/Center_"+cname);
-			}
-		}
-	}
-	
-	OM.write();
-}
-
 void processCathTweak(CathodeTweakPlugin& CTDat, CathodeTweakPlugin& CTSim) {
 	
 	RunNum r1 = CTDat.myA->runCounts.counts.begin()->first;
@@ -286,10 +270,18 @@ void processCathTweak(CathodeTweakPlugin& CTDat, CathodeTweakPlugin& CTSim) {
 				cs.s = s;
 				cs.d = d;
 				cs.i = c;
-				double nDat = hCathHitposDat->Integral();
-				double nSim = hCathHitposSim->Integral();
-				cs.fill_frac = nDat/nSim;
+				cs.n_obs = hCathHitposDat->Integral();
+				cs.n_exp = hCathHitposSim->Integral();
+				unsigned int bxm0 = hCathHitposDat->GetXaxis()->FindBin(-0.499);
+				unsigned int bxm1 = hCathHitposDat->GetXaxis()->FindBin(-0.4);
+				unsigned int bxp0 = hCathHitposDat->GetXaxis()->FindBin(0.4);
+				unsigned int bxp1 = hCathHitposDat->GetXaxis()->FindBin(0.499);
+				unsigned int ny = hCathHitposDat->GetNbinsY();
+				cs.dndx_lo = hCathHitposDat->Integral(bxm0,bxm1,1,ny)/(hCathHitposDat->GetXaxis()->GetBinUpEdge(bxm1)-hCathHitposDat->GetXaxis()->GetBinLowEdge(bxm0));
+				cs.dndx_hi = hCathHitposDat->Integral(bxp0,bxp1,1,ny)/(hCathHitposDat->GetXaxis()->GetBinUpEdge(bxp1)-hCathHitposDat->GetXaxis()->GetBinLowEdge(bxp0));
 				OM.qOut.insert("cathseg",cathseg2sm(cs));
+				
+				if(cs.n_exp<10000) continue;
 				
 				// determine variable energy bin size re-binning based on available statistics
 				std::vector<TH1F*> hEnDats = sliceTH2(*hCathHitposDat,Y_DIRECTION);

@@ -224,6 +224,11 @@ void mi_showGenerator(std::deque<std::string>&, std::stack<std::string>& stack) 
 	return;
 }
 
+void mi_showCal(std::deque<std::string>&, std::stack<std::string>& stack) {
+	RunNum rn = streamInteractor::popInt(stack);
+	PMTCalibrator PCal(rn);
+}
+
 void mi_makeSimSpectrum(std::deque<std::string>&, std::stack<std::string>& stack) {
 	float eMax = streamInteractor::popFloat(stack);
 	std::string simName = streamInteractor::popString(stack);
@@ -318,6 +323,9 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	plotGMS.addArg("End Run");
 	plotGMS.addArg("","",&selectRuntype);
 	
+	inputRequester showCal("Show run calibration",&mi_showCal);
+	showCal.addArg("Run");
+	
 	inputRequester octetProcessor("Process Octet",&mi_processOctet);
 	octetProcessor.addArg("Octet number");
 	inputRequester octetRange("Process Octet Range",&mi_anaOctRange);
@@ -333,6 +341,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
+	PostRoutines.addChoice(&showCal,"cal");
 	PostRoutines.addChoice(&plotGMS,"gms");
 	PostRoutines.addChoice(&octetProcessor,"oct");
 	PostRoutines.addChoice(&octetRange,"rng");

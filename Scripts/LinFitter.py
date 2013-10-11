@@ -1,8 +1,6 @@
 #!/usr/bin/python
 
-from numpy import array
-import numpy.linalg as linalg
-from numpy import dot
+from numpy import array, linalg, dot
 from math import *
 from bisect import bisect
 

@@ -7,8 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+bool ProcessedDataScanner::redoPositions = false;
+
 ProcessedDataScanner::ProcessedDataScanner(const std::string& treeName, bool withCalibrators):
-RunSetScanner(treeName,withCalibrators), redoPositions(false), runClock(0), EvnbGood(true), BkhfGood(true), SIS00(0),
+RunSetScanner(treeName,withCalibrators), runClock(0), EvnbGood(true), BkhfGood(true), SIS00(0),
 physicsWeight(1.0), anChoice(ANCHOICE_A), fiducialRadius(45.0) {
 	for(Side s = EAST; s<=WEST; ++s)
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)

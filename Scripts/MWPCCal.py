@@ -5,6 +5,8 @@ from math import *
 from QFile import *
 from PyxUtils import *
 from Asymmetries import *
+import numpy
+from numpy import zeros,matrix,linalg
 import os
 
 class wireSpec:
@@ -14,10 +16,41 @@ class wireSpec:
 		self.n = n
 		self.norm = 1.0
 
-class cathseg(KVMap):
+class cathnorm_fits(KVMap):
+	"""cathnorm_fits from CathodeGainPlugin analysis, indicating shape of cathode charge distribution"""
 	def __init__(self,m=KVMap()):
 		self.dat = m.dat
-		self.loadFloats(["center","d_center","height","d_height","width","d_width","i","position","max","d_max","fill_frac"])
+		self.loadFloats(["center","d_center","height","d_height","width","d_width","cathode"])
+		self.cathode = int(self.cathode)
+		for i in range(3):
+			self.loadFloats(["cx_lo_a%i"%i,"d_cx_lo_a%i"%i,"cx_hi_a%i"%i,"d_cx_hi_a%i"%i])
+		self.loadStrings(["side","plane"])
+	def cathkey(self):
+		return (self.side,self.plane,self.cathode)
+	def getY(self,x):
+		if -0.6 <= x <= -0.4:
+			return self.cx_lo_a0 + self.cx_lo_a1*x + self.cx_lo_a2*x**2
+		if 0.4 <= x <= 0.6:
+			return self.cx_hi_a0 + self.cx_hi_a1*x + self.cx_hi_a2*x**2
+		return None
+	def getDeriv(self,x):
+		if -0.6 <= x <= -0.4:
+			return self.cx_lo_a1 + 2*self.cx_lo_a2*x
+		if 0.4 <= x <= 0.6:
+			return self.cx_hi_a1 + 2*self.cx_hi_a2*x
+		return None
+
+class CathnormFile(QFile):
+	"""QFile containing 'cathnorm_fits' keys"""
+	def __init__(self,fname):
+		QFile.__init__(self,fname)
+		self.cathnorms = dict([(c.cathkey(),c) for c in [cathnorm_fits(c) for c in self.dat.get("cathnorm_fits",[])]])
+
+class cathseg(KVMap):
+	"""CathodeSeg struct created by CathodeTweakPlugin analysis, indicating counts vs data and derivatives at boundary"""
+	def __init__(self,m=KVMap()):
+		self.dat = m.dat
+		self.loadFloats(["position","n_exp","n_obs","dndx_lo","dndx_hi","i"])
 		self.i = int(self.i)
 		self.loadStrings(["side","plane"])
 	def __eval__(self,x):
@@ -28,8 +61,12 @@ class cathseg(KVMap):
 		return exp(-(x0**2-x1**2)/(2*self.width**2))
 	def renorm(self):
 		return self.expansionFactor(0.5,0.5/self.fill_frac)
+	
+	def cathkey(self):
+		return (self.side,self.plane,self.i)
 
 class hitdist(KVMap):
+	"""Fourier decomposition of hit distribution around cathode"""
 	def __init__(self,m=KVMap()):
 		self.dat = m.dat
 		self.loadFloats(["cathode","ehi","elo","eavg"])
@@ -37,6 +74,26 @@ class hitdist(KVMap):
 		self.loadStrings(["side","plane"])
 		self.terms = [float(x) for x in self.getFirst("terms","").split(",")]
 		self.dterms = [float(x) for x in self.getFirst("dterms","").split(",")]
+	def cathkey(self):
+		return (self.side,self.plane,self.cathode)
+
+
+class CathFillFile(QFile):
+	"""QFile containing cathseg entries with fill fraction vs MC"""
+	def __init__(self,fname):
+		QFile.__init__(self,fname)
+		self.cathsegs = dict([(c.cathkey(),c) for c in [cathseg(c) for c in self.dat.get("cathseg",[])]])
+		# cathode normalization from runcal
+		self.cnorms = {}
+		for s in ["E","W"]:
+			for d in ["x","y"]:
+				self.cnorms[(s,d)] = [float(x) for x in self.getItem("runcal","cnorm_"+s+d).split(",")]
+		for k in self.cathsegs:
+			self.cathsegs[k].cnorm = self.cnorms[(k[0],k[1])][k[2]]
+	def getCathkeys(self,side,plane):
+		ckeys = [ k for k in  self.cathsegs if k[0] == side and k[1] == plane]
+		ckeys.sort()
+		return ckeys
 
 class CathFile(QFile):
 	def __init__(self,fname):
@@ -165,6 +222,25 @@ def gen_cathcal_set(conn,r0,r1,cr0,cr1):
 					gid = upload_graph(conn,"Cathode %s%s %i"%(s,d,w.n),c)
 					set_cathshape_graph(conn,csid,gid)
 
+def upload_cathcal_set(conn,r0,r1,cathnorms,corrcuves=None):
+	
+	if not corrcuves:
+		corrcurves = dict([(k,[]) for k in cathnorms])
+	
+	for ccsid in find_cathcal_sets(conn,r0,r1):
+		delete_cathcal_set(conn,ccsid)
+	
+	for s in ["East","West"]:
+		for d in ["X","Y"]:
+			ccsid = new_cathcal_set(conn,s,d,r0,r1)
+			for w in getWires(r0,s,d):
+				w.norm = cathnorms[(s[0],d.lower(),w.n)]
+				csid = new_cathseg_cal(conn,ccsid,w)
+				for c in corrcurves[(s[0],d.lower(),w.n)]:
+					gid = upload_graph(conn,"Cathode %s%s %i"%(s,d,w.n),c)
+					set_cathshape_graph(conn,csid,gid)
+
+
 # Cathode hit distribution correction factors
 def PlotCathShapes(basepath):
 	CF = CathFile(basepath+"/MWPCCal.txt")
@@ -262,63 +338,120 @@ def PlotCathShapes(basepath):
 				
 	return corrcurves
 
-def PlotCathNorm(basepath):
-	CF = CathFile(basepath+"/MWPCCal.txt")
-	caths = CF.hitdists.keys()
-	caths.sort()
-	cathnorms = {}
+def CathNormCorrection(basePath, normFile, fillFile):
+
+	CN = CathnormFile(normFile)
+	CF = CathFillFile(fillFile)
 	
-	gCNorm=graph.graphxy(width=15,height=10,
-						   x=graph.axis.lin(title="cathode number",min=0,max=15,
-											parter=graph.axis.parter.linear(tickdists=[5,1])),
-						   y=graph.axis.lin(title="normalization factor",min=0.8,max=1.2),
-						   key = graph.key.key(pos="bc",columns=2))
-	setTexrunner(gCNorm)
-	
+	# fill fractions
 	gFill=graph.graphxy(width=15,height=10,
 						 x=graph.axis.lin(title="cathode number",min=0,max=15,
 										  parter=graph.axis.parter.linear(tickdists=[5,1])),
-						 y=graph.axis.lin(title="fill fraction",min=0.75,max=1.25),
+						 y=graph.axis.lin(title="observed/expected counts",min=0.9,max=1.12),
 						 key = graph.key.key(pos="bc",columns=2))
 	setTexrunner(gFill)
+	
+	# cathode norms after correction
+	gCNorm=graph.graphxy(width=15,height=10,
+						   x=graph.axis.lin(title="cathode number",min=0,max=15,
+											parter=graph.axis.parter.linear(tickdists=[5,1])),
+						   y=graph.axis.lin(title="gain change $dg$"),
+						   key = graph.key.key(pos="tc",columns=2))
+	setTexrunner(gCNorm)
 	
 	lstyles = {"x":[],"y":[style.linestyle.dashed]}
 	lcols = {"E":[rgb.red],"W":[rgb.blue]}
 	ssymbs = {"E":symbol.circle,"W":symbol.triangle}
 	
+	# all cathode gain normalizations recommended
+	cathnorms = {}
+	numpy.set_printoptions(precision=3, linewidth=250)
+	
 	for s in ["E","W"]:
 		for d in ["x","y"]:
 			print "-----------",s,d,"------------"
-			gdat = [ CF.cathsegs[k] for k in caths if k[0]==s and k[1]==d ]
-			gdat = [ (g.i,g.renorm()*CF.cnorms[(s,d)][g.i],g.fill_frac,g) for g in gdat ]
-			gdat.sort()
-			gdat = gdat[1:-1]
-			gnorm = sum([g[1] for g in gdat])/len(gdat)
-			for g in gdat:
-				print s,d,g[0],g[1],g[-1].fill_frac,g[-1].renorm(),g[-1].width
-			gdat = [ (g[0],g[1]/gnorm,g[2]) for g in gdat ]
+			
+			# collect data
+			ckeys = CF.getCathkeys(s,d)[1:-1]
+			nCaths = len(ckeys)
+			cathSegs = [CF.cathsegs[k] for k in ckeys]
+			cathNorms = [CN.cathnorms[k] for k in ckeys]
+			n_obs = sum([c.n_obs for c in cathSegs])
+			n_exp = sum([c.n_exp for c in cathSegs])
+			print "Total events Expected:",n_exp,"Observed:",n_obs
+			gdat = [ (c.i,c.n_obs/c.n_exp*n_exp/n_obs) for c in cathSegs]
+			print "Fill factors",gdat
+			
 			gtitle = "%s%s"%(s,d)
-			gCNorm.plot(graph.data.points(gdat,x=1,y=2,title=gtitle),
-			  [graph.style.line(lineattrs=lstyles[d]+lcols[s]),
-			   graph.style.symbol(ssymbs[s],symbolattrs=lcols[s])])
-			gFill.plot(graph.data.points(gdat,x=1,y=3,title=gtitle),
+			gFill.plot(graph.data.points(gdat,x=1,y=2,title=gtitle),
 						[graph.style.line(lineattrs=lstyles[d]+lcols[s]),
 						 graph.style.symbol(ssymbs[s],symbolattrs=lcols[s])])
+
+			# check crossover consistency
+			print "Cx consistency",  [cathNorms[i].getY(0.5)-cathNorms[i+1].getY(-0.5) for i in range(nCaths-1)]
+			# dx/dgain at each crossing
+			dxdg = [0.5*(cathNorms[i].getY(0.5)+cathNorms[i+1].getY(-0.5))/(-cathNorms[i].getDeriv(0.5)+cathNorms[i+1].getDeriv(-0.5)) for i in range(nCaths-1)]
+			print "Crossing dx/dg",dxdg
+			# dn/dx at each crossing, averaged between cathodes
+			dndx = [0.5*(cathSegs[i].dndx_hi+cathSegs[i+1].dndx_lo) for i in range(nCaths-1)]
+			print "Crossing dn/dx",dndx
+			# desired delta n expected-observed
+			deltaN = matrix([ c.n_exp*n_obs/n_exp - c.n_obs for c in cathSegs]).transpose()
+			print "Desired delta N"
+			print deltaN
 			
-			for g in gdat:
-				cathnorms[(s,d,g[0])] = g[1]
-			#cathnorms[(s,d,0)]=cathnorms[(s,d,1)]
-			#cathnorms[(s,d,15)]=cathnorms[(s,d,14)]
-			cathnorms[(s,d,0)] = 0.85
-			cathnorms[(s,d,15)] = 0.85
-	
-	cathnorms[("W","x",1)] = 0.9
-	cathnorms[("E","x",14)] = 0.9
-				
-	gCNorm.writetofile(basepath+"/CathNorm.pdf")
-	gFill.writetofile(basepath+"/CathFill.pdf")
-	return cathnorms
+			# matrix: deltaN sensitivity to gain changes
+			gmatrix = matrix(zeros((nCaths,nCaths)))
+			for i in range(nCaths):
+				dndg = 0
+				if i>0:
+					gmatrix[i-1,i] -= dxdg[i-1]*dndx[i-1]
+					dndg -= gmatrix[i-1,i]
+				if i<nCaths-1:
+					gmatrix[i+1,i] -= dxdg[i]*dndx[i]
+					dndg -= gmatrix[i+1,i]
+				gmatrix[i,i] += dndg
+			print "gain sensitivity [counts]"
+			print gmatrix
 		
+			# matrix: transform gmatrix into local imbalance system
+			ncomb = matrix(zeros((nCaths-1+nCaths,nCaths)))
+			for i in range(nCaths-1):
+				#ncomb[i,i] = -1.0/cathSegs[i].n_exp
+				#ncomb[i,i+1] = 1.0/cathSegs[i+1].n_exp
+				ncomb[i,i] = -1.0/n_exp
+				ncomb[i,i+1] = 1.0/n_exp
+			print "combining matrix"
+			print ncomb
+			
+			gmatrix = ncomb*gmatrix
+			deltaN = ncomb*deltaN
+			#gmatrix[nCaths-1,3] = gmatrix[nCaths,12] = gmatrix[nCaths+1,7] = 10.0
+			for i in range(nCaths):
+				gmatrix[nCaths-1+i,i] = 0.005
+			print "gain equation matrix"
+			print gmatrix
+			
+			(gain,ssr,matrixRank,singularValues) = linalg.lstsq(gmatrix,deltaN)
+			print "recommended gain change"
+			print gain
+			print "rms dev =",sqrt(ssr/len(deltaN))
+
+			gdat = [(n+1,c) for (n,c) in enumerate(gain)]
+			gCNorm.plot(graph.data.points(gdat,x=1,y=2,title=gtitle),
+						[graph.style.line(lineattrs=lstyles[d]+lcols[s]),
+						 graph.style.symbol(ssymbs[s],symbolattrs=lcols[s])])
+
+			for (n,k) in enumerate(ckeys):
+				cathnorms[k] = 1.0+gain[n]
+			cathnorms[(s,d,0)] = cathnorms[(s,d,15)] = 1.0
+
+	print cathnorms
+	
+	gFill.writetofile(basePath+"/CathFill.pdf")
+	gCNorm.writetofile(basePath+"/CathNorm.pdf")
+
+	return cathnorms
 
 ###############
 # anode gain calibration
@@ -437,11 +570,19 @@ def sep23effic(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation/"):
 
 if __name__ == "__main__":
 	
+	ppath = os.environ["UCNA_ANA_PLOTS"]
+	
 	#anodeGainCal(None)
 	
 	#sep23effic(os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation_Sim0823_4x/")
 	
 	#conn = open_connection()
+	#for ccsid in find_cathcal_sets(conn,14077,16216):
+	#	delete_cathcal_set(conn,ccsid)
 	#anodeGainCal(conn)
-	conn = None
-	gen_cathcal_set(conn,13000,100000,14264,16077)
+	#conn = None
+	#gen_cathcal_set(conn,13000,100000,14264,16077)
+
+	wpath = ppath+"/WirechamberCal/14077-16216"
+	cnorms = CathNormCorrection(wpath,ppath+"BetaOctetPositions_NewNorm/BetaOctetPositions_NewNorm.txt",wpath+"/MWPCCal.txt")
+	#upload_cathcal_set(conn,14077,16216,cnorms)

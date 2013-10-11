@@ -11,6 +11,7 @@ void OctetSimuCloneManager::scanOct(RunAccumulator& RA, unsigned int octn) {
 		if(!oct.getNRuns()) return;
 		RunAccumulator* octRA = (RunAccumulator*)RA.makeAnalyzer(oct.octName(),"");
 		processOctets(*octRA,oct.getSubdivs(oct.divlevel+1,false),0*24*3600, doPlots);
+		delete octRA;
 }
 
 void OctetSimuCloneManager::combineOcts(RunAccumulator& RA) {
@@ -35,6 +36,7 @@ void OctetSimuCloneManager::simOct(RunAccumulator& SimRA, unsigned int octn) {
 		Sim2PMT* simData = getSimdata(octn);
 		octSim->simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), *simData, simFactor, 0.*3600, doPlots);
 		delete simData;
+		delete octSim;
 }
 
 void OctetSimuCloneManager::combineSims(RunAccumulator& SimRA) {

@@ -59,7 +59,25 @@ def processXeSim(rmin,rmax,nr):
 		os.system("nice -n 15 parallel -P %i < xenon_simlist.txt"%nproc)
 		os.system("rm xenon_simlist.txt")
 		os.system(pcmd%(rmin,rmax,0,nr))
-	
+
+def betaOctetPositions(dosim):
+	pcmd = "cd ..; ./BetaOctetPositions %i\n"
+	freplaylist = open("parallel_cmd.txt","w")
+	for r in range(60):
+		if dosim:
+			freplaylist.write(pcmd%(-r-1))
+		else:
+			freplaylist.write(pcmd%r)
+	freplaylist.close()
+	os.system("cat parallel_cmd.txt")
+	os.system("nice -n 15 parallel -P 3 < parallel_cmd.txt")
+	os.system("rm parallel_cmd.txt")
+	if dosim:
+		os.system(pcmd%(-1000))
+	else:
+		os.system(pcmd%1000)
+
+
 if __name__ == "__main__":
 	
 	parser = OptionParser()
@@ -72,11 +90,13 @@ if __name__ == "__main__":
 	parser.add_option("--rmin", type="int", dest="rmin", default=0)
 	parser.add_option("--rmax", type="int", dest="rmax", default=100000)
 	parser.add_option("--nrings", type="int", dest="nrings", default=11, help="number of rings for position map")
+	parser.add_option("--bops", dest="bops", action="store_true", default=False, help="beta octet positions")
 	
 	options, args = parser.parse_args()
 	if options.kill:
 		os.system("killall -9 parallel")
 		os.system("killall -9 UCNAnalyzer")
+		os.system("killall -9 BetaOctetPositions")
 		os.system("killall -9 ReplayManager.py")
 		exit(0)
 	
@@ -100,4 +120,8 @@ if __name__ == "__main__":
 		
 	if options.sources:
 		processSources(options.rmin,options.rmax)
+		exit(0)
+
+	if options.bops:
+		betaOctetPositions(False)
 		exit(0)

@@ -7,6 +7,8 @@
 
 #define kUndefinedPosition 666
 
+bool WirechamberCalibrator::calibrateCathodes = true;
+
 WirechamberCalibrator::WirechamberCalibrator(RunNum rn, CalDB* cdb): sigma(5.90), anodeP(cdb->getAnodePositioningCorrector(rn)) {
 	assert(anodeP);
 	anodeP->setNormAvg();
@@ -23,6 +25,10 @@ WirechamberCalibrator::WirechamberCalibrator(RunNum rn, CalDB* cdb): sigma(5.90)
 			}
 			domains[s][d].push_back(0);
 			for(unsigned int i=0; i<cathsegs[s][d].size(); i++) {
+				if(!calibrateCathodes) {
+					cathsegs[s][d][i]->norm = 1.0;
+					cathsegs[s][d][i]->pcoeffs.clear();
+				}
 				wirePos[s][d].push_back(cathsegs[s][d][i]->pos);
 				if(i)
 					domains[s][d].push_back(0.5*(wirePos[s][d][i]+wirePos[s][d][i-1]));
@@ -205,7 +211,6 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d,
 		// cathode normalization
 		float cnm = cathsegs[s][d][c]->norm;
 		if(isClipped) {
-			wireValues[c] = 100000;
 			h.nClipped++;
 		} else {
 			// record in usable wires
