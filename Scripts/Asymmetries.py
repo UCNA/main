@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
 import os
-from LinFitter import *
-from PyxUtils import *
-from QFile import *
-from EncalDB import *
-from Histogram import *
+from ucnacore.LinFitter import *
+from ucnacore.PyxUtils import *
+from ucnacore.QFile import *
+from ucnacore.EncalDB import *
+from ucnacore.Histogram import *
 try:
 	from scipy import stats
 except:

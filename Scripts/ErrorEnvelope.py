@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from Sources import *
-from Histogram import *
+from ucnacore.Histogram import *
 
 limdat = {2008:[(0,5.0),(250,5.0),(500,500*0.013),(900,900*0.025),(1000,1000*0.025),(1200,1200*0.025)],
 			2010:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)],

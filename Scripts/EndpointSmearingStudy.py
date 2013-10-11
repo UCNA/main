@@ -1,8 +1,8 @@
 #!/sw/bin/python2.7
 
 from LinFitter import *
-from PyxUtils import *
-from QFile import *
+from ucnacore.PyxUtils import *
+from ucnacore.QFile import *
 import os
 
 def EndpointSmearingDat():

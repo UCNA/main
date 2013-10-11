@@ -3,7 +3,7 @@
 import sys
 sys.path.append("..")
 from math import *
-from PyxUtils import *
+from ucnacore.PyxUtils import *
 from ErrorEnvelope import *
 
 def bin_edges(w=10,n=100):

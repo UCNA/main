@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from Asymmetries import *
-from PyxUtils import *
+from ucnacore.PyxUtils import *
 import copy
 
 class AsymCorrFile(QFile):

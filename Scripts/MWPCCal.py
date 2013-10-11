@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-from EncalDB import *
+from ucnacore.EncalDB import *
 from math import *
-from QFile import *
-from PyxUtils import *
+from ucnacore.QFile import *
+from ucnacore.PyxUtils import *
 from Asymmetries import *
 import numpy
 from numpy import zeros,matrix,linalg

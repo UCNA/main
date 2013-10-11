@@ -1,7 +1,7 @@
 #!/sw/bin/python2.7
 
 from math import *
-from PyxUtils import *
+from ucnacore.PyxUtils import *
 from LinFitter import *
 import os
 

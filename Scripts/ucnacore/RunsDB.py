@@ -2,7 +2,7 @@
 
 import os
 import time
-from EncalDB import *
+from ucnacore.EncalDB import *
 
 class RunInfo:
 	def __init__(self,rn,rtype="Other",ccyc="Unknown"):

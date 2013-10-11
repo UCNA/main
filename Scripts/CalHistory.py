@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 from LinFitter import *
-from PyxUtils import *
-from EncalDB import *
+from ucnacore.PyxUtils import *
+from ucnacore.EncalDB import *
 import os
 
 def make_runaxis(rmin,rmax):

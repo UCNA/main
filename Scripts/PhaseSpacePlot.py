@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from PyxUtils import *
+from ucnacore.PyxUtils import *
 from LinFitter import *
 import os
 

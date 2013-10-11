@@ -1,6 +1,6 @@
 #!/sw/bin/python2.7
 import os
-from EncalDB import *
+from ucnacore.EncalDB import *
 
 import os
 import string

@@ -4,7 +4,7 @@ from math import *
 import os
 import sys
 sys.path.append("..")
-from PyxUtils import *
+from ucnacore.PyxUtils import *
 
 class CorrFile:
 	def __init__(self,fname):

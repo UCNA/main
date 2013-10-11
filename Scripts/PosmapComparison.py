@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-from PyxUtils import *
-from EncalDB import *
-from QFile import *
+from ucnacore.PyxUtils import *
+from ucnacore.EncalDB import *
+from ucnacore.QFile import *
 from math import *
 from LinFitter import *
 

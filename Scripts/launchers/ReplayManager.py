@@ -1,8 +1,11 @@
 #!/usr/bin/python
 import os
 import time
-from EncalDB import *
-from optparse import OptionParser	
+from optparse import OptionParser
+import sys
+sys.path.append("..")
+from ucnacore.EncalDB import *
+
 	
 def processOctets(sim,omin,omax):
 	pcmd = "cd ..; ./UCNAnalyzer pr oct %i x x\n"

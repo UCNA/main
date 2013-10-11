@@ -1,6 +1,6 @@
 #!/sw/bin/python2.6
 
-from PyxUtils import *
+from ucnacore.PyxUtils import *
 from math import *
 from LinFitter import *
 

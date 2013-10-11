@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-from PyxUtils import *
-from QFile import *
+from ucnacore.PyxUtils import *
+from ucnacore.QFile import *
 from math import *
 import os
 import sys

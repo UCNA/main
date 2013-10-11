@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-from QFile import *
+from ucnacore.QFile import *
 from LinFitter import *
-from PyxUtils import *
-from EncalDB import *
+from ucnacore.PyxUtils import *
+from ucnacore.EncalDB import *
 import os
 
 def deleteEQ2ET(conn,eqid):

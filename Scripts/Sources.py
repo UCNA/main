@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 from LinFitter import *
-from PyxUtils import *
-from EncalDB import *
-from QFile import *
+from ucnacore.PyxUtils import *
+from ucnacore.EncalDB import *
+from ucnacore.QFile import *
 import os
 
 peakNames = { 8:"$^{207}$Bi 1", 9:"$^{207}$Bi 2", 11:"$^{113}$Sn", 12:"Sr85", 13:"$^{109}$Cd", 14:"$^{114}$In", 15:"$^{139}$Ce", 20:"$^{137}$Cs" }  

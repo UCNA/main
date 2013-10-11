@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-from QFile import *
-from PyxUtils import *
+from ucnacore.QFile import *
+from ucnacore.PyxUtils import *
 from LinFitter import *
 from Asymmetries import *
 import os

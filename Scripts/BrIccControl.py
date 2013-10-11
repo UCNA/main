@@ -5,7 +5,7 @@ from string import *
 from math import *
 import os
 
-from QFile import *
+from ucnacore.QFile import *
 
 def fmt_err(xdx):
 	x,dx = xdx
