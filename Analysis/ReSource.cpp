@@ -19,6 +19,8 @@ OM(O), mySource(s), PCal(P), dbgplots(false), simMode(false),
 nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 	
 	// source-dependent ranges
+	double wRange = 10; // position plot +/-width
+	unsigned int wCounts = 300;
 	if(mySource.t == "Bi207") {
 		eMax = 1800;
 		pkMin = 200;
@@ -35,10 +37,14 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 		eMin = -20;
 		eMax = 300;
 		addCorrFit(70,140);
+		wRange = 5;
+		wCounts = 100;
 	} else if (mySource.t == "Cd109") {
 		nBins = 100;
 		eMin = -20;
 		eMax = 300;
+		wRange = 5;
+		wCounts = 100;
 	} else if(mySource.t == "Cs137") {
 		eMax = 1200;
 		pkMin = 400;
@@ -80,9 +86,12 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0) {
 		}
 	}	
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
-		hitPos[d] = OM->registeredTH1F(s.name()+"_hits_profile_"+itos(d),"Hit Positions",300,-10,10);
+		hitPos[d] = OM->registeredTH1F(s.name()+"_hits_profile_"+itos(d),mySource.lxname()+" event positions",wCounts,-wRange,wRange);
 		hitPos[d]->SetLineColor(2+2*d);
-		hitPos[d]->GetXaxis()->SetTitle("position [mm]");
+		hitPos[d]->Sumw2();
+		hitPos[d]->GetXaxis()->SetTitle((std::string(d==X_DIRECTION?"x":"y")+" position [mm]").c_str());
+		hitPos[d]->GetYaxis()->SetTitle("Event Rate [Hz/mm]");
+		hitPos[d]->GetYaxis()->SetTitleOffset(1.25);
 	}
 }
 
@@ -147,7 +156,9 @@ void ReSourcer::findSourcePeaks(float runtime) {
 			hTubesRaw[t]->Scale(1.0/(runtime*hTubesRaw[t]->GetBinWidth(1)));
 	}
 	hErec->Scale(1.0/(runtime*hErec->GetBinWidth(1)));
-	
+	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
+		hitPos[d]->Scale(1.0/(runtime*hitPos[d]->GetBinWidth(1)));
+		
 	// perform fits, draw histograms
 	float searchsigma;
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
@@ -246,13 +257,6 @@ void ReSourcer::findSourcePeaks(float runtime) {
 			OM->printCanvas(mySource.name()+"/Spectrum_Combined"+(tp==TYPE_0_EVENT?"":"_type_"+itos(tp))+(simMode?"_Sim":""));
 		}
 	}
-	
-	OM->defaultCanvas->SetLogy(false);
-	std::vector<TH1*> hToPlot;
-	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
-		hToPlot.push_back(hitPos[d]);
-	drawSimulHistos(hToPlot);
-	OM->printCanvas(mySource.name()+"/Hit_Positions"+(simMode?"_Sim":""));
 }
 
 void ReSourcer::calcPMTcorr() {
@@ -453,12 +457,13 @@ void reSource(RunNum rn) {
 		TM.defaultCanvas->cd();
 		TM.defaultCanvas->SetLeftMargin(2.0);
 		TM.defaultCanvas->SetRightMargin(0.05);
+		float simNorm[nBetaTubes+1];
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
-			float simNorm = it->second.hTubes[t][TYPE_0_EVENT]->Integral()/RS.hTubes[t][TYPE_0_EVENT]->Integral();
+			simNorm[t] = it->second.hTubes[t][TYPE_0_EVENT]->Integral()/RS.hTubes[t][TYPE_0_EVENT]->Integral();
 			for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_III_EVENT; tp++) {
 				if(tp>TYPE_0_EVENT && t!=nBetaTubes) continue;
 				std::vector<TH1*> hToPlot;
-				RS.hTubes[t][tp]->Scale(simNorm);
+				RS.hTubes[t][tp]->Scale(simNorm[t]);
 				
 				RS.hTubes[t][tp]->SetLineColor(4);
 				it->second.hTubes[t][tp]->SetLineColor(2);
@@ -505,6 +510,20 @@ void reSource(RunNum rn) {
 		it->second.hErec->Draw("HIST SAME");
 		TM.printCanvas(it->second.mySource.name()+"/Erecon");
 		
+		// positions
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+#ifdef PUBLICATION_PLOTS
+			it->second.hitPos[d]->SetLineColor(1);
+			it->second.hitPos[d]->SetLineWidth(2);
+			RS.hitPos[d]->SetLineColor(1);
+			RS.hitPos[d]->SetLineStyle(2);
+			RS.hitPos[d]->GetSumw2()->Set(0);
+#endif
+			RS.hitPos[d]->Scale(simNorm[nBetaTubes]);
+			it->second.hitPos[d]->Draw("");
+			RS.hitPos[d]->Draw("H SAME");
+			TM.printCanvas(it->second.mySource.name()+"/Hit_Pos_"+(d==X_DIRECTION?"x":"y"));
+		}
 	}
 	
 	TM.write();	
