@@ -194,8 +194,15 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 		throw(e);
 	}
 	
-	pcors.insert(std::make_pair(psid,new PositioningCorrector(pinf)));
+	PositioningCorrector* PC = new PositioningCorrector();
+	PC->loadData(pinf);
+	pcors.insert(std::make_pair(psid,PC));
 	return getPositioningCorrectorByID(psid);
+}
+
+void CalDBSQL::forgetPositioningCorrector(RunNum rn) {
+	unsigned int psid = getCalSetInfo(rn,"posmap_set_id");
+	pcors.erase(psid);
 }
 
 unsigned int CalDBSQL::getCalSetInfo(RunNum R, const char* field) {

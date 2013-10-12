@@ -37,6 +37,44 @@ void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& fout
 	fout.commit();
 }
 
+void dumpPosmap(QFile& qOut, PositioningCorrector& PCor, PMTCalibrator* PCal) {
+
+	for(Side s = EAST; s<=WEST; ++s) {
+		
+		unsigned int nMaps = PCor.getNMaps(s);
+		for(unsigned int t=0; t<nMaps; t++) {
+			
+			const SectorCutter& psects = PCor.getSectors(s,t);
+			
+			Stringmap sm = SCtoSM(psects);
+			sm.insert("side",sideSubst("%c",s));
+			sm.insert("tube",itos(t));
+			qOut.insert("SectorCutter",sm);
+			
+			for(unsigned int n=0; n<psects.nSectors(); n++) {
+				
+				float x,y;
+				psects.sectorCenter(n,x,y);
+				
+				Stringmap m;
+				m.insert("side",ctos(sideNames(s)));
+				m.insert("tube",itos(t));
+				m.insert("sector",n);
+				m.insert("x",x);
+				m.insert("y",y);
+				if(t<nBetaTubes)
+					m.insert("light",PCor.eval(s,t,x,y,true));
+				if(PCal && nMaps>=nBetaTubes)
+					m.insert("nPE",PCal->nPE(s, t, 1000, x, y, 0));
+				m.insert("energy",1.0);
+				
+				qOut.insert("PosmapPoint",m);
+			}
+		}
+	}
+}
+
+
 void dumpPosmap(std::string basepath, unsigned int pnum) {
 	
 	PositioningCorrector* PCor;
@@ -56,34 +94,7 @@ void dumpPosmap(std::string basepath, unsigned int pnum) {
 	
 	makePath(basepath);
 	QFile fout(basepath+"/Posmap_"+itos(pnum)+".txt",false);
-	
-	for(Side s = EAST; s<=WEST; ++s) {
-		for(unsigned int t=0; t<PCor->getNMaps(s); t++) {
-			
-			SectorCutter& psects = PCor->getSectors(s,t);
-			
-			for(unsigned int n=0; n<psects.nSectors(); n++) {
-				
-				float x,y;
-				psects.sectorCenter(n,x,y);
-				
-				Stringmap m;
-				m.insert("side",ctos(sideNames(s)));
-				m.insert("tube",itos(t));
-				m.insert("sector",n);
-				m.insert("x",x);
-				m.insert("y",y);
-				if(t<nBetaTubes)
-					m.insert("light",PCor->eval(s,t,x,y,true));
-				else
-					m.insert("light",PCal->nPE(s, nBetaTubes, 1000, x, y, 0));
-				m.insert("energy",1.0);
-				
-				fout.insert("PosmapPoint",m);
-			}
-		}
-		
-	}
+	dumpPosmap(fout, *PCor, PCal);
 	fout.commit();
 }
 
@@ -269,7 +280,7 @@ TH2F* PosPlotter::makeHisto(const std::string& nm, const std::string& title) {
 
 void PosPlotter::npePlot(PMTCalibrator* PCal) {
 	
-	SectorCutter& Sects = PCal->P->getSectors(EAST,0);
+	const SectorCutter& Sects = PCal->P->getSectors(EAST,0);
 	r0 = Sects.r;
 	
 	float e0 = 1000;
@@ -297,7 +308,7 @@ void PosPlotter::npePlot(PMTCalibrator* PCal) {
 
 void PosPlotter::npeGradPlot(PMTCalibrator* PCal) {
 	
-	SectorCutter& Sects = PCal->P->getSectors(EAST,0);
+	const SectorCutter& Sects = PCal->P->getSectors(EAST,0);
 	r0 = Sects.r;
 	
 	for(Side s = EAST; s<=WEST; ++s) {
@@ -327,9 +338,71 @@ void PosPlotter::npeGradPlot(PMTCalibrator* PCal) {
 	}
 }
 
+void PosPlotter::diffPlot(const PositioningCorrector& P1, const PositioningCorrector& P2, double zRange) {
+	const SectorCutter& Sects = P1.getSectors(EAST,0);
+	r0 = Sects.r;
+	
+	for(Side s = EAST; s<=WEST; ++s) {
+		assert(P1.getNMaps(s)==P2.getNMaps(s));
+		for(unsigned int t=0; t<P1.getNMaps(s); t++) {
+			std::string hTitle = sideSubst("Position Maps %c",s)+itos(t+1)+" Difference";
+			TH2F* interpogrid = makeHisto(sideSubst("%c ",s)+itos(t+1), hTitle);
+			interpogrid->SetAxisRange(-zRange,zRange,"Z");
+			startScan(interpogrid);
+			unsigned int npts = 0;
+			double sx = 0;
+			double sxx = 0;
+			while(nextPoint()) {
+				double z1 = P1.eval(s, t, x, y, true);
+				double dx = 100.0*(z1-P2.eval(s, t, x, y, true))/z1;
+				sx += dx;
+				sxx += dx*dx;
+				npts++;
+				dx = dx>zRange ? zRange:(dx<-zRange ? -zRange:dx);
+				interpogrid->SetBinContent(nx,ny,dx);
+				
+			}
+			sx /= npts;
+			sxx /= npts;
+			printf("%c%i RMS %% difference: %.3f\n",sideNames(s),t,sqrt(sxx-sx*sx));
+			interpogrid->Draw("COL Z");
+			drawSectors(Sects,6);
+			OM->printCanvas(sideSubst("PosmapDiff_%c",s)+itos(t));
+		}
+	}
+}
+
+void PosPlotter::npeDiffPlot(const PMTCalibrator& P1, const PMTCalibrator& P2) {
+	const SectorCutter& Sects = P1.P->getSectors(EAST,0);
+	r0 = Sects.r;
+	for(Side s = EAST; s<=WEST; ++s) {
+		TH2F* interpogrid = makeHisto(sideSubst("npe_diff_%c",s),"nPE difference");
+		interpogrid->SetAxisRange(-4,4,"Z");
+		unsigned int npts = 0;
+		double sx = 0;
+		double sxx = 0;
+		startScan(interpogrid);
+		while(nextPoint()) {
+			float n1 = P1.nPE(s,nBetaTubes,1000,x,y);
+			float n2 = P2.nPE(s,nBetaTubes,1000,x,y);
+			float pdif = 100.*(n1-n2)/n1;
+			sx += pdif;
+			sxx += pdif*pdif;
+			npts++;
+			interpogrid->SetBinContent(nx,ny,n1-n2);
+		}
+		sx /= npts;
+		sxx /= npts;
+		printf("%c RMS nPE %% difference: %.3f\n",sideNames(s),sqrt(sxx-sx*sx));
+		interpogrid->Draw("COL Z");
+		drawSectors(Sects,6);
+		OM->printCanvas(sideSubst("PosmapEtaDiff_%c",s));
+	}
+}
+
 void PosPlotter::etaPlot(PositioningCorrector* P, double z0, double z1) {
 	
-	SectorCutter& Sects = P->getSectors(EAST,0);
+	const SectorCutter& Sects = P->getSectors(EAST,0);
 	r0 = Sects.r;
 	
 	for(Side s = EAST; s<=WEST; ++s) {

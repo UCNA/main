@@ -13,7 +13,9 @@ int main(int argc, char *argv[]) {
 		printf("Have a nice day.\n");
 		return 0;
 	}
-	std::string rname = argv[1];
+	const std::string rname = argv[1];
+	
+	printf("Running routine '%s'\n",rname.c_str());
 	
 	ROOTStyleSetup();
 	
@@ -143,6 +145,29 @@ int main(int argc, char *argv[]) {
 	
 	if(rname=="compare_xenon") {
 		compareXenonSpectra();
+	}
+	
+	if(rname=="interpl_err") {
+		OutputManager OM("interpl_err",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/interpl_err/");
+		PosPlotter PP(&OM);
+		PositioningCorrector* PCor = CalDBSQL::getCDB()->getPositioningCorrector(16000);
+		
+		PositioningCorrector P1;
+		P1.interpType = CubiTerpolator::newCubiTerpolator;
+		//P1.interpType =  Interpolator::newInterpolator;
+		P1.loadData(PCor->getData());
+		PositioningCorrector P2;
+		P2.interpType = LinTerpolator::newLinTerpolator;
+		P2.loadData(PCor->getData());
+		
+		PP.diffPlot(P1,P2,1.);
+		
+		PMTCalibrator PC1(16000);
+		CalDBSQL::getCDB()->forgetPositioningCorrector(16000);
+		PositioningCorrector::defaultInterpType = LinTerpolator::newLinTerpolator;
+		PMTCalibrator PC2(16000);
+		
+		PP.npeDiffPlot(PC1, PC2);
 	}
 	
 	return 0;

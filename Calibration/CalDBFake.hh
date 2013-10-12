@@ -62,7 +62,9 @@ public:
 	PositioningCorrector* getPositioningCorrectorByID(unsigned int psid) {
 		printf("*** Warning: loading default fake position map for %i!\n",psid);
 		QFile qin("../SummaryData/Posmap_Default.txt");
-		return new PositioningCorrector(qin);	
+		PositioningCorrector* PC = new PositioningCorrector();
+		PC->loadData(qin);
+		return PC;
 	}
 	
 	/// get trigger efficiency function

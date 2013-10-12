@@ -20,10 +20,7 @@ AnalyzerPlugin(RA,nm), sects(nr,PositionBinnedPlugin::fidRadius) {
 	}
 	
 	// save sector cutter
-	Stringmap ms;
-	ms.insert("nRings",sects.n);
-	ms.insert("radius",sects.r);
-	ms.insert("nSectors",sects.nSectors());
+	Stringmap ms = SCtoSM(sects);
 	myA->qOut.insert("SectorCutter_"+name,ms);
 }
 

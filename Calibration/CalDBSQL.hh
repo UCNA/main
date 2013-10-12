@@ -52,6 +52,8 @@ public:
 	virtual PositioningCorrector* getPositioningCorrector(RunNum rn);
 	/// get positioning corrector by ID number
 	PositioningCorrector* getPositioningCorrectorByID(unsigned int psid);
+	/// remove cached positioning corrector for run
+	void forgetPositioningCorrector(RunNum rn);
 	
 	/// get anode positioning corrector for given run
 	virtual PositioningCorrector* getAnodePositioningCorrector(RunNum rn);

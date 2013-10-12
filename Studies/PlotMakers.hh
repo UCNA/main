@@ -23,6 +23,10 @@ public:
 	void npeGradPlot(PMTCalibrator* PCal);
 	/// plot light transport
 	void etaPlot(PositioningCorrector* P, double z0 = 0.0, double z1 = 2.0);
+	/// compare output from two PositioningCorrectors
+	void diffPlot(const PositioningCorrector& P1, const PositioningCorrector& P2, double zRange = 10);
+	/// compare nPE between to PMTCalibrators
+	void npeDiffPlot(const PMTCalibrator& P1, const PMTCalibrator& P2);
 	
 	float rscale; 		//< extra radius to plot beyond edge of measured area
 	unsigned int nbin;	//< number of position bins
@@ -44,7 +48,9 @@ protected:
 /// plot run-by-run GMS corrections, output data
 void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath = "../PostPlots/");
 
-/// dump position map data to a file
+/// dump position map to file, optionally with nPE from PCal
+void dumpPosmap(QFile& qOut, PositioningCorrector& PCor, PMTCalibrator* PCal);
+/// dump position map data to a file, lookup by pnum (>5000 for a run)
 void dumpPosmap(std::string basepath, unsigned int pnum);
 
 /// extract Evis<->Etrue info from contiunuum spectrum simulation
