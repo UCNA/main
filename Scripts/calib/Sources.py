@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-from LinFitter import *
+import sys
+sys.path.append("..")
+from ucnacore.LinFitter import *
 from ucnacore.PyxUtils import *
 from ucnacore.EncalDB import *
 from ucnacore.QFile import *
@@ -501,6 +503,8 @@ cal_2012 = [
 			
 	
 if __name__=="__main__":
+
+	exit(0)
 
 	# set up output paths
 	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/"

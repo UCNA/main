@@ -2,7 +2,7 @@
 
 from ucnacore.PyxUtils import *
 from math import *
-from LinFitter import *
+from ucnacore.LinFitter import *
 #from UCNAUtils import *
 from bisect import bisect
 from FieldMapGen import *

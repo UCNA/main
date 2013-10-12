@@ -4,7 +4,7 @@ from ucnacore.QFile import *
 from ucnacore.PyxUtils import *
 from pyx import pattern
 from math import *
-from LinFitter import *
+from ucnacore.LinFitter import *
 import os
 
 class enhist(KVMap):

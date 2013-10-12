@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from LinFitter import *
+from ucnacore.LinFitter import *
 from ucnacore.PyxUtils import *
 from ucnacore.EncalDB import *
 import os

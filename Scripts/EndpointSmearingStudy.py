@@ -1,6 +1,6 @@
 #!/sw/bin/python2.7
 
-from LinFitter import *
+from ucnacore.LinFitter import *
 from ucnacore.PyxUtils import *
 from ucnacore.QFile import *
 import os

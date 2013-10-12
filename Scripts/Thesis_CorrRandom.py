@@ -2,7 +2,7 @@
 
 from math import *
 from ucnacore.PyxUtils import *
-from LinFitter import *
+from ucnacore.LinFitter import *
 import os
 
 def calc_ab(c,n):

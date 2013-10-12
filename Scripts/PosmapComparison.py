@@ -4,7 +4,7 @@ from ucnacore.PyxUtils import *
 from ucnacore.EncalDB import *
 from ucnacore.QFile import *
 from math import *
-from LinFitter import *
+from ucnacore.LinFitter import *
 
 class etaPoint(KVMap):
 	def __init__(self,m):

@@ -2,7 +2,7 @@
 
 from ucnacore.QFile import *
 from ucnacore.PyxUtils import *
-from LinFitter import *
+from ucnacore.LinFitter import *
 from Asymmetries import *
 import os
 from math import *

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from ucnacore.PyxUtils import *
-from LinFitter import *
+from ucnacore.LinFitter import *
 import os
 
 # PDG 2012 values

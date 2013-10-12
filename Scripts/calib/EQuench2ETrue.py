@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append("..")
 from ucnacore.QFile import *
-from LinFitter import *
+from ucnacore.LinFitter import *
 from ucnacore.PyxUtils import *
 from ucnacore.EncalDB import *
 import os
