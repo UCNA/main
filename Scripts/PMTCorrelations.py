@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from Sources import *
+from calib.Sources import *
 	
 class pmtCorr(KVMap):
 	def __init__(self,m):

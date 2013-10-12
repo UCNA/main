@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append("..")
 import os
 from ucnacore.LinFitter import *
 from ucnacore.PyxUtils import *

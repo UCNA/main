@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-from Sources import *
+import sys
+sys.path.append("..")
+from calib.Sources import *
 from ucnacore.Histogram import *
 
 limdat = {2008:[(0,5.0),(250,5.0),(500,500*0.013),(900,900*0.025),(1000,1000*0.025),(1200,1200*0.025)],

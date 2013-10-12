@@ -1,4 +1,7 @@
 #!/sw/bin/python2.7
+
+import sys
+sys.path.append("..")
 import os
 from ucnacore.EncalDB import *
 
