@@ -1,6 +1,7 @@
 #include <cassert>
 #include "StyleSetup.hh"
 #include "strutils.hh"
+#include "GraphicsUtils.hh"
 #include "OutputManager.hh"
 #include "PlotMakers.hh"
 #include "AsymmetryCorrections.hh"
@@ -168,6 +169,18 @@ int main(int argc, char *argv[]) {
 		PMTCalibrator PC2(16000);
 		
 		PP.npeDiffPlot(PC1, PC2);
+	}
+	
+	if(rname=="sectors") {
+		OutputManager OM("ThisNameNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/test/");
+		SectorCutter SC(11,50);
+		TH2F foo("foo","",10,-60,60,10,-60,60);
+		foo.GetXaxis()->SetTitle("x position [mm]");
+		foo.GetYaxis()->SetTitle("y position [mm]");
+		foo.Draw();
+		drawSectors(SC,1);
+		labelSectors(SC,1);
+		OM.printCanvas("Sectors");
 	}
 	
 	return 0;

@@ -88,5 +88,39 @@ def EndpointSmearingDat():
 		g.plot(graph.data.points(avgd,x=4,y=3),[graph.style.symbol(symbol.circle)])
 		g.writetofile(baseDir+"EndpointSigma.pdf")
 
+
+def XenonEnergyShift():
+	baseDir = os.environ["UCNA_ANA_PLOTS"]+"/SimSpectrum/XenonEndpoint/"
+	kFits = QFile(baseDir+"/EndpointEnergyShift.txt").dat["kurieFit"]
+
+	gHeight = 12
+	g=graph.graphxy(width=20,height=gHeight,
+			   x=graph.axis.lin(title="energy nonuniformity",min=-0.06,max=0.06),
+			   y=graph.axis.lin(title="simulated endpoint shift [keV]"),
+			   key = graph.key.key(pos="tl"))
+	setTexrunner(g)
+
+	sigmas = []
+	for s in ["E","W"]:
+		for t in range(4):
+			shdat = {}
+			for k in kFits:
+				k.loadFloats(["endpoint","dendpoint","shift","tube"])
+				k.loadStrings(["side"])
+				if not k.tube==t and k.side==s:
+					continue
+				shdat.setdefault(k.shift,[]).append(k.endpoint)
+			
+			gdat = [ [k,]+musigma(shdat[k]) for k in shdat]
+			sigmas.append(gdat[0][2])
+			QF = LinearFitter([polyterm(i) for i in range(2)])
+			QF.fit(gdat,cols=(0,1))
+			print "Shift factor",QF.toLatex()
+			g.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),[graph.style.symbol(symbol.circle)])
+
+	g.writetofile(baseDir+"EndpointShift.pdf")
+	print sigmas,musigma(sigmas)
+
 if __name__ == "__main__":
-	EndpointSmearingDat()
+	#EndpointSmearingDat()
+	XenonEnergyShift()

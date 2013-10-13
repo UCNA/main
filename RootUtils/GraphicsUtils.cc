@@ -184,8 +184,9 @@ void labelSectors(const SectorCutter& S, int color) {
 		S.sectorCenter(i,x,y);
 		l.SetTextColor(color);
 		l.SetTextAlign(22);
-		l.SetTextSize(0.02);
-		l.DrawLatex(x,y,itos(i).c_str());
+		l.SetTextFont(242);
+		l.SetTextSize(0.015);
+		l.DrawLatex(x+0.5,y+0.4,itos(i).c_str());
 	}
 }
 
