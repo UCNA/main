@@ -6,9 +6,10 @@ import sys
 sys.path.append("..")
 from ucnacore.EncalDB import *
 
+anaBinDir = "../../"
 	
 def processOctets(sim,omin,omax):
-	pcmd = "cd ..; ./UCNAnalyzer pr oct %i x x\n"
+	pcmd = "cd "+anaBinDir+"; ./UCNAnalyzer pr oct %i x x\n"
 	freplaylist = open("oct_replaylist.txt","w")
 	for r in range(60)[omin:omax+1]:
 		if sim:
@@ -29,7 +30,7 @@ def processOctets(sim,omin,omax):
 	
 
 def processSources(rmin,rmax):
-		pcmd = "cd ..; ./UCNAnalyzer sr %i %i x\n"
+		pcmd = "cd "+anaBinDir+"; ./UCNAnalyzer sr %i %i x\n"
 		freplaylist = open("source_replaylist.txt","w")
 		for r in getRunType(open_connection(),"SourceCalib",rmin,rmax):
 			freplaylist.write(pcmd%(r,r))
@@ -39,7 +40,7 @@ def processSources(rmin,rmax):
 		os.system("rm source_replaylist.txt")
 
 def processXeMap(rmin,rmax,nr):
-		pcmd = "cd ..; ./UCNAnalyzer pmap gen %i %i %i x x\n"
+		pcmd = "cd "+anaBinDir+"; ./UCNAnalyzer pmap gen %i %i %i x x\n"
 		freplaylist = open("xenon_replaylist.txt","w")
 		for r in range(rmin,rmax+1):
 			freplaylist.write(pcmd%(r,r,nr))
@@ -50,7 +51,7 @@ def processXeMap(rmin,rmax,nr):
 		os.system(pcmd%(rmin,rmax,nr))
 
 def processXeSim(rmin,rmax,nr):
-		pcmd = "cd ..; ./UCNAnalyzer pmap sim %i %i %i %i x x\n"
+		pcmd = "cd "+anaBinDir+"; ./UCNAnalyzer pmap sim %i %i %i %i x x\n"
 		freplaylist = open("xenon_simlist.txt","w")
 		for r in range(rmin,rmax+1):
 			freplaylist.write(pcmd%(rmin,rmax,r,nr))
@@ -64,7 +65,7 @@ def processXeSim(rmin,rmax,nr):
 		os.system(pcmd%(rmin,rmax,0,nr))
 
 def betaOctetPositions(dosim):
-	pcmd = "cd ..; ./BetaOctetPositions %i\n"
+	pcmd = "cd "+anaBinDir+"; ./BetaOctetPositions %i\n"
 	freplaylist = open("parallel_cmd.txt","w")
 	for r in range(60):
 		if dosim:

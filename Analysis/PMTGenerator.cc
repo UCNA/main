@@ -43,7 +43,8 @@ double TriggerProbMLP::calcProb() {
 	
 	
 	
-	
+// note, crosstalk = 0.010 was used for 2010 data analysis.
+
 PMTGenerator::PMTGenerator(Side s, float xx, float yy):
 x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), dgain(16.0), pedcorr(0.2), crosstalk(0.010), xscatter(0.), trigThreshScale(1.0),
 currentCal(NULL), TProb(new TriggerProb()), mySide(s) {
@@ -159,12 +160,12 @@ ScintEvent PMTGenerator::generate(float en) {
 		}
 		nPE[t] = tubeRes[t]*lightBal[mySide][t];
 	}
-	//preuncorrelate(nPE, crosstalk);
+	preuncorrelate(nPE, crosstalk);
 	for(unsigned int t=0; t<nBetaTubes; t++) {
 		nPE[t] = sim_rnd_source.PoissonD(nPE[t]>0?nPE[t]:0);				//< primary photoelectrons
 		nPE[t] = sim_rnd_source.PoissonD(dgain*(nPE[t]>0?nPE[t]:0))/dgain;	//< first gain stage electron multiplication
 	}
-	//recorrelate(nPE, crosstalk);
+	recorrelate(nPE, crosstalk);
 	for(unsigned int t=0; t<nBetaTubes; t++)
 		sevt.tuben[t] = nPE[t]/tubeRes[t]*en;
 	

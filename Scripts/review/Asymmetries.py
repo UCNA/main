@@ -63,24 +63,47 @@ class kurieFit(KVMap):
 		self.ep = self.endpoint
 		self.dep = self.dendpoint
 
+# runcal:		E0_BiMean = 2683.99	E0_BiRMS = 0	E0_PdWMean = 7.50563	E0_PdWRMS = 0.0631276	E0_PedMean = 179.157	E0_PedRMS = 0.652353	E0_Pulser0 = 2684.09
+#	E0_adc100 = 120.771	E0_deltaL = 3.21507	E0_eFinal = 730.466	E0_eOrig = 732.098	E0_gms = 0.999821	E0_gms0 = 0.999788	E0_nBiPts = 2	E0_nPedPts = 9	E0_res500 = 69.1879
+#	E0_sensNm = ADCE3Beta	E0_trig50 = 34.343	E1_BiMean = 2737.9	E1_BiRMS = 0	E1_PdWMean = 5.30983	E1_PdWRMS = 0.110084	E1_PedMean = 171.592	E1_PedRMS = 0.0865926
+#	E1_Pulser0 = 2742.63	E1_adc100 = 140.459	E1_deltaL = 3.41578	E1_eFinal = 731.8	E1_eOrig = 743.113	E1_gms = 1.00161	E1_gms0 = 0.99988	E1_nBiPts = 2	E1_nPedPts = 9
+#	E1_res500 = 72.8208	E1_sensNm = ADCE4Beta	E1_trig50 = 35.2397	E2_BiMean = 2757.49	E2_BiRMS = 0	E2_PdWMean = 5.7243	E2_PdWRMS = 0.0912741	E2_PedMean = 165.47
+#	E2_PedRMS = 0.0908623	E2_Pulser0 = 2772.27	E2_adc100 = 91.4981	E2_deltaL = 3.58021	E2_eFinal = 734.291	E2_eOrig = 731.888	E2_gms = 1.00532	E2_gms0 = 0.999961
+#	E2_nBiPts = 2	E2_nPedPts = 9	E2_res500 = 75.8902	E2_sensNm = ADCE1Beta	E2_trig50 = 18.3455	E3_BiMean = 2711.36	E3_BiRMS = 0	E3_PdWMean = 3.81645	E3_PdWRMS = 0.0366913
+#	E3_PedMean = 173.017	E3_PedRMS = 0.0392095	E3_Pulser0 = 2707.06	E3_adc100 = 109.459	E3_deltaL = 3.5573	E3_eFinal = 731.748	E3_eOrig = 738.725	E3_gms = 0.998086
+#	E3_gms0 = 0.999669	E3_nBiPts = 2	E3_nPedPts = 9	E3_res500 = 75.0101	E3_sensNm = ADCE2Beta	E3_trig50 = 22.7289	E4_eFinal = 500	E4_eOrig = 500	W0_BiMean = 2762.63
+#	W0_BiRMS = 0	W0_PdWMean = 12.1794	W0_PdWRMS = 0.0781325	W0_PedMean = 150.447	W0_PedRMS = 0.200236	W0_Pulser0 = 2774.13	W0_adc100 = 97.9986	W0_deltaL = 3.01243
+#	W0_eFinal = 727.749	W0_eOrig = 736.731	W0_gms = 1.00406	W0_gms0 = 0.999895	W0_nBiPts = 2	W0_nPedPts = 9	W0_res500 = 67.3539	W0_sensNm = ADCW1Beta	W0_trig50 = 45.0015
+#	W1_BiMean = 2561.68	W1_BiRMS = 0	W1_PdWMean = 9.78249	W1_PdWRMS = 0.0755246	W1_PedMean = 147.448	W1_PedRMS = 0.112109	W1_Pulser0 = 2582.8	W1_adc100 = 107.071
+#	W1_deltaL = 3.08584	W1_eFinal = 727.788	W1_eOrig = 732.944	W1_gms = 1.00845	W1_gms0 = 1.00021	W1_nBiPts = 2	W1_nPedPts = 9	W1_res500 = 64.4555	W1_sensNm = ADCW2Beta
+#	W1_trig50 = 48.8915	W2_BiMean = 2550.74	W2_BiRMS = 0	W2_PdWMean = 11.6685	W2_PdWRMS = 0.0730248	W2_PedMean = 187.027	W2_PedRMS = 0.113917	W2_Pulser0 = 2511.17
+#	W2_adc100 = 99.9512	W2_deltaL = 2.87462	W2_eFinal = 727.862	W2_eOrig = 727.376	W2_gms = 0.984725	W2_gms0 = 1.00024	W2_nBiPts = 2	W2_nPedPts = 9	W2_res500 = 66.3103
+#	W2_sensNm = ADCW3Beta	W2_trig50 = 45.9391	W3_BiMean = 2620.88	W3_BiRMS = 0	W3_PdWMean = 11.7004	W3_PdWRMS = 0.154432	W3_PedMean = 171.042	W3_PedRMS = 0.0991155
+#	W3_Pulser0 = 2636.3	W3_adc100 = 99.9507	W3_deltaL = 3.09846	W3_eFinal = 726.825	W3_eOrig = 736.23	W3_gms = 1.00587	W3_gms0 = 0.999987	W3_nBiPts = 2	W3_nPedPts = 9
+#	W3_res500 = 65.6138	W3_sensNm = ADCW4Beta	W3_trig50 = 47.0207	W4_eFinal = 500	W4_eOrig = 500
+#	anodegain_E = 0.00881931	anodegain_W = 0.00791	cnorm_Ex = 0.85,0.893018,0.938962,0.99554,1.05521,1.09601,1.10523,1.12384,1.08915,1.05008,1.02788,0.994964,0.903721,0.864318,0.9,0.85
+#	cnorm_Ey = 0.85,0.960174,0.980948,0.967438,1.01027,1.01605,1.04073,1.05651,1.03195,1.04185,1.01058,0.988066,0.973694,0.979575,0.942173,0.85
+#	cnorm_Wx = 0.85,0.9,0.815271,0.895268,0.932465,0.984098,1.04789,1.06714,1.05726,1.08621,1.08433,1.03969,1.05007,1.05164,1.08735,0.85
+#	cnorm_Wy = 0.85,1.08801,1.03268,1.01274,1.01399,0.997512,1.02515,1.03327,1.00298,1.01529,1.00029,1.0061,0.960519,0.914793,0.896689,0.85
+#	run = 14077	tend = 1286504064	tstart = 1286503424
+
 class runCal(KVMap):
 	def __init__(self,m):
 		self.dat = m.dat
-		self.run = int(self.getFirstF("run"))
-		self.eOrig={}
-		self.eFinal={}
-		self.gms={}
-		self.gms0={}
-		for s in ['E','W']:
-			for t in range(5):
-				self.eOrig[(s,t)]=self.getFirstF("%s%i_eOrig"%(s,t))
-				self.eFinal[(s,t)]=self.getFirstF("%s%i_eFinal"%(s,t))
-				if t<4:
-					self.gms[(s,t)]=self.getFirstF("%s%i_gms"%(s,t))
-					self.gms0[(s,t)]=self.getFirstF("%s%i_gms0"%(s,t))
-					
+		self.loadInts(["run","tstart","tend"])
+		self.eOrig = self.get_tubesparam("eOrig")
+		self.eFinal = self.get_tubesparam("eFinal")
+		self.gms = self.get_tubesparam("gms")
+		self.gms0 = self.get_tubesparam("gms0")
+
+	def get_tubesparam(self,pname):
+		return dict( [ ((s,t),self.getFirstF("%s%i_%s"%(s,t,pname))) for s in ['E','W'] for t in range(5) ] )
+
 	def getGMSTweak(self,side,tube):
 		return self.eFinal[(side,tube)]/self.eOrig[(side,tube)]
+
+	def midTime(self):
+		return 0.5*(self.tend+self.tstart)
 
 class bgSubtr(KVMap):
 	def __init__(self,m):

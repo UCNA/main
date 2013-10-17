@@ -11,7 +11,6 @@ class GeantSimManager:
 	def __init__(self, simName, vacuum="1.e-5 torr",
 				 fmap=None, geometry="C", sourceHolderPos = None):
 		
-		self.podsh = False				
 		self.settings = {}
 		
 		self.settings["simName"] = simName
@@ -121,8 +120,6 @@ class GeantSimManager:
 	def set_dirs(self):
 		self.g4_workdir = os.environ["G4WORKDIR"]
 		self.g4_bindir = os.environ["G4BINDIR"]
-		if self.podsh:
-			g4_workdir = "~/geant4/"
 		self.type_dir = self.settings["simName"]+"_%s"%(self.settings["generator"].replace("/","_"))
 		if self.settings["gunenergy"]:
 			self.type_dir += "_%.1fkeV"%self.settings["gunenergy"]
@@ -135,11 +132,8 @@ class GeantSimManager:
 		
 		nruns = 0
 		nperclust = 0
-		if self.podsh:
-			nperclust = 8
-		else:
-			import multiprocessing
-			nperclust = multiprocessing.cpu_count()	# number of simulation files to produce (generated in parallel)
+		import multiprocessing
+		nperclust = multiprocessing.cpu_count()	# number of simulation files to produce (generated in parallel)
 		nruns = nperclust*nClusters
 		if not nruns:
 			nruns = 1
@@ -161,12 +155,9 @@ class GeantSimManager:
 		
 		# main simulations
 		os.system("rm -r %s/*"%self.g4_macro_dir)
-		jobsout = None
-		if not self.podsh:
-			jobsout = open(parallel_jobfile,"w")
+		jobsout = open(parallel_jobfile,"w")
 		ucnG4_prod = self.g4_bindir+"/ucnG4_prod"
 		onejob = ""
-		subcmds = []
 		
 		# set up macros for each job
 		for rn in range(nruns):
@@ -185,44 +176,24 @@ class GeantSimManager:
 					self.settings["sourceholderpos"] = "%g 0 0 mm"%xpos
 			self.settings["gunpos"] = "%g %g %g mm"%tuple(self.settings["gunpos_mm"])
 			
-			# estimate wall time
-			twall = int((60.0 + 0.2*self.settings["nevt"])/60)
-			self.settings["walltime"]="%i:%02i:00"%(twall/60,twall%60)
-			
 			if os.path.exists(self.g4_out_name%str(self.settings["run_num"])) and os.stat(self.g4_out_name%str(self.settings["run_num"])).st_mtime > oldtime:
 				continue;
 			onejob = ucnG4_prod + " %s/geantgen_%i.mac %s"%(self.g4_macro_dir,self.settings["run_num"],self.settings["physlist"])
 			# geant macro
 			open(os.path.expanduser("%s/geantgen_%i.mac"%(self.g4_macro_dir,self.settings["run_num"])),"w").write(open("GeantGenMacroTemplate.mac","r").read()%self.settings)
-			# submission script
-			self.settings["jobcmd"] =  "mkdir -p %s\n"%self.g4_out_dir
-			self.settings["jobcmd"] += "mkdir -p %s\n"%self.g4_log_dir
-			self.settings["jobcmd"] += onejob+"\n"
-			open(os.path.expanduser(g4_sub_file),"w").write(open("GeantJobTemplate.sub","r").read()%self.settings)
-			subcmds.append("podsh submit --stageout='%s':'%s' %s"%(self.settings["joblog"],self.settings["joblog"],g4_sub_file))
 			
-			if jobsout:
-				jobsout.write(onejob+" > %s 2>&1\n"%self.settings["joblog"])
+			jobsout.write(onejob+" > %s 2>&1\n"%self.settings["joblog"])
 		
-		if jobsout:
-			jobsout.close()
+		jobsout.close()
 		
-		if self.podsh:
-			# send executable, macro to remote system
-			print "Staging in macro files..."
-			os.system("podsh stagein --files=~/geant4/bin:'~/geant4',~/geant4/macros:'~/geant4',~/geant4/logs:'~/geant4'")
-			# submit each job
-			for cmd in subcmds:
-				print cmd
-				os.system(cmd)
-		else:	
-			print "Running simulation jobs..."
-			os.system("cat "+parallel_jobfile)
-			if nruns > 1:
-				os.system("nice -n 20 parallel < %s"%parallel_jobfile)
-			else:
-				os.system(onejob)
-			os.system("rm "+parallel_jobfile)
+	
+		print "Running simulation jobs..."
+		os.system("cat "+parallel_jobfile)
+		if nruns > 1:
+			os.system("nice -n 20 parallel < %s"%parallel_jobfile)
+		else:
+			os.system(onejob)
+		os.system("rm "+parallel_jobfile)
 	
 	
 	def launch_postanalyzer(self,nMin=0,nMax=100000):
@@ -342,14 +313,15 @@ if __name__ == "__main__":
 	# Xenon [	"Xe135_3-2+","Xe133_3-2+",
 	#			"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
 	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
+	# 3M for most; do lots more for important Xe135_3-2+
 	####################
-	if 0:
-		for g in [ "Xe133_3-2+", "Xe135_11-2-", "Xe137_7-2-" ]:
-			sourceSim = GeantSimManager("20120917",vacuum="1.e-3 torr")
+	if 1:
+		for g in [ "Xe135_3-2+" ]:
+			sourceSim = GeantSimManager("20131015",vacuum="1.e-3 torr")
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 			sourceSim.settings["physlist"]="livermore"
 			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=3e6,nClusters=54,hours_old=0)
+			sourceSim.launch_sims(nEvents=30e6,nClusters=54,hours_old=0)
 			sourceSim.launch_postanalyzer()
 
 	

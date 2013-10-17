@@ -118,7 +118,7 @@ void drawEllipseCut(Source E, Float_t nSigma, std::string label) {
 }
 
 
-void drawVLine(Float_t x, TVirtualPad* C, Int_t color) {
+void drawVLine(Float_t x, TVirtualPad* C, Int_t color, Int_t style) {
 	Double_t xmin,ymin,xmax,ymax;
 	C->Update();
 	C->GetRangeAxis(xmin,ymin,xmax,ymax);
@@ -128,6 +128,7 @@ void drawVLine(Float_t x, TVirtualPad* C, Int_t color) {
 	}
 	TLine* l = new TLine(x,ymin,x,ymax);
 	l->SetLineColor(color);
+	l->SetLineStyle(style);
 	l->Draw();
 }
 

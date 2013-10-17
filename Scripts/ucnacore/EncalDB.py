@@ -135,3 +135,20 @@ def deleteRunMonitors(conn,rmin,rmax,mtype='pedestal'):
 	conn.execute("SELECT monitor_id FROM run_monitors WHERE %i <= run_number AND run_number <= %i and monitor_type = '%s'"%(rmin,rmax,mtype))
 	for r in conn.fetchall():
 		deleteRunMonitor(conn,r[0])
+
+
+# get position map points by posmap ID
+class posmap_point:
+	pass
+def getPosmapPoints(conn,pmid):
+	conn.execute("SELECT side,quadrant,pixel_id,`signal`,norm,center_x,center_y FROM posmap_points WHERE posmap_set_id = %i"%pmid)
+	pts = {}
+	for p in conn.fetchall():
+		x = posmap_point()
+		x.n = p[2]
+		x.sig = p[3]
+		x.norm = p[4]
+		x.x = p[5]
+		x.y = p[6]
+		pts.setdefault((p[0],p[1]),[]).append(x)
+	return pts

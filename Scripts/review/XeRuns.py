@@ -100,19 +100,30 @@ def XeTimeEvolution(rmin,rmax,nrings):
 			#exit(1)
 	
 	# plot
-	gIA=graph.graphxy(width=15,height=15,
-					  x=graph.axis.lin(title="Time [h]",min=0),
-					  y=graph.axis.log(title="Decay rate [Hz]",min=5),
-					  key = graph.key.key(pos="tr"))
+	gIA=graph.graphxy(width=20,height=12,
+					  x=graph.axis.lin(title="Time [h]",min=0,max=20),
+					  y=graph.axis.log(title="Decay rate [Hz]",min=5,max=2000),
+					  key = graph.key.key(pos="br",columns=2))
 	setTexrunner(gIA)
 	icols = rainbowDict(isotdat)
+	# black-and-white version
+	for k in isotdat:
+		icols[k] = rgb.black
+
 	ks = isotdat.keys()
 	ks.sort()
-	for k in ks:
+	ks    = ['Xe135_3-2+', 'Xe125_1-2+', 'Xe133_3-2+', 'Xe131_11-2-', 'Xe129_11-2-', 'Xe133_11-2-', 'Xe137_7-2-', 'Xe135_11-2-']
+	kshort = ['Xe137_7-2-', 'Xe135_11-2-']
+	ksymb = [symbol.circle, symbol.triangle, symbol.square, symbol.plus, symbol.cross, symbol.diamond, symbol.circle, symbol.triangle]
+	for (n,k) in enumerate(ks):
+		if k not in isotdat:
+			continue
 		for d in isotdat[k]:
 			d[0] = (d[0]-tmin)/3600.
+		if k=='Xe137_7-2-':
+			isotdat[k] = [d for d in isotdat[k] if d[1]>200]
 		LF = LogYer(terms=[polyterm(0),polyterm(1)])
-		LF.fit([d for d in isotdat[k] if d[1]>20],cols=(0,1))
+		LF.fit([d for d in isotdat[k] if d[1]>5 and not (k not in kshort and d[0]<2) and not (k=='Xe125_1-2+' and d[0]>10)],cols=(0,1))
 		thalf = 0
 		if LF.coeffs[1]:
 			thalf = -log(2)/LF.coeffs[1]
@@ -124,10 +135,14 @@ def XeTimeEvolution(rmin,rmax,nrings):
 			gtitle += "%.1f h"%thalf
 		else:
 			gtitle += "%.1f d"%(thalf/24)
+
+		sfill = []
+		if k in kshort:
+			sfill = [deco.filled]
 		gIA.plot(graph.data.points(isotdat[k],x=1,y=2,dy=3,title=gtitle),
-					[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[icols[k],]),
+					[graph.style.symbol(ksymb[n],size=0.2,symbolattrs=[icols[k],]+sfill),
 					graph.style.errorbar(errorbarattrs=[icols[k],])])
-		gIA.plot(graph.data.points(LF.fitcurve(0,30),x=1,y=2,title=None),[graph.style.line([icols[k],])])
+		gIA.plot(graph.data.points(LF.fitcurve(0,30),x=1,y=2,title=None),[graph.style.line([icols[k]])])
 	gIA.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/test/XeDecomp/DecompHistory_%i-%i.pdf"%(rmin,rmax))
 
 
@@ -203,8 +218,8 @@ def data_v_sim(rmin,rmax,nrings):
 
 if __name__ == "__main__":
 	
-	XeTimeEvolution(14283,14333,11)
-	#XeTimeEvolution(15992,16077,15)
+	#XeTimeEvolution(14283,14333,11)
+	XeTimeEvolution(15992,16077,15)
 	exit(0)
 	
 	#data_v_sim(14282,14347,12)

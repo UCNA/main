@@ -104,7 +104,8 @@ void XenonSpectrumPlugin::fitSpectrum(TH1* hSpec,SectorDat& sd) {
 	//----------------------
 	// 915keV endpoint fit
 	//----------------------
-	sd.xe_ep = kurieIterator(hSpec,epGuess,NULL,915.,450,750);
+	// 2010 analysis fit range was 450-750; expanded for better statistics
+	sd.xe_ep = kurieIterator(hSpec,epGuess,NULL,915.,350,850);
 }
 
 void XenonSpectrumPlugin::fitSectors() {
@@ -280,8 +281,10 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, XenonAnalyzer& XA, 
 		if(XA.myXeSpec->energySpectrum->h[GV_OPEN]->Integral(b1,b2) > 100)
 			isotsIn.push_back("Xe137_7-2-");
 		
-		srand(time(NULL));
-		std::vector<unsigned int> p = randomPermutation(isotsIn.size());
+		
+		// randomize order of isotope simulation to pick different simulation files for each one
+		srand((unsigned int)time(NULL)); // set new random seed from clock
+		std::vector<unsigned int> p = randomPermutation((unsigned int)isotsIn.size());
 		std::vector<std::string> isots;
 		for(unsigned int n=0; n<isotsIn.size(); n++)
 			isots.push_back(isotsIn[p[n]]);
@@ -292,11 +295,12 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, XenonAnalyzer& XA, 
 			G4SegmentMultiplier GSM(SectorCutter(4,52.));
 			GSM.setCalibrator(PCal);
 			std::string simFile = "/data2/mmendenhall/G4Out/2010/20120917_"+isots[n]+"/analyzed_";
+			if(isots[n]=="Xe135_3-2+") simFile = "/home/mmendenhall/geant4/output/20131015_Xe135_3-2+/analyzed_";
 			unsigned int nTot = 54;
 			unsigned int stride = 23;
 			for(unsigned int i=0; i<stride; i++)
 				GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
-			XAMi.back()->loadSimData(GSM, nToSim*(isots[n]=="Xe135_3-2+"?1.5:0.25));
+			XAMi.back()->loadSimData(GSM, nToSim*(isots[n]=="Xe135_3-2+"?4.:0.25));
 			LHC.addTerm(XAMi.back()->myXeSpec->energySpectrum->h[GV_OPEN]);
 			printf("Done.\n");
 		}

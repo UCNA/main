@@ -27,7 +27,7 @@ void drawFiducialCuts(Int_t color = 6);
 /// draw red ellipse around, e.g., a source's position
 void drawEllipseCut(Source E, Float_t nSigma, std::string label = "");
 /// draw vertical line marker
-void drawVLine(Float_t x, TVirtualPad* C, Int_t color = 4);
+void drawVLine(Float_t x, TVirtualPad* C, Int_t color = 4, Int_t style = 1);
 /// draw horizontal line
 void drawHLine(Float_t y, TVirtualPad* C, Int_t color = 4);
 /// draw circle

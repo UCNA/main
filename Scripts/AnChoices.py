@@ -94,7 +94,7 @@ def compare_corrections(basedir,fin):
 	gdA.writetofile(basedir+"/Asymmetries.pdf")
 
 	A0s = [g[1] for g in gdat]
-	mu,sigma = musigma(A0s)
+	mu,sigma = mu_sigma(A0s)
 	dmax = max([abs(a-mu) for a in A0s])
 	print "mu,sigma,dmax=",(mu,sigma,dmax)
 

@@ -9,7 +9,8 @@ from ucnacore.QFile import *
 import os
 
 peakNames = { 8:"$^{207}$Bi 1", 9:"$^{207}$Bi 2", 11:"$^{113}$Sn", 12:"Sr85", 13:"$^{109}$Cd", 14:"$^{114}$In", 15:"$^{139}$Ce", 20:"$^{137}$Cs" }  
-				
+peakSymbs = { 8:symbol.circle, 9:symbol.square, 11:symbol.triangle, 15:symbol.diamond }
+
 class SourcePos:
 	"""Position of a source for a run"""
 	def __init__(self,sID):
@@ -162,8 +163,15 @@ class LinearityCurve:
 		self.tube = tube
 		self.fitter = LinearFitter(terms=[polyterm(0),polyterm(1)])
 		self.axisType = graph.axis.lin
+	
 		
+	##
+	# Linearity plot & fit
+	##
 	def fitLinearity(self,slines):
+	
+		# estimated position map fractional error
+		etaErr = 0.014
 	
 		self.slines = [l for l in slines if l.side==self.side and l.tube==self.tube]
 		pks = sort_by_type(self.slines)
@@ -172,6 +180,9 @@ class LinearityCurve:
 			self.cnvs=None
 			return
 		cP = rainbowDict(pks.keys())
+		if "PUBLICATION_PLOTS" in os.environ:
+			for k in cP:
+				cP[k] = rgb.black
 		adcmax = max([l.adc for l in self.slines])
 
 		##
@@ -191,7 +202,7 @@ class LinearityCurve:
 
 		self.gEvis=graph.graphxy(width=10,height=10,ypos=self.gResid.height+0.5,
 				x=graph.axis.linkedaxis(self.gResid.axes["x"]),
-				y=self.axisType(title="Expected Light $\\eta\\cdot E_Q$",min=yrange[0],max=yrange[1]),
+				y=self.axisType(title="Expected Light $\\eta\\cdot E_{\\rm vis}$",min=yrange[0],max=yrange[1]),
 				key = graph.key.key(pos="tl"))
 		setTexrunner(self.gEvis)
 		
@@ -204,12 +215,12 @@ class LinearityCurve:
 		##
 		combodat = []
 		for k in pks:
-			gdat = [ (l.adc*l.gms,l.sim.erecon*l.eta,l.dadc*l.gms,l) for l in pks[k] if 0 < l.adc < 3500 and 5 < l.sim.erecon*l.eta < 2500 ]
+			gdat = [ (l.adc*l.gms, l.sim.erecon*l.eta, l.dadc*l.gms, l.sim.erecon*l.eta*etaErr, l) for l in pks[k] if 0 < l.adc < 3500 and 5 < l.sim.erecon*l.eta < 2500 ]
 			combodat += [g for g in gdat if g[-1].src.radius() <= 45. and k != 11]
 			if not gdat:
 				continue
-			self.gEvis.plot(graph.data.points(gdat,x=1,y=2,dx=3,title=peakNames[k]),
-				[graph.style.symbol(symbol.circle,size=0.1,symbolattrs=[cP[k],]),graph.style.errorbar(errorbarattrs=[cP[k],])])
+			self.gEvis.plot(graph.data.points(gdat,x=1,y=2,dy=4,title=peakNames.get(k,k)),
+				[graph.style.symbol(peakSymbs.get(k,symbol.circle),size=0.2,symbolattrs=[cP[k],]),graph.style.errorbar(errorbarattrs=[cP[k],])])
 		
 		self.gEvis.text(7.5,3.5,"%s %i"%(self.side,self.tube+1))
 		
@@ -222,7 +233,6 @@ class LinearityCurve:
 			return
 		dmin,dmax = min([p[0] for p in combodat]),max([p[0] for p in combodat])
 		dmin=min(dmin,100)
-		#self.fitter.fit(combodat,cols=(0,1,2),errorbarWeights=True)
 		self.fitter.fit(combodat,cols=(0,1))
 		trimcdat = []
 		for p in combodat:
@@ -233,8 +243,11 @@ class LinearityCurve:
 		if not trimcdat:
 			print "********* DATA IFFY! *********",self.side,self.tube
 			trimcdat = combodat
-		self.fitter.fit(trimcdat)
+		self.fitter.fit(trimcdat,cols=(0,1,3),errorbarWeights=True)
 		print "Fit",s,t,":",self.fitter.toLatex()
+		print "chi^2/nu =",self.fitter.chisquared(),"/",self.fitter.nu()
+		self.fitter.displayCoeffErrCorr()
+		print
 		self.gEvis.plot(graph.data.points([ [x,self.fitter(x)] for x in self.fitter.unifPoints(xrange[0]+0.1,xrange[1],100)],x=1,y=2,title=None),
 			[graph.style.line(),])
 			
@@ -242,14 +255,18 @@ class LinearityCurve:
 		# residuals plotting
 		##
 		for k in pks:
-			gdat = [ (l.adc*l.gms,self.fitter(l.adc*l.gms),l.sim.erecon*l.eta) for l in pks[k] if l.adc > 0]
-			gdat = [ (x,100.0*(y-yexp)/yexp) for (x,yexp,y) in gdat ]
+			gdat = [ (l.adc*l.gms, self.fitter(l.adc*l.gms), l.sim.erecon*l.eta, l.sim.erecon*l.eta*etaErr) for l in pks[k] if l.adc > 0]
+			gdat = [ (x,100.0*(y-yexp)/yexp,100*dy/yexp) for (x,yexp,y,dy) in gdat ]
 			if not gdat:
 				continue
-			self.gResid.plot(graph.data.points(gdat,x=1,y=2,title=None),
-				[graph.style.symbol(symbol.circle,size=0.1,symbolattrs=[cP[k],])])
+			self.gResid.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
+				[graph.style.symbol(peakSymbs.get(k,symbol.circle),size=0.2,symbolattrs=[cP[k],]), graph.style.errorbar(errorbarattrs=[cP[k]])])
 		self.gResid.plot(graph.data.function("y(x)=0.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
 		
+		
+	##
+	# Reconstructed energy plot with residuals
+	##
 	def plot_erecon(self,slines):
 	
 		self.slines = [l for l in slines if l.side==self.side and l.tube==self.tube]
@@ -259,10 +276,13 @@ class LinearityCurve:
 			self.cnvs=None
 			return
 		cP = rainbowDict(pks.keys())
+		if "PUBLICATION_PLOTS" in os.environ:
+			for k in cP:
+				cP[k] = rgb.black
 		
 		# set up graphs
 		title = "Tube %i"%(t+1)
-		csize = 0.10
+		csize = 0.20
 		if t == 4:
 			csize = 0.30
 			title = "Combined"
@@ -296,9 +316,12 @@ class LinearityCurve:
 				key = graph.key.key(pos="tl"))
 		setTexrunner(self.gEn)
 		
+		maxWidth = 175
+		if self.tube==4:
+			maxWidth = 80
 		self.gWidth=graph.graphxy(width=15,height=15,
-				x=graph.axis.lin(title="Expected Width [keV]",min=0),
-				y=graph.axis.lin(title="Observed Width [keV]",min=0),
+				x=graph.axis.lin(title="Expected Width [keV]",min=0,max=maxWidth),
+				y=graph.axis.lin(title="Observed Width [keV]",min=0,max=maxWidth),
 				key = graph.key.key(pos="tl"))
 		setTexrunner(self.gWidth)
 		
@@ -311,24 +334,26 @@ class LinearityCurve:
 		# plot
 		combodat = []
 		for k in pks.keys():
-			#		0         1            2        3                                          4     5         6          7             8
-			gdat = [ (q.src.run,q.sim.erecon,q.erecon,100.0*(q.erecon-q.sim.erecon)/q.sim.erecon,q.eta,q.enwidth,q.denwidth,q.sim.enwidth,q.sim.denwidth,q) for q in pks[k]]
+			#		  0          1             2         3                                           4      5          6
+			gdat = [ (q.src.run, q.sim.erecon, q.erecon, 100.0*(q.erecon-q.sim.erecon)/q.sim.erecon, q.eta, q.enwidth, q.denwidth,
+			#           7              8               9                                     -1
+						q.sim.enwidth, q.sim.denwidth, sqrt(q.sim.denwidth**2+q.denwidth**2), q) for q in pks[k]]
 			gdat = [ g for g in gdat if 0 < g[5] < 1000 and 0 < g[7] < 1000]
 			combodat += gdat
 			if not gdat:
 				continue
-			self.gEn.plot(graph.data.points(gdat,x=2,y=3,title=peakNames[k]), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
-			self.gRes.plot(graph.data.points(gdat,x=2,y=4,title=None), [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),])
+			self.gEn.plot(graph.data.points(gdat,x=2,y=3,title=peakNames.get(k,k)), [graph.style.symbol(peakSymbs.get(k,symbol.circle),size=csize,symbolattrs=[cP[k]]),])
+			self.gRes.plot(graph.data.points(gdat,x=2,y=4,title=None), [graph.style.symbol(peakSymbs.get(k,symbol.circle),size=csize,symbolattrs=[cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=3,size=5,title=None), [ varCircle(symbolattrs=[cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=2,title=None), [ graph.style.line([style.linestyle.dashed,cP[k]]),])
-			self.gWidth.plot(graph.data.points(gdat,x=8,y=6,dy=7,dx=9,title=peakNames[k]),
-							 [graph.style.symbol(symbol.circle,size=csize,symbolattrs=[cP[k]]),
+			self.gWidth.plot(graph.data.points(gdat,x=8,y=6,dy=7,dx=9,title=peakNames.get(k,k)),
+							 [graph.style.symbol(peakSymbs.get(k,symbol.circle),size=csize,symbolattrs=[cP[k]]),
 							  graph.style.errorbar(errorbarattrs=[cP[k]])])
 			
-		self.gEn.plot(graph.data.function("y(x)=x",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
+		self.gEn.plot(graph.data.function("y(x)=x",title=None), [graph.style.line(lineattrs=[]),])
 		self.gEn.text(11,1.5,"%s Reconstructed Energy"%self.side)
 		self.gRes.plot(graph.data.function("y(x)=0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
-		self.gWidth.plot(graph.data.function("y(x)=x",title="$y=x$"), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
+		#self.gWidth.plot(graph.data.function("y(x)=x",title="$y=x$"), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
 		
 		######
 		# Fit widths
@@ -340,20 +365,30 @@ class LinearityCurve:
 		self.LFwid.fit(cselect,cols=(7,5))
 		wxmax = max([g[7] for g in cselect])
 		for g in cselect:
-			if not 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2:
+			if not abs(g[5]-self.LFwid(g[7]))/g[9] < 4:
 				print "--> Check width",g[-1].src.run,g[-1].uid
-		self.LFwid.fit([g for g in cselect if 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2],cols=(7,5))
-		self.gWidth.plot(graph.data.points(self.LFwid.fitcurve(0,wxmax),x=1,y=2,title="$y=%.3f \\cdot x$"%self.LFwid.coeffs[0]),
-			[graph.style.line(lineattrs=[style.linestyle.dashed,rgb.red]),])
+
+		self.LFwid.fit([g for g in cselect if abs(g[5]-self.LFwid(g[7]))/g[9] < 4],cols=(7,5,9),errorbarWeights=True)
+		print "Width Fit",s,t,":",self.LFwid.toLatex()
+		print "chi^2/nu =",self.LFwid.chisquared(),"/",self.LFwid.nu()
+		self.LFwid.displayCoeffErrCorr()
+		print
+		# re-fit without errorbars
+		#self.LFwid.fit([g for g in cselect if 1/1.2 < g[5]/self.LFwid(g[7]) < 1.2],cols=(7,5))
+
+		self.gWidth.plot(graph.data.points(self.LFwid.fitcurve(0,maxWidth),x=1,y=2,title="$y=%.3f \\cdot x$"%self.LFwid.coeffs[0]),
+			[graph.style.line(lineattrs=[style.linestyle.dashed]),])
 				
-				
+	##
+	# Upload linearity to calibrations DB
+	##
 	def dbUpload(self,conn,ecid,refline_id):
 		"""Upload PMT calibration curves to DB for given energy calibration ID."""
 				
 		# generate points with logarithmic spacing, upload as linearity curve
 		lg = LogLogger(terms=[(lambda x: x)])
 		#lindat = [(0,0),]+[ (x,self.fitter(x)) for x in lg.unifPoints(10,4000,50) ]
-		lindat = [ (x,self.fitter(x)) for x in lg.unifPoints(10,4000,50) ]
+		lindat = [ (x,self.fitter(x)) for x in lg.unifPoints(10,4000,100) ]
 		lgid = upload_graph(conn,"Tube Linearity %s %i ID=%i"%(self.side,self.tube,ecid),lindat)
 		
 		# reference line for anchoring energy, resolution
@@ -461,8 +496,54 @@ def plotBackscatters(conn,rlist):
 							[graph.style.line(lineattrs=[cP[tp]]+tplines[evtp]),graph.style.symbol(ssymbs2[s],symbolattrs=[cP[tp]])])
 							
 	return gRuns
+
+
+def plotSourcePositions(conn,rlist):
+	"""Source positions in source scan"""
+
+	sdat = gather_sourcedat(conn,rlist)
+	stypes = sort_by_type(sdat)
 	
+	sstyle = {	"Ce139":[style.linewidth.thick],
+				"Sn113":[style.linewidth.thick,style.linestyle.dotted],
+				"Bi207":[style.linewidth.thick,style.linestyle.dashed] }
+				
+	sname = {	"Ce139":"$^{139}$Ce",
+				"Sn113":"$^{113}$Sn",
+				"Bi207":"$^{207}$Bi" }
 	
+	for s in ['East','West']:
+	
+		gwid = 13
+		gSourcepos=graph.graphxy(width=gwid,height=gwid,
+			x=graph.axis.lin(title="x position [mm]",min=-60,max=60),
+			y=graph.axis.lin(title="y position [mm]",min=-60,max=60),
+			key = graph.key.key(pos="tl"))
+		setTexrunner(gSourcepos)
+		
+		gSourcepos.dolayout()
+		
+		gx0,gy0 = gSourcepos.pos(0,0)
+		gx1,gy1 = gSourcepos.pos(1,1)
+		gscale = sqrt(0.5*( (gx0-gx1)**2 + (gy0-gy1)**2 ))
+		
+		# draw 50mm radius fiducial volume
+		gSourcepos.stroke(path.circle(gx0, gy0, 50*gscale), [style.linestyle.dashdotted, style.linewidth.thin])
+		
+		for styp in stypes:
+			print styp
+			gSourcepos.plot(graph.data.points([(-1000,-1000)],x=1,y=2,title=sname.get(styp,styp)),[graph.style.line(lineattrs=sstyle.get(styp,[]))])
+			for sc in stypes[styp]:
+				if not sc.side == s:
+					continue
+				x,y = gSourcepos.pos(sc.x,sc.y)
+				gSourcepos.stroke(path.circle(x, y, 0.5*gscale*(sc.wx+sc.wy)) ,sstyle.get(styp,[]))
+				
+		gSourcepos.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Sources/Positions/Pos_%i_%s.pdf"%(rlist[0],s))
+
+
+
+
 # calibration definitions:
 #				source runs;	gms;	calibrated range; 	E,W ref sources;	posmap
 cal_2010 = [
@@ -504,8 +585,6 @@ cal_2012 = [
 	
 if __name__=="__main__":
 
-	exit(0)
-
 	# set up output paths
 	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/"
 	os.system("mkdir -p %s/Linearity"%outpath)
@@ -515,12 +594,20 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	conn = open_connection() # connection to calibrations DB
-	replace = True	# whether to replace previous calibration data
+	replace = False	# whether to replace previous calibration data
+	makePlots = True
 	
-	for c in cal_2012[-1:]:
+	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-		# gather source data from calibration runs
+	for c in cal_2010[1:2]:
+	
 		rlist = range(c[0],c[1]+1)
+		fCalSummary.write("\n--------- %i-%i ----------\n"%(rlist[0],rlist[-1]))
+		
+		# plot source locations
+		#plotSourcePositions(conn,rlist)
+		
+		# gather source data from calibration runs
 		slines = gather_peakdat(conn,rlist)
 		
 		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
@@ -537,16 +624,15 @@ if __name__=="__main__":
 				LC = LinearityCurve(s,t)
 				if t<4:
 					LC.fitLinearity(slines)
-					if LC.cnvs:
+					fCalSummary.write("%s %i\t%s\n"%(s,t,LC.fitter.toLatex()))
+					if LC.cnvs and makePlots:
 						LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
-				#try:
-				LC.plot_erecon(slines)
-				#except:
-				#	print "*** FAIL plot_erecon ***"
+				if makePlots:
+					LC.plot_erecon(slines)
 			
 				if ecid and t<4:
 					LC.dbUpload(conn,ecid,c[5+sn])
-				if not LC.cnvs:
+				if not (makePlots and LC.cnvs):
 						continue
 				LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
 				LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))

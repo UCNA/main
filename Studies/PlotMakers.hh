@@ -9,6 +9,7 @@
 #include "OutputManager.hh"
 #include "BetaSpectrum.hh"
 #include "BetaDecayAnalyzer.hh"
+#include "QFile.hh"
 #include <vector>
 #include <string>
 
@@ -46,7 +47,7 @@ protected:
 
 
 /// plot run-by-run GMS corrections, output data
-void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath = "../PostPlots/");
+void dumpCalInfo(const std::vector<RunNum>& runs, QFile& Qout);
 
 /// dump position map to file, optionally with nPE from PCal
 void dumpPosmap(QFile& qOut, PositioningCorrector& PCor, PMTCalibrator* PCal);

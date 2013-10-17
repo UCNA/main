@@ -1,7 +1,7 @@
 #----------------------------------------------------------------------------
 # Usage:
 # cmake -DGeant4_DIR=~/geant4.9.5/geant4.9.5-install/lib/Geant4-9.5.0/ ../ucnG4_dev/
-# cmake -DGeant4_DIR=/Users/michael/Applications/geant4/lib/Geant4-9.5.1/ ../UCNA_git/ucnG4_dev/
+# cmake -DGeant4_DIR=~/geant4.9.6/geant4.9.6-install/lib/Geant4-9.6.2/ ../ucnG4_dev/
 # make
 
 #----------------------------------------------------------------------------
@@ -76,7 +76,7 @@ add_dependencies(ucnG4 extern_lib)
 target_link_libraries(ucnG4 ${ROOT_LIBRARIES} ${Geant4_LIBRARIES} UCNA)
 SET(ucnG4_LIBRARY_PROPERTIES
 		${ucnG4_LIBRARY_PROPERTIES}
-		VERSION "0.0"
+		VERSION "0"
 		SOVERSION "0"
 		SUFFIX ".so"
 )

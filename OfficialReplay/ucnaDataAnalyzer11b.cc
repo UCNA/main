@@ -617,7 +617,7 @@ int main(int argc, char** argv) {
 	
 	std::string outDir = getEnvSafe("UCNAOUTPUTDIR");
 	
-	for(RunNum r = (unsigned int)rlist[0]; r<=(unsigned int)rlist[1]; r++) {
+	for(RunNum r = (RunNum)rlist[0]; r<=(RunNum)rlist[1]; r++) {
 		
 		std::string inDir = getEnvSafe("UCNADATADIR");
 		if(!fileExists(inDir+"/full"+itos(r)+".root") && r > 16300)

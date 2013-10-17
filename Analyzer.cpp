@@ -98,11 +98,12 @@ void mi_PostprocessSources(std::deque<std::string>&, std::stack<std::string>& st
 		reSource(*it);
 }
 
-void mi_PlotGMS(std::deque<std::string>&, std::stack<std::string>& stack) {
+void mi_DumpCalInfo(std::deque<std::string>&, std::stack<std::string>& stack) {
 	std::string typeSelect = streamInteractor::popString(stack);
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
-	plotGMScorrections(selectRuns(r0,r1,typeSelect));
+	QFile QOut(getEnvSafe("UCNA_ANA_PLOTS")+"/test/CalDump.txt",false);
+	dumpCalInfo(selectRuns(r0,r1,typeSelect),QOut);
 }
 
 void mi_dumpPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -318,10 +319,10 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	PMapR.addChoice(&exitMenu,"x");
 	
 	// postprocessing/plots routines
-	inputRequester plotGMS("Plot GMS corrections",&mi_PlotGMS);
-	plotGMS.addArg("Start Run");
-	plotGMS.addArg("End Run");
-	plotGMS.addArg("","",&selectRuntype);
+	inputRequester dumpCalInfo("Dump calibration info to file",&mi_DumpCalInfo);
+	dumpCalInfo.addArg("Start Run");
+	dumpCalInfo.addArg("End Run");
+	dumpCalInfo.addArg("","",&selectRuntype);
 	
 	inputRequester showCal("Show run calibration",&mi_showCal);
 	showCal.addArg("Run");
@@ -342,7 +343,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
 	PostRoutines.addChoice(&showCal,"cal");
-	PostRoutines.addChoice(&plotGMS,"gms");
+	PostRoutines.addChoice(&dumpCalInfo,"dcl");
 	PostRoutines.addChoice(&octetProcessor,"oct");
 	PostRoutines.addChoice(&octetRange,"rng");
 	PostRoutines.addChoice(&showGenerator,"evg");

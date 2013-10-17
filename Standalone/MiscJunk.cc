@@ -183,5 +183,12 @@ int main(int argc, char *argv[]) {
 		OM.printCanvas("Sectors");
 	}
 	
+	if(rname=="gradposmap") {
+		OutputManager OM("PosmapGradient",getEnvSafe("UCNA_ANA_PLOTS")+"/test/PosmapGradient/");
+		PosPlotter PP(&OM);
+		PMTCalibrator PCal(16000);
+		PP.npeGradPlot(&PCal);
+	}
+	
 	return 0;
 }

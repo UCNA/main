@@ -44,6 +44,11 @@ class KVMap:
 			names = self.dat.keys()
 		for nm in names:
 			self.__dict__[nm] = self.getFirstF(nm)
+
+	# set attributes for integer values
+	def loadInts(self,names):
+		for nm in names:
+			self.__dict__[nm] = int(self.getFirstF(nm))
 	
 	# set attributes for string values
 	def loadStrings(self,names):

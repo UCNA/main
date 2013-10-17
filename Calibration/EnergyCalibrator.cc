@@ -57,7 +57,22 @@ void PedestalCorrector::insertPedestal(const std::string& sensorName, TGraph* g)
 	pedestals.erase(sensorName);
 	pedestals.insert(std::make_pair(sensorName,g));
 }
-
+Stringmap PedestalCorrector::getPedSummary(const std::string& sensorName, const std::string& baseKey) const {
+	Stringmap m;
+	std::map<std::string,TGraph*>::const_iterator it = pedestals.find(sensorName);
+	if(it != pedestals.end()) {
+			m.insert(baseKey+"_sensNm",sensorName);
+			m.insert(baseKey+"_nPedPts",itos(it->second->GetN()));
+			m.insert(baseKey+"_PedMean",it->second->GetMean(2));
+			m.insert(baseKey+"_PedRMS",it->second->GetRMS(2));
+	}
+	it = pedwidths.find(sensorName);
+	if(it != pedwidths.end()) {
+			m.insert(baseKey+"_PdWMean",it->second->GetMean(2));
+			m.insert(baseKey+"_PdWRMS",it->second->GetRMS(2));
+	}
+	return m;
+}
 
 
 
@@ -405,6 +420,7 @@ Stringmap PMTCalibrator::calSummary() const {
 			m.insert(tname+"_res500",energyResolution(s,t,500.0,0,0,0));
 			if(pmtEffic[s][t])
 				m.insert(tname+"_trig50",calibratedEnergy(s,t,0,0,pmtEffic[s][t]->getThreshold(),0).x);
+			m += PedestalCorrector::getPedSummary(sensorNames[s][t], tname);
 		}
 	}
 	

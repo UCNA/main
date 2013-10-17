@@ -3,6 +3,7 @@ from pyx import style
 from pyx import graph
 from pyx.color import rgb, hsb
 from pyx.graph.style import symbol
+import math
 
 def setTexrunner(g,opt='foils17pt'):
 	try:
@@ -129,3 +130,46 @@ def rainbowDict(keys):
 	knew = [k for k in keys]
 	knew.sort()
 	return dict([ (k,hsb((1.0*x)/n,1,1)) for (x,k) in enumerate(knew) ])
+
+# axis in fractions of pi
+class piaxis(graph.axis.linear):
+    def __init__(self, divisor=math.pi,
+                 texter=graph.axis.texter.rational(suffix="\pi"), **kwargs):
+        graph.axis.linear.__init__(self, divisor=divisor, texter=texter, **kwargs)
+
+
+
+#-------------------------------------------------------------------------------------------------------------------
+
+import time
+import pyx
+
+class timetexter:
+	__implements__ = pyx.graph.axis.texter._Itexter
+
+	def __init__(self):
+		#label format strings, for strftime(), also easily overridden in derived classes
+		#format of start-of-day string
+		self.dateformat=r"$\rm{%a} \; %m%d$"
+		#format of time string without seconds
+		self.minuteformat=r"$%H \! \! : \! \!%M$"
+		#format of time string with seconds
+		self.secondsformat=r"$%H \! \! : \! \!%M \! \! : \! \!%S$"
+	
+	def createtext(self, tick):
+		timeval=time.gmtime(float(tick.num)/tick.denom) #convert back to seconds and to time object
+		seconds=int(((float(tick.num)/float(tick.denom))%86400 + 0.5))
+		if seconds== 0: #tick 0 of a day gets date
+			tick.label=time.strftime(self.dateformat, timeval) #at day turnover, print date
+		elif seconds%60==0:
+			tick.label=time.strftime(self.minuteformat, timeval)
+		else:
+			tick.label=time.strftime(self.secondsformat, timeval)
+
+	def labels(self, ticks):
+		labeledticks = []
+		maxdecprecision = 0
+		for tick in ticks:
+			if tick.label is None and tick.labellevel is not None:
+				labeledticks.append(tick)
+				self.createtext(tick)

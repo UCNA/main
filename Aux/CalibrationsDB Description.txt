@@ -58,16 +58,6 @@ CREATE TABLE posmap_set (
 	INDEX(posmap_set_id)
 );
 
-CREATE TABLE posmap_info (
-	posmap_info_id SERIAL,		# unique ID for this tube position map
-	posmap_set_id INT UNSIGNED,	# ID of position map set this belongs to
-	side ENUM('East','West'),	# tube side
-	quadrant INT UNSIGNED,		# tube quadrant
-	n_rings INT UNSIGNED,		# number of rings dividing position map
-	radius DOUBLE,				# radius of mapped region
-	INDEX(posmap_set_id)
-);
-
 # data points for each position map
 CREATE TABLE posmap_points (
 	posmap_point_id SERIAL,		# unique ID for this position map point

@@ -25,16 +25,15 @@
 
 TRandom3 plRndSrc;
 
-void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
-	QFile fout(foutPath+"/GMS_Plot.txt",false);
+void dumpCalInfo(const std::vector<RunNum>& runs, QFile& Qout) {
 	for(unsigned int i=0; i<runs.size(); i++) {
 		PMTCalibrator LC(runs[i]);
 		Stringmap m = LC.calSummary();
 		printf("----- %i -----\n",runs[i]);
 		m.display();
-		fout.insert("gmsinfo",m);
+		Qout.insert("runcal",m);
 	}
-	fout.commit();
+	Qout.commit();
 }
 
 void dumpPosmap(QFile& qOut, PositioningCorrector& PCor, PMTCalibrator* PCal) {
@@ -330,7 +329,7 @@ void PosPlotter::npeGradPlot(PMTCalibrator* PCal) {
 				interpogrid->SetBinContent(nx,ny,100.0*gd);
 			}
 			gradsum = sqrt(gradsum/nn);
-			printf("**** %c%i RMS gradient = %g 1/mm ****\n",sideNames(s),t,gradsum);
+			printf("**** %c%i RMS gradient/light = %g 1/mm ****\n",sideNames(s),t,gradsum);
 			interpogrid->Draw("COL Z");
 			drawSectors(Sects,6);
 			OM->printCanvas(sideSubst("Posmap_Grad_%c",s)+itos(t));

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from numpy import array, linalg, dot
+from numpy import array, linalg, dot, matrix, diag
 from math import *
 from bisect import bisect
 
@@ -8,10 +8,16 @@ from bisect import bisect
 def unifrange(xmin,xmax,npts):
 	return [ xmin + float(i)/float(npts-1)*(xmax-xmin) for i in range(npts)]
 
-# mean and standard deviation
+# mean and standard deviation of a distribution
 def musigma(l):
 	mu = sum(l)/len(l)
-	s = sqrt(sum([x*x for x in l])/len(l)-mu*mu)/sqrt(len(l))
+	s = sqrt(sum([x*x for x in l])/len(l)-mu*mu)
+	return [mu,s]
+
+# mean and uncertainty of points
+def mu_uncert(l):
+	mu,s = musigma(l)
+	s /= sqrt(len(l))
 	return [mu,s]
 
 # LaTeX formatting for polynomial term
@@ -85,45 +91,83 @@ class LinearFitter:
 		self.coeffs = [0.0 for t in terms]
 		for n in fixparams:
 			self.coeffs[n] = fixparams[n]
-	
+
+	# make weights and covariance matrix for diagonal (uncorrelated) terms
+	def makeDiagWeights(self,wts):
+		self.weights = diag(wts)
+		self.Cov = diag([1./w for w in wts])
+
 	# perform linear fit with on (x,y) pair data (using specified columns);			
 	def fit(self,xydat,cols=(0,1),errorbarWeights=False):
 	
-		self.xdat = array([ x[cols[0]] for x in xydat])
-		self.ydat = array([ x[cols[1]] for x in xydat])
+		self.xdat = [x[cols[0]] for x in xydat]
+		self.ydat = matrix([ x[cols[1]] for x in xydat]).transpose()
 		
-		self.weights = []
+		# weight matrix: inverse of covariance matrix; here, for uncorrelated errors
+		self.weights = None
 		if len(cols) < 3:
-			self.weights = array([1.0 for x in self.xdat])
+			self.makeDiagWeights([1.0 for x in self.xdat])
 		else:
 			if errorbarWeights:
-				self.weights = array([ 1./x[cols[2]]**2 for x in xydat])
+				self.makeDiagWeights([ 1./x[cols[2]]**2 for x in xydat])
 			else:
-				self.weights = array([ x[cols[2]] for x in xydat])
+				self.makeDiagWeights([ x[cols[2]] for x in xydat])
 		
 		# non-fixed terms to use in fit
 		varterms = [ n for n in range(len(self.terms)) if n not in self.fixparams ]
 		
 		# contribution from fixed terms
-		fixedshift = array([ sum([self.fixparams[n]*self.terms[n](x) for n in self.fixparams])  for x in self.xdat])
+		self.fixedshift = matrix([ sum([self.fixparams[n]*self.terms[n](x) for n in self.fixparams])  for x in self.xdat]).transpose()
 		
 		# fill arrays and perform fit
-		a = array([ [self.terms[n](x)*self.weights[i] for n in varterms] for (i,x) in enumerate(self.xdat) ])
-		b = (array(self.ydat)-fixedshift)*self.weights
-		(varcoeffs,ssr,matrixRank,singularValues) = linalg.lstsq(a,b)
+		self.X = matrix([[self.terms[n](x) for n in varterms] for x in self.xdat])
+		self.XT_W = self.X.transpose()*self.weights
+		self.XT_W_X = self.XT_W*self.X
+		self.XT_W_Y = self.XT_W*(self.ydat-self.fixedshift)
+		(varcoeffs,ssr,matrixRank,singularValues) = linalg.lstsq(self.XT_W_X,self.XT_W_Y)
+		
+		# general solution... produce on demand later
+		self.M = None
 		
 		# merge variable and fixed terms
 		self.coeffs = range(len(self.terms))
 		for (n,t) in enumerate(varterms):
-			self.coeffs[t] = varcoeffs[n]
+			self.coeffs[t] = varcoeffs[n,0]
 		for n in self.fixparams:
 			self.coeffs[n] = self.fixparams[n]
 
-	
+	# calculate covariance matrix of fit coefficients
+	def calcCoeffCov(self):
+		if self.M is None:
+			self.M = linalg.solve(self.XT_W_X,self.XT_W)
+		return self.M*self.Cov*self.M.transpose()
+
+	# display individual coefficient errors and correlations
+	def displayCoeffErrCorr(self):
+		ccov = self.calcCoeffCov()
+		for i in range(ccov.shape[0]):
+			s = "%f\t"%sqrt(ccov[i,i])
+			for j in range(ccov.shape[0]):
+				s += "%f\t"%(ccov[i,j]/sqrt(ccov[i,i]*ccov[j,j]))
+			print s
+		
 	# evaluate fit function at position x
 	def __call__(self,x):
 		return sum([f(x)*self.coeffs[n] for (n,f) in enumerate(self.terms)])
 	
+	# predicted y values for each input
+	def yhat(self):
+		return matrix([self(x) for x in self.xdat]).transpose()
+
+	# calculate chi^2
+	def chisquared(self):
+		dy = self.ydat-self.yhat()
+		return (dy.transpose()*self.weights*dy)[0,0]
+
+	# number of degrees of freedom
+	def nu(self):
+		return self.ydat.shape[0]-self.X.shape[1]
+
 	# get a list of the fitted points along with the fit value
 	def fittedpoints(self,dosort = True):
 		fp = [ [self.xdat[i],self.ydat[i],self(self.xdat[i])] for i in range(len(self.xdat))]
@@ -158,6 +202,8 @@ class LinearFitter:
 	# latex printable form
 	def toLatex(self,varname='x',cfmt=".4g"):
 		s = ""
+		ccov = self.calcCoeffCov()
+		
 		for (n,f) in enumerate(self.terms):
 		
 			coeffstr = f.toLatex(varname)
@@ -168,10 +214,10 @@ class LinearFitter:
 				if n==0:
 					s += coeffstr
 				else:
-					s += "+"+coeffstr
+					s += " + "+coeffstr
 				continue
 			if self.coeffs[n]==-1:
-				s += "-"+coeffstr
+				s += " - "+coeffstr
 				continue
 				
 			fmt = "%+"+cfmt
@@ -181,7 +227,7 @@ class LinearFitter:
 				coeffstr = ""
 			else:
 				coeffstr = "\\cdot "+coeffstr
-			s += fmt%self.coeffs[n] + coeffstr
+			s += (" "+fmt+" \\pm %"+cfmt)%(self.coeffs[n],sqrt(ccov[n,n])) + coeffstr
 		return s
 		
 # wrap a linear fitter with axis transforms
