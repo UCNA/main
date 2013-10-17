@@ -441,16 +441,15 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		particleGun->GeneratePrimaryVertex(anEvent);
 		particleGun->SetParticleEnergy(eOrig);
 	} else if (gunType=="eGunRandMomentum") {
-		//for both eGun generator, assume gun energy is set by the
-		//standard gun energy command!!!
+		// assumes gun energy is set by /gun/energy
+		// particle type can also be set by /benchmark/gun/particle
 		G4ThreeVector direction;
 		RandomizeMomentum(direction);
 		particleGun->SetParticleMomentumDirection(direction);
 		displayGunStatus();
 		particleGun->GeneratePrimaryVertex(anEvent);
 	} else if (gunType=="eGun") {
-		//for both eGun generator, assume gun energy is set by the
-		//standard gun energy command!!!
+		// assumes gun energy is set by /gun/energy
 		particleGun->SetParticleMomentumDirection(G4ThreeVector(0,0,1));
 		displayGunStatus();
 		particleGun->GeneratePrimaryVertex(anEvent);
