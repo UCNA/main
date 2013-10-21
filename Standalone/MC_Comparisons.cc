@@ -7,16 +7,20 @@
 #include <TStyle.h>
 
 void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax) {
+
+	// put two simulations in a list for easy iteration
 	std::vector<Sim2PMT*> sps;
 	sps.push_back(&SP1);
 	sps.push_back(&SP2);
 	
+	// set up lists for histograms/data from each simulation
 	std::vector<TH1F*> hEvis[TYPE_II_EVENT+1];
 	std::vector<TH1F*> hEquench[TYPE_II_EVENT+1];
 	std::vector<TH1F*> hCTScint;
 	std::vector<TH1F*> hCTMWPC;
 	std::vector<double> t0norm;
 	
+	// process each simulation to fill histograms
 	for(unsigned int i=0; i<sps.size(); i++) {
 		Sim2PMT* SP = sps[i];
 		
@@ -51,7 +55,7 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
 	}
 	
 	/////////////
-	// process data and make plots
+	// make plots, process data
 	/////////////
 	
 	// normaliztion factors to Type 0 counts
@@ -119,6 +123,7 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
 }
 
 int main(int argc, char *argv[]) {
+
 	gROOT->SetStyle("Plain");
 	gStyle->SetPalette(1);
 	gStyle->SetNumberContours(255);
@@ -130,13 +135,16 @@ int main(int argc, char *argv[]) {
 	for(int i = 0; i < 7; i++) {
 		int l = enlist[i];
 		
+		// set up output directories
 		OutputManager OM("MC_Compare",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MC_Compare/"+itos(l)+"_keV");
 		Stringmap mcdat;
 		mcdat.insert("energy",l);
 		mcdat.insert("n_MC",2);
 		
+		// make PMT response look like run 15925
 		PMTCalibrator PCal(15925);
 		
+		// load Geant4 simulation
 		G4toPMT g2p(true);
 		std::string fname = "/home/mmendenhall/geant4/output/IsotLine_eGunRandMomentum_"+itos(l)+".0keV/analyzed_*";
 		mcdat.insert("MC_1",fname);
@@ -144,6 +152,7 @@ int main(int argc, char *argv[]) {
 		if(!g2p.getnFiles()) continue;
 		g2p.setCalibrator(PCal);
 		
+		// load Penelope simulation
 		PenelopeToPMT p2p;
 		fname = "/home/ucna/penelope_output/iso_line_sources/event_"+itos(l/50-1)+" _*.root";
 		mcdat.insert("MC_2",fname);
@@ -151,6 +160,7 @@ int main(int argc, char *argv[]) {
 		if(!p2p.getnFiles()) continue;
 		p2p.setCalibrator(PCal);
 		
+		// make comparison plots between simulations
 		mc_compare_plots(OM,g2p,p2p,2*l);
 		OM.qOut.insert("mcdat",mcdat);
 		OM.write();
