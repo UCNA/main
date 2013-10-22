@@ -104,14 +104,14 @@ def compareMichaelRobbyAsyms(depth):
 	# Robby's A
 	LFr = LinearFitter(terms=[polyterm(0)])
 	LFr.fit(gdat,cols=(0,1,2),errorbarWeights=True)
-	chi2_r = LFr.ssResids()
-	nu_r = len(gdat)-len(LFr.coeffs)
+	chi2_r = LFr.chisquared()
+	nu_r = LFr.nu()
 	dA_r = 1.0/sqrt(LFr.sumWeights())
 	# Michael's A
 	LFm = LinearFitter(terms=[polyterm(0)])
 	LFm.fit(gdat,cols=(0,3,4),errorbarWeights=True)
-	chi2_m = LFm.ssResids()
-	nu_m = len(gdat)-len(LFm.coeffs)
+	chi2_m = LFm.chisquared()
+	nu_m = LFm.nu()
 	dA_m = 1.0/sqrt(LFm.sumWeights())
 
 	#stats.chisqprob(chi2,ndf);

@@ -338,18 +338,18 @@ def plot_octet_asymmetries(basedir,depth=0):
 	
 	if gdat_A:
 		LF.fit(gdat_A,cols=(0,1,2),errorbarWeights=True)
-		chi2 = LF.ssResids()
-		ndf = len(gdat_A)-len(LF.coeffs)
-		gtitle = "$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],1.0/sqrt(LF.sumWeights()),chi2,ndf)
+		chi2 = LF.chisquared()
+		ndf = LF.nu()
+		gtitle = "$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.rmsDeviation()/sqrt(LF.ydat.size),chi2,ndf)
 		if stats:
 			gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
 		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_A[0][0],gdat_A[-1][0]),x=1,y=2,title=gtitle),[graph.style.line()])
 	
 	if gdat_B:
 		LF.fit(gdat_B,cols=(0,1,2),errorbarWeights=True)
-		chi2 = LF.ssResids()
-		ndf = len(gdat_B)-len(LF.coeffs)
-		gtitle = "$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],1.0/sqrt(LF.sumWeights()),chi2,ndf)
+		chi2 = LF.chisquared()
+		ndf = LF.nu()
+		gtitle = "$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.rmsDeviation()/sqrt(LF.ydat.size),chi2,ndf)
 		if stats:
 			gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
 		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_B[0][0],gdat_B[-1][0]),x=1,y=2,title=gtitle),
@@ -377,13 +377,13 @@ def plot_octet_asymmetries(basedir,depth=0):
 	for s in ['E','C','W']:
 		
 		LF.fit([kd for kd in kepDelta[s] if kd[2]>0],cols=(0,1,2),errorbarWeights=True)
-		chi2 = LF.ssResids()
-		ndf = len(gdat)-len(LF.coeffs)
+		chi2 = LF.chisquared()
+		ndf = LF.nu()
 		sname = "$%s_{\\rm on}-%s_{\\rm off}$"%(s,s)
 		if s == 'C':
 			sname = "$(E_{\\rm on}-E_{\\rm off}-W_{\\rm on}+W_{\\rm off})/2$"
 		ch2str = "$\\chi^2/\\nu = %.1f/%i$"%(chi2,ndf)
-		err = LF.rmsDeviation()/sqrt(len(gdat)) #1.0/sqrt(LF.sumWeights())
+		err = LF.rmsDeviation()/sqrt(LF.ydat.size)
 		print "dEp:",s,LF.coeffs[0],LF.rmsDeviation(),err
 					
 		gdEp.plot(graph.data.points(kepDelta[s],x=1,y=2,dy=3,
@@ -397,7 +397,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 				if len(bgRateDat[s][afp])<2:
 					continue;
 				LF.fit(bgRateDat[s][afp],cols=(0,1,2),errorbarWeights=True)
-				chi2 = LF.ssResids()
+				chi2 = LF.chisquared()
 				print chi2
 				ndf = len(bgRateDat[s][afp])-len(LF.coeffs)
 				gtitle = s+" Side, AFP=%s: $%.4f$Hz $\\chi^2/\\nu = %.1f/%i$"%(afp,LF.coeffs[0],chi2,ndf)
@@ -419,7 +419,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 					 
 	gdEp.writetofile(basedir+"/Octet_dEP_%i.pdf"%depth)
 	gBgRate.writetofile(basedir+"/Octet_BgRate_%i.pdf"%depth)
-	gMuRate.writetofile(basedir+"/Octet_MuRate_%i.pdf"%depth)
+	#gMuRate.writetofile(basedir+"/Octet_MuRate_%i.pdf"%depth)
 	
 			
 
@@ -629,9 +629,9 @@ def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
 
 if __name__=="__main__":
 	
-	backscatterFracTable("OctetAsym_Offic_Sim0823_4x")
-	backscatterFracTable("OctetAsym_Offic_SimPen")
-	exit(0)
+	#backscatterFracTable("OctetAsym_Offic_Sim0823_4x")
+	#backscatterFracTable("OctetAsym_Offic_SimPen")
+	#exit(0)
 	
 	if 0:
 		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_SimMagF/")
@@ -646,6 +646,7 @@ if __name__=="__main__":
 		exit(0)
 	
 	for i in range(3):				
-		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",i)
+		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",i)
+		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim0823/",i)
 		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
 			

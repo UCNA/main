@@ -72,8 +72,8 @@ def plot_TypeIV_resid(basedir,depth=2):
 			gdat = [ [n,r.rate,r.d_rate] for (n,r) in rts[(s,afp)] ]
 			LF.fit(gdat,cols=(0,1,2),errorbarWeights=True)
 			err = 1.0/sqrt(LF.sumWeights())
-			chi2 = LF.ssResids()
-			ndf = len(gdat)-len(LF.coeffs)
+			chi2 = LF.chisquared()
+			ndf = LF.nu()
 			gtitle = "%s %s: $%.3f \\pm %.3f$, $\\chi^2/\\nu = %.1f/%i$"%(s,afp,LF.coeffs[0],err,chi2,ndf)
 			print gtitle
 			gRts.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=gtitle),

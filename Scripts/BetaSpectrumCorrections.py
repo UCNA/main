@@ -244,9 +244,42 @@ def thesisCorrsPlot(fin,outpath):
 	gSpec.writetofile(outpath+"/Thesis_Spectrum_%i_%i_%f.pdf"%(A,Z,ep))
 
 
-if __name__ == "__main__":						  
-	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
-					   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+def asymStatSens():
+	"""Plot estimated statistical sensitivity for asymmetry from neutron spectrum"""
+	p = (lambda KE: sqrt(KE**2+2*511*KE))
+	beta = (lambda KE: p(KE)/(KE+511))
+	S0 = (lambda KE: (p(KE)*(KE+511)*(782.3-KE)**2)*(KE<782.3))
+
+	g = graph.graphxy(width=20,height=10,
+			x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
+			y=graph.axis.lin(title=None,min=0,max=1.1),
+			key = graph.key.key(pos="bc"))
+	setTexrunner(g)
+	
+	gdat = [(x, S0(x), beta(x)**2*S0(x)) for x in unifrange(0,800,800)]
+	specnorm = sum([x[1] for x in gdat])
+	sens = sum([x[2] for x in gdat if 220<x[0]<670])/specnorm
+	print "sensitivty 1/sqrt(I) =",1./sqrt(sens)
+	
+	
+	gcum = [gdat[0][2],]
+	for x in gdat:
+		gcum.append(gcum[-1]+x[2])
+	smx = max([x[1] for x in gdat])
+	amx = max([x[2] for x in gdat])
+	gdat = [(x[0],x[1]/smx,x[2]/amx,gcum[n]/gcum[-1]) for (n,x) in enumerate(gdat)]
+	
+	g.plot(graph.data.points(gdat,x=1,y=2,title="neutron decay spectrum"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
+	g.plot(graph.data.points(gdat,x=1,y=3,title="$A_0$ statistical sensitivity"),[graph.style.line([style.linestyle.dashed,style.linewidth.Thick])])
+	g.plot(graph.data.points(gdat,x=1,y=4,title="cumulative $A_0$ sensitivity"),[graph.style.line([style.linewidth.Thick])])
+	g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/StatSens.pdf")
+	
+if __name__ == "__main__":
+
+	asymStatSens()
+	
+	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
+	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
 	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_137_55_513.97.txt",
 	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
 

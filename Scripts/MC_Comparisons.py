@@ -149,7 +149,7 @@ def paperFig1(inColor=False):
 		LF = LinearFitter(terms=[polyterm(0)])
 		fdat = [(p.KE,p.A0,p.dA0) for p in pdat if e0 < p.KE < e1]
 		LF.fit(fdat,cols=(0,1,2),errorbarWeights=True)
-		print "<A0> [%i,%i] ="%(e0,e1),LF.coeffs[0],"chi^2/ndf =",LF.ssResids(),len(fdat)-1
+		print "<A0> [%i,%i] ="%(e0,e1),LF.coeffs[0],"chi^2/ndf =",LF.chisquared(),LF.nu()
 
 	cnvs.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Paper/Fig1_new.pdf")
 

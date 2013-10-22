@@ -174,18 +174,11 @@ class LinearFitter:
 		if dosort:
 			fp.sort()
 		return fp
-		
-	# sum of square of residuals (weighted = sum(chi^2))
-	def ssResids(self):
-		return sum([ (self.ydat[i]-self(self.xdat[i]))**2*self.weights[i] for i in range(len(self.xdat))])
-	
-	# sum of weights
-	def sumWeights(self):
-		return sum(self.weights)
 	
 	# rms deviation		
 	def rmsDeviation(self):
-		return (self.ssResids()/sum(self.weights))**0.5
+		dy = self.ydat - self.yhat()
+		return sqrt((dy.transpose() * dy)[0,0])/sqrt(dy.size)
 	
 	# get a list of npts uniformly spaced points between xmin and xmax
 	def unifPoints(self,xmin,xmax,npts):
