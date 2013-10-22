@@ -61,7 +61,7 @@ Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o OctetSimuCloneManager.
 	MuonPlugin.o PositionsPlugin.o WirechamberAnodePlugins.o BGDecayPlugin.o HighEnergyExcessPlugin.o \
 	AsymmetryPlugin.o SimAsymmetryPlugin.o BetaDecayAnalyzer.o \
 	CathodeTuningAnalyzer.o PositionBinnedPlugin.o AnodeGainMapPlugin.o XenonAnalyzer.o \
-	PlotMakers.o AsymmetryCorrections.o FierzFitter.o
+	PlotMakers.o AsymmetryCorrections.o FierzFitter.o GravitySpectrometerPlugin.o
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 

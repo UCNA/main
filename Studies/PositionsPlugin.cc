@@ -12,14 +12,14 @@ PositionsPlugin::PositionsPlugin(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"pos
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_III_EVENT; ++t) {
 			TH2F hPositionsTemplate(("hPos_Type_"+itos(t)).c_str(),
-									("Type "+itos(t)+" Positions").c_str(),
+									("Type "+itosRN(t)+" Positions").c_str(),
 									200,-65,65,200,-65,65);
 			qPositions[s][t] = registerCoreHist(hPositionsTemplate,s);
 			qPositions[s][t]->setAxisTitle(X_DIRECTION,"x Position [mm]");
 			qPositions[s][t]->setAxisTitle(Y_DIRECTION,"y Position [mm]");
 			myA->ignoreMissingHistos = true;
-			qRadius2[s][t] = registerCoreHist("hR2_Type_"+itos(t), "Type "+itos(t)+" Radius^2", 60, 0, 60*60, s);
-			qRadius2[s][t]->setAxisTitle(X_DIRECTION,"radius^2 [mm^2]");
+			qRadius2[s][t] = registerCoreHist("hR2_Type_"+itos(t), "Type "+itosRN(t)+" radius^{2}", 60, 0, 60*60, s);
+			qRadius2[s][t]->setAxisTitle(X_DIRECTION,"radius^{2} [mm^{2}]");
 			myA->ignoreMissingHistos = false;
 		}
 	}
@@ -65,12 +65,39 @@ void PositionsPlugin::calculateResults() {
 
 void PositionsPlugin::makePlots() {
 	if(myA->depth > 0) return;
-	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t=TYPE_0_EVENT; t<=TYPE_III_EVENT; t++) {
-			qPositions[s][t]->setDrawRange(0,false);
-			drawQuad(qPositions[s][t],"Positions","COL");
-			drawQuad(qRadius2[s][t],"Positions","E L");
+	
+	myA->defaultCanvas->cd();
+	
+	for(EventType tp=TYPE_0_EVENT; tp<=TYPE_III_EVENT; ++tp) {
+		std::vector<TH1*> hToPlot;
+		for(Side s = EAST; s <= WEST; ++s) {
+			myA->defaultCanvas->SetRightMargin(0.08);
+			myA->defaultCanvas->SetLeftMargin(0.10);
+			
+			qPositions[s][tp]->setDrawRange(0,false);
+			drawQuad(qPositions[s][tp],"Positions","COL");
+			drawQuad(qRadius2[s][tp],"Positions","E L");
+			
+			TH1* hBgPos = myA->flipperSummedRate(qPositions[s][tp], GV_CLOSED, false);
+			hBgPos->SetTitle(("Type "+itosRN(tp)+" background positions").c_str());
+			hBgPos->Draw(tp==TYPE_0_EVENT?"scat=0.5":"");
+			printCanvas(sideSubst("Positions/BGPos_%c_Type_",s)+itos(tp));
+			delete hBgPos;
+			
+			TH1* hBgRad = myA->flipperSummedRate(qRadius2[s][tp], GV_CLOSED);
+			hBgRad->SetLineStyle(1+s);
+			hBgRad->SetLineColor(1);
+			hBgRad->GetYaxis()->SetTitleOffset(1.5);
+			hBgRad->SetTitle(("Type "+itosRN(tp)+" background radius^{2}").c_str());
+			hBgRad->Scale(1000000);
+			hBgRad->GetYaxis()->SetTitle("event rate [uHz/mm^{2}]");
+			hToPlot.push_back(hBgRad);
 		}
+		myA->defaultCanvas->SetRightMargin(0.04);
+		myA->defaultCanvas->SetLeftMargin(0.14);
+		drawSimulHistos(hToPlot,"HIST");
+		for(int r = 10; r <= 50; r += 10) drawVLine(r*r, myA->defaultCanvas, 1, 3);
+		printCanvas("Positions/BGRad_Type_"+itos(tp));
 	}
 }
 

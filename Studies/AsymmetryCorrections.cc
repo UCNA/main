@@ -358,6 +358,14 @@ ErrTables::~ErrTables() {
 			delete S[s][afp];
 }
 
+ double ErrTables::energyErrorEnvelope(double e, unsigned int year) const {
+ 	assert(year==2010);
+	double err = e*0.0125;
+	if(err<2.5) return 2.5;
+	if(err>500*0.0125) return 500*0.0125;
+	return err;
+ }
+
 double ErrTables::getRexp(double e) const {
 	return (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e) /
 			(S[EAST][AFP_ON]->Eval(e)*S[WEST][AFP_OFF]->Eval(e)));
@@ -399,6 +407,23 @@ void ErrTables::pedShiftsTable(double delta) {
 					 (S[EAST][AFP_ON]->Eval(e-delta)*S[WEST][AFP_OFF]->Eval(e)));
 		double Ap = AofR(Rp);
 		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,0.,(A-Ap)/A);
+	}
+	fclose(f);
+}
+
+void ErrTables::eLinearityTable(unsigned int yr) {
+	// this doesn't work! too much statistical scatter in asymmetry data. Use smooth fit to asymmetry, instead.
+	FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/EnergyLinearity_"+itos(yr)+".txt").c_str(),"w");
+	fprintf(f,"# Energy reconstruction errors for %i error envelope, using observed spectra\n",yr);
+	fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
+	for(unsigned int b=0; b<800; b+=10) {
+		double e = b+5.;
+		double A = getAexp(e);
+		double ee = e+energyErrorEnvelope(e,yr)*0.01;
+		double Rp = (S[EAST][AFP_OFF]->Eval(ee)*S[WEST][AFP_ON]->Eval(ee) /
+					 (S[EAST][AFP_ON]->Eval(ee)*S[WEST][AFP_OFF]->Eval(ee)));
+		double Ap = AofR(Rp);
+		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,0.,100*(A-Ap)/A);
 	}
 	fclose(f);
 }

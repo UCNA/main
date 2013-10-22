@@ -103,6 +103,8 @@ public:
 	bool analyzeLED;
 	/// set whether pedestals need to be measured
 	bool needsPeds;
+	/// set whether to produce color or black-and-white plots
+	bool colorPlots;
 	
 protected:
 	// read variables
@@ -257,6 +259,12 @@ protected:
 	void drawCutRange(const RangeCut& r, Int_t c=4);
 	/// draw regions excluded by blip cuts
 	void drawExclusionBlips(Int_t c=4);
+	/// set drawing style for second histogram in group
+	void setSecondaryStyle(TH1* h);
+	/// set drawing style based on detector side
+	void setSideStyle(TH1* h, Side s);
+	/// scale histogram to rate
+	void scaleToRate(TH1* h, double rscale = 1.0);
 	// histograms
 	TH1F* hCathMax[2][2];						//< cathode max, [side][cut]
 	TH1F* hCathMaxSum[2][2];					//< cathode max sum, [side][cut]

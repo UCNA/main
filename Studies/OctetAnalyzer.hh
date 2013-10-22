@@ -72,6 +72,9 @@ public:
 	/// load simulation data
 	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim = 0, bool countAll = false);
 	
+	/// make flipper-summed histogram normalized to rate
+	TH1* flipperSummedRate(const quadHists* qh, GVState gv, bool doNorm = true) const;
+	
 private:
 	
 	std::map<std::string,quadHists*> coreHists;	//< core histograms for merging, BG subtraction

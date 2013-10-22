@@ -132,8 +132,8 @@ public:
 
 	
 	std::map<std::string,fgbgPair*> fgbgHists;	//< background-subtractable quantities
-	float totalCounts[AFP_OTHER+1][2];			//< total type-0 event counts by [flipper][fg/bg], for re-simulation
-	BlindTime totalTime[AFP_OTHER+1][2]; 		//< total time for [flipper][fg/bg]
+	float totalCounts[AFP_OTHER+1][GV_OPEN+1];	//< total type-0 event counts by [flipper][fg/bg], for re-simulation
+	BlindTime totalTime[AFP_OTHER+1][GV_OPEN+1];//< total time for [flipper][fg/bg]
 	TagCounter<RunNum> runTimes;				//< time spent on each run
 	
 	/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs

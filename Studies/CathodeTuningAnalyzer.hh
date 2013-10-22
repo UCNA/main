@@ -2,8 +2,10 @@
 #define CATHODETWEAKANALYZER_HH 1
 
 #include "RunAccumulator.hh"
+#include "OctetAnalyzer.hh"
 #include "WirechamberCalibrator.hh"
 #include "WirechamberAnodePlugins.hh"
+#include "GravitySpectrometerPlugin.hh"
 
 /// Struct for cathode calibration data
 struct CathodeSeg {
@@ -51,15 +53,16 @@ public:
 };
 
 /// analyzer for wirechamber gain and position tweaking
-class CathodeTuningAnalyzer: public RunAccumulator {
+class CathodeTuningAnalyzer: public OctetAnalyzer {
 public:
 	/// constructor
 	CathodeTuningAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "");
 	/// create a new instance of this analyzer
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new CathodeTuningAnalyzer(this,nm,inflname); }
 	
-	CathodeGainPlugin* myCG;		//< cathode gain
-	CathodeTweakPlugin* myCT;		//< cathode position tweaking
+	CathodeGainPlugin* myCG;			//< cathode gain
+	CathodeTweakPlugin* myCT;			//< cathode position tweaking
+	GravitySpectrometerPlugin* myGS;	//< gravity spectrometer: event height vs time
 };
 
 /// comparison analyzer for simulation

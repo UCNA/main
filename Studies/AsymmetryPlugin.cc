@@ -292,23 +292,64 @@ void AsymmetryPlugin::uploadAnaResults() {
 
 void AsymmetryPlugin::makePlots() {
 	
+	myA->defaultCanvas->SetRightMargin(0.04);
+	myA->defaultCanvas->SetLeftMargin(0.12);
+	
+	// overall asymmetry
 	hAsym->SetMinimum(-0.10);
 	hAsym->SetMaximum(0.0);
 	hAsym->GetXaxis()->SetRangeUser(0,800);
 	hAsym->Draw();
 	printCanvas("Asymmetry");
 	
+	// instrumental asymmetry
 	hInstAsym->SetMinimum(-0.10);
 	hInstAsym->SetMaximum(0.10);
 	hInstAsym->GetXaxis()->SetRangeUser(0,800);
 	hInstAsym->Draw();
 	printCanvas("InstAsym");
 	
+	// super sum spectrum
 	hSuperSum[GV_OPEN]->Draw();
 	printCanvas("SuperSum");
 	
-	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++)
-		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][t], qEnergySpectra[WEST][nBetaTubes][t], true, "Energy");
+	// energy spectra event counts
+	for(EventType tp=TYPE_0_EVENT; tp<=TYPE_IV_EVENT; ++tp) {
+		drawQuadSides(qEnergySpectra[EAST][nBetaTubes][tp], qEnergySpectra[WEST][nBetaTubes][tp], true, "Energy");
+		for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
+			std::vector<TH1*> hToPlot;
+			for(Side s = EAST; s <= WEST; ++s) {
+				TH1* hTpRt = myA->flipperSummedRate(qEnergySpectra[s][nBetaTubes][tp], gv);
+				hTpRt->GetYaxis()->SetTitleOffset(1.45);
+				hTpRt->Scale(1000);
+				hTpRt->GetYaxis()->SetTitle("event rate [mHz/keV]");
+				if(gv==GV_CLOSED && tp<TYPE_IV_EVENT) {
+					hTpRt->Scale(1000);
+					hTpRt->GetYaxis()->SetTitle("event rate [uHz/keV]");
+				}
+				hTpRt->SetTitle(("Type "+itosRN(tp)+" events"+(gv==GV_OPEN?"":" background")).c_str());
+				if(tp==TYPE_IV_EVENT) hTpRt->SetTitle("Gamma events");
+				hTpRt->SetMinimum(0);
+				hTpRt->SetLineStyle(1+s);
+#ifdef PUBLICATION_PLOTS
+				hTpRt->SetLineColor(1);
+#endif
+				if(gv==GV_CLOSED && tp>TYPE_0_EVENT) hTpRt->Rebin(2);
+				if(gv==GV_CLOSED) hTpRt->GetXaxis()->SetRange(1,hTpRt->GetXaxis()->GetNbins());
+				hToPlot.push_back(hTpRt);
+			}
+			drawSimulHistos(hToPlot,"HIST");
+			printCanvas("Energy/EnergyRate_"+itos(tp)+(gv==GV_OPEN?"":"_BG"));
+			if(tp==TYPE_IV_EVENT && gv==GV_CLOSED) {
+				myA->defaultCanvas->SetLogy(true);
+				for(Side s = EAST; s <= WEST; ++s) hToPlot[s]->SetMinimum(0.9);
+				drawSimulHistos(hToPlot,"HIST");
+				printCanvas("Energy/EnergyRate_"+itos(tp)+"_BG_Log");
+				myA->defaultCanvas->SetLogy(false);
+			}
+		}
+	}
+		
 }
 
 void AsymmetryPlugin::compareMCtoData(AnalyzerPlugin* AP) {

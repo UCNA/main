@@ -72,12 +72,17 @@ public:
 	void gainfluctsTable(double delta);
 	/// pedestal fluctuations errors
 	void pedShiftsTable(double delta);
+	/// energy reconstruction errors
+	void eLinearityTable(unsigned int yr = 2010);
 	/// muon veto efficiency change errors
 	void muonVetoEfficTable(double delta);
 	/// uniform efficiency shifts tables (e.g. deadtime, veto accidentals)
 	void efficShiftTable(double delta);
 	///constant neutron generated background (in Hz/keV)
 	void NGBGTable(double EScale, double dEScale, double WScale, double dWScale, double dAFPfrac);
+	
+	/// energy reconstruction uncertainty envelope
+	double energyErrorEnvelope(double e, unsigned int year = 2010) const;
 	
 protected:
 	OutputManager OM;		//< unused OutputManager

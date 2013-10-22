@@ -30,11 +30,11 @@ public:
 	unsigned int nEnergyBins;		//< number of bins for energy histograms
 	double energyMax;				//< energy range for energy histograms
 	
-	TH1F* hAsym;											//< asymmetry
-	TH1F* hTpAsym[TYPE_III_EVENT+1];		//< asymmetry by event type
+	TH1F* hAsym;						//< asymmetry
+	TH1F* hTpAsym[TYPE_III_EVENT+1];	//< asymmetry by event type
 	TH1F* hInstAsym;					//< instrumental asymmetry
 	TH1F* hSuperSum[2];					//< super-sum spectrum for FG/BG
-	TH1F* hCxn;			//< applied asymmetry correction
+	TH1F* hCxn;							//< applied asymmetry correction
 	TH1F* hEvtSS[TYPE_III_EVENT+1];		//< super-sum for each event type
 	
 	quadHists* qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]

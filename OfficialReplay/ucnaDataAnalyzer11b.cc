@@ -13,7 +13,7 @@
 RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
 
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
-TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false),
+TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false), colorPlots(true),
 rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), nLiveTrigs(0), ignore_beam_out(false),
 nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	plotPath = bp+"/figures/run_"+itos(R)+"/";
@@ -627,6 +627,9 @@ int main(int argc, char** argv) {
 		A.setIgnoreBeamOut(!cutBeam);
 		A.analyzeLED = ledtree;
 		A.needsPeds = forceped;
+#ifdef PUBLICATION_PLOTS
+		A.colorPlots = false;
+#endif
 		if(!nodbout) {
 			printf("Connecting to output DB...\n");
 			A.setOutputDB(CalDBSQL::getCDB(false));

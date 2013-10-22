@@ -98,10 +98,11 @@ int main(int argc, char *argv[]) {
 	
 	if(rname=="make_errtables") {
 		ErrTables ET;
-		ET.gainfluctsTable(0.000125);
-		ET.pedShiftsTable(0.015);
-		ET.muonVetoEfficTable(0.002);
-		ET.NGBGTable(0.99,0.08,0.48,0.09, 0.25);
+		//ET.gainfluctsTable(0.000125);
+		//ET.pedShiftsTable(0.015);
+		ET.eLinearityTable(2010);
+		//ET.muonVetoEfficTable(0.002);
+		//ET.NGBGTable(0.99,0.08,0.48,0.09, 0.25);
 	}
 	
 	if(rname=="combo_ngbg_spectrum") {

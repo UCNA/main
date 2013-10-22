@@ -231,9 +231,10 @@ void CathodeTweakPlugin::makePlots() {
 //-----------------------------------------------------------
 
 CathodeTuningAnalyzer::CathodeTuningAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
-RunAccumulator(pnt,nm,inflName) {
+OctetAnalyzer(pnt,nm,inflName) {
 	addPlugin(myCG = new CathodeGainPlugin(this));
 	addPlugin(myCT = new CathodeTweakPlugin(this));
+	addPlugin(myGS = new GravitySpectrometerPlugin(this));
 }
 
 SimCathodeTuningAnalyzer::SimCathodeTuningAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):

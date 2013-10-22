@@ -122,6 +122,18 @@ void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool coun
 	RunAccumulator::loadSimData(simData,nToSim,countAll);
 }
 
+TH1* OctetAnalyzer::flipperSummedRate(const quadHists* qh, GVState gv, bool doNorm) const {
+	assert(qh);
+	assert(gv == GV_OPEN || gv == GV_CLOSED);
+	TH1* h = (TH1*)qh->fgbg[AFP_OFF]->h[gv]->Clone();
+	h->SetTitle(qh->title.c_str());
+	h->Add(qh->fgbg[AFP_ON]->h[gv]);
+	Side s = qh->mySide;
+	if(doNorm)
+		h->Scale(1.0/h->GetXaxis()->GetBinWidth(1)/(totalTime[AFP_ON][gv][s]+totalTime[AFP_OFF][gv][s]));
+	return h;
+}
+
 /* --------------------------------------------------- */
 
 TH1* OctetAnalyzerPlugin::calculateSR(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg, bool instr) {

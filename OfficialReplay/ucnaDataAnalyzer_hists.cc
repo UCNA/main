@@ -2,6 +2,22 @@
 #include "GraphicsUtils.hh"
 #include "SourceDBSQL.hh"
 #include <TSpectrum2.h>
+
+void ucnaDataAnalyzer11b::setSecondaryStyle(TH1* h) {
+	if(colorPlots) h->SetLineColor(2);
+	else h->SetLineStyle(2);
+}
+
+void ucnaDataAnalyzer11b::setSideStyle(TH1* h, Side s) {
+	if(colorPlots) h->SetLineColor(2+2*s);
+	else if(s==WEST) h->SetLineStyle(2);
+}
+
+void ucnaDataAnalyzer11b::scaleToRate(TH1* h, double rscale) {
+	h->Scale(rscale/h->GetBinWidth(1)/totalTime[BOTH]);
+	h->GetYaxis()->SetTitleOffset(1.4);
+}
+
 void ucnaDataAnalyzer11b::setupHistograms() {
 	
 	unsigned int nTimeBins = wallTime/10.;
@@ -11,47 +27,52 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		hCathMax[s][0] = registeredTH1F(sideSubst("hCathMax_%c",s),sideSubst("%s Max Cathode",s),200,-200,4200);
 		hCathMax[s][1] = registeredTH1F(sideSubst("hCathMaxCut_%c",s),sideSubst("%s Max Cathode, MWPC Cut",s),200,-200,4200);
-		hCathMax[s][1]->SetLineColor(2);
+		setSecondaryStyle(hCathMax[s][1]);
 		hCathMax[s][0]->GetXaxis()->SetTitle("ADC Channels");
 		hCathMaxSum[s][0] = registeredTH1F(sideSubst("hCathMaxSum_%c",s),sideSubst("%s Max Cathode Sum",s),200,-200,8200);
 		hCathMaxSum[s][1] = registeredTH1F(sideSubst("hCathMaxSumCut_%c",s),sideSubst("%s Max Cathode Sum, MWPC Cut",s),200,-200,8200);
-		hCathMaxSum[s][1]->SetLineColor(2);
+		setSecondaryStyle(hCathMaxSum[s][1]);
 		hCathMaxSum[s][0]->GetXaxis()->SetTitle("ADC Channels");
 		hAnode[s][0] = registeredTH1F(sideSubst("hAnode_%c",s),sideSubst("%s Anode",s),200,-200,4000);
 		hAnode[s][1] = registeredTH1F(sideSubst("hAnodeCut_%c",s),sideSubst("%s Anode, MWPC Cut",s),200,-200,4000);
-		hAnode[s][1]->SetLineColor(2);
+		setSecondaryStyle(hAnode[s][1]);
 		hAnode[s][0]->GetXaxis()->SetTitle("ADC Channels");
 		hCathSum[s][0] = registeredTH1F(sideSubst("hCathSum_%c",s),sideSubst("%s Cathode Sum",s),200,-1000,40000);
 		hCathSum[s][1] = registeredTH1F(sideSubst("hCathSumCut_%c",s),sideSubst("%s Cathode Sum, MWPC Cut",s),200,-1000,40000);
-		hCathSum[s][1]->SetLineColor(2);
+		setSecondaryStyle(hCathSum[s][1]);
 		hCathSum[s][0]->GetXaxis()->SetTitle("ADC Channels");
 		
 		hBackTDC[s] = registeredTH1F(sideSubst("hBackTDC_%c",s),"Backing Veto TDC",200,0,4000);
-		hBackTDC[s]->SetLineColor(2+2*s);
-		hBackTDC[s]->GetXaxis()->SetTitle("TDC Channels");
+		setSideStyle(hBackTDC[s],s);
+		hBackTDC[s]->GetXaxis()->SetTitle("TDC Counts");
 		hBackADC[s][0] = registeredTH1F(sideSubst("hBackADC_%c",s),sideSubst("%s Backing Veto ADC",s),200,-200,4000);
 		hBackADC[s][1] = registeredTH1F(sideSubst("hBackADCCut_%c",s),sideSubst("%s Backing Veto ADC, TDC Cut",s),200,-200,4000);
-		hBackADC[s][1]->SetLineColor(2);
+		hBackADC[s][0]->GetXaxis()->SetTitle("ADC Channels");
+		hBackADC[s][1]->GetXaxis()->SetTitle("ADC Channels");
+		setSecondaryStyle(hBackADC[s][1]);
 		hDriftTAC[s] = registeredTH1F(sideSubst("hDriftTAC_%c",s),"Drift Tubes TAC",200,-200,4000);
-		hDriftTAC[s]->SetLineColor(2+2*s);
+		hDriftTAC[s]->GetXaxis()->SetTitle("TAC Channels");
+		setSideStyle(hDriftTAC[s],s);
 		if(s==EAST) {
 			hTopTDC[s] = registeredTH1F(sideSubst("hTopTDC_%c",s),"Top Veto TDC",200,0,4000);
-			hTopTDC[s]->SetLineColor(2+2*s);
-			hBackTDC[s]->GetXaxis()->SetTitle("TDC Channels");
+			setSideStyle(hTopTDC[s],s);
+			hTopTDC[s]->GetXaxis()->SetTitle("TDC Counts");
 			hTopADC[s][0] = registeredTH1F(sideSubst("hTopADC_%c",s),sideSubst("%s Top Veto ADC",s),200,-200,4000);
 			hTopADC[s][1] = registeredTH1F(sideSubst("hTopADCCut_%c",s),sideSubst("%s Top Veto ADC, with TDC Cut",s),200,-200,4000);
-			hTopADC[s][1]->SetLineColor(2);
+			setSecondaryStyle(hTopADC[s][1]);
 			hTopADC[s][0]->GetXaxis()->SetTitle("ADC Channels");
+			hTopADC[s][1]->GetXaxis()->SetTitle("ADC Channels");
 		}
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			hScintTDC[s][t] = registeredTH1F(sideSubst("hScintTDC_%c",s)+(t<nBetaTubes?itos(t):""),"2-of-4 TDC",200,0,5000);
-			hScintTDC[s][t]->SetLineColor(t<nBetaTubes?t+2:2+2*s);
-			hScintTDC[s][t]->GetXaxis()->SetTitle("TDC Channels");
+			if(t==nBetaTubes) setSideStyle(hScintTDC[s][t],s);
+			else hScintTDC[s][t]->SetLineColor(t+2);
+			hScintTDC[s][t]->GetXaxis()->SetTitle("TDC Counts");
 		}
 		
 		for(unsigned int t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; t++) {
 			hEtrue[s][t] = registeredTH1F(sideSubst("hErecon_%c_",s)+itos(t),"Reconstructed Energy, Type "+itos(t),200,0,1500);
-			hEtrue[s][t]->SetLineColor(2+2*s);
+			setSideStyle(hEtrue[s][t],s);
 			hEtrue[s][t]->GetXaxis()->SetTitle("Erecon [keV]");
 		}
 		
@@ -62,7 +83,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 		}
 		
 		hSideRate[s][1] = registeredTH1F(sideSubst("hBetaRate_%c",s),"Beta Event Rate",nTimeBins,-tpad,wallTime+tpad);
-		hSideRate[s][1]->SetLineColor(2+2*s);
+		setSideStyle(hSideRate[s][1],s);
 		hSideRate[s][1]->GetXaxis()->SetTitle("Time [s]");
 		
 		hSideRate[s][0] = registeredTH1F(sideSubst("hMuonRate_%c",s),"Muon Event Rate",nTimeBins,-tpad,wallTime+tpad);
@@ -75,7 +96,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			hHitsProfile[s][d] = registeredTH1F(sideSubst("HitPos_%c",s)+(d==X_DIRECTION?"x":"y"),
 												std::string(d==X_DIRECTION?"x":"y")+" Hit Positions",200,-65,65);
-			hHitsProfile[s][d]->SetLineColor(2+2*s);
+			setSideStyle(hHitsProfile[s][d],s);
 			hHitsProfile[s][d]->GetXaxis()->SetTitle((std::string(d==X_DIRECTION?"x":"y")+" position [mm]").c_str());
 		}
 		
@@ -88,8 +109,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 			hTrigEffic[s][t][0] = registeredTH1F(sideSubst("hTrigEfficAll_%c",s)+itos(t),"Trigger Efficiency Events",100,-50,150);
 			hTrigEffic[s][t][0]->SetLineColor(4);
 			hTrigEffic[s][t][1] = registeredTH1F(sideSubst("hTrigEfficTrig_%c",s)+itos(t),"Trigger Efficiency Events",100,-50,150);
-			hTrigEffic[s][t][1]->SetLineColor(2);
-			hTrigEffic[s][t][1]->SetLineStyle(2);
+			setSecondaryStyle(hTrigEffic[s][t][1]);
 			for(unsigned int i=0; i<2; i++) {
 				hTrigEffic[s][t][i]->GetXaxis()->SetTitle("ADC channels above pedestal");
 			}
@@ -233,8 +253,15 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 }
 
 void ucnaDataAnalyzer11b::drawCutRange(const RangeCut& r, Int_t c) {
-	drawVLine(r.start, defaultCanvas, c);
-	drawVLine(r.end, defaultCanvas, c);
+	if(colorPlots) {
+		drawVLine(r.start, defaultCanvas, c);
+		drawVLine(r.end, defaultCanvas, c);
+	} else {
+		int st = 1;
+		if(c==4) st = 2;
+		drawVLine(r.start, defaultCanvas, 1, st);
+		drawVLine(r.end, defaultCanvas, 1, st);
+	}
 }
 
 void ucnaDataAnalyzer11b::drawExclusionBlips(Int_t c) {
@@ -286,6 +313,15 @@ void ucnaDataAnalyzer11b::plotHistos() {
 		defaultCanvas->SetLogy(true);
 		
 		// muon vetos
+		for(unsigned int i=0; i<=1; i++) {
+			scaleToRate(hBackADC[s][i],1000);
+			hBackADC[s][i]->GetYaxis()->SetTitle("event rate [mHz/ADC channel]");
+			hBackADC[s][i]->GetXaxis()->SetRangeUser(0,2000);
+			if(s==EAST) {
+				scaleToRate(hTopADC[s][i],1000);
+				hTopADC[s][i]->GetYaxis()->SetTitle("event rate [mHz/ADC channel]");
+			}
+		}
 		hBackADC[s][0]->Draw();
 		hBackADC[s][1]->Draw("Same");
 		printCanvas(sideSubst("MuVeto/BackADC_%c",s));
@@ -315,7 +351,7 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	// 1-D hit positions
 	defaultCanvas->SetLogy(false);
 	defaultCanvas->SetLeftMargin(0.13);
-	defaultCanvas->SetRightMargin(0.04);
+	defaultCanvas->SetRightMargin(0.05);
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 		hToPlot.clear();
 		for(Side s = EAST; s <= WEST; ++s)
@@ -326,20 +362,32 @@ void ucnaDataAnalyzer11b::plotHistos() {
 	defaultCanvas->SetLogy(true);
 	
 	// muon vetos
-	hBackTDC[EAST]->Draw();
-	hBackTDC[WEST]->Draw("Same");
-	drawCutRange(fBacking_tdc[EAST].R,2);
-	drawCutRange(fBacking_tdc[WEST].R,4);
+	for(Side s = EAST; s <= WEST; ++s) {
+		scaleToRate(hBackTDC[s],1000);
+		hBackTDC[s]->GetYaxis()->SetTitle("event rate [mHz/TDC count]");
+		hBackTDC[s]->SetMinimum(0.1);
+		hBackTDC[s]->SetMaximum(30);
+		hBackTDC[s]->Draw(s==EAST?"":"SAME");
+		drawCutRange(fBacking_tdc[s].R,2+2*s);
+	}
 	printCanvas("MuVeto/Backing_TDC");
 	
 	hTopTDC[EAST]->Draw();
+	scaleToRate(hTopTDC[EAST],1000);
+	hTopTDC[EAST]->GetYaxis()->SetTitle("event rate [mHz/TDC count]");
+	hTopTDC[EAST]->SetMinimum(0.1);
+	hTopTDC[EAST]->SetMaximum(100);
 	drawCutRange(fTop_tdc[EAST].R,2);
 	printCanvas("MuVeto/Top_TDC");
 	
-	hDriftTAC[EAST]->Draw();
-	hDriftTAC[WEST]->Draw("Same");
-	drawCutRange(fDrift_tac[EAST].R,2);
-	drawCutRange(fDrift_tac[WEST].R,4);
+	for(Side s = EAST; s <= WEST; ++s) {
+		scaleToRate(hDriftTAC[s],1000);
+		hDriftTAC[s]->GetYaxis()->SetTitle("event rate [mHz/TAC channel]");
+		hDriftTAC[s]->SetMinimum(0.1);
+		hDriftTAC[s]->SetMaximum(100);
+		hDriftTAC[s]->Draw(s==EAST?"":"SAME");
+		drawCutRange(fDrift_tac[s].R,2+2*s);
+	}
 	printCanvas("MuVeto/Drift_TAC");
 	
 	// PMT TDCs
