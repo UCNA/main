@@ -41,7 +41,7 @@ void NeutronEndpointSmearShift() {
 	PMTCalibratorMeddler PCal(16194);
 	G4toPMT G2P;
 	G2P.setCalibrator(PCal);
-	G2P.addFile(getEnvSafe("G4WORKDIR")+"/output/thinFoil_neutronBetaUnpol/analyzed_*.root");
+	G2P.addFile(getEnvSafe("G4OUTDIR")+"/thinFoil_neutronBetaUnpol/analyzed_*.root");
 
 	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {

@@ -154,6 +154,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	} else {
 		BetaDecayAnalyzer BDA(&OM,OSCM.outputDir);
 		if(octn==1000) OSCM.combineOcts(BDA);
+		else if(octn==1001) OSCM.recalcAllOctets(BDA,false);
 		else OSCM.scanOct(BDA, octn);
 	}
 	
@@ -168,19 +169,13 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 }
 
+/*
 void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octMax = streamInteractor::popInt(stack);
 	int octMin = streamInteractor::popInt(stack);
 	std::string inPath = getEnvSafe("UCNA_ANA_PLOTS");
 	std::string datset = "OctetAsym_Offic_datFid45";
 	std::string outPath = inPath+"/"+datset+"/Range_"+itos(octMin)+"-"+itos(octMax);
-	
-	if(true) {
-		OutputManager OM("ThisNameIsNotUsedAnywhere",inPath);
-		BetaDecayAnalyzer AA(&OM,datset);
-		AA.plotPath = AA.dataPath = AA.rootPath = outPath;
-		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600,true,octMin,octMax);
-	}
 	
 	if(true) {
 		OutputManager OM("CorrectedAsym",outPath+"/CorrectAsym/");
@@ -195,6 +190,7 @@ void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
 		OM.setWriteRoot(true);
 	}
 }
+*/
 
 void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
 	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/20120810/");
@@ -237,7 +233,7 @@ void mi_makeSimSpectrum(std::deque<std::string>&, std::stack<std::string>& stack
 	RunNum rn = 16194;
 	
 	G4toPMT G2P;
-	std::string fPath = getEnvSafe("G4WORKDIR")+"/output/"+simName;
+	std::string fPath = getEnvSafe("G4OUTDIR")+"/"+simName;
 	if(dirExists(fPath)) {
 		G2P.addFile(fPath+"/analyzed_*.root");
 	} else {
@@ -329,10 +325,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	inputRequester octetProcessor("Process Octet",&mi_processOctet);
 	octetProcessor.addArg("Octet number");
-	inputRequester octetRange("Process Octet Range",&mi_anaOctRange);
-	octetRange.addArg("Start octet","0");
-	octetRange.addArg("end octet","1000");
-	
+
 	inputRequester showGenerator("Event generator test",&mi_showGenerator);
 	showGenerator.addArg("Generator name");
 	
@@ -345,7 +338,6 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	PostRoutines.addChoice(&showCal,"cal");
 	PostRoutines.addChoice(&dumpCalInfo,"dcl");
 	PostRoutines.addChoice(&octetProcessor,"oct");
-	PostRoutines.addChoice(&octetRange,"rng");
 	PostRoutines.addChoice(&showGenerator,"evg");
 	PostRoutines.addChoice(&makeSimSpectrum,"mks");
 	PostRoutines.addChoice(&exitMenu,"x");

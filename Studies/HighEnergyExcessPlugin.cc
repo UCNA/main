@@ -1,5 +1,6 @@
 #include "HighEnergyExcessPlugin.hh"
 #include "GraphUtils.hh"
+#include "GraphicsUtils.hh"
 
 void fitHighEnergyExcess(QFile& qOut, quadHists* qh, double e0, double e1) {
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
@@ -9,10 +10,10 @@ void fitHighEnergyExcess(QFile& qOut, quadHists* qh, double e0, double e1) {
 		int b0 = hEnBG->FindBin(e0);
 		int b1 = hEnBG->FindBin(e1)-1;
 		if(b1 == hEnBG->GetNbinsX()) ++b1;
-		double nBG = hEnBG->Integral(b0,b1);
-		double xs = hEn->Integral(b0,b1);
+		Double_t d_nBG;
+		double nBG = hEnBG->IntegralAndError(b0,b1,d_nBG);
 		Double_t d_xs;
-		double d_nBG = hEnBG->IntegralAndError(b0,b1,d_xs);
+		double xs = hEn->IntegralAndError(b0,b1,d_xs);
 		
 		Stringmap m;
 		m.insert("side",sideSubst("%c",qh->mySide));
@@ -33,7 +34,7 @@ void fitHighEnergyExcess(QFile& qOut, quadHists* qh, double e0, double e1) {
 HighEnergyExcessPlugin::HighEnergyExcessPlugin(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"highenergy") {
 	for(Side s = EAST; s <= WEST; ++s) {
 		qExcessr2[s] = registerCoreHist("Excessr2","Excess events radial distribution",10,0,80*80,s);
-		qExcessr2[s]->setAxisTitle(X_DIRECTION,"event radius squared [mm^2]");
+		qExcessr2[s]->setAxisTitle(X_DIRECTION,"event radius squared [mm^{2}]");
 		qExcessTheta[s] = registerCoreHist("ExcessTheta","Excess events angular distribution",10,-M_PI,M_PI,s);
 		qExcessTheta[s]->setAxisTitle(X_DIRECTION,"event position angle [radians]");
 		qExcessSpectra[s] = registerCoreHist("ExcessE","Excess high energy event spectrum",72,800,8000,s);
@@ -73,5 +74,104 @@ void HighEnergyExcessPlugin::makePlots() {
 		drawQuadSides(qExcessSpectra[EAST],qExcessSpectra[WEST],true,"Energy");
 		drawQuadSides(qExcessr2[EAST],qExcessr2[WEST],true,"Positions");
 		drawQuadSides(qExcessTheta[EAST],qExcessTheta[WEST],true,"Positions");
+		
+		std::vector<TH1*> hToPlot;
+		for(Side s = EAST; s <= WEST; ++s) {
+			TH1* hXS = myA->flipperSummedRate(qExcessSpectra[s], GV_OPEN);
+			hXS->GetYaxis()->SetTitleOffset(1.45);
+			hXS->Scale(1000000);
+			hXS->GetYaxis()->SetTitle("event rate [uHz/keV]");
+			hXS->SetTitle("Excess high energy beta events");
+			hXS->SetMinimum(0);
+			hXS->SetMaximum(30);
+			hXS->SetLineStyle(1+s);
+			hXS->SetLineColor(1);
+			hToPlot.push_back(hXS);
+		}
+		drawSimulHistos(hToPlot);
+		printCanvas("Energy/HighEnergyBetas");
 	}
 }
+
+void HighEnergyExcessPlugin::compareMCtoData(AnalyzerPlugin* AP) {
+	if(myA->depth > 0) return;
+	
+	// re-cast to correct type
+	HighEnergyExcessPlugin& dat = *(HighEnergyExcessPlugin*)AP;
+	
+	printf("Comparing data/MC high energy excess events...\n");
+	
+	std::vector<TH1*> hToPlot;
+	std::vector<TH1*> hToPlotR;
+	for(Side s = EAST; s <= WEST; ++s) {
+		TH1* hXS = myA->flipperSummedRate(dat.qExcessSpectra[s], GV_OPEN);
+		hXS->SetLineStyle(1+s);
+		hXS->GetYaxis()->SetTitleOffset(1.45);
+		hXS->GetXaxis()->SetRangeUser(800,5000);
+		hXS->Scale(1000000);
+		hXS->GetYaxis()->SetTitle("event rate [uHz/keV]");
+		hXS->SetTitle("Excess high energy beta events");
+		hXS->SetLineColor(1);
+		hXS->SetMinimum(-5);
+		hXS->SetMaximum(25);
+		hToPlot.push_back(hXS);
+		
+		TH1* hXSR = myA->flipperSummedRate(dat.qExcessr2[s], GV_OPEN);
+		hXSR->SetLineStyle(1+s);
+		hXSR->SetLineWidth(2);
+		hXSR->GetYaxis()->SetTitleOffset(1.45);
+		hXSR->Scale(1000000);
+		hXSR->GetYaxis()->SetTitle("event rate [uHz/mm^{2}]");
+		hXSR->SetTitle("Excess events radial distribution");
+		hXSR->SetLineColor(1);
+		hToPlotR.push_back(hXSR);
+
+	}
+	drawSimulHistos(hToPlot);
+	TH1* hXSim = myA->flipperSummedRate(qExcessSpectra[EAST], GV_OPEN);
+	hXSim->Scale(1000000);
+	hXSim->SetMarkerStyle(33);
+	hXSim->SetMarkerSize(0.75);
+	hXSim->Draw("P Same");
+	printCanvas("DataComparison/HighEnergyBetas");
+	drawSimulHistos(hToPlotR);
+	TH1* hXSimR = myA->flipperSummedRate(qExcessr2[EAST], GV_OPEN);
+	hXSimR->Scale(1000000);
+	hXSimR->SetMarkerStyle(33);
+	hXSimR->SetMarkerSize(1.25);
+	hXSimR->SetLineColor(0);
+	hXSimR->SetLineWidth(0);
+	hXSimR->Draw("P Same");
+	for(int r = 10; r <= 70; r += 10) drawVLine(r*r, myA->defaultCanvas, 1, 3);
+	printCanvas("DataComparison/HighEnergyRadial");
+}
+
+
+//-------------------------------------------------------------------------------------------------------------
+
+NGBGAnalyzer::NGBGAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
+OctetAnalyzer(pnt,nm,inflName) {
+	addPlugin(myHEE = new HighEnergyExcessPlugin(this));
+	addPlugin(myAsym = new AsymmetryPlugin(this));
+}
+
+//-------------------------------------------------------------//
+
+void NGBGSpectra(std::string datname) {
+	OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
+	G4toPMT g2p;
+	g2p.addFile(getEnvSafe("G4OUTDIR")+"/"+datname+"/analyzed_*.root");
+	g2p.setAFP(AFP_OFF);
+	g2p.weightAsym = false;
+	PMTCalibrator PCal(15668);
+	g2p.setCalibrator(PCal);
+	
+	NGBGAnalyzer AH(&OM,datname);
+	AH.loadSimData(g2p);
+	
+	AH.calculateResults();
+	AH.makePlots();
+	AH.write();
+	AH.setWriteRoot(true);
+}
+

@@ -141,7 +141,11 @@ class LinearFitter:
 		if self.M is None:
 			self.M = linalg.solve(self.XT_W_X,self.XT_W)
 		return self.M*self.Cov*self.M.transpose()
-
+	
+	# individual coefficient uncertainty, not chi^2 inflated
+	def coeffErr(self,i):
+		return sqrt(self.calcCoeffCov()[i,i])
+	
 	# display individual coefficient errors and correlations
 	def displayCoeffErrCorr(self):
 		ccov = self.calcCoeffCov()

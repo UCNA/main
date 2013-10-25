@@ -22,13 +22,15 @@ divSegments = [octSegments,hoSegments,ppSegments]
 unitNames = {0:"Octet",1:"Half Octet",2:"Pulse Pair",3:"Run"}
 
 scols = {"East":rgb.red,"West":rgb.blue}
+if "PUBLICATION_PLOTS" in os.environ:
+	scols = {"East":rgb.black,"West":rgb.black}
 afpSymbs = {"On":symbol.circle,"Off":symbol.triangle}
 afpLines = {"Off":style.linestyle.dashed,"On":style.linestyle.dotted}
 
 
 def addQuad(a,b):
 	return sqrt(a**2+b**2)
-	
+
 class asymmetryFit(KVMap):
 	def __init__(self,m=KVMap()):
 		self.dat = m.dat
@@ -63,29 +65,20 @@ class kurieFit(KVMap):
 		self.ep = self.endpoint
 		self.dep = self.dendpoint
 
-# runcal:		E0_BiMean = 2683.99	E0_BiRMS = 0	E0_PdWMean = 7.50563	E0_PdWRMS = 0.0631276	E0_PedMean = 179.157	E0_PedRMS = 0.652353	E0_Pulser0 = 2684.09
-#	E0_adc100 = 120.771	E0_deltaL = 3.21507	E0_eFinal = 730.466	E0_eOrig = 732.098	E0_gms = 0.999821	E0_gms0 = 0.999788	E0_nBiPts = 2	E0_nPedPts = 9	E0_res500 = 69.1879
-#	E0_sensNm = ADCE3Beta	E0_trig50 = 34.343	E1_BiMean = 2737.9	E1_BiRMS = 0	E1_PdWMean = 5.30983	E1_PdWRMS = 0.110084	E1_PedMean = 171.592	E1_PedRMS = 0.0865926
-#	E1_Pulser0 = 2742.63	E1_adc100 = 140.459	E1_deltaL = 3.41578	E1_eFinal = 731.8	E1_eOrig = 743.113	E1_gms = 1.00161	E1_gms0 = 0.99988	E1_nBiPts = 2	E1_nPedPts = 9
-#	E1_res500 = 72.8208	E1_sensNm = ADCE4Beta	E1_trig50 = 35.2397	E2_BiMean = 2757.49	E2_BiRMS = 0	E2_PdWMean = 5.7243	E2_PdWRMS = 0.0912741	E2_PedMean = 165.47
-#	E2_PedRMS = 0.0908623	E2_Pulser0 = 2772.27	E2_adc100 = 91.4981	E2_deltaL = 3.58021	E2_eFinal = 734.291	E2_eOrig = 731.888	E2_gms = 1.00532	E2_gms0 = 0.999961
-#	E2_nBiPts = 2	E2_nPedPts = 9	E2_res500 = 75.8902	E2_sensNm = ADCE1Beta	E2_trig50 = 18.3455	E3_BiMean = 2711.36	E3_BiRMS = 0	E3_PdWMean = 3.81645	E3_PdWRMS = 0.0366913
-#	E3_PedMean = 173.017	E3_PedRMS = 0.0392095	E3_Pulser0 = 2707.06	E3_adc100 = 109.459	E3_deltaL = 3.5573	E3_eFinal = 731.748	E3_eOrig = 738.725	E3_gms = 0.998086
-#	E3_gms0 = 0.999669	E3_nBiPts = 2	E3_nPedPts = 9	E3_res500 = 75.0101	E3_sensNm = ADCE2Beta	E3_trig50 = 22.7289	E4_eFinal = 500	E4_eOrig = 500	W0_BiMean = 2762.63
-#	W0_BiRMS = 0	W0_PdWMean = 12.1794	W0_PdWRMS = 0.0781325	W0_PedMean = 150.447	W0_PedRMS = 0.200236	W0_Pulser0 = 2774.13	W0_adc100 = 97.9986	W0_deltaL = 3.01243
-#	W0_eFinal = 727.749	W0_eOrig = 736.731	W0_gms = 1.00406	W0_gms0 = 0.999895	W0_nBiPts = 2	W0_nPedPts = 9	W0_res500 = 67.3539	W0_sensNm = ADCW1Beta	W0_trig50 = 45.0015
-#	W1_BiMean = 2561.68	W1_BiRMS = 0	W1_PdWMean = 9.78249	W1_PdWRMS = 0.0755246	W1_PedMean = 147.448	W1_PedRMS = 0.112109	W1_Pulser0 = 2582.8	W1_adc100 = 107.071
-#	W1_deltaL = 3.08584	W1_eFinal = 727.788	W1_eOrig = 732.944	W1_gms = 1.00845	W1_gms0 = 1.00021	W1_nBiPts = 2	W1_nPedPts = 9	W1_res500 = 64.4555	W1_sensNm = ADCW2Beta
-#	W1_trig50 = 48.8915	W2_BiMean = 2550.74	W2_BiRMS = 0	W2_PdWMean = 11.6685	W2_PdWRMS = 0.0730248	W2_PedMean = 187.027	W2_PedRMS = 0.113917	W2_Pulser0 = 2511.17
-#	W2_adc100 = 99.9512	W2_deltaL = 2.87462	W2_eFinal = 727.862	W2_eOrig = 727.376	W2_gms = 0.984725	W2_gms0 = 1.00024	W2_nBiPts = 2	W2_nPedPts = 9	W2_res500 = 66.3103
-#	W2_sensNm = ADCW3Beta	W2_trig50 = 45.9391	W3_BiMean = 2620.88	W3_BiRMS = 0	W3_PdWMean = 11.7004	W3_PdWRMS = 0.154432	W3_PedMean = 171.042	W3_PedRMS = 0.0991155
-#	W3_Pulser0 = 2636.3	W3_adc100 = 99.9507	W3_deltaL = 3.09846	W3_eFinal = 726.825	W3_eOrig = 736.23	W3_gms = 1.00587	W3_gms0 = 0.999987	W3_nBiPts = 2	W3_nPedPts = 9
-#	W3_res500 = 65.6138	W3_sensNm = ADCW4Beta	W3_trig50 = 47.0207	W4_eFinal = 500	W4_eOrig = 500
-#	anodegain_E = 0.00881931	anodegain_W = 0.00791	cnorm_Ex = 0.85,0.893018,0.938962,0.99554,1.05521,1.09601,1.10523,1.12384,1.08915,1.05008,1.02788,0.994964,0.903721,0.864318,0.9,0.85
-#	cnorm_Ey = 0.85,0.960174,0.980948,0.967438,1.01027,1.01605,1.04073,1.05651,1.03195,1.04185,1.01058,0.988066,0.973694,0.979575,0.942173,0.85
-#	cnorm_Wx = 0.85,0.9,0.815271,0.895268,0.932465,0.984098,1.04789,1.06714,1.05726,1.08621,1.08433,1.03969,1.05007,1.05164,1.08735,0.85
-#	cnorm_Wy = 0.85,1.08801,1.03268,1.01274,1.01399,0.997512,1.02515,1.03327,1.00298,1.01529,1.00029,1.0061,0.960519,0.914793,0.896689,0.85
-#	run = 14077	tend = 1286504064	tstart = 1286503424
+class muonInfo(KVMap):
+	def __init__(self,m):
+		self.dat = m.dat
+		self.loadFloats(["mu_rate","d_mu_rate","ecut_mu_rate","d_ecut_mu_rate","ecut_eMin","ecut_eMax","mpv","d_mpv","sigma","d_sigma","height","d_height"])
+		self.loadStrings(["side","afp","gv"])
+
+class betarateInfo(KVMap):
+	def __init__(self,m):
+		self.dat = m.dat
+		self.loadFloats(["rate","d_rate","ecut_rate","d_ecut_rate","ecut_eMin","ecut_eMax"])
+		self.loadStrings(["side","afp","gv"])
+		self.loadInts(["type"])
+
+
 
 class runCal(KVMap):
 	def __init__(self,m):
@@ -104,12 +97,6 @@ class runCal(KVMap):
 
 	def midTime(self):
 		return 0.5*(self.tend+self.tstart)
-
-class bgSubtr(KVMap):
-	def __init__(self,m):
-		self.dat = m.dat
-		self.loadFloats(["nBG","d_nBG","xs","d_xs","eMin","eMax"])
-		self.loadStrings(["side","afp","name"])
 
 class asymData:
 	"""Asymmetry data extracted from a group of runs"""
@@ -159,7 +146,8 @@ class AsymmetryFile(QFile,asymData):
 		self.asyms = [asymmetryFit(m) for m in self.dat.get("asymmetry",[])]
 		self.kuries = [kurieFit(m) for m in self.dat.get("kurieFit",[])]
 		self.rates = [eventRate(m) for m in self.dat.get("rate",[])]
-		self.bgs = dict([((b.side,b.afp,b.type),b) for b in [bgSubtr(m) for m in self.dat.get("bg_subtr_fit",[])]])
+		self.betarates = dict([((m.side,m.afp,m.gv,m.type),m) for m in [betarateInfo(m) for m in self.dat.get("betarate_info",[])]])
+		self.muons = dict([((m.side,m.afp,m.gv),m) for m in [muonInfo(m) for m in self.dat.get("muons_info",[])]])
 		for m in self.dat.get("Octet",[]):
 			for k in m.dat:
 				if k in octSegments[0]:
@@ -195,7 +183,15 @@ class AsymmetryFile(QFile,asymData):
 				return r
 		print "Missing rate for",hname,fg
 		return None
-	
+		
+	def totalBetaRate(self,side,afp,gv):
+		sx = serr2 = 0
+		for tp in range(4):
+			br = self.betarates[(side,afp,gv,tp)]
+			sx += br.ecut_rate
+			serr2 += br.d_ecut_rate**2
+		return [sx,sqrt(serr2)]
+			
 	def getGMSTweak(self,side,tube):
 		tweaks = [self.runcals[r].getGMSTweak(side,tube) for r in self.runcals]
 		return sum(tweaks)/len(tweaks)
@@ -259,22 +255,20 @@ def plot_octet_asymmetries(basedir,depth=0):
 				if rt:
 					ndat[-1][-1] += rt.counts
 				
-				rt = af.getRate(s,afp,'0',"hEnergy_Type_0_%s_%s"%(s,afp))
+				rt = af.totalBetaRate(s,afp,"Closed")
 				if rt:
-					if not 0.10 < rt.rate < 0.30:
-						print "*** Funny BG rate",rt.rate,rt.side,rt.afp,"in",af.fname
-					if not 0.001 < rt.dRate():
-						print "**** Funny dRate",rt.dRate(),rt.side,rt.afp,"in",af.fname
-						continue
-					bgRateDat[s][afp].append([n,rt.rate,rt.dRate()])
+					if not 0.05 < rt[0] < 0.10:
+						print "*** Funny BG rate",rt,s,afp,"in",af.fname
+					bgRateDat[s][afp].append([n,1000*rt[0],1000*rt[1]])
 				else:
 					print "*** Can't find rate for",n,s,afp
 				
-				murt = af.getRate(s,afp,'1',"hMuonNoSub_%s_%s"%(s,afp))
+				murt = af.muons.get((s,afp,"Closed"),None)
 				if murt:
-					if not 0.85 < murt.rate < 1.15:
-						print "*** Funny muons",murt.rate,murt.side,murt.afp,"in",af.fname
-					muRateDat[s][afp].append([n,murt.rate,murt.dRate()])
+					if not 0.05 < murt.ecut_mu_rate < 0.15:
+						print "*** Funny muons",murt.ecut_mu_rate,murt.side,murt.afp,"in",af.fname
+					muRateDat[s][afp].append([n,murt.ecut_mu_rate*1000,murt.d_ecut_mu_rate*1000])
+					#muRateDat[s][afp].append([n,murt.mu_rate*1000,murt.d_mu_rate*1000])
 				else:
 					print "*** Can't find muon rate for",n,s,afp
 
@@ -299,16 +293,16 @@ def plot_octet_asymmetries(basedir,depth=0):
 						 key = None)
 	setTexrunner(gCount)
 			
-	gBgRate=graph.graphxy(width=25,height=8,
+	gBgRate=graph.graphxy(width=30,height=10,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
-				y=graph.axis.lin(title="Background Rate [Hz]",min=0,max=0.35),
-				key = graph.key.key(pos="bl"))
+				y=graph.axis.lin(title="Background Rate [mHz]",min=0,max=150),
+				key = graph.key.key(pos="bc",columns=2))
 	setTexrunner(gBgRate)
 
-	gMuRate=graph.graphxy(width=25,height=8,
+	gMuRate=graph.graphxy(width=30,height=10,
 						  x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
-						  y=graph.axis.lin(title="Muon Rate [Hz]"),
-						  key = graph.key.key(pos="bl"))
+						  y=graph.axis.lin(title="Muon Rate [mHz]",min=0,max=150),
+						  key = graph.key.key(pos="bc",columns=2))
 	setTexrunner(gMuRate)
 		
 	gdEp=graph.graphxy(width=25,height=8,
@@ -373,7 +367,9 @@ def plot_octet_asymmetries(basedir,depth=0):
 	##############
 	# endpoint, background, muons plots
 	##############
-	sideCols = {'E':rgb.red,'W':rgb.blue,'C':rgb(0.,0.7,0.)}
+	#sideCols = {'E':rgb.red,'W':rgb.blue,'C':rgb(0.,0.7,0.)}
+	sideCols = {'E':[],'W':[],'C':[rgb(0.,0.7,0.)]}
+	sideFills = {'E':[],'W':[deco.filled]}
 	for s in ['E','C','W']:
 		
 		LF.fit([kd for kd in kepDelta[s] if kd[2]>0],cols=(0,1,2),errorbarWeights=True)
@@ -388,38 +384,40 @@ def plot_octet_asymmetries(basedir,depth=0):
 					
 		gdEp.plot(graph.data.points(kepDelta[s],x=1,y=2,dy=3,
 					title="%s: $\\mu=%.2f \pm %.3f$"%(sname,LF.coeffs[0],err)),
-						[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[sideCols[s],]),
-						graph.style.errorbar(errorbarattrs=[sideCols[s],])])
-		gdEp.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line([sideCols[s],])])
+						[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=sideCols[s]),
+						graph.style.errorbar(errorbarattrs=sideCols[s])])
+		gdEp.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line(sideCols[s])])
 		
 		if s in bgRateDat:
 			for afp in bgRateDat[s]:
 				if len(bgRateDat[s][afp])<2:
 					continue;
 				LF.fit(bgRateDat[s][afp],cols=(0,1,2),errorbarWeights=True)
-				chi2 = LF.chisquared()
-				print chi2
-				ndf = len(bgRateDat[s][afp])-len(LF.coeffs)
-				gtitle = s+" Side, AFP=%s: $%.4f$Hz $\\chi^2/\\nu = %.1f/%i$"%(afp,LF.coeffs[0],chi2,ndf)
-				if stats:
-					gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
+				gtitle = s+" "+afp+": $%.1f \\pm %.1f$ mHz, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.coeffErr(0),LF.chisquared(),LF.nu())
+				#if stats:
+				#	gtitle += " $(p=%.2f)$"%stats.chisqprob(LF.chisquared(),LF.nu())
 				gBgRate.plot(graph.data.points(bgRateDat[s][afp],x=1,y=2,dy=3,title=gtitle),
-							[graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=[sideCols[s],]),
-							graph.style.errorbar(errorbarattrs=[sideCols[s],])])
-				gBgRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line([sideCols[s],])])
+							[graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=sideCols[s]+sideFills[s]),
+							graph.style.errorbar(errorbarattrs=sideCols[s])])
+				gBgRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line(sideCols[s])])
 
 		if s in muRateDat:
 			for afp in muRateDat[s]:
 				if len(muRateDat[s][afp])<2:
-					continue;
-				gMuRate.plot(graph.data.points(muRateDat[s][afp],x=1,y=2,dy=3,title=None),
-							 [graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=[sideCols[s],]),
-							  graph.style.errorbar(errorbarattrs=[sideCols[s],])])
-								 #gMuRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line([sideCols[s],])])
-					 
+					continue
+				
+				LF.fit(muRateDat[s][afp],cols=(0,1,2),errorbarWeights=True)
+				gtitle = s+" "+afp+": $%.1f \\pm %.1f$ mHz, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.coeffErr(0),LF.chisquared(),LF.nu())
+	
+				gMuRate.plot(graph.data.points(muRateDat[s][afp],x=1,y=2,dy=3,title=gtitle),
+							 [graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=sideCols[s]+sideFills[s]),
+							  graph.style.errorbar(errorbarattrs=sideCols[s])])
+				
+				gMuRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line(sideCols[s])])
+				
 	gdEp.writetofile(basedir+"/Octet_dEP_%i.pdf"%depth)
 	gBgRate.writetofile(basedir+"/Octet_BgRate_%i.pdf"%depth)
-	#gMuRate.writetofile(basedir+"/Octet_MuRate_%i.pdf"%depth)
+	gMuRate.writetofile(basedir+"/Octet_MuRate_%i.pdf"%depth)
 	
 			
 
@@ -646,7 +644,7 @@ if __name__=="__main__":
 		exit(0)
 	
 	for i in range(3):				
-		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",i)
-		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim0823/",i)
+		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",i)
+		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim0823/",i)
 		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
 			

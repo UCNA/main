@@ -18,6 +18,10 @@ void OctetSimuCloneManager::combineOcts(RunAccumulator& RA) {
 	RA.mergeOcts(Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))));
 }
 
+unsigned int OctetSimuCloneManager::recalcAllOctets(RunAccumulator& RA, bool doPlots) {
+	return recalcOctets(RA, Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))), doPlots);
+}
+
 Sim2PMT* OctetSimuCloneManager::getSimdata(unsigned int octn) {
 	G4toPMT* simData = new G4toPMT();
 	for(unsigned int i=0; i<stride; i++)

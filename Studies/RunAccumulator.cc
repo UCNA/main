@@ -374,6 +374,12 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 	PDS.writeCalInfo(qOut,"runcal");
 }
 
+void RunAccumulator::loadTotalTime(const RunAccumulator& RA) {
+	for(AFPState afp = AFP_OFF; afp<=AFP_OTHER; ++afp)
+		for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv)
+			totalTime[afp][gv] = RA.totalTime[afp][gv];
+}
+
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
 	isSimulated = true;
 	setCurrentState(simData.getAFP(),GV_OPEN);
@@ -647,6 +653,33 @@ unsigned int processPulsePair(RunAccumulator& RA, const Octet& PP) {
 	return nproc;
 }
 
+unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bool doPlots) {
+	unsigned int nproc = 0;
+	
+	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
+		
+		printf("Reprocessing octet '%s' at division %i...\n",octit->octName().c_str(),octit->divlevel);
+		if(!octit->getNRuns()) {
+			printf("\tThat was too easy (octet contained zero runs).\n");
+			continue;
+		}
+		RA.qOut.insert("Octet",octit->toStringmap());
+		
+		std::string inflname = RA.basePath+"/"+octit->octName()+"/"+octit->octName();
+		if(SegmentSaver::inflExists(inflname)) {
+			RunAccumulator* subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),inflname);
+			subRA->depth = octit->divlevel;
+			nproc += recalcOctets(*subRA,octit->getSubdivs(octit->divlevel+1,false), doPlots);
+			RA.addSegment(*subRA);
+			delete subRA;
+		}
+	}
+	
+	RA.makeOutput(doPlots);
+	RA.setWriteRoot(false);
+	return nproc;
+}
+
 unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, double replaceIfOlder, bool doPlots, unsigned int oMin, unsigned int oMax) {
 	
 	unsigned int nproc = 0;
@@ -683,7 +716,7 @@ unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, d
 		}
 	}
 	
-	RA.makeOutput(doPlots);	
+	RA.makeOutput(doPlots);
 	return nproc;
 }
 

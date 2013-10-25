@@ -617,27 +617,6 @@ void lowStatsTest() {
 
 //-------------------------------------------------------------//
 
-void NGBGSpectra(std::string datname) {
-	OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
-	G4toPMT g2p;
-	g2p.addFile(getEnvSafe("G4WORKDIR")+"/output/"+datname+"/analyzed_*.root");
-	g2p.setAFP(AFP_OFF);
-	g2p.weightAsym = false;
-	PMTCalibrator PCal(15668);
-	g2p.setCalibrator(PCal);
-	
-	
-	SimBetaDecayAnalyzer AH(&OM,datname);
-	AH.loadSimData(g2p);
-	
-	AH.calculateResults();
-	AH.makePlots();
-	AH.write();
-	AH.setWriteRoot(true);
-}
-
-//-------------------------------------------------------------//
-
 void separate23(std::string simName) {
 	OutputManager OM("23Separation",getEnvSafe("UCNA_ANA_PLOTS")+"/test/23Separation_"+simName+"/");
 	RunAccumulator RA(&OM, "RunAccumulator", getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+simName+"/OctetAsym_Offic_"+simName);

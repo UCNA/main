@@ -144,6 +144,8 @@ public:
 	void mergeSims(const std::string& basedata, RunAccumulator* origRA=NULL);
 	/// merge individual analyzed octets
 	void mergeOcts(const std::vector<Octet>& Octs);
+	/// load total time from another RunAccumulator (for simulations)
+	void loadTotalTime(const RunAccumulator& RA);
 	
 	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
 	
@@ -197,5 +199,7 @@ unsigned int processPulsePair(RunAccumulator& RA, const Octet& PP);
 /// process a set of octets; return number of processed pulse-pairs
 unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& O, double replaceIfOlder = 0,
 						   bool doPlots = true, unsigned int oMin = 0, unsigned int oMax = 10000);
+/// re-process a set of octets using previously booked histograms; return number of processed pulse-pairs
+unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bool doPlots);
 
 #endif

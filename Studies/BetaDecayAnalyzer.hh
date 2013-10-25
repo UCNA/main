@@ -20,9 +20,9 @@ public:
 	MuonPlugin* myMuons;			//< muons plugin
 	PositionsPlugin* myPos;			//< positions plugin
 	AnodeGainPlugin* myAG;			//< wirechamber anode gain plugin
-	//CathodeGainPlugin* myCG;		//< wirechamber cathode gain plugin
+	HighEnergyExcessPlugin* myHEE;	//< high energy excess events, indicating neutron generated backgrounds
+	
 	AsymmetryPlugin* myAsym;		//< asymmetry plugin
-	//HighEnergyExcessPlugin* myHEE;	//< high energy excess events
 };
 
 /// analyzer for beta decay simulation

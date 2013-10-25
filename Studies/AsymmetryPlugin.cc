@@ -1,8 +1,8 @@
 #include "AsymmetryPlugin.hh"
-#include "HighEnergyExcessPlugin.hh"
 #include "BetaSpectrum.hh"
 #include "KurieFitter.hh"
 #include "GraphicsUtils.hh"
+#include "HighEnergyExcessPlugin.hh"
 #include <TH2F.h>
 
 /// nominal asymmetry for fit
@@ -18,10 +18,12 @@ OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500), hAsym(NU
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			if(t==TYPE_II_EVENT || t==TYPE_III_EVENT) {
+				myA->ignoreMissingHistos = true;
 				q23ProbCut[s][t] = registerCoreHist("h23ProbCut_Tp_"+itos(t),
 													"Type "+itos(t)+" Events Energy",
 													nEnergyBins, 0, energyMax, s);
 				q23ProbCut[s][t]->setAxisTitle(X_DIRECTION,"Energy [keV]");
+				myA->ignoreMissingHistos = false;
 			}
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
 				qEnergySpectra[s][p][t] = registerCoreHist("hEnergy_"+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
@@ -172,6 +174,35 @@ void AsymmetryPlugin::calcSuperCombos() {
 }
 
 void AsymmetryPlugin::calculateResults() {
+
+	// event rates in energy cut
+	double emin = 220;
+	double emax = 670;
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
+			for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
+				for(EventType tp = TYPE_0_EVENT; tp <= TYPE_IV_EVENT; ++tp) {
+					Stringmap m;
+					m.insert("side",sideSubst("%c",s));
+					m.insert("afp",afpWords(afp));
+					m.insert("gv",gvWords(gv));
+					m.insert("type",itos(tp));
+					
+					TH1* h = qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[gv];
+					float tm = myA->totalTime[afp][gv][s];
+					Double_t ierr;
+					m.insert("ecut_eMin",emin);
+					m.insert("ecut_eMax",emax);
+					m.insert("rate",h->IntegralAndError(1,h->GetNbinsX(),ierr)/tm);
+					m.insert("d_rate",ierr/tm);
+					m.insert("ecut_rate",h->IntegralAndError(h->FindBin(emin),h->FindBin(emax),ierr)/tm);
+					m.insert("d_ecut_rate",ierr/tm);
+					
+					myA->qOut.insert("betarate_info",m);
+				}
+			}
+		}
+	}
 	
 	calcSuperCombos();
 	

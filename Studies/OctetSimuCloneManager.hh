@@ -22,6 +22,9 @@ public:
 	/// combine simulated octets
 	void combineSims(RunAccumulator& SimRA);
 	
+	/// run re-calculation on all octets
+	unsigned int recalcAllOctets(RunAccumulator& RA, bool doPlots);
+	
 	/// load simulation data for octet
 	virtual Sim2PMT* getSimdata(unsigned int octn);
 	

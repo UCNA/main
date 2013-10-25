@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 		double l = eGamma[i];
 		G4toPMT G2P;
 		G2P.setCalibrator(PCal);
-		G2P.addFile(getEnvSafe("G4WORKDIR")+"/output/SourceHolderGammas_eGunRandMomentum_"+itos(l)+".0keV/analyzed_*.root");
+		G2P.addFile(getEnvSafe("G4OUTDIR")+"/SourceHolderGammas_eGunRandMomentum_"+itos(l)+".0keV/analyzed_*.root");
 		hSpec.push_back(OM.registeredTH1F(std::string("hSpec_")+itos(l),"EventSpectrum",50,0,eMax));
 		hSpec.back()->SetTitle("Source Foil Comptons");
 		hSpec.back()->GetXaxis()->SetTitle("Energy [keV]");

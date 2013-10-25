@@ -69,9 +69,6 @@ void compareXenonSpectra();
 /// Decompose xenon spectrum for given run number
 void decomposeXenon(RunNum rn, bool includeFast = false);
 
-/// process simulation for neutron generated background
-void NGBGSpectra(std::string simName);
-
 /// determine Type II/III anode cuts
 void separate23(std::string datname);
 

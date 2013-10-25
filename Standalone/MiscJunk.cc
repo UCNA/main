@@ -107,21 +107,36 @@ int main(int argc, char *argv[]) {
 	
 	if(rname=="combo_ngbg_spectrum") {
 		OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
-		SimBetaDecayAnalyzer AH(&OM,"Combined");
+		NGBGAnalyzer AH(&OM,"Combined");
 		
-		SimBetaDecayAnalyzer AH1(&OM,"ScintFace_nCaptH",OM.basePath+"/ScintFace_nCaptH/ScintFace_nCaptH");
+		NGBGAnalyzer AH1(&OM,"ScintFace_nCaptH",OM.basePath+"/ScintFace_nCaptH/ScintFace_nCaptH");
 		AH1.scaleData(0.126);
-		SimBetaDecayAnalyzer AH2(&OM,"DetAl_nCaptAl",OM.basePath+"/DetAl_nCaptAl/DetAl_nCaptAl");
+		NGBGAnalyzer AH2(&OM,"DetAl_nCaptAl",OM.basePath+"/DetAl_nCaptAl/DetAl_nCaptAl");
 		AH2.scaleData(0.073);
-		SimBetaDecayAnalyzer AH3(&OM,"DetAl_nCaptAlGamma",OM.basePath+"/DetAl_nCaptAlGamma/DetAl_nCaptAlGamma");
+		NGBGAnalyzer AH3(&OM,"DetAl_nCaptAlGamma",OM.basePath+"/DetAl_nCaptAlGamma/DetAl_nCaptAlGamma");
 		AH3.scaleData(0.594);
 		
 		AH.addSegment(AH1);
 		AH.addSegment(AH2);
 		AH.addSegment(AH3);
 		
+		NGBGAnalyzer AHdat(&OM,"NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
+		AH.loadTotalTime(AHdat);
+		AHdat.calculateResults();
+		
 		AH.calculateResults();
 		AH.makePlots();
+		
+		AH.compareMCtoData(AHdat);
+		
+		TH1* h = AH.flipperSummedRate(AH.myAsym->qTotalSpectrum[EAST],GV_OPEN);
+		h->Scale(1000000);
+		h->SetTitle("MC neutron generated spectrum contribution");
+		h->GetYaxis()->SetTitleOffset(1.25);
+		h->GetYaxis()->SetTitle("event rate [uHz/keV]");
+		h->Draw();
+		AH.printCanvas("SuperSum");
+		
 		AH.write();
 		AH.setWriteRoot(true);
 	}
