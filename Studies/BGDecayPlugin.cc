@@ -15,5 +15,5 @@ void BGDecayPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	Side s = PDS.fSide;
 	if(!(s==EAST || s==WEST)) return;
 	if(PDS.fPID == PID_BETA && PDS.fType <= TYPE_III_EVENT && PDS.passesPositionCut(s))
-		((TH2F*)qBGDecay[s]->fillPoint)->Fill(PDS.runClock[s],PDS.getEtrue(),weight);
+		((TH2F*)qBGDecay[s]->fillPoint)->Fill(PDS.runClock[s],PDS.getErecon(),weight);
 }

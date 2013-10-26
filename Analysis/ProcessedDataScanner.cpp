@@ -61,9 +61,9 @@ bool ProcessedDataScanner::passesPositionCut(Side s) {
 	return radius(s)<fiducialRadius;
 }
 
-float ProcessedDataScanner::getEtrue() const {
+float ProcessedDataScanner::getErecon() const {
 	assert(ActiveCal);
-	return ActiveCal->Etrue(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
+	return ActiveCal->Erecon(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
 }
 
 float ProcessedDataScanner::radius2(Side s) const {

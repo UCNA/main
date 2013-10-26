@@ -54,7 +54,7 @@ void dumpPosmap(QFile& qOut, PositioningCorrector& PCor, PMTCalibrator* PCal);
 /// dump position map data to a file, lookup by pnum (>5000 for a run)
 void dumpPosmap(std::string basepath, unsigned int pnum);
 
-/// extract Evis<->Etrue info from contiunuum spectrum simulation
+/// extract Evis<->Erecon info from contiunuum spectrum simulation
 void SimSpectrumInfo(Sim2PMT& S, OutputManager& OM);
 
 /// generate a file with spectrum correction factors

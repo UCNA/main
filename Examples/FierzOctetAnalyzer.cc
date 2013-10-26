@@ -21,15 +21,15 @@ void FierzAnalyzerPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight
 	Side s = PDS.fSide;
 	if(!(s==EAST || s==WEST)) return;
 	if(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA) {
-		// fill events spectrum with Etrue on both sides
-		qFullEnergySpectrum[s]->fillPoint->Fill(PDS.getEtrue(), weight);
+		// fill events spectrum with Erecon on both sides
+		qFullEnergySpectrum[s]->fillPoint->Fill(PDS.getErecon(), weight);
 		// trigger threshold extraction histograms
 		if(currentGV==GV_OPEN) {
 			if(PGen.getCalibrator() != PDS.ActiveCal) PGen.setCalibrator(PDS.ActiveCal);
 			PGen.setSide(s);
 			PGen.setPosition(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center);
 			double evis = PGen.generate(fierz_rnd_src.Uniform(350)).energy.x;
-			double etrue = PDS.ActiveCal->Etrue(s,TYPE_0_EVENT,s==EAST?evis:0,s==WEST?evis:0);
+			double etrue = PDS.ActiveCal->Erecon(s,TYPE_0_EVENT,s==EAST?evis:0,s==WEST?evis:0);
 			pTriggerThreshold[s][0]->h[GV_OPEN]->Fill(etrue);
 			pTriggerThreshold[s][1]->h[GV_OPEN]->Fill(etrue,PGen.triggered());
 		}

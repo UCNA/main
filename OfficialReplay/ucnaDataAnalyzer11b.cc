@@ -297,7 +297,7 @@ void ucnaDataAnalyzer11b::classifyEventType() {
 
 void ucnaDataAnalyzer11b::reconstructTrueEnergy() {
 	if((fSide==EAST || fSide==WEST) && fType <= TYPE_III_EVENT)
-		fEtrue = PCal.Etrue(fSide,fType,sevt[EAST].energy.x,sevt[WEST].energy.x);
+		fEtrue = PCal.Erecon(fSide,fType,sevt[EAST].energy.x,sevt[WEST].energy.x);
 	else
 		fEtrue = sevt[EAST].energy.x + sevt[WEST].energy.x;
 }

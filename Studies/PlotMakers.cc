@@ -529,7 +529,7 @@ void decomposeXenon(RunNum rn, bool includeFast) {
 	while(POA.nextPoint()) {
 		Side s = POA.fSide;
 		if(POA.fPID == PID_BETA && POA.fType <= TYPE_III_EVENT && (s==EAST || s==WEST) && POA.radius(s)<fidrad)
-			hSpec->Fill(POA.getEtrue());
+			hSpec->Fill(POA.getErecon());
 	}
 	
 	SectorCutter SC(5,fidrad);
@@ -551,7 +551,7 @@ void decomposeXenon(RunNum rn, bool includeFast) {
 			g2p.nextPoint();
 			Side s = g2p.fSide;
 			if(g2p.fPID == PID_BETA && g2p.fType <= TYPE_III_EVENT && (s==EAST || s==WEST) && g2p.radius(s)<50.)
-				hSim->Fill(g2p.getEtrue());
+				hSim->Fill(g2p.getErecon());
 		}
 		hIsot.push_back((TH1F*)hSim->Clone());
 		LHC.addTerm(hSim);

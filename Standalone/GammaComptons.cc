@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 			Side s = G2P.fSide;
 			hPos.back()->Fill(G2P.wires[s][X_DIRECTION].center,G2P.wires[s][Y_DIRECTION].center);
 			if(G2P.radius(s)<7.0) continue;
-			hSpec.back()->Fill(G2P.getEtrue());
+			hSpec.back()->Fill(G2P.getErecon());
 		}
 	}
 	

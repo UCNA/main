@@ -48,11 +48,11 @@ void HighEnergyExcessPlugin::fillCoreHists(ProcessedDataScanner& PDS, double wei
 	Side s = PDS.fSide;
 	if(!(s==EAST || s==WEST)) return;
 	if(PDS.fPID == PID_SINGLE && PDS.fType == TYPE_IV_EVENT)
-		qExcessGamma[s]->fillPoint->Fill(PDS.getEtrue(),weight);
+		qExcessGamma[s]->fillPoint->Fill(PDS.getErecon(),weight);
 	if(PDS.fPID != PID_BETA) return;
 	if(PDS.fType <= TYPE_I_EVENT)
-		qExcessSpectra[s]->fillPoint->Fill(PDS.getEtrue(),weight);
-	if(PDS.fType <= TYPE_I_EVENT && PDS.getEtrue()>1000) {
+		qExcessSpectra[s]->fillPoint->Fill(PDS.getErecon(),weight);
+	if(PDS.fType <= TYPE_I_EVENT && PDS.getErecon()>1000) {
 		qExcessr2[s]->fillPoint->Fill(PDS.radius2(s),weight);
 		qExcessTheta[s]->fillPoint->Fill(atan2(PDS.wires[s][Y_DIRECTION].center,PDS.wires[s][X_DIRECTION].center),weight);
 	}

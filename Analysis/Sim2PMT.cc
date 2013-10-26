@@ -177,9 +177,9 @@ void Sim2PMT::classifyEvent() {
 	if(fProbIII>0.5) fType=TYPE_III_EVENT;
 }
 
-float Sim2PMT::getEtrue() const {
+float Sim2PMT::getErecon() const {
 	if(fSide>WEST) return 0;
-	return PGen[fSide].getCalibrator()->Etrue(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
+	return PGen[fSide].getCalibrator()->Erecon(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
 }
 
 //-------------------------------------------

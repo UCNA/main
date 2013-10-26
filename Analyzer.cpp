@@ -248,7 +248,7 @@ void mi_makeSimSpectrum(std::deque<std::string>&, std::stack<std::string>& stack
 	G2P.startScan(false);
 	while(G2P.nextPoint()) {
 		if(G2P.fType >= TYPE_IV_EVENT) continue;
-		hSpec->Fill(G2P.getEtrue());
+		hSpec->Fill(G2P.getErecon());
 	}
 	
 	double nOrigEvts = 3e6;

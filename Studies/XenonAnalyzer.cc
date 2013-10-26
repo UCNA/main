@@ -72,7 +72,7 @@ void XenonSpectrumPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight
 	Side s = PDS.fSide;
 	if(!(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)) return;
 	if(PDS.radius2(s) < 45*45)
-		energySpectrum->h[currentGV]->Fill(PDS.getEtrue(),weight);
+		energySpectrum->h[currentGV]->Fill(PDS.getErecon(),weight);
 	unsigned int m = sects.sector(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center);
 	if(m>=sects.nSectors()) return;
 	for(unsigned int t=0; t<nBetaTubes; t++) {

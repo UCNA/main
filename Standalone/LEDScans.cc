@@ -734,7 +734,7 @@ void spectrumGenTest() {
 			EventType tp = G2P.fType;
 			if(tp>=TYPE_IV_EVENT || !G2P.passesPositionCut(s) || G2P.fSide != s)
 				continue;
-			hSpec[G2P.fSide]->Fill(G2P.getEtrue(),G2P.physicsWeight);
+			hSpec[G2P.fSide]->Fill(G2P.getErecon(),G2P.physicsWeight);
 		}
 		if(G2P.getCurrentEvent()>=nToSim)
 			break;

@@ -40,13 +40,13 @@ void AsymmetryPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	Side s = PDS.fSide;
 	if(!(s==EAST || s==WEST)) return;
 	if(PDS.fPID == PID_SINGLE && PDS.fType == TYPE_IV_EVENT)
-		qEnergySpectra[s][nBetaTubes][TYPE_IV_EVENT]->fillPoint->Fill(PDS.getEtrue(),weight);
+		qEnergySpectra[s][nBetaTubes][TYPE_IV_EVENT]->fillPoint->Fill(PDS.getErecon(),weight);
 	if(PDS.fPID != PID_BETA) return;
 	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT) {
-		qEnergySpectra[s][nBetaTubes][PDS.fType]->fillPoint->Fill(PDS.getEtrue(),weight);
+		qEnergySpectra[s][nBetaTubes][PDS.fType]->fillPoint->Fill(PDS.getErecon(),weight);
 		if(PDS.fType >= TYPE_II_EVENT) {
-			q23ProbCut[s][TYPE_II_EVENT]->fillPoint->Fill(PDS.getEtrue(),weight*(1.0-PDS.fProbIII));
-			q23ProbCut[s][TYPE_III_EVENT]->fillPoint->Fill(PDS.getEtrue(),weight*PDS.fProbIII);
+			q23ProbCut[s][TYPE_II_EVENT]->fillPoint->Fill(PDS.getErecon(),weight*(1.0-PDS.fProbIII));
+			q23ProbCut[s][TYPE_III_EVENT]->fillPoint->Fill(PDS.getErecon(),weight*PDS.fProbIII);
 		}
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			qEnergySpectra[s][t][PDS.fType]->fillPoint->Fill(PDS.scints[s].tuben[t].x,weight);

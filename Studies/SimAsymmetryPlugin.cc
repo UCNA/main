@@ -78,12 +78,12 @@ void SimAsymmetryPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 	if(S2P.fPID != PID_BETA) return;
 	if(S2P.passesPositionCut(s) && S2P.fType <= TYPE_III_EVENT) {
 		// NOTE: these profiles filled WITHOUT weight to capture isotropic acceptance
-		((TProfile*)(qBCT[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getEtrue(),beta(S2P.ePrim)*S2P.costheta);
-		((TProfile*)(qBeta[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getEtrue(),beta(S2P.ePrim));
-		((TProfile*)(qCosth[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getEtrue(),S2P.costheta);
-		((TProfile*)(qAsymAcc[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getEtrue(),correctedAsymmetry(S2P.ePrim,S2P.costheta));
+		((TProfile*)(qBCT[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getErecon(),beta(S2P.ePrim)*S2P.costheta);
+		((TProfile*)(qBeta[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getErecon(),beta(S2P.ePrim));
+		((TProfile*)(qCosth[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getErecon(),S2P.costheta);
+		((TProfile*)(qAsymAcc[S2P.primSide][S2P.fType]->fillPoint))->Fill(S2P.getErecon(),correctedAsymmetry(S2P.ePrim,S2P.costheta));
 		if( (S2P.fType == TYPE_II_EVENT?otherSide(s):s) != S2P.primSide)
-			qWrongSide[s][S2P.fType]->fillPoint->Fill(S2P.getEtrue(),weight);
+			qWrongSide[s][S2P.fType]->fillPoint->Fill(S2P.getErecon(),weight);
 	}
 }
 
@@ -156,7 +156,7 @@ std::vector<TH1*> SimAsymmetryPlugin::calculateCorrectionsOld(AsymmetryPlugin& A
 			for(AFPState a = AFP_OFF; a<=AFP_ON; ++a) {
 				TH1* hMisID = qMisCorr[s]->fgbg[a]->h[GV_OPEN];
 				TH1* hRightID = qRightID[s]->fgbg[a]->h[GV_OPEN];
-				hRightID->Add(qWrongSide[s][t]->fgbg[a]->h[GV_OPEN],-1.0); // remove counts coming from wrong side
+				hRightID->Add(qWrongSide[s][t]->fgbg[a]->h[GV_OPEN],-1.0); // remove counts coming from wrong side, leaving only correctly-identified event count on this side
 				hMisID->Divide(hRightID);
 				
 				hMisID->SetLineColor(2+2*s);

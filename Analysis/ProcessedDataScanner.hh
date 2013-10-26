@@ -29,7 +29,7 @@ public:
 	/// event energy
 	virtual float getEnergy() const { return scints[EAST].energy.x + scints[WEST].energy.x; }
 	/// get event true (reconstructed) energy
-	virtual float getEtrue() const;
+	virtual float getErecon() const;
 	/// re-calibrate tube energy of currently loaded event
 	virtual void recalibrateEnergy();
 	/// whether event passes fiducia/position cut on side

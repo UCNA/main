@@ -37,15 +37,15 @@ void MuonPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	if(!(s==EAST || s==WEST)) return;
 	if(!(PDS.fPID == PID_MUON && PDS.fType <= TYPE_III_EVENT)) return;
 	if(PDS.passesPositionCut(s)) {
-		qMuonSpectra[s][false]->fillPoint->Fill(PDS.getEtrue(),weight);
-		qMuonSpectra[s][true]->fillPoint->Fill(PDS.getEtrue(),weight);
+		qMuonSpectra[s][false]->fillPoint->Fill(PDS.getErecon(),weight);
+		qMuonSpectra[s][true]->fillPoint->Fill(PDS.getErecon(),weight);
 	}
 	((TH2F*)pMuonPos[s]->h[currentGV])->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 	
 	if(!PDS.fTaggedBack[s]) return;
 	if(PDS.passesPositionCut(s)) {
-		qBackMuons[s][false]->fillPoint->Fill(PDS.getEtrue(),weight);
-		qBackMuons[s][true]->fillPoint->Fill(PDS.getEtrue(),weight);
+		qBackMuons[s][false]->fillPoint->Fill(PDS.getErecon(),weight);
+		qBackMuons[s][true]->fillPoint->Fill(PDS.getErecon(),weight);
 	}
 	((TH2F*)pBackMuPos[s]->h[currentGV])->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 }

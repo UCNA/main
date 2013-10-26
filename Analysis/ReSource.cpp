@@ -123,7 +123,7 @@ unsigned int ReSourcer::fill(const ProcessedDataScanner& P) {
 		if(PCal && !simMode && tp==TYPE_0_EVENT)
 			hTubesRaw[t]->Fill(P.scints[s].adc[t]*PCal->gmsFactor(mySource.mySide,t,P.runClock[BOTH]),P.physicsWeight);
 	}
-	hErec->Fill(P.getEtrue(),P.physicsWeight);
+	hErec->Fill(P.getErecon(),P.physicsWeight);
 	if(tp==TYPE_0_EVENT)
 		hTubes[nBetaTubes][tp]->Fill(P.scints[s].energy.x,P.physicsWeight);
 	else

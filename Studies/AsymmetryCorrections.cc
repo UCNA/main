@@ -48,8 +48,10 @@ void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBas
 	AA.hCxn->Scale(0);
 	AA.myA->defaultCanvas->cd();
 	
-	double emin = 220;
-	double emax = 670;
+	// analysis energy window; 220-670 keV for 2010 data.
+	double emin = 275;
+	double emax = 625;
+	
 	TF1 lineFit("lineFit","pol0",emin,emax);
 	TLatex lx;
 	char tmp[1024];

@@ -126,7 +126,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 	TPhys->Branch("Type",&fType,"Type/I");
 	TPhys->Branch("Side",&fSide,"Side/I");
 	TPhys->Branch("ProbIII",&fProbIII,"ProbIII/F");
-	TPhys->Branch("Etrue",&fEtrue,"Etrue/F");
+	TPhys->Branch("Erecon",&fEtrue,"Erecon/F");
 	
 	// LED events tree
 	if(analyzeLED) {

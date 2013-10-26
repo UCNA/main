@@ -14,7 +14,7 @@ std::string PostOfficialAnalyzer::locateRun(RunNum r) {
 void PostOfficialAnalyzer::setReadpoints() {
 	
 	// reconstructed energy
-	Tch->SetBranchAddress("Etrue",&Etrue);
+	Tch->SetBranchAddress("Erecon",&Erecon);
 	// event ID
 	Tch->SetBranchAddress("PID",&fPID);
 	Tch->SetBranchAddress("Side",&fSide);

@@ -35,8 +35,8 @@ int main(int argc, char *argv[]) {
 				continue;
 			
 			// print out event info, (simulated) reconstructed true energy and position, comparable to values in data
-			printf("Event on side %c: type=%i, Etrue=%g @ position (%g,%g)\n",
-				   sideNames(s),tp,G2P.getEtrue(),G2P.wires[s][X_DIRECTION].center,G2P.wires[s][Y_DIRECTION].center);
+			printf("Event on side %c: type=%i, Erecon=%g @ position (%g,%g)\n",
+				   sideNames(s),tp,G2P.getErecon(),G2P.wires[s][X_DIRECTION].center,G2P.wires[s][Y_DIRECTION].center);
 			// print out event primary info, only available in simulation
 			printf("\tprimary KE=%g, cos(theta)=%g\n",G2P.ePrim,G2P.costheta);
 		}

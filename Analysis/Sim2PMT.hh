@@ -62,7 +62,7 @@ public:
 	virtual Stringmap evtInfo();
 	
 	/// get true energy
-	virtual float getEtrue() const;
+	virtual float getErecon() const;
 	/// primary event radius
 	virtual float primRadius() const { return sqrt(pow(primPos[X_DIRECTION],2)+pow(primPos[Y_DIRECTION],2)); }
 	
