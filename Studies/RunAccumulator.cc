@@ -170,8 +170,13 @@ void RunAccumulator::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 }
 
 void RunAccumulator::calculateResults() {
-	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++)
+	printf("Calculating results for %s...\n",name.c_str());
+	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++) {
+		printf("... results in '%s' ...\n",it->first.c_str());
 		it->second->calculateResults();
+	}
+	printf("Done calculating results for %s.\n",name.c_str());
+	isCalculated = true;
 }
 
 void RunAccumulator::uploadAnaResults() {
@@ -181,16 +186,28 @@ void RunAccumulator::uploadAnaResults() {
 
 void RunAccumulator::makePlots() {
 	defaultCanvas->cd();
-	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++)
+	if(!isCalculated) calculateResults();
+	printf("Generating plots for %s...\n",name.c_str());
+	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++) {
+		printf("... plots in '%s' ...\n",it->first.c_str());
 		it->second->makePlots();
+	}
+	printf("Done generating plots for %s...\n",name.c_str());
 }
 
 void RunAccumulator::compareMCtoData(RunAccumulator& OAdata) {
 	defaultCanvas->cd();
+	printf("Comparing MC %s and data %s...\n",name.c_str(),OAdata.name.c_str());
 	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++) {
 		AnalyzerPlugin* AP = OAdata.getPlugin(it->second->name);
-		if(AP) it->second->compareMCtoData(AP);
+		if(AP) {
+			printf("... comparison in '%s' ...\n",it->first.c_str());
+			if(!isCalculated) it->second->calculateResults();
+			if(!OAdata.isCalculated) AP->calculateResults();
+			it->second->compareMCtoData(AP);
+		}
 	}
+	printf("Done comparing MC %s and data %s.\n",name.c_str(),OAdata.name.c_str());
 }
 
 void RunAccumulator::zeroCounters() {
@@ -326,6 +343,7 @@ void RunAccumulator::makeRatesSummary() {
 }
 
 void RunAccumulator::write(std::string outName) {
+	printf("Writing data to file '%s'...\n",outName.c_str());
 	// record total times, counts
 	for(AFPState afp = AFP_OFF; afp <= AFP_OTHER; ++afp) {
 		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {

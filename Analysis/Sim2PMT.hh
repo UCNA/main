@@ -120,7 +120,7 @@ public:
 	unsigned int nToSim;		//< number of events to simulate
 	double nCounted;			//< physics-weighted number of counted events
 	double mwpcThresh[2];		//< MWPC trigger 50% threshold on each side
-	double mwpcWidth[2];			//< MWPC threshold width
+	double mwpcWidth[2];		//< MWPC threshold width
 	double mwpcAccidentalProb;	//< probability of MWPC accidental triggers
 	
 protected:

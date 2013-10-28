@@ -17,10 +17,10 @@ void ExampleAnalyzerPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weig
 
 void ExampleAnalyzerPlugin::calculateResults() {
 	// form (blinded) super-ratio and super-sum of anode spectra
-	hAnodeSR = (TH1F*)calculateSR("Wirechamber_Energy_Asymmetry",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
+	hAnodeSR = calculateSR("Wirechamber_Energy_Asymmetry",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
 	hAnodeSR->SetMinimum(-0.20);
 	hAnodeSR->SetMaximum(0.0);
-	hAnodeSS = (TH1F*)calculateSuperSum("Wirechamber_Energy_SuperSum",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
+	hAnodeSS = calculateSuperSum("Wirechamber_Energy_SuperSum",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
 }
 
 void ExampleAnalyzerPlugin::makePlots() {

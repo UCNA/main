@@ -22,8 +22,8 @@ public:
 	virtual void compareMCtoData(AnalyzerPlugin* AP);
 	
 	quadHists* qAnodeSpectrum[2];	//< set of histograms for extracting anode spectrum on each side
-	TH1F* hAnodeSR;					//< super-ratio asymmetry of anode data
-	TH1F* hAnodeSS;					//< super-sum of anode data
+	TH1* hAnodeSR;					//< super-ratio asymmetry of anode data
+	TH1* hAnodeSS;					//< super-sum of anode data
 };
 
 

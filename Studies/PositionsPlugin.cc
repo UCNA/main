@@ -61,6 +61,13 @@ void PositionsPlugin::calculateResults() {
 		}
 		myA->qOut.insert("posOffset",odat);
 	}
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+		hSuperSumPos[tp] = calculateSuperSum("Event_Radius_SuperSum_Tp"+itos(tp),qRadius2[EAST][tp],qRadius2[WEST][tp],GV_OPEN,true);
+		hSuperSumPos[tp]->Scale(1000);
+		hSuperSumPos[tp]->SetTitle(("Type "+itosRN(tp)+" events radius distribution").c_str());
+		hSuperSumPos[tp]->GetYaxis()->SetTitle("event rate [mHz/mm^{2}]");
+		hSuperSumPos[tp]->GetYaxis()->SetTitleOffset(tp?1.7:1.5);
+	}
 }
 
 void PositionsPlugin::makePlots() {
@@ -107,6 +114,10 @@ void PositionsPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 	// re-cast to correct type
 	PositionsPlugin& dat = *(PositionsPlugin*)AP;
 	
+	myA->defaultCanvas->SetRightMargin(0.04);
+	myA->defaultCanvas->SetLeftMargin(0.14);
+		
+	/*
 	for(unsigned int t=TYPE_0_EVENT; t<=TYPE_III_EVENT; t++) {
 		std::vector<TH1*> hToPlot;
 		for(Side s = EAST; s <= WEST; ++s) {
@@ -126,5 +137,17 @@ void PositionsPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 		}
 		drawSimulHistos(hToPlot,"HIST P E");
 		printCanvas("DataComparison/Radius2_Type_"+itos(t));
+	}
+	*/
+	
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+		hSuperSumPos[tp]->SetMarkerSize(0.5);
+		hSuperSumPos[tp]->SetMarkerStyle(33);
+		hSuperSumPos[tp]->Scale(dat.hSuperSumPos[tp]->Integral()/hSuperSumPos[tp]->Integral());
+		
+		dat.hSuperSumPos[tp]->Draw();
+		hSuperSumPos[tp]->Draw("P SAME");
+		for(int r = 10; r <= 70; r += 10) drawVLine(r*r, myA->defaultCanvas, 1, 3);
+		printCanvas("DataComparison/Radius2_Type_"+itos(tp));
 	}
 }

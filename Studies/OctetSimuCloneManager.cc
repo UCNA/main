@@ -43,6 +43,6 @@ void OctetSimuCloneManager::simOct(RunAccumulator& SimRA, unsigned int octn) {
 		delete octSim;
 }
 
-void OctetSimuCloneManager::combineSims(RunAccumulator& SimRA) {
-	SimRA.mergeSims(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir);
+void OctetSimuCloneManager::combineSims(RunAccumulator& SimRA, RunAccumulator* OrigRA) {
+	SimRA.mergeSims(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, OrigRA);
 }

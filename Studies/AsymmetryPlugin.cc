@@ -207,19 +207,19 @@ void AsymmetryPlugin::calculateResults() {
 	calcSuperCombos();
 	
 	// calculate SR and SS
-	hAsym = (TH1F*)calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
-	hInstAsym = (TH1F*)calculateSR("Total_Instrumental_Asym",qTotalSpectrum[EAST],qTotalSpectrum[WEST],true,true);
+	hAsym = calculateSR("Total_Events_SR",qTotalSpectrum[EAST],qTotalSpectrum[WEST]);
+	hInstAsym = calculateSR("Total_Instrumental_Asym",qTotalSpectrum[EAST],qTotalSpectrum[WEST],true,true);
 	for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv)
-		hSuperSum[gv] = (TH1F*)calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST],gv);
+		hSuperSum[gv] = calculateSuperSum("Total_Events_SuperSum",qTotalSpectrum[EAST],qTotalSpectrum[WEST],gv);
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
-		hTpAsym[tp] = (TH1F*)calculateSR("Asymmetry_Type_"+itos(tp),
-										 qEnergySpectra[tp==TYPE_II_EVENT?WEST:EAST][nBetaTubes][tp],
-										 qEnergySpectra[tp==TYPE_II_EVENT?EAST:WEST][nBetaTubes][tp]);
+		hTpAsym[tp] = calculateSR("Asymmetry_Type_"+itos(tp),
+									qEnergySpectra[tp==TYPE_II_EVENT?WEST:EAST][nBetaTubes][tp],
+									qEnergySpectra[tp==TYPE_II_EVENT?EAST:WEST][nBetaTubes][tp]);
 		hTpAsym[tp]->SetMinimum(-0.10);
 		hTpAsym[tp]->SetMaximum(0.0);
-		hEvtSS[tp] = (TH1F*)calculateSuperSum("SuperSum_Type_"+itos(tp),
-											  qEnergySpectra[EAST][nBetaTubes][tp],
-											  qEnergySpectra[WEST][nBetaTubes][tp]);
+		hEvtSS[tp] = calculateSuperSum("SuperSum_Type_"+itos(tp),
+										qEnergySpectra[EAST][nBetaTubes][tp],
+										qEnergySpectra[WEST][nBetaTubes][tp]);
 	}
 	
 	// perform data fits

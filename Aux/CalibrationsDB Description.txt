@@ -236,7 +236,7 @@ CREATE TABLE cut_spec (
 
 # generic analysis results
 CREATE TABLE analysis_results (
-	analsysis_results_id SERIAL,			# unique ID for this result
+	analysis_results_id SERIAL,				# unique ID for this result
 	author ENUM('MPM','RWP','BZ'),			# person generating result
 	date DATETIME,							# result generation date
 	type ENUM('Asymmetry','Counts'),		# type of result

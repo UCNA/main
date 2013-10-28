@@ -144,13 +144,22 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	OSCM.nTot = 492;
 	OSCM.stride = 73;
 
-	const std::string simOutputDir=OSCM.outputDir+"_endcap_180_150";
+	//const std::string simOutputDir=OSCM.outputDir+"_endcap_180_150";
+	const std::string simOutName = "_Sim0823";
+	const std::string simOutputDir=OSCM.outputDir+simOutName;
+	
 	
 	if(octn < 0) {
 		SimBetaDecayAnalyzer BDA_Sim(&OM,simOutputDir);
 		BDA_Sim.simPerfectAsym = true;
-		if(octn==-1000) OSCM.combineSims(BDA_Sim);
-		else OSCM.simOct(BDA_Sim,-octn-1);
+		if(octn==-1000) {
+			BetaDecayAnalyzer BDA(&OM,OSCM.outputDir,RunAccumulator::processedLocation);
+			OSCM.combineSims(BDA_Sim,&BDA);
+		} else if(octn==-1001) {
+			BetaDecayAnalyzer BDA(&OM,OSCM.outputDir,RunAccumulator::processedLocation);
+			SimBetaDecayAnalyzer BDA_MC(&OM,simOutputDir,OSCM.baseDir+"/"+simOutputDir+"/"+simOutputDir);
+			BDA_MC.compareMCtoData(BDA);
+		} else OSCM.simOct(BDA_Sim,-octn-1);
 	} else {
 		BetaDecayAnalyzer BDA(&OM,OSCM.outputDir);
 		if(octn==1000) OSCM.combineOcts(BDA);

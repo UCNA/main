@@ -50,10 +50,11 @@ public:
 	/// virtual routine for generating output plots
 	virtual void makePlots() {}
 	/// virtual routine for generating calculated hists
-	virtual void calculateResults() {}
+	virtual void calculateResults() { isCalculated = true; }
 	
 	TFile* fIn;									//< input file to read in histograms from
 	std::string inflname;						//< where to look for input file
+	bool isCalculated;	
 	
 protected:
 	

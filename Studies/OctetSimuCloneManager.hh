@@ -19,8 +19,8 @@ public:
 	void combineOcts(RunAccumulator& RA);
 	/// simulate one octet
 	void simOct(RunAccumulator& SimRA, unsigned int octn);
-	/// combine simulated octets
-	void combineSims(RunAccumulator& SimRA);
+	/// combine simulated octets; optionally, compare to data
+	void combineSims(RunAccumulator& SimRA, RunAccumulator* OrigRA = NULL);
 	
 	/// run re-calculation on all octets
 	unsigned int recalcAllOctets(RunAccumulator& RA, bool doPlots);
