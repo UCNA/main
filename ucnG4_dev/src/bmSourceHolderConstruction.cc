@@ -3,13 +3,13 @@
 
 
 bmSourceHolderConstruction::bmSourceHolderConstruction():
-fWindowThick(3.6*um), fCoatingThick(0.1*um),
+fWindowThick(4.7*um), fCoatingThick(0.1*um),
 fWindowMat(Mylar), fCoatingMat(Al), fSourceHolderThickness(3./16.*inch) {
 	pUIdir = new G4UIdirectory("/sourceholder/");	
 	pWindowThickCmd = new G4UIcmdWithADoubleAndUnit("/sourceholder/windowthickness",this);
 	pWindowThickCmd->AvailableForStates(G4State_PreInit);
 	pWindowThickCmd->SetGuidance("thickness of windows on either side of sealed source");
-	pWindowThickCmd->SetDefaultValue(3.6*um);
+	pWindowThickCmd->SetDefaultValue(4.7*um);
 }
 
 void bmSourceHolderConstruction::SetNewValue(G4UIcommand * command, G4String newValue) {
