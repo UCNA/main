@@ -8,6 +8,7 @@ from ucnacore.PyxUtils import *
 from ucnacore.QFile import *
 from ucnacore.EncalDB import *
 from ucnacore.Histogram import *
+from ucnacore.AnaDB import *
 try:
 	from scipy import stats
 except:
@@ -281,10 +282,10 @@ def plot_octet_asymmetries(basedir,depth=0):
 	##############
 	unitName=unitNames[depth]
 	
-	gAsyms=graph.graphxy(width=25,height=8,
+	gAsyms=graph.graphxy(width=25,height=6.5,
 				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
-				y=graph.axis.lin(title="Asymmetry",min=-0.2,max=0),
-				key = graph.key.key(pos="bl"))
+				y=graph.axis.lin(title="uncorrected asymmetry",min=-0.2,max=0),
+				key = graph.key.key(pos="tl"))
 	setTexrunner(gAsyms)
 
 	gCount=graph.graphxy(width=15,height=15,
@@ -314,12 +315,132 @@ def plot_octet_asymmetries(basedir,depth=0):
 	##############
 	# event count
 	##############
-	gCount.plot(graph.data.points(ndat,x=1,y=2),[graph.style.line(lineattrs=[rgb.red,])])
-	gCount.writetofile(basedir+"/OctetCounts_%i.pdf"%depth)
+	if 0:
+		gCount.plot(graph.data.points(ndat,x=1,y=2),[graph.style.line(lineattrs=[rgb.red,])])
+		gCount.writetofile(basedir+"/OctetCounts_%i.pdf"%depth)
 		
 	##############
 	# asymmetry plots
 	##############
+	if 1:
+		pcolor = rgb.black
+		gAsyms.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
+					[ graph.style.errorbar(errorbarattrs=[pcolor,]),
+					  graph.style.symbol(symbol.circle,size=0.15,symbolattrs=[pcolor,deco.filled([rgb.white])])])
+				
+		LF = LinearFitter(terms=[polyterm(0)])
+		
+		rbreak = 14800 #= polarization # 15400 = magnet ramp, calibration changes
+		gdat_A = [g for g in gdat if 14000 < g[3] < rbreak]
+		gdat_B = [g for g in gdat if rbreak < g[3] ]
+		lsty = [style.linestyle.solid,style.linestyle.dashed]
+		for (n,gd) in enumerate([gdat_A,gdat_B]):
+			if not gd:
+				continue
+			LF.fit(gd,cols=(0,1,2),errorbarWeights=True)
+			chi2 = LF.chisquared()
+			ndf = LF.nu()
+			gtitle = "$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.rmsDeviation()/sqrt(LF.ydat.size),chi2,ndf)
+			if stats:
+				gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
+			gAsyms.plot(graph.data.points(LF.fitcurve(gd[0][0],gd[-1][0]),x=1,y=2,title=gtitle),[graph.style.line([style.linewidth.thick,lsty[n]])])
+
+		gAsyms.writetofile(basedir+"/OctetAsym_%i.pdf"%depth)
+	
+	##############
+	# instrumental asymmetry
+	##############
+	if 0:
+		gIA=graph.graphxy(width=25,height=8,
+					x=graph.axis.lin(title=unitName,min=0,max=iadat[-1][0]),
+					y=graph.axis.lin(title="Instrumental Asymmetry",min=-0.04,max=0.01),
+					key = graph.key.key(pos="bl"))
+		setTexrunner(gIA)
+		gIA.plot(graph.data.points(iadat,x=1,y=2,dy=3,title=None),
+					[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
+					graph.style.errorbar(errorbarattrs=[rgb.red,])])
+		gIA.writetofile(basedir+"/OctetInstAsym_%i.pdf"%depth)
+
+	##############
+	# endpoint, background, muons plots
+	##############
+	if 0:
+		#sideCols = {'E':rgb.red,'W':rgb.blue,'C':rgb(0.,0.7,0.)}
+		sideCols = {'E':[],'W':[],'C':[rgb(0.,0.7,0.)]}
+		sideFills = {'E':[],'W':[deco.filled]}
+		for s in ['E','C','W']:
+			
+			LF.fit([kd for kd in kepDelta[s] if kd[2]>0],cols=(0,1,2),errorbarWeights=True)
+			chi2 = LF.chisquared()
+			ndf = LF.nu()
+			sname = "$%s_{\\rm on}-%s_{\\rm off}$"%(s,s)
+			if s == 'C':
+				sname = "$(E_{\\rm on}-E_{\\rm off}-W_{\\rm on}+W_{\\rm off})/2$"
+			ch2str = "$\\chi^2/\\nu = %.1f/%i$"%(chi2,ndf)
+			err = LF.rmsDeviation()/sqrt(LF.ydat.size)
+			print "dEp:",s,LF.coeffs[0],LF.rmsDeviation(),err
+						
+			gdEp.plot(graph.data.points(kepDelta[s],x=1,y=2,dy=3,
+						title="%s: $\\mu=%.2f \pm %.3f$"%(sname,LF.coeffs[0],err)),
+							[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=sideCols[s]),
+							graph.style.errorbar(errorbarattrs=sideCols[s])])
+			gdEp.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line(sideCols[s])])
+			
+			if s in bgRateDat:
+				for afp in bgRateDat[s]:
+					if len(bgRateDat[s][afp])<2:
+						continue;
+					LF.fit(bgRateDat[s][afp],cols=(0,1,2),errorbarWeights=True)
+					gtitle = s+" "+afp+": $%.1f \\pm %.1f$ mHz, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.coeffErr(0),LF.chisquared(),LF.nu())
+					#if stats:
+					#	gtitle += " $(p=%.2f)$"%stats.chisqprob(LF.chisquared(),LF.nu())
+					gBgRate.plot(graph.data.points(bgRateDat[s][afp],x=1,y=2,dy=3,title=gtitle),
+								[graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=sideCols[s]+sideFills[s]),
+								graph.style.errorbar(errorbarattrs=sideCols[s])])
+					gBgRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line(sideCols[s])])
+
+			if s in muRateDat:
+				for afp in muRateDat[s]:
+					if len(muRateDat[s][afp])<2:
+						continue
+					
+					LF.fit(muRateDat[s][afp],cols=(0,1,2),errorbarWeights=True)
+					gtitle = s+" "+afp+": $%.1f \\pm %.1f$ mHz, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.coeffErr(0),LF.chisquared(),LF.nu())
+		
+					gMuRate.plot(graph.data.points(muRateDat[s][afp],x=1,y=2,dy=3,title=gtitle),
+								 [graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=sideCols[s]+sideFills[s]),
+								  graph.style.errorbar(errorbarattrs=sideCols[s])])
+					
+					gMuRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line(sideCols[s])])
+					
+		gdEp.writetofile(basedir+"/Octet_dEP_%i.pdf"%depth)
+		gBgRate.writetofile(basedir+"/Octet_BgRate_%i.pdf"%depth)
+		gMuRate.writetofile(basedir+"/Octet_MuRate_%i.pdf"%depth)
+	
+			
+
+
+
+def AnaDB_Asyms(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/"):
+
+	conn = open_anadb_connection()
+	asyms = get_ana_results(conn,find_ana_results(conn,grouping="octet"))
+	asyms = [(a.rrange,a) for a in asyms if a.rrange[1]-a.rrange[0]<50]
+	asyms.sort()
+	print len(asyms)
+	for a in asyms:
+		print a[1],a[1].date
+	
+	gdat = [[n,2*a[1].value,2*a[1].err,a[1].start_run] for (n,a) in enumerate(asyms)]
+
+	unitName="Octet"
+	
+	gAsyms=graph.graphxy(width=25,height=8,
+				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
+				y=graph.axis.lin(title="Asymmetry"),
+				key = graph.key.key(pos="bl"))
+	setTexrunner(gAsyms)
+
 	gAsyms.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
 				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
 				graph.style.errorbar(errorbarattrs=[rgb.red,])])
@@ -349,80 +470,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_B[0][0],gdat_B[-1][0]),x=1,y=2,title=gtitle),
 					[graph.style.line([style.linestyle.dashed,])])
 				
-	gAsyms.writetofile(basedir+"/OctetAsym_%i.pdf"%depth)
-	
-	##############
-	# instrumental asymmetry
-	##############
-	gIA=graph.graphxy(width=25,height=8,
-				x=graph.axis.lin(title=unitName,min=0,max=iadat[-1][0]),
-				y=graph.axis.lin(title="Instrumental Asymmetry",min=-0.04,max=0.01),
-				key = graph.key.key(pos="bl"))
-	setTexrunner(gIA)
-	gIA.plot(graph.data.points(iadat,x=1,y=2,dy=3,title=None),
-				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
-				graph.style.errorbar(errorbarattrs=[rgb.red,])])
-	gIA.writetofile(basedir+"/OctetInstAsym_%i.pdf"%depth)
-
-	##############
-	# endpoint, background, muons plots
-	##############
-	#sideCols = {'E':rgb.red,'W':rgb.blue,'C':rgb(0.,0.7,0.)}
-	sideCols = {'E':[],'W':[],'C':[rgb(0.,0.7,0.)]}
-	sideFills = {'E':[],'W':[deco.filled]}
-	for s in ['E','C','W']:
-		
-		LF.fit([kd for kd in kepDelta[s] if kd[2]>0],cols=(0,1,2),errorbarWeights=True)
-		chi2 = LF.chisquared()
-		ndf = LF.nu()
-		sname = "$%s_{\\rm on}-%s_{\\rm off}$"%(s,s)
-		if s == 'C':
-			sname = "$(E_{\\rm on}-E_{\\rm off}-W_{\\rm on}+W_{\\rm off})/2$"
-		ch2str = "$\\chi^2/\\nu = %.1f/%i$"%(chi2,ndf)
-		err = LF.rmsDeviation()/sqrt(LF.ydat.size)
-		print "dEp:",s,LF.coeffs[0],LF.rmsDeviation(),err
-					
-		gdEp.plot(graph.data.points(kepDelta[s],x=1,y=2,dy=3,
-					title="%s: $\\mu=%.2f \pm %.3f$"%(sname,LF.coeffs[0],err)),
-						[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=sideCols[s]),
-						graph.style.errorbar(errorbarattrs=sideCols[s])])
-		gdEp.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line(sideCols[s])])
-		
-		if s in bgRateDat:
-			for afp in bgRateDat[s]:
-				if len(bgRateDat[s][afp])<2:
-					continue;
-				LF.fit(bgRateDat[s][afp],cols=(0,1,2),errorbarWeights=True)
-				gtitle = s+" "+afp+": $%.1f \\pm %.1f$ mHz, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.coeffErr(0),LF.chisquared(),LF.nu())
-				#if stats:
-				#	gtitle += " $(p=%.2f)$"%stats.chisqprob(LF.chisquared(),LF.nu())
-				gBgRate.plot(graph.data.points(bgRateDat[s][afp],x=1,y=2,dy=3,title=gtitle),
-							[graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=sideCols[s]+sideFills[s]),
-							graph.style.errorbar(errorbarattrs=sideCols[s])])
-				gBgRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line(sideCols[s])])
-
-		if s in muRateDat:
-			for afp in muRateDat[s]:
-				if len(muRateDat[s][afp])<2:
-					continue
-				
-				LF.fit(muRateDat[s][afp],cols=(0,1,2),errorbarWeights=True)
-				gtitle = s+" "+afp+": $%.1f \\pm %.1f$ mHz, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.coeffErr(0),LF.chisquared(),LF.nu())
-	
-				gMuRate.plot(graph.data.points(muRateDat[s][afp],x=1,y=2,dy=3,title=gtitle),
-							 [graph.style.symbol(afpSymbs[afp],size=0.2,symbolattrs=sideCols[s]+sideFills[s]),
-							  graph.style.errorbar(errorbarattrs=sideCols[s])])
-				
-				gMuRate.plot(graph.data.points(LF.fitcurve(0,gdat[-1][0],),x=1,y=2,title=None),[graph.style.line(sideCols[s])])
-				
-	gdEp.writetofile(basedir+"/Octet_dEP_%i.pdf"%depth)
-	gBgRate.writetofile(basedir+"/Octet_BgRate_%i.pdf"%depth)
-	gMuRate.writetofile(basedir+"/Octet_MuRate_%i.pdf"%depth)
-	
-			
-
-
-
+	gAsyms.writetofile(basedir+"/OctetAsym.pdf")
 
 
 
@@ -627,6 +675,9 @@ def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
 
 if __name__=="__main__":
 	
+	#AnaDB_Asyms()
+	#exit(0)
+	
 	#backscatterFracTable("OctetAsym_Offic_Sim0823_4x")
 	#backscatterFracTable("OctetAsym_Offic_SimPen")
 	#exit(0)
@@ -644,7 +695,7 @@ if __name__=="__main__":
 		exit(0)
 	
 	for i in range(3):				
-		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",i)
+		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
 		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim0823/",i)
 		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
 			

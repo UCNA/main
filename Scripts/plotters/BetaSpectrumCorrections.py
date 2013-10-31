@@ -62,24 +62,7 @@ def plotWilkinsonCorrs(fin,outpath):
 	gWC.plot(graph.data.points([(c.energy,-c.Qm1) for c in corrs],x=1,y=2,title="$1-Q$"),[graph.style.line([style.linestyle.dotted,style.linewidth.thick])])
 	
 
-	
-	#gWC.plot(graph.data.points(gdat,x=1,y=10,title="$g$"),[graph.style.line([rgb.green,style.linestyle.dashdotted,style.linewidth.THick])])
-	#gWC.plot(graph.data.points(gdat,x=1,y=6,title="$R^A-1$"),[graph.style.line([rgb.red,style.linestyle.dotted,style.linewidth.THick])])
-	#gWC.plot(graph.data.points(gdat,x=1,y=5,title="$R^V-1$"),[graph.style.line([rgb.red,style.linestyle.dashed,style.linewidth.THick])])
-	#gWC.plot(graph.data.points(gdat,x=1,y=14,title="$R-1$"),[graph.style.line([rgb.red,style.linestyle.dashdotted,style.linewidth.thick])])
-	#gWC.plot(graph.data.points(gdat,x=1,y=7,title="$|R+{\\rm WM}|$"),[graph.style.line([rgb.red,style.linewidth.THick])])
-	
-	#gWC.plot(graph.data.points(gdat,x=1,y=11,title="$J(Z)-1$"),[graph.style.line([rgb(0.7,0.,0.7),style.linestyle.dashdotted,style.linewidth.thick])])
-	#gWC.plot(graph.data.points(gdat,x=1,y=12,title="$O[ K(\\alpha) ]$"),[graph.style.line([rgb(0.7,0.,0.7),style.linestyle.dotted,style.linewidth.thick])])
-	
-	#gWC.plot(graph.data.points(gdat,x=1,y=4,title="$1-Q$"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
-	#gWC.plot(graph.data.points(gdat,x=1,y=8,title="$1-{^VC}$"),[graph.style.line([rgb.blue,style.linestyle.dashed,style.linewidth.Thick])])
-	#gWC.plot(graph.data.points(gdat,x=1,y=9,title="$1-{^AC}$"),[graph.style.line([rgb.blue,style.linestyle.dotted,style.linewidth.Thick])])
-	#gWC.plot(graph.data.points(gdat,x=1,y=13,title="$1-C$"),[graph.style.line([rgb.blue,style.linestyle.dashdotted,style.linewidth.thick])])
-	#gWC.plot(graph.data.points(gdat,x=1,y=3,title="$L_0-1$"),[graph.style.line([style.linestyle.dashed,style.linewidth.Thick])])
-	
-	gWC.writetofile(outpath+"/WilkinsonCorrs_%i_%i_%f.pdf"%(A,Z,ep))
-	return
+	#gWC.writetofile(outpath+"/WilkinsonCorrs_%i_%i_%f.pdf"%(A,Z,ep))
 	
 	###############
 	# spectrum shapes
@@ -102,7 +85,7 @@ def plotWilkinsonCorrs(fin,outpath):
 	else:
 		gSpec.plot(graph.data.points(gdat,x=1,y=4,title="Corrected"),[graph.style.line([style.linestyle.dashed,rgb.blue,style.linewidth.Thick])])
 	gSpec.plot(graph.data.points(gdat,x=1,y=2,title="Plain"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
-	gSpec.writetofile(outpath+"/BetaSpectrum_%i_%i_%f.pdf"%(A,Z,ep))
+	#gSpec.writetofile(outpath+"/BetaSpectrum_%i_%i_%f.pdf"%(A,Z,ep))
 
 	if A != 1:
 		return
@@ -119,20 +102,20 @@ def plotWilkinsonCorrs(fin,outpath):
 	gdat = [[c.energy,c.S/c.S0] for c in corrs if c.S0]
 	gdat.sort()
 	gWCTot.plot(graph.data.points(gdat,x=1,y=2,title=None),[graph.style.line([style.linewidth.Thick])])
-	gWCTot.writetofile(outpath+"/WilkinsonCorrsTot.pdf")
+	#gWCTot.writetofile(outpath+"/WilkinsonCorrsTot.pdf")
 	
 	################
 	# Asymmetry corrections
 	################
 	
-	gWCA=graph.graphxy(width=20,height=10,
-			x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
-			y=graph.axis.lin(title="Fractional Correction to $A$",min=0.0000),
+	gWCA=graph.graphxy(width=15,height=7,
+			x=graph.axis.lin(title="Energy [keV]",min=0,max=782),
+			y=graph.axis.lin(title="$(A-A_0)/A_0$ [\\%]",min=0.0000),
 			key = graph.key.key(pos="tl"))
 	setTexrunner(gWCA)
-	gWCA.plot(graph.data.points([(c.energy,c.RWM) for c in corrs],x=1,y=2,title="recoil-order (Wilkinson)"),[graph.style.line([style.linewidth.Thick])])
-	gWCA.plot(graph.data.points([(c.energy,c.hmg) for c in corrs],x=1,y=2,title="Radiative $h - g$ (Shann/Sirlin)"),[graph.style.line([style.linewidth.Thick,rgb.red])])
-	if 1:
+	gWCA.plot(graph.data.points([(c.energy,c.RWM*100) for c in corrs],x=1,y=2,title="Recoil order"),[graph.style.line([style.linewidth.Thick,style.linestyle.dashed])])
+	gWCA.plot(graph.data.points([(c.energy,c.hmg*100) for c in corrs],x=1,y=2,title="${\\alpha \\over 2\\pi}(h - g)$"),[graph.style.line([style.linewidth.Thick])])
+	if 0:
 		def gluckx2E(x):
 			return x*(782.6+511.)-511.
 		gluck_da = [ [gluckx2E(0.4),0.03/1.66],[gluckx2E(0.5),0.01/6.55],[gluckx2E(0.6),0.01/8.08],
@@ -144,6 +127,7 @@ def plotWilkinsonCorrs(fin,outpath):
 		#gWCA.plot(graph.data.points(gluck_da,x=1,y=2,title='Gl\\"uck 1992 $\\delta \\alpha_e$ table'),[graph.style.symbol(symbolattrs=[rgb.green])])
 		gWCA.plot(graph.data.points(gluck_hmg,x=1,y=2,title='Gl\\"uck private communication'),[graph.style.symbol(symbolattrs=[rgb.green])])
 	gWCA.writetofile(outpath+"/A_Rad_Corrections.pdf")
+	return
 
 	################
 	# Asymmetry curves
@@ -273,10 +257,43 @@ def asymStatSens():
 	g.plot(graph.data.points(gdat,x=1,y=3,title="$A_0$ statistical sensitivity"),[graph.style.line([style.linestyle.dashed,style.linewidth.Thick])])
 	g.plot(graph.data.points(gdat,x=1,y=4,title="cumulative $A_0$ sensitivity"),[graph.style.line([style.linewidth.Thick])])
 	g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/StatSens.pdf")
+
+
+def asymLambdaDep():
+	"""Plot lambda dependence of asymmetry observables"""
+
+	AA = (lambda l: -2*l*(1+l)/(1+3*l**2))
+	Aa = (lambda l: (1-l**2)/(1+3*l**2))
+	AB = (lambda l: -2*l*(1-l)/(1+3*l**2))
+	AC = (lambda l: -0.27484*(AA(l)+AB(l)))
+
+	dx = 0.5
+	g = graph.graphxy(width=20,height=10,
+			x=graph.axis.lin(title="${1 \\over \\pi}\\tan^{-1} \\lambda$",min=-dx,max=dx),
+			y=graph.axis.lin(title="asymmetry",min=-1.1,max=1.1),
+			key = graph.key.key(pos="tr",columns=2))
+	setTexrunner(g)
+	
+	xr = unifrange(-dx,dx,300)
+	xr = [(x,tan(pi*x)) for x in unifrange(-0.5,0.5,300)]
+	
+	g.plot(graph.data.points([(l[0],AA(l[1])) for l in xr],x=1,y=2,title="A: $e^-$"),[graph.style.line([style.linewidth.Thick])])
+	g.plot(graph.data.points([(l[0],AB(l[1])) for l in xr],x=1,y=2,title="B: $\\overline \\nu_e$"),[graph.style.line([style.linestyle.dashed,style.linewidth.Thick])])
+	g.plot(graph.data.points([(l[0],AC(l[1])) for l in xr],x=1,y=2,title="C: $p$"),[graph.style.line([style.linestyle.dashdotted,style.linewidth.Thick])])
+	g.plot(graph.data.points([(l[0],Aa(l[1])) for l in xr],x=1,y=2,title="a: $e^-/\\overline\\nu_e$"),[graph.style.line([style.linestyle.dotted,style.linewidth.Thick])])
+	
+	lpdg = atan(-1.2701)/pi
+	g.plot(graph.data.points([[lpdg,-2],[lpdg,2]],x=1,y=2,title=None),[graph.style.line([style.linestyle.dotted])])
+	g.plot(graph.data.points([[-dx,0],[dx,0]],x=1,y=2,title=None),[graph.style.line([style.linestyle.dotted])])
+	
+	
+	g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/AsymVLambda.pdf")
 	
 if __name__ == "__main__":
 
-	asymStatSens()
+	asymLambdaDep()
+	
+	#asymStatSens()
 	
 	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
 	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")

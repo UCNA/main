@@ -57,48 +57,65 @@ def errorband_area(g,gdat,cols=(0,1,2)):
 	u = g.plot(graph.data.points(gup,x=1,y=2,title=None),[graph.style.line(None)])
 	d =	g.plot(graph.data.points(gdn,x=1,y=2,title=None),[graph.style.line(None)])
 	g.finish()
-	#return g.area_between(u.path,d.path)
-	area = u.path << xhi << d.path.reversed() << xlo.reversed()
-	#area = d.path.reversed() << u.path
+	#area = u.path << xhi << d.path.reversed() << xlo.reversed()
+	area = u.path << d.path.reversed()
 	area.append(path.closepath())
-	#area[-1].close()
 	return area
 
 
 class CorrFile:
 	def __init__(self,fname):
-		self.dat = [[float(x) for x in l.split()] for l in open(fname,"r").readlines() if len(l)>10 and l[0] != '#']
-baseCorrPath = "../../Aux/Corrections/"
+		self.dat = []
+		if fname:
+			self.dat = [[float(x) for x in l.split()] for l in open(fname,"r").readlines() if len(l)>7 and l[0] != '#']
+	def __add__(self,other):
+		if type(other)==type(self):
+			z = CorrFile(None)
+			if not self.dat:
+				z.dat = [x for x in other.dat]
+				return z
+			z.dat = [x for x in self.dat]
+			for i in range(len(z.dat)):
+				print other.dat[i],z.dat[i]
+				assert other.dat[i][:2] == z.dat[i][:2]
+				z.dat[i] = z.dat[i][:2] + [z.dat[i][2]+other.dat[i][2],z.dat[i][3]+other.dat[i][3]]
+			return z
+		return None
+	def addquad(self,other):
+		for i in range(len(self.dat)):
+			self.dat[i][2] += other.dat[i][2]
+			self.dat[i][3] = sqrt(self.dat[i][3]**2+other.dat[i][3]**2)
+	def const_frac_err(self,c):
+		for i in range(len(self.dat)):
+			self.dat[i][3] = abs(c*self.dat[i][2])
 
-def PlotCorrections():
+baseCorrPath = os.environ["UCNA_AUX"]+"/Corrections/"
+
+def PlotCorrections(cxname,cxfl):
 	
-	clist = {
-			None:"NGBG.txt",
+	#clist = {
+	#		None:"NGBG.txt",
 		#"Muon Veto":"MuonEffic.txt",
 		#	"Linearity":"EnergyLinearityUncertainty_2010.txt",
 		#	"Gain Flucts":"GainFlucts.txt",
 		#	"Ped Shifts":"PedShifts.txt",
 		#	"Recoil Order":"RecoilOrder.txt",
 		#	"Radiative":"Radiative_h-g.txt"
-			}
-	cxns = dict([(k,CorrFile(baseCorrPath+clist[k])) for k in clist])
+	#		}
 	
-	gCx=bg_graphxy(width=20,height=12,
+	gCx=bg_graphxy(width=15,height=10,
 						  x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
-						  y=graph.axis.lin(title="Uncertainty on $A$ [\\%]",min=-0.05,max=0.05),
+						  y=graph.axis.lin(title="correction to $A$ [\\%]",min=-1,max=3),
 						  key = graph.key.key(pos="tl"))
 	setTexrunner(gCx)
 
-	cxcols = rainbowDict(cxns)
-	for cx in cxns:
-		gdat = [ [0.5*(d[0]+d[1]),100*d[2],abs(100*d[3])] for d in cxns[cx].dat][2:]
-		gCx.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=cx),[graph.style.line([style.linewidth.THick])])
-		gCx.plot(graph.data.function("y(x)=0",title=None),[graph.style.line([style.linewidth.thick,style.linestyle.dashed])])
-		eband = errorband_area(gCx,gdat)
-		gCx.fill(eband,[pattern.hatched(0.1,45)])
+	gdat = [ [0.5*(d[0]+d[1]),100*d[2],abs(100*d[3])] for d in cxfl.dat if 60 < d[1] < 740]
+	gCx.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),[graph.style.line([style.linewidth.THick])])
+	gCx.plot(graph.data.function("y(x)=0",title=None),[graph.style.line([style.linewidth.thick,style.linestyle.dashed])])
+	eband = errorband_area(gCx,gdat)
+	gCx.fill(eband,[pattern.hatched(0.1,-45)])
 
-
-	gCx.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/test/NGBGCorrections.pdf")
+	gCx.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/test/Correction_%s.pdf"%cxname)
 				 
 
 def PlotUncerts():
@@ -129,6 +146,20 @@ def PlotUncerts():
 
 
 if __name__=="__main__":
-	PlotCorrections()
+	
+	CF = CorrFile(None)
+	for i in range(4):
+		CF += CorrFile(baseCorrPath+"Delta_2_%i_C.txt"%i)
+	CF.const_frac_err(0.25)
+
+	CF3 = CorrFile(baseCorrPath+"Delta_3_C.txt")
+	CF3.addquad(CF)
+
+	#CF.const_frac_err(0.25)
+	#PlotCorrections("Delta_2+3_C",CF3)
+
+	CFM = CorrFile(baseCorrPath+"MWPCEffic.txt")
+	PlotCorrections("MWPCEffic",CFM);
+
 	#PlotUncerts()
 

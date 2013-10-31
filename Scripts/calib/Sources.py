@@ -599,7 +599,7 @@ if __name__=="__main__":
 	
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2010[1:2]:
+	for c in cal_2010:
 	
 		rlist = range(c[0],c[1]+1)
 		fCalSummary.write("\n--------- %i-%i ----------\n"%(rlist[0],rlist[-1]))

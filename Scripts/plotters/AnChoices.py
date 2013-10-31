@@ -133,15 +133,15 @@ def plot_A_corrs(basedir,fin):
 if __name__=="__main__":
 	
 	#plot_A_corrs(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_0-1000/CorrectAsym/","CorrectedAsym.txt")
-	plot_A_corrs(os.environ["UCNA_ANA_PLOTS"]+"/test/MCCors/thinfoil/","test.txt")
-	exit(0)
+	#plot_A_corrs(os.environ["UCNA_ANA_PLOTS"]+"/test/MCCors/thinfoil/","test.txt")
+	#exit(0)
 	
-	#compare_anchoices(os.environ["UCNA_ANA_PLOTS"]+"/test/Anchoices/",os.environ["UCNA_ANA_PLOTS"]+"/test/Anchoices_SimMagF/")
+	compare_anchoices(os.environ["UCNA_ANA_PLOTS"]+"/test/Anchoices/",os.environ["UCNA_ANA_PLOTS"]+"/test/Anchoices_SimMagF/")
 
 	#compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym_Sim0823_4x/","CorrectedAsym.txt")
-	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_0-16/CorrectAsym/","CorrectedAsym.txt")
-	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_17-1000/CorrectAsym/","CorrectedAsym.txt")
-	compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_0-1000/CorrectAsym/","CorrectedAsym.txt")
+	#compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_0-16/CorrectAsym/","CorrectedAsym.txt")
+	#compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_17-1000/CorrectAsym/","CorrectedAsym.txt")
+	#compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/Range_0-1000/CorrectAsym/","CorrectedAsym.txt")
 
 	#compare_corrections(os.environ["UCNA_ANA_PLOTS"]+"/test/CorrectAsym_SimPen/","CorrectedAsym.txt")
 

@@ -166,9 +166,12 @@ def paperFig1(inColor=False):
 
 def G4_Pen_Compare():
 	basepath = outpath = os.environ["UCNA_ANA_PLOTS"]+"/test/MC_Compare/"
-	mccols = {"Geant4":rgb.red,"Penelope":rgb.blue}
+	mccols = {"Geant4":rgb.black,"Penelope":rgb.black} #{"Geant4":rgb.red,"Penelope":rgb.blue}
 	mcsymbs = {"Geant4":symbol.circle,"Penelope":symbol.triangle}
 	tpname = {0:"0",1:"I",2:"II-III"}
+	
+	gxrange = (75,800)
+	
 	for tp in range(3):
 		print "Type",tp,"events"
 		gdat = {}
@@ -188,19 +191,19 @@ def G4_Pen_Compare():
 				gdat.setdefault(mc,[]).append(d)
 
 		gEvis=graph.graphxy(width=10,height=10,
-						  x=graph.axis.log(title="primary energy [keV]",min=40,max=1000),
+						  x=graph.axis.log(title="primary energy [keV]",min=gxrange[0],max=gxrange[1]),
 						  y=graph.axis.lin(title="mean energy loss [keV]",min=0),
 						  key = graph.key.key(pos="bl"))
 		setTexrunner(gEvis)
 		
 		gEquench=graph.graphxy(width=10,height=10,
-						x=graph.axis.log(title="primary energy [keV]",min=40,max=1000),
+						x=graph.axis.log(title="primary energy [keV]",min=gxrange[0],max=gxrange[1]),
 						y=graph.axis.lin(title="quenching loss [keV]",min=0),
 						key = graph.key.key(pos="bl"))
 		setTexrunner(gEquench)
 		
 		gScatter=graph.graphxy(width=10,height=10,
-							x=graph.axis.log(title="primary energy [keV]",min=40,max=1000),
+							x=graph.axis.log(title="primary energy [keV]",min=gxrange[0],max=gxrange[1]),
 							y=graph.axis.lin(title="Type %s backscatter [\\%% of Type 0]"%tpname[tp],min=0,max=5),
 							key = graph.key.key(pos="tl"))
 		setTexrunner(gScatter)
@@ -216,11 +219,13 @@ def G4_Pen_Compare():
 						 [graph.style.symbol(mcsymbs[mc],size=0.2,symbolattrs=[mccols[mc],]),
 						  graph.style.errorbar(errorbarattrs=[mccols[mc],])])
 					
-		gEvis.writetofile(basepath+"/Evis_Type_%i.pdf"%tp)
-		gEquench.writetofile(basepath+"/Equench_Type_%i.pdf"%tp)
-		gScatter.writetofile(basepath+"/Frac_Type_%i.pdf"%tp)
+		gEvis.writetofile(basepath+"/MC_Compare_Eloss_Type_%i.pdf"%tp)
+		#gEquench.writetofile(basepath+"/Equench_Type_%i.pdf"%tp)
+		gScatter.writetofile(basepath+"/MC_Compare_Frac_Type_%i.pdf"%tp)
 
 
 if __name__=="__main__":
-	#G4_Pen_Compare()
-	paperFig1(True)
+	
+	G4_Pen_Compare()
+
+	#paperFig1(True)

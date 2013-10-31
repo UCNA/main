@@ -9,7 +9,7 @@ from ucnacore.EncalDB import *
 import os
 
 def deleteEQ2ET(conn,eqid):
-	print "Deleting Equench to Etrue",eqid
+	print "Deleting Equench to Erecon",eqid
 	conn.execute("SELECT conversion_curve_id FROM evis_conversion WHERE evis_conversion_id = %i"%eqid)
 	for i in conn.fetchall():
 		if i[0]:
@@ -17,7 +17,7 @@ def deleteEQ2ET(conn,eqid):
 	conn.execute("DELETE FROM evis_conversion WHERE evis_conversion_id = %i"%eqid)
 
 def delete_all_EQ2ET(conn):
-	print "Deleting ALL Equench->Etrue conversions"
+	print "Deleting ALL Equench->Erecon conversions"
 	conn.execute("SELECT evis_conversion_id FROM evis_conversion")
 	for i in conn.fetchall():
 		deleteEQ2ET(conn,i[0])
@@ -25,10 +25,10 @@ def delete_all_EQ2ET(conn):
 
 def uploadEQ2ET(conn,tp,LF,rmin=13000,rmax=100000):
 	tp = int(tp)
-	print "Loading Equench->Etrue curve for type",tp,"Runs",rmin,"-",rmax
+	print "Loading Equench->Erecon curve for type",tp,"Runs",rmin,"-",rmax
 	curvedat = [ (x,LF(x)) for x in LF.unifPoints(1,1000,400) ]	
 	for s in ["East","West"]:
-		lgid = upload_graph(conn,"Equench to Etrue %s Type %i"%(s,tp),curvedat)
+		lgid = upload_graph(conn,"Equench to Erecon %s Type %i"%(s,tp),curvedat)
 		conn.execute("""INSERT INTO evis_conversion
 						(start_run,end_run,side,type,conversion_curve_id)
 						VALUES (%i,%i,'%s',%i,%i)"""

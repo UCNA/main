@@ -24,9 +24,9 @@ def processOctets(sim,omin,omax):
 		os.system("nice -n 5 parallel -P 6 < oct_replaylist.txt")
 	os.system("rm oct_replaylist.txt")
 	if sim:
-		os.system("cd ..; ./UCNAnalyzer pr oct -1000 x x\n");
+		os.system("cd "+anaBinDir+"; ./UCNAnalyzer pr oct -1000 x x\n");
 	else:
-		os.system("cd ..; ./UCNAnalyzer pr oct 1000 x x\n");
+		os.system("cd "+anaBinDir+"; ./UCNAnalyzer pr oct 1000 x x\n");
 	
 
 def processSources(rmin,rmax):

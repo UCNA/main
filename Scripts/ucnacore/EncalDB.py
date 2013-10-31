@@ -4,11 +4,15 @@ import MySQLdb
 import getpass
 
 # open write connection to calibration DB
-def open_connection():
-	host = os.environ["UCNADBADDRESS"]
-	db = os.environ["UCNADB"]
-	usr = os.environ["UCNADBUSER"]
-	pw = os.environ["UCNADBPASS"]
+def open_connection(db=None,usr=None,pw=None,host=None):
+	if not host:
+		host = os.environ["UCNADBADDRESS"]
+	if not db:
+		db = os.environ["UCNADB"]
+	if not usr:
+		usr = os.environ["UCNADBUSER"]
+	if not pw:
+		pw = os.environ["UCNADBPASS"]
 	print "Connecting to database",db,"on",host
 	conn = None
 	nfails = 0
