@@ -1,5 +1,6 @@
 #include "SQL_Utils.hh"
 #include <stdlib.h>
+#include <unistd.h>
 #include "strutils.hh"
 #include "SMExcept.hh"
 
