@@ -47,10 +47,12 @@ void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBas
 	AA.hCxn = (TH1F*)AA.hAsym->Clone("hCxn");
 	AA.hCxn->Scale(0);
 	AA.myA->defaultCanvas->cd();
+	AA.myA->defaultCanvas->SetLeftMargin(0.11);
+	AA.myA->defaultCanvas->SetRightMargin(0.04);
 	
 	// analysis energy window; 220-670 keV for 2010 data.
-	double emin = 275;
-	double emax = 625;
+	double emin = 220;
+	double emax = 670;
 	
 	TF1 lineFit("lineFit","pol0",emin,emax);
 	TLatex lx;
@@ -88,7 +90,8 @@ void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBas
 	AA.hAsym->SetTitle("Raw Asymmetry");
 	AA.hAsym->Draw();
 	AA.myA->printCanvas("RawAsym");
-	AA.hAsym->GetFunction("asymFit")->SetBit(TF1::kNotDraw);
+	TF1* asft = AA.hAsym->GetFunction("asymFit");
+	if(asft) asft->SetBit(TF1::kNotDraw);
 	
 	// initial beta/2 correction
 	for(int b=1; b<=AA.hAsym->GetNbinsX(); b++) {
@@ -97,6 +100,7 @@ void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBas
 		AA.hAsym->SetBinContent(b, AA.hAsym->GetBinContent(b)*c);
 		AA.hAsym->SetBinError(b, AA.hAsym->GetBinError(b)*c);
 	}
+	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
 	AA.hAsym->Fit(&lineFit,"NR");
 	Stringmap m1;
 	m1.insert("anChoice",ctos(choiceLetter(AA.anChoice)));
@@ -107,6 +111,11 @@ void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBas
 	m1.insert("eMin",emin);
 	m1.insert("eMax",emax);
 	OM.qOut.insert("rawFit",m1);
+	
+	// save a copy of the uncorrected version
+	TH1* hA_unc = (TH1*)AA.hAsym->Clone("hA_unc");
+	hA_unc->SetTitle("Uncorrected Asymmetry");
+
 	
 	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
 	AA.hAsym->SetTitle("Uncorrected Asymmetry");
@@ -158,7 +167,7 @@ void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBas
 	int b1 = AA.hAsym->FindBin(emax-0.5);
 	
 	// root average fit
-	AA.hAsym->Fit(&lineFit,"NR");
+	AA.hAsym->Fit(&lineFit,"R");
 	Stringmap m2;
 	m2.insert("anChoice",ctos(choiceLetter(AA.anChoice)));
 	m2.insert("A0",lineFit.GetParameter(0));
@@ -168,13 +177,24 @@ void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBas
 	OM.qOut.insert("correctedFit",m2);
 	
 	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
-	AA.hAsym->SetTitle("Corrected Asymmetry");
+	AA.hAsym->SetTitle("Asymmetry A_{0}");
 	AA.hAsym->Draw();
 	sprintf(tmp,"#splitline{A_{0} = %.5f #pm %.5f,}{#chi^{2}/ndf = %.1f/%i}",lineFit.GetParameter(0),lineFit.GetParError(0),lineFit.GetChisquare(),lineFit.GetNDF());
 	//lx.DrawLatex(100,-0.06,tmp);
 	AA.myA->printCanvas("hAsym_A3");
 	printf("*** Corrected %s ***\n",tmp);
 	OM.addObject(AA.hAsym->Clone(("hAsym_Corrected_"+ctos(choiceLetter(AA.anChoice))).c_str()));
+	
+	
+	// corrected+uncorrected drawing
+	AA.hAsym->GetYaxis()->SetRangeUser(-0.16,-0.08);
+	AA.hAsym->GetYaxis()->SetTitleOffset(1.7);
+	AA.hAsym->Draw("E0");
+	hA_unc->SetMarkerStyle(20);
+	hA_unc->SetMarkerSize(0.35);
+	hA_unc->Draw("HIST SAME P");
+	AA.myA->printCanvas("hAsym_Comparison");
+	delete hA_unc;
 	
 	// manual bins averaging
 	double statw = 0;
@@ -196,7 +216,8 @@ void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBas
 		sumc[i]/=statw;
 		sumcerr[i]/=statw;
 	}
-	printf("\n\n%i-%i STATISTICS: %.6f +- %.6f\n",R0,R1,mu,1./sqrt(statw));
+	printf("\n\n---------------- %i - %i keV window ----------------\n",int(emin),int(emax));
+	printf("\n%i-%i STATISTICS: %.6f +- %.6f\n",R0,R1,mu,1./sqrt(statw));
 	Stringmap m3;
 	m3.insert("anChoice",ctos(choiceLetter(AA.anChoice)));
 	for(unsigned int i=0; i<ctable.size(); i++) {

@@ -306,18 +306,18 @@ void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor, 
 		if(!RefOA.hasFGBGPair(it->first)) continue;
 		const fgbgPair& qhRef = RefOA.getFGBGPair(it->first);
 		double bgRatio = RefOA.getTotalTime(it->second->afp,GV_OPEN)[it->second->mySide]/RefOA.getTotalTime(it->second->afp,GV_CLOSED)[it->second->mySide];
-		for(unsigned int i=0; i<totalBins(it->second->h[0]); i++) {
+		for(unsigned int i=0; i<totalBins(it->second->h[GV_CLOSED]); i++) {
 			double rootn = qhRef.h[0]->GetBinError(i)*sqrt(simfactor);		// root(bg counts) from ref histogram errorbars
 			double n = rootn*rootn;											// background counts from reference histogram
 			double bgObsCounts = rnd_source.PoissonD(n);					// simulated background counts
 			double fgBgCounts = rnd_source.PoissonD(n*bgRatio);				// simulated foreground counts due to background
 			if(!addFluctCounts) bgObsCounts = fgBgCounts = 0.;
-			it->second->h[0]->AddBinContent(i,bgObsCounts);					// fill fake background counts
-			it->second->h[0]->SetBinError(i,rootn);							// set root-n statitics for background
-			it->second->h[1]->AddBinContent(i,fgBgCounts);					// add simulated background to foreground histogram				
+			it->second->h[GV_CLOSED]->AddBinContent(i,bgObsCounts);			// fill fake background counts
+			it->second->h[GV_CLOSED]->SetBinError(i,rootn);					// set root-n statitics for background
+			it->second->h[GV_OPEN]->AddBinContent(i,fgBgCounts);			// add simulated background to foreground histogram
 		}
 		printf("\t%i counts for %s [%i bins]\n",int(it->second->h[0]->Integral()),it->second->getName().c_str(),totalBins(it->second->h[0]));
-		it->second->h[1]->Add(it->second->h[0],-bgRatio);						// subtract back off simulated background
+		it->second->h[GV_OPEN]->Add(it->second->h[GV_CLOSED],-bgRatio);		// subtract back off simulated background
 		it->second->isSubtracted = true;
 	}
 }

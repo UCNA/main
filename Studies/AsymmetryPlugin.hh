@@ -37,9 +37,10 @@ public:
 	TH1F* hCxn;							//< applied asymmetry correction
 	TH1*  hEvtSS[TYPE_III_EVENT+1];		//< super-sum for each event type
 	
-	quadHists* qEnergySpectra[2][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
-	quadHists* q23ProbCut[2][TYPE_III_EVENT+1];						//< Type II/III spectra by probability cut for [side][type]
-	quadHists* qTotalSpectrum[2];									//< total spectrum based on analysis choice
+	quadHists* qEnergySpectra[BOTH][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
+	quadHists* qPassesWC[BOTH];										//< events passing wirechamber cut, no other cuts
+	quadHists* q23ProbCut[BOTH][TYPE_III_EVENT+1];					//< Type II/III spectra by probability cut for [side][type]
+	quadHists* qTotalSpectrum[BOTH];								//< total spectrum based on analysis choice
 	
 	AnalysisChoice anChoice;	//< asymmetry analysis choice
 

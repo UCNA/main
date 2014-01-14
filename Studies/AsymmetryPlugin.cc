@@ -16,14 +16,15 @@ TF1 AsymmetryPlugin::averagerFit = TF1("averagerFit","pol0",0,neutronBetaEp);
 AsymmetryPlugin::AsymmetryPlugin(OctetAnalyzer* OA):
 OctetAnalyzerPlugin(OA,"asymmetry"), nEnergyBins(150), energyMax(1500), hAsym(NULL), hCxn(NULL), anChoice(ANCHOICE_C) {
 	for(Side s = EAST; s <= WEST; ++s) {
+		myA->ignoreMissingHistos = true;
+		qPassesWC[s] = registerCoreHist("hPassedWC","Events Passing Wirechamber Energy",nEnergyBins, 0, energyMax, s);
+		myA->ignoreMissingHistos = false;
 		for(EventType t=TYPE_0_EVENT; t<=TYPE_IV_EVENT; ++t) {
 			if(t==TYPE_II_EVENT || t==TYPE_III_EVENT) {
-				myA->ignoreMissingHistos = true;
 				q23ProbCut[s][t] = registerCoreHist("h23ProbCut_Tp_"+itos(t),
 													"Type "+itos(t)+" Events Energy",
 													nEnergyBins, 0, energyMax, s);
 				q23ProbCut[s][t]->setAxisTitle(X_DIRECTION,"Energy [keV]");
-				myA->ignoreMissingHistos = false;
 			}
 			for(unsigned int p=0; p<=nBetaTubes; p++) {
 				qEnergySpectra[s][p][t] = registerCoreHist("hEnergy_"+(p<nBetaTubes?itos(p)+"_":"")+"Type_"+itos(t),
@@ -41,6 +42,8 @@ void AsymmetryPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	if(!(s==EAST || s==WEST)) return;
 	if(PDS.fPID == PID_SINGLE && PDS.fType == TYPE_IV_EVENT)
 		qEnergySpectra[s][nBetaTubes][TYPE_IV_EVENT]->fillPoint->Fill(PDS.getErecon(),weight);
+	if(PDS.fPID == PID_BETA || PDS.fPID == PID_MUON)
+		qPassesWC[s]->fillPoint->Fill(PDS.getErecon(),weight);
 	if(PDS.fPID != PID_BETA) return;
 	if(PDS.passesPositionCut(s) && PDS.fType <= TYPE_III_EVENT) {
 		qEnergySpectra[s][nBetaTubes][PDS.fType]->fillPoint->Fill(PDS.getErecon(),weight);
@@ -68,7 +71,9 @@ void AsymmetryPlugin::fitAsym(float fmin, float fmax, unsigned int color, bool a
 	TF1* fitter = avg?&averagerFit:&asymmetryFit;
 	fitter->SetParameter(0,A0_PDG);
 	fitter->SetLineColor(color);
-	hAsym->Fit(fitter,"Q","",fmin,fmax);
+	fitter->SetLineStyle(2);
+	fitter->SetLineWidth(2.0);
+	hAsym->Fit(fitter,(fmin==0 && myA->isSimulated?"Q":"QN"),"",fmin,fmax);
 	m.insert("A0_fit",fitter->GetParameter(0));
 	m.insert("dA0",fitter->GetParError(0));
 	m.insert("A0_chi2",fitter->GetChisquare());
@@ -227,7 +232,7 @@ void AsymmetryPlugin::calculateResults() {
 	asymFits.pop_back(); asymCuts.pop_back();
 	fitAsym(50,800,7);
 	fitAsym(225,675,6);
-	fitAsym(0,1000,7);
+	fitAsym(0,1000,1);
 	fitInstAsym();
 	endpointFits();
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -368,12 +373,21 @@ void AsymmetryPlugin::makePlots() {
 				if(gv==GV_CLOSED && tp>TYPE_0_EVENT) hTpRt->Rebin(2);
 				if(gv==GV_CLOSED) hTpRt->GetXaxis()->SetRange(1,hTpRt->GetXaxis()->GetNbins());
 				hToPlot.push_back(hTpRt);
+				
+				// non-WC-vetoed for comparison
+				if(tp==TYPE_IV_EVENT) {
+					TH1* hTpRtWC = myA->flipperSummedRate(qPassesWC[s], gv);
+					hTpRtWC->Scale(1000);
+					hTpRtWC->SetLineStyle(1+s);
+					hToPlot.push_back(hTpRtWC);
+				}
+				
 			}
 			drawSimulHistos(hToPlot,"HIST");
 			printCanvas("Energy/EnergyRate_"+itos(tp)+(gv==GV_OPEN?"":"_BG"));
 			if(tp==TYPE_IV_EVENT && gv==GV_CLOSED) {
 				myA->defaultCanvas->SetLogy(true);
-				for(Side s = EAST; s <= WEST; ++s) hToPlot[s]->SetMinimum(0.9);
+				for(Side s = EAST; s <= WEST; ++s) { hToPlot[2*s]->SetMinimum(0.3); hToPlot[2*s+1]->SetMinimum(0.3); }
 				drawSimulHistos(hToPlot,"HIST");
 				printCanvas("Energy/EnergyRate_"+itos(tp)+"_BG_Log");
 				myA->defaultCanvas->SetLogy(false);
@@ -387,31 +401,71 @@ void AsymmetryPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 	// re-cast to correct type
 	AsymmetryPlugin& dat = *(AsymmetryPlugin*)AP;
 	
-	hAsym->GetXaxis()->SetRangeUser(0,800);
-	hAsym->SetLineColor(4);
-	dat.hAsym->SetLineColor(2);
-	hAsym->Draw("HIST E1");
-	dat.hAsym->Draw("SAME HIST E1");
+	myA->defaultCanvas->SetRightMargin(0.04);
+	myA->defaultCanvas->SetLeftMargin(0.14);
+	
+	//hAsym->SetLineColor(4);
+	//dat.hAsym->SetLineColor(2);
+	dat.hAsym->SetTitle("Super-ratio Asymmetry");
+	dat.hAsym->GetXaxis()->SetRangeUser(0,800);
+	dat.hAsym->GetYaxis()->SetRangeUser(-0.07,0);
+	
+	hAsym->SetMarkerStyle(33);
+	hAsym->SetMarkerSize(0.4);
+	
+	dat.hAsym->Draw("E0");
+	hAsym->Draw("P SAME");
 	printCanvas("DataComparison/Asymmetry");
 	
-	drawHistoPair(dat.hSuperSum[GV_OPEN],hSuperSum[GV_OPEN]);
+	// determine scale to total events over analysis window
+	TH1* simRef = hSuperSum[GV_OPEN];
+	TH1* datRef = dat.hSuperSum[GV_OPEN];
+	int b1 = datRef->FindBin(220);
+	int b2 = datRef->FindBin(670);
+	double evtscale = datRef->Integral(b1,b2)/simRef->Integral(b1,b2);
+	
+	// total events super sum
+	dat.hSuperSum[GV_OPEN]->Scale(1000);
+	dat.hSuperSum[GV_OPEN]->SetTitle("beta decay energy spectrum");
+	dat.hSuperSum[GV_OPEN]->GetYaxis()->SetTitle("event rate [mHz/keV]");
+	dat.hSuperSum[GV_OPEN]->SetMinimum(0);
+	dat.hSuperSum[GV_OPEN]->GetYaxis()->SetTitleOffset(1.5);
+	hSuperSum[GV_OPEN]->Scale(1000*evtscale);
+	hSuperSum[GV_OPEN]->SetMarkerSize(0.5);
+	drawDataMCPair(dat.hSuperSum[GV_OPEN],hSuperSum[GV_OPEN]);
 	printCanvas("DataComparison/SuperSum");
-	double evtscale = dat.hEvtSS[TYPE_0_EVENT]->Integral()/hEvtSS[TYPE_0_EVENT]->Integral();
+	
+	// residuals
+	hSuperSum[GV_OPEN]->Add(dat.hSuperSum[GV_OPEN],-1.);
+	hSuperSum[GV_OPEN]->SetTitle("MC - Data residuals");
+	hSuperSum[GV_OPEN]->GetYaxis()->SetTitleOffset(1.5);
+	hSuperSum[GV_OPEN]->GetYaxis()->SetTitle("event rate [mHz/keV]");
+	hSuperSum[GV_OPEN]->Draw();
+	drawHLine(0, myA->defaultCanvas);
+	printCanvas("DataComparison/SuperSumResid");
+	
 	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 		// data vs. MC supersums by event type
 		dat.hEvtSS[tp]->GetXaxis()->SetRangeUser(0,800);
 		hEvtSS[tp]->GetXaxis()->SetRangeUser(0,800);
+		dat.hEvtSS[tp]->SetTitle(("Type "+itosRN(tp)+" event rate").c_str());
+		hEvtSS[tp]->SetTitle(("Type "+itosRN(tp)+" event rate").c_str());
+		dat.hEvtSS[tp]->Scale(1000);
+		dat.hEvtSS[tp]->GetYaxis()->SetTitle("event rate [mHz/keV]");
 		dat.hEvtSS[tp]->SetMinimum(0);
+		dat.hEvtSS[tp]->GetYaxis()->SetTitleOffset(1.5);
+		hEvtSS[tp]->Scale(1000*evtscale);
+		hEvtSS[tp]->GetYaxis()->SetTitle("event rate [mHz/keV]");
 		hEvtSS[tp]->SetMinimum(0);
-		dat.hEvtSS[tp]->SetMarkerStyle(1);
-		hEvtSS[tp]->SetMarkerStyle(1);
-		hEvtSS[tp]->Scale(evtscale);
-		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
+		hEvtSS[tp]->GetYaxis()->SetTitleOffset(1.5);
+		hEvtSS[tp]->SetMarkerSize(0.5);
+		drawDataMCPair(dat.hEvtSS[tp],hEvtSS[tp]);
 		printCanvas("DataComparison/SuperSum_Type_"+itos(tp));
+		
 		// match data, MC scales to compare shapes
 		hEvtSS[tp]->Scale(dat.hEvtSS[tp]->Integral()/hEvtSS[tp]->Integral());
 		hEvtSS[tp]->SetMinimum(0);
-		drawHistoPair(dat.hEvtSS[tp],hEvtSS[tp]);
+		drawDataMCPair(dat.hEvtSS[tp],hEvtSS[tp]);
 		printCanvas("DataComparison/SuperSumScaled_Type_"+itos(tp));
 		
 		if(tp>TYPE_0_EVENT) {
