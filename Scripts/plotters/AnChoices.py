@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
-from Asymmetries import *
+import sys
+sys.path.append("..")
+
+from review.Asymmetries import *
 from ucnacore.PyxUtils import *
+from ucnacore.DecayPhysics import *
 import copy
 
 class AsymCorrFile(QFile):
@@ -22,10 +26,12 @@ def compare_anchoices(datf, simf):
 	gdat = []
 	ancs = ["A","B","C","D","E","F","G","H","I","J","K"]
 	
+	pol_corr = 1.0067 # polarization correction
+	
 	for (n,a) in enumerate(ancs):
-		aDat = AsymmetryFile(datf+"/Anchoice_"+a+"/Anchoice_"+a+".txt").getAsym(200,675)
-		aSim = AsymmetryFile(simf+"/Anchoice_"+a+"/Anchoice_"+a+".txt").getAsym(200,675)
-		gdat.append([n+1,aDat.A0,aDat.dA0,aSim.A0,aSim.dA0,aDat.A0/aSim.A0-1.,aDat.dA0/abs(aSim.A0)])
+		aDat = AsymmetryFile(datf+"/Anchoice_"+a+"/Anchoice_"+a+".txt").getAsym(225,675)
+		aSim = AsymmetryFile(simf+"/Anchoice_"+a+"/Anchoice_"+a+".txt").getAsym(225,675)
+		gdat.append([n+1,aDat.A0*pol_corr,aDat.dA0*pol_corr,aSim.A0,aSim.dA0,aDat.A0*pol_corr*A0_PDG/aSim.A0,aDat.dA0*pol_corr*abs(A0_PDG/aSim.A0)])
 
 			
 	myticks = [ graph.axis.tick.tick(n+1,label=a) for (n,a) in enumerate(ancs) ]
@@ -48,15 +54,23 @@ def compare_anchoices(datf, simf):
 	ancs = ancs[:5]
 	myticks = myticks[:5]
 	gdat = gdat[:5]
+	#ancs = ancs[5:]
+	#myticks = myticks[5:]
+	#gdat = gdat[5:]
 	gdA=graph.graphxy(width=10,height=10,
 					 x=graph.axis.lin(title="Analysis Choice",manualticks=myticks,min=0.5,max=len(ancs)+0.5,parter=None),
-					 y=graph.axis.lin(title="${\\rm Data}/{\\rm MC}-1$ Asymmetry Difference",min=0,max=0.025),
-					 key = graph.key.key(pos="tl"))
+					 y=graph.axis.lin(title="Asymmetry",min=-0.125,max=-0.118),
+					 key = graph.key.key(pos="bl"))
 	setTexrunner(gdA)
-	gdA.plot(graph.data.points(gdat,x=1,y=6,dy=7,title=None),
-			[graph.style.symbol(symbol.triangle,size=0.2,symbolattrs=[rgb.blue,]),
-			 graph.style.errorbar(errorbarattrs=[rgb.blue,])])
-	
+	gdA.plot(graph.data.points(gdat,x=1,y=2,dy=3,title="Uncorrected"),
+			[graph.style.symbol(symbol.triangle,size=0.2,symbolattrs=[deco.filled(),]),
+			 graph.style.errorbar(errorbarattrs=[])])
+	gdA.plot(graph.data.points(gdat,x=1,y=6,dy=7,title="MC Corrected"),
+			[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[deco.filled(),]),
+			 graph.style.errorbar(errorbarattrs=[])])
+	gdA.plot(graph.data.function("y(x)=%f"%A0_PDG,title=None),
+			[graph.style.line(lineattrs=[style.linestyle.dashed,])])
+			 
 	gdA.writetofile(simf+"/Anchoices_Delta.pdf")
 
 
@@ -87,7 +101,7 @@ def compare_corrections(basedir,fin):
 			 [graph.style.symbol(symbol.triangle,size=0.2,symbolattrs=[rgb.blue,]),
 			  graph.style.errorbar(errorbarattrs=[rgb.blue,])])
 	gdat = [(f.n,f.A0,f.dA0) for f in corrdat]
-	gdA.plot(graph.data.points(gdat,x=1,y=2,dy=3,title="Corrected"),
+	gdA.plot(graph.data.points(gdat,x=1,y=2,dy=3,title="MC Corrected"),
 			 [graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
 			  graph.style.errorbar(errorbarattrs=[rgb.red,])])
 

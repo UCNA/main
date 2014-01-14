@@ -1,11 +1,14 @@
 #!/sw/bin/python2.7
 
+import sys
+sys.path.append("..")
+
 from ucnacore.PyxUtils import *
 from math import *
 from ucnacore.LinFitter import *
 #from UCNAUtils import *
 from bisect import bisect
-from FieldMapGen import *
+from calib.FieldMapGen import *
 
 def clip_function(y,rho,h,R):
 	sqd = sqrt(rho**2-y**2)
@@ -151,9 +154,9 @@ def drawInterleaved(c,ps):
 		c.stroke(p[2],ps[p[1]].sty)
 	print "Done."
 
-def fieldPath(fmap,z0,z1,c,cmax):
+def fieldPath(fmap,z0,z1,c,cmax,npts=50):
 	pfield = path3d()
-	for z in unifrange(z0,z1,50):
+	for z in unifrange(z0,z1,npts):
 		Bdens = c/sqrt(fmap(z)+0.0001)
 		if abs(Bdens) < cmax:
 			pfield.addpt((0,Bdens,z))
@@ -251,7 +254,33 @@ def plot_larmor_trajectory():
 	
 	c.writetofile("/Users/michael/Desktop/larmor_spiral.pdf")
 	
+
+def plot_spectrometer_field():
+
+	fmap = fieldMap()
+	fmap.addFlat(-3,-2.8,0.01)
+	fmap.addFlat(-2.3,-2.1,0.6)
+	fmap.addFlat(-1.6,1.6,1.0)
+	fmap.addFlat(2.1,2.3,0.6)
+	fmap.addFlat(2.8,3,0.01)
 	
+	rot = rot3(0.0,0.0,-pi/2.,10.)
+	
+	w = 0.25
+	cmagf = canvas.canvas()
+	for o in unifrange(-w,w,20):
+		pf = fieldPath(fmap,-2.6,2.6,o,w,400)
+		pf.apply(rot)
+		#if len(pf.pts) < 10:
+		#	continue
+		pf.finish()
+		#pf.sty=[style.linewidth.thin,rgb.blue]
+		pf.sty=[style.linewidth.thin]	# field line color/style
+		pf.drawto(cmagf)
+	cmagf.writetofile("/Users/michael/Desktop/Bfield.pdf")
+
+
+
 	
 def larmor_clipping_plot():
 	
@@ -298,4 +327,5 @@ def radial_clipping_plot():
 if __name__ == "__main__":
 	#larmor_clipping_plot()
 	#radial_clipping_plot()
-	plot_larmor_trajectory()
+	#plot_larmor_trajectory()
+	plot_spectrometer_field()

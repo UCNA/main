@@ -7,6 +7,7 @@
 #include "AsymmetryCorrections.hh"
 #include "EnumerationFitter.hh"
 #include "CathodeTuningAnalyzer.hh"
+#include "SimEdepPlugin.hh"
 
 int main(int argc, char *argv[]) {
 	
@@ -81,6 +82,35 @@ int main(int argc, char *argv[]) {
 	if(rname=="sep_23") {
 		separate23(sim);
 	}
+	
+	if(rname=="sim_edep_scan") {
+		G4toPMT G2P(true);
+		G2P.addFile(getEnvSafe("G4OUTDIR")+"/20120824_MagF_neutronBetaUnpol/analyzed_*.root");
+		PMTCalibrator PCal(16000);
+		G2P.setCalibrator(PCal);
+		
+		OutputManager OM("SimSpectrum",getEnvSafe("UCNA_ANA_PLOTS")+"/SimSpectrum/SimEdep/");
+		SimEdepAnalyzer SEA(&OM);
+		
+		G2P.startScan(false);
+		while(G2P.nextPoint()) {
+			SEA.fillCoreHists(G2P, G2P.physicsWeight);
+		}
+		
+		SEA.calculateResults();
+		SEA.myEdep->makeBigTable();
+		SEA.write();
+		SEA.setWriteRoot(true);
+	}
+	
+	if(rname=="sim_edep") {
+		OutputManager OM("SimSpectrum",getEnvSafe("UCNA_ANA_PLOTS")+"/SimSpectrum/SimEdep/");
+		SimEdepAnalyzer SEA(&OM,"SimEdepAnalyzer",OM.basePath+"/SimEdepAnalyzer/SimEdepAnalyzer");
+		SEA.calculateResults();
+		SEA.makePlots();
+		SEA.myEdep->makeBigTable();
+	}
+
 	
 	if(rname=="fit_bg_excess") {
 		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
@@ -204,6 +234,28 @@ int main(int argc, char *argv[]) {
 		PosPlotter PP(&OM);
 		PMTCalibrator PCal(16000);
 		PP.npeGradPlot(&PCal);
+	}
+	
+	if(rname=="alpha_loss") {
+		PMTCalibrator PCal(16000);
+		QFile qOut;
+		for(unsigned int i=0; i<20; i++) {
+			G4toPMT G2P;
+			G2P.setCalibrator(PCal);
+			G2P.addFile(getEnvSafe("G4OUTDIR")+"/AlphaFoil_"+itos(i)+"_eGun_5485.6keV/analyzed_0.root");
+			G2P.startScan(false);
+			TH1F alphaLoss("alphaEnergy","alphaEnergy",6000,0,6000);
+			while(G2P.nextPoint()) {
+				alphaLoss.Fill(G2P.eDep[EAST]);
+			}
+			Stringmap m;
+			m.insert("thickness",i);
+			m.insert("mean",alphaLoss.GetMean());
+			m.insert("rms",alphaLoss.GetRMS());
+			qOut.insert("alpha_eloss",m);
+			qOut.commit(getEnvSafe("UCNA_ANA_PLOTS")+"/test/AlphaEnergyLossSim.txt");
+		}
+		
 	}
 	
 	return 0;

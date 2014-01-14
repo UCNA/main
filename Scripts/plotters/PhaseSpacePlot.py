@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append("..")
+
 from ucnacore.PyxUtils import *
 from ucnacore.LinFitter import *
 import os
@@ -22,6 +25,14 @@ d_Vud_PDG = 0.00022
 # Serebrov 2005 lifetime
 tau_sbv = 878.5
 d_tau_sbv = 0.8
+
+# Nico 2005 NIST beam lifetime
+tau_nico = 886.3
+d_tau_nico = 3.4
+
+# Yue 2013 NIST beam lifetime
+tau_yue = 887.7
+d_tau_yue = 2.25
 
 # Perkeo II 2002 (Abele)
 lambda_PII02 = 1.2739
@@ -67,6 +78,8 @@ class PhaseSpacePlotter:
 		area_Vud,area_PDGgA,area_PDGtau = self.PDG_bands(PDG2012)
 		area_MundgA = self.lambda_area(lambda_Mund,d_lambda_Mund,0.002)
 		area_UCNA = self.lambda_area(1.2756,0.0030)
+		area_YueTau = self.tau_area(tau_yue,d_tau_yue)
+		area_NicoTau = self.tau_area(tau_nico,d_tau_nico)
 		
 		if False:
 			gdat = [(l,Vud(l,tau_SBV),dVdTau(l,tau_SBV)*d_tau_SBV) for l in unifrange(l0,l1,npts)]
@@ -98,6 +111,8 @@ class PhaseSpacePlotter:
 			self.gPS.fill(area_MundgA, [pattern.hatched(0.15,-45)])
 			self.gPS.fill(area_UCNA, [pattern.hatched(0.10,45)])
 			self.gPS.fill(area_PDGtau, [pattern.hatched(0.07,90)])
+			#self.gPS.fill(area_NicoTau, [pattern.hatched(0.07,75)])
+			self.gPS.fill(area_YueTau, [pattern.hatched(0.07,75)])
 
 		self.gPS.text(9.0,6.8,"$0^+ \\rightarrow 0^+$")
 
@@ -105,6 +120,9 @@ class PhaseSpacePlotter:
 		self.gPS.insert(tbox,[trafo.rotate(-52),trafo.translate(9.0,3.55)])
 		#gPS.text(9.5,2.5,"$\\tau_n$ PDG")
 
+		tbox = text.text(0,0,"$\\tau_n$ NIST")
+		self.gPS.insert(tbox,[trafo.rotate(-52),trafo.translate(2.2,3.55)])
+		
 		tbox = text.text(5.55, 1, "UCNA")
 		tpath = tbox.bbox().enlarged(0.2).path()
 		self.gPS.stroke(tpath,[deco.filled([color.rgb.white])])
@@ -163,11 +181,47 @@ class PhaseSpacePlotter:
 		self.gPS.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Paper/PhaseSpace2010.pdf")
 
 
+def A_meas_history():
+
+	gdat = [	(1975,-0.113,0.006),					# Krohn 75 Argonne
+				(1986,-0.1146,0.0019),					# Bopp 86
+				(1995,-0.1160,sqrt(.0009**2+.0012**2)),	# TPC Liaud '95
+				(1997,-0.1189,0.0012),					# Abele '97
+				(2002,-0.1189,0.0007),					# Abele '02
+				#(2012.3,-0.11972,0.00065)				# Mund '13
+			]
+
+	gYeroz = [
+				(1990.5,-0.1116,0.0014),				# Yeroz. 1990, 1991
+				(1996,-0.1135,0.0014),					# Yeroz. '97 - revised
+			]
+				
+	gUCNA = [	(2009,-0.1138,sqrt(.0046**2+.0021**2)),
+				(2010,-.11966,sqrt(.00089**2+.0014**2)),
+				#(2013.1,-0.11954,sqrt(.00055**2+.00098**2))
+			]
+	
+	gA = graph.graphxy(width=15,height=10,
+			   x=graph.axis.lin(title="Year",max=2015),
+			   y=graph.axis.lin(title="$A_0$"),
+			   key = graph.key.key(pos="bl"))
+	setTexrunner(gA)
+	
+	gA.plot(graph.data.points(gdat,x=1,y=2, dy=3, title="CN experiments"),
+			   [graph.style.errorbar(),graph.style.symbol(symbol.circle,size=0.22,symbolattrs=[deco.filled()]),])
+	gA.plot(graph.data.points(gYeroz,x=1,y=2, dy=3, title=None),
+			   [graph.style.errorbar(),graph.style.symbol(symbol.circle,size=0.22,symbolattrs=[deco.filled()]),graph.style.line()])
+	gA.plot(graph.data.points(gUCNA,x=1,y=2, dy=3, title="UCNA"),
+			   [graph.style.errorbar(),graph.style.symbol(symbol.diamond,size=0.22,symbolattrs=[deco.filled([rgb.white])]),])
+			   
+	gA.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Paper/AsymHistory_2010.pdf")
 
 if __name__=="__main__":
 	
-	#PSP = PhaseSpacePlotter()
-	#PSP.ucnaPRL2012()
+	#A_meas_history()
 	
 	PSP = PhaseSpacePlotter()
-	PSP.thesis_conflicted()
+	PSP.ucnaPRL2012()
+	
+	#PSP = PhaseSpacePlotter()
+	#PSP.thesis_conflicted()

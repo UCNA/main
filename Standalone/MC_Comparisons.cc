@@ -39,6 +39,7 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
 		// fill histograms
 		SP->startScan();
 		while(SP->nextPoint()) {
+			if(SP->fType == TYPE_III_EVENT) SP->fType = TYPE_II_EVENT; // merge Type II/III
 			if(SP->fPID != PID_BETA || SP->fSide != EAST) continue;
 			if(SP->fType <= TYPE_II_EVENT) {
 				hEvis[SP->fType].back()->Fill(SP->eDep[EAST]+SP->eDep[WEST],SP->physicsWeight);
@@ -130,9 +131,9 @@ int main(int argc, char *argv[]) {
 	gStyle->SetOptStat("");
 	
 	// list of simulated energies
-	int enlist[] = {100,150,200,300,400,600,800};
+	int enlist[] = {50,100,150,200,300,400,600,800};
 	
-	for(int i = 0; i < 7; i++) {
+	for(int i = 1; i < 8; i++) {
 		int l = enlist[i];
 		
 		// set up output directories
@@ -146,7 +147,7 @@ int main(int argc, char *argv[]) {
 		
 		// load Geant4 simulation
 		G4toPMT g2p(true);
-		std::string fname = "/home/mmendenhall/geant4/output/IsotLine_eGunRandMomentum_"+itos(l)+".0keV/analyzed_*";
+		std::string fname = getEnvSafe("G4OUTDIR")+"/IsotLine_eGunRandMomentum_"+itos(l)+".0keV/analyzed_*";
 		mcdat.insert("MC_1",fname);
 		g2p.addFile(fname);
 		if(!g2p.getnFiles()) continue;

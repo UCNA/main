@@ -1,12 +1,14 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append("..")
+
 from ucnacore.PyxUtils import *
 from ucnacore.QFile import *
 from math import *
 import os
 import sys
-sys.path.append("Corrections")
-from EnergyErrors import *
+from Corrections.EnergyErrors import *
 
 class spectrumCorrs(KVMap):
 	def __init__(self,m):
@@ -69,7 +71,7 @@ def plotWilkinsonCorrs(fin,outpath):
 	###############
 	
 	gSpec=graph.graphxy(width=10,height=8,
-						x=graph.axis.lin(title="Energy [keV]",min=0,max=ep),
+						x=graph.axis.lin(title="Kinetic Energy [keV]",min=0,max=ep),
 						y=graph.axis.lin(title="Decay Rate",min=0),
 						key = graph.key.key(pos="tr"))
 	setTexrunner(gSpec)
@@ -95,7 +97,7 @@ def plotWilkinsonCorrs(fin,outpath):
 	##############
 	
 	gWCTot=graph.graphxy(width=20,height=10,
-			x=graph.axis.lin(title="Energy [keV]",min=0,max=783),
+			x=graph.axis.lin(title="Kinetic Energy [keV]",min=0,max=783),
 			y=graph.axis.lin(title="Total spectrum correction factor",min=1.0,max=1.2),
 			key = graph.key.key(pos="tr"))
 	setTexrunner(gWCTot)
@@ -109,7 +111,7 @@ def plotWilkinsonCorrs(fin,outpath):
 	################
 	
 	gWCA=graph.graphxy(width=15,height=7,
-			x=graph.axis.lin(title="Energy [keV]",min=0,max=782),
+			x=graph.axis.lin(title="Kinetic Energy [keV]",min=0,max=782),
 			y=graph.axis.lin(title="$(A-A_0)/A_0$ [\\%]",min=0.0000),
 			key = graph.key.key(pos="tl"))
 	setTexrunner(gWCA)
@@ -134,7 +136,7 @@ def plotWilkinsonCorrs(fin,outpath):
 	################
 	
 	gAsym=graph.graphxy(width=10,height=8,
-			x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
+			x=graph.axis.lin(title="Kinetic Energy [keV]",min=0,max=800),
 			y=graph.axis.lin(title="Asymmetry $A(E)\\beta/2$"),
 			key = graph.key.key(pos="tr"))
 	setTexrunner(gAsym)
@@ -154,7 +156,7 @@ def plotWilkinsonCorrs(fin,outpath):
 		l = 1.2694
 		return 2/(1+3*l)**2/938000*(m_e**2./E*l**2*(1-l)+782*(l**2+2./3.*l-1./3.)+E*2./3.*(1+l+3*l**2+3*l**3))*(1+3.*l**2)/(2*l*(1-l))
 	gT=graph.graphxy(width=20,height=10,
-			x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
+			x=graph.axis.lin(title="Kinetic Energy [keV]",min=0,max=800),
 			y=graph.axis.lin(title="$\\Delta A/A$ for $g_{II}/g_V=1$",min=-0.01,max=0.01),
 			key = graph.key.key(pos="tr"))
 	setTexrunner(gT)
@@ -168,7 +170,7 @@ def plot_hg_radiative(fin,outpath):
 	ep = Q.getItemF("decayInfo","endpt")
 	corrs = [spectrumCorrs(m) for m in Q.dat["spectrumPoint"]]
 	ghg=graph.graphxy(width=24,height=16,
-			   x=graph.axis.lin(title="Energy [keV]",min=500,max=1300),
+			   x=graph.axis.lin(title="Kinetic Energy [keV]",min=500,max=1300),
 			   y=graph.axis.lin(title="Relative Asymmetry Correction",min=0,max=0.003),
 			   key = graph.key.key(pos="mr"))
 	setTexrunner(ghg)
@@ -193,7 +195,7 @@ def thesisCorrsPlot(fin,outpath):
 	##############
 	
 	gWC=graph.graphxy(width=16,height=8,
-			x=graph.axis.lin(title="Energy [keV]",min=0,max=ep),
+			x=graph.axis.lin(title="Kinetic Energy [keV]",min=0,max=ep),
 			y=graph.axis.lin(title="Spectrum Correction"),
 			key = graph.key.key(pos="bc",columns=3))
 	setTexrunner(gWC)
@@ -210,7 +212,7 @@ def thesisCorrsPlot(fin,outpath):
 	###############
 	
 	gSpec=graph.graphxy(width=10,height=8,
-						x=graph.axis.lin(title="Energy [keV]",min=0,max=ep),
+						x=graph.axis.lin(title="Kinetic Energy [keV]",min=0,max=ep),
 						y=graph.axis.lin(title="Decay Rate",min=0,max=1.1),
 						key = graph.key.key(pos="bc"))
 	setTexrunner(gSpec)
@@ -235,7 +237,7 @@ def asymStatSens():
 	S0 = (lambda KE: (p(KE)*(KE+511)*(782.3-KE)**2)*(KE<782.3))
 
 	g = graph.graphxy(width=20,height=10,
-			x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
+			x=graph.axis.lin(title="Kinetic Energy [keV]",min=0,max=800),
 			y=graph.axis.lin(title=None,min=0,max=1.1),
 			key = graph.key.key(pos="bc"))
 	setTexrunner(g)
@@ -291,12 +293,12 @@ def asymLambdaDep():
 	
 if __name__ == "__main__":
 
-	asymLambdaDep()
+	#asymLambdaDep()
 	
-	#asymStatSens()
+	asymStatSens()
 	
-	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
-	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
+	plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_1_1_782.347.txt",
+					   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
 	#plotWilkinsonCorrs(os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/SpectrumCorrection_137_55_513.97.txt",
 	#				   os.environ["UCNA_ANA_PLOTS"]+"/SpectrumCorrection/")
 

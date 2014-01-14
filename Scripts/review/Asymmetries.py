@@ -424,12 +424,14 @@ def plot_octet_asymmetries(basedir,depth=0):
 def AnaDB_Asyms(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/"):
 
 	conn = open_anadb_connection()
-	asyms = get_ana_results(conn,find_ana_results(conn,grouping="octet"))
-	asyms = [(a.rrange,a) for a in asyms if a.rrange[1]-a.rrange[0]<50]
+	ADBL = AnaDBLocator()
+	ADBL.req["grouping"]="octet"
+	asyms = ADBL.find(conn)
+	asyms = [(a.rrange,a) for a in asyms] # if a.rrange[1]-a.rrange[0]<50]
 	asyms.sort()
 	print len(asyms)
 	for a in asyms:
-		print a[1],a[1].date
+		a[1].display()
 	
 	gdat = [[n,2*a[1].value,2*a[1].err,a[1].start_run] for (n,a) in enumerate(asyms)]
 
@@ -472,8 +474,29 @@ def AnaDB_Asyms(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/"):
 				
 	gAsyms.writetofile(basedir+"/OctetAsym.pdf")
 
+def AnaDB_Counts(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/"):
+	conn = open_anadb_connection()
+	ADBL = AnaDBLocator()
+	
+	ADBL.req = {"source":"Data", "grouping":"octet", "type":"Counts", "gate_valve":"Open", "ana_choice":"C", "radius":50, "start_run":14077, "end_run":16216}
+	datcounts = dict([((a.side,a.event_type,a.afp),a) for a in ADBL.find(conn)])
+	for a in datcounts:
+		datcounts[a].display()
+		
+	ADBL.req["source"] = "G4"
+	simcounts = dict([((a.side,a.event_type,a.afp),a) for a in ADBL.find(conn)])
+	for a in simcounts:
+		simcounts[a].display()
 
+	def sumsideafp(d,tp):
+		return sqrt(d[("East",tp,"On")].value*d[("West",tp,"Off")].value)+sqrt(d[("West",tp,"On")].value*d[("East",tp,"Off")].value)
 
+	dat0 = sumsideafp(datcounts,"0")
+	sim0 = sumsideafp(simcounts,"0")
+	for tp in ["0","I","II","III"]:
+		df = sumsideafp(datcounts,tp)/dat0
+		sf = sumsideafp(simcounts,tp)/sim0
+		print tp,df,sf,100*(sf-df)/df
 
 					
 def get_gain_tweak(conn,rn,s,t):
@@ -676,7 +699,8 @@ def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
 if __name__=="__main__":
 	
 	#AnaDB_Asyms()
-	#exit(0)
+	AnaDB_Counts()
+	exit(0)
 	
 	#backscatterFracTable("OctetAsym_Offic_Sim0823_4x")
 	#backscatterFracTable("OctetAsym_Offic_SimPen")
