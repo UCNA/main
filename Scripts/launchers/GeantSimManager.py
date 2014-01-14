@@ -13,22 +13,26 @@ class GeantSimManager:
 		
 		self.settings = {}
 		
+		self.settings["run_num"] = 0
 		self.settings["simName"] = simName
 		self.settings["geometry"] = geometry
 		self.settings["vacuum"] = vacuum
 		self.settings["sourceholderpos"] = sourceHolderPos
-		self.settings["sourceRadius"] = "1.5 mm"
+		self.settings["gunpos_mm"] = [0.,0.,0.]
+		self.settings["sourceRadius"] = "0 mm"
 		self.settings["sourceScan"] = 0.
-		self.settings["particle"] = "e-"
+		self.settings["makeinfoil"] = "false"
+		self.settings["magf"] = "on"
 		self.settings["fieldmapcmd"] = "#/detector/fieldmapfile UNUSED"
 		if fmap:
 			self.settings["fieldmapcmd"] = "/detector/fieldmapfile "+fmap
 		self.settings["physlist"] = "livermore"
-		self.settings["scintstep"] = "1.0 mm"
 		self.settings["ana_args"] = ""
 		self.settings["extra_cmds"] = ""
 		
 		self.settings["vis_cmd"] = ""
+		
+		self.anagroup = 10 # number of files to group together for final analyzer result
 				
 	def enable_vis(self):
 		
@@ -62,82 +66,44 @@ class GeantSimManager:
 		#self.settings["vis_cmd"] += "/tracking/verbose 2\n"
 		
 		self.settings["vis_cmd"] += "/vis/viewer/flush\n"
-
-	def set_generator(self,generator,forcePositioner=None):
+	
+	def set_evtsrc(self,evtsrc):
+		self.settings["evtsrc"] = evtsrc;
+		self.needsHolder = False
 		
-		self.settings["generator"] = generator
-		self.settings["gunenergy"] = 0
-		
-		# whether to construct the source holder and use source positioning
-		self.settings["positioner"] = "DecayTrapFiducial" # DecayTrapUniform
-		self.settings["gunpos_mm"] = [0.,0.,0.]
-		self.settings["magf"] = "on"
-		if self.settings["generator"] in ["In114E","In114W"]:
-			self.settings["makeinfoil"] = "y"
-		else:
-			self.settings["makeinfoil"] = "n"
-		needsHolder = False
-		
-		if self.settings["generator"][:2] in ["Bi","Ce","Sn","Cd","In","Sr","Cs"]:
-			needsHolder = True
-			self.settings["positioner"] = "SourceDrop"
-		if self.settings["generator"][:2] in ["Ce","Cd"]:
+		# special setting for calibration source generators
+		if self.settings["evtsrc"][:2] in ["Bi","Ce","Sn","Cd","In","Sr","Cs"]:
+			self.settings["sourceRadius"] = "1.5 mm"
+			self.needsHolder = True
+		if self.settings["evtsrc"][:2] in ["Ce","Cd"]:
 			self.settings["sourceRadius"] = "1.25 mm"
-		if self.settings["generator"] == "In114E":
-			self.settings["gunpos_mm"] = [0.,0.,-.004975]
-		if self.settings["generator"] == "In114W":
-			self.settings["gunpos_mm"] = [0.,0.,.004975]
-		if self.settings["generator"] == "eGun":
-			needsHolder = True
-			self.settings["positioner"] = "Fixed"
-			self.settings["gunpos_mm"] = [0.,0.,-1000]
-			self.settings["magf"] = "off"
-		if self.settings["generator"][:2] == "Xe":
-			self.settings["positioner"] = "UniformRadialGasFill"
-		if forcePositioner:
-			self.settings["positioner"] = forcePositioner
-		
-		if not self.settings["sourceholderpos"]:	
-			if needsHolder:
+	
+		if not self.settings["sourceholderpos"]:
+			if self.needsHolder:
 				self.settings["sourceholderpos"] = "0 0	0 m"
+				self.settings["extra_cmds"] += "/benchmark/gun/relholder true\n"
 			else:
 				self.settings["sourceholderpos"] = "0 0.5 0 m"
-		
-		self.settings["run_num"] = 0
-	
-	
-	#def throw_lines(self,nLines,eStart,eStop,logSpace):
-	#
-	#	energyLines = [0.5*(eStart+eStop),]
-	#	if nLines > 1:
-	#		if logSpace:
-	#			energyLines = [ exp(log(eStart)+i*log(float(eStop)/eStart)/(nLines-1)) for i in range(nLines) ]
-	#		else:
-	#			energyLines = [eStart+i*(eStop-eStart)/float(nLines-1) for i in range(nLines) ]
-	#	
-	#	for self.settings["gunenergy"] in energyLines:
-	
+
 	def set_dirs(self):
 		self.g4_workdir = os.environ["G4WORKDIR"]
 		self.g4_bindir = os.environ["G4BINDIR"]
-		self.type_dir = self.settings["simName"]+"_%s"%(self.settings["generator"].replace("/","_"))
-		if self.settings["gunenergy"]:
+		self.g4_evtsdir = os.environ["G4EVTDIR"]+"/"+self.settings["evtsrc"]
+		
+		self.type_dir = self.settings["simName"]+"_"+self.settings["evtsrc"]
+		if "gunenergy" in self.settings:
 			self.type_dir += "_%.1fkeV"%self.settings["gunenergy"]
+		
 		self.g4_out_dir = self.g4_workdir+"/output/%s/"%self.type_dir
 		self.g4_log_dir = self.g4_workdir+"/logs/%s/"%self.type_dir
 		self.g4_macro_dir = self.g4_workdir+"/macros/%s/"%self.type_dir
 		self.g4_out_name = "%s/g4_run_%%s.root"%self.g4_out_dir
-	
-	def launch_sims(self,nEvents,nClusters=6,hours_old=0):
-		
-		nruns = 0
-		nperclust = 0
-		import multiprocessing
-		nperclust = multiprocessing.cpu_count()	# number of simulation files to produce (generated in parallel)
-		nruns = nperclust*nClusters
-		if not nruns:
-			nruns = 1
-		oldtime = time.time() - hours_old*3600
+
+	def set_detector_offsets(self):
+		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
+		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
+
+	def launch_sims(self,maxIn=100000,hours_old=0):
 		
 		self.set_dirs()
 		parallel_jobfile = "%s/jobs.txt"%self.g4_macro_dir
@@ -146,12 +112,12 @@ class GeantSimManager:
 		os.system("mkdir -p %s"%self.g4_out_dir)
 		os.system("mkdir -p %s"%self.g4_log_dir)
 		
-		# account for low Bi conversion efficiency, ~14.3% as many electrons thrown as events run, mostly Auger
-		ineffic_mul = 1
-		if self.settings["generator"] == "Bi207":
-			ineffic_mul = 4
-		if self.settings["generator"] == "Ce139":
-			ineffic_mul = 2
+		inflist = [f for f in os.listdir(self.g4_evtsdir) if f[:5]=="Evts_"]
+		inflist.sort()
+		inflist = inflist[:maxIn]
+		nruns = len(inflist)
+		
+		oldtime = time.time() - hours_old*3600
 		
 		# main simulations
 		os.system("rm -r %s/*"%self.g4_macro_dir)
@@ -164,29 +130,32 @@ class GeantSimManager:
 			self.settings["run_num"] += 1
 			self.settings["jobname"] = self.settings["simName"]+"_%i"%self.settings["run_num"]
 			self.settings["outfile"]=self.g4_out_name%str(self.settings["run_num"])
-			self.settings["nevt"]=(ineffic_mul*nEvents)/nruns
+			self.settings["evtfile"]=self.g4_evtsdir+"/"+inflist[rn]
+			self.settings["nevt"] = 10000 # assume this many events per input file... TODO something more elegant
 			self.settings["joblog"] = "%s/gen_macro_%i.txt"%(self.g4_log_dir,self.settings["run_num"])
 			g4_sub_file = "%s/geantjob_%i.sub"%(self.g4_macro_dir,self.settings["run_num"])
 			
 			# source position scan
-			if self.settings["sourceScan"]:
-				xpos = (((rn%nperclust)*nClusters+(rn/nperclust))/float(nruns-1)-0.5)*self.settings["sourceScan"]
-				self.settings["gunpos_mm"][0] = xpos;
-				if self.settings["sourceholderpos"] != "0 0.5 0 m":
-					self.settings["sourceholderpos"] = "%g 0 0 mm"%xpos
+			# TODO
+			#if self.settings["sourceScan"]:
+			#	xpos = (((rn%self.anagroup)*nClusters+(rn/self.anagroup))/float(nruns-1)-0.5)*self.settings["sourceScan"]
+			#	if self.settings["sourceholderpos"] != "0 0.5 0 m":
+			#		self.settings["sourceholderpos"] = "%g 0 0 mm"%xpos
+			
 			self.settings["gunpos"] = "%g %g %g mm"%tuple(self.settings["gunpos_mm"])
 			
+			# skip recently-run jobs
 			if os.path.exists(self.g4_out_name%str(self.settings["run_num"])) and os.stat(self.g4_out_name%str(self.settings["run_num"])).st_mtime > oldtime:
 				continue;
-			onejob = ucnG4_prod + " %s/geantgen_%i.mac %s"%(self.g4_macro_dir,self.settings["run_num"],self.settings["physlist"])
-			# geant macro
-			open(os.path.expanduser("%s/geantgen_%i.mac"%(self.g4_macro_dir,self.settings["run_num"])),"w").write(open("GeantGenMacroTemplate.mac","r").read()%self.settings)
 			
+			# generate macro file
+			open(os.path.expanduser("%s/geantgen_%i.mac"%(self.g4_macro_dir,self.settings["run_num"])),"w").write(open("GeantGenMacroTemplate.mac","r").read()%self.settings)
+			# single job execution command, appended to batch job file
+			onejob = ucnG4_prod + " %s/geantgen_%i.mac %s"%(self.g4_macro_dir,self.settings["run_num"],self.settings["physlist"])
 			jobsout.write(onejob+" > %s 2>&1\n"%self.settings["joblog"])
 		
 		jobsout.close()
 		
-	
 		print "Running simulation jobs..."
 		os.system("cat "+parallel_jobfile)
 		if nruns > 1:
@@ -210,14 +179,12 @@ class GeantSimManager:
 		while anafiles:
 			outlist_name = self.g4_out_dir+"outlist_%i.txt"%nanalyzed
 			fout = open(outlist_name,"w")
-			for f in anafiles[:6]:
+			for f in anafiles[:self.anagroup]:
 				fout.write(f[1]+"\n")
 			fout.close()
-			anafiles = anafiles[6:]
+			anafiles = anafiles[self.anagroup:]
 			print "\n----- %s ------"%outlist_name
 			os.system("cat "+outlist_name)
-			if self.settings["generator"] in ["neutronBetaUnpol"]: #,"eGunRandMomentum","eGun"]:
-				self.settings["ana_args"] += " saveall"
 			analyzer_bin = self.g4_bindir+"/"+self.settings["analyzer"]
 			if nMin <= nanalyzed <= nMax:
 				jobsout.write("%s %s %s/analyzed_%i.root%s\n"%(analyzer_bin,outlist_name,self.g4_out_dir,nanalyzed,self.settings["ana_args"]))
@@ -243,6 +210,21 @@ if __name__ == "__main__":
 		os.system("killall -9 GeantSimManager.py")
 		exit(0)
 	
+	# self.settings["ana_args"] += " saveall"
+	
+	if 1:
+		betaSim = GeantSimManager("2014013_GeomC")
+		betaSim.set_evtsrc("n1_f_n")
+		betaSim.set_detector_offsets()
+		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
+		betaSim.launch_sims(maxIn=100,hours_old=0)
+		betaSim.launch_postanalyzer()
+		exit(0)
+
+
+	
+	
+	
 	####################				
 	# neutrons
 	####################
@@ -252,8 +234,7 @@ if __name__ == "__main__":
 		betaSim = GeantSimManager("20120823")
 		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
-		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
-		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
+		betaSim.set_detector_offsets()
 		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 		betaSim.launch_sims(nEvents=5e7,nClusters=520,hours_old=10*24)
 		betaSim.launch_postanalyzer(52,10000)

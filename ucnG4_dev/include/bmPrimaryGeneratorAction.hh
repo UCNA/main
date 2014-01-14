@@ -74,42 +74,55 @@ public:
 	/// destructor
 	~bmPrimaryGeneratorAction();
 	
+	/// generate primaries for next event
 	void GeneratePrimaries(G4Event*);
+	/// set gun type
 	void SetGunType(G4String val) { gunType = val; }
+	/// set default particle type
 	void SetParticleType(G4String val) { particleType = val; }
+	/// set positioner type
 	void SetPositioner(G4String val) { positioner = val; }
+	/// set radius for "source drop" positioner
 	void SetSourceRadius(double r) { sourceRadius = r; }
+	/// set positioning relative to holder
+	void SetPosRelHolder(bool b) { relToSourceHolder = b; }
+	/// set input events tree
+	void SetEventFile(G4String val);
 	
 private:
-	G4ParticleGun* particleGun;
-	bmDetectorConstruction* myDetector;
+	G4ParticleGun* particleGun;					//< particle gun primary event thrower
+	bmDetectorConstruction* myDetector;			//< detector geometry
 	bmPrimaryGeneratorMessenger* gunMessenger;	//< messenger of this class
 	G4String gunType;							//< event generator gun to use
 	G4String particleType;						//< particle type to throw
 	G4String positioner;						//< how to position initial events
-	double sourceRadius;						//< radius for sealed source generator
-	G4ThreeVector vertex_position;				//< event vertex position
 	
-	/// choose event vertex position
-	void selectVertex();
+	EventTreeScanner* ETS;						//< Reader for saved input events
 	
-	/// throw multiple electrons and gammas in one event
-	void throwElectronsAndGammas(const std::vector<G4double>& electrons,
-								 const std::vector<G4double>& gammas,
-								 G4Event* anEvent);
-	/// throw a gamma towards some point on specified surface, recording weight relative to 4pi uniform
-	void throwGammaAt(SurfaceSeg* S, double eGamma, G4Event* anEvent);
-
+	// positioning related variables
+	G4ThreeVector posOffset;	//< base positioning offset
+	double sourceRadius;		//< spread radius for source droplets
+	bool relToSourceHolder;		//< make positions relative to source holder, instead of geometry origin
+	void setVertices(std::vector<NucDecayEvent>& evts);	//< set vertex positions for each primary
+	
 	/// throw a cluster of events
 	void throwEvents(const std::vector<NucDecayEvent>& evts, G4Event* anEvent);
-	
+
 	/// print what the particle gun is set up to do
 	void displayGunStatus();
 	
+	long myseed;	//< random seed for event
+	/// initialize random seed for event
+	void initEventRandomSeed(G4Event* anEvent);
+	
+	/// throw a gamma towards some point on specified surface, recording weight relative to 4pi uniform
+	//void throwGammaAt(SurfaceSeg* S, double eGamma, G4Event* anEvent);
 	/// approximation for neutron capture on Cu gammas, based on probabilities in Robby's eLog 134
-	void nCaptureCuGammas(G4Event* anEvent, SurfaceAssembly* S);
+	//void nCaptureCuGammas(G4Event* anEvent, SurfaceAssembly* S);
 	/// approximation for neutron capture on Fe gammas
-	void nCaptureFeGammas(G4Event* anEvent, SurfaceAssembly* S);
+	//void nCaptureFeGammas(G4Event* anEvent, SurfaceAssembly* S);
+	
+	
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

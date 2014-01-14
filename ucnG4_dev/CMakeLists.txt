@@ -26,7 +26,8 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 include_directories(${PROJECT_SOURCE_DIR}/include
 					${PROJECT_SOURCE_DIR}/../Physics
 					${PROJECT_SOURCE_DIR}/../IOUtils
-					${PROJECT_SOURCE_DIR}/../BaseTypes)
+					${PROJECT_SOURCE_DIR}/../BaseTypes
+					${PROJECT_SOURCE_DIR}/../RootUtils)
 link_directories(${PROJECT_SOURCE_DIR}/..)
 
 #-------------------------------
