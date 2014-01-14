@@ -122,6 +122,31 @@ void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool coun
 	RunAccumulator::loadSimData(simData,nToSim,countAll);
 }
 
+void OctetAnalyzer::loadBothAFP(Sim2PMT& simData, unsigned int nToSim) {
+	printf("Loading %i events of simulated data doubled over AFP states...\n",nToSim);
+	simData.resetSimCounters();
+	while(!nToSim || simData.nSimmed<=nToSim) {
+		bool np = simData.nextPoint();
+		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
+			setCurrentState(afp,GV_OPEN);
+			setFillPoints(afp,GV_OPEN);
+			simData.setAFP(afp);
+			simData.calcReweight();
+			loadSimPoint(simData);
+		}
+		if(nToSim && !(int(simData.nSimmed)%(nToSim/20))) {
+			if(nToSim>1e6) {
+				printf("* %s\n",simData.evtInfo().toString().c_str());
+			} else {
+				printf("*");
+				fflush(stdout);
+			}
+		}
+		if(!nToSim && !np) break;
+	}
+	printf("\n--Scan complete.--\n");
+}
+
 TH1* OctetAnalyzer::flipperSummedRate(const quadHists* qh, GVState gv, bool doNorm) const {
 	assert(qh);
 	assert(gv == GV_OPEN || gv == GV_CLOSED);

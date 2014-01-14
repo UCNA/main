@@ -82,6 +82,8 @@ class AnalysisDB: public SQLHelper, NoCopy {
 public:
 	/// globally available AnalysisDB
 	static AnalysisDB* getADB();
+	/// disable analysis DB access
+	static bool disableADB;
 	
 	/// upload a cut spec and return ID
 	unsigned int uploadCutSpec(AnaCutSpec& c);

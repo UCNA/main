@@ -424,7 +424,7 @@ void RunAccumulator::loadSimPoint(Sim2PMT& simData) {
 	fillCoreHists(simData,simData.physicsWeight);
 	if(double evtc = simData.simEvtCounts()) {
 		runCounts.add(simData.getRun(),evtc);
-		totalCounts[currentAFP][1] += evtc;
+		totalCounts[currentAFP][GV_OPEN] += evtc;
 	}	
 }
 

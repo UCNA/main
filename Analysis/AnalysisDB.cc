@@ -1,5 +1,7 @@
 #include "AnalysisDB.hh"
 
+bool AnalysisDB::disableADB = false;
+
 AnaResult::AnaResult(const std::string& auth): arid(0), author(auth), timestamp(time(NULL)),
 startRun(0), endRun(0), anach(ANCHOICE_C), s(BOTH), afp(AFP_OTHER), gv(GV_OPEN), value(0), err(0), csid(0) { }
 
@@ -40,6 +42,7 @@ std::string AnaResult::typeSetString() const {
 
 AnalysisDB* AnalysisDB::getADB() {
 	static AnalysisDB* ADB = NULL;
+	if(disableADB) return NULL;
 	if(!ADB) ADB = new AnalysisDB();
 	return ADB;
 }

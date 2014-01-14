@@ -226,7 +226,11 @@ class LinearFitter:
 				coeffstr = "\\cdot "+coeffstr
 			s += (" "+fmt+" \\pm %"+cfmt)%(self.coeffs[n],sqrt(ccov[n,n])) + coeffstr
 		return s
-		
+
+
+def nderiv(f,x,h=0.001):
+	return (f(x+h)-f(x-h))/(2*h)
+
 # wrap a linear fitter with axis transforms
 class TransformedFitter:
 
@@ -240,11 +244,14 @@ class TransformedFitter:
 		self.coeffs = self.LF.coeffs
 	
 	# perform fit
-	def fit(self,xydat,cols=(0,1)):
+	def fit(self,xydat,cols=(0,1),errorbarWeights=False):
 		if len(cols) < 3:
 			self.LF.fit([(self.xtrans(x[cols[0]]),self.ytrans(x[cols[1]])) for x in xydat])
 		else:
-			self.LF.fit([(self.xtrans(x[cols[0]]),self.ytrans(x[cols[1]]),x[cols[2]]) for x in xydat],cols=(0,1,2))
+			if errorbarWeights:
+				self.LF.fit([(self.xtrans(x[cols[0]]),self.ytrans(x[cols[1]]),x[cols[2]]*nderiv(self.ytrans,x[cols[1]])) for x in xydat],cols=(0,1,2),errorbarWeights=True)
+			else:
+				self.LF.fit([(self.xtrans(x[cols[0]]),self.ytrans(x[cols[1]]),x[cols[2]]) for x in xydat],cols=(0,1,2))
 		self.coeffs = self.LF.coeffs
 	
 	# evaluate at x
@@ -288,9 +295,6 @@ class LogLogger(TransformedFitter):
 	# latex printable form
 	def toLatex(self,varname='x'):
 		return "\\exp \\left[ %s \\right]"%self.LF.toLatex("{\\ln %s}"%varname)
-
-def nderiv(f,x,h=0.001):
-	return (f(x+h)-f(x-h))/(2*h)
 	
 def logderiv(f,x,h=0.001):
 	return nderiv(f,x,h)*x/f(x)

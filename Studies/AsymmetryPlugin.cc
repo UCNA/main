@@ -247,6 +247,7 @@ void AsymmetryPlugin::calculateResults() {
 void AsymmetryPlugin::uploadAnaResults() {
 	
 	AnalysisDB* ADB = AnalysisDB::getADB();
+	if(!ADB) return;
 	
 	// delete old fit results
 	for(unsigned int n=0; n<asymFits.size(); n++) {

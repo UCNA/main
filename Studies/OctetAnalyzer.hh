@@ -71,6 +71,8 @@ public:
 	virtual void loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS) { setFillPoints(afp,gv); RunAccumulator::loadProcessedData(afp, gv, PDS); }
 	/// load simulation data
 	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim = 0, bool countAll = false);
+	/// load same simulation data into both flipper states
+	void loadBothAFP(Sim2PMT& simData, unsigned int nToSim);
 	
 	/// make flipper-summed histogram normalized to rate
 	TH1* flipperSummedRate(const quadHists* qh, GVState gv, bool doNorm = true) const;

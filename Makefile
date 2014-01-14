@@ -86,7 +86,7 @@ ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm CombinedAbFi
 
 examples: $(ExampleObjs)
 
-StandaloneObjs = GammaComptons BetaEndpoint BetaOctetPositions MC_Comparisons LEDScans MiscJunk MC_EventGen
+StandaloneObjs = GammaComptons BetaEndpoint BetaOctetPositions MC_Comparisons LEDScans MiscJunk MC_EventGen QuasiRandomTest
 
 standalone: $(StandaloneObjs)
 
