@@ -14,6 +14,8 @@
 double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt = "", const std::string& newTitle = "DEFAULT");
 /// draw a pair of histograms (red and blue by default)
 void drawHistoPair(TH1* hRed, TH1* hBlue, const std::string& opt = "", Int_t c1 = 2, Int_t c2 = 4);
+/// draw a pair of histograms, with line and diamond markers
+void drawDataMCPair(TH1* dat, TH1* mc);
 
 /// 6" diameter, projected back
 #define wirechamber_window_radius (3*25.4*sqrt(0.6))	

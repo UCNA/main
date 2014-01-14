@@ -20,7 +20,7 @@ CXX = g++
 
 CXXFLAGS = -O3 -Wall -fPIC `root-config --cflags` -I. \
 	-IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics
-LDFLAGS =  -L. -lUCNA -lSpectrum -lMLP `root-config --libs`
+LDFLAGS =  -L. -lUCNA -lSpectrum -lMLP `root-config --libs` -lMathMore
 
 ifdef PROFILER_COMPILE
 	CXXFLAGS += -pg
@@ -49,19 +49,19 @@ Physics = BetaSpectrum.o ElectronBindingEnergy.o NuclEvtGen.o
 
 Utils = ControlMenu.o strutils.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
 		SectorCutter.o LinHistCombo.o Enums.o Types.o FloatErr.o SMExcept.o Octet.o SpectrumPeak.o Source.o \
-		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o EnumerationFitter.o StyleSetup.o
+		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o EnumerationFitter.o StyleSetup.o TChainScanner.o
 
 Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberCalibrator.o \
 		EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
 	
-Analysis = TChainScanner.o RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT.o G4toPMT.o \
+Analysis = RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT.o G4toPMT.o \
 		PenelopeToPMT.o LED2PMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
 
 Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o OctetSimuCloneManager.o \
 	MuonPlugin.o PositionsPlugin.o WirechamberAnodePlugins.o BGDecayPlugin.o HighEnergyExcessPlugin.o \
 	AsymmetryPlugin.o SimAsymmetryPlugin.o BetaDecayAnalyzer.o \
 	CathodeTuningAnalyzer.o PositionBinnedPlugin.o AnodeGainMapPlugin.o XenonAnalyzer.o \
-	PlotMakers.o AsymmetryCorrections.o FierzFitter.o GravitySpectrometerPlugin.o
+	PlotMakers.o AsymmetryCorrections.o FierzFitter.o GravitySpectrometerPlugin.o SimEdepPlugin.o
 
 objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
@@ -86,7 +86,7 @@ ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm CombinedAbFi
 
 examples: $(ExampleObjs)
 
-StandaloneObjs = GammaComptons BetaEndpoint BetaOctetPositions MC_Comparisons LEDScans MiscJunk
+StandaloneObjs = GammaComptons BetaEndpoint BetaOctetPositions MC_Comparisons LEDScans MiscJunk MC_EventGen
 
 standalone: $(StandaloneObjs)
 

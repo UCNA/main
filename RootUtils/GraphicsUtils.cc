@@ -73,6 +73,20 @@ void drawHistoPair(TH1* hRed, TH1* hBlue, const std::string& opt, Int_t c1, Int_
 	drawSimulHistos(hToPlot,opt);
 }
 
+void drawDataMCPair(TH1* dat, TH1* mc) {
+	dat->SetLineColor(1);
+	mc->SetMarkerStyle(33);
+	mc->SetMarkerColor(1);
+	if(dat->GetMaximum() > mc->GetMaximum()) {
+		dat->Draw("H E0");
+		mc->Draw("P SAME");
+	} else {
+		mc->Draw("P");
+		dat->Draw("H E0 SAME");
+	}
+}
+
+
 void drawCircle(float r, Int_t color, Int_t lstyle, float x0, float y0) {
 	TEllipse* e = new TEllipse(x0,y0,r,r);
 	e->SetFillStyle(0);
