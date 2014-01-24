@@ -7,7 +7,6 @@
 #include <string>
 
 #define nBetaTubes 4
-#define PI 3.1415926535
 
 /// detector side specification
 enum Side {

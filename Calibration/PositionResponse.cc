@@ -19,7 +19,7 @@ S(PMI.nRings,PMI.radius), sRadial(BC_DERIVCLAMP_ZERO), L((*rInterp)(&sRadial, PM
 	// set up sequences/interpolators
 	for(unsigned int n=0; n<PMI.nRings; n++) {
 		phiSeqs.push_back(new DoubleSequence(BC_CYCLIC));
-		phiInterps.push_back((*phiInterp)(phiSeqs.back(),2.0*PI,PI/float(S.getNDivs(n))));
+		phiInterps.push_back((*phiInterp)(phiSeqs.back(),2.0*M_PI,M_PI/float(S.getNDivs(n))));
 		sRadial.addPoint(phiInterps.back());
 	}
 	

@@ -44,7 +44,9 @@ void CathodeGainPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 			PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].center,n,c);
 			assert(n<kMaxCathodes);
 			for(int i=0; i<kMaxCathodes; i++)
-				((TH2F*)cathNorm[s][d][i]->h[currentGV])->Fill(c+(int(n)-i),PDS.cathodes[s][d][i]*PDS.ActiveCal->getCathNorm(s,d,i)/PDS.mwpcs[s].anode,weight);
+				((TH2F*)cathNorm[s][d][i]->h[currentGV])->Fill(c+(int(n)-i),
+															   PDS.cathodes[s][d][i] * PDS.ActiveCal->getCathNorm(s,d,i) / PDS.mwpcs[s].anode,
+															   weight);
 		}
 	}
 }

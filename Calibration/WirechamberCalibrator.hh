@@ -8,8 +8,10 @@
 #include "CathSegCalibrator.hh"
 #include <vector>
 
-/// maximum number of MWPC cathode wires per plane (actual number may be less if some dead)
+/// maximum number of MWPC cathode segments per plane (actual number may be less if some dead)
 #define kMaxCathodes 16
+/// number of individual cathode wires per segment
+#define kWiresPerCathode 4
 
 /// enumeration for various types of wirechamber reconstruction errors
 enum reconstructionErrors {

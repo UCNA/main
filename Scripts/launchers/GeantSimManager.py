@@ -217,7 +217,8 @@ if __name__ == "__main__":
 		betaSim.set_evtsrc("n1_f_n")
 		betaSim.set_detector_offsets()
 		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
-		betaSim.launch_sims(maxIn=100,hours_old=0)
+		betaSim.settings["ana_args"] += " cathodes"
+		#betaSim.launch_sims(maxIn=100,hours_old=0)
 		betaSim.launch_postanalyzer()
 		exit(0)
 

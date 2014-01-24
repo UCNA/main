@@ -38,7 +38,7 @@ void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
 SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
-nSimmed(0), nToSim(INT_MAX), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER) {
+nSimmed(0), nToSim(INT_MAX), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER), simCathodes(false) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		mwpcThresh[s] = 0;
@@ -49,7 +49,7 @@ nSimmed(0), nToSim(INT_MAX), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER) 
 		//mwpcWidth[s] = 0.15;
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 			for(unsigned int c = 0; c < kMaxCathodes; c++)
-				cathodes[s][d][c] = 0;
+				cath_chg[s][d][c] = cathodes[s][d][c] = 0;
 		fTaggedBack[s] = false;
 	}
 	totalTime = BlindTime(1.0);
