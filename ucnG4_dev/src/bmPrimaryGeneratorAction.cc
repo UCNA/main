@@ -283,7 +283,7 @@ void randomTubePosition(const G4ThreeVector centerpos, const G4double radius, co
 
 /// generate a random position on a cylinder
 void randomCylPosition(const G4ThreeVector centerpos, const G4double radius, const G4double halfz, G4ThreeVector& pos) {
-	G4double theta = 2*PI*G4UniformRand();
+	G4double theta = 2*M_PI*G4UniformRand();
 	G4double z0=(2.0*G4UniformRand()-1.0)*halfz;
 	pos = centerpos + G4ThreeVector(radius*cos(theta),radius*sin(theta),z0);
 }
@@ -291,7 +291,7 @@ void randomCylPosition(const G4ThreeVector centerpos, const G4double radius, con
 /// generate a random position with uniform number in radial bins
 void randomUniformRadialBins(const G4ThreeVector centerpos, const G4double radius, const G4double halfz, G4ThreeVector& pos) {
 	G4double r = G4UniformRand()*radius;
-	G4double theta = 2*PI*G4UniformRand();
+	G4double theta = 2*M_PI*G4UniformRand();
 	G4double z0=(2.0*G4UniformRand()-1.0)*halfz;
 	pos = centerpos+G4ThreeVector(r*cos(theta),r*sin(theta),z0);
 }
