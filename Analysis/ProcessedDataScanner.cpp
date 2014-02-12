@@ -1,7 +1,6 @@
 #include "ProcessedDataScanner.hh"
 #include "PathUtils.hh"
 #include "CalDBSQL.hh"
-#include "CalDBFake.hh"
 #include "SMExcept.hh"
 #include <cassert>
 #include <stdio.h>
@@ -44,15 +43,13 @@ void ProcessedDataScanner::recalibrateEnergy() {
 	assert(ActiveCal);
 	for(Side s = EAST; s<=WEST; ++s) {
 		if(redoPositions && fPID==PID_BETA && fSide==s) {
-			std::vector<float> nopeds;
 			for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
-				std::vector<float> caths(cathodes[s][d],cathodes[s][d]+kMaxCathodes);
-				wires[s][d] = ActiveCal->calcHitPos(s,d,caths,nopeds);
+				wires[s][d] = ActiveCal->calcHitPos(s,d,cathodes[s][d]);
 				ActiveCal->tweakPosition(s,d,wires[s][d],scints[s].energy.x);
 			}
 		}
 		ActiveCal->calibrateEnergy(s, wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, scints[s], runClock[s]);
-		mwpcEnergy[s] = ActiveCal->calibrateAnode(mwpcs[s].anode,s,wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, runClock[s]);
+		mwpcEnergy[s] = ActiveCal->wirechamberEnergy(s, wires[s][X_DIRECTION], wires[s][Y_DIRECTION], mwpcs[s]);
 	}
 	calcEventFlags();
 }

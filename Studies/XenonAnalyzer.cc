@@ -185,7 +185,7 @@ XenonAnalyzer::XenonAnalyzer(OutputManager* pnt, const std::string& nm, const st
 CathodeTuningAnalyzer(pnt,nm,inflName) {
 	addPlugin(myXeSpec = new XenonSpectrumPlugin(this,nrE));
 	addPlugin(myAnode = new AnodeGainMapPlugin(this,nrA));
-	addPlugin(myWG = new AnodeGainPlugin(this));
+	addPlugin(myWG = new MWPCGainPlugin(this));
 }
 
 //----------------------------------------------------------------
@@ -193,7 +193,7 @@ CathodeTuningAnalyzer(pnt,nm,inflName) {
 SimXenonAnalyzer::SimXenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName, unsigned int nrE):
 CathodeTuningAnalyzer(pnt,nm,inflName) {
 	addPlugin(myXeSpec = new XenonSpectrumPlugin(this,nrE));
-	addPlugin(myWG = new AnodeGainPlugin(this));
+	addPlugin(myWG = new MWPCGainPlugin(this));
 }
 
 //----------------------------------------------------------------
@@ -236,7 +236,7 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	XA.calculateResults();
 	XA.myXeSpec->fitSectors();
 	XA.makePlots();
-	XA.myAnode->genAnodePosmap();
+	XA.myAnode->genPosmap("anode");
 	XA.write();
 	XA.setWriteRoot(true);
 }

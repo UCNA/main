@@ -8,7 +8,7 @@
 #include <TF1.h>
 #include <map>
 
-/// class for retrieving calibration data from DB
+/// class for retrieving calibration data from DB --- CURRENT UNUSED AND OUT-OF-DATE
 class CalDBFake: public CalDB {
 public:
 	/// constructor
@@ -51,13 +51,17 @@ public:
 	
 	/// get positioning corrector for given run
 	virtual PositioningCorrector* getPositioningCorrector(RunNum rn) { return getPositioningCorrectorByID(0); }
-	/// get anode positioning corrector for given run
-	virtual PositioningCorrector* getAnodePositioningCorrector(RunNum rn) { return getPositioningCorrectorByID(0); }
-	/// get anode gain correction factor
-	virtual float getAnodeGain(RunNum rn, Side) { return 1.0; }
 	/// get GMS gain tweaking factors
 	virtual void getGainTweak(RunNum rn, Side s, unsigned int t, float& orig, float& final) { orig=final=500.0; }
-	
+
+	/// get anode positioning corrector for given run
+	virtual PositioningCorrector* getMWPCPositioningCorrector(RunNum rn, Side s) { return getPositioningCorrectorByID(0); }
+	/// get anode gain correction factor
+	virtual float getMWPCGain(RunNum rn, Side) { return 1.0; }
+	/// get MWPC charge measurement method
+	virtual ChargeProxyType get_MWPC_charge_meas(RunNum rn, Side s) { return CHARGE_PROXY_CCLOUD; }
+
+		
 	/// get positioning corrector by ID number
 	PositioningCorrector* getPositioningCorrectorByID(unsigned int psid) {
 		printf("*** Warning: loading default fake position map for %i!\n",psid);

@@ -107,7 +107,7 @@ public:
 	double edepKevlar[BOTH];		//< energy deposition [keV] in kevlar strings
 	double edepWires[BOTH];			//< energy deposition [keV] in wire planes
 	double edepDeadScint[BOTH];		//< energy deposition [keV] in dead scintillator
-	double cath_chg[BOTH][Y_DIRECTION+1][kMaxCathodes];	//< signal on each cathode segment (portion of eW)
+	float cath_chg[BOTH][Y_DIRECTION+1][kMaxCathodes];	//< signal on each cathode segment (portion of eW)
 	
 	double cosThetaInFoils[BOTH];	//< entrance angle cosine to decay trap foils
 	double cosThetaInWinOut[BOTH];	//< entrance angle cosine to outer wirechamber window
@@ -124,7 +124,6 @@ public:
 	double nCounted;				//< physics-weighted number of counted events
 	double mwpcThresh[BOTH];		//< MWPC trigger 50% threshold on each side
 	double mwpcWidth[BOTH];			//< MWPC threshold width
-	double mwpcAccidentalProb;		//< probability of MWPC accidental triggers
 	
 protected:
 	/// perform unit conversions, etc.

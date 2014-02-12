@@ -47,7 +47,7 @@ void UCNA_MC_Analyzer::setupOutputTree() {
 		for(Side s = EAST; s <= WEST; ++s) {
 			for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
 				std::string cname = sideSubst("Cath_%c",s)+(d==X_DIRECTION?"X":"Y");
-				anaTree->Branch(cname.c_str(),cathCharge[s][d],(cname+"["+itos(kMaxCathodes)+"]/D").c_str());
+				anaTree->Branch(cname.c_str(),cathCharge[s][d],(cname+"["+itos(kMaxCathodes)+"]/F").c_str());
 			}
 		}
 	}
@@ -62,7 +62,7 @@ void UCNA_MC_Analyzer::resetAnaEvt() {
 			MWPCPos[s][d] = ScintPos[s][d] = MWPCPosSigma[s][d] = ScintPosSigma[s][d] = 0;
 		if(calcCathCharge)
 			for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
-				memset(cathCharge[s][d],0,sizeof(cathCharge[0][0][0])*kMaxCathodes);
+				memset(cathCharge[s][d],0,sizeof(cathCharge[s][d][0])*kMaxCathodes);
 	}
 	EdepAll = 0;
 	for(size_t ii=0; ii<N_SD; ii++) {
@@ -157,6 +157,7 @@ void UCNA_MC_Analyzer::processTrack() {
 				// charge radius
 				Double_t cr = sqrt((trackinfo->edepPos2[X_DIRECTION]+trackinfo->edepPos2[Y_DIRECTION])/trackinfo->Edep
 									-c[X_DIRECTION]*c[X_DIRECTION]-c[Y_DIRECTION]*c[Y_DIRECTION]);
+				if(!(cr==cr)) cr=0; // avoid NAN
 				
 				const double dx = 0.254;		// distance between wires, cm
 				const double h = 1.0;			// plane spacing, cm
@@ -170,7 +171,8 @@ void UCNA_MC_Analyzer::processTrack() {
 				for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
 					for(int i = 0; i<kWiresPerCathode*kMaxCathodes; i++) {
 						for(int j=0; j<N_CHG_CIRC_PTS; j++) {
-							const double lambda = (c[d]+cr*circ_pts[d][j]-cathWirePos[i])/h;
+							int flip = (s==EAST && d==X_DIRECTION)?-1:1; // flip for East X because of mirrored position coordinates
+							const double lambda = (c[d]+cr*circ_pts[d][j]-cathWirePos[i]*flip)/h;
 							const double tkl = tanh(K2*lambda);
 							cathCharge[s][d][i/kWiresPerCathode] += Ew * dlambda * K1 * (1-tkl*tkl) / (1+K3*tkl*tkl);
 						}

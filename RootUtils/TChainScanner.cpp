@@ -63,7 +63,13 @@ void TChainScanner::startScan(bool startRandom) {
 
 void TChainScanner::SetBranchAddress(const std::string& bname, void* bdata) {
 	assert(bdata);
-	Tch->SetBranchAddress(bname.c_str(),bdata);
+	Int_t err = Tch->SetBranchAddress(bname.c_str(),bdata);
+	if(err && err != TTree::kNoCheck) {
+		SMExcept e("TTreeBranchError");
+		e.insert("branchName", bname);
+		e.insert("errCode",err);
+		throw e;
+	}
 }
 
 void TChainScanner::speedload(unsigned int e) {

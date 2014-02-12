@@ -36,7 +36,7 @@ public:
 	Double_t trapMonTime[BOTH];		//< timing for trap monitor hits
 	
 	Double_t cathWirePos[kWiresPerCathode*kMaxCathodes];		//< individual cathode wire positions, [cm] in physical (non-projected) position
-	Double_t cathCharge[BOTH][Y_DIRECTION+1][kMaxCathodes];		//< estimated cathode segment charge signal
+	Float_t cathCharge[BOTH][Y_DIRECTION+1][kMaxCathodes];		//< estimated cathode segment charge signal
 	
 protected:
 

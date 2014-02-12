@@ -2,6 +2,7 @@
 #include "GraphUtils.hh"
 #include "GraphicsUtils.hh"
 #include <TObjArray.h>
+#include <TProfile.h>
 
 //---------------------------------------------------
 
@@ -25,28 +26,35 @@ CathodeGainPlugin::CathodeGainPlugin(RunAccumulator* RA): AnalyzerPlugin(RA,"cat
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(unsigned int c=0; c < kMaxCathodes; c++) {
 				TH2F hCathNormTemplate((std::string("hCathNorm_")+(d==X_DIRECTION?"x_":"y_")+itos(c)).c_str(),
-									   "Normalized Cathode",601,-6.0,6.0,100,-0.5,4);
+									   "Normalized Cathode",601,-6.0,6.0,100,-0.05,0.4);
 				cathNorm[s][d][c] = registerFGBGPair(hCathNormTemplate,AFP_OTHER,s);
 				cathNorm[s][d][c]->setAxisTitle(X_DIRECTION,"normalized position");
-				cathNorm[s][d][c]->setAxisTitle(Y_DIRECTION,"normalized cathode/anode");
+				cathNorm[s][d][c]->setAxisTitle(Y_DIRECTION,"cathode charge fraction");
 			}
+			TProfile pTemplate((std::string("pCathGainfact_")+(d==X_DIRECTION?"x_":"y_")).c_str(),"Cathode Gain Factors",kMaxCathodes,-0.5,kMaxCathodes-0.5);
+			prevGain[s][d] = registerFGBGPair(pTemplate,AFP_OTHER,s);
+			prevGain[s][d]->doSubtraction = false;
 		}
 	}
 }
 
 void CathodeGainPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	const Side s = PDS.fSide;
-	if(!(PDS.fPID == PID_BETA && (s==EAST||s==WEST))) return;
-	if(PDS.fType == TYPE_0_EVENT && PDS.mwpcs[s].anode < 1000) { // avoid most massively clipped events.
-		unsigned int n;
-		float c;
-		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
-			PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].center,n,c);
-			assert(n<kMaxCathodes);
-			for(int i=0; i<kMaxCathodes; i++)
-				((TH2F*)cathNorm[s][d][i]->h[currentGV])->Fill(c+(int(n)-i),
-															   PDS.cathodes[s][d][i] * PDS.ActiveCal->getCathNorm(s,d,i) / PDS.mwpcs[s].anode,
-															   weight);
+	if(!(PDS.fPID == PID_BETA && (s==EAST||s==WEST) && PDS.fType == TYPE_0_EVENT)) return;
+	double x = PDS.wires[s][X_DIRECTION].center;
+	double y = PDS.wires[s][Y_DIRECTION].center;
+	double eta_cc = PDS.ActiveCal->ccloud_eta[s]->eval(s,0,x,y,true);
+	if(PDS.mwpcEnergy[s]>15.) return;	// avoid clipped events
+	unsigned int n;
+	float c;
+	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+		PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].center,n,c);
+		assert(n<kMaxCathodes);
+		for(int i=0; i<PDS.ActiveCal->nWires(s,d); i++) {
+			double gi_gcc = PDS.ActiveCal->getCathCCloudGain(s,d,i);
+			double c_enorm = PDS.ActiveCal->cathseg_energy_norm[s][d][i];
+			((TH2F*)cathNorm[s][d][i]->h[currentGV])->Fill(c+(int(n)-i), PDS.cathodes[s][d][i] / (c_enorm*eta_cc*PDS.mwpcEnergy[s]), weight);
+			((TProfile*)prevGain[s][d]->h[currentGV])->Fill(c,gi_gcc,weight);
 		}
 	}
 }
@@ -113,7 +121,7 @@ void CathodeGainPlugin::makePlots() {
 			for(unsigned int c=0; c<kMaxCathodes; c++) {
 				std::string cname = sideSubst("%c",s)+(d==X_DIRECTION?"x":"y")+itos(c+1);
 				TH2* hCathNorm =  (TH2*)cathNorm[s][d][c]->h[GV_OPEN];
-				hCathNorm->GetYaxis()->SetTitleOffset(1.35);
+				hCathNorm->GetYaxis()->SetTitleOffset(1.55);
 				hCathNorm->SetTitle(("Cathode "+cname).c_str());
 				hCathNorm->GetXaxis()->SetRangeUser(-3, 3);
 				hCathNorm->Draw("Col");

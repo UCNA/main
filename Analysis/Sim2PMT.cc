@@ -38,7 +38,7 @@ void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
 SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
-nSimmed(0), nToSim(INT_MAX), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER), simCathodes(false) {
+nSimmed(0), nToSim(INT_MAX), nCounted(0), afp(AFP_OTHER), simCathodes(false) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
 		mwpcThresh[s] = 0;
@@ -120,11 +120,9 @@ void Sim2PMT::reverseCalibrate() {
 	
 	// simulate event on both sides
 	for(Side s = EAST; s <= WEST; ++s) {
-		// wirechamber accidentals
-		if(!eW[s] && mc_rnd_source.Uniform(0.,1.)<mwpcAccidentalProb)
-			eW[s] = mwpcThresh[s]+0.1;
 		
 		mwpcEnergy[s] = eW[s];
+		
 		// simulate detector energy response, or use un-smeared original data 
 		if(reSimulate) {
 			PGen[s].evtm = runClock[BOTH];
@@ -132,6 +130,15 @@ void Sim2PMT::reverseCalibrate() {
 								wires[s][X_DIRECTION].center-scintPos[s][X_DIRECTION], wires[s][Y_DIRECTION].center-scintPos[s][Y_DIRECTION]);
 			scints[s] = PGen[s].generate(eQ[s]);
 			passesScint[s] = PGen[s].triggered();
+			
+			if(simCathodes) {
+				mwpcs[s].cathodeSum = 0;
+				for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+					PGen[s].calcCathodeSignals(s,d,cath_chg[s][d],cathodes[s][d],wires[s][d]);
+					mwpcs[s].cathodeSum += wires[s][d].cathodeSum;
+				}
+			}
+			
 		} else {
 			scints[s].energy = eQ[s];
 			passesScint[s] = (eQ[s] > 0);
@@ -143,13 +150,18 @@ void Sim2PMT::reverseCalibrate() {
 
 void Sim2PMT::classifyEvent() {
 	
-	bool passesMWPC[2];
-	bool is2fold[2];
+	bool passesMWPC[BOTH];
+	bool is2fold[BOTH];
 	
 	primSide = costheta>0?WEST:EAST;
 	
 	for(Side s = EAST; s <= WEST; ++s) {
-		passesMWPC[s] = (mwpcEnergy[s] > mc_rnd_source.Gaus(mwpcThresh[s],mwpcWidth[s]));
+		if(simCathodes) {
+			ActiveCal->fCathMaxSum[s].val = wires[s][X_DIRECTION].maxValue+wires[s][Y_DIRECTION].maxValue;
+			passesMWPC[s] = ActiveCal->fCathMaxSum[s].inRange();
+		} else {
+			passesMWPC[s] = (mwpcEnergy[s] > mc_rnd_source.Gaus(mwpcThresh[s],mwpcWidth[s]));
+		}
 		is2fold[s] = passesMWPC[s] && passesScint[s];
 	}
 	

@@ -2,9 +2,9 @@
 #define XENONANALYZER_HH 1
 
 #include "PositionBinnedPlugin.hh"
-#include "AnodeGainMapPlugin.hh"
+#include "WirechamberGainMapPlugins.hh"
 #include "CathodeTuningAnalyzer.hh"
-#include "WirechamberAnodePlugins.hh"
+#include "WirechamberEnergyPlugins.hh"
 
 /// xenon data collected for each sector
 struct SectorDat {
@@ -56,8 +56,8 @@ public:
 		return new XenonAnalyzer(this,nm,inflname,myXeSpec->sects.n,myAnode->sects.n); }
 	
 	XenonSpectrumPlugin* myXeSpec;	//< position-binned Xenon spectrum analysis
-	AnodeGainMapPlugin* myAnode;		//< anode position gain
-	AnodeGainPlugin* myWG;			//< anode energy calibration
+	AnodeGainMapPlugin* myAnode;	//< anode position gain
+	MWPCGainPlugin* myWG;			//< MWPC energy calibration
 };
 
 /// analyzer for simulated xenon data
@@ -67,7 +67,7 @@ public:
 	SimXenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0);
 	
 	XenonSpectrumPlugin* myXeSpec;	//< position-binned Xenon spectrum analysis
-	AnodeGainPlugin* myWG;			//< anode energy calibration
+	MWPCGainPlugin* myWG;			//< MWPC energy calibration
 };
 
 /// process xenon runs

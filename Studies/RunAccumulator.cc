@@ -657,7 +657,7 @@ unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& sim
 
 unsigned int processPulsePair(RunAccumulator& RA, const Octet& PP) {
 	unsigned int nproc = 0;
-	std::vector<Octet> triads = PP.getSubdivs(3,false);
+	std::vector<Octet> triads = PP.getSubdivs(DIV_TRIAD,false);
 	printf("Processing pulse pair for %s containing %i triads...\n",PP.octName().c_str(),int(triads.size()));
 	for(std::vector<Octet>::iterator sd = triads.begin(); sd != triads.end(); sd++) {
 		nproc++;
@@ -687,7 +687,7 @@ unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bo
 		if(SegmentSaver::inflExists(inflname)) {
 			RunAccumulator* subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),inflname);
 			subRA->depth = octit->divlevel;
-			nproc += recalcOctets(*subRA,octit->getSubdivs(octit->divlevel+1,false), doPlots);
+			nproc += recalcOctets(*subRA,octit->getSubdivs(nextDiv(octit->divlevel),false), doPlots);
 			RA.addSegment(*subRA);
 			delete subRA;
 		}
@@ -714,7 +714,7 @@ unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, d
 		}
 		RA.qOut.insert("Octet",octit->toStringmap());
 		
-		if(octit->divlevel<=2) {
+		if(octit->divlevel<=DIV_PP) {
 			// make sub-Analyzer for this octet, to load data if already available, otherwise re-process
 			RunAccumulator* subRA;
 			std::string inflname = RA.basePath+"/"+octit->octName()+"/"+octit->octName();
@@ -725,7 +725,7 @@ unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, d
 			} else {
 				subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),"");
 				subRA->depth = octit->divlevel;
-				nproc += processOctets(*subRA,octit->getSubdivs(octit->divlevel+1,false),replaceIfOlder, doPlots);
+				nproc += processOctets(*subRA,octit->getSubdivs(nextDiv(octit->divlevel),false),replaceIfOlder, doPlots);
 			}
 			RA.addSegment(*subRA);
 			delete(subRA);

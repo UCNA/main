@@ -215,3 +215,27 @@ bool PMTGenerator::triggered() {
 	return sim_rnd_source.Uniform(0.0,1.0) < TProb->calcProb();
 }
 
+//-------------------------------------------------------------
+
+void PMTGenerator::calcCathodeSignals(Side s, AxisDirection d, const float* cath_chg, float* cath_adc, wireHit& w) const {
+	// generate simulated cathode ADCs
+	for(unsigned int c=0; c<currentCal->nWires(s,d); c++) {
+		// base ADC conversion
+		cath_adc[c] = currentCal->ccloud_eta[s]->eval(s,0,xw,yw,true) * currentCal->cathseg_energy_norm[s][d][c] * cath_chg[c];
+		// pedestals and electronics noise
+		double ped = currentCal->cathPeds0[s][d][c];
+		cath_adc[c] += ped + sim_rnd_source.Gaus(0.,currentCal->cathPedW0[s][d][c]);
+		// clamp to ADC range and quantize
+		cath_adc[c] = int(cath_adc[c]<0 ? 0 : (cath_adc[c]>4095 ? 4095:cath_adc[c]));
+		// pedestal subtract
+		cath_adc[c] -= ped;
+	}
+	
+	// calculate wireplane info from simulated cathodes, but keep original center location
+	double old_center = w.center;
+	double old_rawcenter = w.rawCenter;
+	w = currentCal->calcHitPos(s,d,cath_adc,&currentCal->cathPeds0[s][d][0]);
+	w.center = old_center;
+	w.rawCenter = old_rawcenter;
+}
+

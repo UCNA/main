@@ -39,7 +39,7 @@ protected:
 	static double unfold(double x);
 };
 
-/// Class for generating PMT signals with energy resolution, efficiency considerations
+/// Class for simulating detector response
 class PMTGenerator {
 public:
 	/// constructor
@@ -52,7 +52,7 @@ public:
 	/// set trigger probability estimator
 	void setTriggerProb(TriggerProb* TP);
 	
-	/// generate an event for a given quenched energy
+	/// generate a scintillator event for a given quenched energy
 	ScintEvent generate(float en);
 	
 	/// calculate and count number of PMT triggers for event
@@ -71,7 +71,7 @@ public:
 	const PMTCalibrator* getCalibrator() const { return currentCal; }
 		
 	float x,y;						//< event hit position in scintillator (projected back to decay trap)
-	float xw,yw;					//< wirechamber hit offset from source position
+	float xw,yw;					//< wirechamber hit position, possibly offset from source position
 	float evtm;						//< event time during run
 	float presmear;					//< nPE/keV already smeared in input spectrum
 	float dgain;					//< gain at first photomultiplier stage (smears single-PE resolution)
@@ -85,14 +85,18 @@ public:
 	
 	static TRandom3 sim_rnd_source;	//< PMTGenerator random number generator
 	
+	
+	/// convert simulated cathode charge distribution to ADC, updating wireHit results
+	void calcCathodeSignals(Side s, AxisDirection d, const float* cath_chg, float* cath_adc, wireHit& w) const;
+	
 protected:
 
-	PMTCalibrator* currentCal;		//< current PMT Calibrator in use
+	PMTCalibrator* currentCal;			//< current PMT Calibrator in use
 	TriggerProb* TProb;
-	Side mySide;					//< side to simulate
-	float pmtRes[2][nBetaTubes];	//< individual PMT nPE per keV
-	float lightBal[2][nBetaTubes];	//< custom light balancing factor between PMTs for LED events
-	ScintEvent sevt;				//< current generated event
+	Side mySide;						//< side to simulate
+	float pmtRes[BOTH][nBetaTubes];		//< individual PMT nPE per keV
+	float lightBal[BOTH][nBetaTubes];	//< custom light balancing factor between PMTs for LED events
+	ScintEvent sevt;					//< current generated event
 };
 
 #endif

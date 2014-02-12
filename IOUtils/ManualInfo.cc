@@ -1,9 +1,12 @@
 #include "ManualInfo.hh"
+#include "SMExcept.hh"
+#include "PathUtils.hh"
 #include <cfloat>
 #include <cmath>
 #include <algorithm>
+#include <stdio.h>
 
-ManualInfo ManualInfo::MI("../Aux/ManualInfo.txt");
+ManualInfo ManualInfo::MI(getEnvSafe("UCNA_AUX")+"/ManualInfo.txt");
 
 struct rangeSorter {
 	rangeSorter(const std::string& key1, const std::string& key2): k1(key1), k2(key2) {}
@@ -31,4 +34,22 @@ std::vector<Stringmap> ManualInfo::getInRange(const std::string& key,
 	rangeSorter RS(k1,k2);
 	std::sort(v.begin(),v.end(),RS);
 	return v;
+}
+
+RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
+
+Stringmap loadCut(RunNum rn, const std::string& cutName) {
+	std::vector<Stringmap> v = ManualInfo::MI.getInRange(cutName,rn);
+	if(!v.size()) {
+		SMExcept e("missingCut");
+		e.insert("cutName",cutName);
+		e.insert("runNum",rn);
+		throw(e);
+	}
+	return v[0];
+}
+
+void loadRangeCut(RunNum rn, CutVariable& c, const std::string& cutName) {
+	c.R = RangeCut(loadCut(rn,cutName));
+	printf("Loaded cut %s/%i = (%g,%g)\n",cutName.c_str(),rn,c.R.start,c.R.end);
 }

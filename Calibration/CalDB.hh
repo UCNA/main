@@ -9,6 +9,16 @@
 #include "RunInfo.hh"
 #include "CathSegCalibrator.hh"
 
+/// specification for MWPC energy calibration
+struct MWPC_Ecal_Spec {
+	ChargeProxyType charge_meas;
+	double gain_factor;
+	PositioningCorrector* pcorr;
+	int priority;
+	RunNum start_run;
+	RunNum end_run;
+};
+
 /// abstract class for interface to database of calibration settings and peaks
 class CalDB {
 public:
@@ -50,7 +60,6 @@ public:
 	
 	/// get GMS Cal run number
 	virtual RunNum getGMSRun(RunNum rn) = 0;
-	
 	/// get energy calibration point ADC value
 	virtual float getEcalADC(RunNum rn, Side s, unsigned int t) = 0;
 	/// get energy calibration point visible energy
@@ -59,22 +68,23 @@ public:
 	virtual float getEcalX(RunNum rn, Side s) = 0;
 	/// get energy calibration point y position
 	virtual float getEcalY(RunNum rn, Side s) = 0;
-	
-	/// get positioning corrector for given run
-	virtual PositioningCorrector* getPositioningCorrector(RunNum rn) = 0;
-	/// get anode positioning corrector for given run
-	virtual PositioningCorrector* getAnodePositioningCorrector(RunNum rn) = 0;
-	/// get anode gain correction factor for run
-	virtual float getAnodeGain(RunNum rn, Side s) = 0;
 	/// get GMS gain tweaking factors
 	virtual void getGainTweak(RunNum rn, Side s, unsigned int t, float& orig, float& final) = 0;
+
+	/// get positioning corrector for given run
+	virtual PositioningCorrector* getPositioningCorrector(RunNum rn) = 0;
 	
+	/// get wirechamber calibration methods (sorted by application priority)
+	virtual std::vector<MWPC_Ecal_Spec> get_MWPC_Ecals(RunNum rn, Side s) = 0;
+			
 	/// get trigger efficiency function
 	virtual EfficCurve* getTrigeff(RunNum rn, Side s, unsigned int t) = 0;
 	/// get E_vis -> E_true parametrization
 	virtual TGraph* getEvisConversion(RunNum rn, Side s, EventType tp) = 0;
 	/// get list of cathode segment calibrators (caller is responsible for deletion)
 	virtual std::vector<CathSegCalibrator*> getCathSegCalibrators(RunNum rn, Side s, AxisDirection d) = 0;
+	/// get cathode to charge cloud gain factors
+	virtual std::vector<double> getCathCCloudGains(RunNum rn, Side s, AxisDirection d) = 0;
 	
 	/// run start time
 	virtual int startTime(RunNum rn, int t0 = 0) { return 0; }

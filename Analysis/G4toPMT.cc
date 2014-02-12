@@ -4,25 +4,25 @@
 #include <cmath>
 
 void G4toPMT::setReadpoints() {
-	Tch->SetBranchAddress("EdepQ",eQ);
-	Tch->SetBranchAddress("Edep",eDep);
-	Tch->SetBranchAddress("MWPCEnergy",eW);
-	Tch->SetBranchAddress("ScintPos",scintPos);
-	Tch->SetBranchAddress("MWPCPos",mwpcPos);
-	Tch->SetBranchAddress("time",time);
-	Tch->SetBranchAddress("primTheta",&costheta);
-	Tch->SetBranchAddress("primKE",&ePrim);
+	SetBranchAddress("EdepQ",eQ);
+	SetBranchAddress("Edep",eDep);
+	SetBranchAddress("MWPCEnergy",eW);
+	SetBranchAddress("ScintPos",scintPos);
+	SetBranchAddress("MWPCPos",mwpcPos);
+	SetBranchAddress("time",time);
+	SetBranchAddress("primTheta",&costheta);
+	SetBranchAddress("primKE",&ePrim);
 	if(Tch->GetBranch("primPos"))
-		Tch->SetBranchAddress("primPos",primPos);
+		SetBranchAddress("primPos",primPos);
 	else
 		primPos[0] = primPos[1] = primPos[2] = primPos[3] = 0;
 	
 	if(extended) {
-		Tch->SetBranchAddress("EdepSD",eDepSD);
-		Tch->SetBranchAddress("thetaInSD",thetaInSD);
-		Tch->SetBranchAddress("thetaOutSD",thetaOutSD);
-		Tch->SetBranchAddress("keInSD",keInSD);
-		Tch->SetBranchAddress("keOutSD",keOutSD);
+		SetBranchAddress("EdepSD",eDepSD);
+		SetBranchAddress("thetaInSD",thetaInSD);
+		SetBranchAddress("thetaOutSD",thetaOutSD);
+		SetBranchAddress("keInSD",keInSD);
+		SetBranchAddress("keOutSD",keOutSD);
 	}
 }
 
@@ -31,7 +31,7 @@ void G4toPMT::runCathodeSim(bool b) {
 	if(!b) return;
 	for(Side s = EAST; s <= WEST; ++s)
 		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
-			Tch->SetBranchAddress((sideSubst("Cath_%c",s)+(d==X_DIRECTION?"X":"Y")).c_str(),cath_chg[s][d]);
+			SetBranchAddress((sideSubst("Cath_%c",s)+(d==X_DIRECTION?"X":"Y")).c_str(),cath_chg[s][d]);
 }
 
 void G4toPMT::doUnits() {

@@ -6,7 +6,7 @@ from ucnacore.EncalDB import *
 from math import *
 from ucnacore.QFile import *
 from ucnacore.PyxUtils import *
-from Asymmetries import *
+from review.Asymmetries import *
 import numpy
 from numpy import zeros,matrix,linalg
 import os
@@ -163,14 +163,6 @@ def new_cathseg_cal(conn,ccsid,wspec):
 
 def set_cathshape_graph(conn,csid,gid):
 	conn.execute("INSERT INTO cathshape_graphs(graph_id,cathseg_id) VALUES (%i,%i)"%(gid,csid))
-
-def deleteAllAnodeCals(conn):
-	conn.execute("DELETE FROM anode_cal WHERE 1")
-
-def uploadAnodeCal(conn,rmin,rmax,pmap,ecor,wcor):
-	cmd = "INSERT INTO anode_cal(start_run,end_run,anode_posmap_id,calfactor_E,calfactor_W) VALUES (%i,%i,%i,%g,%g)"%(rmin,rmax,pmap,ecor,wcor)
-	print cmd
-	conn.execute(cmd)
 
 ###############
 # wires info
@@ -566,11 +558,116 @@ def sep23effic(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/23Separation/"):
 		
 		g23.writetofile(basedir+"frac23_%s.pdf"%s)
 
+
+################################
+# Wirechamber calibration sets #
+################################
+
+# make new MWPC position maps from energy and charge signal maps
+def make_mwpc_posmap(conn,charge_pmid,energy_pmid):
+	c_pset = getPosmapSet(conn,charge_pmid)
+	e_pset = getPosmapSet(conn,energy_pmid)
+	
+	pinfo = c_pset["East",0].info
+	pinfo.descrip = "MWPC Position Response Q/E=[%i]/[%i]"%(charge_pmid,energy_pmid)
+	newPosmap(conn,pinfo)
+	
+	for s in ["East","West"]:
+		c_pts = c_pset[(s,0)].get_pts_sorted()
+		e_pts = e_pset[(s,0)].get_pts_sorted()
+		m = posmap(pinfo)
+		m.side = s
+		m.quadrant = 0
+		assert len(c_pts)==len(e_pts)
+		for (i,c) in enumerate(c_pts):
+			c.sig /= c.norm;
+			c.norm = e_pts[i].sig/e_pts[i].norm
+			m.add_pt(c)
+		uploadPosmap(conn,m)
+	
+	return pinfo
+
+# assign calibration for range of runs
+def assign_MWPC_calib(conn,start_run,end_run,pmid=None,charge_meas="ccloud",gain=None,side="BOTH"):
+	
+	if side=="BOTH":
+		for s in ["East","West"]:
+			assign_MWPC_calib(conn,start_run,end_run,pmid,charge_meas,gain,s)
+		return
+		
+	# delete old entries for same run range
+	conn.execute("SELECT count(*) FROM mwpc_ecal WHERE start_run = %i AND end_run = %i AND side = '%s'"%(start_run,end_run,side))
+	nold = conn.fetchone()[0]
+	if nold:
+		print "Deleting",nold,"previous entries."
+		cmd = "DELETE FROM mwpc_ecal WHERE start_run = %i AND end_run = %i AND side = '%s'"%(start_run,end_run,side)
+		print cmd
+		conn.execute(cmd)
+	
+	if pmid is None:
+		return
+	if gain is None: # synthesize gain from position map
+		gain = getPosmapSet(conn,pmid)[(s,0)].avg_val()
+
+	cmd = "INSERT INTO mwpc_ecal (start_run,end_run,side,charge_meas,gain_posmap_id,gain_factor) VALUES (%i,%i,'%s','%s',%i,%g)"%(start_run,end_run,side,charge_meas,pmid,gain)
+	print cmd
+	conn.execute(cmd)
+
+def delete_cath_ccloud_scale(conn,ccsid):
+	print "Deleting cathode cloud scaling set",ccsid
+	conn.execute("SELECT gain_graph_id FROM cath_ccloud_scale WHERE cath_ccloud_scale_id = %i"%ccsid);
+	for r in conn.fetchall():
+		delete_graph(conn,r[0])
+	conn.execute("DELETE FROM cath_ccloud_scale WHERE cath_ccloud_scale_id = %i"%ccsid);
+
+# Cathode CCloud scaling factor g_i*g_CC data class
+class CthCclScl:
+	def __init__(self,srun,erun,side,plane):
+		self.srun = srun
+		self.erun = erun
+		self.side = side
+		self.plane = plane
+		self.cfacts = None
+	def delete_from_db(self,conn):
+		conn.execute("SELECT cath_ccloud_scale_id FROM cath_ccloud_scale WHERE start_run = %i AND end_run = %i AND side = '%s' AND plane = '%s'"%(self.srun,self.erun,self.side,self.plane))
+		for r in conn.fetchall():
+			delete_cath_ccloud_scale(conn,r[0])
+	def upload_to_db(self,conn):
+		assert self.cfacts is not None
+		self.gid = upload_graph(conn,"Cathode CCloud Scaling %s %s"%(self.side,self.plane),self.cfacts)
+		conn.execute("INSERT INTO cath_ccloud_scale (start_run,end_run,side,plane,gain_graph_id) VALUES (%i,%i,'%s','%s',%i)"%(self.srun,self.erun,self.side,self.plane,self.gid))
+
+
+##################
+# Functions for updating from Cal. DB prior to full cathode gain calibrations system
+
+# transfer deprecated anode calibration table to new system
+def assign_MWPC_calib_from_anode_table(conn):
+	conn.execute("SELECT start_run,end_run,anode_posmap_id,calfactor_E,calfactor_W FROM anode_cal")
+	for r in conn.fetchall():
+		for s in ["East","West"]:
+			assign_MWPC_calib(conn,r[0],r[1],r[2],"anode",{"East":r[3],"West":r[4]}[s],s)
+
+# set approximate default cathode scale factors in DB
+def set_default_cathode_scalefactors(conn):
+	for s in ["East","West"]:
+		for p in ["X","Y"]:
+			C = CthCclScl(0,100000,s,p)
+			C.delete_from_db(conn)
+			C.cfacts = [ [i,0,655./(0.27*8840.),0] for i in range(16)]
+			C.upload_to_db(conn)
+
+		
 ###############
 #             #
 ###############
 
 if __name__ == "__main__":
+
+	conn = open_connection()
+	#assign_MWPC_calib_from_anode_table(conn)
+	set_default_cathode_scalefactors(conn)
+	exit(0)
 	
 	ppath = os.environ["UCNA_ANA_PLOTS"]
 	

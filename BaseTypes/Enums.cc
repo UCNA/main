@@ -113,5 +113,18 @@ char choiceLetter(AnalysisChoice a) {
 	return (ANCHOICE_A <= a && a <= ANCHOICE_Z)?'A'+(a-ANCHOICE_A):'0';
 }
 
+//----------------------------------------
+
+std::string chargeProxyName(ChargeProxyType& tp) {
+	if(tp==CHARGE_PROXY_ANODE) return "anode";
+	else if(tp==CHARGE_PROXY_CCLOUD) return "ccloud";
+	return "None";
+}
+
+ChargeProxyType strToChgPrx(const std::string& s) {
+	if(s=="anode") return CHARGE_PROXY_ANODE;
+	else if(s=="ccloud") return CHARGE_PROXY_CCLOUD;
+	return CHARGE_PROXY_NONE;
+}
 
 

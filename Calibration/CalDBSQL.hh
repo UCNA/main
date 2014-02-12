@@ -42,6 +42,8 @@ public:
 	float getRunMonitorStart(RunNum rn, const std::string& sensorName, const std::string& monType);
 	/// get a continuous monitor graph for a run
 	TGraphErrors* getContinuousMonitor(const std::string& sensorName, const std::string& monType, RunNum rn, bool centers);
+	/// get GMS gain tweaking factors
+	virtual void getGainTweak(RunNum rn, Side s, unsigned int t, float& orig, float& final);
 	
 	/// get pedestals for named sensor
 	virtual TGraph* getPedestals(RunNum rn, const std::string& sensorName) { return getRunMonitor(rn,sensorName,"pedestal",true); }
@@ -55,19 +57,17 @@ public:
 	/// remove cached positioning corrector for run
 	void forgetPositioningCorrector(RunNum rn);
 	
-	/// get anode positioning corrector for given run
-	virtual PositioningCorrector* getAnodePositioningCorrector(RunNum rn);
-	/// get anode gain correction factor
-	virtual float getAnodeGain(RunNum rn, Side s);
-	/// get GMS gain tweaking factors
-	virtual void getGainTweak(RunNum rn, Side s, unsigned int t, float& orig, float& final);
-	
+	/// get wirechamber calibration methods (sorted by application priority)
+	virtual std::vector<MWPC_Ecal_Spec> get_MWPC_Ecals(RunNum rn, Side s);
+
 	/// get trigger efficiency function
 	EfficCurve* getTrigeff(RunNum rn, Side s, unsigned int t);
 	/// get E_vis -> E_true parametrization
 	TGraph* getEvisConversion(RunNum rn, Side s, EventType tp);
 	/// get list of cathode segment calibrators (caller is responsible for deletion)
 	virtual std::vector<CathSegCalibrator*> getCathSegCalibrators(RunNum rn, Side s, AxisDirection d);
+	/// get cathode to charge cloud gain factors
+	virtual std::vector<double> getCathCCloudGains(RunNum rn, Side s, AxisDirection d);
 	
 	/// run start time
 	int startTime(RunNum rn, int t0 = 0);
@@ -126,8 +126,6 @@ protected:
 	unsigned int getCalSetInfo(RunNum R, const char* field);
 	/// get tube calibrations table tubecal_id
 	unsigned int getTubecalID(RunNum R, Side s, unsigned int t);
-	/// get anode calibrations ID
-	float getAnodeCalInfo(RunNum R, const char* field);
  	/// get tube calibrations table entry
 	virtual float getTubecalData(RunNum rn, Side s, unsigned int t, const char* field);
 	/// get tube calibrations table (int) entry

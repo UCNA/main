@@ -8,7 +8,7 @@ from ucnacore.EncalDB import *
 
 def replay_betas(rmin,rmax):	
 	
-	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i cutbeam ledtree\n"
+	pcmd = "cd ../../OfficialReplay; ./ucnaDataAnalyzer11b %i cutbeam ledtree\n"
 	rlist = getRunType(open_connection(),"Asymmetry",rmin,rmax)	
 	freplaylist = open("officialreplaylist.txt","w")
 	rlist.sort()
@@ -23,7 +23,7 @@ def replay_betas(rmin,rmax):
 def replay_new(rmin,rmax):
 	
 	rlist = range(rmin,rmax+1)
-	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i\n"	
+	pcmd = "cd ../../OfficialReplay; ./ucnaDataAnalyzer11b %i\n"
 		
 	freplaylist = open("officialreplaylist.txt","w")
 	
@@ -42,7 +42,7 @@ def replay_sources(rmin,rmax,doXe=False):
 	rlist = getRunType(open_connection(),"SourceCalib",rmin,rmax)
 	if doXe:
 		rlist = getRunType(open_connection(),"Xenon",rmin,rmax)
-	pcmd = "cd ../OfficialReplay; ./ucnaDataAnalyzer11b %i\n"
+	pcmd = "cd ../../OfficialReplay; ./ucnaDataAnalyzer11b %i\n"
 			
 	freplaylist = open("officialreplaylist_sources.txt","w")
 	

@@ -3,7 +3,7 @@ import os
 import MySQLdb
 import getpass
 
-# open write connection to calibration DB
+# open connection to calibration DB
 def open_connection(db=None,usr=None,pw=None,host=None):
 	if not host:
 		host = os.environ["UCNADBADDRESS"]
@@ -13,7 +13,7 @@ def open_connection(db=None,usr=None,pw=None,host=None):
 		usr = os.environ["UCNADBUSER"]
 	if not pw:
 		pw = os.environ["UCNADBPASS"]
-	print "Connecting to database",db,"on",host
+	print "Connecting to database",db,"with user",usr,"on",host
 	conn = None
 	nfails = 0
 	while nfails < 3 and not conn:
@@ -21,7 +21,7 @@ def open_connection(db=None,usr=None,pw=None,host=None):
 			passwd = pw
 			if not pw:
 				passwd = getpass.getpass("password for %s? "%usr)
-			conn = MySQLdb.connect(host = host, user = usr, passwd = passwd, db = db).cursor()
+			conn = MySQLdb.connect(host = host, user = usr, passwd = passwd, db = db)
 		except:
 			print "Connection failed! Try again?"
 			nfails += 1
@@ -29,13 +29,16 @@ def open_connection(db=None,usr=None,pw=None,host=None):
 			passwd = pw
 			if not pw:
 				passwd = getpass.getpass("password for %s? "%usr)
-			conn = MySQLdb.connect(host = host, user = usr, passwd = passwd, db = db).cursor()
-			
-	conn.execute("SELECT VERSION()")
-	r=conn.fetchone()
+			conn = MySQLdb.connect(host = host, user = usr, passwd = passwd, db = db)
+	
+
+	curs = conn.cursor()
+	curs.execute("SELECT VERSION()")
+	r=curs.fetchone()
 	if r:
 		print "Connected to server version:",r[0]
-		return conn
+		conn.autocommit(True)
+		return curs
 	else:
 		print "CONNECTION FAILED"
 		exit()
@@ -46,7 +49,7 @@ def newgraph(conn,gdescrip):
 	conn.execute("SELECT LAST_INSERT_ID()")
 	return int(conn.fetchone()[0])
 
-# upload a new graph
+# upload a new graph, formatted [[x,dx,y,dy],...]; return graph ID
 def upload_graph(conn,gdescrip,gdata):
 	gid=newgraph(conn,gdescrip)
 	print "Loading new graph id",gid
@@ -141,10 +144,44 @@ def deleteRunMonitors(conn,rmin,rmax,mtype='pedestal'):
 		deleteRunMonitor(conn,r[0])
 
 
-# get position map points by posmap ID
+################
+# Position maps
+################
+
 class posmap_point:
 	pass
-def getPosmapPoints(conn,pmid):
+class posmap_info:
+	def __repr__(self):
+		return "[Posmap %i: '%s' %i, %g]"%(self.posmap_set_id,self.descrip,self.n_rings,self.radius)
+
+# one position map
+class posmap:
+	def __init__(self,info):
+		self.pts = {}
+		self.info = info
+	def add_pt(self,pt):
+		self.pts[pt.n] = pt
+	def get_pts_sorted(self):
+		l = self.pts.keys()
+		l.sort()
+		return [self.pts[k] for k in l]
+	def avg_val(self):
+		return sum([p.sig/p.norm for p in self.pts.values()])/len(self.pts)
+
+# get information about a posmap
+def getPosmapInfo(conn,pmid):
+	conn.execute("SELECT descrip,n_rings,radius FROM posmap_set WHERE posmap_set_id=%i"%pmid)
+	p = conn.fetchone()
+	info = posmap_info()
+	info.posmap_set_id = pmid
+	info.descrip = p[0]
+	info.n_rings = p[1]
+	info.radius = p[2]
+	return info
+
+# get set of all position maps corresponding to given ID number
+def getPosmapSet(conn,pmid):
+	pinfo = getPosmapInfo(conn,pmid)
 	conn.execute("SELECT side,quadrant,pixel_id,`signal`,norm,center_x,center_y FROM posmap_points WHERE posmap_set_id = %i"%pmid)
 	pts = {}
 	for p in conn.fetchall():
@@ -154,5 +191,23 @@ def getPosmapPoints(conn,pmid):
 		x.norm = p[4]
 		x.x = p[5]
 		x.y = p[6]
-		pts.setdefault((p[0],p[1]),[]).append(x)
+		pts.setdefault((p[0],p[1]),posmap(pinfo)).add_pt(x)
+	for k in pts:
+		pts[k].side = k[0]
+		pts[k].quadrant = k[1]
 	return pts
+
+# generate new position map ID from information (assigning new posmap set ID to info)
+def newPosmap(conn,pinfo):
+	conn.execute("INSERT INTO posmap_set (descrip,n_rings,radius) VALUES ('%s',%i,%g)"%(pinfo.descrip,pinfo.n_rings,pinfo.radius))
+	conn.execute("SELECT LAST_INSERT_ID()")
+	pinfo.posmap_set_id = int(conn.fetchone()[0])
+	print "Uploaded",pinfo
+
+# upload posmap points
+def uploadPosmap(conn,pmap):
+	print "Uploading points for",pmap.info
+	cmd = "INSERT INTO posmap_points (posmap_set_id,side,quadrant,pixel_id,center_x,center_y,signal,norm) VALUES (%i,'%s',%i,"%(pmap.info.posmap_set_id,pmap.side,pmap.quadrant)
+	for p in pmap.get_pts_sorted():
+		conn.execute(cmd+"%i,%g,%g,$g,%g)"%(p.n,p.x,p.y,p.sig,p.norm))
+		

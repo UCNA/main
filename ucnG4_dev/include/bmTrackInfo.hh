@@ -33,7 +33,7 @@ public:
 	Int_t pID;				//< particle creating this track (PDG code)
 	bool isEntering;		//< whether this is initial track entering a volume
 	
-	ClassDef(bmTrackInfo, 1);
+	ClassDef(bmTrackInfo, 2);
 };
 
 #endif

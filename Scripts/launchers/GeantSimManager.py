@@ -32,6 +32,8 @@ class GeantSimManager:
 		
 		self.settings["vis_cmd"] = ""
 		
+		self.g4_out_dir_base = None
+		
 		self.anagroup = 10 # number of files to group together for final analyzer result
 				
 	def enable_vis(self):
@@ -94,7 +96,9 @@ class GeantSimManager:
 		if "gunenergy" in self.settings:
 			self.type_dir += "_%.1fkeV"%self.settings["gunenergy"]
 		
-		self.g4_out_dir = self.g4_workdir+"/output/%s/"%self.type_dir
+		if not self.g4_out_dir_base:
+			self.g4_out_dir_base = self.g4_workdir++"/output/"
+		self.g4_out_dir = self.g4_out_dir_base+"/%s/"%self.type_dir
 		self.g4_log_dir = self.g4_workdir+"/logs/%s/"%self.type_dir
 		self.g4_macro_dir = self.g4_workdir+"/macros/%s/"%self.type_dir
 		self.g4_out_name = "%s/g4_run_%%s.root"%self.g4_out_dir
@@ -212,7 +216,7 @@ if __name__ == "__main__":
 	
 	# self.settings["ana_args"] += " saveall"
 	
-	if 1:
+	if 0:
 		betaSim = GeantSimManager("2014013_GeomC")
 		betaSim.set_evtsrc("n1_f_n")
 		betaSim.set_detector_offsets()
@@ -227,19 +231,23 @@ if __name__ == "__main__":
 	
 	
 	####################				
-	# neutrons
+	# neutrons: 2010
 	####################
 	
 	# unpolarized beta baseline: 5e7 in 520 clusters
-	if 0:
+	if 1:
 		betaSim = GeantSimManager("20120823")
 		betaSim.settings["physlist"]="livermore"
-		betaSim.set_generator("neutronBetaUnpol")
+		#betaSim.set_generator("neutronBetaUnpol")
+		betaSim.set_evtsrc("neutronBetaUnpol")
 		betaSim.set_detector_offsets()
 		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
-		betaSim.launch_sims(nEvents=5e7,nClusters=520,hours_old=10*24)
-		betaSim.launch_postanalyzer(52,10000)
-	
+		betaSim.settings["ana_args"] += " cathodes"
+		betaSim.g4_out_dir_base = "/data2/mmendenhall/G4Out/2010/"
+		#betaSim.launch_sims(nEvents=5e7,nClusters=520,hours_old=10*24)
+		betaSim.launch_postanalyzer()
+		exit(0)
+		
 	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 104 clusters
 	if 0:
 		betaSim = GeantSimManager("20120824_MagF",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")

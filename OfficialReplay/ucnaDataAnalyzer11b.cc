@@ -10,17 +10,12 @@
 #include <TStyle.h>
 #include <TDatime.h>
 
-RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
-
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
 TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false), colorPlots(true),
 rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), nLiveTrigs(0), ignore_beam_out(false),
 nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	plotPath = bp+"/figures/run_"+itos(R)+"/";
 	dataPath = bp+"/data/";
-	for(Side s = EAST; s <= WEST; ++s)
-		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
-			fMWPC_caths[s][d].resize(kMaxCathodes);
 }
 
 void ucnaDataAnalyzer11b::analyze() {
@@ -51,44 +46,28 @@ void ucnaDataAnalyzer11b::analyze() {
 	quickAnalyzerSummary();
 }
 
-Stringmap ucnaDataAnalyzer11b::loadCut(const std::string& cutName) {
-	std::vector<Stringmap> v = ManualInfo::MI.getInRange(cutName,rn);
-	if(!v.size()) {
-		SMExcept e("missingCut");
-		e.insert("cutName",cutName);
-		e.insert("runNum",rn);
-		throw(e);
-	}
-	return v[0];
-}
-
-void ucnaDataAnalyzer11b::loadRangeCut(CutVariable& c, const std::string& cutName) {
-	c.R = RangeCut(loadCut(cutName));
-	printf("Loaded cut %s/%i = (%g,%g)\n",cutName.c_str(),rn,c.R.start,c.R.end);
-}
-
 void ucnaDataAnalyzer11b::loadCuts() {
 	for(Side s = EAST; s <= WEST; ++s) {
-		loadRangeCut(fMWPC_anode[s], sideSubst("Cut_MWPC_%c_Anode",s));
-		loadRangeCut(fCathMax[s],sideSubst("Cut_MWPC_%c_CathMax",s));
-		loadRangeCut(fCathSum[s],sideSubst("Cut_MWPC_%c_CathSum",s));
-		loadRangeCut(fCathMaxSum[s],sideSubst("Cut_MWPC_%c_CathMaxSum",s));
-		loadRangeCut(fBacking_tdc[s], sideSubst("Cut_TDC_Back_%c",s));
-		loadRangeCut(fDrift_tac[s], sideSubst("Cut_ADC_Drift_%c",s));
-		loadRangeCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c_Selftrig",s));
+		loadRangeCut(rn,fMWPC_anode[s], sideSubst("Cut_MWPC_%c_Anode",s));
+		loadRangeCut(rn,fCathMax[s],sideSubst("Cut_MWPC_%c_CathMax",s));
+		loadRangeCut(rn,fCathSum[s],sideSubst("Cut_MWPC_%c_CathSum",s));
+		loadRangeCut(rn,fCathMaxSum[s],sideSubst("Cut_MWPC_%c_CathMaxSum",s));
+		loadRangeCut(rn,fBacking_tdc[s], sideSubst("Cut_TDC_Back_%c",s));
+		loadRangeCut(rn,fDrift_tac[s], sideSubst("Cut_ADC_Drift_%c",s));
+		loadRangeCut(rn,fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c_Selftrig",s));
 		ScintSelftrig[s] = fScint_tdc[s][nBetaTubes].R;
-		loadRangeCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c",s));
+		loadRangeCut(rn,fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c",s));
 		for(unsigned int t=0; t<nBetaTubes; t++)
-			loadRangeCut(fScint_tdc[s][t], sideSubst("Cut_TDC_Scint_%c_",s)+itos(t));
+			loadRangeCut(rn,fScint_tdc[s][t], sideSubst("Cut_TDC_Scint_%c_",s)+itos(t));
 	}
-	loadRangeCut(fTop_tdc[EAST], "Cut_TDC_Top_E");
-	loadRangeCut(fBeamclock,"Cut_BeamBurst");
-	loadRangeCut(fWindow,"Cut_ClusterEvt");
+	loadRangeCut(rn,fTop_tdc[EAST], "Cut_TDC_Top_E");
+	loadRangeCut(rn,fBeamclock,"Cut_BeamBurst");
+	loadRangeCut(rn,fWindow,"Cut_ClusterEvt");
 	if(ignore_beam_out)
 		fBeamclock.R.end = FLT_MAX;
 	
 	// GV monitor rate cut
-	Stringmap gvm = loadCut("Cut_GVMon");
+	Stringmap gvm = loadCut(rn,"Cut_GVMon");
 	gvMonChecker = RollingWindow((int)gvm.getDefault("minCounts",5),gvm.getDefault("overTime",5));
 	printf("GV Monitor Rate Cut: expect %i counts (x10 prescaling) in %.1f s\n",gvMonChecker.nMax,gvMonChecker.lMax);
 	
@@ -211,11 +190,13 @@ bool ucnaDataAnalyzer11b::passesBeamCuts() {
 }
 
 void ucnaDataAnalyzer11b::reconstructPosition() {
+	float cathPeds[kMaxCathodes];
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
-			std::vector<float> cathPeds;
-			for(unsigned int c=0; c<cathNames[s][d].size(); c++)
-				cathPeds.push_back(PCal.getPedestal(cathNames[s][d][c],fTimeScaler[BOTH]));
+			for(unsigned int c=0; c<cathNames[s][d].size(); c++) {
+				cathPeds[c] = PCal.getPedestal(cathNames[s][d][c],fTimeScaler[BOTH]);
+				fMWPC_caths[s][d][c] -= cathPeds[c];
+			}
 			wirePos[s][d] = PCal.calcHitPos(s,d,fMWPC_caths[s][d],cathPeds);
 		}
 		fMWPC_anode[s].val -= PCal.getPedestal(sideSubst("MWPC%cAnode",s),fTimeScaler[BOTH]);
@@ -226,6 +207,8 @@ void ucnaDataAnalyzer11b::reconstructPosition() {
 		fPassedCath[s] = fCathSum[s].inRange();
 		fPassedCathMax[s] = fCathMax[s].inRange();
 		fPassedCathMaxSum[s] = fCathMaxSum[s].inRange();
+		mwpcs[s].anode = fMWPC_anode[s].val;
+		mwpcs[s].cathodeSum = fCathSum[s].val;
 	}
 }
 
@@ -239,11 +222,10 @@ void ucnaDataAnalyzer11b::reconstructVisibleEnergy() {
 			for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 				PCal.tweakPosition(s,d,wirePos[s][d],sevt[s].energy.x);
 			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler[BOTH]);
-			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,wirePos[s][X_DIRECTION].center,
-											wirePos[s][Y_DIRECTION].center,fTimeScaler[BOTH]);
+			fEMWPC[s] = PCal.wirechamberEnergy(s, wirePos[s][X_DIRECTION], wirePos[s][Y_DIRECTION], mwpcs[s]);
 		} else {
 			PCal.calibrateEnergy(s,0,0,sevt[s],fTimeScaler[BOTH]);
-			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,0,0,fTimeScaler[BOTH]);
+			fEMWPC[s] = PCal.wirechamberEnergy(s, wirePos[s][X_DIRECTION], wirePos[s][Y_DIRECTION], mwpcs[s]);
 		}
 	}
 }

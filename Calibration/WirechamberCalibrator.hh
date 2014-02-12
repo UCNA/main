@@ -6,7 +6,9 @@
 #include "CalDBSQL.hh"
 #include "PositionResponse.hh"
 #include "CathSegCalibrator.hh"
+#include "ManualInfo.hh"
 #include <vector>
+#include <map>
 
 /// maximum number of MWPC cathode segments per plane (actual number may be less if some dead)
 #define kMaxCathodes 16
@@ -26,7 +28,8 @@ enum reconstructionErrors {
 };
 
 /// struct for reconstruction information about a wirechamber hit
-struct wireHit {
+class wireHit {
+public:
 	float center;				//< reconstructed center of charge cloud
 	float width;				//< reconstructed 1-sigma width of charge cloud
 	float maxValue;				//< maximum wire signal for event
@@ -37,15 +40,9 @@ struct wireHit {
 	int errflags;				//< reconstruction error warnings
 	float rawCenter;			//< center position before energy-dependent tweaking
 	float height;				//< reconstructed amplitude of charge cloud
-};
-
-/// struct for approximate wireplane hit reconstruction
-struct hitRecon {
-	float c;	//< center
-	float w;	//< width
-	float h;	//< height
-	float a;	//< area
-	int flags;	//< reconstruction flags
+	
+	/// charge cloud size
+	float ccloud_size() const { return height*width; }
 };
 
 /// class for calibrating wirechamber data
@@ -56,14 +53,18 @@ public:
 	/// destructor
 	virtual ~WirechamberCalibrator();
 	
-	/// calibrate anode padc signal to deposited energy
-	float calibrateAnode(float adc, Side s, float x, float y, float t) const;
+	/// calibrate wire energy
+	float wirechamberEnergy(Side s, const wireHit& x_wires, const wireHit& y_wires, const MWPCevent& mwpce) const;
 	
-	/// get anode gain correction factor
-	float wirechamberGainCorr(Side s, float t) const;
+	/// get gain correction in use
+	float wirechamberGainCorr(Side s) const { return mwpcGainCorr[s]; }
+	/// get charge by method
+	float chargeProxy(Side s, ChargeProxyType c, const wireHit& x_wires, const wireHit& y_wires, const MWPCevent& mwpce) const;
+	/// get alternate energy calibration method
+	const MWPC_Ecal_Spec& getAltEcal(Side s, ChargeProxyType tp) const;
 	
 	/// calculate hit position from wire values array; optionally, calculate other centering variables
-	wireHit calcHitPos(Side s, AxisDirection d, std::vector<float>& wireValues, std::vector<float>& wirePeds, hitRecon* hLorentzian = NULL) const;
+	wireHit calcHitPos(Side s, AxisDirection d, const float* cathADC, const float* cathPed = NULL) const;
 	
 	/// special case for calculating hit position from two points
 	void calcDoubletHitPos(wireHit& h, float x0, float x1, float y0, float y1) const;
@@ -79,6 +80,10 @@ public:
 	
 	/// get normalization for given cathode
 	float getCathNorm(Side s, AxisDirection d, unsigned int c) const;
+	/// get charge cloud gain factor for given cathode
+	float getCathCCloudGain(Side s, AxisDirection d, unsigned int c) const;
+	/// get charge cloud gain factor for overall wirechamber
+	float getCcloudGain(Side s) const { return ccloudGainCorr[s]; }
 	
 	/// display summary info
 	virtual void printSummary();
@@ -100,20 +105,37 @@ public:
 	
 	double sigma;	//< expected charge cloud width for default reconstruction, in same units as cathode positions
 	
-	/// calculate ``Lorentzian center'' from three points
-	static hitRecon calcLorentzCenter(double sm, double s0, double sp, double pm, double p0, double pp);
 	/// draw wire positions on plot
 	void drawWires(Side s, AxisDirection p, TVirtualPad* C, Int_t color = 4, AxisDirection onAxis=X_DIRECTION) const;
 	
 	/// turn on/off cathode shape calibrations (for baseline comparison)
 	static bool calibrateCathodes;
 	
+	// wirechamber trigger cut information
+	CutVariable fCathSum[BOTH];		//< combined x+y cathode sum on each side
+	CutVariable fCathMax[BOTH];		//< min(max cathode each plane) for each side
+	CutVariable fCathMaxSum[BOTH];	//< sum of max cathode from each plane for each side
+
+	
+	// some specialized data for detector response simulation
+	unsigned int nWires(Side s, AxisDirection d) const { if(s>WEST||d>Y_DIRECTION) return 0; return nCaths[s][d]; }
+	std::vector<std::string> cathNames[BOTH][2];		//< cathode sensor names
+	std::vector<float> cathPeds0[BOTH][2];				//< t=0 cathode pedestal values [side][plane]
+	std::vector<float> cathPedW0[BOTH][2];				//< t=0 cathode pedesatl widths [side][plane]
+	std::vector<double> cath_ccloud_gains[BOTH][2];		//< gain conversion factors between cathode signal and charge cloud size
+	std::vector<float> cathseg_energy_norm[BOTH][2];	//< cathode ADC to energy normalization ADC/(Ew*f*eta) = g_i/cnorm
+	PositioningCorrector* ccloud_eta[BOTH];				//< position map for charge cloud method
+	
 protected:
-	PositioningCorrector* anodeP;						//< anode calibration maps
-	float anodeGainCorr[BOTH];							//< anode correction factor for each side
-	std::vector<CathSegCalibrator*> cathsegs[BOTH][2];	//< cathode segments for each [side][plane]
-	std::vector<double> wirePos[BOTH][2];				//< cathode wire positions on each plane
-	std::vector<double> domains[BOTH][2];				//< dividing lines between ``domains'' of each wire
+	unsigned int nCaths[BOTH][2];									//< number of cathodes on each [side][plane]
+	std::map<ChargeProxyType, MWPC_Ecal_Spec> ecalMethods[BOTH];	//< alternate energy calibration methods
+	ChargeProxyType myChargeProxy[BOTH];							//< what signal to use for energy calibration
+	PositioningCorrector* chargeP[BOTH];							//< charge signal position calibration maps
+	float mwpcGainCorr[BOTH];										//< gain correction factor for each side
+	float ccloudGainCorr[BOTH];										//< charge cloud method gain correction factor for each side
+	std::vector<CathSegCalibrator*> cathsegs[BOTH][2];				//< cathode segments for each [side][plane]
+	std::vector<double> wirePos[BOTH][2];							//< cathode wire positions on each plane
+	std::vector<double> domains[BOTH][2];							//< dividing lines between ``domains'' of each wire
 };
 
 

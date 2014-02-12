@@ -83,15 +83,28 @@ CREATE TABLE evis_conversion (
 	INDEX (start_run), INDEX(end_run), INDEX (side), INDEX (type)
 );
 
-# anode calibration
-CREATE TABLE anode_cal (
-	anode_cal_id SERIAL,			# unique ID
-	start_run INT UNSIGNED,			# starting run for calibration range
-	end_run INT UNSIGNED,			# ending run for calibration range
-	anode_posmap_id INT UNSIGNED,	# anode position response map
-	calfactor_E DOUBLE,				# East calibration factor
-	calfactor_W DOUBLE,				# West calibration factor
-	INDEX(start_run), INDEX(end_run)
+# wirechamber energy calibration
+CREATE TABLE mwpc_ecal (
+	mwpc_ecal_id SERIAL,				# unique ID
+	start_run INT UNSIGNED,				# starting run for calibration range
+	end_run INT UNSIGNED,				# ending run for calibration range
+	side ENUM('East','West'),			# side for calibration
+	charge_meas ENUM('anode','ccloud'),	# charge measure calibrated, anode or cathode charge cloud
+	gain_posmap_id INT UNSIGNED,		# gain position map ID for eta_Q
+	gain_factor DOUBLE,					# gain correction factor g_Q
+	priority INT,						# priority when multiple methods specified (prefer higher)
+	INDEX(start_run,end_run,side)
+);
+
+# cathode to charge cloud scaling factors
+CREATE TABLE cath_ccloud_scale (
+	cath_ccloud_scale_id SERIAL,		# unique ID
+	start_run INT UNSIGNED,				# starting run for calibration range
+	end_run INT UNSIGNED,				# ending run for calibration range
+	side ENUM('East','West'),			# side for calibration
+	plane ENUM('X','Y'),				# which cathode plane to consider
+	gain_graph_id INT UNSIGNED,			# graph containing g_i g_CC gain factor for each segment
+	INDEX(start_run,end_run,side,plane)
 );
 
 # cathode calibration sets

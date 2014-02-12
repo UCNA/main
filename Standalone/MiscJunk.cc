@@ -9,6 +9,20 @@
 #include "CathodeTuningAnalyzer.hh"
 #include "SimEdepPlugin.hh"
 
+/// Simulated wirechamber data energy calibrations analyzer
+class Sim_Cathode_Shape_Analyzer: public RunAccumulator {
+public:
+	/// constructor
+	Sim_Cathode_Shape_Analyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname = ""):
+	RunAccumulator(pnt,nm,inflname) {
+		addPlugin(cgain_plgn = new CathodeGainPlugin(this));
+	}
+	/// cloning generator: just return another of the same subclass (with any settings you want to preserve)
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
+									   const std::string& inflname) { return new Sim_Cathode_Shape_Analyzer(this, nm, inflname); }
+	CathodeGainPlugin* cgain_plgn;
+};
+
 int main(int argc, char *argv[]) {
 	
 	if(argc < 2) {
@@ -262,35 +276,16 @@ int main(int argc, char *argv[]) {
 		G4toPMT G2P;
 		G2P.runCathodeSim();
 		G2P.addFile(getEnvSafe("G4OUTDIR")+"/2014013_GeomC_n1_f_n/analyzed_*.root");
-		PMTCalibrator PCal(16000);
+		PMTCalibrator PCal(14127);
 		G2P.setCalibrator(PCal);
 		
 		OutputManager OM("SimCathShape",getEnvSafe("UCNA_ANA_PLOTS")+"/test/SimCathShape/");
-		OM.defaultCanvas->SetLeftMargin(0.14);
-		OM.defaultCanvas->SetRightMargin(0.04);
-		TH2F* hCath = OM.registeredTH2F("hCath", "Simulated Cathode", 301, -3, 3, 100, -0.05, 0.4);
-		hCath->GetXaxis()->SetTitle("normalized position");
-		hCath->GetYaxis()->SetTitle("signal per wirechamber energy");
+		Sim_Cathode_Shape_Analyzer SCTA(&OM,"SimCathodeShape");
 
-		G2P.startScan(false);
-		const unsigned int i=7;
-		const AxisDirection d=X_DIRECTION;
-		unsigned int n;
-		float c;
-		while(G2P.nextPoint()) {
-			const Side s = G2P.fSide;
-			if(G2P.fPID == PID_BETA && s==EAST && G2P.fType == TYPE_0_EVENT) {
-				G2P.ActiveCal->toLocal(s,d,G2P.wires[s][d].center,n,c);
-				hCath->Fill(int(n)+c-i-1,G2P.cath_chg[s][d][i]/G2P.eW[s]);
-			}
-		}
-		
-		hCath->GetYaxis()->SetTitleOffset(1.45);
-		hCath->GetXaxis()->SetRangeUser(-3, 3);
-		hCath->Draw("Col");
-		OM.printCanvas("CathShape");
+		SCTA.loadSimData(G2P);
+		SCTA.makePlots();
+		SCTA.write();
 	}
-	
 	
 	return 0;
 }

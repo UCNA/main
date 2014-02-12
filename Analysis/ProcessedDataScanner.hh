@@ -25,7 +25,7 @@ public:
 	/// radius of event
 	virtual float radius(Side s) const { return sqrt(radius2(s)); }
 	/// MWPC charge cloud volume
-	virtual float mwpcCharge(Side s) const { return wires[s][X_DIRECTION].height*wires[s][X_DIRECTION].width + wires[s][Y_DIRECTION].height*wires[s][Y_DIRECTION].width; }
+	virtual float mwpcCharge(Side s) const { return wires[s][X_DIRECTION].ccloud_size() + wires[s][Y_DIRECTION].ccloud_size(); }
 	/// event energy
 	virtual float getEnergy() const { return scints[EAST].energy.x + scints[WEST].energy.x; }
 	/// get event true (reconstructed) energy

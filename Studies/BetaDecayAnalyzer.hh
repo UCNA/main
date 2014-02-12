@@ -3,7 +3,6 @@
 
 #include "MuonPlugin.hh"
 #include "PositionsPlugin.hh"
-#include "WirechamberAnodePlugins.hh"
 #include "CathodeTuningAnalyzer.hh"
 #include "AsymmetryPlugin.hh"
 #include "SimAsymmetryPlugin.hh"
@@ -19,7 +18,6 @@ public:
 	
 	MuonPlugin* myMuons;			//< muons plugin
 	PositionsPlugin* myPos;			//< positions plugin
-	AnodeGainPlugin* myAG;			//< wirechamber anode gain plugin
 	HighEnergyExcessPlugin* myHEE;	//< high energy excess events, indicating neutron generated backgrounds
 	
 	AsymmetryPlugin* myAsym;		//< asymmetry plugin
@@ -35,11 +33,9 @@ public:
 	
 	MuonPlugin* myMuons;			//< muons plugin
 	PositionsPlugin* myPos;			//< positions plugin
-	AnodeGainPlugin* myAG;			//< wirechamber anode gain plugin
 	AsymmetryPlugin* myAsym;		//< asymmetry plugin
 
 	SimAsymmetryPlugin* mySimAsym;	//< simulated asymmetry plugin
-	WirechamberSimBackscattersPlugin* mySimID;		//< simulated Type II/III separation
 };
 
 #endif

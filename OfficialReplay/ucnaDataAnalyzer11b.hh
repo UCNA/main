@@ -20,33 +20,6 @@ enum UCN_MON_ID {
 	UCN_MON_SCS = 3
 };
 
-/// simple class for cuts from Stringmap
-class RangeCut {
-public:
-	/// constructor
-	RangeCut(const Stringmap& m = Stringmap());
-	/// constructor with start, end times
-	RangeCut(double s, double e): start(s), end(e) {}
-	
-	/// check if value is in range
-	inline bool inRange(double x) const { return start <= x && x <= end; }
-	
-	double start;	//< cut minimum
-	double end;		//< cut maximum
-};
-
-/// simple class for value + cuts range
-class CutVariable {
-public:
-	/// constructor
-	CutVariable(std::string sn=""): sname(sn) {}
-	/// check if in range
-	inline bool inRange() const { return R.inRange(val); }
-	std::string sname;	//< sensor name (for pedestal subtraction)
-	Float_t val;		//< stored value
-	RangeCut R;			//< cuts range
-};
-
 /// cut blip in data
 struct Blip {
 	Blip(): start(0), end(0) {}
@@ -115,15 +88,15 @@ protected:
 	Float_t r_Delt0;							//< time since last event
 	Float_t r_AbsTime;							//< absolute time clock
 	Float_t r_MonADC[kNumUCNMons];				//< UCN monitor ADCs
-	Float_t r_PMTADC[2][nBetaTubes];			//< PMT ADCs
-	Float_t r_PMTTDC[2][nBetaTubes+1];			//< PMT TDCs
-	Float_t r_MWPC_caths[2][2][kMaxCathodes];		//< cathodes on [side][xplane][wire]
-	Float_t r_MWPC_anode[2];					//< MWPC anode on each side
-	Float_t r_Backing_TDC[2];					//< Backing Veto TDC
-	Float_t r_Drift_TAC[2];						//< Drift tubes TAC
-	Float_t r_Backing_ADC[2];					//< Backing Veto ADC
-	Float_t r_Top_TDC[2];						//< Top Veto TDC (for East only)
-	Float_t r_Top_ADC[2];						//< Top Veto ADC (for East only)
+	Float_t r_PMTADC[BOTH][nBetaTubes];			//< PMT ADCs
+	Float_t r_PMTTDC[BOTH][nBetaTubes+1];		//< PMT TDCs
+	Float_t r_MWPC_caths[BOTH][2][kMaxCathodes];//< cathodes on [side][xplane][wire]
+	Float_t r_MWPC_anode[BOTH];					//< MWPC anode on each side
+	Float_t r_Backing_TDC[BOTH];				//< Backing Veto TDC
+	Float_t r_Drift_TAC[BOTH];					//< Drift tubes TAC
+	Float_t r_Backing_ADC[BOTH];				//< Backing Veto ADC
+	Float_t r_Top_TDC[BOTH];					//< Top Veto TDC (for East only)
+	Float_t r_Top_ADC[BOTH];					//< Top Veto ADC (for East only)
 	Float_t r_Evnb[kNumModules];				//< header and footer counters per module
 	Float_t r_Bkhf[kNumModules];				//< header and footer counters per module
 	
@@ -131,7 +104,7 @@ protected:
 	RunNum rn;									//< run number for file being processed
 	PMTCalibrator PCal;							//< PMT Calibrator for this run
 	CalDBSQL* CDBout;							//< output database connection
-	std::vector<std::string> cathNames[2][2];	//< cathode sensor names on each [side][xplane]
+	std::vector<std::string> cathNames[BOTH][2];//< cathode sensor names on each [side][xplane]
 	Float_t fAbsTimeStart;						//< absolute start time of run
 	Float_t fAbsTimeEnd;						//< absolute end time of run
 	BlindTime deltaT;							//< time scaler wraparound fix
@@ -141,36 +114,33 @@ protected:
 	bool ignore_beam_out;						//< whether to ignore long beam outages (e.g. for a source run)
 	Float_t nFailedEvnb;						//< total Evnb failures
 	Float_t nFailedBkhf;						//< total Bkhf failures
-	RangeCut ScintSelftrig[2];					//< self-trigger range cut for each scintillator (used for Type I origin side determination)
+	RangeCut ScintSelftrig[BOTH];				//< self-trigger range cut for each scintillator (used for Type I origin side determination)
 	std::vector< std::pair<double,double> > manualCuts;	//< manually cut time segments
 	std::vector<Blip> cutBlips;							//< keep track of cut run time
 	
 	
 	// event-by-event calibrated variables
-	int iTriggerNumber;						//< trigger number
-	int iSis00;								//< Sis00 flags
-	BlindTime fTimeScaler;					//< absolute event time scaler, blinded E, W, and unblinded
-	CutVariable fBeamclock;					//< time since last beam pulse scaler
-	Float_t fDelt0;							//< time since previous event
-	CutVariable fWindow;					//< time window between previous and next event
-	CutVariable fScint_tdc[2][nBetaTubes+1];//< TDC readout for each PMT and side
-	ScintEvent sevt[2];						//< scintillator event, for reconstructing energy
-	CutVariable fMWPC_anode[2];				//< anode ADC
-	std::vector<float> fMWPC_caths[2][2];	//< cathodes on [side][xplane][wire]
-	CutVariable fBacking_tdc[2];			//< muon backing veto TDC
-	Float_t fBacking_adc[2];				//< muon backing veto ADC
-	CutVariable fDrift_tac[2];				//< muon veto drift tubes TAC
-	CutVariable fTop_tdc[2];				//< top veto TDCs (only East)
-	Float_t fTop_adc[2];					//< top veto ADCs (only East)
-	CutVariable fMonADC[kNumUCNMons];		//< UCN monitor ADCs = GV, Sw, Fe, SCS
-	RollingWindow gvMonChecker;				//< rolling window check on gv monitor rate
-	bool prevPassedCuts;					//< whether passed cuts on previous event
-	bool prevPassedGVRate;					//< whether passed GV rate on previous event
+	int iTriggerNumber;							//< trigger number
+	int iSis00;									//< Sis00 flags
+	BlindTime fTimeScaler;						//< absolute event time scaler, blinded E, W, and unblinded
+	CutVariable fBeamclock;						//< time since last beam pulse scaler
+	Float_t fDelt0;								//< time since previous event
+	CutVariable fWindow;						//< time window between previous and next event
+	CutVariable fScint_tdc[BOTH][nBetaTubes+1];	//< TDC readout for each PMT and side
+	ScintEvent sevt[BOTH];						//< scintillator event, for reconstructing energy
+	CutVariable fMWPC_anode[BOTH];				//< anode ADC
+	float fMWPC_caths[BOTH][2][kMaxCathodes];	//< cathodes on [side][xplane][wire]
+	CutVariable fBacking_tdc[BOTH];				//< muon backing veto TDC
+	Float_t fBacking_adc[BOTH];					//< muon backing veto ADC
+	CutVariable fDrift_tac[BOTH];				//< muon veto drift tubes TAC
+	CutVariable fTop_tdc[BOTH];					//< top veto TDCs (only East)
+	Float_t fTop_adc[BOTH];						//< top veto ADCs (only East)
+	CutVariable fMonADC[kNumUCNMons];			//< UCN monitor ADCs = GV, Sw, Fe, SCS
+	RollingWindow gvMonChecker;					//< rolling window check on gv monitor rate
+	bool prevPassedCuts;						//< whether passed cuts on previous event
+	bool prevPassedGVRate;						//< whether passed GV rate on previous event
+	MWPCevent mwpcs[BOTH];						//< MWPC information
 	
-	/// load a cut
-	Stringmap loadCut(const std::string& cutName);
-	/// load a cut range for a CutVariable
-	void loadRangeCut(CutVariable& c, const std::string& cutName);
 	/// load all cuts for run
 	void loadCuts();
 	
@@ -180,28 +150,28 @@ protected:
 	void setupOutputTree();
 	
 	// additional event variables for output tree
-	TTree* TPhys;			//< physics events output tree
-	TTree* TLED;			//< LED pulser events output tree
-	Int_t fEvnbGood;		//< DAQ data quality checks
-	Int_t fBkhfGood;		//< DAQ data quality checks
-	Int_t fPassedAnode[2];	//< whether passed anode cut on each side 
-	Int_t fPassedCath[2];	//< whether passed cathode sum cut on each side
-	Int_t fPassedCathMax[2];//< whether passed cathode max cut on each side
-	Int_t fPassedCathMaxSum[2];	//< whether passed cathode max sum on each side
-	Int_t fPassedGlobal;	//< whether this event passed global beam/misc cuts on each side (counts for total run time)
-	wireHit wirePos[2][2];	//< wire positioning data for [side][direction]
-	CutVariable fCathSum[2];//< combined x+y cathode sum on each side
-	CutVariable fCathMax[2];//< min(max cathode each plane) for each side
-	CutVariable fCathMaxSum[2];	//< sum of max cathode from each plane for each side
-	Float_t fEMWPC[2];		//< reconstructed energy deposition in wirechamber
-	Int_t fTaggedBack[2];	//< whether event was tagged by the muon backing veto on each side
-	Int_t fTaggedDrift[2];	//< whether event was tagged by muon veto drift tubes on each side
-	Int_t fTaggedTop[2];	//< whether event was tagged by top veto on each side (only meaningful on East)
-	Side fSide;				//< event primary scintillator side
-	EventType fType;		//< event backscatter type
-	PID fPID;				//< event particle ID
-	Float_t fProbIII;		//< event estimated probability of being a Type III backscatter
-	Float_t fEtrue;			//< event reconstructed true energy
+	TTree* TPhys;								//< physics events output tree
+	TTree* TLED;								//< LED pulser events output tree
+	Int_t fEvnbGood;							//< DAQ data quality checks
+	Int_t fBkhfGood;							//< DAQ data quality checks
+	Int_t fPassedAnode[BOTH];					//< whether passed anode cut on each side
+	Int_t fPassedCath[BOTH];					//< whether passed cathode sum cut on each side
+	Int_t fPassedCathMax[BOTH];					//< whether passed cathode max cut on each side
+	Int_t fPassedCathMaxSum[BOTH];				//< whether passed cathode max sum on each side
+	Int_t fPassedGlobal;						//< whether this event passed global beam/misc cuts on each side (counts for total run time)
+	wireHit wirePos[BOTH][2];					//< wire positioning data for [side][direction]
+	CutVariable fCathSum[BOTH];					//< combined x+y cathode sum on each side
+	CutVariable fCathMax[BOTH];					//< min(max cathode each plane) for each side
+	CutVariable fCathMaxSum[BOTH];				//< sum of max cathode from each plane for each side
+	Float_t fEMWPC[BOTH];						//< reconstructed energy deposition in wirechamber
+	Int_t fTaggedBack[BOTH];					//< whether event was tagged by the muon backing veto on each side
+	Int_t fTaggedDrift[BOTH];					//< whether event was tagged by muon veto drift tubes on each side
+	Int_t fTaggedTop[BOTH];						//< whether event was tagged by top veto on each side (only meaningful on East)
+	Side fSide;									//< event primary scintillator side
+	EventType fType;							//< event backscatter type
+	PID fPID;									//< event particle ID
+	Float_t fProbIII;							//< event estimated probability of being a Type III backscatter
+	Float_t fEtrue;								//< event reconstructed true energy
 	
 	/// pre-scan data to extract pedestals
 	void pedestalPrePass();
@@ -266,29 +236,29 @@ protected:
 	/// scale histogram to rate
 	void scaleToRate(TH1* h, double rscale = 1.0);
 	// histograms
-	TH1F* hCathMax[2][2];						//< cathode max, [side][cut]
-	TH1F* hCathMaxSum[2][2];					//< cathode max sum, [side][cut]
-	TH1F* hAnode[2][2];							//< anode, [side][cut]
-	TH1F* hCathSum[2][2];						//< cathode sum, [side][cut]
-	TH1F* hBackTDC[2];							//< backing TDC
-	TH1F* hBackADC[2][2];						//< backing ADC, [side][cut]
-	TH1F* hDriftTAC[2];							//< drift TAC [side]
-	TH1F* hTopTDC[2];							//< top TDC [side] (East only)
-	TH1F* hTopADC[2][2];						//< top ADC [side][cut] (East only)
-	TH1F* hScintTDC[2][nBetaTubes+1];			//< scintillator 2-of-4 TDC by [side][tube]
-	TH1F* hEtrue[2][5];							//< true energy, by [side][type]
-	TH1F* hTuben[2][nBetaTubes];				//< individual PMT visible energy
-	TH1F* hMonADC[kNumUCNMons];					//< UCN Monitor ADCs
-	TH1F* hMonRate[kNumUCNMons];				//< UCM Monitor rates
-	TH1F* hTypeRate[TYPE_IV_EVENT+1];			//< rate of event type for betas
-	TH1F* hSideRate[2][2];						//< rate for [side][muon/beta]
-	TH1F* hBkhfFailRate;						//< rate of bad Bkhf events
-	TH1F* hEvnbFailRate;						//< rate of bad Evnb events
-	TH1F* hHitsProfile[2][2];					//< 1D hit position histograms [side][plane]
-	TH2F* hHitPos[2];							//< hit position on each side, 2D
-	TH1F* hTrigEffic[2][nBetaTubes][2];			//< trigger efficiency for [side][tube][all/trig]
-	std::vector<TH1*> hBiPulser[2][nBetaTubes];	//< Bi puser for [side][tube]
-	TH1F* hClusterTiming[2];					//< event cluster timing for [all/beta]
+	TH1F* hCathMax[BOTH][2];						//< cathode max, [side][cut]
+	TH1F* hCathMaxSum[BOTH][2];						//< cathode max sum, [side][cut]
+	TH1F* hAnode[BOTH][2];							//< anode, [side][cut]
+	TH1F* hCathSum[BOTH][2];						//< cathode sum, [side][cut]
+	TH1F* hBackTDC[BOTH];							//< backing TDC
+	TH1F* hBackADC[BOTH][2];						//< backing ADC, [side][cut]
+	TH1F* hDriftTAC[BOTH];							//< drift TAC [side]
+	TH1F* hTopTDC[BOTH];							//< top TDC [side] (East only)
+	TH1F* hTopADC[BOTH][2];							//< top ADC [side][cut] (East only)
+	TH1F* hScintTDC[BOTH][nBetaTubes+1];			//< scintillator 2-of-4 TDC by [side][tube]
+	TH1F* hEtrue[BOTH][TYPE_IV_EVENT+1];			//< true energy, by [side][type]
+	TH1F* hTuben[BOTH][nBetaTubes];					//< individual PMT visible energy
+	TH1F* hMonADC[kNumUCNMons];						//< UCN Monitor ADCs
+	TH1F* hMonRate[kNumUCNMons];					//< UCM Monitor rates
+	TH1F* hTypeRate[TYPE_IV_EVENT+1];				//< rate of event type for betas
+	TH1F* hSideRate[BOTH][2];						//< rate for [side][muon/beta]
+	TH1F* hBkhfFailRate;							//< rate of bad Bkhf events
+	TH1F* hEvnbFailRate;							//< rate of bad Evnb events
+	TH1F* hHitsProfile[BOTH][2];					//< 1D hit position histograms [side][plane]
+	TH2F* hHitPos[BOTH];							//< hit position on each side, 2D
+	TH1F* hTrigEffic[BOTH][nBetaTubes][2];			//< trigger efficiency for [side][tube][all/trig]
+	std::vector<TH1*> hBiPulser[BOTH][nBetaTubes];	//< Bi puser for [side][tube]
+	TH1F* hClusterTiming[2];						//< event cluster timing for [all/beta]
 };
 
 

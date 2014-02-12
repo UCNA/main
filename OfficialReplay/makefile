@@ -18,7 +18,7 @@ ifdef PUBLICATION_PLOTS
 	CXXFLAGS += -DPUBLICATION_PLOTS
 endif
 
-ANA_OBJS      = ManualInfo.o ucnaDataAnalyzer_hists.o ucnaDataAnalyzer_tree.o ucnaDataAnalyzer_peds.o
+ANA_OBJS      = ucnaDataAnalyzer_hists.o ucnaDataAnalyzer_tree.o ucnaDataAnalyzer_peds.o
 
 all: ucnaDataAnalyzer11b
 

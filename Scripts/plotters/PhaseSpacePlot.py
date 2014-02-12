@@ -42,7 +42,8 @@ def Vud(gA,tau):
 	return sqrt(4908.7/(tau*(1+3*gA**2)))
 def dVdTau(gA,tau):
 	return 0.5*sqrt(4908.7/(tau**3*(1+3*gA**2)))
-
+def dVdLambda(gA,tau):
+	return 0.5*sqrt(4908.7/(tau*(1+3*gA**2)**3))*6*gA
 
 class PhaseSpacePlotter:
 	def __init__(self):
@@ -181,6 +182,55 @@ class PhaseSpacePlotter:
 		self.gPS.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Paper/PhaseSpace2010.pdf")
 
 
+class VudTauSpacePlotter:
+	def __init__(self):
+		self.t0,self.t1 = (870,900)
+		self.V0,self.V1 = (.969,.979)
+		self.npts = 100
+
+		self.gPS=graph.graphxy(width=12,height=12,
+			   x=graph.axis.lin(title="$\\tau_n$ [s]",min=self.t0,max=self.t1,
+							parter=graph.axis.parter.linear(tickdists=[5,1])),
+			   y=graph.axis.lin(title="$V_{ud}$",min=self.V0,max=self.V1),
+			   key = graph.key.key(pos="bl"))
+		setTexrunner(self.gPS)
+
+	def Vud_area(self,Vud,d_Vud):
+		gdat = [(l,Vud,d_Vud) for l in unifrange(self.t0,self.t1,self.npts)]
+		return errorBand(self.gPS,gdat,0,1,2)
+
+	def tau_area(self,tau,d_tau,dV0=0):
+		gdat = [(tau,v,d_tau) for v in unifrange(self.V0+dV0,self.V1,self.npts)]
+		return errorBand(self.gPS,gdat,0,1,2,True)
+
+	def lambda_area(self,lm,d_lm):
+		gdat = [(tau,Vud(lm,tau),dVdLambda(lm,tau)*d_lm) for tau in unifrange(self.t0,self.t1,self.npts)]
+		return errorBand(self.gPS,gdat,0,1,2)
+
+	def PDG_bands(self,pdg):
+		return self.Vud_area(pdg["Vud"],pdg["d_Vud"]),self.lambda_area(pdg["lambda"],pdg["d_lambda"]),self.tau_area(pdg["tau"],pdg["d_tau"])
+
+	def NIST_Proposal(self):
+	
+		a_Vud,a_PDGgA,a_PDGtau = self.PDG_bands(PDG2012)
+		a_Beamtau = self.tau_area(888.0,2.1)
+		a_Bottletau = self.tau_area(879.6,0.8)
+		
+		self.gPS.fill(a_Vud, [deco.filled([color.rgb(0.5,0.5,0.5),color.transparency(0.5)])])
+		self.gPS.fill(a_PDGgA, [deco.filled([color.rgb(0,0.7,0),color.transparency(0.5)])])
+		self.gPS.fill(a_Beamtau, [deco.filled([color.rgb(0,0,1),color.transparency(0.5)])])
+		self.gPS.fill(a_Bottletau, [deco.filled([color.rgb(1,0,0),color.transparency(0.5)])])
+		
+		self.gPS.text(9.2,6.8,"$0^+ \\rightarrow 0^+$")
+		self.gPS.text(8.2,9.4,"$\\tau_n$ beam")
+		self.gPS.text(1.0,3.0,"$\\tau_n$ bottle")
+		
+		tbox = text.text(0,0,"$\\lambda$ PDG")
+		self.gPS.insert(tbox,[trafo.rotate(-60),trafo.translate(9.2,3.9)])
+		
+		self.gPS.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Paper/NIST_Lifetime_PS.pdf")
+
+
 def A_meas_history():
 
 	gdat = [	(1975,-0.113,0.006),					# Krohn 75 Argonne
@@ -220,8 +270,11 @@ if __name__=="__main__":
 	
 	#A_meas_history()
 	
-	PSP = PhaseSpacePlotter()
-	PSP.ucnaPRL2012()
-	
+	#PSP = PhaseSpacePlotter()
+	#PSP.ucnaPRL2012()
+
+	PSP = VudTauSpacePlotter()
+	PSP.NIST_Proposal()
+
 	#PSP = PhaseSpacePlotter()
 	#PSP.thesis_conflicted()

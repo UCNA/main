@@ -18,7 +18,7 @@
 #include "LinHistCombo.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "BetaDecayAnalyzer.hh"
-#include "AnodeGainMapPlugin.hh"
+#include "WirechamberGainMapPlugins.hh"
 #include "AsymmetryCorrections.hh"
 #include <TColor.h>
 
@@ -633,7 +633,7 @@ void refitXeAnode(std::string datname) {
 	RunAccumulator RA(&OM, "RunAccumulator", datname);
 	AnodeGainMapPlugin* AP = new AnodeGainMapPlugin(&RA,0);
 	RA.addPlugin(AP);
-	AP->genAnodePosmap();
+	AP->genPosmap("anode");
 }
 
 //-------------------------------------------------------------//

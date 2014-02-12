@@ -116,8 +116,8 @@ int main(int argc, char *argv[]) {
 	inputRequester run_evt_gen("Run event generator",&mi_evtgen);
 	run_evt_gen.addArg("Generator name");
 	run_evt_gen.addArg("Output path",getEnvSafe("G4EVTDIR"));
-	run_evt_gen.addArg("","",&selectVertexPos);
-	run_evt_gen.addArg("","",&selectRandomType);
+	run_evt_gen.addArg(&selectVertexPos);
+	run_evt_gen.addArg(&selectRandomType);
 	run_evt_gen.addArg("Events per TTree","10000");
 	run_evt_gen.addArg("N. TTrees","100");
 		

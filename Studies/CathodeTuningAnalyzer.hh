@@ -4,7 +4,7 @@
 #include "RunAccumulator.hh"
 #include "OctetAnalyzer.hh"
 #include "WirechamberCalibrator.hh"
-#include "WirechamberAnodePlugins.hh"
+#include "WirechamberEnergyPlugins.hh"
 #include "GravitySpectrometerPlugin.hh"
 
 /// Struct for cathode calibration data
@@ -34,6 +34,7 @@ public:
 	virtual void makePlots();
 	
 	fgbgPair* cathNorm[BOTH][2][kMaxCathodes];				//< cathode normalization histograms by [side][plane][cathode]
+	fgbgPair* prevGain[BOTH][2];							//< TProfiles of gain factors used to produce normalization plots
 	std::vector<TH1D*> slicefits[BOTH][2][kMaxCathodes];	//< Gaussian fit parameters for cathode response shape at each position
 };
 

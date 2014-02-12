@@ -313,7 +313,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	inputRequester dumpCalInfo("Dump calibration info to file",&mi_DumpCalInfo);
 	dumpCalInfo.addArg("Start Run");
 	dumpCalInfo.addArg("End Run");
-	dumpCalInfo.addArg("","",&selectRuntype);
+	dumpCalInfo.addArg(&selectRuntype);
 	
 	inputRequester showCal("Show run calibration",&mi_showCal);
 	showCal.addArg("Run");

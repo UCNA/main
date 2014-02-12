@@ -65,19 +65,20 @@ def PosmapArrowPlot(pnum):
 
 def SmearCorrectingPlot(pmid):
 	conn = open_connection()
-	pts = getPosmapPoints(conn,pmid)
+	pset = getPosmapSet(conn,pmid)
 
 	for s in ["East","West"]:
 		for t in range(4):
-			if (s,t) not in pts:
+			if (s,t) not in pset:
 				continue
 			gSmear=graph.graphxy(width=15,height=10,
 					x=graph.axis.lin(title="relative light transport $\\eta$"),
 					y=graph.axis.lin(title="resolution correction [\\%]"),
 					key = None)
 			setTexrunner(gSmear)
-
-			gdat = [ (p.sig/p.norm, 100*(p.norm-860)/860) for p in pts[(s,t)]]
+			
+			pts = pset[(s,t)].get_points_sorted()
+			gdat = [ (p.sig/p.norm, 100*(p.norm-860)/860) for p in pts]
 			gSmear.plot(graph.data.points(gdat,x=1,y=2), [graph.style.symbol(symbol.circle,size=0.15)])
 
 			print s,t,musigma([g[1] for g in gdat])
