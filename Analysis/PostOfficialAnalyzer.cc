@@ -28,8 +28,8 @@ void PostOfficialAnalyzer::setReadpoints() {
 	SetBranchAddress("TimeW",&runClock[WEST]);
 	runClock[BOTH]=runClock[NOSIDE]=0.0;
 	
-	SetBranchAddress("EvnbGood",&EvnbGood);
-	SetBranchAddress("BkhfGood",&BkhfGood);
+	SetBranchAddress("EvnbGood",&fEvnbGood);
+	SetBranchAddress("BkhfGood",&fBkhfGood);
 
 	for(Side s=EAST; s<=WEST; ++s) {
 		

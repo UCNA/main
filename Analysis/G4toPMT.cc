@@ -31,7 +31,7 @@ void G4toPMT::runCathodeSim(bool b) {
 	if(!b) return;
 	for(Side s = EAST; s <= WEST; ++s)
 		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
-			SetBranchAddress((sideSubst("Cath_%c",s)+(d==X_DIRECTION?"X":"Y")).c_str(),cath_chg[s][d]);
+			SetBranchAddress(sideSubst("Cath_%c",s)+(d==X_DIRECTION?"X":"Y"),cath_chg[s][d]);
 }
 
 void G4toPMT::doUnits() {

@@ -32,7 +32,6 @@ void runSimulation() {
 			simData.setAFP(afp);
 			simData.calcReweight();
 			for(unsigned int i=0; i<nThreshBins; i++) {
-				simData.mwpcThresh[EAST]=simData.mwpcThresh[WEST]=maxThresh*float(i)/(nThreshBins-1);
 				simData.classifyEvent();
 				AAs[i]->currentAFP = afp;
 				AAs[i]->setFillPoints(afp,GV_OPEN);

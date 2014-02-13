@@ -50,10 +50,10 @@ void CathodeGainPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 		PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].center,n,c);
 		assert(n<kMaxCathodes);
-		for(int i=0; i<PDS.ActiveCal->nWires(s,d); i++) {
+		for(unsigned int i=0; i<PDS.ActiveCal->nWires(s,d); i++) {
 			double gi_gcc = PDS.ActiveCal->getCathCCloudGain(s,d,i);
 			double c_enorm = PDS.ActiveCal->cathseg_energy_norm[s][d][i];
-			((TH2F*)cathNorm[s][d][i]->h[currentGV])->Fill(c+(int(n)-i), PDS.cathodes[s][d][i] / (c_enorm*eta_cc*PDS.mwpcEnergy[s]), weight);
+			((TH2F*)cathNorm[s][d][i]->h[currentGV])->Fill(c+(int(n)-int(i)), PDS.cathodes[s][d][i] / (c_enorm*eta_cc*PDS.mwpcEnergy[s]), weight);
 			((TProfile*)prevGain[s][d]->h[currentGV])->Fill(c,gi_gcc,weight);
 		}
 	}

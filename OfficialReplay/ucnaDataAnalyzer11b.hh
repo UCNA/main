@@ -9,6 +9,7 @@
 #include "CalDBSQL.hh"
 #include "ManualInfo.hh"
 #include "RollingWindow.hh"
+#include "EventClassifier.hh"
 
 const size_t kNumModules = 5;	//< number of DAQ modules for internal event header checks
 const size_t kNumUCNMons = 4;	//< number of UCN monitors
@@ -29,7 +30,7 @@ struct Blip {
 };
 
 /// new clean-ish re-write of data analyzer; try to be backward compatible with old output tree
-class ucnaDataAnalyzer11b: public TChainScanner, public OutputManager {
+class ucnaDataAnalyzer11b: public TChainScanner, public OutputManager, public EventClassifier {
 public:
 	/// constructor
 	ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB);
@@ -45,22 +46,6 @@ public:
 	
 	/// beam + data cuts
 	bool passesBeamCuts();
-	/// overall wirechamber cut
-	inline bool passedMWPC(Side s) const { return fPassedCathMaxSum[s]; }
-	/// scintillator TDC cut
-	inline bool passedCutTDC(Side s) const { return fScint_tdc[s][nBetaTubes].inRange(); }
-	/// overall wirechamber+scintillator cut
-	inline bool Is2fold(Side s) const { return passedMWPC(s) && passedCutTDC(s); }
-	/// overall muon tag check
-	inline bool taggedMuon() const { return fTaggedBack[EAST] || fTaggedBack[WEST] || fTaggedDrift[EAST] || fTaggedDrift[WEST] || fTaggedTop[EAST]; }
-	/// sis-tagged LED events
-	inline bool isLED() const {return iSis00 & (1<<7); }
-	/// sis-tagged UCN Mon events
-	inline bool isUCNMon() const { return iSis00 & ((1<<2) | (1<<8) | (1<<9) | (1<<10) | (1<<11)); }
-	/// specific UCN monitors
-	inline bool isUCNMon(unsigned int n) const { return (iSis00 & (1<<2)) && (iSis00 & (1<<(8+n))); }
-	/// sis-tagged scintillator trigger events
-	inline bool isScintTrigger() const { return iSis00 & 3; }
 	/// figure out whether this is a Bi pulser trigger
 	bool isPulserTrigger();
 	/// whether one PMT fired
@@ -69,8 +54,6 @@ public:
 	inline bool trig2of4(Side s) const { return fScint_tdc[s][nBetaTubes].val > 5; }
 	/// calculate number of PMTs firing on given side
 	unsigned int nFiring(Side s) const;
-	/// qadc sum
-	inline double qadcSum(Side s) const { double q = 0; for(unsigned int t=0; t<nBetaTubes; t++) q+=sevt[s].adc[t]; return q; }
 	
 	/// set whether to separately analyze LED events
 	bool analyzeLED;
@@ -78,6 +61,14 @@ public:
 	bool needsPeds;
 	/// set whether to produce color or black-and-white plots
 	bool colorPlots;
+	
+	//---- event classifier subclass functions
+	/// event type classification
+	virtual void classifyEvent();
+	/// Type I initial hit side determination --- needed in subclass
+	virtual Side getFirstScint() const { return fScint_tdc[WEST][nBetaTubes].val < ScintSelftrig[WEST].start ? EAST : WEST; }
+	/// Type II/III separation probability --- needed in subclass
+	virtual float getProbIII() const { return WirechamberCalibrator::sep23Prob(fSide, sevt[EAST].energy.x + sevt[WEST].energy.x, fEMWPC[fSide]); }
 	
 protected:
 	// read variables
@@ -121,7 +112,6 @@ protected:
 	
 	// event-by-event calibrated variables
 	int iTriggerNumber;							//< trigger number
-	int iSis00;									//< Sis00 flags
 	BlindTime fTimeScaler;						//< absolute event time scaler, blinded E, W, and unblinded
 	CutVariable fBeamclock;						//< time since last beam pulse scaler
 	Float_t fDelt0;								//< time since previous event
@@ -152,25 +142,12 @@ protected:
 	// additional event variables for output tree
 	TTree* TPhys;								//< physics events output tree
 	TTree* TLED;								//< LED pulser events output tree
-	Int_t fEvnbGood;							//< DAQ data quality checks
-	Int_t fBkhfGood;							//< DAQ data quality checks
-	Int_t fPassedAnode[BOTH];					//< whether passed anode cut on each side
-	Int_t fPassedCath[BOTH];					//< whether passed cathode sum cut on each side
-	Int_t fPassedCathMax[BOTH];					//< whether passed cathode max cut on each side
-	Int_t fPassedCathMaxSum[BOTH];				//< whether passed cathode max sum on each side
 	Int_t fPassedGlobal;						//< whether this event passed global beam/misc cuts on each side (counts for total run time)
 	wireHit wirePos[BOTH][2];					//< wire positioning data for [side][direction]
 	CutVariable fCathSum[BOTH];					//< combined x+y cathode sum on each side
 	CutVariable fCathMax[BOTH];					//< min(max cathode each plane) for each side
 	CutVariable fCathMaxSum[BOTH];				//< sum of max cathode from each plane for each side
 	Float_t fEMWPC[BOTH];						//< reconstructed energy deposition in wirechamber
-	Int_t fTaggedBack[BOTH];					//< whether event was tagged by the muon backing veto on each side
-	Int_t fTaggedDrift[BOTH];					//< whether event was tagged by muon veto drift tubes on each side
-	Int_t fTaggedTop[BOTH];						//< whether event was tagged by top veto on each side (only meaningful on East)
-	Side fSide;									//< event primary scintillator side
-	EventType fType;							//< event backscatter type
-	PID fPID;									//< event particle ID
-	Float_t fProbIII;							//< event estimated probability of being a Type III backscatter
 	Float_t fEtrue;								//< event reconstructed true energy
 	
 	/// pre-scan data to extract pedestals
@@ -194,8 +171,6 @@ protected:
 	void reconstructVisibleEnergy();
 	/// classify muon veto response
 	void checkMuonVetos();
-	/// classify event type
-	void classifyEventType();
 	/// reconstruct true energy based on event type
 	void reconstructTrueEnergy();
 	

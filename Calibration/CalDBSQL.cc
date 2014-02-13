@@ -136,7 +136,7 @@ std::vector<MWPC_Ecal_Spec> CalDBSQL::get_MWPC_Ecals(RunNum rn, Side s) {
 		throw e;
 	}
 	std::sort(v.begin(),v.end(),&compare_mes_priority);
-	if(!(v[0].start_run<=rn<=v[0].end_run))
+	if(!(v[0].start_run <= rn && rn <= v[0].end_run))
 		printf("**** WARNING: No matching wirechamber calibration found for %i; using nearest range %i-%i...\n",rn,v[0].start_run,v[0].end_run);
 	return v;
 }
@@ -494,7 +494,7 @@ std::vector<double> CalDBSQL::getCathCCloudGains(RunNum rn, Side s, AxisDirectio
 	assert(g);
 	std::vector<double> v;
 	double x,y;
-	for(unsigned int i=0; i<g->GetN(); i++) {
+	for(int i=0; i<g->GetN(); i++) {
 		g->GetPoint(i,x,y);
 		v.push_back(y);
 	}

@@ -588,13 +588,13 @@ void CylPosGen::genPos(double* v, double* rnd) const {
 
 
 void EventTreeScanner::setReadpoints() {
-	Tch->SetBranchAddress("num",&evt.eid);
-	Tch->SetBranchAddress("PID",&evt.d);
-	Tch->SetBranchAddress("KE",&evt.E);
-	Tch->SetBranchAddress("vertex",evt.x);
-	Tch->SetBranchAddress("direction",evt.p);
-	Tch->SetBranchAddress("time",&evt.t);
-	Tch->SetBranchAddress("weight",&evt.w);
+	SetBranchAddress("num",&evt.eid);
+	SetBranchAddress("PID",&evt.d);
+	SetBranchAddress("KE",&evt.E);
+	SetBranchAddress("vertex",evt.x);
+	SetBranchAddress("direction",evt.p);
+	SetBranchAddress("time",&evt.t);
+	SetBranchAddress("weight",&evt.w);
 }
 
 int EventTreeScanner::addFile(const std::string& filename) {

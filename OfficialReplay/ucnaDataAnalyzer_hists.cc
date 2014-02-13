@@ -217,7 +217,7 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			int nf = nFiring(s);
 			bool tfired = pmtFired(s,t);
-			if(nf-tfired<2 || iSis00!=1+s || !fPassedGlobal)
+			if(nf-tfired<2 || SIS00!=1+s || !fPassedGlobal)
 				continue;
 			hTrigEffic[s][t][0]->Fill(sevt[s].adc[t]);
 			if(tfired)

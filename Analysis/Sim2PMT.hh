@@ -78,10 +78,11 @@ public:
 	/// set desired AFP state for simulation data
 	virtual void setAFP(AFPState a) { afp=a; }
 	
-	/// Determine event classification flags
-	virtual void classifyEvent();
 	/// calculate spectrum re-weighting factor
 	virtual void calcReweight();
+	
+	/// Type I initial hit side determination --- needed in subclass
+	virtual Side getFirstScint() const { return time[EAST]<time[WEST] ? EAST:WEST; }
 	
 	PMTGenerator PGen[BOTH];		//< PMT simulator for each side
 	SimPositioner* SP;				//< optional postion modifier
@@ -122,8 +123,6 @@ public:
 	unsigned int nSimmed;			//< count of number of events simulated
 	unsigned int nToSim;			//< number of events to simulate
 	double nCounted;				//< physics-weighted number of counted events
-	double mwpcThresh[BOTH];		//< MWPC trigger 50% threshold on each side
-	double mwpcWidth[BOTH];			//< MWPC threshold width
 	
 protected:
 	/// perform unit conversions, etc.
@@ -134,7 +133,6 @@ protected:
 	virtual void reverseCalibrate();
 	
 	AFPState afp;				//< AFP state for data
-	bool passesScint[BOTH];		//< whether simulation passed scintillator cut
 	bool simCathodes;			//< whether to simulate cathode response
 };
 

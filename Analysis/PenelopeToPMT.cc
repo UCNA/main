@@ -6,44 +6,44 @@
 void PenelopeToPMT::setReadpoints() {
 	
 	for(Side s = EAST; s <= WEST; ++s) {
-		Tch->SetBranchAddress(sideSubst("Ep%c",s,true).c_str(),&fEdep[s]);
-		Tch->SetBranchAddress(sideSubst("nph%c",s,true).c_str(),&fEquench[s]);
-		Tch->SetBranchAddress(sideSubst("Ep%cd",s,true).c_str(),&fedepDeadScint[s]);
+		SetBranchAddress(sideSubst("Ep%c",s,true),&fEdep[s]);
+		SetBranchAddress(sideSubst("nph%c",s,true),&fEquench[s]);
+		SetBranchAddress(sideSubst("Ep%cd",s,true),&fedepDeadScint[s]);
 		
-		Tch->SetBranchAddress(sideSubst("Eg%ca",s,true).c_str(),&fEW[s]);
-		Tch->SetBranchAddress(sideSubst("Eg%cdf",s,true).c_str(),&fEMWPCDead[s][0]);
-		Tch->SetBranchAddress(sideSubst("Eg%cdb",s,true).c_str(),&fEMWPCDead[s][1]);
+		SetBranchAddress(sideSubst("Eg%ca",s,true),&fEW[s]);
+		SetBranchAddress(sideSubst("Eg%cdf",s,true),&fEMWPCDead[s][0]);
+		SetBranchAddress(sideSubst("Eg%cdb",s,true),&fEMWPCDead[s][1]);
 		
-		Tch->SetBranchAddress(sideSubst("E%cc1",s,true).c_str(),&fEMWPCWires[s][0]);
-		Tch->SetBranchAddress(sideSubst("E%cc2",s,true).c_str(),&fEMWPCWires[s][1]);
-		Tch->SetBranchAddress(sideSubst("E%can",s,true).c_str(),&fEMWPCWires[s][2]);
+		SetBranchAddress(sideSubst("E%cc1",s,true),&fEMWPCWires[s][0]);
+		SetBranchAddress(sideSubst("E%cc2",s,true),&fEMWPCWires[s][1]);
+		SetBranchAddress(sideSubst("E%can",s,true),&fEMWPCWires[s][2]);
 		
-		Tch->SetBranchAddress(sideSubst("Em%c1",s,true).c_str(),&fedepWinIn[s]);
-		Tch->SetBranchAddress(sideSubst("Em%c2",s,true).c_str(),&fedepWinOut[s]);
+		SetBranchAddress(sideSubst("Em%c1",s,true),&fedepWinIn[s]);
+		SetBranchAddress(sideSubst("Em%c2",s,true),&fedepWinOut[s]);
 		
 		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
-			Tch->SetBranchAddress((sideSubst("%cpos",s,true)+(d==X_DIRECTION?"x":"y")).c_str(),&fMWPCpos[s][d]);
+			SetBranchAddress(sideSubst("%cpos",s,true)+(d==X_DIRECTION?"x":"y"),&fMWPCpos[s][d]);
 		
-		Tch->SetBranchAddress(sideSubst("Efl%c",s,true).c_str(),&fedepFoils[s]);
-		Tch->SetBranchAddress(sideSubst("t%c",s,true).c_str(),&fTime[s]);
+		SetBranchAddress(sideSubst("Efl%c",s,true),&fedepFoils[s]);
+		SetBranchAddress(sideSubst("t%c",s,true),&fTime[s]);
 	}
 	
 	for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d)
-		Tch->SetBranchAddress(d==X_DIRECTION?"X":d==Y_DIRECTION?"Y":"Z",&fPrimPos[d]);
+		SetBranchAddress(d==X_DIRECTION?"X":d==Y_DIRECTION?"Y":"Z",&fPrimPos[d]);
 	
 	
-	Tch->SetBranchAddress("W1",&fcosThetaInFoils[EAST]);
-	Tch->SetBranchAddress("W3",&fcosThetaInWinIn[EAST]);
-	Tch->SetBranchAddress("W4",&fcosThetaInWinOut[EAST]);
-	Tch->SetBranchAddress("W6",&fcosThetaInScint[EAST]);
+	SetBranchAddress("W1",&fcosThetaInFoils[EAST]);
+	SetBranchAddress("W3",&fcosThetaInWinIn[EAST]);
+	SetBranchAddress("W4",&fcosThetaInWinOut[EAST]);
+	SetBranchAddress("W6",&fcosThetaInScint[EAST]);
 	
-	Tch->SetBranchAddress("W7",&fcosThetaOutFoils[EAST]);
-	Tch->SetBranchAddress("W9",&fcosThetaOutWinIn[EAST]);
-	Tch->SetBranchAddress("W10",&fcosThetaOutWinOut[EAST]);
-	Tch->SetBranchAddress("W12",&fcosThetaOutScint[EAST]);
+	SetBranchAddress("W7",&fcosThetaOutFoils[EAST]);
+	SetBranchAddress("W9",&fcosThetaOutWinIn[EAST]);
+	SetBranchAddress("W10",&fcosThetaOutWinOut[EAST]);
+	SetBranchAddress("W12",&fcosThetaOutScint[EAST]);
 	
-	Tch->SetBranchAddress("E",&fEprim);
-	Tch->SetBranchAddress("W",&fCostheta);
+	SetBranchAddress("E",&fEprim);
+	SetBranchAddress("W",&fCostheta);
 }
 
 void PenelopeToPMT::calcReweight() {

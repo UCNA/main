@@ -88,7 +88,7 @@ void ucnaDataAnalyzer11b::checkHeaderQuality() {
 }
 
 void ucnaDataAnalyzer11b::convertReadin() {
-	iSis00 = int(r_Sis00);
+	SIS00 = int(r_Sis00);
 	iTriggerNumber = int(r_TriggerNumber);
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<=nBetaTubes; t++)
@@ -162,7 +162,7 @@ unsigned int ucnaDataAnalyzer11b::nFiring(Side s) const {
 }
 
 bool ucnaDataAnalyzer11b::isPulserTrigger() {
-	if(iSis00 & (1<<5) && !(trig2of4(EAST)||trig2of4(WEST)))
+	if(SIS00 & (1<<5) && !(trig2of4(EAST)||trig2of4(WEST)))
 		return true;
 	for(Side s = EAST; s <= WEST; ++s) {
 		unsigned int nthresh = 0;
@@ -244,37 +244,17 @@ void ucnaDataAnalyzer11b::checkMuonVetos() {
 	}
 }
 
-void ucnaDataAnalyzer11b::classifyEventType() {
-	// PID
+void ucnaDataAnalyzer11b::classifyEvent() {
+	// assign remaining event tags
+	for(Side s = EAST; s <= WEST; ++s)
+		fPassedScint[s] = fScint_tdc[s][nBetaTubes].inRange();
+	
+	// basic PID
+	EventClassifier::classifyEvent();
+	
+	// special PID
 	if(isLED()) fPID = PID_LED;	// LED event identified by Sis00
 	else if(isPulserTrigger()) fPID = PID_PULSER;
-	else if(Is2fold(EAST) || Is2fold(WEST)) {	// passes wirechamber and scintillator cuts on either side
-		if(taggedMuon())
-			fPID = PID_MUON; //at least one side muon
-		else fPID = PID_BETA; //beta-like
-	} else fPID = PID_SINGLE; //gamma
-	
-	// type, side
-	fType = TYPE_IV_EVENT;
-	fSide = NOSIDE;
-	for(Side s = EAST; s<=WEST; ++s) {
-		if(Is2fold(s)) {
-			if(passedCutTDC(otherSide(s)))
-				fType = TYPE_I_EVENT;
-			else
-				fType = passedMWPC(otherSide(s))?TYPE_II_EVENT:TYPE_0_EVENT;
-		}
-		if(passedCutTDC(s)&&!passedCutTDC(otherSide(s))) fSide = s;
-	}
-	// if side is ambiguous, TDCW has a cleaner TDC separation; make an 1-D cut (JL)
-	if(passedCutTDC(WEST)&&passedCutTDC(EAST))
-		fSide = (fScint_tdc[WEST][nBetaTubes].val < ScintSelftrig[WEST].start)?EAST:WEST;
-	
-	// Type II/III separation
-	fProbIII = ((fType==TYPE_II_EVENT)?
-				WirechamberCalibrator::sep23Prob(fSide, sevt[EAST].energy.x + sevt[WEST].energy.x, fEMWPC[fSide])
-				: 0.);
-	if(fProbIII>0.5) fType=TYPE_III_EVENT;
 }
 
 void ucnaDataAnalyzer11b::reconstructTrueEnergy() {
@@ -399,7 +379,7 @@ bool ucnaDataAnalyzer11b::processEvent() {
 	// Stage III: processing and histograms for beta trigger events
 	reconstructPosition();
 	reconstructVisibleEnergy();
-	classifyEventType();
+	classifyEvent();
 	reconstructTrueEnergy();
 	fillHistograms();
 	

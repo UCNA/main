@@ -41,12 +41,6 @@ SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
 nSimmed(0), nToSim(INT_MAX), nCounted(0), afp(AFP_OTHER), simCathodes(false) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
-		mwpcThresh[s] = 0;
-		mwpcWidth[s] = 0;
-		//mwpcThresh[s] = (s==EAST?0.98:0.10); // 2010 based on Sn ineffic
-		//mwpcThresh[s] = (s==EAST?0.95:0.67); // similar to 2009 Geom D?
-		//mwpcThresh[s] = 1.3; // extra high
-		//mwpcWidth[s] = 0.15;
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 			for(unsigned int c = 0; c < kMaxCathodes; c++)
 				cath_chg[s][d][c] = cathodes[s][d][c] = 0;
@@ -129,7 +123,7 @@ void Sim2PMT::reverseCalibrate() {
 			PGen[s].setPosition(scintPos[s][X_DIRECTION], scintPos[s][Y_DIRECTION],
 								wires[s][X_DIRECTION].center-scintPos[s][X_DIRECTION], wires[s][Y_DIRECTION].center-scintPos[s][Y_DIRECTION]);
 			scints[s] = PGen[s].generate(eQ[s]);
-			passesScint[s] = PGen[s].triggered();
+			fPassedScint[s] = PGen[s].triggered();
 			
 			if(simCathodes) {
 				mwpcs[s].cathodeSum = 0;
@@ -137,56 +131,19 @@ void Sim2PMT::reverseCalibrate() {
 					PGen[s].calcCathodeSignals(s,d,cath_chg[s][d],cathodes[s][d],wires[s][d]);
 					mwpcs[s].cathodeSum += wires[s][d].cathodeSum;
 				}
+				ActiveCal->fCathMaxSum[s].val = wires[s][X_DIRECTION].maxValue+wires[s][Y_DIRECTION].maxValue;
+				fPassedCathMaxSum[s] = ActiveCal->fCathMaxSum[s].inRange();
 			}
 			
 		} else {
 			scints[s].energy = eQ[s];
-			passesScint[s] = (eQ[s] > 0);
+			fPassedScint[s] = (eQ[s] > 0);
+			fPassedCathMaxSum[s] = mwpcEnergy[s] > 0;
 		}
 	}
-	
-	classifyEvent();
-}
-
-void Sim2PMT::classifyEvent() {
-	
-	bool passesMWPC[BOTH];
-	bool is2fold[BOTH];
 	
 	primSide = costheta>0?WEST:EAST;
-	
-	for(Side s = EAST; s <= WEST; ++s) {
-		if(simCathodes) {
-			ActiveCal->fCathMaxSum[s].val = wires[s][X_DIRECTION].maxValue+wires[s][Y_DIRECTION].maxValue;
-			passesMWPC[s] = ActiveCal->fCathMaxSum[s].inRange();
-		} else {
-			passesMWPC[s] = (mwpcEnergy[s] > mc_rnd_source.Gaus(mwpcThresh[s],mwpcWidth[s]));
-		}
-		is2fold[s] = passesMWPC[s] && passesScint[s];
-	}
-	
-	if(is2fold[EAST] || is2fold[WEST]) fPID = PID_BETA;
-	else fPID = PID_SINGLE;
-	
-	fType = TYPE_IV_EVENT;
-	fSide = NOSIDE;
-	for(Side s = EAST; s<=WEST; ++s) {
-		if(is2fold[s]) {
-			if(passesScint[otherSide(s)])
-				fType = TYPE_I_EVENT;
-			else
-				fType = passesMWPC[otherSide(s)]?TYPE_II_EVENT:TYPE_0_EVENT;
-		}
-		if(passesScint[s]&&!passesScint[otherSide(s)]) fSide = s;
-	}
-	if(passesScint[EAST] && passesScint[WEST])
-		fSide = time[EAST]<time[WEST]?EAST:WEST;
-	
-	// Type II/III separation
-	fProbIII = ((fType==TYPE_II_EVENT)?
-				WirechamberCalibrator::sep23Prob(fSide,getEnergy(),mwpcEnergy[fSide])
-				: 0.);
-	if(fProbIII>0.5) fType=TYPE_III_EVENT;
+	classifyEvent();
 }
 
 float Sim2PMT::getErecon() const {

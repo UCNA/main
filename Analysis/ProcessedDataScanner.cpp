@@ -9,8 +9,7 @@
 bool ProcessedDataScanner::redoPositions = false;
 
 ProcessedDataScanner::ProcessedDataScanner(const std::string& treeName, bool withCalibrators):
-RunSetScanner(treeName,withCalibrators), runClock(0), EvnbGood(true), BkhfGood(true), SIS00(0),
-physicsWeight(1.0), anChoice(ANCHOICE_A), fiducialRadius(45.0) {
+RunSetScanner(treeName,withCalibrators), runClock(0), physicsWeight(1.0), anChoice(ANCHOICE_A), fiducialRadius(45.0) {
 	for(Side s = EAST; s<=WEST; ++s)
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 				wires[s][d].center = 0;
@@ -51,7 +50,6 @@ void ProcessedDataScanner::recalibrateEnergy() {
 		ActiveCal->calibrateEnergy(s, wires[s][X_DIRECTION].center, wires[s][Y_DIRECTION].center, scints[s], runClock[s]);
 		mwpcEnergy[s] = ActiveCal->wirechamberEnergy(s, wires[s][X_DIRECTION], wires[s][Y_DIRECTION], mwpcs[s]);
 	}
-	calcEventFlags();
 }
 
 bool ProcessedDataScanner::passesPositionCut(Side s) {

@@ -52,7 +52,7 @@ Utils = ControlMenu.o strutils.o ManualInfo.o PathUtils.o TSpectrumUtils.o QFile
 		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o EnumerationFitter.o StyleSetup.o TChainScanner.o
 
 Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberCalibrator.o \
-		EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o
+		EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o EventClassifier.o
 	
 Analysis = RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT.o G4toPMT.o \
 		PenelopeToPMT.o LED2PMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o

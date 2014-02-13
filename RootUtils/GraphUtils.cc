@@ -464,6 +464,8 @@ void histoverlap(const TH1& h1, const TH1& h2, double& o, double& xdiv) {
 TF1_Quantiles::TF1_Quantiles(TF1& f): npx(f.GetNpx()), xMin(f.GetXmin()), xMax(f.GetXmax()), dx((xMax-xMin)/npx),
 integral(npx+1), alpha(npx), beta(npx), gamma(npx) {
 	
+	assert(npx);
+	
 	integral[0] = 0;
 	Int_t intNegative = 0;
 	for (unsigned int i = 0; i < npx; i++) {
@@ -500,7 +502,7 @@ integral(npx+1), alpha(npx), beta(npx), gamma(npx) {
 
 double TF1_Quantiles::eval(double p) const {
 
-	Int_t bin  = TMath::Max(TMath::BinarySearch(npx+1,integral.GetArray(),p),(Long64_t)0);
+	UInt_t bin  = TMath::Max(TMath::BinarySearch(npx+1,integral.GetArray(),p),(Long64_t)0);
 	// LM use a tolerance 1.E-12 (integral precision)
 	while (bin < npx-1 && TMath::AreEqualRel(integral[bin+1], p, 1E-12) ) {
 		if (TMath::AreEqualRel(integral[bin+2], p, 1E-12) ) bin++;

@@ -6,6 +6,7 @@
 
 #include "RunSetScanner.hh"
 #include "EnergyCalibrator.hh"
+#include "EventClassifier.hh"
 
 #include "QFile.hh"
 #include "PMTGenerator.hh"
@@ -13,9 +14,10 @@
 #include "TagCounter.hh"
 
 #include <map>
+#include <cassert>
 
 /// Generic class for processed data TChains
-class ProcessedDataScanner: public RunSetScanner {
+class ProcessedDataScanner: public RunSetScanner, public EventClassifier {
 public:
 	/// constructor
 	ProcessedDataScanner(const std::string& treeName, bool withCalibrators = false);
@@ -41,6 +43,11 @@ public:
 	/// get info about current event
 	virtual Stringmap evtInfo();
 	
+	/// Type I initial hit side determination --- not available here
+	virtual Side getFirstScint() const { assert(false); }
+	/// Type II/III separation probability
+	virtual float getProbIII() const { return WirechamberCalibrator::sep23Prob(fSide,getEnergy(),mwpcEnergy[fSide]); }
+	
 	static bool redoPositions;		//< whether to re-calibrate positions
 
 	ScintEvent scints[BOTH];	//< readout point for scintillator data
@@ -50,25 +57,11 @@ public:
 	MWPCevent mwpcs[BOTH];		//< readout point for mwpc data (anode & cathode sum)
 	Float_t mwpcEnergy[BOTH];	//< calibrated wirechamber energy deposition on each side
 	BlindTime runClock;			//< time of current event since run start
-	
-	PID fPID;					//< analysis particle ID
-	EventType fType;			//< analysis event type
-	Float_t fProbIII;			//< probability of Type III backscatter
-	Side fSide;					//< analysis event side
-	Int_t EvnbGood;				//< Event number header good
-	Int_t BkhfGood;				//< Block header good
-	Int_t SIS00;				//< DAQ trigger bits
-	
-	Int_t fTaggedBack[BOTH];	//< whether event was tagged by the muon backing veto on each side
+		
 	double physicsWeight;		//< event spectrum re-weighting factor
 	
 	AnalysisChoice anChoice;	//< which analysis choice to use in identifying event types
 	float fiducialRadius;		//< radius for position cut
-		
-protected:
-	
-	/// generate event classification flags
-	virtual void calcEventFlags() {}
 };
 
 #endif
