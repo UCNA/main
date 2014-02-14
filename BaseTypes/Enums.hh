@@ -158,6 +158,9 @@ enum PID {
 	PID_PULSER = 4	//< tagged Bi pulser event
 };
 
+/// names for particle ID
+std::string pidWords(PID p);
+
 /// event backscattering types
 enum EventType {
 	TYPE_0_EVENT	= 0,	//< "Correct" events arrive on only one side of detector

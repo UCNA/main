@@ -67,14 +67,16 @@ void mi_MWPCCal(std::deque<std::string>&, std::stack<std::string>& stack) {
 	// simulations input setup
 	OSCM.simFile="/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_";
 	OSCM.simFactor = 1.0;
-	OSCM.nTot = 520;
+	OSCM.nTot = 312;
 	OSCM.stride = 73;
 	const std::string simOutputDir="MWPC_ECal_"+itos(nRings)+"_Sim0823";
 	
 	if(tpSelect=="sim") {
 		Sim_MWPC_Ecal_Analyzer MEA_Sim(nRings,&OM,simOutputDir);
-		if(octn==1000) OSCM.combineSims(MEA_Sim);
-		else if(octn==1001) {
+		if(octn==1000) {
+			OSCM.combineSims(MEA_Sim);
+			MEA_Sim.edep_plgn->genPosmap("mwpc_sim");
+		} else if(octn==1001) {
 			MWPC_Ecal_Analyzer BDA(nRings,&OM,OSCM.outputDir,RunAccumulator::processedLocation);
 			Sim_MWPC_Ecal_Analyzer BDA_MC(nRings,&OM,simOutputDir,OSCM.baseDir+"/"+simOutputDir+"/"+simOutputDir);
 			BDA_MC.compareMCtoData(BDA);
@@ -82,8 +84,14 @@ void mi_MWPCCal(std::deque<std::string>&, std::stack<std::string>& stack) {
 		} else OSCM.simOct(MEA_Sim,octn);
 	} else {
 		MWPC_Ecal_Analyzer MEA(nRings,&OM,OSCM.outputDir);
-		if(octn==1000) OSCM.combineOcts(MEA);
-		else OSCM.scanOct(MEA, octn);
+		if(octn==1000) {
+			OSCM.combineOcts(MEA);
+			MEA.anode_plgn->genPosmap("anode");
+			MEA.ccloud_plgn->genPosmap("ccloud");
+		} else {
+			//OSCM.doPlots = true;
+			OSCM.scanOct(MEA, octn);
+		}
 	}
 }
 

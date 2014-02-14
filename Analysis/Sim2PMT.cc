@@ -133,6 +133,8 @@ void Sim2PMT::reverseCalibrate() {
 				}
 				ActiveCal->fCathMaxSum[s].val = wires[s][X_DIRECTION].maxValue+wires[s][Y_DIRECTION].maxValue;
 				fPassedCathMaxSum[s] = ActiveCal->fCathMaxSum[s].inRange();
+			} else {
+				fPassedCathMaxSum[s] = fPassedCathMax[s] = fPassedAnode[s] = mwpcEnergy[s] > 0;
 			}
 			
 		} else {

@@ -121,6 +121,7 @@ void CathodeGainPlugin::makePlots() {
 			for(unsigned int c=0; c<kMaxCathodes; c++) {
 				std::string cname = sideSubst("%c",s)+(d==X_DIRECTION?"x":"y")+itos(c+1);
 				TH2* hCathNorm =  (TH2*)cathNorm[s][d][c]->h[GV_OPEN];
+				hCathNorm->SetMinimum(0);
 				hCathNorm->GetYaxis()->SetTitleOffset(1.55);
 				hCathNorm->SetTitle(("Cathode "+cname).c_str());
 				hCathNorm->GetXaxis()->SetRangeUser(-3, 3);

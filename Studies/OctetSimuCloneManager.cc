@@ -35,10 +35,12 @@ void OctetSimuCloneManager::setSimData(Sim2PMT* s2p) {
 void OctetSimuCloneManager::setOctetSimdata(unsigned int octn) {
 	if(simData && ownSimData) delete simData;
 	ownSimData = true;
-	simData = new G4toPMT();
+	G4toPMT* G2P = new G4toPMT();
 	for(unsigned int i=0; i<stride; i++)
-		simData->addFile(simFile+itos((stride*octn+i)%nTot)+".root");
-	simData->PGen[EAST].xscatter = simData->PGen[WEST].xscatter = 0.005;
+		G2P->addFile(simFile+itos((stride*octn+i)%nTot)+".root");
+	G2P->PGen[EAST].xscatter = G2P->PGen[WEST].xscatter = 0.005;
+	G2P->runCathodeSim();
+	simData = G2P;
 }
 
 void OctetSimuCloneManager::simOct(RunAccumulator& SimRA, const Octet& oct) {

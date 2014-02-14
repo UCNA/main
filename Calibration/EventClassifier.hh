@@ -15,6 +15,9 @@ public:
 	/// classify event based on inputs
 	virtual void classifyEvent();
 
+	/// return event description string
+	std::string eventClassDescription() const;
+
 	/// overall wirechamber cut
 	virtual inline bool passedMWPC(Side s) const { return fPassedCathMaxSum[s]; }
 	/// combined wirechamber+scintillator cut

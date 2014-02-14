@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# nohup ./ReplayManager.py --mwpccal_sim < /dev/null > scriptlog.txt 2>&1 &
+
 import os
 import time
 from optparse import OptionParser
@@ -6,8 +8,9 @@ import sys
 sys.path.append("..")
 from ucnacore.EncalDB import *
 
+
 anaBinDir = "../../"
-	
+
 def processOctets(sim,omin,omax):
 	pcmd = "cd "+anaBinDir+"; ./UCNAnalyzer pr oct %i x x\n"
 	freplaylist = open("oct_replaylist.txt","w")
@@ -85,18 +88,12 @@ def process_MWPCCal_octets(sim,omin,omax):
 	pcmd = "cd "+anaBinDir+"; ./MWPC_Energy_Cal oct %%i %s 8 x\n"%{True:"sim", False:"dat"}[sim]
 	freplaylist = open("mwpccal_replaylist.txt","w")
 	for r in range(60)[omin:omax+1]:
-		if sim:
-			freplaylist.write(pcmd%(-r-1));
-		else:
-			freplaylist.write(pcmd%r);
+		freplaylist.write(pcmd%r);
 	freplaylist.close()
 	os.system("cat mwpccal_replaylist.txt")
 	os.system("nice -n 15 parallel -P 4 < mwpccal_replaylist.txt")
 	os.system("rm mwpccal_replaylist.txt")
-	#if sim:
-	#	os.system("cd "+anaBinDir+"; ./UCNAnalyzer pr oct -1000 x x\n");
-	#else:
-	#	os.system("cd "+anaBinDir+"; ./UCNAnalyzer pr oct 1000 x x\n");
+
 
 if __name__ == "__main__":
 	

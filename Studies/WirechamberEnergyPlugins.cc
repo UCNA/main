@@ -361,7 +361,7 @@ void WirechamberSimBackscattersPlugin::make23SepInfo(OutputManager& OM) {
 				TGraph gAngleSep(nAngles);
 				TGraph gDivPt(nAngles);
 				double amin = 0;
-				double omin = 1.0;
+				//double omin = 1.0;
 				double divmin = 0;
 				for(int a = 0; a < nAngles; a++) {
 					double th = a*M_PI/nAngles-M_PI/2;
@@ -387,7 +387,7 @@ void WirechamberSimBackscattersPlugin::make23SepInfo(OutputManager& OM) {
 					gDivPt.SetPoint(a,th,xdiv);
 					//if(o/cTot < omin) {
 					if(a==nAngles/2) {
-						omin = o/cTot;
+						//omin = o/cTot;
 						amin = a;
 						divmin = xdiv;
 					}

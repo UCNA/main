@@ -68,7 +68,7 @@ void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	if(CalDBSQL::getCDB()->isValid(13883)) {
 		OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Posmap_"+itos(pmid));
 		PosPlotter PP(&OM);
-		PP.etaPlot(CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),0.7,1.6);
+		PP.etaPlot(CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),0.6,1.6);
 	} else {
 		printf("Invalid CalDB!\n");
 	}
@@ -138,7 +138,7 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	OSCM.stride = 14;
 	
 	/////////// Geant4 0823, thinfoil
-	//OSCM.nTot = 520;
+	//OSCM.nTot = 312;
 	//OSCM.stride = 73;
 	
 	/////////// endcap_180_150

@@ -8,6 +8,10 @@ EventClassifier::EventClassifier(): fEvnbGood(true), fBkhfGood(true), SIS00(0) {
 	}
 }
 
+std::string EventClassifier::eventClassDescription() const {
+	return sideWords(fSide)+(" "+typeWords(fType)+" "+pidWords(fPID));
+}
+
 void EventClassifier::classifyEvent() {
 	// particle ID: "beta-like" with scintillator and wirechamber, or "gamma-like"
 	fPID = (Is2fold(EAST)||Is2fold(WEST)) ? (taggedMuon() ? PID_MUON:PID_BETA) : PID_SINGLE;
@@ -22,7 +26,7 @@ void EventClassifier::classifyEvent() {
 			else
 				fType = passedMWPC(otherSide(s))?TYPE_II_EVENT:TYPE_0_EVENT;
 		}
-		if(fPassedScint[s]&&!fPassedScint[otherSide(s)]) fSide = s;
+		if(fPassedScint[s] && !fPassedScint[otherSide(s)]) fSide = s;
 	}
 	if(fPassedScint[WEST] && fPassedScint[EAST]) fSide = getFirstScint();
 	

@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 	// simulations input setup
 	OSCM.simFile="/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_";
 	OSCM.simFactor = 1.0;
-	OSCM.nTot = 520;
+	OSCM.nTot = 312;
 	OSCM.stride = 73;
 
 	//const std::string simOutputDir=OSCM.outputDir+"_Sim0823";

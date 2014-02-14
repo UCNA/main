@@ -19,6 +19,12 @@ const char* sideWords(Side s) {
 	return swd[s];
 }
 
+std::string pidWords(PID p) {
+	const char* twd[] = {"gamma","beta","muon","LED","BiPulser"};
+	if(p<=PID_PULSER) return twd[p];
+	return "unknown";
+}
+
 std::string typeWords(EventType tp) {
 	assert(tp<=TYPE_IV_EVENT);
 	const char* twd[] = {"Type0","TypeI","TypeII","TypeIII","TypeIV"};
