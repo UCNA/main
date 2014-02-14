@@ -89,7 +89,12 @@ void MWPCGainPlugin::calculateResults() {
 				double e0 = hEw->GetBinCenter(i+1);
 				double c = hSlices[s][tp][i]->GetBinCenter(hSlices[s][tp][i]->GetMaximumBin());
 				double mx = hSlices[s][tp][i]->GetMaximum();
-				if(mx<50) continue; // don't bother with extra-low-counts bins
+				if(mx<50) {
+					// skip extra-low-counts bins
+					fitParams[s][tp].push_back(std::vector<double>());
+					fitErrs[s][tp].push_back(std::vector<double>());
+					continue;
+				}
 				
 				fLandau.SetParameter(2,0.23*c);
 				fLandau.SetParameter(0,c*mx/fLandau.GetParameter(2));
@@ -199,6 +204,7 @@ void MWPCGainPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 			gGain[tp] = new TGraphErrors((int)fitParams[s][tp].size());
 			int j=0;
 			for(unsigned int i=0; i<fitParams[s][tp].size(); i++) {
+				if(!dat.fitParams[s][tp][i].size() || !fitParams[s][tp][i].size()) continue;
 				if(dat.fitParams[s][tp][i][0] < 100 || fitParams[s][tp][i][0] < 100) continue;
 				if(dat.fitErrs[s][tp][i][1] > 0.1 || fitErrs[s][tp][i][1] > 0.1) continue;
 				gGain[tp]->SetPoint(j, fitParams[s][tp][i][1], dat.fitParams[s][tp][i][1]);

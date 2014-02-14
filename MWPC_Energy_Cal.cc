@@ -81,7 +81,11 @@ void mi_MWPCCal(std::deque<std::string>&, std::stack<std::string>& stack) {
 			Sim_MWPC_Ecal_Analyzer BDA_MC(nRings,&OM,simOutputDir,OSCM.baseDir+"/"+simOutputDir+"/"+simOutputDir);
 			BDA_MC.compareMCtoData(BDA);
 			BDA_MC.write();
-		} else OSCM.simOct(MEA_Sim,octn);
+		} else {
+			OSCM.hoursOld = 24*30;
+			OSCM.doCompare = true;
+			OSCM.simOct(MEA_Sim,octn);
+		}
 	} else {
 		MWPC_Ecal_Analyzer MEA(nRings,&OM,OSCM.outputDir);
 		if(octn==1000) {

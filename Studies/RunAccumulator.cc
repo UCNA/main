@@ -540,7 +540,7 @@ void RunAccumulator::mergeSims(const std::string& basedata, RunAccumulator* orig
 }
 
 
-unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor, double replaceIfOlder, bool doPlots) {
+unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor, double replaceIfOlder, bool doPlots, bool doCompare) {
 	
 	printf("\n------ Cloning data in '%s'\n------                        to '%s'...\n",basedata.c_str(),basePath.c_str());
 	int nCloned = 0;
@@ -579,7 +579,7 @@ unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& sim
 		RunAccumulator* subRA = (RunAccumulator*)makeAnalyzer(*it,RunAccumulator::inflExists(siminfl)?siminfl:"");
 		subRA->depth = depth+1;
 		subRA->simPerfectAsym = simPerfectAsym;
-		nCloned += subRA->simuClone(basedata+"/"+(*it),simData,simfactor,replaceIfOlder,doPlots);
+		nCloned += subRA->simuClone(basedata+"/"+(*it),simData,simfactor,replaceIfOlder,doPlots,doCompare);
 		addSegment(*subRA);
 		delete(subRA);
 	}
@@ -642,7 +642,7 @@ unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& sim
 	
 	// generate output
 	makeOutput(doPlots);
-	if(doPlots) {
+	if(doCompare) {
 		origRA->calculateResults();
 		compareMCtoData(*origRA);
 	}

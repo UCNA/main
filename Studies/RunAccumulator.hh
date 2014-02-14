@@ -137,7 +137,7 @@ public:
 	TagCounter<RunNum> runTimes;				//< time spent on each run
 	
 	/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs
-	unsigned int simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor = 1., double replaceIfOlder = 0., bool doPlots = true);
+	unsigned int simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor = 1., double replaceIfOlder = 0., bool doPlots = true, bool doCompare = true);
 	/// merge every subdirectory of basePath containing analyzed data
 	unsigned int mergeDir();
 	/// merge simulations, checking match against data

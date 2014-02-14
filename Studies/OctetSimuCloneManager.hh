@@ -35,6 +35,8 @@ public:
 	std::string outputDir;	//< output directory naming
 	std::string baseDir;	//< base directory for output
 	bool doPlots;			//< whether to make individual octet plots
+	bool doCompare;			//< whether to run data/MC comparison on cloned octets
+	unsigned int hoursOld;	//< do not re-scan data for runs less than this number of hours old
 	std::string simFile;	//< location of Geant4 simulation data to use
 	float simFactor;		//< ratio of simulation to data events to produce
 	unsigned int nTot;		//< total number of individual sim files

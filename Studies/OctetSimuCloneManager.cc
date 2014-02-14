@@ -2,14 +2,14 @@
 #include "PathUtils.hh"
 
 OctetSimuCloneManager::OctetSimuCloneManager(const std::string& dname, const std::string& bdir):
-outputDir(dname), baseDir(bdir), doPlots(false), simFactor(1.0), nTot(0), stride(0), ownSimData(false), simData(NULL) {
+outputDir(dname), baseDir(bdir), doPlots(false), doCompare(false), hoursOld(0), simFactor(1.0), nTot(0), stride(0), ownSimData(false), simData(NULL) {
 	RunAccumulator::processedLocation = baseDir+"/"+outputDir+"/"+outputDir;
 }
 
 void OctetSimuCloneManager::scanOct(RunAccumulator& RA, const Octet& oct) {
 	if(!oct.getNRuns()) return;
 	RunAccumulator* octRA = (RunAccumulator*)RA.makeAnalyzer(oct.octName(),"");
-	processOctets(*octRA,oct.getSubdivs(nextDiv(oct.divlevel),false),0*24*3600, doPlots);
+	processOctets(*octRA,oct.getSubdivs(nextDiv(oct.divlevel),false),hoursOld*3600,doPlots);
 	delete octRA;
 }
 
@@ -47,7 +47,7 @@ void OctetSimuCloneManager::simOct(RunAccumulator& SimRA, const Octet& oct) {
 	if(!oct.getNRuns()) return;
 	assert(simData);
 	RunAccumulator* octSim = (RunAccumulator*)SimRA.makeAnalyzer(oct.octName(),"");
-	octSim->simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), *simData, simFactor, 0.*3600, doPlots);
+	octSim->simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), *simData, simFactor, hoursOld*3600, doPlots, doCompare);
 	delete octSim;
 }
 
