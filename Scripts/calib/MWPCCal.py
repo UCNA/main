@@ -574,42 +574,52 @@ def make_mwpc_posmap(conn,charge_pmid,energy_pmid):
 	
 	for s in ["East","West"]:
 		c_pts = c_pset[(s,0)].get_pts_sorted()
-		e_pts = e_pset[(s,0)].get_pts_sorted()
+		#e_pts = e_pset[(s,0)].get_pts_sorted()
+		#assert len(c_pts)==len(e_pts)
+		
+		# average and standard deviation of energy fits
+		emu,esig = musigma(e_pset[(s,0)].get_pt_vals())
+		print "Energy",s,"mu =",emu," rms =",esig
+		
 		m = posmap(pinfo)
 		m.side = s
 		m.quadrant = 0
-		assert len(c_pts)==len(e_pts)
 		for (i,c) in enumerate(c_pts):
 			c.sig /= c.norm;
-			c.norm = e_pts[i].sig/e_pts[i].norm
+			c.norm = emu #e_pts[i].sig/e_pts[i].norm # use energy position map average
 			m.add_pt(c)
 		uploadPosmap(conn,m)
 	
 	return pinfo
 
 # assign calibration for range of runs
-def assign_MWPC_calib(conn,start_run,end_run,pmid=None,charge_meas="ccloud",gain=None,side="BOTH"):
+def assign_MWPC_calib(conn,start_run,end_run,priority=0,pmid=None,charge_meas="ccloud",gain=None,side="BOTH"):
 	
 	if side=="BOTH":
 		for s in ["East","West"]:
-			assign_MWPC_calib(conn,start_run,end_run,pmid,charge_meas,gain,s)
+			assign_MWPC_calib(conn,start_run,end_run,priority,pmid,charge_meas,gain,s)
 		return
 		
 	# delete old entries for same run range
-	conn.execute("SELECT count(*) FROM mwpc_ecal WHERE start_run = %i AND end_run = %i AND side = '%s'"%(start_run,end_run,side))
+	conn.execute("SELECT count(*) FROM mwpc_ecal WHERE start_run = %i AND end_run = %i AND side = '%s' AND charge_meas='%s'"%(start_run,end_run,side,charge_meas))
 	nold = conn.fetchone()[0]
 	if nold:
 		print "Deleting",nold,"previous entries."
-		cmd = "DELETE FROM mwpc_ecal WHERE start_run = %i AND end_run = %i AND side = '%s'"%(start_run,end_run,side)
+		cmd = "DELETE FROM mwpc_ecal WHERE start_run = %i AND end_run = %i AND side = '%s' AND charge_meas='%s'"%(start_run,end_run,side,charge_meas)
 		print cmd
 		conn.execute(cmd)
 	
 	if pmid is None:
 		return
+	
+	print "Setting up MWPC calibrations for",start_run,"-",end_run,side,"using",charge_meas
 	if gain is None: # synthesize gain from position map
-		gain = getPosmapSet(conn,pmid)[(s,0)].avg_val()
+		gain = 1.0/getPosmapSet(conn,pmid)[(side,0)].avg_val()
+		print "Applying average gain factor",gain,"from position map",pmid
+	else:
+		print "Gain factor",gain,"and position map",pmid
 
-	cmd = "INSERT INTO mwpc_ecal (start_run,end_run,side,charge_meas,gain_posmap_id,gain_factor) VALUES (%i,%i,'%s','%s',%i,%g)"%(start_run,end_run,side,charge_meas,pmid,gain)
+	cmd = "INSERT INTO mwpc_ecal (start_run,end_run,priority,side,charge_meas,gain_posmap_id,gain_factor) VALUES (%i,%i,%i,'%s','%s',%i,%g)"%(start_run,end_run,priority,side,charge_meas,pmid,gain)
 	print cmd
 	conn.execute(cmd)
 
@@ -665,9 +675,25 @@ def set_default_cathode_scalefactors(conn):
 if __name__ == "__main__":
 
 	conn = open_connection()
+	
+	#########
+	# transition from DB before mwpc calibrations
+	#########
 	#assign_MWPC_calib_from_anode_table(conn)
-	set_default_cathode_scalefactors(conn)
+	#set_default_cathode_scalefactors(conn)
+	#exit(0)
+	
+	#########
+	# 2010 cathode-based calibration
+	#########
+	#make_mwpc_posmap(conn,167,169) # only run this once
+	#assign_MWPC_calib(conn,0,100000,10,181,"ccloud") # default calibration for all runs
 	exit(0)
+	
+	
+	
+	
+	
 	
 	ppath = os.environ["UCNA_ANA_PLOTS"]
 	

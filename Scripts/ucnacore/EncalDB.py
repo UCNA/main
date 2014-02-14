@@ -165,8 +165,10 @@ class posmap:
 		l = self.pts.keys()
 		l.sort()
 		return [self.pts[k] for k in l]
+	def get_pt_vals(self):
+		return [p.sig/p.norm for p in self.get_pts_sorted()]
 	def avg_val(self):
-		return sum([p.sig/p.norm for p in self.pts.values()])/len(self.pts)
+		return sum(self.get_pt_vals())/len(self.pts)
 
 # get information about a posmap
 def getPosmapInfo(conn,pmid):
@@ -207,7 +209,9 @@ def newPosmap(conn,pinfo):
 # upload posmap points
 def uploadPosmap(conn,pmap):
 	print "Uploading points for",pmap.info
-	cmd = "INSERT INTO posmap_points (posmap_set_id,side,quadrant,pixel_id,center_x,center_y,signal,norm) VALUES (%i,'%s',%i,"%(pmap.info.posmap_set_id,pmap.side,pmap.quadrant)
+	cmd = "INSERT INTO posmap_points (posmap_set_id, side, quadrant, pixel_id, center_x, center_y, `signal`, norm) VALUES (%i,'%s',%i,"%(pmap.info.posmap_set_id,pmap.side,pmap.quadrant)
 	for p in pmap.get_pts_sorted():
-		conn.execute(cmd+"%i,%g,%g,$g,%g)"%(p.n,p.x,p.y,p.sig,p.norm))
+		pcmd = cmd+"%i,%g,%g,%g,%g)"%(p.n,p.x,p.y,p.sig,p.norm)
+		print pcmd
+		conn.execute(pcmd)
 		
