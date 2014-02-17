@@ -344,6 +344,13 @@ void RunAccumulator::makeRatesSummary() {
 
 void RunAccumulator::write(std::string outName) {
 	printf("Writing data to file '%s'...\n",outName.c_str());
+	
+	// clear previous tallies
+	qOut.erase("totalTime");
+	qOut.erase("totalCounts");
+	qOut.erase("runCounts");
+	qOut.erase("runTimes");
+	
 	// record total times, counts
 	for(AFPState afp = AFP_OFF; afp <= AFP_OTHER; ++afp) {
 		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
@@ -358,9 +365,11 @@ void RunAccumulator::write(std::string outName) {
 			qOut.insert("totalCounts",ct);
 		}
 	}
+	
 	// record run counts, times
 	qOut.insert("runCounts",runCounts.toStringmap());
 	qOut.insert("runTimes",runTimes.toStringmap());
+	
 	// base class write
 	SegmentSaver::write(outName);
 }

@@ -48,4 +48,19 @@ public:
 	fgbgPair* EwNormCoords[BOTH][TYPE_III_EVENT+1];	//< anode energy spectrum in cut-normalized coordinates by [side][type]
 };
 
+
+/// analyzer plugin for evaluting wirechamber trigger efficiency curves
+class WirechamberSimTrigEfficPlugin: public AnalyzerPlugin {
+public:
+	/// constructor
+	WirechamberSimTrigEfficPlugin(RunAccumulator* RA);
+	/// fill histograms
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
+	/// make output plots
+	virtual void makePlots();
+	
+	TH1* mwpcHitEffic[BOTH][2];			//< MWPC event spectra for [side][triggered]
+};
+
+
 #endif

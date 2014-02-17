@@ -199,6 +199,7 @@ Stringmap WirechamberCalibrator::wirecalSummary() const {
 	Stringmap m;
 	for(Side s = EAST; s <= WEST; ++s) {
 		m.insert(sideSubst("mwpc_gain_%c",s),mwpcGainCorr[s]);
+		m.insert(sideSubst("mwpc_calmethod_%c",s),chargeProxyName(myChargeProxy[s]));
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			std::string pname = sideSubst("%c",s)+(d==X_DIRECTION?"x":"y");
 			std::vector<double> cnorm;

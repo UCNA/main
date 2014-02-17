@@ -404,7 +404,7 @@ void reSource(RunNum rn) {
 		std::string g4dat = "/data2/mmendenhall/G4Out/2010/FixGeom_";
 		printf("Loading source simulation data...\n");
 		if(simSource.t=="Bi207" || simSource.t=="Ce139" || simSource.t=="Sn113")
-			g4dat = "/data2/mmendenhall/G4Out/2010/20120823_";
+			g4dat = "/data2/mmendenhall/G4Out/2010/20120823_"; 
 		if(rn > 20200) {
 			g4dat = "/home/mmendenhall/geant4/output/thinfoil_";
 			//if(simSource.t=="Bi207")

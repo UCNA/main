@@ -16,11 +16,13 @@ public:
 	Sim_Cathode_Shape_Analyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname = ""):
 	RunAccumulator(pnt,nm,inflname) {
 		addPlugin(cgain_plgn = new CathodeGainPlugin(this));
+		addPlugin(wste_plugin = new WirechamberSimTrigEfficPlugin(this));
 	}
 	/// cloning generator: just return another of the same subclass (with any settings you want to preserve)
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
 									   const std::string& inflname) { return new Sim_Cathode_Shape_Analyzer(this, nm, inflname); }
 	CathodeGainPlugin* cgain_plgn;
+	WirechamberSimTrigEfficPlugin* wste_plugin;
 };
 
 int main(int argc, char *argv[]) {

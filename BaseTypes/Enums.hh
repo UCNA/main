@@ -185,7 +185,7 @@ enum ChargeProxyType {
 /// iteration to next charge type
 inline ChargeProxyType& operator++(ChargeProxyType& tp) { return tp = ChargeProxyType(tp+1); }
 /// string name for charge proxy
-std::string chargeProxyName(ChargeProxyType& tp);
+std::string chargeProxyName(ChargeProxyType tp);
 /// charge proxy from string
 ChargeProxyType strToChgPrx(const std::string& s);
 

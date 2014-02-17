@@ -200,13 +200,17 @@ void MWPCGainPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 		
 		TGraphErrors* gGain[TYPE_III_EVENT+1];
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+			
+			// compile Data/MC comparison data
 			assert(fitParams[s][tp].size()==dat.fitParams[s][tp].size());
 			gGain[tp] = new TGraphErrors((int)fitParams[s][tp].size());
 			int j=0;
 			for(unsigned int i=0; i<fitParams[s][tp].size(); i++) {
-				if(!dat.fitParams[s][tp][i].size() || !fitParams[s][tp][i].size()) continue;
-				if(dat.fitParams[s][tp][i][0] < 100 || fitParams[s][tp][i][0] < 100) continue;
-				if(dat.fitErrs[s][tp][i][1] > 0.1 || fitErrs[s][tp][i][1] > 0.1) continue;
+				if(!dat.fitParams[s][tp][i].size() || !fitParams[s][tp][i].size()) continue;		// skip failed fits
+				if(dat.fitParams[s][tp][i][0] < 100 || fitParams[s][tp][i][0] < 100) continue;		// skip low-counts fits
+				if(!(dat.fitParams[s][tp][i][1] < 10 && fitParams[s][tp][i][1] < 10)) continue;		// skip out-of-range fits
+				if(!(dat.fitParams[s][tp][i][1] > 0.1 && fitParams[s][tp][i][1] > 0.1)) continue;	// skip out-of-range fits
+				if(!(dat.fitErrs[s][tp][i][1] < 0.1 && fitErrs[s][tp][i][1] < 0.1)) continue;		// skip large-errorbars fits
 				gGain[tp]->SetPoint(j, fitParams[s][tp][i][1], dat.fitParams[s][tp][i][1]);
 				gGain[tp]->SetPointError(j, fitErrs[s][tp][i][1], dat.fitErrs[s][tp][i][1]);
 				j++;
@@ -217,6 +221,7 @@ void MWPCGainPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 			
 			TF1 lineFit("lineFit","pol1",0,10);
 			lineFit.FixParameter(0,0);
+			lineFit.SetParameter(1,1);
 			lineFit.SetLineStyle(1+tp);
 			lineFit.SetLineWidth(1);
 			gGain[tp]->Fit(&lineFit,"RB");
@@ -621,3 +626,51 @@ void WirechamberSimBackscattersPlugin::make23SepInfo(OutputManager& OM) {
 		OM.printCanvas("ProbFitParam_"+itos(n));
 	}
 }
+
+
+//---------------------------------------------------
+
+
+WirechamberSimTrigEfficPlugin::WirechamberSimTrigEfficPlugin(RunAccumulator* RA): AnalyzerPlugin(RA,"mwpcSimHitEffic") {
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(unsigned int i=0; i<2; i++) {
+			mwpcHitEffic[s][i] = RA->registerSavedHist(sideSubst("mwpcSimHitEffic_%c_",s)+itos(i),"MWPC Hits",100,0,4);
+			mwpcHitEffic[s][i]->GetXaxis()->SetTitle("MWPC Energy [keV]");
+		}
+	}
+}
+
+void WirechamberSimTrigEfficPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+	Sim2PMT& S2P = *(Sim2PMT*)(&PDS);
+	for(Side s = EAST; s <= WEST; ++s) {
+		if(!S2P.eW[s]) continue;
+		mwpcHitEffic[s][true]->Fill(S2P.mwpcEnergy[s],weight);
+		if(S2P.passedMWPC(s)) mwpcHitEffic[s][false]->Fill(S2P.mwpcEnergy[s],weight);
+	}
+}
+
+void WirechamberSimTrigEfficPlugin::makePlots() {
+	for(Side s = EAST; s <= WEST; ++s) {
+		
+		drawHistoPair(mwpcHitEffic[s][true], mwpcHitEffic[s][false]);
+		printCanvas(sideSubst("MWPC_TrigSpectra_%c",s));
+		
+		TGraphAsymmErrors* gEffic = new TGraphAsymmErrors(mwpcHitEffic[s][true]->GetNbinsX());
+		gEffic->BayesDivide(mwpcHitEffic[s][false],mwpcHitEffic[s][true],"w");
+		
+		gEffic->SetMinimum(-0.10);
+		gEffic->SetMaximum(1.10);
+		gEffic->Draw("AP");
+		gEffic->SetTitle("Trigger Efficiency");
+		gEffic->GetXaxis()->SetTitle("MWPC energy [keV]");
+		//gEffic->GetXaxis()->SetLimits(xmin,xmax);
+		gEffic->GetYaxis()->SetTitle("Efficiency");
+		gEffic->Draw("AP");
+		printCanvas(sideSubst("MWPC_TrigEffic_%c",s));
+		
+		delete(gEffic);
+	}
+}
+
+
+
