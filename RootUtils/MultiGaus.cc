@@ -75,7 +75,7 @@ double MultiGaus::operator() (double* x, double* par) {
 	
 	bool reject = true;
 	for(unsigned int i=0; i<npks; i++) {
-		if( iguess[3*i+1] - nSigma*iguess[3*i+2] < x[0] && x[0] < iguess[3*i+1] + nSigma*iguess[3*i+2] ) {
+		if( iguess[3*i+1] - 1.01*nSigma*iguess[3*i+2] < x[0] && x[0] < iguess[3*i+1] + 1.01*nSigma*iguess[3*i+2] ) {
 			reject = false;
 			break;
 		}

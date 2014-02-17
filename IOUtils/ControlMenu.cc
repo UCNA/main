@@ -75,7 +75,7 @@ bool nameselector_default_softmatch(const std::string& a, const std::string& b) 
 std::string NameSelector::barf_control = "\033_BARF";
 std::string NameSelector::exit_control = "\033_EXIT";
 
-NameSelector::NameSelector(std::string t, std::string promptval, bool persist): inputRequester(t), catchAll(false), isPersistent(persist) {
+NameSelector::NameSelector(std::string t, std::string promptval, bool persist): inputRequester(t), catchAll(NULL), isPersistent(persist) {
 	inputRequester::addArg(promptval);
 	setSoftmatch();
 }

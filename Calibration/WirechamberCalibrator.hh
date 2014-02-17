@@ -37,6 +37,15 @@ struct wireHit {
 	float height;				//< reconstructed amplitude of charge cloud
 };
 
+/// struct for approximate wireplane hit reconstruction
+struct hitRecon {
+	float c;	//< center
+	float w;	//< width
+	float h;	//< height
+	float a;	//< area
+	int flags;	//< reconstruction flags
+};
+
 /// class for calibrating wirechamber data
 class WirechamberCalibrator: private NoCopy {
 public:
@@ -51,8 +60,8 @@ public:
 	/// get anode gain correction factor
 	float wirechamberGainCorr(Side s, float t) const;
 	
-	/// calculate hit position from wire values array
-	wireHit calcHitPos(Side s, AxisDirection d, std::vector<float>& wireValues, std::vector<float>& wirePeds) const;
+	/// calculate hit position from wire values array; optionally, calculate other centering variables
+	wireHit calcHitPos(Side s, AxisDirection d, std::vector<float>& wireValues, std::vector<float>& wirePeds, hitRecon* hLorentzian = NULL) const;
 	
 	/// special case for calculating hit position from two points
 	void calcDoubletHitPos(wireHit& h, float x0, float x1, float y0, float y1) const;
@@ -89,9 +98,17 @@ public:
 	
 	double sigma;	//< expected charge cloud width for default reconstruction, in same units as cathode positions
 	
+	/// calculate ``Lorentzian center'' from three points
+	static hitRecon calcLorentzCenter(double sm, double s0, double sp, double pm, double p0, double pp);
+	/// draw wire positions on plot
+	void drawWires(Side s, AxisDirection p, TVirtualPad* C, Int_t color = 4, AxisDirection onAxis=X_DIRECTION) const;
+	
+	/// turn on/off cathode shape calibrations (for baseline comparison)
+	static bool calibrateCathodes;
+	
 protected:
-	PositioningCorrector* anodeP;					//< anode calibration maps
-	float anodeGainCorr[BOTH];						//< anode correction factor for each side
+	PositioningCorrector* anodeP;						//< anode calibration maps
+	float anodeGainCorr[BOTH];							//< anode correction factor for each side
 	std::vector<CathSegCalibrator*> cathsegs[BOTH][2];	//< cathode segments for each [side][plane]
 	std::vector<double> wirePos[BOTH][2];				//< cathode wire positions on each plane
 	std::vector<double> domains[BOTH][2];				//< dividing lines between ``domains'' of each wire

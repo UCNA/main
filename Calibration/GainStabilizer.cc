@@ -43,6 +43,21 @@ float ChrisGainStabilizer::gmsFactor(Side s, unsigned int t, float time) const {
 		return LCor->getGMS0(s,t);
 }
 
+Stringmap ChrisGainStabilizer::gmsSummary() const {
+	Stringmap m = GainStabilizer::gmsSummary();
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(unsigned int t=0; t<nBetaTubes; t++) {
+			std::string tname = sideSubst("%c",s)+itos(t);
+			if(!pulserPeak[s][t]) continue;
+			m.insert(tname+"_nBiPts",itos(pulserPeak[s][t]->GetN()));
+			m.insert(tname+"_BiMean",pulserPeak[s][t]->GetMean(2));
+			m.insert(tname+"_BiRMS",pulserPeak[s][t]->GetRMS(2));
+			m.insert(tname+"_Pulser0",pulser0[s][t]);
+		}
+	}
+	return m;
+}
+
 void ChrisGainStabilizer::printSummary() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		

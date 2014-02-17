@@ -48,15 +48,12 @@ public:
 	/// get pedestal widths for named sensor
 	virtual TGraph* getPedwidths(RunNum rn, const std::string& sensorName) { return getRunMonitor(rn,sensorName,"pedestal",false); }
 	
-	/// get kurie endpoint calibration energy for given run, side, PMT
-	virtual float getKurieEnergy(RunNum rn, Side s, unsigned int t);
-	/// get kurie endpoint calibration energy for given run, side, PMT
-	virtual float getKurieADC(RunNum rn, Side s, unsigned int t);
-	
 	/// get positioning corrector for given run
 	virtual PositioningCorrector* getPositioningCorrector(RunNum rn);
 	/// get positioning corrector by ID number
 	PositioningCorrector* getPositioningCorrectorByID(unsigned int psid);
+	/// remove cached positioning corrector for run
+	void forgetPositioningCorrector(RunNum rn);
 	
 	/// get anode positioning corrector for given run
 	virtual PositioningCorrector* getAnodePositioningCorrector(RunNum rn);

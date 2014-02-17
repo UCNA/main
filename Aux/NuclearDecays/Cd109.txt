@@ -1,13 +1,13 @@
 #####
 # Cd109 to  EC followed by internal conversions
 # Data from Jean Blachot, Nuclear Data Sheets 107, 355 (2006)
-# conversion electrons from O. Dragoun et al, Z. Phys. A279, 107-11 (1976)
+# L1:L2:L3 from experiment, O. Dragoun et al, Z. Phys. A279, 107-11 (1976)
 #####
 
 level:	nm = 109.47.0	E = 0.			hl = -1				jpi = 1/2-
 level:	nm = 109.47.1	E = 88.0341		hl = 39.6			jpi = 7/2+
 level:	nm = 109.48.0	E = 126.3		hl = 39.864e6		jpi = 5/2+
 
-gamma:	from = 109.47.1	to = 109.47.0	Igamma = 3.70	CE_K = 11.4	CE_L = 12.22@.63:5.48:6.11	CE_M = 2.40	CE_N = 0.405
+gamma:	from = 109.47.1	to = 109.47.0	Igamma = 3.70	CE_K = 11.3~0.5	CE_L = 11.9~0.5@.63:5.48:6.11	CE_M = 2.41~0.11	CE_N = 0.43~0.02
 ecapt:	from = 109.48.0
 AugerK:	Z = 47	ka1 = 56.1	ka2 = 29.8	kb3 = 4.80	kb1 = 9.2	kb2 = 2.31	Iauger = 20.8

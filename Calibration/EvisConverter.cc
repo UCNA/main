@@ -9,7 +9,7 @@ EvisConverter::EvisConverter(RunNum rn, CalDB* CDB) {
 		}
 	}
 	if(!hasConverters)
-		printf("******* WARNING: missing Evis->Etrue conversion for run %i ********\n",rn);
+		printf("******* WARNING: missing Evis->Erecon conversion for run %i ********\n",rn);
 }
 
 EvisConverter::~EvisConverter() {
@@ -19,7 +19,7 @@ EvisConverter::~EvisConverter() {
 				delete conversions[s][tp];
 }
 
-float EvisConverter::Etrue(Side s, EventType tp, float EvisE, float EvisW) const {
+float EvisConverter::Erecon(Side s, EventType tp, float EvisE, float EvisW) const {
 	assert((s==EAST || s==WEST));
 	float Evis = (tp==TYPE_I_EVENT)? EvisE+EvisW:(s==EAST?EvisE:EvisW);
 	if(tp>TYPE_III_EVENT || !conversions[s][tp]) return Evis;

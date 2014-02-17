@@ -1,16 +1,25 @@
 #include "PositionResponse.hh"
 #include <stdlib.h>
 
-PositioningInterpolator::PositioningInterpolator(const PosmapInfo& PMI):
-S(PMI.nRings,PMI.radius), sRadial(BC_DERIVCLAMP_ZERO), L(&sRadial, PMI.radius*(1.0+1.0/(2*PMI.nRings-1.0)), 0) {
+Stringmap SCtoSM(const SectorCutter& SC) {
+	Stringmap m;
+	m.insert("nRings",SC.n);
+	m.insert("radius",SC.r);
+	m.insert("nSectors",SC.nSectors());
+	return m;
+}
+
+PositioningInterpolator::PositioningInterpolator(const PosmapInfo& PMI,
+	Interpolator* (*phiInterp)(DataSequence*, double, double),
+	Interpolator* (*rInterp)(DataSequence*, double, double)):
+S(PMI.nRings,PMI.radius), sRadial(BC_DERIVCLAMP_ZERO), L((*rInterp)(&sRadial, PMI.radius*(1.0+1.0/(2*PMI.nRings-1.0)), 0)) {
 	
 	assert(PMI.signal.size() == S.nSectors());
 	
 	// set up sequences/interpolators
 	for(unsigned int n=0; n<PMI.nRings; n++) {
 		phiSeqs.push_back(new DoubleSequence(BC_CYCLIC));
-		phiInterps.push_back(new CubiTerpolator(phiSeqs.back(),2.0*PI,PI/float(S.getNDivs(n))));
-		//phiInterps.push_back(new Interpolator(phiSeqs.back(),2.0*PI,PI/float(S.getNDivs(n))));
+		phiInterps.push_back((*phiInterp)(phiSeqs.back(),2.0*PI,PI/float(S.getNDivs(n))));
 		sRadial.addPoint(phiInterps.back());
 	}
 	
@@ -25,21 +34,33 @@ PositioningInterpolator::~PositioningInterpolator() {
 		delete(phiSeqs[i]);
 	for(unsigned int i=0; i<phiInterps.size(); i++)
 		delete(phiInterps[i]);
+	delete L;
 }
 
 double PositioningInterpolator::eval(double x, double y) {
 	double xp[2] = {sqrt(x*x+y*y),atan2(y,x)};
-	return L.eval(xp);
+	return L->eval(xp);
 }
 
-void PositioningCorrector::initPIs(std::vector<PosmapInfo>& indat) {
-	for(std::vector<PosmapInfo>::iterator it = indat.begin(); it != indat.end(); it++) {
+
+//--------------------------------------------------------------------------------------
+
+Interpolator* (*PositioningCorrector::defaultInterpType)(DataSequence*, double, double) = CubiTerpolator::newCubiTerpolator;
+
+void PositioningCorrector::loadData(const std::vector<PosmapInfo>& indat) {
+	// clear old data
+	deleteInterpolators();
+	myData = indat;
+	
+	// build interpolators
+	for(std::vector<PosmapInfo>::const_iterator it = indat.begin(); it != indat.end(); it++) {
 		assert(it->s==EAST || it->s==WEST);
 		while(tubes[it->s].size()<=it->t)
 			tubes[it->s].push_back(NULL);
 		assert(!tubes[it->s][it->t]);
-		tubes[it->s][it->t] = new PositioningInterpolator(*it);
+		tubes[it->s][it->t] = new PositioningInterpolator(*it,interpType,interpType);
 	}
+	setNormCenter();
 }
 
 void PositioningCorrector::setNormCenter(double c) {
@@ -54,7 +75,7 @@ void PositioningCorrector::setNormAvg(double c) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		neta[s].clear();
 		for(unsigned int t=0; t<tubes[s].size(); t++) {
-			SectorCutter& tsects = getSectors(s,t);
+			const SectorCutter& tsects = getSectors(s,t);
 			float x,y;
 			double avg = 0;
 			for(unsigned int m=0; m<tsects.nSectors(); m++) {
@@ -67,12 +88,7 @@ void PositioningCorrector::setNormAvg(double c) {
 	}
 }
 
-PositioningCorrector::PositioningCorrector(std::vector<PosmapInfo>& indat) {
-	initPIs(indat);
-	setNormCenter();
-}
-
-PositioningCorrector::PositioningCorrector(QFile& qin) {
+void PositioningCorrector::loadData(const QFile& qin) {
 	
 	// init PosmapInfo vector
 	int nRings = atoi(qin.getDefault("SectorCutter","nRings","0").c_str());
@@ -108,14 +124,19 @@ PositioningCorrector::PositioningCorrector(QFile& qin) {
 		pinf[nBetaTubes*s+t].norm[n] = z0;
 	}
 	
-	initPIs(pinf);
-	setNormCenter();
+	loadData(pinf);
+}
+
+void PositioningCorrector::deleteInterpolators() {
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(unsigned int i=0; i<tubes[s].size(); i++)
+			if(tubes[s][i]) delete tubes[s][i];
+		tubes[s].clear();
+	}
 }
 
 PositioningCorrector::~PositioningCorrector() {
-	for(Side s = EAST; s <= WEST; ++s)
-		for(unsigned int i=0; i<tubes[s].size(); i++)
-			if(tubes[s][i]) delete tubes[s][i];
+	deleteInterpolators();
 }
 
 double PositioningCorrector::eval(Side s, unsigned int t, double x, double y, bool normalize) const {

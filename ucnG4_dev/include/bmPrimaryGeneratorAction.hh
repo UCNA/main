@@ -64,8 +64,6 @@ class bmPrimaryGeneratorMessenger;
 
 /// (uncorrected) beta spectrum probability with arbitrary endpoint (for use with TF1)
 double genericBetaSpectrum(double* x, double *par);
-/// corrected beta decay spectrum from heavy nucleus (for use with TF1)
-double heavyBetaSpectrum(double* x, double* par);
 	
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

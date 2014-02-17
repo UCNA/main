@@ -92,27 +92,6 @@ TGraphErrors* CalDBSQL::getContinuousMonitor(const std::string& sensorName, cons
 }
 
 
-float CalDBSQL::getKurieEnergy(RunNum rn, Side s, unsigned int t) {
-	sprintf(query,"SELECT energy FROM kurie_cal WHERE run_number = %i AND side = %s AND quadrant = %i",rn,dbSideName(s),t);
-	TSQLRow* r = getFirst();		
-	if(!r)
-		return 0;
-	float ken = fieldAsFloat(r,0);
-	delete(r);
-	return ken;	
-}
-float CalDBSQL::getKurieADC(RunNum rn, Side s, unsigned int t) {
-	sprintf(query,"SELECT adc FROM kurie_cal WHERE run_number = %i AND side = %s AND quadrant = %i",rn,dbSideName(s),t);
-	TSQLRow* r = getFirst();		
-	if(!r)
-		return 0;
-	float kadc = fieldAsFloat(r,0);
-	delete(r);
-	return kadc;		
-}
-
-
-
 PositioningCorrector* CalDBSQL::getPositioningCorrector(RunNum rn) {
 	return getPositioningCorrectorByID(getCalSetInfo(rn,"posmap_set_id"));
 }
@@ -148,10 +127,6 @@ float CalDBSQL::getAnodeGain(RunNum rn, Side s) {
 }
 
 void CalDBSQL::getGainTweak(RunNum rn, Side s, unsigned int t, float& orig, float& final) {
-	if(!checkTable("gain_tweak")) {
-		orig=final=500.0;
-		return;
-	}
 	sprintf(query,"SELECT e_orig,e_final FROM gain_tweak WHERE start_run <= %i AND %i <= end_run \
 			AND side = %s AND quadrant = %i ORDER BY end_run-start_run LIMIT 1",rn,rn,dbSideName(s),t);
 	TSQLRow* r = getFirst();
@@ -219,8 +194,15 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 		throw(e);
 	}
 	
-	pcors.insert(std::make_pair(psid,new PositioningCorrector(pinf)));
+	PositioningCorrector* PC = new PositioningCorrector();
+	PC->loadData(pinf);
+	pcors.insert(std::make_pair(psid,PC));
 	return getPositioningCorrectorByID(psid);
+}
+
+void CalDBSQL::forgetPositioningCorrector(RunNum rn) {
+	unsigned int psid = getCalSetInfo(rn,"posmap_set_id");
+	pcors.erase(psid);
 }
 
 unsigned int CalDBSQL::getCalSetInfo(RunNum R, const char* field) {

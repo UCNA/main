@@ -73,6 +73,56 @@ TGraphErrors* TH1toTGraph(const TH1& h) {
 	return g;
 }
 
+TGraphErrors* TProf2TGraph(const TProfile& P, unsigned int minpts) {
+	TGraphErrors* g = new TGraphErrors(P.GetNbinsX()-2);
+	unsigned int ig = 0;
+	for(int i=0; i<P.GetNbinsX()-2; i++) {
+		if(P.GetBinEntries(i+1)<minpts) continue;
+		g->SetPoint(ig,P.GetBinCenter(i+1),P.GetBinContent(i+1));
+		g->SetPointError(ig,0.0,P.GetBinError(i+1));
+		ig++;
+	}
+	while(g->GetN()>(int)ig) g->RemovePoint(ig);
+	return g;
+}
+
+void comboErr(double a, double da, double b, double db, double& x, double& dx) {
+	da *= da;
+	db *= db;
+	if(!da) da = 1e-16;
+	if(!db) db = 1e-16;
+	double nrm = 1./(1./da+1./db);
+	x = (a/da+b/db)*nrm;
+	dx = sqrt(nrm);
+}
+
+void accumPoints(TGraphErrors& a, const TGraphErrors& b, bool errorWeight, bool yonly) {
+	assert(a.GetN()==b.GetN());
+	for(int i=0; i<a.GetN(); i++) {
+		double ax,ay,bx,by;
+		a.GetPoint(i,ax,ay);
+		b.GetPoint(i,bx,by);
+		double dax = a.GetErrorX(i);
+		double day = a.GetErrorY(i);
+		double dbx = b.GetErrorX(i);
+		double dby = b.GetErrorY(i);
+		if(errorWeight) {
+			double x,dx,y,dy;
+			comboErr(ax, dax, bx, dbx, x, dx);
+			comboErr(ay, day, by, dby, y, dy);
+			if(!yonly) a.SetPoint(i,x,y);
+			a.SetPointError(i,dx,dy);
+		} else {
+			if(yonly) {
+				a.SetPoint(i,ax,ay+by);
+				a.SetPointError(i,dax,sqrt(day*day+dby*dby));
+			} else {
+				a.SetPoint(i,ax+bx,ay+by);
+				a.SetPointError(i,sqrt(dax*dax+dbx*dbx),sqrt(day*day+dby*dby));
+			}
+		}
+	}
+}
 
 TH1F* cumulativeHist(const TH1F& h, bool normalize) {
 	TH1F* c = new TH1F(h);

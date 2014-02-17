@@ -1,14 +1,12 @@
 #include <exception>
-#include <TStyle.h>
-#include <TROOT.h>
 #include <iostream>
 
+#include "StyleSetup.hh"
 #include "ControlMenu.hh"
 #include "PathUtils.hh"
 #include "GraphicsUtils.hh"
 #include "PositionResponse.hh"
 #include "BetaDecayAnalyzer.hh"
-#include "CathodeTweakAnalyzer.hh"
 #include "XenonAnalyzer.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "PlotMakers.hh"
@@ -16,10 +14,9 @@
 #include "ReSource.hh"
 #include "G4toPMT.hh"
 #include "PenelopeToPMT.hh"
-#include "LEDScans.hh"
 #include "NuclEvtGen.hh"
-#include "EnumerationFitter.hh"
 #include "AsymmetryCorrections.hh"
+#include "OctetSimuCloneManager.hh"
 
 std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
 	if(typeSelect=="ref") {
@@ -71,7 +68,7 @@ void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	if(CalDBSQL::getCDB()->isValid(13883)) {
 		OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Posmap_"+itos(pmid));
 		PosPlotter PP(&OM);
-		PP.etaPlot(CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid));
+		PP.etaPlot(CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),0.7,1.6);
 	} else {
 		printf("Invalid CalDB!\n");
 	}
@@ -101,11 +98,12 @@ void mi_PostprocessSources(std::deque<std::string>&, std::stack<std::string>& st
 		reSource(*it);
 }
 
-void mi_PlotGMS(std::deque<std::string>&, std::stack<std::string>& stack) {
+void mi_DumpCalInfo(std::deque<std::string>&, std::stack<std::string>& stack) {
 	std::string typeSelect = streamInteractor::popString(stack);
 	RunNum r1 = streamInteractor::popInt(stack);
 	RunNum r0 = streamInteractor::popInt(stack);
-	plotGMScorrections(selectRuns(r0,r1,typeSelect));
+	QFile QOut(getEnvSafe("UCNA_ANA_PLOTS")+"/test/CalDump.txt",false);
+	dumpCalInfo(selectRuns(r0,r1,typeSelect),QOut);
 }
 
 void mi_dumpPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
@@ -122,76 +120,65 @@ void mi_listPosmaps(std::deque<std::string>&, std::stack<std::string>&) { CalDBS
 
 void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octn = streamInteractor::popInt(stack);
-	const std::string outputDir="OctetAsym_Offic";
 	
-	//const std::string simOutputDir=outputDir+"_Sim0823_4x";
-	//const std::string simOutputDir=outputDir+"_SimMagF_MWPCthresh";
-	//const std::string simOutputDir=outputDir+"_SimMagF_4x";
-	//const std::string simOutputDir=outputDir+"_SimPen";
-	//const std::string simOutputDir=outputDir+"_fid45";
-	const std::string simOutputDir=outputDir+"_thinfoil";
+	OctetSimuCloneManager OSCM("OctetAsym_Offic");
+	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 	
+	// simulations input setup
 	//std::string simFile="/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_";
 	//std::string simFile="/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_";
 	//std::string simFile="/home/mmendenhall/geant4/output/thinFoil_neutronBetaUnpol/analyzed_";
-	std::string simFile="/home/mmendenhall/geant4/output/endcap_180_150_neutronBetaUnpol/analyzed_";
+	OSCM.simFile="/home/mmendenhall/geant4/output/endcap_180_150_neutronBetaUnpol/analyzed_";
+	OSCM.simFactor = 1.0;
+	OSCM.doPlots = true;
 	
 	/////////// Geant4 MagF
-	//unsigned int nTot = 104;
-	//unsigned int stride = 14;
+	//OSCM.nTot = 104;
+	//OSCM.stride = 14;
 	
 	/////////// Geant4 0823, thinfoil
-	//unsigned int nTot = 520;
-	//unsigned int stride = 73;
+	//OSCM.nTot = 520;
+	//OSCM.stride = 73;
 	
 	/////////// endcap_180_150
-	unsigned int nTot = 492;
-	unsigned int stride = 73;
+	OSCM.nTot = 492;
+	OSCM.stride = 73;
+
+	//const std::string simOutputDir=OSCM.outputDir+"_endcap_180_150";
+	const std::string simOutName = "_Sim0823";
+	const std::string simOutputDir=OSCM.outputDir+simOutName;
 	
-	double simFactor = 1.0;
-	bool doPlots = false;
 	
-	BetaDecayAnalyzer::processedLocation = getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+outputDir;
-	
-	if(octn==1000) {
-		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
-		BetaDecayAnalyzer AA(&OM,outputDir);
-		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600);
-	} else if(octn < 0) {
-		G4toPMT simData;
-		for(unsigned int i=0; i<stride; i++)
-			simData.addFile(simFile+itos((stride*abs(octn)+i)%nTot)+".root");
-		simData.PGen[EAST].xscatter = simData.PGen[WEST].xscatter = 0.005;
-		
+	if(octn < 0) {
+		SimBetaDecayAnalyzer BDA_Sim(&OM,simOutputDir);
+		BDA_Sim.simPerfectAsym = true;
 		if(octn==-1000) {
-			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
-			SimBetaDecayAnalyzer AA_Sim(&OM,simOutputDir);
-			AA_Sim.simPerfectAsym = true;
-			AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir, simData, simFactor, 365*24*3600);
-		} else {
-			Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),-octn-1);
-			if(!oct.getNRuns()) return;
-			OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+simOutputDir);
-			SimBetaDecayAnalyzer AA_Sim(&OM,oct.octName());
-			AA_Sim.simPerfectAsym = true;
-			if(simOutputDir==outputDir+"_SimPen") {
-				PenelopeToPMT penSim;
-				penSim.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root");
-				penSim.PGen[EAST].xscatter = penSim.PGen[WEST].xscatter = 0.005;
-				AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), penSim, simFactor, 0.*3600, doPlots);
-			}
-			else
-				AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), simData, simFactor, 0.*3600, doPlots);
-		}
+			BetaDecayAnalyzer BDA(&OM,OSCM.outputDir,RunAccumulator::processedLocation);
+			OSCM.combineSims(BDA_Sim,&BDA);
+		} else if(octn==-1001) {
+			BetaDecayAnalyzer BDA(&OM,OSCM.outputDir,RunAccumulator::processedLocation);
+			SimBetaDecayAnalyzer BDA_MC(&OM,simOutputDir,OSCM.baseDir+"/"+simOutputDir+"/"+simOutputDir);
+			BDA_MC.compareMCtoData(BDA);
+		} else OSCM.simOct(BDA_Sim,-octn-1);
 	} else {
-		Octet oct = Octet::loadOctet(QFile(getEnvSafe("UCNA_OCTET_LIST")),octn);
-		if(!oct.getNRuns()) return;
-		OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir);
-		BetaDecayAnalyzer AA(&OM,oct.octName());
-		processOctets(AA,oct.getSubdivs(oct.divlevel+1,false),0*24*3600, doPlots);
+		BetaDecayAnalyzer BDA(&OM,OSCM.outputDir);
+		if(octn==1000) OSCM.combineOcts(BDA);
+		else if(octn==1001) OSCM.recalcAllOctets(BDA,false);
+		else OSCM.scanOct(BDA, octn);
 	}
+	
+	//if(simOutputDir==outputDir+"_SimPen") {
+	//	PenelopeToPMT penSim;
+	//	penSim.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root");
+	//	penSim.PGen[EAST].xscatter = penSim.PGen[WEST].xscatter = 0.005;
+	//	AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), penSim, simFactor, 0.*3600, doPlots);
+	//}
+	//else
+	//	AA_Sim.simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), simData, simFactor, 0.*3600, doPlots);
+
 }
 
+/*
 void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
 	int octMax = streamInteractor::popInt(stack);
 	int octMin = streamInteractor::popInt(stack);
@@ -200,17 +187,10 @@ void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
 	std::string outPath = inPath+"/"+datset+"/Range_"+itos(octMin)+"-"+itos(octMax);
 	
 	if(true) {
-		OutputManager OM("ThisNameIsNotUsedAnywhere",inPath);
-		BetaDecayAnalyzer AA(&OM,datset);
-		AA.plotPath = AA.dataPath = AA.rootPath = outPath;
-		processOctets(AA,Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST"))),365*24*3600,true,octMin,octMax);
-	}
-	
-	if(true) {
 		OutputManager OM("CorrectedAsym",outPath+"/CorrectAsym/");
 		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
 			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), outPath+"/"+datset);
-			AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+			AsymmetryPlugin* AAdat = new AsymmetryPlugin(&OAdat);
 			OAdat.addPlugin(AAdat);
 			AAdat->anChoice = a;
 			doFullCorrections(*AAdat,OM);
@@ -219,6 +199,7 @@ void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
 		OM.setWriteRoot(true);
 	}
 }
+*/
 
 void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
 	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/20120810/");
@@ -249,186 +230,53 @@ void mi_showGenerator(std::deque<std::string>&, std::stack<std::string>& stack) 
 	return;
 }
 
-void mi_misc(std::deque<std::string>&, std::stack<std::string>&) {
+void mi_showCal(std::deque<std::string>&, std::stack<std::string>& stack) {
+	RunNum rn = streamInteractor::popInt(stack);
+	PMTCalibrator PCal(rn);
+}
+
+void mi_makeSimSpectrum(std::deque<std::string>&, std::stack<std::string>& stack) {
+	float eMax = streamInteractor::popFloat(stack);
+	std::string simName = streamInteractor::popString(stack);
 	
-	if(false) {
-		paperDataPlot();
-		return;
+	RunNum rn = 16194;
+	
+	G4toPMT G2P;
+	std::string fPath = getEnvSafe("G4OUTDIR")+"/"+simName;
+	if(dirExists(fPath)) {
+		G2P.addFile(fPath+"/analyzed_*.root");
+	} else {
+		G2P.addFile(std::string("/data2/mmendenhall/G4Out/2010/")+simName+"/analyzed_*.root");
+	}
+	PMTCalibrator PCal(rn);
+	G2P.setCalibrator(PCal);
+	
+	OutputManager OM("SimSpectrum",getEnvSafe("UCNA_ANA_PLOTS")+"/SimSpectrum/");
+	TH1F* hSpec = OM.registeredTH1F("hSpec","EventSpectrum",200,0,eMax);
+	
+	G2P.startScan(false);
+	while(G2P.nextPoint()) {
+		if(G2P.fType >= TYPE_IV_EVENT) continue;
+		hSpec->Fill(G2P.getErecon());
 	}
 	
-	if(false) {
-		//OutputManager OMdat("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/Anchoices/");
-		//calcAnalysisChoices(OMdat, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
-		//return;
-		std::string sim = "SimPen";
-		OutputManager OMsim("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/Anchoices_"+sim+"/");
-		calcAnalysisChoices(OMsim, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim);
-		return;
-	}
+	double nOrigEvts = 3e6;
 	
-	if(false) {
-		std::string sim = "SimMagF_4x";
-		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCChanges_"+sim+"/");
-		compareMCs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Sim0823_4x/OctetAsym_Offic_Sim0823_4x",
-				 getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,"MagF");
-		//return;
-	}
-	
-	//std::string sim = "Sim0823_4x";
-	//std::string sim = "SimPen";
-	std::string sim = "thinfoil";
-	
-	if(false) {
-		// MC correction for data set
-		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors_"+sim+"/");
-		calcMCCorrs(OM, getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic",
-				  getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim,
-				  getEnvSafe("UCNA_AUX")+"/Corrections/", false);
-		//return;
-	}
-	
-	if(true) {
-		// MC self-correction
-		sim = "thinfoil";
-		std::string simOutNm = getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+sim+"/OctetAsym_Offic_"+sim;
-		OutputManager OM("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors/"+sim+"/");
-		calcMCCorrs(OM, simOutNm, simOutNm,getEnvSafe("UCNA_ANA_PLOTS")+"/test/MCCors/"+sim+"/");
-		
-		AnalysisChoice a = ANCHOICE_C;
-		OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), simOutNm);
-		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
-		OAdat.addPlugin(AAdat);
-		AAdat->anChoice = a;
-		doFullCorrections(*AAdat,OM,OM.basePath);
-		
-		OM.write();
-		return;
-	}
-	
-	if(false) {
-		OutputManager OM("CorrectedAsym",getEnvSafe("UCNA_ANA_PLOTS")+"/test/CorrectAsym_"+sim+"/");
-		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
-			if(a!=ANCHOICE_C) continue;
-			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
-			AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
-			OAdat.addPlugin(AAdat);
-			AAdat->anChoice = a;
-			doFullCorrections(*AAdat,OM);
-		}
-		OM.write();
-		return;
-	}
-	
-	if(false) {
-		//refitXeAnode(getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Xenon_14282-14347_20/Xenon_14282-14347_20");
-		//return;
-		separate23("SimPen");
-		return;
-	}
-	
-	if(false) {
-		OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test");
-		EnumerationFitter EF;
-		TGraphErrors* g = EF.loadFitFile("/home/mmendenhall/BGExcess_Combo_W.txt");
-		TF1* f = EF.getFitter();
-		f->SetRange(0,g->GetN());
-		for(unsigned int i=0; i<EF.getNParams(); i++)
-			f->SetParLimits(i,0.,100.);
-		g->Fit(f,"R");
-		printf("Chi2/ndf = %g/%i\n",f->GetChisquare(),f->GetNDF());
-		g->Draw("A*");
-		OMTest.printCanvas("BG_Components_ComboW");
-		return;
-	}
-	
-	if(false) {
-		ErrTables ET;
-		ET.gainfluctsTable(0.000125);
-		ET.pedShiftsTable(0.015);
-		ET.muonVetoEfficTable(0.002);
-		ET.NGBGTable(0.99,0.08,0.48,0.09, 0.25);
-		return;
-	}
-	
-	if(false) {
-		OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
-		SimBetaDecayAnalyzer AH(&OM,"Combined");
-		
-		SimBetaDecayAnalyzer AH1(&OM,"ScintFace_nCaptH",OM.basePath+"/ScintFace_nCaptH/ScintFace_nCaptH");
-		AH1.scaleData(0.126);
-		SimBetaDecayAnalyzer AH2(&OM,"DetAl_nCaptAl",OM.basePath+"/DetAl_nCaptAl/DetAl_nCaptAl");
-		AH2.scaleData(0.073);
-		SimBetaDecayAnalyzer AH3(&OM,"DetAl_nCaptAlGamma",OM.basePath+"/DetAl_nCaptAlGamma/DetAl_nCaptAlGamma");
-		AH3.scaleData(0.594);
-		
-		AH.addSegment(AH1);
-		AH.addSegment(AH2);
-		AH.addSegment(AH3);
-		
-		AH.calculateResults();
-		AH.makePlots();
-		AH.write();
-		AH.setWriteRoot(true);
-	}
-	
-	return;
-	
-	//NGBGSpectra("EndcapEdge_nCaptH");
-	//NGBGSpectra("EndcapEdge_nCaptCu");
-	//NGBGSpectra("TrapWall_Cu66");
-	//NGBGSpectra("TrapWall_nCaptCu");
-	//NGBGSpectra("EntryPort_Al28");
-	//NGBGSpectra("EntryPort_nCaptAl");
-	NGBGSpectra("DetAl_nCaptAl");
-	NGBGSpectra("DetAl_nCaptAlGamma");
-	NGBGSpectra("ScintFace_nCaptH");
-	return;
-	
-	processWirechamberCal(14264,16077,20);
-	return;
-	
-	//decomposeXenon(15991,true);
-	//decomposeXenon(14282,false);
-	//decomposeXenon(14347,false);
-	//decomposeXenon(17224,false);
-	//return;
-	
-	compareXenonSpectra();
-	return;
-	
-	
-	
-	//spectrumGenTest();
-	
-	/*
-	 OutputManager OMLS("PMTCorr",getEnvSafe("UCNA_ANA_PLOTS")+"/PMTCorr");
-	 LEDScanScanner LSS;
-	 std::vector<RunNum> bruns = selectRuns(16193, 16216, "beta");
-	 //std::vector<RunNum> bruns = selectRuns(16097, 16216, "beta");
-	 LSS.addRuns(bruns);
-	 PMT_LED_Correlations(OMLS,LSS);
-	 exit(0);
-	 */
+	hSpec->SetTitle(NULL);
+	hSpec->GetXaxis()->SetTitle("Energy [keV]");
+	hSpec->GetYaxis()->SetTitle("Events / keV / 1000 decays");
+	hSpec->GetYaxis()->SetTitleOffset(1.2);
+	hSpec->Scale(1.0e3/nOrigEvts/hSpec->GetBinWidth(1));
+	hSpec->Draw();
+	OM.printCanvas(simName);
 }
 
 void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
-	gROOT->SetStyle("Plain");
-	gStyle->SetPalette(1);
-	gStyle->SetNumberContours(255);
-	gStyle->SetOptStat("e");
-	TCanvas defaultCanvas;
-#ifdef PUBLICATION_PLOTS
-	gStyle->SetOptStat("");
-	makeGrayscalepalette();
-	defaultCanvas.SetGrayscale(true);
-#endif
-	defaultCanvas.SetFillColor(0);
-	defaultCanvas.SetCanvasSize(300,300);
+	ROOTStyleSetup();
 	
 	inputRequester exitMenu("Exit Menu",&menutils_Exit);
 	inputRequester peek("Show stack",&menutils_PrintStack);
-	inputRequester doMisc("Misc",&mi_misc);
 	
 	// selection utilities
 	NameSelector selectRuntype("Run Type");
@@ -476,26 +324,31 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	PMapR.addChoice(&exitMenu,"x");
 	
 	// postprocessing/plots routines
-	inputRequester plotGMS("Plot GMS corrections",&mi_PlotGMS);
-	plotGMS.addArg("Start Run");
-	plotGMS.addArg("End Run");
-	plotGMS.addArg("","",&selectRuntype);
+	inputRequester dumpCalInfo("Dump calibration info to file",&mi_DumpCalInfo);
+	dumpCalInfo.addArg("Start Run");
+	dumpCalInfo.addArg("End Run");
+	dumpCalInfo.addArg("","",&selectRuntype);
+	
+	inputRequester showCal("Show run calibration",&mi_showCal);
+	showCal.addArg("Run");
 	
 	inputRequester octetProcessor("Process Octet",&mi_processOctet);
 	octetProcessor.addArg("Octet number");
-	inputRequester octetRange("Process Octet Range",&mi_anaOctRange);
-	octetRange.addArg("Start octet","0");
-	octetRange.addArg("end octet","1000");
-	
-	inputRequester showGenerator("Event generator",&mi_showGenerator);
+
+	inputRequester showGenerator("Event generator test",&mi_showGenerator);
 	showGenerator.addArg("Generator name");
+	
+	inputRequester makeSimSpectrum("Sim Spectrum",&mi_makeSimSpectrum);
+	makeSimSpectrum.addArg("Sim name");
+	makeSimSpectrum.addArg("energy range");
 	
 	// Posprocessing menu
 	OptionsMenu PostRoutines("Postprocessing Routines");
-	PostRoutines.addChoice(&plotGMS);
+	PostRoutines.addChoice(&showCal,"cal");
+	PostRoutines.addChoice(&dumpCalInfo,"dcl");
 	PostRoutines.addChoice(&octetProcessor,"oct");
-	PostRoutines.addChoice(&octetRange,"rng");
-	PostRoutines.addChoice(&showGenerator,"shg");
+	PostRoutines.addChoice(&showGenerator,"evg");
+	PostRoutines.addChoice(&makeSimSpectrum,"mks");
 	PostRoutines.addChoice(&exitMenu,"x");
 	
 	// sources
@@ -519,7 +372,6 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OM.addChoice(&uploadSources,"us");
 	OM.addChoice(&evis2etrue,"ev");
 	OM.addChoice(&radcor,"rc");
-	OM.addChoice(&doMisc,"msc");
 	OM.addChoice(&exitMenu,"x");
 	OM.addSynonym("x","exit");
 	OM.addSynonym("x","quit");

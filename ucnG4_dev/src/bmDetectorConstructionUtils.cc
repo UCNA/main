@@ -108,6 +108,6 @@ void MaterialUser::setVacuumPressure(G4double pressure) {
 	// our slightly crappy vacuum: low-pressure air (density @20c; 1.290*mg/cm3 @STP)
 	G4cout<<"+++++++++++++++++ Detector vacuum is set at "<<pressure/torr<<" Torr"<<G4endl;
 	Vacuum = new G4Material("Vacuum",1.2048*mg/cm3*pressure/atmosphere,2,kStateGas,293*kelvin,pressure);
-	Vacuum->AddElement(G4Element::GetElement("N"),0.7);
-	Vacuum->AddElement(G4Element::GetElement("O"),0.3);	
+	Vacuum->AddElement(G4Element::GetElement("N"),0.88);
+	Vacuum->AddElement(G4Element::GetElement("O"),0.22);
 }

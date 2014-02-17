@@ -12,7 +12,7 @@ public:
 	/// find path to processed run .root file
 	virtual std::string locateRun(RunNum r);	
 	
-	float Etrue;	//< reconstructed "true" energy
+	float Erecon;	//< reconstructed "true" energy
 	
 protected:
 	/// set TChain branch data readpoints

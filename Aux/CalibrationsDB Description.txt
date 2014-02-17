@@ -26,8 +26,6 @@ CREATE TABLE tube_calibration (
 	INDEX (ecal_id)
 );
 
-CREATE TABLE kurie_cal (run_number INT UNSIGNED, side ENUM('East','West'), quadrant INT UNSIGNED, energy DOUBLE, adc DOUBLE, INDEX (run_number) );
-
 # extra final gain calibration tweaks
 CREATE TABLE gain_tweak (
 	gain_tweak_id SERIAL,
@@ -57,16 +55,6 @@ CREATE TABLE posmap_set (
 	descrip VARCHAR(1012),	# description of position map
 	n_rings INT UNSIGNED,	# number of rings dividing position map
 	radius DOUBLE,			# radius of mapped region
-	INDEX(posmap_set_id)
-);
-
-CREATE TABLE posmap_info (
-	posmap_info_id SERIAL,		# unique ID for this tube position map
-	posmap_set_id INT UNSIGNED,	# ID of position map set this belongs to
-	side ENUM('East','West'),	# tube side
-	quadrant INT UNSIGNED,		# tube quadrant
-	n_rings INT UNSIGNED,		# number of rings dividing position map
-	radius DOUBLE,				# radius of mapped region
 	INDEX(posmap_set_id)
 );
 
@@ -248,7 +236,7 @@ CREATE TABLE cut_spec (
 
 # generic analysis results
 CREATE TABLE analysis_results (
-	analsysis_results_id SERIAL,			# unique ID for this result
+	analysis_results_id SERIAL,				# unique ID for this result
 	author ENUM('MPM','RWP','BZ'),			# person generating result
 	date DATETIME,							# result generation date
 	type ENUM('Asymmetry','Counts'),		# type of result

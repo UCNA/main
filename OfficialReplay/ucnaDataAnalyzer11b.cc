@@ -2,6 +2,7 @@
 #include "strutils.hh"
 #include "ManualInfo.hh"
 #include "GraphicsUtils.hh"
+#include "StyleSetup.hh"
 #include "MultiGaus.hh"
 #include "SMExcept.hh"
 #include <stdio.h>
@@ -12,7 +13,7 @@
 RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
 
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
-TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false),
+TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false), colorPlots(true),
 rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), nLiveTrigs(0), ignore_beam_out(false),
 nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	plotPath = bp+"/figures/run_"+itos(R)+"/";
@@ -23,6 +24,9 @@ nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevP
 }
 
 void ucnaDataAnalyzer11b::analyze() {
+	
+	defaultCanvas->cd();
+	
 	loadCuts();
 	setupOutputTree();
 	
@@ -293,7 +297,7 @@ void ucnaDataAnalyzer11b::classifyEventType() {
 
 void ucnaDataAnalyzer11b::reconstructTrueEnergy() {
 	if((fSide==EAST || fSide==WEST) && fType <= TYPE_III_EVENT)
-		fEtrue = PCal.Etrue(fSide,fType,sevt[EAST].energy.x,sevt[WEST].energy.x);
+		fEtrue = PCal.Erecon(fSide,fType,sevt[EAST].energy.x,sevt[WEST].energy.x);
 	else
 		fEtrue = sevt[EAST].energy.x + sevt[WEST].energy.x;
 }
@@ -338,8 +342,8 @@ void ucnaDataAnalyzer11b::calcTrigEffic() {
 			efficfit.SetParLimits(2,0.1,1000.0);
 			efficfit.SetParLimits(3,0.75,1.0);
 			efficfit.SetLineColor(4);
-			gEffic.Fit(&efficfit,"QR+");
-			
+			//gEffic.Fit(&efficfit,"QR+");
+			gEffic.Fit(&efficfit,"QR");
 			
 			float_err trigef(efficfit.GetParameter(3),efficfit.GetParError(3));
 			float_err trigc(efficfit.GetParameter(0),efficfit.GetParError(0));
@@ -426,6 +430,8 @@ bool ucnaDataAnalyzer11b::processEvent() {
 void ucnaDataAnalyzer11b::processBiPulser() {
 	
 	printf("\nFitting Bi Pulser...\n");
+	defaultCanvas->SetRightMargin(0.05);
+	defaultCanvas->SetLeftMargin(0.12);
 	TF1 gausFit("gasufit","gaus",1000,4000);
 	QFile pulseLocation(dataPath+"/Monitors/Run_"+itos(rn)+"/ChrisPulser.txt",false);
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -435,11 +441,17 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 			std::vector<double> dcenters;
 			std::vector<double> widths;
 			std::vector<double> dwidths;
-			for(unsigned int i=0; i<hBiPulser[s][t].size(); i++) {
+			const unsigned int nHists = (unsigned int)hBiPulser[s][t].size();
+			for(unsigned int i=0; i<nHists; i++) {
 				Stringmap m;
 				m.insert("side",ctos(sideNames(s)));
 				m.insert("tube",t);
 				m.insert("counts",hBiPulser[s][t][i]->GetEntries());
+				
+				// normalize histogram to rate [mHz/channel]
+				hBiPulser[s][t][i]->GetYaxis()->SetTitle("Event rate [mHz/ADC channel]");
+				hBiPulser[s][t][i]->GetYaxis()->SetTitleOffset(1.25);
+				hBiPulser[s][t][i]->Scale(1000.0/(hBiPulser[s][t][i]->GetBinWidth(1)*wallTime/nHists));
 				
 				// initial estimate of peak location: first high isolated peak scanning from right
 				int bmax = 0;
@@ -460,7 +472,7 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 				
 				// refined fit
 				if(!iterGaus(hBiPulser[s][t][i],&gausFit,3,bcenter,200,1.5)) {
-					times.push_back((i+0.5)*wallTime/hBiPulser[s][t].size());
+					times.push_back((i+0.5)*wallTime/nHists);
 					m.insert("time",times.back());
 					m.insert("height",gausFit.GetParameter(0));
 					m.insert("dheight",gausFit.GetParError(0));
@@ -601,13 +613,11 @@ int main(int argc, char** argv) {
 		}
 	}
 	
-	gStyle->SetPalette(1);
-	gStyle->SetNumberContours(255);
-	gStyle->SetOptStat("e");
+	ROOTStyleSetup();
 	
 	std::string outDir = getEnvSafe("UCNAOUTPUTDIR");
 	
-	for(RunNum r = (unsigned int)rlist[0]; r<=(unsigned int)rlist[1]; r++) {
+	for(RunNum r = (RunNum)rlist[0]; r<=(RunNum)rlist[1]; r++) {
 		
 		std::string inDir = getEnvSafe("UCNADATADIR");
 		if(!fileExists(inDir+"/full"+itos(r)+".root") && r > 16300)
@@ -617,6 +627,9 @@ int main(int argc, char** argv) {
 		A.setIgnoreBeamOut(!cutBeam);
 		A.analyzeLED = ledtree;
 		A.needsPeds = forceped;
+#ifdef PUBLICATION_PLOTS
+		A.colorPlots = false;
+#endif
 		if(!nodbout) {
 			printf("Connecting to output DB...\n");
 			A.setOutputDB(CalDBSQL::getCDB(false));

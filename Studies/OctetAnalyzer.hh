@@ -67,15 +67,13 @@ public:
 	/// set all quadHists fill points
 	void setFillPoints(AFPState afp, GVState gv);
 	
-	/// load data from ProcessedDataScanner
-	void loadProcessedData(AFPState afp, ProcessedDataScanner& FG, ProcessedDataScanner& BG);
+	/// fill data from a ProcessedDataScanner
+	virtual void loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS) { setFillPoints(afp,gv); RunAccumulator::loadProcessedData(afp, gv, PDS); }
 	/// load simulation data
 	virtual void loadSimData(Sim2PMT& simData, unsigned int nToSim = 0, bool countAll = false);
-	/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs
-	unsigned int simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor = 1., double replaceIfOlder = 0., bool doPlots = true);
 	
-	int depth;				//< octet division depth
-	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
+	/// make flipper-summed histogram normalized to rate
+	TH1* flipperSummedRate(const quadHists* qh, GVState gv, bool doNorm = true) const;
 	
 private:
 	
@@ -100,7 +98,7 @@ public:
 	/// calculate (blinded) super-ratio from quadHists for each side (optionally asymmetry of background and/or instrumental)
 	TH1* calculateSR(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg=true, bool instr=false);
 	/// calculate super-sum from quadHists for each side (optionally super-sum of background)
-	TH1* calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, GVState gv = GV_OPEN);
+	TH1* calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, GVState gv = GV_OPEN, bool toRate = true);
 	/// draw whole quadHists of histograms
 	void drawQuad(quadHists* qh, const std::string& subfolder = ".", const char* opt = "");
 	/// draw East/West pair of quadHists together, optionally also drawing AFP states together
@@ -108,12 +106,5 @@ public:
 	
 	OctetAnalyzer* myA;	//< OctetAnalyzer with which this plugin is associated
 };
-
-/// process one pulse-pair worth of data
-unsigned int processPulsePair(OctetAnalyzer& OA, const Octet& PP);
-
-/// process a set of octets; return number of processed pulse-pairs
-unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& O, double replaceIfOlder = 0,
-						   bool doPlots = true, unsigned int oMin = 0, unsigned int oMax = 10000);
 	
 #endif

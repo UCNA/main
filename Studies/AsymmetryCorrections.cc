@@ -1,6 +1,6 @@
 #include "AsymmetryCorrections.hh"
-#include "AsymmetryAnalyzer.hh"
-#include "SimAsymmetryAnalyzer.hh"
+#include "AsymmetryPlugin.hh"
+#include "SimAsymmetryPlugin.hh"
 #include "GraphUtils.hh"
 #include "PathUtils.hh"
 #include "BetaSpectrum.hh"
@@ -33,7 +33,7 @@ AsymCorrFile::AsymCorrFile(const std::string& nm, const std::string& basepath): 
 			gUnc.Set(p+1);
 			gUnc.SetPoint(p,0.5*(e0+e1),u);
 		} else {
-			int foo = fscanf(f,"%*c");
+			n = fscanf(f,"%*c");
 		}
 	}
 	fclose(f);
@@ -41,15 +41,17 @@ AsymCorrFile::AsymCorrFile(const std::string& nm, const std::string& basepath): 
 	printf("Loaded %i points for correction '%s'\n",gCor.GetN(),name.c_str());
 }
 
-void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcBase) {
+void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBase) {
 	
 	AA.calculateResults();
 	AA.hCxn = (TH1F*)AA.hAsym->Clone("hCxn");
 	AA.hCxn->Scale(0);
 	AA.myA->defaultCanvas->cd();
 	
-	double emin = 220;
-	double emax = 670;
+	// analysis energy window; 220-670 keV for 2010 data.
+	double emin = 275;
+	double emax = 625;
+	
 	TF1 lineFit("lineFit","pol0",emin,emax);
 	TLatex lx;
 	char tmp[1024];
@@ -228,15 +230,15 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcB
 void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin, const std::string& outDir, bool oldCorr) {
 	for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_E; ++a) {
 		OctetAnalyzer OAdat(&OM, "DataCorrector", datin);
-		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+		AsymmetryPlugin* AAdat = new AsymmetryPlugin(&OAdat);
 		AAdat->anChoice = a;
 		OAdat.addPlugin(AAdat);
 		
 		OctetAnalyzer OAsim(&OM, "Corr_Anchoice_"+ctos(choiceLetter(a)), simin);
-		AsymmetryAnalyzer* AAsim = new AsymmetryAnalyzer(&OAsim);
+		AsymmetryPlugin* AAsim = new AsymmetryPlugin(&OAsim);
 		AAsim->anChoice = a;
 		OAsim.addPlugin(AAsim);
-		SimAsymmetryAnalyzer* SAAsim = new SimAsymmetryAnalyzer(&OAsim);
+		SimAsymmetryPlugin* SAAsim = new SimAsymmetryPlugin(&OAsim);
 		OAsim.addPlugin(SAAsim);
 		
 		std::vector<TH1*> asymStages = oldCorr?SAAsim->calculateCorrectionsOld(*AAsim):SAAsim->calculateCorrections(*AAdat,*AAsim);
@@ -294,10 +296,10 @@ void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string&
 
 void compareMCs(OutputManager& OM, const std::string& sim0, const std::string& sim1, const std::string& fOut) {
 	OctetAnalyzer OA0(&OM, "DataCorrector", sim0);
-	AsymmetryAnalyzer* AA0 = new AsymmetryAnalyzer(&OA0);
+	AsymmetryPlugin* AA0 = new AsymmetryPlugin(&OA0);
 	OA0.addPlugin(AA0);
 	OctetAnalyzer OA1(&OM, "DataCorrector", sim1);
-	AsymmetryAnalyzer* AA1 = new AsymmetryAnalyzer(&OA1);
+	AsymmetryPlugin* AA1 = new AsymmetryPlugin(&OA1);
 	OA1.addPlugin(AA1);
 	
 	AA1->anChoice = AA0->anChoice;
@@ -358,6 +360,14 @@ ErrTables::~ErrTables() {
 			delete S[s][afp];
 }
 
+ double ErrTables::energyErrorEnvelope(double e, unsigned int year) const {
+ 	assert(year==2010);
+	double err = e*0.0125;
+	if(err<2.5) return 2.5;
+	if(err>500*0.0125) return 500*0.0125;
+	return err;
+ }
+
 double ErrTables::getRexp(double e) const {
 	return (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e) /
 			(S[EAST][AFP_ON]->Eval(e)*S[WEST][AFP_OFF]->Eval(e)));
@@ -399,6 +409,23 @@ void ErrTables::pedShiftsTable(double delta) {
 					 (S[EAST][AFP_ON]->Eval(e-delta)*S[WEST][AFP_OFF]->Eval(e)));
 		double Ap = AofR(Rp);
 		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,0.,(A-Ap)/A);
+	}
+	fclose(f);
+}
+
+void ErrTables::eLinearityTable(unsigned int yr) {
+	// this doesn't work! too much statistical scatter in asymmetry data. Use smooth fit to asymmetry, instead.
+	FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/EnergyLinearity_"+itos(yr)+".txt").c_str(),"w");
+	fprintf(f,"# Energy reconstruction errors for %i error envelope, using observed spectra\n",yr);
+	fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
+	for(unsigned int b=0; b<800; b+=10) {
+		double e = b+5.;
+		double A = getAexp(e);
+		double ee = e+energyErrorEnvelope(e,yr)*0.01;
+		double Rp = (S[EAST][AFP_OFF]->Eval(ee)*S[WEST][AFP_ON]->Eval(ee) /
+					 (S[EAST][AFP_ON]->Eval(ee)*S[WEST][AFP_OFF]->Eval(ee)));
+		double Ap = AofR(Rp);
+		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,0.,100*(A-Ap)/A);
 	}
 	fclose(f);
 }

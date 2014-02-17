@@ -98,7 +98,7 @@ quadHists* OctetAnalyzer::cloneQuadHist(const quadHists* qh, const std::string& 
 }
 
 OctetAnalyzer::OctetAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
-RunAccumulator(pnt,nm,inflName), depth(-1), simPerfectAsym(false) { }
+RunAccumulator(pnt,nm,inflName) { }
 
 void OctetAnalyzer::setFillPoints(AFPState afp, GVState gv) {
 	for(std::map<std::string,quadHists*>::iterator it = coreHists.begin(); it != coreHists.end(); it++)
@@ -117,133 +117,21 @@ const quadHists* OctetAnalyzer::getCoreHist(const std::string& qname) const {
 	return it->second;
 }
 
-void OctetAnalyzer::loadProcessedData(AFPState afp, ProcessedDataScanner& FG, ProcessedDataScanner& BG) {
-	assert(afp == AFP_OFF || afp == AFP_ON);
-	for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
-		ProcessedDataScanner& PDS = gv?FG:BG;
-		setFillPoints(afp,gv);
-		RunAccumulator::loadProcessedData(afp,gv,PDS);
-	}
-}
-
 void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
 	setFillPoints(simData.getAFP(),GV_OPEN);
 	RunAccumulator::loadSimData(simData,nToSim,countAll);
 }
 
-unsigned int OctetAnalyzer::simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor, double replaceIfOlder, bool doPlots) {
-	
-	printf("\n------ Cloning data in '%s'\n------                        to '%s'...\n",basedata.c_str(),basePath.c_str());
-	int nCloned = 0;
-	
-	// check if simulation is already up-to-date
-	if(getInflAge() && getInflAge() < replaceIfOlder) {
-		printf("\tSimulations in '%s' already recently generated, update skipped...\n",basePath.c_str());
-		return nCloned;
-	}
-	
-	// clear any existing data from out-of-date input
-	zeroSavedHists();
-	zeroCounters();
-	
-	// load original data for comparison
-	std::vector<std::string> datpath = split(strip(basedata,"/"),"/");
-	assert(datpath.size()>0);
-	isSimulated = false;
-	OctetAnalyzer* origOA = (OctetAnalyzer*)makeAnalyzer("nameUnused",basedata+"/"+datpath.back());
-	isSimulated = true;
-	// copy over octet information
-	qOut.erase("Octet");
-	qOut.transfer(origOA->qOut,"Octet");
-	
-	// load/clone data in all subdirectories, if they exist
-	int nClonable = 0;
-	std::vector<std::string> fnames = listdir(basedata);
-	for(std::vector<std::string>::iterator it = fnames.begin(); it != fnames.end(); it++) {
-		// check whether data directory contains cloneable subdirectories
-		std::string datinfl = basedata+"/"+(*it)+"/"+(*it);
-		if(!OctetAnalyzer::inflExists(datinfl)) continue;
-		std::string siminfl = basePath+"/"+(*it)+"/"+(*it);		
-		nClonable++;
-		
-		// load cloned sub-data
-		OctetAnalyzer* subOA = (OctetAnalyzer*)makeAnalyzer(*it,OctetAnalyzer::inflExists(siminfl)?siminfl:"");
-		subOA->depth = depth+1;
-		subOA->simPerfectAsym = simPerfectAsym;
-		nCloned += subOA->simuClone(basedata+"/"+(*it),simData,simfactor,replaceIfOlder,doPlots);
-		addSegment(*subOA);
-		delete(subOA);
-	}
-	
-	// if there were no clonable subdrectories, we need to actually simulate the data
-	if(!nClonable) {
-		printf("\tNo data subdirectories found; assume data here needs cloning...\n");
-		printf("\tProcessing simulation data for each pulse-pair run...\n");
-		
-		// collate requested simulation counts
-		TagCounter<RunNum> countRequests[2];
-		for(std::map<RunNum,double>::iterator it = origOA->runCounts.counts.begin(); it != origOA->runCounts.counts.end(); it++) {
-			nCloned++;
-			if(!it->first || !it->second) continue;
-			RunInfo RI = CalDBSQL::getCDB()->getRunInfo(it->first);
-			// no simulation for background runs
-			if(RI.gvState != GV_OPEN) {
-				runCounts.add(it->first,0);
-				runTimes.add(it->first,0);
-				continue;
-			}
-			assert(RI.afpState <= AFP_ON);	// are you really trying to clone non-beta-octet runs here??
-			// estimate background count share for this run (and reduce simulation by this amount)
-			double bgEst = origOA->getTotalCounts(RI.afpState,GV_CLOSED)*origOA->getRunTime(it->first)/origOA->getTotalTime(RI.afpState,GV_CLOSED)[BOTH];
-			if(it->second <= bgEst) continue;
-			double nToSim = simfactor*(it->second-bgEst);
-			printf("\t---Simulation cloning for run %i (%i+%i counts)---\n",it->first,int(nToSim),int(simfactor*bgEst));
-			countRequests[RI.afpState].add(it->first,nToSim);
-		}
-		
-		// see which kind of run got more AFP counts; clone first
-		AFPState bigafp = countRequests[AFP_OFF].total()>=countRequests[AFP_ON].total()?AFP_OFF:AFP_ON;
-		AFPState smallafp = bigafp?AFP_OFF:AFP_ON;
-		assert(countRequests[bigafp].nTags());
-		// determine starting point in simulation data to which we can return later
-		unsigned int startEvt = 0;
-		while(!startEvt) {
-			simData.startScan(true);
-			startEvt = simData.getCurrentEvent();
-		}
-		unsigned int rseed = countRequests[bigafp].counts.begin()->first;
-		PMTGenerator::sim_rnd_source.SetSeed(rseed);
-		RunAccumulator::rnd_source.SetSeed(rseed);
-		unsigned int nSimmed = simMultiRuns(simData, countRequests[bigafp]);
-		// return to starting point or continue on with different data
-		if(simPerfectAsym) {
-			PMTGenerator::sim_rnd_source.SetSeed(rseed);
-			RunAccumulator::rnd_source.SetSeed(rseed);
-			simData.gotoEvent(startEvt);
-			simMultiRuns(simData, countRequests[smallafp], nSimmed);
-		} else {
-			simMultiRuns(simData, countRequests[smallafp]);
-		}
-					 
-		// clone background counts in original data
-		simBgFlucts(*origOA,simfactor,!simPerfectAsym);
-		// scale back out simulation factor
-		scaleData(1.0/simfactor);
-	}
-	
-	// generate output
-	calculateResults();
-	uploadAnaResults();
-	if(doPlots) {
-		makePlots();
-		origOA->calculateResults();
-		compareMCtoData(*origOA);
-	}
-	write();
-	setWriteRoot(true);
-	
-	delete(origOA);
-	return nCloned;
+TH1* OctetAnalyzer::flipperSummedRate(const quadHists* qh, GVState gv, bool doNorm) const {
+	assert(qh);
+	assert(gv == GV_OPEN || gv == GV_CLOSED);
+	TH1* h = (TH1*)qh->fgbg[AFP_OFF]->h[gv]->Clone();
+	h->SetTitle(qh->title.c_str());
+	h->Add(qh->fgbg[AFP_ON]->h[gv]);
+	Side s = qh->mySide;
+	if(doNorm)
+		h->Scale(1.0/h->GetXaxis()->GetBinWidth(1)/(totalTime[AFP_ON][gv][s]+totalTime[AFP_OFF][gv][s]));
+	return h;
 }
 
 /* --------------------------------------------------- */
@@ -306,16 +194,16 @@ void sqrtHist(TH1* h) {
 	}
 }
 
-TH1* OctetAnalyzerPlugin::calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, GVState gv) {
+TH1* OctetAnalyzerPlugin::calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, GVState gv, bool toRate) {
 	assert(qEast && qWest);
 	assert(gv <= GV_OPEN);
 	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[gv]->Clone("SuperSum_intermediate");
 	hR->Multiply(qWest->fgbg[AFP_OFF]->h[gv]);
-	hR->Scale(1.0/(myA->totalTime[AFP_ON][gv][EAST]*myA->totalTime[AFP_OFF][gv][WEST]));
+	if(toRate) hR->Scale(1.0/(myA->totalTime[AFP_ON][gv][EAST]*myA->totalTime[AFP_OFF][gv][WEST]));
 	
 	TH1* hSS = (TH1*)qEast->fgbg[AFP_OFF]->h[gv]->Clone(hname.c_str());
 	hSS->Multiply(qWest->fgbg[AFP_ON]->h[gv]);
-	hSS->Scale(1.0/(myA->totalTime[AFP_OFF][gv][EAST]*myA->totalTime[AFP_ON][gv][WEST]));
+	if(toRate) hSS->Scale(1.0/(myA->totalTime[AFP_OFF][gv][EAST]*myA->totalTime[AFP_ON][gv][WEST]));
 	
 	sqrtHist(hR);
 	sqrtHist(hSS);
@@ -368,77 +256,4 @@ void OctetAnalyzerPlugin::drawQuadSides(quadHists* qhE, quadHists* qhW, bool com
 		}
 	}
 }
-
-
-/* --------------------------------------------------- */
-
-
-unsigned int processPulsePair(OctetAnalyzer& OA, const Octet& PP) {
-	unsigned int nproc = 0;
-	std::vector<Octet> triads = PP.getSubdivs(3,false);
-	printf("Processing pulse pair for %s containing %i triads...\n",PP.octName().c_str(),int(triads.size()));
-	for(std::vector<Octet>::iterator sd = triads.begin(); sd != triads.end(); sd++) {
-		nproc++;
-		ProcessedDataScanner* PDSs[2] = {NULL,NULL};
-		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
-			PDSs[gv] = new PostOfficialAnalyzer(true);
-			PDSs[gv]->addRuns(sd->getAsymRuns(gv));
-		}
-		if(PDSs[0]->getnFiles()+PDSs[1]->getnFiles())
-			OA.loadProcessedData(sd->octAFPState(),*PDSs[1],*PDSs[0]);
-		delete(PDSs[0]);
-		delete(PDSs[1]);
-	}
-	return nproc;
-}
-
-unsigned int processOctets(OctetAnalyzer& OA, const std::vector<Octet>& Octs, double replaceIfOlder, bool doPlots, unsigned int oMin, unsigned int oMax) {
-	
-	unsigned int nproc = 0;
-		
-	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
-		unsigned int octn = (unsigned int)(octit-Octs.begin());
-		if(octn<oMin || oMax<octn) continue;
-		
-		// check if there are any runs to process
-		printf("Processing octet '%s' at division %i...\n",octit->octName().c_str(),octit->divlevel);
-		if(!octit->getNRuns()) {
-			printf("\tThat was too easy (octet contained zero runs).\n");
-			continue;
-		}
-		OA.qOut.insert("Octet",octit->toStringmap());
-		
-		if(octit->divlevel<=2) {
-			// make sub-Analyzer for this octet, to load data if already available, otherwise re-process
-			OctetAnalyzer* subOA;
-			std::string inflname = OA.basePath+"/"+octit->octName()+"/"+octit->octName();
-			double fAge = fileAge(inflname+".root");
-			if(fileExists(inflname+".root") && fileExists(inflname+".txt") && fAge < replaceIfOlder) {
-				printf("Octet '%s' already scanned %.1fh ago; skipping\n",octit->octName().c_str(),fAge/3600);
-				subOA = (OctetAnalyzer*)OA.makeAnalyzer(octit->octName(),inflname);
-			} else {
-				subOA = (OctetAnalyzer*)OA.makeAnalyzer(octit->octName(),"");
-				subOA->depth = octit->divlevel;
-				nproc += processOctets(*subOA,octit->getSubdivs(octit->divlevel+1,false),replaceIfOlder, doPlots);
-			}
-			OA.addSegment(*subOA);
-			delete(subOA);
-		} else {
-			nproc += processPulsePair(OA,*octit);
-		}
-	}
-	
-	// make output for octet
-	if(OA.needsSubtraction)
-		OA.bgSubtractAll();
-	OA.calculateResults();
-	OA.uploadAnaResults();
-	if(doPlots)
-		OA.makePlots();
-	OA.write();
-	OA.setWriteRoot(true);
-	
-	return nproc;
-}
-
 

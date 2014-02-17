@@ -23,14 +23,14 @@ public:
 	virtual TGraph* getLinearity(RunNum rn, Side s, unsigned int t) { return constGraph(0.0,1.0); }
 	
 	/// get noise estimate calibration point ADC width
-	virtual float getNoiseWidth(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst("PMT_"+sideNames(s)+itos(t)).getDefault("noiseWidth",50); }
+	virtual float getNoiseWidth(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("noiseWidth",50); }
 	/// get noise estimate calibration point raw ADC value
-	virtual float getNoiseADC(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst("PMT_"+sideNames(s)+itos(t)).getDefault("noiseADC",400); }
+	virtual float getNoiseADC(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("noiseADC",400); }
 	
 	/// get energy calibration point ADC value
-	virtual float getEcalADC(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst("PMT_"+sideNames(s)+itos(t)).getDefault("ecalADC",500); }
+	virtual float getEcalADC(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("ecalADC",500); }
 	/// get energy calibration point visible energy
-	virtual float getEcalEvis(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst("PMT_"+sideNames(s)+itos(t)).getDefault("ecalEvis",500); }
+	virtual float getEcalEvis(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("ecalEvis",500); }
 	/// get energy calibration point x position
 	virtual float getEcalX(RunNum rn, Side s)  { return calfile.getFirst(sideSubst("PMT_%c",s)+"1").getDefault("ecalX",0); }
 	/// get energy calibration point y position
@@ -49,11 +49,6 @@ public:
 	/// get pedestal widths for named sensor
 	virtual TGraph* getPedwidths(RunNum rn, const std::string& sensorName) { return NULL; }
 	
-	/// get kurie endpoint calibration energy for given run, side, PMT
-	virtual float getKurieEnergy(RunNum rn, Side s, unsigned int t) { return 782.0; }
-	/// get kurie endpoint calibration energy for given run, side, PMT
-	virtual float getKurieADC(RunNum rn, Side s, unsigned int t) { return 782.0; }
-	
 	/// get positioning corrector for given run
 	virtual PositioningCorrector* getPositioningCorrector(RunNum rn) { return getPositioningCorrectorByID(0); }
 	/// get anode positioning corrector for given run
@@ -67,12 +62,14 @@ public:
 	PositioningCorrector* getPositioningCorrectorByID(unsigned int psid) {
 		printf("*** Warning: loading default fake position map for %i!\n",psid);
 		QFile qin("../SummaryData/Posmap_Default.txt");
-		return new PositioningCorrector(qin);	
+		PositioningCorrector* PC = new PositioningCorrector();
+		PC->loadData(qin);
+		return PC;
 	}
 	
 	/// get trigger efficiency function
 	EfficCurve* getTrigeff(RunNum rn, Side s, unsigned int t) { return NULL; /*TODO*/ }
-	/// Evis to Etrue conversion
+	/// Evis to Erecon conversion
 	TGraph* getEvisConversion(RunNum rn, Side s, EventType tp) { return NULL; /*TODO*/ }
 	/// get list of cathode segment calibrators (caller is responsible for deletion)
 	virtual std::vector<CathSegCalibrator*> getCathSegCalibrators(RunNum rn, Side s, AxisDirection d) { return std::vector<CathSegCalibrator*>(); /*TODO*/ }	

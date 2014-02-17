@@ -81,14 +81,14 @@ unsigned int AnalysisDB::uploadAnaResult(AnaResult& r) {
 
 void AnalysisDB::deleteAnaResult(unsigned int arid) {
 	printf("Deleting analysis result %i\n",arid);
-	sprintf(query,"SELECT cut_spec_id FROM analysis_results WHERE analsysis_results_id = %i",arid);
+	sprintf(query,"SELECT cut_spec_id FROM analysis_results WHERE analysis_results_id = %i",arid);
 	Query();
 	TSQLRow* r = getFirst();
 	if(!r) return;
 	int csid = fieldAsInt(r); 
 	delete(r);
 	
-	sprintf(query,"DELETE FROM analysis_results WHERE analsysis_results_id = %i",arid);
+	sprintf(query,"DELETE FROM analysis_results WHERE analysis_results_id = %i",arid);
 	execute();
 	
 	sprintf(query,"SELECT COUNT(*) FROM analysis_results WHERE cut_spec_id = %i",csid);
@@ -109,7 +109,7 @@ void AnalysisDB::deleteCutSpec(unsigned int csid) {
 AnaResult AnalysisDB::getAnaResult(unsigned int arid) {
 	//                    0      1    2    3      4         5       6          7          8    9   10    11  12
 	sprintf(query,"SELECT author,date,type,source,start_run,end_run,event_type,ana_choice,side,afp,gate_valve,value,err,cut_spec_id \
-			FROM analysis_results WHERE analsysis_results_id = %i",arid);
+			FROM analysis_results WHERE analysis_results_id = %i",arid);
 	TSQLRow* r = getFirst();
 	if(!r) {
 		SMExcept e("MissingAnaResult");
@@ -155,7 +155,7 @@ AnaCutSpec AnalysisDB::getCutSpec(unsigned int csid) {
 }
 
 std::vector<AnaResult> AnalysisDB::findMatching(const AnaResult& A) {
-	std::string qry = "SELECT analsysis_results_id FROM analysis_results WHERE author = '"+A.author+"'";
+	std::string qry = "SELECT analysis_results_id FROM analysis_results WHERE author = '"+A.author+"'";
 	qry += " AND type = '"+AnaResult::atypeWord(A.anatp)+"'";
 	qry += " AND source = '"+AnaResult::dsourceWord(A.datp)+"'";
 	qry += " AND ana_choice = '"+ctos(choiceLetter(A.anach))+"'";

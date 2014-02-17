@@ -19,7 +19,7 @@ public:
 	/// start a "speed scan," possibly at a random entry number
 	virtual void startScan(bool startRandom = false);
 	/// jump scanner to specified event
-	void gotoEvent(unsigned int e);
+	virtual void gotoEvent(unsigned int e);
 	/// load identified "speed scan" point
 	virtual void speedload(unsigned int e);	
 	/// load next "speed scan" point

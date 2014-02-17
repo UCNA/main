@@ -119,21 +119,6 @@ double genericBetaSpectrum(double* x, double *par) {
 	return plainPhaseSpace((KE+m_e)/m_e,(Q+m_e)/m_e);
 }
 
-double heavyBetaSpectrum(double* x, double* par) {
-	double KE = x[0];	// beta kinetic energy
-	double Q = par[0];	// spectrum endpoint
-	double A = par[1];	// nucleus A
-	double Z = par[2];	// nucleus Z
-	double W = (KE+m_e)/m_e;
-	double W0 = (Q+m_e)/m_e;
-	double R = pow(A,1./3.)*neutron_R0;
-	
-	// TODO: recoil/weak magnetism terms???
-	if(0<KE && KE<Q)
-		return plainPhaseSpace(W,W0)*WilkinsonF0(Z,W,R)*WilkinsonL0(Z,W,R)*(1.+Wilkinson_g(W,W0));
-	return 0;
-}
-
 void bmPrimaryGeneratorAction::
 throwEvents(const std::vector<NucDecayEvent>& evts, G4Event* anEvent) {
 	G4ThreeVector direction;
@@ -456,16 +441,15 @@ void bmPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		particleGun->GeneratePrimaryVertex(anEvent);
 		particleGun->SetParticleEnergy(eOrig);
 	} else if (gunType=="eGunRandMomentum") {
-		//for both eGun generator, assume gun energy is set by the
-		//standard gun energy command!!!
+		// assumes gun energy is set by /gun/energy
+		// particle type can also be set by /benchmark/gun/particle
 		G4ThreeVector direction;
 		RandomizeMomentum(direction);
 		particleGun->SetParticleMomentumDirection(direction);
 		displayGunStatus();
 		particleGun->GeneratePrimaryVertex(anEvent);
 	} else if (gunType=="eGun") {
-		//for both eGun generator, assume gun energy is set by the
-		//standard gun energy command!!!
+		// assumes gun energy is set by /gun/energy
 		particleGun->SetParticleMomentumDirection(G4ThreeVector(0,0,1));
 		displayGunStatus();
 		particleGun->GeneratePrimaryVertex(anEvent);
