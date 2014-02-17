@@ -9,7 +9,7 @@ SectorCutter::SectorCutter(unsigned int N, float R): n(N), r(R) {
 		if(i==0)
 			ndivs.push_back(1);
 		else
-			ndivs.push_back((unsigned int)ceil(2*3.1415926535*i));
+			ndivs.push_back((unsigned int)ceil(2*M_PI*i));
 		cumdivs.push_back(cumdivs[i]+ndivs[i]);
 	}
 }
@@ -25,7 +25,7 @@ unsigned int SectorCutter::sector(float x, float y) const {
 		return nSectors();
 	
 	// which phi this belongs in
-	int ph = int(((atan2(-y,-x)+3.141592653589)/6.28318531)*ndivs[rng]);
+	int ph = int(((atan2(-y,-x)+M_PI)/(2*M_PI))*ndivs[rng]);
 	if(ph<0) ph = 0;
 	if(ph==(int)ndivs[rng]) ph--;
 	
@@ -48,8 +48,8 @@ void SectorCutter::sectorBounds(unsigned int s, float& r0, float& r1, float& ph0
 	r0 = rng>0?ringRadius(rng-1):0;
 	r1 = ringRadius(rng);
 	s -= cumdivs[rng];
-	ph0 = 6.28318531*float(s)/float(ndivs[rng]);
-	ph1 = 6.28318531*float(s+1)/float(ndivs[rng]);
+	ph0 = 2*M_PI*float(s)/float(ndivs[rng]);
+	ph1 = 2*M_PI*float(s+1)/float(ndivs[rng]);
 }
 
 void SectorCutter::sectorCenter(unsigned int s, float& x, float& y) const {
@@ -77,9 +77,9 @@ float SectorCutter::sectorArea(unsigned int s) const {
 	unsigned int rng = getRing(s);
 	float r1 = ringRadius(rng);
 	if(rng==0)
-		return 3.141592653589*r1*r1;
+		return M_PI*r1*r1;
 	float r2 = ringRadius(rng-1);
-	return 3.141592653589*(r1-r2)*(r1+r2)/getNDivs(rng);
+	return M_PI*(r1-r2)*(r1+r2)/getNDivs(rng);
 }
 
 double randunif(double x0, double x1) {

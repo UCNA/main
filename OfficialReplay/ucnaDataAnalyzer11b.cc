@@ -2,6 +2,7 @@
 #include "strutils.hh"
 #include "ManualInfo.hh"
 #include "GraphicsUtils.hh"
+#include "StyleSetup.hh"
 #include "MultiGaus.hh"
 #include "SMExcept.hh"
 #include <stdio.h>
@@ -9,20 +10,18 @@
 #include <TStyle.h>
 #include <TDatime.h>
 
-RangeCut::RangeCut(const Stringmap& m): start(m.getDefault("start",0.0)), end(m.getDefault("end",0.0)) {}
-
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
-TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false),
+TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false), colorPlots(true),
 rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), nLiveTrigs(0), ignore_beam_out(false),
 nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	plotPath = bp+"/figures/run_"+itos(R)+"/";
 	dataPath = bp+"/data/";
-	for(Side s = EAST; s <= WEST; ++s)
-		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
-			fMWPC_caths[s][d].resize(kMaxCathodes);
 }
 
 void ucnaDataAnalyzer11b::analyze() {
+	
+	defaultCanvas->cd();
+	
 	loadCuts();
 	setupOutputTree();
 	
@@ -47,44 +46,28 @@ void ucnaDataAnalyzer11b::analyze() {
 	quickAnalyzerSummary();
 }
 
-Stringmap ucnaDataAnalyzer11b::loadCut(const std::string& cutName) {
-	std::vector<Stringmap> v = ManualInfo::MI.getInRange(cutName,rn);
-	if(!v.size()) {
-		SMExcept e("missingCut");
-		e.insert("cutName",cutName);
-		e.insert("runNum",rn);
-		throw(e);
-	}
-	return v[0];
-}
-
-void ucnaDataAnalyzer11b::loadRangeCut(CutVariable& c, const std::string& cutName) {
-	c.R = RangeCut(loadCut(cutName));
-	printf("Loaded cut %s/%i = (%g,%g)\n",cutName.c_str(),rn,c.R.start,c.R.end);
-}
-
 void ucnaDataAnalyzer11b::loadCuts() {
 	for(Side s = EAST; s <= WEST; ++s) {
-		loadRangeCut(fMWPC_anode[s], sideSubst("Cut_MWPC_%c_Anode",s));
-		loadRangeCut(fCathMax[s],sideSubst("Cut_MWPC_%c_CathMax",s));
-		loadRangeCut(fCathSum[s],sideSubst("Cut_MWPC_%c_CathSum",s));
-		loadRangeCut(fCathMaxSum[s],sideSubst("Cut_MWPC_%c_CathMaxSum",s));
-		loadRangeCut(fBacking_tdc[s], sideSubst("Cut_TDC_Back_%c",s));
-		loadRangeCut(fDrift_tac[s], sideSubst("Cut_ADC_Drift_%c",s));
-		loadRangeCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c_Selftrig",s));
+		loadRangeCut(rn,fMWPC_anode[s], sideSubst("Cut_MWPC_%c_Anode",s));
+		loadRangeCut(rn,fCathMax[s],sideSubst("Cut_MWPC_%c_CathMax",s));
+		loadRangeCut(rn,fCathSum[s],sideSubst("Cut_MWPC_%c_CathSum",s));
+		loadRangeCut(rn,fCathMaxSum[s],sideSubst("Cut_MWPC_%c_CathMaxSum",s));
+		loadRangeCut(rn,fBacking_tdc[s], sideSubst("Cut_TDC_Back_%c",s));
+		loadRangeCut(rn,fDrift_tac[s], sideSubst("Cut_ADC_Drift_%c",s));
+		loadRangeCut(rn,fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c_Selftrig",s));
 		ScintSelftrig[s] = fScint_tdc[s][nBetaTubes].R;
-		loadRangeCut(fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c",s));
+		loadRangeCut(rn,fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c",s));
 		for(unsigned int t=0; t<nBetaTubes; t++)
-			loadRangeCut(fScint_tdc[s][t], sideSubst("Cut_TDC_Scint_%c_",s)+itos(t));
+			loadRangeCut(rn,fScint_tdc[s][t], sideSubst("Cut_TDC_Scint_%c_",s)+itos(t));
 	}
-	loadRangeCut(fTop_tdc[EAST], "Cut_TDC_Top_E");
-	loadRangeCut(fBeamclock,"Cut_BeamBurst");
-	loadRangeCut(fWindow,"Cut_ClusterEvt");
+	loadRangeCut(rn,fTop_tdc[EAST], "Cut_TDC_Top_E");
+	loadRangeCut(rn,fBeamclock,"Cut_BeamBurst");
+	loadRangeCut(rn,fWindow,"Cut_ClusterEvt");
 	if(ignore_beam_out)
 		fBeamclock.R.end = FLT_MAX;
 	
 	// GV monitor rate cut
-	Stringmap gvm = loadCut("Cut_GVMon");
+	Stringmap gvm = loadCut(rn,"Cut_GVMon");
 	gvMonChecker = RollingWindow((int)gvm.getDefault("minCounts",5),gvm.getDefault("overTime",5));
 	printf("GV Monitor Rate Cut: expect %i counts (x10 prescaling) in %.1f s\n",gvMonChecker.nMax,gvMonChecker.lMax);
 	
@@ -105,7 +88,7 @@ void ucnaDataAnalyzer11b::checkHeaderQuality() {
 }
 
 void ucnaDataAnalyzer11b::convertReadin() {
-	iSis00 = int(r_Sis00);
+	SIS00 = int(r_Sis00);
 	iTriggerNumber = int(r_TriggerNumber);
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<=nBetaTubes; t++)
@@ -179,7 +162,7 @@ unsigned int ucnaDataAnalyzer11b::nFiring(Side s) const {
 }
 
 bool ucnaDataAnalyzer11b::isPulserTrigger() {
-	if(iSis00 & (1<<5) && !(trig2of4(EAST)||trig2of4(WEST)))
+	if(SIS00 & (1<<5) && !(trig2of4(EAST)||trig2of4(WEST)))
 		return true;
 	for(Side s = EAST; s <= WEST; ++s) {
 		unsigned int nthresh = 0;
@@ -207,11 +190,13 @@ bool ucnaDataAnalyzer11b::passesBeamCuts() {
 }
 
 void ucnaDataAnalyzer11b::reconstructPosition() {
+	float cathPeds[kMaxCathodes];
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
-			std::vector<float> cathPeds;
-			for(unsigned int c=0; c<cathNames[s][d].size(); c++)
-				cathPeds.push_back(PCal.getPedestal(cathNames[s][d][c],fTimeScaler[BOTH]));
+			for(unsigned int c=0; c<cathNames[s][d].size(); c++) {
+				cathPeds[c] = PCal.getPedestal(cathNames[s][d][c],fTimeScaler[BOTH]);
+				fMWPC_caths[s][d][c] -= cathPeds[c];
+			}
 			wirePos[s][d] = PCal.calcHitPos(s,d,fMWPC_caths[s][d],cathPeds);
 		}
 		fMWPC_anode[s].val -= PCal.getPedestal(sideSubst("MWPC%cAnode",s),fTimeScaler[BOTH]);
@@ -222,6 +207,8 @@ void ucnaDataAnalyzer11b::reconstructPosition() {
 		fPassedCath[s] = fCathSum[s].inRange();
 		fPassedCathMax[s] = fCathMax[s].inRange();
 		fPassedCathMaxSum[s] = fCathMaxSum[s].inRange();
+		mwpcs[s].anode = fMWPC_anode[s].val;
+		mwpcs[s].cathodeSum = fCathSum[s].val;
 	}
 }
 
@@ -235,11 +222,10 @@ void ucnaDataAnalyzer11b::reconstructVisibleEnergy() {
 			for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 				PCal.tweakPosition(s,d,wirePos[s][d],sevt[s].energy.x);
 			PCal.calibrateEnergy(s,wirePos[s][X_DIRECTION].center,wirePos[s][Y_DIRECTION].center,sevt[s],fTimeScaler[BOTH]);
-			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,wirePos[s][X_DIRECTION].center,
-											wirePos[s][Y_DIRECTION].center,fTimeScaler[BOTH]);
+			fEMWPC[s] = PCal.wirechamberEnergy(s, wirePos[s][X_DIRECTION], wirePos[s][Y_DIRECTION], mwpcs[s]);
 		} else {
 			PCal.calibrateEnergy(s,0,0,sevt[s],fTimeScaler[BOTH]);
-			fEMWPC[s] = PCal.calibrateAnode(fMWPC_anode[s].val,s,0,0,fTimeScaler[BOTH]);
+			fEMWPC[s] = PCal.wirechamberEnergy(s, wirePos[s][X_DIRECTION], wirePos[s][Y_DIRECTION], mwpcs[s]);
 		}
 	}
 }
@@ -258,42 +244,22 @@ void ucnaDataAnalyzer11b::checkMuonVetos() {
 	}
 }
 
-void ucnaDataAnalyzer11b::classifyEventType() {
-	// PID
+void ucnaDataAnalyzer11b::classifyEvent() {
+	// assign remaining event tags
+	for(Side s = EAST; s <= WEST; ++s)
+		fPassedScint[s] = fScint_tdc[s][nBetaTubes].inRange();
+	
+	// basic PID
+	EventClassifier::classifyEvent();
+	
+	// special PID
 	if(isLED()) fPID = PID_LED;	// LED event identified by Sis00
 	else if(isPulserTrigger()) fPID = PID_PULSER;
-	else if(Is2fold(EAST) || Is2fold(WEST)) {	// passes wirechamber and scintillator cuts on either side
-		if(taggedMuon())
-			fPID = PID_MUON; //at least one side muon
-		else fPID = PID_BETA; //beta-like
-	} else fPID = PID_SINGLE; //gamma
-	
-	// type, side
-	fType = TYPE_IV_EVENT;
-	fSide = NOSIDE;
-	for(Side s = EAST; s<=WEST; ++s) {
-		if(Is2fold(s)) {
-			if(passedCutTDC(otherSide(s)))
-				fType = TYPE_I_EVENT;
-			else
-				fType = passedMWPC(otherSide(s))?TYPE_II_EVENT:TYPE_0_EVENT;
-		}
-		if(passedCutTDC(s)&&!passedCutTDC(otherSide(s))) fSide = s;
-	}
-	// if side is ambiguous, TDCW has a cleaner TDC separation; make an 1-D cut (JL)
-	if(passedCutTDC(WEST)&&passedCutTDC(EAST))
-		fSide = (fScint_tdc[WEST][nBetaTubes].val < ScintSelftrig[WEST].start)?EAST:WEST;
-	
-	// Type II/III separation
-	fProbIII = ((fType==TYPE_II_EVENT)?
-				WirechamberCalibrator::sep23Prob(fSide, sevt[EAST].energy.x + sevt[WEST].energy.x, fEMWPC[fSide])
-				: 0.);
-	if(fProbIII>0.5) fType=TYPE_III_EVENT;
 }
 
 void ucnaDataAnalyzer11b::reconstructTrueEnergy() {
 	if((fSide==EAST || fSide==WEST) && fType <= TYPE_III_EVENT)
-		fEtrue = PCal.Etrue(fSide,fType,sevt[EAST].energy.x,sevt[WEST].energy.x);
+		fEtrue = PCal.Erecon(fSide,fType,sevt[EAST].energy.x,sevt[WEST].energy.x);
 	else
 		fEtrue = sevt[EAST].energy.x + sevt[WEST].energy.x;
 }
@@ -338,8 +304,8 @@ void ucnaDataAnalyzer11b::calcTrigEffic() {
 			efficfit.SetParLimits(2,0.1,1000.0);
 			efficfit.SetParLimits(3,0.75,1.0);
 			efficfit.SetLineColor(4);
-			gEffic.Fit(&efficfit,"QR+");
-			
+			//gEffic.Fit(&efficfit,"QR+");
+			gEffic.Fit(&efficfit,"QR");
 			
 			float_err trigef(efficfit.GetParameter(3),efficfit.GetParError(3));
 			float_err trigc(efficfit.GetParameter(0),efficfit.GetParError(0));
@@ -413,7 +379,7 @@ bool ucnaDataAnalyzer11b::processEvent() {
 	// Stage III: processing and histograms for beta trigger events
 	reconstructPosition();
 	reconstructVisibleEnergy();
-	classifyEventType();
+	classifyEvent();
 	reconstructTrueEnergy();
 	fillHistograms();
 	
@@ -426,6 +392,8 @@ bool ucnaDataAnalyzer11b::processEvent() {
 void ucnaDataAnalyzer11b::processBiPulser() {
 	
 	printf("\nFitting Bi Pulser...\n");
+	defaultCanvas->SetRightMargin(0.05);
+	defaultCanvas->SetLeftMargin(0.12);
 	TF1 gausFit("gasufit","gaus",1000,4000);
 	QFile pulseLocation(dataPath+"/Monitors/Run_"+itos(rn)+"/ChrisPulser.txt",false);
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -435,11 +403,17 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 			std::vector<double> dcenters;
 			std::vector<double> widths;
 			std::vector<double> dwidths;
-			for(unsigned int i=0; i<hBiPulser[s][t].size(); i++) {
+			const unsigned int nHists = (unsigned int)hBiPulser[s][t].size();
+			for(unsigned int i=0; i<nHists; i++) {
 				Stringmap m;
 				m.insert("side",ctos(sideNames(s)));
 				m.insert("tube",t);
 				m.insert("counts",hBiPulser[s][t][i]->GetEntries());
+				
+				// normalize histogram to rate [mHz/channel]
+				hBiPulser[s][t][i]->GetYaxis()->SetTitle("Event rate [mHz/ADC channel]");
+				hBiPulser[s][t][i]->GetYaxis()->SetTitleOffset(1.25);
+				hBiPulser[s][t][i]->Scale(1000.0/(hBiPulser[s][t][i]->GetBinWidth(1)*wallTime/nHists));
 				
 				// initial estimate of peak location: first high isolated peak scanning from right
 				int bmax = 0;
@@ -460,7 +434,7 @@ void ucnaDataAnalyzer11b::processBiPulser() {
 				
 				// refined fit
 				if(!iterGaus(hBiPulser[s][t][i],&gausFit,3,bcenter,200,1.5)) {
-					times.push_back((i+0.5)*wallTime/hBiPulser[s][t].size());
+					times.push_back((i+0.5)*wallTime/nHists);
 					m.insert("time",times.back());
 					m.insert("height",gausFit.GetParameter(0));
 					m.insert("dheight",gausFit.GetParError(0));
@@ -601,13 +575,11 @@ int main(int argc, char** argv) {
 		}
 	}
 	
-	gStyle->SetPalette(1);
-	gStyle->SetNumberContours(255);
-	gStyle->SetOptStat("e");
+	ROOTStyleSetup();
 	
 	std::string outDir = getEnvSafe("UCNAOUTPUTDIR");
 	
-	for(RunNum r = (unsigned int)rlist[0]; r<=(unsigned int)rlist[1]; r++) {
+	for(RunNum r = (RunNum)rlist[0]; r<=(RunNum)rlist[1]; r++) {
 		
 		std::string inDir = getEnvSafe("UCNADATADIR");
 		if(!fileExists(inDir+"/full"+itos(r)+".root") && r > 16300)
@@ -617,6 +589,9 @@ int main(int argc, char** argv) {
 		A.setIgnoreBeamOut(!cutBeam);
 		A.analyzeLED = ledtree;
 		A.needsPeds = forceped;
+#ifdef PUBLICATION_PLOTS
+		A.colorPlots = false;
+#endif
 		if(!nodbout) {
 			printf("Connecting to output DB...\n");
 			A.setOutputDB(CalDBSQL::getCDB(false));

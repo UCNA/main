@@ -48,8 +48,12 @@ public:
 	/// set calibrator to use for simulations
 	virtual void setCalibrator(PMTCalibrator& PCal);
 	
+	/// set whether to simulate cathodes response --- implement in subclass
+	virtual void runCathodeSim(bool = true) {}
 	/// this does nothing for processed data
 	virtual void recalibrateEnergy() {}
+	/// overrides ProcessedDataScanner::startScan to clear simulation counters
+	virtual void startScan(bool startRandom = false);
 	/// overrides ProcessedDataScanner::nextPoint to insert reverse-calibrations, offsets
 	virtual bool nextPoint();
 	/// whether to count this event as successfully generated
@@ -60,72 +64,76 @@ public:
 	virtual Stringmap evtInfo();
 	
 	/// get true energy
-	virtual float getEtrue();
+	virtual float getErecon() const;
 	/// primary event radius
 	virtual float primRadius() const { return sqrt(pow(primPos[X_DIRECTION],2)+pow(primPos[Y_DIRECTION],2)); }
 	
 	/// check whether this is simulated data
 	virtual bool isSimulated() const { return true; }
+	/// whether event was simulated as triggering the given side
+	virtual bool Sis00_2fold(Side s) { return PGen[s].triggered(); }
 	
 	/// return AFP state for data (note: may need to use physicsWeight for this to be meaningful)
 	virtual AFPState getAFP() const { return afp; }
 	/// set desired AFP state for simulation data
 	virtual void setAFP(AFPState a) { afp=a; }
 	
-	/// Determine event classification flags
-	virtual void classifyEvent();
 	/// calculate spectrum re-weighting factor
 	virtual void calcReweight();
 	
-	PMTGenerator PGen[2];		//< PMT simulator for each side
-	SimPositioner* SP;			//< optional postion modifier
-	bool reSimulate;			//< whether to re-simulate energy or use "raw" values
-	bool fakeClip;				//< whether to fake clipping on wirechamber entrance edge
-	bool weightAsym;			//< whether to weight simulated events by beta asymmetry
+	/// Type I initial hit side determination --- needed in subclass
+	virtual Side getFirstScint() const { return time[EAST]<time[WEST] ? EAST:WEST; }
 	
-	double eQ[2];				//< Scintillator quenched energy [keV]
-	double eDep[2];				//< Scintillator deposited energy [keV]
-	double eW[2];				//< Wirechamber active volume deposited energy [keV]
-	double scintPos[2][3];		//< hit position in scintillator [mm in decay trap]
-	double mwpcPos[2][3];		//< hit position in MWPC
-	double primPos[4];			//< primary event vertex position (4=radius)
-	double time[2];				//< hit time [s] in each scintillator
-	double costheta;			//< primary event cos pitch angle
-	Side primSide;				//< side primary event is heading towards
-	double ePrim;				//< primary event energy
+	PMTGenerator PGen[BOTH];		//< PMT simulator for each side
+	SimPositioner* SP;				//< optional postion modifier
+	bool reSimulate;				//< whether to re-simulate energy or use "raw" values
+	bool fakeClip;					//< whether to fake clipping on wirechamber entrance edge
+	bool weightAsym;				//< whether to weight simulated events by beta asymmetry
 	
-	double edepFoils[2];		//< energy deposition [keV] in decay trap foils
-	double edepWinOut[2];		//< energy deposition [keV] in outer wirechamber window
-	double edepWinIn[2];		//< energy deposition [keV] in inner wirechamber window
-	double edepDeadMWPC[2];		//< energy deposition [keV] in MWPC dead volume
-	double edepKevlar[2];		//< energy deposition [keV] in kevlar strings
-	double edepWires[2];		//< energy deposition [keV] in wire planes
-	double edepDeadScint[2];	//< energy deposition [keV] in dead scintillator
+	double eQ[BOTH];						//< Scintillator quenched energy [keV]
+	double eDep[BOTH];						//< Scintillator deposited energy [keV]
+	double eW[BOTH];						//< Wirechamber active volume deposited energy [keV]
+	double scintPos[BOTH][Z_DIRECTION+1];	//< hit position in scintillator [mm in decay trap]
+	double mwpcPos[BOTH][Z_DIRECTION+1];	//< hit position in MWPC
+	double primPos[Z_DIRECTION+2];			//< primary event vertex position (4=radius)
+	double time[BOTH];						//< hit time [s] in each scintillator
+	double costheta;						//< primary event cos pitch angle
+	Side primSide;							//< side primary event is heading towards
+	double ePrim;							//< primary event energy
 	
-	double cosThetaInFoils[2];	//< entrance angle cosine to decay trap foils
-	double cosThetaInWinOut[2];	//< entrance angle cosine to outer wirechamber window
-	double cosThetaInWinIn[2];	//< entrance angle cosine to inner wirechamber window
-	double cosThetaInScint[2];	//< entrance angle cosine to scintillator
+	double edepFoils[BOTH];			//< energy deposition [keV] in decay trap foils
+	double edepWinOut[BOTH];		//< energy deposition [keV] in outer wirechamber window
+	double edepWinIn[BOTH];			//< energy deposition [keV] in inner wirechamber window
+	double edepDeadMWPC[BOTH];		//< energy deposition [keV] in MWPC dead volume
+	double edepKevlar[BOTH];		//< energy deposition [keV] in kevlar strings
+	double edepWires[BOTH];			//< energy deposition [keV] in wire planes
+	double edepDeadScint[BOTH];		//< energy deposition [keV] in dead scintillator
+	float cath_chg[BOTH][Y_DIRECTION+1][kMaxCathodes];	//< signal on each cathode segment (portion of eW)
 	
-	double cosThetaOutFoils[2];	//< exit angle cosine from decay trap foils
-	double cosThetaOutWinOut[2];//< exit angle cosine from outer wirechamber windo
-	double cosThetaOutWinIn[2];	//< exit angle cosine from inner wirechamber window
-	double cosThetaOutScint[2];	//< exit angle cosine from scintillator
+	double cosThetaInFoils[BOTH];	//< entrance angle cosine to decay trap foils
+	double cosThetaInWinOut[BOTH];	//< entrance angle cosine to outer wirechamber window
+	double cosThetaInWinIn[BOTH];	//< entrance angle cosine to inner wirechamber window
+	double cosThetaInScint[BOTH];	//< entrance angle cosine to scintillator
 	
-	unsigned int nSimmed;		//< number of events simulated since scan start
-	double nCounted;			//< physics-weighted number of counted events
-	double mwpcThresh[2];		//< MWPC trigger 50% threshold on each side
-	double mwpcWidth[2];			//< MWPC threshold width
-	double mwpcAccidentalProb;	//< probability of MWPC accidental triggers
+	double cosThetaOutFoils[BOTH];	//< exit angle cosine from decay trap foils
+	double cosThetaOutWinOut[BOTH];	//< exit angle cosine from outer wirechamber windo
+	double cosThetaOutWinIn[BOTH];	//< exit angle cosine from inner wirechamber window
+	double cosThetaOutScint[BOTH];	//< exit angle cosine from scintillator
+	
+	unsigned int nSimmed;			//< count of number of events simulated
+	unsigned int nToSim;			//< number of events to simulate
+	double nCounted;				//< physics-weighted number of counted events
 	
 protected:
 	/// perform unit conversions, etc.
 	virtual void doUnits() { assert(false); }
+	/// generate event time stamp
+	virtual void updateClock();
 	/// "reverse calibration" from simulated data
 	virtual void reverseCalibrate();
 	
 	AFPState afp;				//< AFP state for data
-	bool passesScint[2];		//< whether simulation passed scintillator cut
+	bool simCathodes;			//< whether to simulate cathode response
 };
 
 /// mixes several simulations

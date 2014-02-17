@@ -112,18 +112,8 @@ MultiGaus multiPeakFitter(TH1F* indat, const std::vector<SpectrumPeak>& expected
 		mg.setParameter(3*n+0, expectedPeaks[n].h.x);
 		mg.setParameter(3*n+1, expectedPeaks[n].center.x);
 		mg.setParameter(3*n+2, expectedPeaks[n].width.x);
-		if(expectedPeaks[n].type==BI_PEAK_2) {
-			//mg.addCorrelated(n,554.4/481.7,0.442/1.54);
-			//mg.addCorrelated(n,566.1/481.7,0.111/1.54);
-			//mg.addCorrelated(n,568.8/481.7,0.0283/1.54);
-		}
-		if(expectedPeaks[n].type==BI_PEAK_1) {
-			//mg.addCorrelated(n,1048.1/975.7,1.84/7.08);
-			//mg.addCorrelated(n,1059.9/975.7,.440/7.08);
-			//mg.addCorrelated(n,1062.8/975.7,.127/7.08);
-		}
 	}
-	mg.getFitter()->SetLineColor(6);
+	mg.getFitter()->SetLineColor(1); // 6
 	mg.fit(indat);
 	mg.fit(indat);
 	
@@ -143,7 +133,7 @@ std::vector<SpectrumPeak> fancyMultiFit(TH1F* indat, float searchsigma, const st
 		delete(bgspec);
 	}
 	
-	unsigned int npks = foundPeaks.size();
+	Size_t npks = foundPeaks.size();
 	if(npks == expectedPeaks.size()) {
 		MultiGaus mg = multiPeakFitter(indat, foundPeaks, nSigma);
 		
@@ -160,11 +150,11 @@ std::vector<SpectrumPeak> fancyMultiFit(TH1F* indat, float searchsigma, const st
 		if(drawName.size()) {
 			makePath(drawName,true);
 			indat->Draw();
-			htout->Draw("Same");
+			//htout->Draw("Same");
 			for(unsigned int p=0; p<npks; p++) {
-				drawVLine(foundPeaks[p].energyCenter.x, gPad, 2);
-				drawVLine(foundPeaks[p].energyCenter.x-foundPeaks[p].energyWidth.x, gPad, 4);
-				drawVLine(foundPeaks[p].energyCenter.x+foundPeaks[p].energyWidth.x, gPad, 4);
+				drawVLine(foundPeaks[p].energyCenter.x, gPad, 1);
+				drawVLine(foundPeaks[p].energyCenter.x-foundPeaks[p].energyWidth.x, gPad, 1, 2);
+				drawVLine(foundPeaks[p].energyCenter.x+foundPeaks[p].energyWidth.x, gPad, 1, 2);
 			}
 			gPad->Print(drawName.c_str());
 		}

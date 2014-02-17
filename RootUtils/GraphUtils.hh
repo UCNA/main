@@ -9,6 +9,7 @@
 #include <TH2F.h>
 #include <TH3.h>
 #include <TGraph.h>
+#include <TProfile.h>
 #include <TGraphErrors.h>
 #include <TCanvas.h>
 #include <vector>
@@ -22,6 +23,9 @@ Stringmap graphToStringmap(const TGraph& g);
 
 /// convert a histogram to a TGraph
 TGraphErrors* TH1toTGraph(const TH1& h);
+
+/// convert a TProfile to a TGraph
+TGraphErrors* TProf2TGraph(const TProfile& P, unsigned int minpts = 0);
 
 /// make cumulative histogram
 TH1F* cumulativeHist(const TH1F& h, bool normalize = false);
@@ -43,6 +47,9 @@ TGraph* matchHistoShapes(const TH1F& h1, const TH1F& h2);
 
 /// scale a TGraphErrors
 void scale(TGraphErrors& tg, float s);
+
+/// accumulate TGraphErrors
+void accumPoints(TGraphErrors& a, const TGraphErrors& b, bool errorWeight = true, bool yonly = false);
 
 /// generate derivative graph
 TGraph* derivative(TGraph& g);
@@ -76,5 +83,28 @@ TH1* histsep(const TH1& h1, const TH1& h2);
 
 /// calculate optimum dividing point and overlap error between two histograms
 void histoverlap(const TH1& h1, const TH1& h2, double& xdiv, double& o);
+
+
+/// Quantiles (inverse CDF) distribution from a TF1
+/// based on ROOT's TF1::GetQuantiles(...) function
+class TF1_Quantiles {
+public:
+	/// constructor
+	TF1_Quantiles(TF1& f);
+	/// return quantile for 0 <= p <= 1
+	double eval(double p) const;
+	
+protected:
+
+	const unsigned int npx;
+	const Double_t xMin;
+	const Double_t xMax;
+	const Double_t dx;
+	TArrayD integral;
+	TArrayD alpha;
+	TArrayD beta;
+	TArrayD gamma;
+};
+
 	
 #endif

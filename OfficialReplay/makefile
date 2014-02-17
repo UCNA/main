@@ -14,7 +14,11 @@ ifdef TSPECTRUM_USES_DOUBLE
 	CXXFLAGS += -DTSPECTRUM_USES_DOUBLE
 endif
 
-ANA_OBJS      = ManualInfo.o ucnaDataAnalyzer_hists.o ucnaDataAnalyzer_tree.o ucnaDataAnalyzer_peds.o
+ifdef PUBLICATION_PLOTS
+	CXXFLAGS += -DPUBLICATION_PLOTS
+endif
+
+ANA_OBJS      = ucnaDataAnalyzer_hists.o ucnaDataAnalyzer_tree.o ucnaDataAnalyzer_peds.o
 
 all: ucnaDataAnalyzer11b
 

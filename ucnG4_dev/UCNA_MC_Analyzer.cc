@@ -1,6 +1,19 @@
 #include "UCNA_MC_Analyzer.hh"
 #include <TMath.h>
 #include <cfloat>
+#include <string.h>
+
+UCNA_MC_Analyzer::UCNA_MC_Analyzer(const std::string& outfname): ucnG4_analyzer(outfname), saveAllEvents(false), undeadLayer(false), calcCathCharge(false) {
+	// set up cathode wire positions array, 0.1 inch wire spacing in cm
+	for(int i = 0; i<kWiresPerCathode*kMaxCathodes; i++)
+		cathWirePos[i] = (i-0.5*(kWiresPerCathode*kMaxCathodes-1.))*(0.1*2.54);
+	// set up circle offsets
+	for(int i=0; i<N_CHG_CIRC_PTS; i++) {
+		double th = 2*M_PI*i/float(N_CHG_CIRC_PTS);
+		circ_pts[X_DIRECTION][i] = cos(th);
+		circ_pts[Y_DIRECTION][i] = sin(th);
+	}
+}
 
 void UCNA_MC_Analyzer::setupOutputTree() {
 	printf("Adding branches for UCNA_MC_Analyzer...\n");
@@ -29,6 +42,15 @@ void UCNA_MC_Analyzer::setupOutputTree() {
 	anaTree->Branch("ScintPos",ScintPos,"ScintPosE[3]/D:ScintPosW[3]/D");
 	anaTree->Branch("MWPCPosSigma",MWPCPosSigma,"MWPCPosSigmaE[3]/D:MWPCPosSigmaW[3]/D");
 	anaTree->Branch("ScintPosSigma",ScintPosSigma,"ScintPosSigmaE[3]/D:ScintPosSigmaW[3]/D");
+	
+	if(calcCathCharge) {
+		for(Side s = EAST; s <= WEST; ++s) {
+			for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
+				std::string cname = sideSubst("Cath_%c",s)+(d==X_DIRECTION?"X":"Y");
+				anaTree->Branch(cname.c_str(),cathCharge[s][d],(cname+"["+itos(kMaxCathodes)+"]/F").c_str());
+			}
+		}
+	}
 }
 
 void UCNA_MC_Analyzer::resetAnaEvt() {
@@ -38,12 +60,16 @@ void UCNA_MC_Analyzer::resetAnaEvt() {
 		hitTime[s]=trapMonTime[s]=FLT_MAX;
 		for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d)
 			MWPCPos[s][d] = ScintPos[s][d] = MWPCPosSigma[s][d] = ScintPosSigma[s][d] = 0;
+		if(calcCathCharge)
+			for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
+				memset(cathCharge[s][d],0,sizeof(cathCharge[s][d][0])*kMaxCathodes);
 	}
 	EdepAll = 0;
 	for(size_t ii=0; ii<N_SD; ii++) {
 		hitCountSD[ii] = keInSD[ii] = keOutSD[ii] = thetaInSD[ii] = thetaOutSD[ii] = EdepSD[ii] = 0.;
 		hitTimeSD[ii]=FLT_MAX;
 	}
+	
 }
 
 void UCNA_MC_Analyzer::processTrack() {
@@ -117,11 +143,41 @@ void UCNA_MC_Analyzer::processTrack() {
 			anodeScale = 0.5;
 		if(detectorID==ID_mwpc[s])
 			anodeScale = 1.0;
-		if(anodeScale) {
-			fMWPCEnergy[s] += anodeScale*trackinfo->Edep;
+		if(anodeScale && trackinfo->Edep) {
+			Double_t Ew = anodeScale*trackinfo->Edep;
+			
+			fMWPCEnergy[s] += Ew;
 			for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
 				MWPCPos[s][d] += anodeScale*trackinfo->edepPos[d];
 				MWPCPosSigma[s][d] += anodeScale*trackinfo->edepPos2[d];
+			}
+			if(calcCathCharge) {
+				double c[Y_DIRECTION+1]; // track center
+				for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) c[d] = trackinfo->edepPos[d]/trackinfo->Edep;
+				// charge radius
+				Double_t cr = sqrt((trackinfo->edepPos2[X_DIRECTION]+trackinfo->edepPos2[Y_DIRECTION])/trackinfo->Edep
+									-c[X_DIRECTION]*c[X_DIRECTION]-c[Y_DIRECTION]*c[Y_DIRECTION]);
+				if(!(cr==cr)) cr=0; // avoid NAN
+				
+				const double dx = 0.254;		// distance between wires, cm
+				const double h = 1.0;			// plane spacing, cm
+				const double dlambda = dx/h;	// wire spacing in plane spacing units
+				
+				// Matthieson 5.41+
+				static const double K3 = 0.18; // read off chart for h/s=3.93, r_a/s=0.002
+				static const double K2 = M_PI/2*(1-0.5*sqrt(K3));
+				static const double K1 = K2*sqrt(K3)/(4.*atan(sqrt(K3))*N_CHG_CIRC_PTS);
+				
+				for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
+					for(int i = 0; i<kWiresPerCathode*kMaxCathodes; i++) {
+						for(int j=0; j<N_CHG_CIRC_PTS; j++) {
+							int flip = (s==EAST && d==X_DIRECTION)?-1:1; // flip for East X because of mirrored position coordinates
+							const double lambda = (c[d]+cr*circ_pts[d][j]-cathWirePos[i]*flip)/h;
+							const double tkl = tanh(K2*lambda);
+							cathCharge[s][d][i/kWiresPerCathode] += Ew * dlambda * K1 * (1-tkl*tkl) / (1+K3*tkl*tkl);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -152,11 +208,14 @@ int main(int argc, char** argv) {
 	
 	UCNA_MC_Analyzer UMA(argv[2]);
 	
-	for(unsigned int i=3; i<argc; i++) {
-		if(std::string(argv[i])=="saveall") {
+	for(int i=3; i<argc; i++) {
+		std::string arg = argv[i];
+		if(arg=="saveall") {
 			UMA.saveAllEvents = true;
-		} else if(std::string(argv[i])=="undead") {
+		} else if(arg=="undead") {
 			UMA.undeadLayer = true;
+		} else if(arg=="cathodes") {
+			UMA.calcCathCharge = true;
 		} else {
 			cout<<"Unknown argument: "<<argv[0]<<endl;
 			exit(1);

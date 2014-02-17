@@ -72,6 +72,9 @@ public:
 	bmSiliconDetectorConstruction siDet;
 	G4VPhysicalVolume* siDet_phys;
 	
+	/// get source holder position
+	G4ThreeVector getHolderPos() const { return fSourceHolderPos; }
+	
 private:
 	/// construct detector (Electro-)Magnetic Field
 	void ConstructField(const TString filename);  

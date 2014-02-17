@@ -13,6 +13,8 @@
 std::string dtos(double d);
 /// convert an int to a string
 std::string itos(int i);
+/// small integer to roman numerals string
+std::string itosRN(int i);
 
 /// convert a vector of doubles to a string list
 std::string vtos(const double* st, const double* en, std::string sep = ",");

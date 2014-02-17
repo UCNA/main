@@ -14,12 +14,14 @@ void inputRequester::doIt(std::deque<std::string>& args, std::stack<std::string>
 		if(inputFilters[i]) {
 			inputFilters[i]->doIt(args,stack);
 		} else if(!args.size()) {
-			char indata[64];
+			char indata[1024];
+			if(argDescrips[i].size())
+				printf("\n// %s\n",argDescrips[i].c_str());
 			printf("%s",argNames[i].c_str());
 			if(defaultArgs[i].size())
 				printf(" [%s]",defaultArgs[i].c_str());
 			printf(" > ");
-			assert(fgets(indata,64,stdin));
+			assert(fgets(indata,1024,stdin));
 			std::string argin = strip(indata);
 			if(!argin.size())
 				stack.push(defaultArgs[i]);
@@ -33,8 +35,9 @@ void inputRequester::doIt(std::deque<std::string>& args, std::stack<std::string>
 	if(myFunc) (*myFunc)(args,stack);
 }
 
-void inputRequester::addArg(std::string s, std::string dflt, namedInteractor* filter) {
+void inputRequester::addArg(const std::string& s, const std::string& dflt, const std::string& descrip, namedInteractor* filter) {
 	argNames.push_back(s);
+	argDescrips.push_back(descrip);
 	defaultArgs.push_back(dflt);
 	inputFilters.push_back(filter);
 }
@@ -75,7 +78,7 @@ bool nameselector_default_softmatch(const std::string& a, const std::string& b) 
 std::string NameSelector::barf_control = "\033_BARF";
 std::string NameSelector::exit_control = "\033_EXIT";
 
-NameSelector::NameSelector(std::string t, std::string promptval, bool persist): inputRequester(t), catchAll(false), isPersistent(persist) {
+NameSelector::NameSelector(std::string t, std::string promptval, bool persist): inputRequester(t), catchAll(NULL), isPersistent(persist) {
 	inputRequester::addArg(promptval);
 	setSoftmatch();
 }

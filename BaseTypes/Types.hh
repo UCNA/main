@@ -17,6 +17,7 @@
 #include <TMath.h>
 #include <map>
 #include <cassert>
+#include <Rtypes.h>
 
 /// class to prevent unintended copying of sub-classes
 class NoCopy {

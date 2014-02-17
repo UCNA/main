@@ -8,15 +8,26 @@
 #include <algorithm>
 
 /// get AFP state for given octet type
-AFPState afpForOctet(OctetType t);
+AFPState afpForOctet(OctetRole t);
 /// get GV state for given octet type
-GVState gvForOctet(OctetType t);
+GVState gvForOctet(OctetRole t);
 /// get run type for given octet type
-RunType runTypeForOctet(OctetType t);
-/// get triad grouping for given octet type
-TriadType triadForOctet(OctetType t);
+RunType runTypeForOctet(OctetRole t);
 /// get name for octet segment
-std::string nameForOctet(OctetType t);
+std::string nameForOctet(OctetRole t);
+
+/// subdivision level for octet list
+enum Octet_Division_t {
+	DIV_OCTET	= 0,
+	DIV_HALFOCT	= 1,
+	DIV_PP		= 2,
+	DIV_TRIAD	= 3,
+	DIV_RUN		= 4
+};
+/// increment subdivision depth
+inline Octet_Division_t& operator++(Octet_Division_t& d) { return d = Octet_Division_t(d+1); }
+/// return next division depth
+inline Octet_Division_t nextDiv(Octet_Division_t d) { Octet_Division_t d2 = d; return ++d2; }
 
 /// class for octets and their subsets
 class Octet {
@@ -24,11 +35,11 @@ public:
 	/// constructor
 	Octet(const Stringmap& m = Stringmap());
 	/// split into (completed) sub-groupings
-	std::vector<Octet> getSubdivs(unsigned int divlvl = 3, bool onlyComplete = false) const;
+	std::vector<Octet> getSubdivs(Octet_Division_t divlvl = DIV_TRIAD, bool onlyComplete = false) const;
 	/// add run to octet listing
-	void addRun(RunNum rn, OctetType t);
+	void addRun(RunNum rn, OctetRole t);
 	/// get runs of given type
-	std::vector<RunNum> getRuns(OctetType t) const;
+	std::vector<RunNum> getRuns(OctetRole t) const;
 	/// get asymmetry runs list
 	std::vector<RunNum> getAsymRuns(bool foreground) const;
 	/// get sorted list of all runs
@@ -50,11 +61,11 @@ public:
 	/// get first run, for sorting Octets
 	RunNum getFirstRun() const;
 	
-	unsigned int divlevel;	//< dividion level of octet
+	Octet_Division_t divlevel;	//< dividion level of octet
 	
 protected:
 	
-	std::map< OctetType,std::vector<RunNum> > runs;	//< list of octet runs
+	std::map< OctetRole,std::vector<RunNum> > runs;	//< list of octet runs
 };
 
 #endif

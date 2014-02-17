@@ -3,6 +3,7 @@
 #include "BetaSpectrum.hh"
 #include <cassert>
 #include <cmath>
+#include <climits>
 
 TRandom3 mc_rnd_source;	
 
@@ -37,18 +38,12 @@ void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
 SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
-nSimmed(0), nCounted(0), mwpcAccidentalProb(0), afp(AFP_OTHER) {
+nSimmed(0), nToSim(INT_MAX), nCounted(0), afp(AFP_OTHER), simCathodes(false) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
-		mwpcThresh[s] = 0;
-		mwpcWidth[s] = 0;
-		//mwpcThresh[s] = (s==EAST?0.98:0.10); // 2010 based on Sn ineffic
-		//mwpcThresh[s] = (s==EAST?0.95:0.67); // similar to 2009 Geom D?
-		//mwpcThresh[s] = 1.3; // extra high
-		//mwpcWidth[s] = 0.15;
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
 			for(unsigned int c = 0; c < kMaxCathodes; c++)
-				cathodes[s][d][c] = 0;
+				cath_chg[s][d][c] = cathodes[s][d][c] = 0;
 		fTaggedBack[s] = false;
 	}
 	totalTime = BlindTime(1.0);
@@ -88,24 +83,28 @@ void Sim2PMT::setCalibrator(PMTCalibrator& PCal) {
 	evtRun = ActiveCal->rn;
 }
 
+void Sim2PMT::startScan(bool startRandom) {
+	nCounted = 0;
+	ProcessedDataScanner::startScan(startRandom);
+}
+
 bool Sim2PMT::nextPoint() {
 	bool np = ProcessedDataScanner::nextPoint();
 	reverseCalibrate();
 	calcReweight();
 	nSimmed++;
 	nCounted+=simEvtCounts();
-	return np;
+	return np && currentEvent < nToSim;
 }
+
+void Sim2PMT::updateClock() { runClock = mc_rnd_source.Uniform(0.,ActiveCal->totalTime); }
 
 void Sim2PMT::reverseCalibrate() {
 	
-	doUnits();
-	
 	assert(ActiveCal);
 	evtRun = ActiveCal->rn;
-	
-	// simulated event time stamp
-	runClock = mc_rnd_source.Uniform(0.,ActiveCal->totalTime);
+	updateClock();
+	doUnits();
 	
 	// apply position offsets; set wires position
 	if(SP) SP->applyOffset(*this);
@@ -115,66 +114,43 @@ void Sim2PMT::reverseCalibrate() {
 	
 	// simulate event on both sides
 	for(Side s = EAST; s <= WEST; ++s) {
-		// wirechamber accidentals
-		if(!eW[s] && mc_rnd_source.Uniform(0.,1.)<mwpcAccidentalProb)
-			eW[s] = mwpcThresh[s]+0.1;
 		
 		mwpcEnergy[s] = eW[s];
+		
 		// simulate detector energy response, or use un-smeared original data 
 		if(reSimulate) {
 			PGen[s].evtm = runClock[BOTH];
 			PGen[s].setPosition(scintPos[s][X_DIRECTION], scintPos[s][Y_DIRECTION],
 								wires[s][X_DIRECTION].center-scintPos[s][X_DIRECTION], wires[s][Y_DIRECTION].center-scintPos[s][Y_DIRECTION]);
 			scints[s] = PGen[s].generate(eQ[s]);
-			passesScint[s] = PGen[s].triggered();
+			fPassedScint[s] = PGen[s].triggered();
+			
+			if(simCathodes) {
+				mwpcs[s].cathodeSum = 0;
+				for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+					PGen[s].calcCathodeSignals(s,d,cath_chg[s][d],cathodes[s][d],wires[s][d]);
+					mwpcs[s].cathodeSum += wires[s][d].cathodeSum;
+				}
+				ActiveCal->fCathMaxSum[s].val = wires[s][X_DIRECTION].maxValue+wires[s][Y_DIRECTION].maxValue;
+				fPassedCathMaxSum[s] = ActiveCal->fCathMaxSum[s].inRange();
+			} else {
+				fPassedCathMaxSum[s] = fPassedCathMax[s] = fPassedAnode[s] = mwpcEnergy[s] > 0;
+			}
+			
 		} else {
 			scints[s].energy = eQ[s];
-			passesScint[s] = (eQ[s] > 0);
+			fPassedScint[s] = (eQ[s] > 0);
+			fPassedCathMaxSum[s] = mwpcEnergy[s] > 0;
 		}
 	}
 	
+	primSide = costheta>0?WEST:EAST;
 	classifyEvent();
 }
 
-void Sim2PMT::classifyEvent() {
-	
-	bool passesMWPC[2];
-	bool is2fold[2];
-	
-	primSide = costheta>0?WEST:EAST;
-	
-	for(Side s = EAST; s <= WEST; ++s) {
-		passesMWPC[s] = (mwpcEnergy[s] > mc_rnd_source.Gaus(mwpcThresh[s],mwpcWidth[s]));
-		is2fold[s] = passesMWPC[s] && passesScint[s];
-	}
-	
-	if(is2fold[EAST] || is2fold[WEST]) fPID = PID_BETA;
-	else fPID = PID_SINGLE;
-	
-	fType = TYPE_IV_EVENT;
-	fSide = NOSIDE;
-	for(Side s = EAST; s<=WEST; ++s) {
-		if(is2fold[s]) {
-			if(passesScint[otherSide(s)])
-				fType = TYPE_I_EVENT;
-			else
-				fType = passesMWPC[otherSide(s)]?TYPE_II_EVENT:TYPE_0_EVENT;
-		}
-		if(passesScint[s]&&!passesScint[otherSide(s)]) fSide = s;
-	}
-	if(passesScint[EAST] && passesScint[WEST])
-		fSide = time[EAST]<time[WEST]?EAST:WEST;
-	
-	// Type II/III separation
-	fProbIII = ((fType==TYPE_II_EVENT)?
-				WirechamberCalibrator::sep23Prob(fSide,getEnergy(),mwpcEnergy[fSide])
-				: 0.);
-	if(fProbIII>0.5) fType=TYPE_III_EVENT;
-}
-
-float Sim2PMT::getEtrue() {
+float Sim2PMT::getErecon() const {
 	if(fSide>WEST) return 0;
-	return PGen[fSide].getCalibrator()->Etrue(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
+	return PGen[fSide].getCalibrator()->Erecon(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
 }
 
 //-------------------------------------------

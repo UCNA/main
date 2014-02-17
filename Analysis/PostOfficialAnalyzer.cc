@@ -14,40 +14,40 @@ std::string PostOfficialAnalyzer::locateRun(RunNum r) {
 void PostOfficialAnalyzer::setReadpoints() {
 	
 	// reconstructed energy
-	Tch->SetBranchAddress("Etrue",&Etrue);
+	SetBranchAddress("Erecon",&Erecon);
 	// event ID
-	Tch->SetBranchAddress("PID",&fPID);
-	Tch->SetBranchAddress("Side",&fSide);
-	Tch->SetBranchAddress("Type",&fType);
+	SetBranchAddress("PID",&fPID);
+	SetBranchAddress("Side",&fSide);
+	SetBranchAddress("Type",&fType);
 	if(Tch->GetBranch("ProbIII"))
-		Tch->SetBranchAddress("ProbIII",&fProbIII);
+		SetBranchAddress("ProbIII",&fProbIII);
 	else
 		fProbIII = 0;
 	// clock
-	Tch->SetBranchAddress("TimeE",&runClock[EAST]);
-	Tch->SetBranchAddress("TimeW",&runClock[WEST]);
+	SetBranchAddress("TimeE",&runClock[EAST]);
+	SetBranchAddress("TimeW",&runClock[WEST]);
 	runClock[BOTH]=runClock[NOSIDE]=0.0;
 	
-	Tch->Branch("EvnbGood",&EvnbGood);
-	Tch->Branch("BkhfGood",&BkhfGood);
+	SetBranchAddress("EvnbGood",&fEvnbGood);
+	SetBranchAddress("BkhfGood",&fBkhfGood);
 
 	for(Side s=EAST; s<=WEST; ++s) {
 		
 		// wirechamber planes
 		for(int p=X_DIRECTION; p<=Y_DIRECTION; p++) {
-			Tch->SetBranchAddress(((p==X_DIRECTION?"x":"y")+sideSubst("%cmpm",s)).c_str(),&wires[s][p]);
-			Tch->SetBranchAddress((sideSubst("Cathodes_%c",s)+(p==X_DIRECTION?"x":"y")).c_str(),cathodes[s][p]);
+			SetBranchAddress(((p==X_DIRECTION?"x":"y")+sideSubst("%cmpm",s)).c_str(),&wires[s][p]);
+			SetBranchAddress((sideSubst("Cathodes_%c",s)+(p==X_DIRECTION?"x":"y")).c_str(),cathodes[s][p]);
 		}
 		
 		// beta scintillators
-		Tch->SetBranchAddress(sideSubst("Scint%c",s).c_str(),&scints[s]);
+		SetBranchAddress(sideSubst("Scint%c",s).c_str(),&scints[s]);
 		
 		// MWPC totals
-		Tch->SetBranchAddress(sideSubst("Anode%c",s).c_str(),&mwpcs[s].anode);
-		Tch->SetBranchAddress(sideSubst("CathSum%c",s).c_str(),&mwpcs[s].cathodeSum);
-		Tch->SetBranchAddress(sideSubst("EMWPC_%c",s).c_str(),&mwpcEnergy[s]);
+		SetBranchAddress(sideSubst("Anode%c",s).c_str(),&mwpcs[s].anode);
+		SetBranchAddress(sideSubst("CathSum%c",s).c_str(),&mwpcs[s].cathodeSum);
+		SetBranchAddress(sideSubst("EMWPC_%c",s).c_str(),&mwpcEnergy[s]);
 		
 		/// muon tags
-		Tch->SetBranchAddress(sideSubst("TaggedBack%c",s).c_str(),&fTaggedBack[s]);
+		SetBranchAddress(sideSubst("TaggedBack%c",s).c_str(),&fTaggedBack[s]);
 	}
 }

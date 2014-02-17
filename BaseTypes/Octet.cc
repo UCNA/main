@@ -3,7 +3,7 @@
 #include <climits>
 #include <utility>
 
-AFPState afpForOctet(OctetType t) {
+AFPState afpForOctet(OctetRole t) {
 	if(t == 1 || t==2 || t == 10 || t == 12 || t == 16 || t == 17 || t == 19 || t == 21)
 		return AFP_OFF;
 	if(t == 4 || t==5 || t == 7 || t == 9 || t == 13 || t == 14 || t == 22 || t == 24)
@@ -15,46 +15,39 @@ AFPState afpForOctet(OctetType t) {
 	return AFP_OTHER;
 }
 
-GVState gvForOctet(OctetType t) {
-	if(t == 1 || t==4 || t == 9 || t == 12 || t == 13 || t == 16 || t == 21 || t == 24)
+GVState gvForOctet(OctetRole t) {
+	if(t == 1 || t==4 || t == 9 || t == 12 || t == 13 || t == 16 || t == 21 || t == 24 || t == OCTR_BG)
 		return GV_CLOSED;
-	if(t == 2 || t==5 || t == 7 || t == 10 || t == 14 || t == 17 || t == 19 || t == 22)
+	if(t == 2 || t==5 || t == 7 || t == 10 || t == 14 || t == 17 || t == 19 || t == 22 || t == OCTR_FG)
 		return GV_OPEN;
 	return GV_OTHER;
 }
 
-RunType runTypeForOctet(OctetType t) {
+RunType runTypeForOctet(OctetRole t) {
 	if(t == 3 || t == 6 || t == 8 || t == 11 || t == 15 || t == 18 || t == 20 || t == 23)
 		return DEPOL_RUN;
-	if(0 < t && t <= 24)
+	if(OCTR_A1 <= t && t <= OCTR_B12)
 		return ASYMMETRY_RUN;
 	return UNKNOWN_RUN;
 }
 
-TriadType triadForOctet(OctetType t) {
-	int tt = TRIAD_NONE;
-	if(1 <= t && t <= 24) {
-		tt += 1 + t/3;
-	}
-	return TriadType(tt);
-}
-
-std::string nameForOctet(OctetType t) {
-	if(1 <= t && t <= 24) {
+std::string nameForOctet(OctetRole t) {
+	if(OCTR_A1 <= t && t <= OCTR_B12) {
 		std::string s;
-		if(t<=12)
+		if(t<=OCTR_A12)
 			s = "A";
 		else
 			s = "B";
-		s += itos(((t-1)%12)+1);
+		s += itos(((t-OCTR_A1)%12)+1);
 		return s;
 	}
-	return "None";
+	if(t==OCTR_BG) return "NBG";
+	if(t==OCTR_FG) return "NFG";
+	return "N";
 }
 
-
-Octet::Octet(const Stringmap& m): divlevel(0) {
-	for(OctetType t = 1; t <= 24; t++) {
+Octet::Octet(const Stringmap& m): divlevel(DIV_OCTET) {
+	for(OctetRole t = OCTR_A1; t <= OCTR_B12; ++t) {
 		std::vector<std::string> rlisting = m.retrieve(nameForOctet(t));
 		for(std::vector<std::string>::iterator it = rlisting.begin(); it != rlisting.end(); it++) {
 			std::vector<int> runlist = sToInts(*it);
@@ -64,8 +57,8 @@ Octet::Octet(const Stringmap& m): divlevel(0) {
 	}
 }
 
-void Octet::addRun(RunNum rn, OctetType t) {
-	std::map< OctetType,std::vector<RunNum> >::iterator it = runs.find(t);
+void Octet::addRun(RunNum rn, OctetRole t) {
+	std::map< OctetRole,std::vector<RunNum> >::iterator it = runs.find(t);
 	if(it != runs.end()) {
 		it->second.push_back(rn);
 	} else {
@@ -75,8 +68,8 @@ void Octet::addRun(RunNum rn, OctetType t) {
 	}
 }
 
-std::vector<RunNum> Octet::getRuns(OctetType t) const {
-	std::map< OctetType,std::vector<RunNum> >::const_iterator it = runs.find(t);
+std::vector<RunNum> Octet::getRuns(OctetRole t) const {
+	std::map< OctetRole,std::vector<RunNum> >::const_iterator it = runs.find(t);
 	if(it != runs.end())
 		return it->second;
 	return std::vector<RunNum>();
@@ -84,7 +77,7 @@ std::vector<RunNum> Octet::getRuns(OctetType t) const {
 
 std::vector<RunNum> Octet::getAllRuns() const {
 	std::vector<RunNum> rns;
-	for(std::map< OctetType,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++)
+	for(std::map< OctetRole,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++)
 		for(std::vector<RunNum>::const_iterator rit = it->second.begin(); rit != it->second.end(); rit++)
 			rns.push_back(*rit);
 	std::sort(rns.begin(),rns.end());
@@ -93,7 +86,7 @@ std::vector<RunNum> Octet::getAllRuns() const {
 
 std::vector<RunNum> Octet::getAsymRuns(bool foreground) const {
 	std::vector<RunNum> rns;
-	for(std::map< OctetType,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++)
+	for(std::map< OctetRole,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++)
 		if(runTypeForOctet(it->first)==ASYMMETRY_RUN && ((foreground && gvForOctet(it->first) == GV_OPEN) || (!foreground && gvForOctet(it->first) == GV_CLOSED)) )
 			for(std::vector<RunNum>::const_iterator rit = it->second.begin(); rit != it->second.end(); rit++)
 				rns.push_back(*rit);
@@ -102,41 +95,58 @@ std::vector<RunNum> Octet::getAsymRuns(bool foreground) const {
 
 Stringmap Octet::toStringmap() const {
 	Stringmap s;
-	for(std::map< OctetType,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++)
-		s.insert(nameForOctet(it->first),vtos(*(std::vector<int>*)&it->second)); //TODO compiler complains about iffy re-casting
+	for(std::map< OctetRole,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++) {
+		std::vector<int> rlist;
+		for(std::vector<RunNum>::const_iterator rit = it->second.begin(); rit != it->second.end(); rit++)
+			rlist.push_back(*rit);
+		s.insert(nameForOctet(it->first),vtos(rlist));
+	}
 	s.insert("name",octName());
 	s.insert("afp",afpWords(octAFPState()));
 	s.insert("divlevel",itos(divlevel));
 	return s;
 }
 
-std::vector<Octet> Octet::getSubdivs(unsigned int divlvl, bool onlyComplete) const {
-	assert(divlvl <= 3);
-	unsigned int ndivs = 1 << divlvl;
+std::vector<Octet> Octet::getSubdivs(Octet_Division_t divlvl, bool onlyComplete) const {
+	assert(divlvl <= DIV_RUN);
 	std::vector<Octet> pps;
-	for(unsigned int n=0; n<ndivs; n++) {
-		Octet pp;
-		pp.divlevel = divlvl;
-		bool completed = true;
-		for(OctetType t = (24/ndivs)*n+1; t < (24/ndivs)*(n+1)+1; t++) {
-			std::vector<RunNum> truns = getRuns(t);
-			if(runTypeForOctet(t) == ASYMMETRY_RUN && !truns.size()) {
-				completed = false;
-				continue;
+	
+	if(divlvl == DIV_RUN) {
+		for(std::map< OctetRole,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); ++it) {
+			for(std::vector<RunNum>::const_iterator rit = it->second.begin(); rit != it->second.end(); ++rit) {
+				Octet pp;
+				pp.addRun(*rit,it->first);
+				pp.divlevel = divlvl;
+				pps.push_back(pp);
 			}
-			for(std::vector<RunNum>::iterator it = truns.begin(); it != truns.end(); it++)
-				pp.addRun(*it,t);
 		}
-		if(!pp.getNRuns() || (onlyComplete && !completed))
-			continue;
-		pps.push_back(pp);
+	} else {
+		unsigned int ndivs = 1 << divlvl;
+		for(unsigned int n=0; n<ndivs; n++) {
+			Octet pp;
+			pp.divlevel = divlvl;
+			bool completed = true;
+			for(OctetRole t = OctetRole((24/ndivs)*n+1); t < OctetRole((24/ndivs)*(n+1)+1); ++t) {
+				std::vector<RunNum> truns = getRuns(t);
+				if(runTypeForOctet(t) == ASYMMETRY_RUN && !truns.size()) {
+					completed = false;
+					continue;
+				}
+				for(std::vector<RunNum>::iterator it = truns.begin(); it != truns.end(); it++)
+					pp.addRun(*it,t);
+			}
+			if(!pp.getNRuns() || (onlyComplete && !completed))
+				continue;
+			pps.push_back(pp);
+		}
 	}
+	
 	return pps;
 }
 
 RunNum Octet::getFirstRun() const {
 	RunNum rmin = INT_MAX;
-	for(std::map< OctetType,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++)
+	for(std::map< OctetRole,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++)
 		for(std::vector<RunNum>::const_iterator rit = it->second.begin(); rit != it->second.end(); rit++)
 			if(*rit<rmin)
 				rmin=*rit;
@@ -166,7 +176,7 @@ Octet Octet::loadOctet(const QFile& q, unsigned int n) {
 
 AFPState Octet::octAFPState() const {
 	AFPState s = AFP_OTHER;
-	for(std::map< OctetType,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++) {
+	for(std::map< OctetRole,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); it++) {
 		AFPState s2 = afpForOctet(it->first);
 		if(s2 == AFP_ON || s2 == AFP_OFF) {
 			if( s != s2 && (s == AFP_ON || s == AFP_OFF))

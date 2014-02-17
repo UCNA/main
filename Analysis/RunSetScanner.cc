@@ -1,7 +1,6 @@
 #include "RunSetScanner.hh"
 #include "PathUtils.hh"
 #include "CalDBSQL.hh"
-#include "CalDBFake.hh"
 #include "SMExcept.hh"
 #include <cassert>
 #include <stdio.h>

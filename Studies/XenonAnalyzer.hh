@@ -1,10 +1,10 @@
 #ifndef XENONANALYZER_HH
 #define XENONANALYZER_HH 1
 
-#include "PositionBinnedAnalyzer.hh"
-#include "AnodePositionAnalyzer.hh"
-#include "CathodeTweakAnalyzer.hh"
-#include "WirechamberGainAnalyzer.hh"
+#include "PositionBinnedPlugin.hh"
+#include "WirechamberGainMapPlugins.hh"
+#include "CathodeTuningAnalyzer.hh"
+#include "WirechamberEnergyPlugins.hh"
 
 /// xenon data collected for each sector
 struct SectorDat {
@@ -22,10 +22,10 @@ SectorDat sm2sd(const Stringmap& m);
 Stringmap sd2sm(const SectorDat& sd);
 
 /// analyzer plugin for Xenon spectrum shape fitting and position map
-class XenonSpectrumAnalyzer: public PositionBinnedAnalyzer {
+class XenonSpectrumPlugin: public PositionBinnedPlugin {
 public:
 	/// constructor
-	XenonSpectrumAnalyzer(RunAccumulator* RA, unsigned int nr = 0);
+	XenonSpectrumPlugin(RunAccumulator* RA, unsigned int nr = 0);
 	
 	/// process a data point into position histograms
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
@@ -47,7 +47,7 @@ protected:
 };
 
 /// analyzer for xenon data
-class XenonAnalyzer: public MWPCTuningAnalyzer {
+class XenonAnalyzer: public CathodeTuningAnalyzer {
 public:
 	/// constructor
 	XenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0, unsigned int nrA = 12);
@@ -55,19 +55,19 @@ public:
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) {
 		return new XenonAnalyzer(this,nm,inflname,myXeSpec->sects.n,myAnode->sects.n); }
 	
-	XenonSpectrumAnalyzer* myXeSpec;	//< position-binned Xenon spectrum analysis
-	AnodePositionAnalyzer* myAnode;		//< anode position gain
-	AnodeGainAnalyzer* myWG;			//< anode energy calibration
+	XenonSpectrumPlugin* myXeSpec;	//< position-binned Xenon spectrum analysis
+	AnodeGainMapPlugin* myAnode;	//< anode position gain
+	MWPCGainPlugin* myWG;			//< MWPC energy calibration
 };
 
 /// analyzer for simulated xenon data
-class SimXenonAnalyzer: public MWPCTuningAnalyzer {
+class SimXenonAnalyzer: public CathodeTuningAnalyzer {
 public:
 	/// constructor
 	SimXenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0);
 	
-	XenonSpectrumAnalyzer* myXeSpec;	//< position-binned Xenon spectrum analysis
-	AnodeGainAnalyzer* myWG;			//< anode energy calibration
+	XenonSpectrumPlugin* myXeSpec;	//< position-binned Xenon spectrum analysis
+	MWPCGainPlugin* myWG;			//< MWPC energy calibration
 };
 
 /// process xenon runs

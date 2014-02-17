@@ -1,6 +1,6 @@
 #include "AsymmetryCorrections.hh"
-#include "AsymmetryAnalyzer.hh"
-#include "SimAsymmetryAnalyzer.hh"
+#include "AsymmetryPlugin.hh"
+#include "SimAsymmetryPlugin.hh"
 #include "GraphUtils.hh"
 #include "PathUtils.hh"
 #include "BetaSpectrum.hh"
@@ -33,7 +33,7 @@ AsymCorrFile::AsymCorrFile(const std::string& nm, const std::string& basepath): 
 			gUnc.Set(p+1);
 			gUnc.SetPoint(p,0.5*(e0+e1),u);
 		} else {
-			int foo = fscanf(f,"%*c");
+			n = fscanf(f,"%*c");
 		}
 	}
 	fclose(f);
@@ -41,15 +41,19 @@ AsymCorrFile::AsymCorrFile(const std::string& nm, const std::string& basepath): 
 	printf("Loaded %i points for correction '%s'\n",gCor.GetN(),name.c_str());
 }
 
-void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcBase) {
+void doFullCorrections(AsymmetryPlugin& AA, OutputManager& OM, std::string mcBase) {
 	
 	AA.calculateResults();
 	AA.hCxn = (TH1F*)AA.hAsym->Clone("hCxn");
 	AA.hCxn->Scale(0);
 	AA.myA->defaultCanvas->cd();
+	AA.myA->defaultCanvas->SetLeftMargin(0.11);
+	AA.myA->defaultCanvas->SetRightMargin(0.04);
 	
+	// analysis energy window; 220-670 keV for 2010 data.
 	double emin = 220;
 	double emax = 670;
+	
 	TF1 lineFit("lineFit","pol0",emin,emax);
 	TLatex lx;
 	char tmp[1024];
@@ -86,7 +90,8 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcB
 	AA.hAsym->SetTitle("Raw Asymmetry");
 	AA.hAsym->Draw();
 	AA.myA->printCanvas("RawAsym");
-	AA.hAsym->GetFunction("asymFit")->SetBit(TF1::kNotDraw);
+	TF1* asft = AA.hAsym->GetFunction("asymFit");
+	if(asft) asft->SetBit(TF1::kNotDraw);
 	
 	// initial beta/2 correction
 	for(int b=1; b<=AA.hAsym->GetNbinsX(); b++) {
@@ -95,6 +100,7 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcB
 		AA.hAsym->SetBinContent(b, AA.hAsym->GetBinContent(b)*c);
 		AA.hAsym->SetBinError(b, AA.hAsym->GetBinError(b)*c);
 	}
+	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
 	AA.hAsym->Fit(&lineFit,"NR");
 	Stringmap m1;
 	m1.insert("anChoice",ctos(choiceLetter(AA.anChoice)));
@@ -105,6 +111,11 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcB
 	m1.insert("eMin",emin);
 	m1.insert("eMax",emax);
 	OM.qOut.insert("rawFit",m1);
+	
+	// save a copy of the uncorrected version
+	TH1* hA_unc = (TH1*)AA.hAsym->Clone("hA_unc");
+	hA_unc->SetTitle("Uncorrected Asymmetry");
+
 	
 	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
 	AA.hAsym->SetTitle("Uncorrected Asymmetry");
@@ -156,7 +167,7 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcB
 	int b1 = AA.hAsym->FindBin(emax-0.5);
 	
 	// root average fit
-	AA.hAsym->Fit(&lineFit,"NR");
+	AA.hAsym->Fit(&lineFit,"R");
 	Stringmap m2;
 	m2.insert("anChoice",ctos(choiceLetter(AA.anChoice)));
 	m2.insert("A0",lineFit.GetParameter(0));
@@ -166,13 +177,24 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcB
 	OM.qOut.insert("correctedFit",m2);
 	
 	AA.hAsym->GetYaxis()->SetRangeUser(-0.2,0);
-	AA.hAsym->SetTitle("Corrected Asymmetry");
+	AA.hAsym->SetTitle("Asymmetry A_{0}");
 	AA.hAsym->Draw();
 	sprintf(tmp,"#splitline{A_{0} = %.5f #pm %.5f,}{#chi^{2}/ndf = %.1f/%i}",lineFit.GetParameter(0),lineFit.GetParError(0),lineFit.GetChisquare(),lineFit.GetNDF());
 	//lx.DrawLatex(100,-0.06,tmp);
 	AA.myA->printCanvas("hAsym_A3");
 	printf("*** Corrected %s ***\n",tmp);
 	OM.addObject(AA.hAsym->Clone(("hAsym_Corrected_"+ctos(choiceLetter(AA.anChoice))).c_str()));
+	
+	
+	// corrected+uncorrected drawing
+	AA.hAsym->GetYaxis()->SetRangeUser(-0.16,-0.08);
+	AA.hAsym->GetYaxis()->SetTitleOffset(1.7);
+	AA.hAsym->Draw("E0");
+	hA_unc->SetMarkerStyle(20);
+	hA_unc->SetMarkerSize(0.35);
+	hA_unc->Draw("HIST SAME P");
+	AA.myA->printCanvas("hAsym_Comparison");
+	delete hA_unc;
 	
 	// manual bins averaging
 	double statw = 0;
@@ -194,7 +216,8 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcB
 		sumc[i]/=statw;
 		sumcerr[i]/=statw;
 	}
-	printf("\n\n%i-%i STATISTICS: %.6f +- %.6f\n",R0,R1,mu,1./sqrt(statw));
+	printf("\n\n---------------- %i - %i keV window ----------------\n",int(emin),int(emax));
+	printf("\n%i-%i STATISTICS: %.6f +- %.6f\n",R0,R1,mu,1./sqrt(statw));
 	Stringmap m3;
 	m3.insert("anChoice",ctos(choiceLetter(AA.anChoice)));
 	for(unsigned int i=0; i<ctable.size(); i++) {
@@ -228,15 +251,15 @@ void doFullCorrections(AsymmetryAnalyzer& AA, OutputManager& OM, std::string mcB
 void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string& simin, const std::string& outDir, bool oldCorr) {
 	for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_E; ++a) {
 		OctetAnalyzer OAdat(&OM, "DataCorrector", datin);
-		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(&OAdat);
+		AsymmetryPlugin* AAdat = new AsymmetryPlugin(&OAdat);
 		AAdat->anChoice = a;
 		OAdat.addPlugin(AAdat);
 		
 		OctetAnalyzer OAsim(&OM, "Corr_Anchoice_"+ctos(choiceLetter(a)), simin);
-		AsymmetryAnalyzer* AAsim = new AsymmetryAnalyzer(&OAsim);
+		AsymmetryPlugin* AAsim = new AsymmetryPlugin(&OAsim);
 		AAsim->anChoice = a;
 		OAsim.addPlugin(AAsim);
-		SimAsymmetryAnalyzer* SAAsim = new SimAsymmetryAnalyzer(&OAsim);
+		SimAsymmetryPlugin* SAAsim = new SimAsymmetryPlugin(&OAsim);
 		OAsim.addPlugin(SAAsim);
 		
 		std::vector<TH1*> asymStages = oldCorr?SAAsim->calculateCorrectionsOld(*AAsim):SAAsim->calculateCorrections(*AAdat,*AAsim);
@@ -294,10 +317,10 @@ void calcMCCorrs(OutputManager& OM, const std::string& datin, const std::string&
 
 void compareMCs(OutputManager& OM, const std::string& sim0, const std::string& sim1, const std::string& fOut) {
 	OctetAnalyzer OA0(&OM, "DataCorrector", sim0);
-	AsymmetryAnalyzer* AA0 = new AsymmetryAnalyzer(&OA0);
+	AsymmetryPlugin* AA0 = new AsymmetryPlugin(&OA0);
 	OA0.addPlugin(AA0);
 	OctetAnalyzer OA1(&OM, "DataCorrector", sim1);
-	AsymmetryAnalyzer* AA1 = new AsymmetryAnalyzer(&OA1);
+	AsymmetryPlugin* AA1 = new AsymmetryPlugin(&OA1);
 	OA1.addPlugin(AA1);
 	
 	AA1->anChoice = AA0->anChoice;
@@ -358,6 +381,14 @@ ErrTables::~ErrTables() {
 			delete S[s][afp];
 }
 
+ double ErrTables::energyErrorEnvelope(double e, unsigned int year) const {
+ 	assert(year==2010);
+	double err = e*0.0125;
+	if(err<2.5) return 2.5;
+	if(err>500*0.0125) return 500*0.0125;
+	return err;
+ }
+
 double ErrTables::getRexp(double e) const {
 	return (S[EAST][AFP_OFF]->Eval(e)*S[WEST][AFP_ON]->Eval(e) /
 			(S[EAST][AFP_ON]->Eval(e)*S[WEST][AFP_OFF]->Eval(e)));
@@ -399,6 +430,23 @@ void ErrTables::pedShiftsTable(double delta) {
 					 (S[EAST][AFP_ON]->Eval(e-delta)*S[WEST][AFP_OFF]->Eval(e)));
 		double Ap = AofR(Rp);
 		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,0.,(A-Ap)/A);
+	}
+	fclose(f);
+}
+
+void ErrTables::eLinearityTable(unsigned int yr) {
+	// this doesn't work! too much statistical scatter in asymmetry data. Use smooth fit to asymmetry, instead.
+	FILE* f = fopen((getEnvSafe("UCNA_AUX")+"/Corrections/EnergyLinearity_"+itos(yr)+".txt").c_str(),"w");
+	fprintf(f,"# Energy reconstruction errors for %i error envelope, using observed spectra\n",yr);
+	fprintf(f,"#\n#E_lo\tE_hi\tcorrection\tuncertainty\n");
+	for(unsigned int b=0; b<800; b+=10) {
+		double e = b+5.;
+		double A = getAexp(e);
+		double ee = e+energyErrorEnvelope(e,yr)*0.01;
+		double Rp = (S[EAST][AFP_OFF]->Eval(ee)*S[WEST][AFP_ON]->Eval(ee) /
+					 (S[EAST][AFP_ON]->Eval(ee)*S[WEST][AFP_OFF]->Eval(ee)));
+		double Ap = AofR(Rp);
+		fprintf(f,"%i\t%i\t%g\t%g\n",b,b+10,0.,100*(A-Ap)/A);
 	}
 	fclose(f);
 }

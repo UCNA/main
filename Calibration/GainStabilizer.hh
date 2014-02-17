@@ -30,6 +30,8 @@ public:
 	ChrisGainStabilizer(RunNum myRun, CalDB* cdb, LinearityCorrector* myCorrecter);
 	/// compute gain stabilization factor for given side, PMT
 	virtual float gmsFactor(Side s, unsigned int t, float time) const;
+	/// get a summary of GMS calibration parameters
+	virtual Stringmap gmsSummary() const;
 	/// print gain stabilization info
 	virtual void printSummary();
 protected:

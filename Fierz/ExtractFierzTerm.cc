@@ -528,8 +528,8 @@ int main(int argc, char *argv[])
 			
 			// print out event info, (simulated) reconstructed true energy and position, comparable to values in data
 			#ifdef DEBUG
-			printf("Event on side %c: type=%i, Etrue=%g @ position (%g,%g), %d\n",
-				   sideNames(s), tp, G2P.getEtrue(), G2P.wires[s][X_DIRECTION].center, 
+			printf("Event on side %c: type=%i, Erecon=%g @ position (%g,%g), %d\n",
+				   sideNames(s), tp, G2P.getErecon(), G2P.wires[s][X_DIRECTION].center, 
 				   G2P.wires[s][Y_DIRECTION].center, (unsigned)G2P.getAFP());
 
 			// print out event primary info, only available in simulation
@@ -540,7 +540,7 @@ int main(int argc, char *argv[])
 			bool load = (nSimmed % 100 < loading_prob);
 
 			// calculate the energy with a distortion factor
-			double energy = scale_x * G2P.getEtrue();
+			double energy = scale_x * G2P.getErecon();
             mc.sm_histogram[s][load]->Fill(energy, 1);
 
 			tntuple->Fill(s, load, energy);

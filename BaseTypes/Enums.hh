@@ -7,7 +7,6 @@
 #include <string>
 
 #define nBetaTubes 4
-#define PI 3.1415926535
 
 /// detector side specification
 enum Side {
@@ -64,20 +63,16 @@ enum RunType {
 /// 0 -> not in octet
 /// 1...12 -> A1...A12
 /// 13...24 -> B1...B12
-typedef unsigned int OctetType;
-
-/// types of beta/background/depol triads
-enum TriadType {
-	TRIAD_NONE		= 0,		//< not part of a triad
-	TRIAD_A010203	= 1,	//< A1-A3 triad
-	TRIAD_A040506	= 2,	//< A4-A6 triad
-	TRIAD_A070809	= 3,	//< A7-A9 triad
-	TRIAD_A101112	= 4,	//< A10-A12 triad
-	TRIAD_B010203	= 5,	//< B1-B3 triad
-	TRIAD_B040506	= 6,	//< B4-B6 triad
-	TRIAD_B070809	= 7,	//< B7-B9 triad
-	TRIAD_B101112	= 8		//< B10-B12 triad
+enum OctetRole {
+	OCTR_UNKNOWN	= 0,	//< unknown run type
+	OCTR_A1			= 1,	//< start of A octet
+	OCTR_A12		= 12,	//< end of A octet
+	OCTR_B1			= 13,	//< start of B octet
+	OCTR_B12		= 24,	//< end of B octet
+	OCTR_BG			= 25,	//< generic background run, undefined AFP
+	OCTR_FG			= 26	//< generic foreground run, undefined AFP
 };
+inline OctetRole& operator++(OctetRole& d) { return d = OctetRole(d+1); }
 
 /// state of AFP during run
 enum AFPState {
@@ -163,6 +158,9 @@ enum PID {
 	PID_PULSER = 4	//< tagged Bi pulser event
 };
 
+/// names for particle ID
+std::string pidWords(PID p);
+
 /// event backscattering types
 enum EventType {
 	TYPE_0_EVENT	= 0,	//< "Correct" events arrive on only one side of detector
@@ -177,5 +175,18 @@ inline EventType& operator++(EventType& tp) { return tp = EventType(tp+1); }
 
 /// names for event types
 std::string typeWords(EventType tp);
+
+/// enumeration for what signal to use for wirechamber energy reconstruction
+enum ChargeProxyType {
+	CHARGE_PROXY_NONE	= 0,	//< charge signal undefined
+	CHARGE_PROXY_ANODE	= 1,	//< use anode ADC for charge signal
+	CHARGE_PROXY_CCLOUD = 2		//< use cathode "charge cloud size" for charge signal
+};
+/// iteration to next charge type
+inline ChargeProxyType& operator++(ChargeProxyType& tp) { return tp = ChargeProxyType(tp+1); }
+/// string name for charge proxy
+std::string chargeProxyName(ChargeProxyType& tp);
+/// charge proxy from string
+ChargeProxyType strToChgPrx(const std::string& s);
 
 #endif

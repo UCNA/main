@@ -26,8 +26,6 @@ CREATE TABLE tube_calibration (
 	INDEX (ecal_id)
 );
 
-CREATE TABLE kurie_cal (run_number INT UNSIGNED, side ENUM('East','West'), quadrant INT UNSIGNED, energy DOUBLE, adc DOUBLE, INDEX (run_number) );
-
 # extra final gain calibration tweaks
 CREATE TABLE gain_tweak (
 	gain_tweak_id SERIAL,
@@ -60,16 +58,6 @@ CREATE TABLE posmap_set (
 	INDEX(posmap_set_id)
 );
 
-CREATE TABLE posmap_info (
-	posmap_info_id SERIAL,		# unique ID for this tube position map
-	posmap_set_id INT UNSIGNED,	# ID of position map set this belongs to
-	side ENUM('East','West'),	# tube side
-	quadrant INT UNSIGNED,		# tube quadrant
-	n_rings INT UNSIGNED,		# number of rings dividing position map
-	radius DOUBLE,				# radius of mapped region
-	INDEX(posmap_set_id)
-);
-
 # data points for each position map
 CREATE TABLE posmap_points (
 	posmap_point_id SERIAL,		# unique ID for this position map point
@@ -95,15 +83,28 @@ CREATE TABLE evis_conversion (
 	INDEX (start_run), INDEX(end_run), INDEX (side), INDEX (type)
 );
 
-# anode calibration
-CREATE TABLE anode_cal (
-	anode_cal_id SERIAL,			# unique ID
-	start_run INT UNSIGNED,			# starting run for calibration range
-	end_run INT UNSIGNED,			# ending run for calibration range
-	anode_posmap_id INT UNSIGNED,	# anode position response map
-	calfactor_E DOUBLE,				# East calibration factor
-	calfactor_W DOUBLE,				# West calibration factor
-	INDEX(start_run), INDEX(end_run)
+# wirechamber energy calibration
+CREATE TABLE mwpc_ecal (
+	mwpc_ecal_id SERIAL,				# unique ID
+	start_run INT UNSIGNED,				# starting run for calibration range
+	end_run INT UNSIGNED,				# ending run for calibration range
+	side ENUM('East','West'),			# side for calibration
+	charge_meas ENUM('anode','ccloud'),	# charge measure calibrated, anode or cathode charge cloud
+	gain_posmap_id INT UNSIGNED,		# gain position map ID for eta_Q
+	gain_factor DOUBLE,					# gain correction factor g_Q
+	priority INT,						# priority when multiple methods specified (prefer higher)
+	INDEX(start_run,end_run,side)
+);
+
+# cathode to charge cloud scaling factors
+CREATE TABLE cath_ccloud_scale (
+	cath_ccloud_scale_id SERIAL,		# unique ID
+	start_run INT UNSIGNED,				# starting run for calibration range
+	end_run INT UNSIGNED,				# ending run for calibration range
+	side ENUM('East','West'),			# side for calibration
+	plane ENUM('X','Y'),				# which cathode plane to consider
+	gain_graph_id INT UNSIGNED,			# graph containing g_i g_CC gain factor for each segment
+	INDEX(start_run,end_run,side,plane)
 );
 
 # cathode calibration sets
@@ -248,7 +249,7 @@ CREATE TABLE cut_spec (
 
 # generic analysis results
 CREATE TABLE analysis_results (
-	analsysis_results_id SERIAL,			# unique ID for this result
+	analysis_results_id SERIAL,				# unique ID for this result
 	author ENUM('MPM','RWP','BZ'),			# person generating result
 	date DATETIME,							# result generation date
 	type ENUM('Asymmetry','Counts'),		# type of result
