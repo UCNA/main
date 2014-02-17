@@ -18,24 +18,61 @@
 #include "LinHistCombo.hh"
 #include "PostOfficialAnalyzer.hh"
 #include "BetaDecayAnalyzer.hh"
-#include "AnodePositionAnalyzer.hh"
+#include "WirechamberGainMapPlugins.hh"
 #include "AsymmetryCorrections.hh"
 #include <TColor.h>
 
 
 TRandom3 plRndSrc;
 
-void plotGMScorrections(const std::vector<RunNum>& runs, const std::string& foutPath) {
-	QFile fout(foutPath+"/GMS_Plot.txt",false);
+void dumpCalInfo(const std::vector<RunNum>& runs, QFile& Qout) {
 	for(unsigned int i=0; i<runs.size(); i++) {
 		PMTCalibrator LC(runs[i]);
 		Stringmap m = LC.calSummary();
 		printf("----- %i -----\n",runs[i]);
 		m.display();
-		fout.insert("gmsinfo",m);
+		Qout.insert("runcal",m);
 	}
-	fout.commit();
+	Qout.commit();
 }
+
+void dumpPosmap(QFile& qOut, PositioningCorrector& PCor, PMTCalibrator* PCal) {
+
+	for(Side s = EAST; s<=WEST; ++s) {
+		
+		unsigned int nMaps = PCor.getNMaps(s);
+		for(unsigned int t=0; t<nMaps; t++) {
+			
+			const SectorCutter& psects = PCor.getSectors(s,t);
+			
+			Stringmap sm = SCtoSM(psects);
+			sm.insert("side",sideSubst("%c",s));
+			sm.insert("tube",itos(t));
+			qOut.insert("SectorCutter",sm);
+			
+			for(unsigned int n=0; n<psects.nSectors(); n++) {
+				
+				float x,y;
+				psects.sectorCenter(n,x,y);
+				
+				Stringmap m;
+				m.insert("side",ctos(sideNames(s)));
+				m.insert("tube",itos(t));
+				m.insert("sector",n);
+				m.insert("x",x);
+				m.insert("y",y);
+				if(t<nBetaTubes)
+					m.insert("light",PCor.eval(s,t,x,y,true));
+				if(PCal && nMaps>=nBetaTubes)
+					m.insert("nPE",PCal->nPE(s, t, 1000, x, y, 0));
+				m.insert("energy",1.0);
+				
+				qOut.insert("PosmapPoint",m);
+			}
+		}
+	}
+}
+
 
 void dumpPosmap(std::string basepath, unsigned int pnum) {
 	
@@ -56,34 +93,7 @@ void dumpPosmap(std::string basepath, unsigned int pnum) {
 	
 	makePath(basepath);
 	QFile fout(basepath+"/Posmap_"+itos(pnum)+".txt",false);
-	
-	for(Side s = EAST; s<=WEST; ++s) {
-		for(unsigned int t=0; t<PCor->getNMaps(s); t++) {
-			
-			SectorCutter& psects = PCor->getSectors(s,t);
-			
-			for(unsigned int n=0; n<psects.nSectors(); n++) {
-				
-				float x,y;
-				psects.sectorCenter(n,x,y);
-				
-				Stringmap m;
-				m.insert("side",ctos(sideNames(s)));
-				m.insert("tube",itos(t));
-				m.insert("sector",n);
-				m.insert("x",x);
-				m.insert("y",y);
-				if(t<nBetaTubes)
-					m.insert("light",PCor->eval(s,t,x,y,true));
-				else
-					m.insert("light",PCal->nPE(s, nBetaTubes, 1000, x, y, 0));
-				m.insert("energy",1.0);
-				
-				fout.insert("PosmapPoint",m);
-			}
-		}
-		
-	}
+	dumpPosmap(fout, *PCor, PCal);
 	fout.commit();
 }
 
@@ -188,6 +198,7 @@ void makeCorrectionsFile(int A, int Z, double Endpt, double M2_F, double M2_GT) 
 	BetaSpectrumGenerator BSG(A,Z,Endpt);
 	BSG.M2_F = M2_F;
 	BSG.M2_GT = M2_GT;
+	if(A==1 && Z==1) { BSG.M2_F = 1; BSG.M2_GT = 3; } // neutron case
 		
 	QFile Q;
 	Stringmap sm;
@@ -217,10 +228,10 @@ void makeCorrectionsFile(int A, int Z, double Endpt, double M2_F, double M2_GT) 
 		m.insert("ACm1",WilkinsonAC(Z,W,BSG.W0,BSG.R)-1.0);
 		m.insert("Cm1",CombinedC(Z,W,M2_F,M2_GT,BSG.W0,BSG.R)-1.0);
 		m.insert("Qm1",WilkinsonQ(Z,W,BSG.W0,BSG.M0)-1.0);
-		m.insert("g",Wilkinson_g(W,BSG.W0));
-		m.insert("gS",Sirlin_g(e,Endpt));
-		m.insert("hmg",shann_h_minus_g(W,BSG.W0));
-		m.insert("h",shann_h(e,Endpt));
+		m.insert("g",Wilkinson_g_a2pi(W,BSG.W0,BSG.M0));
+		m.insert("gS",Sirlin_g_a2pi(e,Endpt));
+		m.insert("hmg",shann_h_minus_g_a2pi(W,BSG.W0));
+		m.insert("h",shann_h_a2pi(e,Endpt));
 		m.insert("RWM",WilkinsonACorrection(W));
 		m.insert("S0",plainPhaseSpace(W,BSG.W0));
 		m.insert("S",BSG.decayProb(e));
@@ -268,7 +279,7 @@ TH2F* PosPlotter::makeHisto(const std::string& nm, const std::string& title) {
 
 void PosPlotter::npePlot(PMTCalibrator* PCal) {
 	
-	SectorCutter& Sects = PCal->P->getSectors(EAST,0);
+	const SectorCutter& Sects = PCal->P->getSectors(EAST,0);
 	r0 = Sects.r;
 	
 	float e0 = 1000;
@@ -296,7 +307,7 @@ void PosPlotter::npePlot(PMTCalibrator* PCal) {
 
 void PosPlotter::npeGradPlot(PMTCalibrator* PCal) {
 	
-	SectorCutter& Sects = PCal->P->getSectors(EAST,0);
+	const SectorCutter& Sects = PCal->P->getSectors(EAST,0);
 	r0 = Sects.r;
 	
 	for(Side s = EAST; s<=WEST; ++s) {
@@ -318,7 +329,7 @@ void PosPlotter::npeGradPlot(PMTCalibrator* PCal) {
 				interpogrid->SetBinContent(nx,ny,100.0*gd);
 			}
 			gradsum = sqrt(gradsum/nn);
-			printf("**** %c%i RMS gradient = %g 1/mm ****\n",sideNames(s),t,gradsum);
+			printf("**** %c%i RMS gradient/light = %g 1/mm ****\n",sideNames(s),t,gradsum);
 			interpogrid->Draw("COL Z");
 			drawSectors(Sects,6);
 			OM->printCanvas(sideSubst("Posmap_Grad_%c",s)+itos(t));
@@ -326,15 +337,82 @@ void PosPlotter::npeGradPlot(PMTCalibrator* PCal) {
 	}
 }
 
-void PosPlotter::etaPlot(PositioningCorrector* P, double axisRange) {
+void PosPlotter::diffPlot(const PositioningCorrector& P1, const PositioningCorrector& P2, double zRange) {
+	const SectorCutter& Sects = P1.getSectors(EAST,0);
+	r0 = Sects.r;
 	
-	SectorCutter& Sects = P->getSectors(EAST,0);
+	for(Side s = EAST; s<=WEST; ++s) {
+		assert(P1.getNMaps(s)==P2.getNMaps(s));
+		for(unsigned int t=0; t<P1.getNMaps(s); t++) {
+			std::string hTitle = sideSubst("Position Maps %c",s)+itos(t+1)+" Difference";
+			TH2F* interpogrid = makeHisto(sideSubst("%c ",s)+itos(t+1), hTitle);
+			interpogrid->SetAxisRange(-zRange,zRange,"Z");
+			startScan(interpogrid);
+			unsigned int npts = 0;
+			double sx = 0;
+			double sxx = 0;
+			while(nextPoint()) {
+				double z1 = P1.eval(s, t, x, y, true);
+				double dx = 100.0*(z1-P2.eval(s, t, x, y, true))/z1;
+				sx += dx;
+				sxx += dx*dx;
+				npts++;
+				dx = dx>zRange ? zRange:(dx<-zRange ? -zRange:dx);
+				interpogrid->SetBinContent(nx,ny,dx);
+				
+			}
+			sx /= npts;
+			sxx /= npts;
+			printf("%c%i RMS %% difference: %.3f\n",sideNames(s),t,sqrt(sxx-sx*sx));
+			interpogrid->Draw("COL Z");
+			drawSectors(Sects,6);
+			OM->printCanvas(sideSubst("PosmapDiff_%c",s)+itos(t));
+		}
+	}
+}
+
+void PosPlotter::npeDiffPlot(const PMTCalibrator& P1, const PMTCalibrator& P2) {
+	const SectorCutter& Sects = P1.P->getSectors(EAST,0);
+	r0 = Sects.r;
+	for(Side s = EAST; s<=WEST; ++s) {
+		TH2F* interpogrid = makeHisto(sideSubst("npe_diff_%c",s),"nPE difference");
+		interpogrid->SetAxisRange(-4,4,"Z");
+		unsigned int npts = 0;
+		double sx = 0;
+		double sxx = 0;
+		startScan(interpogrid);
+		while(nextPoint()) {
+			float n1 = P1.nPE(s,nBetaTubes,1000,x,y);
+			float n2 = P2.nPE(s,nBetaTubes,1000,x,y);
+			float pdif = 100.*(n1-n2)/n1;
+			sx += pdif;
+			sxx += pdif*pdif;
+			npts++;
+			interpogrid->SetBinContent(nx,ny,n1-n2);
+		}
+		sx /= npts;
+		sxx /= npts;
+		printf("%c RMS nPE %% difference: %.3f\n",sideNames(s),sqrt(sxx-sx*sx));
+		interpogrid->Draw("COL Z");
+		drawSectors(Sects,6);
+		OM->printCanvas(sideSubst("PosmapEtaDiff_%c",s));
+	}
+}
+
+void PosPlotter::etaPlot(PositioningCorrector* P, double z0, double z1) {
+	
+	const SectorCutter& Sects = P->getSectors(EAST,0);
 	r0 = Sects.r;
 	
 	for(Side s = EAST; s<=WEST; ++s) {
 		for(unsigned int t=0; t<P->getNMaps(s); t++) {
-			TH2F* interpogrid = makeHisto(sideSubst("%c ",s)+itos(t+1), sideSubst("%s PMT ",s)+itos(t+1)+" Light Transport");
-			interpogrid->SetAxisRange(0,axisRange,"Z");
+			std::string hTitle = sideSubst("%s PMT ",s)+itos(t+1)+" Light Transport";
+			if(P->getNMaps(s) == 1) {
+				P->setNormAvg();
+				hTitle = sideSubst("%s MWPC Charge Scaling", s);
+			}
+			TH2F* interpogrid = makeHisto(sideSubst("%c ",s)+itos(t+1), hTitle);
+			interpogrid->SetAxisRange(z0,z1,"Z");
 			
 			startScan(interpogrid);
 			while(nextPoint())
@@ -451,7 +529,7 @@ void decomposeXenon(RunNum rn, bool includeFast) {
 	while(POA.nextPoint()) {
 		Side s = POA.fSide;
 		if(POA.fPID == PID_BETA && POA.fType <= TYPE_III_EVENT && (s==EAST || s==WEST) && POA.radius(s)<fidrad)
-			hSpec->Fill(POA.getEtrue());
+			hSpec->Fill(POA.getErecon());
 	}
 	
 	SectorCutter SC(5,fidrad);
@@ -473,7 +551,7 @@ void decomposeXenon(RunNum rn, bool includeFast) {
 			g2p.nextPoint();
 			Side s = g2p.fSide;
 			if(g2p.fPID == PID_BETA && g2p.fType <= TYPE_III_EVENT && (s==EAST || s==WEST) && g2p.radius(s)<50.)
-				hSim->Fill(g2p.getEtrue());
+				hSim->Fill(g2p.getErecon());
 		}
 		hIsot.push_back((TH1F*)hSim->Clone());
 		LHC.addTerm(hSim);
@@ -539,31 +617,10 @@ void lowStatsTest() {
 
 //-------------------------------------------------------------//
 
-void NGBGSpectra(std::string datname) {
-	OutputManager OM("NGBG",getEnvSafe("UCNA_ANA_PLOTS")+"/NGBG/");
-	G4toPMT g2p;
-	g2p.addFile(getEnvSafe("G4WORKDIR")+"/output/"+datname+"/analyzed_*.root");
-	g2p.setAFP(AFP_OFF);
-	g2p.weightAsym = false;
-	PMTCalibrator PCal(15668);
-	g2p.setCalibrator(PCal);
-	
-	
-	SimBetaDecayAnalyzer AH(&OM,datname);
-	AH.loadSimData(g2p);
-	
-	AH.calculateResults();
-	AH.makePlots();
-	AH.write();
-	AH.setWriteRoot(true);
-}
-
-//-------------------------------------------------------------//
-
 void separate23(std::string simName) {
 	OutputManager OM("23Separation",getEnvSafe("UCNA_ANA_PLOTS")+"/test/23Separation_"+simName+"/");
 	RunAccumulator RA(&OM, "RunAccumulator", getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_"+simName+"/OctetAsym_Offic_"+simName);
-	WirechamberSimTypeID* WS = new WirechamberSimTypeID(&RA);
+	WirechamberSimBackscattersPlugin* WS = new WirechamberSimBackscattersPlugin(&RA);
 	RA.addPlugin(WS);
 	WS->make23SepInfo(OM);
 	OM.write();
@@ -574,9 +631,9 @@ void separate23(std::string simName) {
 void refitXeAnode(std::string datname) {
 	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/test/");
 	RunAccumulator RA(&OM, "RunAccumulator", datname);
-	AnodePositionAnalyzer* AP = new AnodePositionAnalyzer(&RA,0);
+	AnodeGainMapPlugin* AP = new AnodeGainMapPlugin(&RA,0);
 	RA.addPlugin(AP);
-	AP->genAnodePosmap();
+	AP->genPosmap("anode");
 }
 
 //-------------------------------------------------------------//
@@ -584,7 +641,7 @@ void refitXeAnode(std::string datname) {
 void calcAnalysisChoices(OutputManager& OM, const std::string& inflname) {
 	for(AnalysisChoice ac = ANCHOICE_A; ac <= ANCHOICE_K; ++ac) {
 		OctetAnalyzer OA(&OM, "Anchoice_"+ctos(choiceLetter(ac)), inflname);
-		AsymmetryAnalyzer* AA = new AsymmetryAnalyzer(&OA);
+		AsymmetryPlugin* AA = new AsymmetryPlugin(&OA);
 		AA->anChoice = ac;
 		OA.addPlugin(AA);
 		OA.calculateResults();
@@ -607,12 +664,12 @@ void paperDataPlot() {
 	rWeights.push_back(0.59);
 	rWeights.push_back(0.41);
 	
-	std::vector<AsymmetryAnalyzer*> rAsyms;
+	std::vector<AsymmetryPlugin*> rAsyms;
 	
 	double tWeight = 0;
 	for(unsigned int n=0; n<rPaths.size(); n++) {
 		OctetAnalyzer* OAdat = new OctetAnalyzer(&OM, "DataCorrector", rPaths[n]+"/OctetAsym_Offic");
-		AsymmetryAnalyzer* AAdat = new AsymmetryAnalyzer(OAdat);
+		AsymmetryPlugin* AAdat = new AsymmetryPlugin(OAdat);
 		OAdat->addPlugin(AAdat);
 		AAdat->anChoice = ANCHOICE_C;
 		doFullCorrections(*AAdat,OM);
@@ -632,11 +689,11 @@ void paperDataPlot() {
 		rAsyms.push_back(AAdat);
 	}
 	
-	AsymmetryAnalyzer* AA = rAsyms.back();
+	AsymmetryPlugin* AA = rAsyms.back();
 	
 	// simulation data for comparison
 	OctetAnalyzer* OAsim = new OctetAnalyzer(&OM, "DataCorrector", getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic_Sim0823_4x/OctetAsym_Offic_Sim0823_4x");
-	AsymmetryAnalyzer* AAsim = new AsymmetryAnalyzer(OAsim);
+	AsymmetryPlugin* AAsim = new AsymmetryPlugin(OAsim);
 	OAsim->addPlugin(AAsim);
 	AAsim->anChoice = ANCHOICE_C;
 	doFullCorrections(*AAsim,OM);

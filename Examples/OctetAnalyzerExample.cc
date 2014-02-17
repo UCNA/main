@@ -17,10 +17,10 @@ void ExampleAnalyzerPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weig
 
 void ExampleAnalyzerPlugin::calculateResults() {
 	// form (blinded) super-ratio and super-sum of anode spectra
-	hAnodeSR = (TH1F*)calculateSR("Wirechamber_Energy_Asymmetry",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
+	hAnodeSR = calculateSR("Wirechamber_Energy_Asymmetry",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
 	hAnodeSR->SetMinimum(-0.20);
 	hAnodeSR->SetMaximum(0.0);
-	hAnodeSS = (TH1F*)calculateSuperSum("Wirechamber_Energy_SuperSum",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
+	hAnodeSS = calculateSuperSum("Wirechamber_Energy_SuperSum",qAnodeSpectrum[EAST],qAnodeSpectrum[WEST]);
 }
 
 void ExampleAnalyzerPlugin::makePlots() {
@@ -45,8 +45,6 @@ void ExampleAnalyzerPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 	printCanvas("DataComparison/Wirechamber_Energy_Asymmetry");
 }
 
-std::string OctetAnalyzerExample::processedLocation = "";	// set this later depending on situtation
-
 int main(int argc, char *argv[]) {
 	
 	if(argc != 2) {
@@ -60,7 +58,7 @@ int main(int argc, char *argv[]) {
 	// environment variable "UCNA_ANA_PLOTS" needs to be set to an ouput directory where you keep analysis results
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 	// after running once, we can use the results for errorbar estimation in low-count background bins on later scans
-	OctetAnalyzerExample::processedLocation = OM.basePath+"/Anode_Asymmetry_Example/Anode_Asymmetry_Example";
+	RunAccumulator::processedLocation = OM.basePath+"/Anode_Asymmetry_Example/Anode_Asymmetry_Example";
 
 	if(std::string(argv[1])=="scan") {
 		

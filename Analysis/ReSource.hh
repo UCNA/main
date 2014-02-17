@@ -24,6 +24,7 @@ public:
 	
 	TH1F* hTubes[nBetaTubes+1][TYPE_III_EVENT+1];		//< calibrated PMT energy spectra by event type
 	TH1F* hTubesRaw[nBetaTubes+1];						//< raw ADC energy spectra
+	TH1F* hErec;										//< total reconstructed energy histogram
 	std::vector<SpectrumPeak> tubePeaks[nBetaTubes+1];	//< found peaks for each PMT
 	TH1F* hitPos[2];									//< x,y hit profiles
 				 

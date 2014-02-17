@@ -25,6 +25,8 @@ public:
 	float getPedestal(const std::string& sensorName, float time);
 	/// get sensor pedestal at given time from beginning of run
 	float getPedwidth(const std::string& sensorName, float time);
+	/// get pedestal values summary
+	Stringmap getPedSummary(const std::string& sensorName, const std::string& baseKey) const;
 	
 	RunNum myRun;			//< run number for this run
 	float totalTime;		//< run time for this run

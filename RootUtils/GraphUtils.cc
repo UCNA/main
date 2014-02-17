@@ -1,8 +1,10 @@
 #include "GraphUtils.hh"
 #include "strutils.hh"
+#include "SMExcept.hh"
 #include <cassert>
 #include <math.h> 
 #include <TROOT.h>
+#include <TMath.h>
 #include <TDirectory.h>
 #include <cfloat>
 
@@ -73,6 +75,56 @@ TGraphErrors* TH1toTGraph(const TH1& h) {
 	return g;
 }
 
+TGraphErrors* TProf2TGraph(const TProfile& P, unsigned int minpts) {
+	TGraphErrors* g = new TGraphErrors(P.GetNbinsX()-2);
+	unsigned int ig = 0;
+	for(int i=0; i<P.GetNbinsX()-2; i++) {
+		if(P.GetBinEntries(i+1)<minpts) continue;
+		g->SetPoint(ig,P.GetBinCenter(i+1),P.GetBinContent(i+1));
+		g->SetPointError(ig,0.0,P.GetBinError(i+1));
+		ig++;
+	}
+	while(g->GetN()>(int)ig) g->RemovePoint(ig);
+	return g;
+}
+
+void comboErr(double a, double da, double b, double db, double& x, double& dx) {
+	da *= da;
+	db *= db;
+	if(!da) da = 1e-16;
+	if(!db) db = 1e-16;
+	double nrm = 1./(1./da+1./db);
+	x = (a/da+b/db)*nrm;
+	dx = sqrt(nrm);
+}
+
+void accumPoints(TGraphErrors& a, const TGraphErrors& b, bool errorWeight, bool yonly) {
+	assert(a.GetN()==b.GetN());
+	for(int i=0; i<a.GetN(); i++) {
+		double ax,ay,bx,by;
+		a.GetPoint(i,ax,ay);
+		b.GetPoint(i,bx,by);
+		double dax = a.GetErrorX(i);
+		double day = a.GetErrorY(i);
+		double dbx = b.GetErrorX(i);
+		double dby = b.GetErrorY(i);
+		if(errorWeight) {
+			double x,dx,y,dy;
+			comboErr(ax, dax, bx, dbx, x, dx);
+			comboErr(ay, day, by, dby, y, dy);
+			if(!yonly) a.SetPoint(i,x,y);
+			a.SetPointError(i,dx,dy);
+		} else {
+			if(yonly) {
+				a.SetPoint(i,ax,ay+by);
+				a.SetPointError(i,dax,sqrt(day*day+dby*dby));
+			} else {
+				a.SetPoint(i,ax+bx,ay+by);
+				a.SetPointError(i,sqrt(dax*dax+dbx*dbx),sqrt(day*day+dby*dby));
+			}
+		}
+	}
+}
 
 TH1F* cumulativeHist(const TH1F& h, bool normalize) {
 	TH1F* c = new TH1F(h);
@@ -404,5 +456,74 @@ void histoverlap(const TH1& h1, const TH1& h2, double& o, double& xdiv) {
 	o = csum[bmn];
 	xdiv = h1.GetBinLowEdge(bmn+1);
 	delete[] csum;
+}
+
+//-------------------------------------------------------------------
+
+
+TF1_Quantiles::TF1_Quantiles(TF1& f): npx(f.GetNpx()), xMin(f.GetXmin()), xMax(f.GetXmax()), dx((xMax-xMin)/npx),
+integral(npx+1), alpha(npx), beta(npx), gamma(npx) {
+	
+	assert(npx);
+	
+	integral[0] = 0;
+	Int_t intNegative = 0;
+	for (unsigned int i = 0; i < npx; i++) {
+	  Double_t integ = f.Integral(Double_t(xMin+i*dx),Double_t(xMin+i*dx+dx));
+	  if (integ < 0) {intNegative++; integ = -integ;}
+	  integral[i+1] = integral[i] + integ;
+	}
+	
+	const Double_t total = integral[npx];
+	
+	if (intNegative > 0 || !total) {
+		SMExcept e("bad_probability_distribution");
+		e.insert("integral",total);
+		e.insert("negative_segs",intNegative);
+		throw(e);
+	}
+	
+	// normalize integral to CDF
+	for (unsigned int i = 1; i <= npx; i++) integral[i] /= total;
+
+	//the integral r for each bin is approximated by a parabola
+	//  x = alpha + beta*r +gamma*r**2
+	// compute the coefficients alpha, beta, gamma for each bin
+	for (unsigned int i = 0; i < npx; i++) {
+		const Double_t x0 = xMin+dx*i;
+		const Double_t r2 = integral[i+1]-integral[i];
+		const Double_t r1 = f.Integral(x0,x0+0.5*dx)/total;
+		gamma[i] = (2*r2-4*r1)/(dx*dx);
+		beta[i]  = r2/dx-gamma[i]*dx;
+		alpha[i] = x0;
+		gamma[i] *= 2;
+	}
+}
+
+double TF1_Quantiles::eval(double p) const {
+
+	UInt_t bin  = TMath::Max(TMath::BinarySearch(npx+1,integral.GetArray(),p),(Long64_t)0);
+	// LM use a tolerance 1.E-12 (integral precision)
+	while (bin < npx-1 && TMath::AreEqualRel(integral[bin+1], p, 1E-12) ) {
+		if (TMath::AreEqualRel(integral[bin+2], p, 1E-12) ) bin++;
+		else break;
+	}
+
+	const Double_t rr = p-integral[bin];
+	Double_t x;
+	if (rr != 0.0) {
+		Double_t xx = 0.0;
+		const Double_t fac = -2.*gamma[bin]*rr/beta[bin]/beta[bin];
+		if (fac != 0 && fac <= 1)
+		xx = (-beta[bin]+TMath::Sqrt(beta[bin]*beta[bin]+2*gamma[bin]*rr))/gamma[bin];
+		else if (beta[bin] != 0.)
+		xx = rr/beta[bin];
+		x = alpha[bin]+xx;
+	} else {
+		x = alpha[bin];
+		if (integral[bin+1] == p) x += dx;
+	}
+    
+	return x;
 }
 

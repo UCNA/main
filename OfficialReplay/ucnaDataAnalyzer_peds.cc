@@ -38,7 +38,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 		convertReadin();
 		calibrateTimes();
 		for(Side s = EAST; s <= WEST; ++s) {
-			if(isUCNMon() || iSis00==(s==EAST?2:1)) {
+			if(isUCNMon() || SIS00==(s==EAST?2:1)) {
 				pmtTimes[s].push_back(fTimeScaler[BOTH]);
 				for(unsigned int t=0; t<nBetaTubes; t++)
 					pmtPeds[s][t].push_back(sevt[s].adc[t]);
@@ -72,11 +72,11 @@ void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const
 	
 	printf("Monitoring data '%s'\n",mon_name.c_str());
 	// collect data
-	unsigned int npts = vdata.size();
+	Size_t npts = vdata.size();
 	assert(vtime.size()==npts); assert(npts);
 	float t0 = vtime[0];
 	float t1 = vtime.back();
-	printf("\tfound %i points over %.2f minutes.\n",npts,(t1-t0)/60.0);
+	printf("\tfound %i points over %.2f minutes.\n",(int)npts,(t1-t0)/60.0);
 	// determine data division
 	unsigned int ndivs = (unsigned int)((t1-t0)/tmin);
 	if(npts/cmin < ndivs)
@@ -97,6 +97,8 @@ void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const
 	
 	// extract pedestal in each interval
 	defaultCanvas->cd();
+	defaultCanvas->SetLeftMargin(0.13);
+	defaultCanvas->SetRightMargin(0.04);
 	TGraph* tg = new TGraph(ndivs>1?ndivs:2);
 	TGraph* tgw = new TGraph(ndivs>1?ndivs:2);
 	std::vector<double> times;
@@ -117,10 +119,19 @@ void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const
 		int x0 = int(c-graphWidth);
 		int x1 = int(c+graphWidth);
 		TH1F* hdiv = registeredTH1F(mon_name+"_Mon_Div_"+itos(i),mon_name+" Pedestals",x1-x0,x0,x1);
+		hdiv->GetXaxis()->SetTitle("ADC Channel");
+		hdiv->GetYaxis()->SetTitle("Rate [Hz/channel]");
+		hdiv->GetYaxis()->SetTitleOffset(1.3);
+#ifdef PUBLICATION_PLOTS
+		hdiv->SetTitle("");
+#endif
+		float t0 = vtime[n];
 		while(n<npts && n <= float((i+1)*npts)/float(ndivs)) {
 			hdiv->Fill(vdata[n]);
 			n++;
 		}
+		float t1 = vtime[n];
+		hdiv->Scale(1./hdiv->GetBinWidth(1)/(t1-t0));
 		hToPlot.push_back(hdiv);
 		centers.push_back(hdiv->GetMean());
 		sigmas.push_back(hdiv->GetRMS());

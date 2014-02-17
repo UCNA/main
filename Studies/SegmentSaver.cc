@@ -44,7 +44,7 @@ TH1* SegmentSaver::registerSavedHist(const std::string& hname, const TH1& hTempl
 }
 
 SegmentSaver::SegmentSaver(OutputManager* pnt, const std::string& nm, const std::string& inflName):
-OutputManager(nm,pnt), ignoreMissingHistos(false), inflname(inflName), inflAge(0) {		
+OutputManager(nm,pnt), ignoreMissingHistos(false), inflname(inflName), isCalculated(false), inflAge(0) {
 	// open file to load existing data
 	fIn = (inflname.size())?(new TFile((inflname+".root").c_str(),"READ")):NULL;
 	assert(!fIn || !fIn->IsZombie());

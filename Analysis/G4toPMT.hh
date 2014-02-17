@@ -11,7 +11,9 @@ public:
 	G4toPMT(bool ext = false): Sim2PMT("anaTree"), extended(ext) { }
 	/// unit conversions
 	virtual void doUnits();
-		
+	/// set whether to simulate cathodes response
+	virtual void runCathodeSim(bool b = true);
+			
 protected:
 	/// set read points for input tree
 	virtual void setReadpoints();

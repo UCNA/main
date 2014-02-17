@@ -56,7 +56,9 @@ public:
 	/// action when selected
 	virtual void doIt(std::deque<std::string>& args, std::stack<std::string>& stack);
 	/// add new argument
-	virtual void addArg(std::string s, std::string dflt = "", namedInteractor* filter = NULL);
+	virtual void addArg(const std::string& s, const std::string& dflt = "", const std::string& descrip = "", namedInteractor* filter = NULL);
+	/// add new argument, assuming descriptions come from filter
+	virtual void addArg(namedInteractor* filter) { addArg("","","",filter); }
 	/// set argument parameters
 	virtual void setArgOpts(unsigned int i, std::string s, std::string dflt = "", namedInteractor* filter = NULL);
 	/// get option name
@@ -65,9 +67,10 @@ public:
 	virtual std::string getDescription();
 	
 protected:
-	std::vector<std::string> argNames;				//< names/descriptions of arguments
+	std::vector<std::string> argNames;				//< names of arguments
+	std::vector<std::string> argDescrips;			//< extended descriptions of arguments
 	std::vector<std::string> defaultArgs;			//< default values for arguments
-	std::vector<namedInteractor*> inputFilters;	//< input data filters
+	std::vector<namedInteractor*> inputFilters;		//< input data filters
 	void (*myFunc)(std::deque<std::string>&,std::stack<std::string>&);		//< function to do when selected
 };
 
@@ -101,7 +104,9 @@ public:
 	/// set catchall action
 	virtual void setCatchall(streamInteractor* I) { catchAll = I; }
 	/// prevent adding arguments (doesn't make sense in this context)
-	virtual void addArg(std::string, std::string, namedInteractor*) { assert(false); }
+	virtual void addArg(const std::string&, const std::string& = "", const std::string& = "", namedInteractor* = NULL) { assert(false); }
+	/// prevent adding arguments (doesn't make sense in this context)
+	virtual void addArg(namedInteractor*) { assert(false); }
 	/// add a synonym for an existing argument
 	virtual void addSynonym(std::string arg0, std::string syn);
 	/// set soft-matching function (set to NULL to disable soft matching)

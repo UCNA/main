@@ -78,7 +78,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 	TPhys->SetMaxVirtualSize(1000000);
 	
 	TPhys->Branch("TriggerNum",&iTriggerNumber,"TriggerNum/I");
-	TPhys->Branch("Sis00",&iSis00,"Sis00/I");
+	TPhys->Branch("Sis00",&SIS00,"Sis00/I");
 	TPhys->Branch("DeltaT",&fDelt0,"DeltaT/F");
 	TPhys->Branch("EvtN",&currentEvent,"EvtN/I");
 	
@@ -94,7 +94,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 			TPhys->Branch((d==X_DIRECTION?sideSubst("x%cmpm",s):sideSubst("y%cmpm",s)).c_str(),
 						  &wirePos[s][d],"center/F:width/F:maxValue/F:cathSum/F:maxWire/i:nClipped/i:mult/i:err/I:rawCenter/F:height/F");
 			std::string cathname = sideSubst("Cathodes_%c",s)+(d==X_DIRECTION?"x":"y");
-			TPhys->Branch(cathname.c_str(),&fMWPC_caths[s][d][0],(cathname+"["+itos(kMaxCathodes)+"]/F").c_str());
+			TPhys->Branch(cathname.c_str(),fMWPC_caths[s][d],(cathname+"["+itos(kMaxCathodes)+"]/F").c_str());
 		}
 		
 		TPhys->Branch(sideSubst("Scint%c",s).c_str(),&sevt[s],
@@ -126,7 +126,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 	TPhys->Branch("Type",&fType,"Type/I");
 	TPhys->Branch("Side",&fSide,"Side/I");
 	TPhys->Branch("ProbIII",&fProbIII,"ProbIII/F");
-	TPhys->Branch("Etrue",&fEtrue,"Etrue/F");
+	TPhys->Branch("Erecon",&fEtrue,"Erecon/F");
 	
 	// LED events tree
 	if(analyzeLED) {
@@ -134,6 +134,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 		TLED->SetMaxVirtualSize(1000000);
 		TLED->Branch("EvtN",&currentEvent,"EvtN/I");
 		TLED->Branch("Time",&fTimeScaler[BOTH],"Time/F");
+		TLED->Branch("Sis00",&SIS00,"Sis00/I");
 		for(Side s = EAST; s <= WEST; ++s) {
 			TLED->Branch(sideSubst("Scint%c",s).c_str(),&sevt[s],
 						 "q1/F:q2/F:q3/F:q4/F:e1/F:de1/F:e2/F:de2/F:e3/F:de3/F:e4/F:de4/F:energy/F:denergy/F:nPE1/F:nPE2/F:nPE3/F:nPE4/F");

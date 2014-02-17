@@ -40,8 +40,7 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-bmPrimaryGeneratorMessenger::bmPrimaryGeneratorMessenger(bmPrimaryGeneratorAction* bmGun)
-:bmAction(bmGun) {
+bmPrimaryGeneratorMessenger::bmPrimaryGeneratorMessenger(bmPrimaryGeneratorAction* bmGun) :bmAction(bmGun) {
 	gunDir = new G4UIdirectory("/benchmark/gun/");
 	gunDir->SetGuidance("PrimaryGenerator control");
 	
@@ -62,6 +61,16 @@ bmPrimaryGeneratorMessenger::bmPrimaryGeneratorMessenger(bmPrimaryGeneratorActio
 	positionerCmd->SetDefaultValue("Fixed");
 	positionerCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 	
+	srcrelCmd = new G4UIcmdWithABool("/benchmark/gun/relholder",this);
+	srcrelCmd->SetGuidance("Set event positioning relative to source holder location");
+	srcrelCmd->SetDefaultValue(false);
+	srcrelCmd = false;
+	
+	eventFileCmd = new G4UIcmdWithAString("/benchmark/gun/evtfile",this);
+	eventFileCmd->SetGuidance("Set input file for events");
+	eventFileCmd->SetDefaultValue("");
+	eventFileCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
 	sourceRadiusCmd = new G4UIcmdWithADoubleAndUnit("/benchmark/gun/sourceRadius",this);
 	sourceRadiusCmd->SetGuidance("Radius for SourceDrop generator");
 	sourceRadiusCmd->SetDefaultValue(1.5*mm);
@@ -89,6 +98,10 @@ void bmPrimaryGeneratorMessenger::SetNewValue(G4UIcommand* command, G4String new
 		bmAction->SetPositioner(newValue);
 	if( command == sourceRadiusCmd )
 		bmAction->SetSourceRadius(sourceRadiusCmd->GetNewDoubleValue(newValue));
+	if( command == srcrelCmd )
+		bmAction->SetPosRelHolder(srcrelCmd->GetNewBoolValue(newValue));
+	if( command == eventFileCmd )
+		bmAction->SetEventFile(newValue);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

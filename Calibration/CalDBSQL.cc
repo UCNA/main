@@ -2,6 +2,12 @@
 #include "PathUtils.hh"
 #include "SMExcept.hh"
 #include <utility>
+#include <algorithm>
+
+// utility function for query to select smallest inclusive run range
+std::string runRangeSelect(RunNum rn) {
+	return "start_run <= "+itos(rn)+" AND "+itos(rn)+" <= end_run ORDER BY end_run-start_run LIMIT 1";
+};
 
 CalDBSQL* CalDBSQL::getCDB(bool readonly) {
 	if(readonly) {
@@ -92,68 +98,51 @@ TGraphErrors* CalDBSQL::getContinuousMonitor(const std::string& sensorName, cons
 }
 
 
-float CalDBSQL::getKurieEnergy(RunNum rn, Side s, unsigned int t) {
-	sprintf(query,"SELECT energy FROM kurie_cal WHERE run_number = %i AND side = %s AND quadrant = %i",rn,dbSideName(s),t);
-	TSQLRow* r = getFirst();		
-	if(!r)
-		return 0;
-	float ken = fieldAsFloat(r,0);
-	delete(r);
-	return ken;	
-}
-float CalDBSQL::getKurieADC(RunNum rn, Side s, unsigned int t) {
-	sprintf(query,"SELECT adc FROM kurie_cal WHERE run_number = %i AND side = %s AND quadrant = %i",rn,dbSideName(s),t);
-	TSQLRow* r = getFirst();		
-	if(!r)
-		return 0;
-	float kadc = fieldAsFloat(r,0);
-	delete(r);
-	return kadc;		
-}
-
-
-
 PositioningCorrector* CalDBSQL::getPositioningCorrector(RunNum rn) {
 	return getPositioningCorrectorByID(getCalSetInfo(rn,"posmap_set_id"));
 }
 
+bool compare_mes_priority(const MWPC_Ecal_Spec& i, const MWPC_Ecal_Spec& j) { return i.priority > j.priority; }
 
-float CalDBSQL::getAnodeCalInfo(RunNum R, const char* field) {
-	sprintf(query,"SELECT %s FROM anode_cal WHERE start_run <= %i AND %i <= end_run ORDER BY end_run-start_run LIMIT 1",field,R,R);
-	TSQLRow* r = getFirst();
-	if(!r) {
-		sprintf(query,"SELECT %s,start_run,end_run FROM anode_cal ORDER BY pow(1.0*end_run-%i,2)+pow(1.0*start_run-%i,2) LIMIT 1",field,R,R);
-		r = getFirst();
+std::vector<MWPC_Ecal_Spec> CalDBSQL::get_MWPC_Ecals(RunNum rn, Side s) {
+	std::vector<MWPC_Ecal_Spec> v;
+	
+	for(ChargeProxyType c = CHARGE_PROXY_ANODE; c <= CHARGE_PROXY_CCLOUD; ++c) {
+		std::string baseQuery = std::string("SELECT gain_factor,gain_posmap_id,priority,start_run,end_run FROM mwpc_ecal WHERE side = ")+dbSideName(s)+" AND charge_meas = '"+chargeProxyName(c)+"'";
+		sprintf(query,"%s AND %s",baseQuery.c_str(),runRangeSelect(rn).c_str());
+		TSQLRow* r = getFirst();
 		if(!r) {
-			SMExcept e("noQueryResults");
-			e.insert("runNum",R);
-			e.insert("field",field);
-			throw(e);
+			// backup if no matching run range found: try locating a nearby wider range
+			sprintf(query,"%s ORDER BY pow(1.0*end_run-%i,2)+pow(1.0*start_run-%i,2) LIMIT 1",baseQuery.c_str(),rn,rn);
+			r = getFirst();
 		}
-		unsigned int r0 = fieldAsInt(r,1);
-		unsigned int r1 = fieldAsInt(r,2);
-		printf("**** WARNING: No matching anode calibration found for %i; using nearest range (%i,%i)...\n",R,r0,r1);
+		if(!r) continue;
+		MWPC_Ecal_Spec m;
+		m.charge_meas = c;
+		m.gain_factor = fieldAsFloat(r,0);
+		unsigned int pcid = fieldAsInt(r,1);
+		m.priority = fieldAsInt(r,2);
+		m.start_run = fieldAsInt(r,3);
+		m.end_run = fieldAsInt(r,4);
+		delete(r);
+		m.pcorr = getPositioningCorrectorByID(pcid);
+		v.push_back(m);
 	}
-	float f = fieldAsFloat(r,0);
-	delete(r);
-	return f;
-}
-
-PositioningCorrector* CalDBSQL::getAnodePositioningCorrector(RunNum rn) {	
-	return getPositioningCorrectorByID(int(getAnodeCalInfo(rn,"anode_posmap_id")));
-}
-
-float CalDBSQL::getAnodeGain(RunNum rn, Side s) {
-	return getAnodeCalInfo(rn,sideSubst("calfactor_%c",s).c_str());
+	
+	if(!v.size()) {
+		SMExcept e("missing_MWPC_Ecal");
+		e.insert("run",itos(rn));
+		e.insert("side",sideWords(s));
+		throw e;
+	}
+	std::sort(v.begin(),v.end(),&compare_mes_priority);
+	if(!(v[0].start_run <= rn && rn <= v[0].end_run))
+		printf("**** WARNING: No matching wirechamber calibration found for %i; using nearest range %i-%i...\n",rn,v[0].start_run,v[0].end_run);
+	return v;
 }
 
 void CalDBSQL::getGainTweak(RunNum rn, Side s, unsigned int t, float& orig, float& final) {
-	if(!checkTable("gain_tweak")) {
-		orig=final=500.0;
-		return;
-	}
-	sprintf(query,"SELECT e_orig,e_final FROM gain_tweak WHERE start_run <= %i AND %i <= end_run \
-			AND side = %s AND quadrant = %i ORDER BY end_run-start_run LIMIT 1",rn,rn,dbSideName(s),t);
+	sprintf(query,"SELECT e_orig,e_final FROM gain_tweak WHERE side = %s AND quadrant = %i AND %s",dbSideName(s),t,runRangeSelect(rn).c_str());
 	TSQLRow* r = getFirst();
 	if(!r) {
 		orig=final=500.0;
@@ -219,12 +208,19 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 		throw(e);
 	}
 	
-	pcors.insert(std::make_pair(psid,new PositioningCorrector(pinf)));
+	PositioningCorrector* PC = new PositioningCorrector();
+	PC->loadData(pinf);
+	pcors.insert(std::make_pair(psid,PC));
 	return getPositioningCorrectorByID(psid);
 }
 
+void CalDBSQL::forgetPositioningCorrector(RunNum rn) {
+	unsigned int psid = getCalSetInfo(rn,"posmap_set_id");
+	pcors.erase(psid);
+}
+
 unsigned int CalDBSQL::getCalSetInfo(RunNum R, const char* field) {
-	sprintf(query,"SELECT %s,start_run FROM energy_calibration WHERE start_run <= %i AND %i <= end_run ORDER BY end_run - start_run LIMIT 1",field,R,R);
+	sprintf(query,"SELECT %s,start_run FROM energy_calibration WHERE %s",field,runRangeSelect(R).c_str());
 	TSQLRow* r = getFirst();
 	if(!r)
 		return 0;
@@ -317,7 +313,7 @@ float CalDBSQL::totalTime(RunNum rn) {
 }
 
 std::string CalDBSQL::getGroupName(RunNum rn) {
-	sprintf(query,"SELECT name,start_run FROM run_group WHERE start_run <= %i AND %i <= end_run ORDER BY end_run-start_run LIMIT 1",rn,rn);
+	sprintf(query,"SELECT name,start_run FROM run_group WHERE %s",runRangeSelect(rn).c_str());
 	TSQLRow* r = getFirst();
 	if(!r)
 		return "0 Unknown";
@@ -343,14 +339,11 @@ RunInfo CalDBSQL::getRunInfo(RunNum r) {
 	}
 	
 	R.roleName = fieldAsString(row,2,"Other");
-	R.octet = 0;
+	R.octet = OCTR_UNKNOWN;
 	if(R.roleName[0] == 'A' || R.roleName[0] == 'B') {
-		R.octet += atoi(R.roleName.c_str()+1);
-		if(R.roleName[0] == 'B')
-			R.octet += 12;
+		if(R.roleName[0] == 'B') R.octet = OCTR_A12;
+		R.octet = OctetRole(R.octet + atoi(R.roleName.c_str()+1));
 	}
-	if(R.octet)
-		R.triad = TriadType((R.octet-1)/3+1);
 	
 	R.slowDaq = fieldAsInt(row,0,0);
 	std::string s = fieldAsString(row,1,"Other");
@@ -443,8 +436,7 @@ EfficCurve* CalDBSQL::getTrigeff(RunNum rn, Side s, unsigned int t) {
 }
 
 TGraph* CalDBSQL::getEvisConversion(RunNum rn, Side s, EventType tp) {
-	sprintf(query,"SELECT conversion_curve_id FROM evis_conversion WHERE side = %s AND type = %i \
-			AND start_run <= %i AND %i <= end_run ORDER BY end_run - start_run LIMIT 1",dbSideName(s),tp,rn,rn);
+	sprintf(query,"SELECT conversion_curve_id FROM evis_conversion WHERE side = %s AND type = %i AND %s",dbSideName(s),tp,runRangeSelect(rn).c_str());
 	TSQLRow* r = getFirst();
 	if(!r)
 		return NULL;
@@ -455,8 +447,7 @@ TGraph* CalDBSQL::getEvisConversion(RunNum rn, Side s, EventType tp) {
 
 std::vector<CathSegCalibrator*> CalDBSQL::getCathSegCalibrators(RunNum rn, Side s, AxisDirection d) {
 	std::vector<CathSegCalibrator*> v;
-	sprintf(query,"SELECT cathcal_set_id FROM cathcal_set WHERE side = %s AND plane = '%s' \
-			AND start_run <= %i AND %i <= end_run ORDER BY end_run - start_run LIMIT 1",dbSideName(s),(d==X_DIRECTION?"X":"Y"),rn,rn);
+	sprintf(query,"SELECT cathcal_set_id FROM cathcal_set WHERE side = %s AND plane = '%s' AND %s",dbSideName(s),(d==X_DIRECTION?"X":"Y"),runRangeSelect(rn).c_str());
 	TSQLRow* r = getFirst();
 	if(!r)
 		return v;
@@ -484,6 +475,30 @@ std::vector<CathSegCalibrator*> CalDBSQL::getCathSegCalibrators(RunNum rn, Side 
 		for(unsigned int n=0; n<gids.size(); n++)
 			v[i]->pcoeffs.push_back(getGraph(gids[n]));
 	}
+	return v;
+}
+
+std::vector<double> CalDBSQL::getCathCCloudGains(RunNum rn, Side s, AxisDirection d) {
+	sprintf(query,"SELECT gain_graph_id FROM cath_ccloud_scale WHERE side = %s AND plane = '%s' AND %s",dbSideName(s),(d==X_DIRECTION?"X":"Y"),runRangeSelect(rn).c_str());
+	TSQLRow* r = getFirst();
+	if(!r) {
+		SMExcept e("missingCathCloudGains");
+		e.insert("run",itos(rn));
+		e.insert("side",sideWords(s));
+		e.insert("plane",(d==X_DIRECTION?"X":"Y"));
+		throw e;
+	}
+	unsigned int gid = fieldAsInt(r,0);
+	delete r;
+	TGraph* g = getGraph(gid);
+	assert(g);
+	std::vector<double> v;
+	double x,y;
+	for(int i=0; i<g->GetN(); i++) {
+		g->GetPoint(i,x,y);
+		v.push_back(y);
+	}
+	delete(g);
 	return v;
 }
 
@@ -738,7 +753,7 @@ void CalDBSQL::deletePosmap(unsigned int pmid) {
 	assert(r);
 	unsigned int ncals = fieldAsInt(r,0);
 	delete(r);
-	sprintf(query,"SELECT COUNT(*) FROM anode_cal WHERE anode_posmap_id=%i",pmid);
+	sprintf(query,"SELECT COUNT(*) FROM mwpc_ecal WHERE gain_posmap_id=%i",pmid);
 	r = getFirst();
 	assert(r);
 	ncals += fieldAsInt(r,0);

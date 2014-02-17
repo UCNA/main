@@ -73,6 +73,28 @@ void drawHistoPair(TH1* hRed, TH1* hBlue, const std::string& opt, Int_t c1, Int_
 	drawSimulHistos(hToPlot,opt);
 }
 
+void drawDataMCPair(TH1* dat, TH1* mc) {
+	dat->SetLineColor(1);
+	mc->SetMarkerStyle(33);
+	mc->SetMarkerColor(1);
+	if(dat->GetMaximum() > mc->GetMaximum()) {
+		dat->Draw("H E0");
+		mc->Draw("P SAME");
+	} else {
+		mc->Draw("P");
+		dat->Draw("H E0 SAME");
+	}
+}
+
+
+void drawCircle(float r, Int_t color, Int_t lstyle, float x0, float y0) {
+	TEllipse* e = new TEllipse(x0,y0,r,r);
+	e->SetFillStyle(0);
+	e->SetLineColor(color);
+	e->SetLineStyle(lstyle);
+	e->Draw();
+}
+
 void drawFiducialCuts(Int_t color) {
 	// decay tube (5")
 	TEllipse* e1 = new TEllipse(0,0,decay_tube_radius,decay_tube_radius);
@@ -89,6 +111,8 @@ void drawFiducialCuts(Int_t color) {
 	e2->SetLineStyle(2);
 	e2->Draw();
 }
+
+
 
 void drawEllipseCut(Source E, Float_t nSigma, std::string label) {
 	
@@ -108,7 +132,7 @@ void drawEllipseCut(Source E, Float_t nSigma, std::string label) {
 }
 
 
-void drawVLine(Float_t x, TVirtualPad* C, Int_t color) {
+void drawVLine(Float_t x, TVirtualPad* C, Int_t color, Int_t style) {
 	Double_t xmin,ymin,xmax,ymax;
 	C->Update();
 	C->GetRangeAxis(xmin,ymin,xmax,ymax);
@@ -117,6 +141,16 @@ void drawVLine(Float_t x, TVirtualPad* C, Int_t color) {
 		ymax = pow(10,ymax);
 	}
 	TLine* l = new TLine(x,ymin,x,ymax);
+	l->SetLineColor(color);
+	l->SetLineStyle(style);
+	l->Draw();
+}
+
+void drawHLine(Float_t y, TVirtualPad* C, Int_t color) {
+	Double_t xmin,ymin,xmax,ymax;
+	C->Update();
+	C->GetRangeAxis(xmin,ymin,xmax,ymax);
+	TLine* l = new TLine(xmin,y,xmax,y);
 	l->SetLineColor(color);
 	l->Draw();
 }
@@ -165,16 +199,20 @@ void labelSectors(const SectorCutter& S, int color) {
 		S.sectorCenter(i,x,y);
 		l.SetTextColor(color);
 		l.SetTextAlign(22);
-		l.SetTextSize(0.02);
-		l.DrawLatex(x,y,itos(i).c_str());
+		l.SetTextFont(242);
+		l.SetTextSize(0.015);
+		l.DrawLatex(x+0.5,y+0.4,itos(i).c_str());
 	}
 }
 
-void makeGrayscalepalette() {
+void makeGrayscalepalette(bool b2w) {
 	const unsigned int ncol = 256;
 	Int_t cnum[ncol];
-	for(unsigned int i=0; i<ncol; i++)
-		cnum[i] = TColor::GetColor(float(i)/float(ncol-1),float(i)/float(ncol-1),float(i)/float(ncol-1));
+	for(unsigned int i=0; i<ncol; i++) {
+		float l = float(i)/float(ncol-1);
+		l = b2w?l:1-l;
+		cnum[i] = TColor::GetColor(l,l,l);
+	}
 	gStyle->SetPalette(ncol,cnum);
 	gStyle->SetNumberContours(64);	
 }

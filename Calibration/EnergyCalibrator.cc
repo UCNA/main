@@ -57,7 +57,22 @@ void PedestalCorrector::insertPedestal(const std::string& sensorName, TGraph* g)
 	pedestals.erase(sensorName);
 	pedestals.insert(std::make_pair(sensorName,g));
 }
-
+Stringmap PedestalCorrector::getPedSummary(const std::string& sensorName, const std::string& baseKey) const {
+	Stringmap m;
+	std::map<std::string,TGraph*>::const_iterator it = pedestals.find(sensorName);
+	if(it != pedestals.end()) {
+			m.insert(baseKey+"_sensNm",sensorName);
+			m.insert(baseKey+"_nPedPts",itos(it->second->GetN()));
+			m.insert(baseKey+"_PedMean",it->second->GetMean(2));
+			m.insert(baseKey+"_PedRMS",it->second->GetRMS(2));
+	}
+	it = pedwidths.find(sensorName);
+	if(it != pedwidths.end()) {
+			m.insert(baseKey+"_PdWMean",it->second->GetMean(2));
+			m.insert(baseKey+"_PdWRMS",it->second->GetRMS(2));
+	}
+	return m;
+}
 
 
 
@@ -196,6 +211,15 @@ PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) 
 				clipThreshold[s][t] -= 500;
 		}
 	}
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
+			for(std::vector<std::string>::const_iterator it = cathNames[s][d].begin(); it != cathNames[s][d].end(); it++) {
+				cathPeds0[s][d].push_back(getPedestal(*it,0));
+				cathPedW0[s][d].push_back(getPedwidth(*it,0));
+			}
+		}
+	}
+	
 	printSummary();
 }
 PMTCalibrator::~PMTCalibrator() {
@@ -405,6 +429,7 @@ Stringmap PMTCalibrator::calSummary() const {
 			m.insert(tname+"_res500",energyResolution(s,t,500.0,0,0,0));
 			if(pmtEffic[s][t])
 				m.insert(tname+"_trig50",calibratedEnergy(s,t,0,0,pmtEffic[s][t]->getThreshold(),0).x);
+			m += PedestalCorrector::getPedSummary(sensorNames[s][t], tname);
 		}
 	}
 	

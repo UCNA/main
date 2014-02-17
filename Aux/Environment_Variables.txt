@@ -25,4 +25,5 @@ export UCNADBPASS_READONLY=<password for read-only 'ucn' user>
 # Geant4 simulation environment variables
 source <path to your geant install>/geant4/env.sh
 export G4WORKDIR=<working directory where simulation output will be sent>
+export G4OUTDIR=${G4WORKDIR}/output/
 export G4BINDIR=<directory where UCNA Geant simulation compiled binaries are found>

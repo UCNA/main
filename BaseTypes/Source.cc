@@ -33,6 +33,16 @@ Stringmap Source::getProperties() const {
 	return M;
 }
 
+std::string Source::lxname() const {
+	if(t=="Sn113") return "{}^{113}Sn";
+	if(t=="Cd109") return "{}^{109}Cd";
+	if(t=="Cs137") return "{}^{137}Cs";
+	if(t=="In114" || t=="In114E" || t=="In114W") return "{}^{114m}In";
+	if(t=="Ce139") return "{}^{139}Ce";
+	if(t=="Bi207") return "{}^{207}Bi";
+	return t;
+}
+
 std::vector<SpectrumPeak> Source::getPeaks() const {
 	std::vector<SpectrumPeak> v;
 	if(t=="Sn113")
@@ -51,3 +61,4 @@ std::vector<SpectrumPeak> Source::getPeaks() const {
 	}
 	return v;
 }
+

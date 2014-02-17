@@ -34,7 +34,7 @@ Stringmap sd2sm(const SectorDat& sd) {
 
 //-----------------------------------------------------------
 
-XenonSpectrumAnalyzer::XenonSpectrumAnalyzer(RunAccumulator* RA, unsigned int nr): PositionBinnedAnalyzer(RA,"Xe",nr) {
+XenonSpectrumPlugin::XenonSpectrumPlugin(RunAccumulator* RA, unsigned int nr): PositionBinnedPlugin(RA,"Xe",nr) {
 	// set up histograms
 	energySpectrum = registerFGBGPair("hXeSpec", "Xenon energy spectrum", 200, 0, 2000);
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -68,11 +68,11 @@ XenonSpectrumAnalyzer::XenonSpectrumAnalyzer(RunAccumulator* RA, unsigned int nr
 	}
 }
 
-void XenonSpectrumAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+void XenonSpectrumPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	Side s = PDS.fSide;
 	if(!(PDS.fType == TYPE_0_EVENT && PDS.fPID == PID_BETA)) return;
 	if(PDS.radius2(s) < 45*45)
-		energySpectrum->h[currentGV]->Fill(PDS.getEtrue(),weight);
+		energySpectrum->h[currentGV]->Fill(PDS.getErecon(),weight);
 	unsigned int m = sects.sector(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center);
 	if(m>=sects.nSectors()) return;
 	for(unsigned int t=0; t<nBetaTubes; t++) {
@@ -83,7 +83,7 @@ void XenonSpectrumAnalyzer::fillCoreHists(ProcessedDataScanner& PDS, double weig
 	sectEnergy[s][nBetaTubes][sects.nSectors()]->h[currentGV]->Fill(PDS.scints[s].energy.x,weight);
 }
 
-void XenonSpectrumAnalyzer::fitSpectrum(TH1* hSpec,SectorDat& sd) {
+void XenonSpectrumPlugin::fitSpectrum(TH1* hSpec,SectorDat& sd) {
 	
 	hSpec->SetLineColor(2+sd.t);
 	
@@ -104,10 +104,11 @@ void XenonSpectrumAnalyzer::fitSpectrum(TH1* hSpec,SectorDat& sd) {
 	//----------------------
 	// 915keV endpoint fit
 	//----------------------
-	sd.xe_ep = kurieIterator(hSpec,epGuess,NULL,915.,450,750);
+	// 2010 analysis fit range was 450-750; expanded for better statistics
+	sd.xe_ep = kurieIterator(hSpec,epGuess,NULL,915.,350,850);
 }
 
-void XenonSpectrumAnalyzer::fitSectors() {
+void XenonSpectrumPlugin::fitSectors() {
 	assert(myA->runCounts.counts.size());
 	PMTCalibrator PCal(myA->runCounts.counts.begin()->first);
 	printf("\n\n---- Using Calibrator: ----\n");
@@ -128,7 +129,7 @@ void XenonSpectrumAnalyzer::fitSectors() {
 	}
 }
 
-void XenonSpectrumAnalyzer::calculateResults() {
+void XenonSpectrumPlugin::calculateResults() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<=nBetaTubes; t++) {
 			unsigned int m = sects.nSectors();
@@ -139,9 +140,9 @@ void XenonSpectrumAnalyzer::calculateResults() {
 	}
 }
 
-void XenonSpectrumAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
+void XenonSpectrumPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 	// cast to correct type
-	XenonSpectrumAnalyzer* XA = (XenonSpectrumAnalyzer*)AP;
+	XenonSpectrumPlugin* XA = (XenonSpectrumPlugin*)AP;
 	
 	// overall energy spectrum
 	int b0 = energySpectrum->h[GV_OPEN]->FindBin(400);
@@ -181,18 +182,18 @@ void XenonSpectrumAnalyzer::compareMCtoData(AnalyzerPlugin* AP) {
 //----------------------------------------------------------------
 
 XenonAnalyzer::XenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName, unsigned int nrE, unsigned int nrA):
-MWPCTuningAnalyzer(pnt,nm,inflName) {
-	addPlugin(myXeSpec = new XenonSpectrumAnalyzer(this,nrE));
-	addPlugin(myAnode = new AnodePositionAnalyzer(this,nrA));
-	addPlugin(myWG = new AnodeGainAnalyzer(this));
+CathodeTuningAnalyzer(pnt,nm,inflName) {
+	addPlugin(myXeSpec = new XenonSpectrumPlugin(this,nrE));
+	addPlugin(myAnode = new AnodeGainMapPlugin(this,nrA));
+	addPlugin(myWG = new MWPCGainPlugin(this));
 }
 
 //----------------------------------------------------------------
 
 SimXenonAnalyzer::SimXenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName, unsigned int nrE):
-MWPCTuningAnalyzer(pnt,nm,inflName) {
-	addPlugin(myXeSpec = new XenonSpectrumAnalyzer(this,nrE));
-	addPlugin(myWG = new AnodeGainAnalyzer(this));
+CathodeTuningAnalyzer(pnt,nm,inflName) {
+	addPlugin(myXeSpec = new XenonSpectrumPlugin(this,nrE));
+	addPlugin(myWG = new MWPCGainPlugin(this));
 }
 
 //----------------------------------------------------------------
@@ -204,7 +205,7 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	OutputManager OM1("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/SingleRuns/");
 	std::vector<RunNum> rlist = CalDBSQL::getCDB()->findRuns("run_type = 'Xenon'",r0,r1);
 	for(std::vector<RunNum>::iterator rit = rlist.begin(); rit != rlist.end(); rit++) {
-		std::string singleName = "Xenon_"+itos(*rit)+"_"+itos(nrings)+"_"+dtos(PositionBinnedAnalyzer::fidRadius);
+		std::string singleName = "Xenon_"+itos(*rit)+"_"+itos(nrings)+"_"+dtos(PositionBinnedPlugin::fidRadius);
 		std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
 		snames.push_back(singleName);
 		if(r0==r1 || !fileExists(prevFile+".root")) {
@@ -235,7 +236,7 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	XA.calculateResults();
 	XA.myXeSpec->fitSectors();
 	XA.makePlots();
-	XA.myAnode->genAnodePosmap();
+	XA.myAnode->genPosmap("anode");
 	XA.write();
 	XA.setWriteRoot(true);
 }
@@ -280,8 +281,10 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, XenonAnalyzer& XA, 
 		if(XA.myXeSpec->energySpectrum->h[GV_OPEN]->Integral(b1,b2) > 100)
 			isotsIn.push_back("Xe137_7-2-");
 		
-		srand(time(NULL));
-		std::vector<unsigned int> p = randomPermutation(isotsIn.size());
+		
+		// randomize order of isotope simulation to pick different simulation files for each one
+		srand((unsigned int)time(NULL)); // set new random seed from clock
+		std::vector<unsigned int> p = randomPermutation((unsigned int)isotsIn.size());
 		std::vector<std::string> isots;
 		for(unsigned int n=0; n<isotsIn.size(); n++)
 			isots.push_back(isotsIn[p[n]]);
@@ -292,11 +295,12 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, XenonAnalyzer& XA, 
 			G4SegmentMultiplier GSM(SectorCutter(4,52.));
 			GSM.setCalibrator(PCal);
 			std::string simFile = "/data2/mmendenhall/G4Out/2010/20120917_"+isots[n]+"/analyzed_";
+			if(isots[n]=="Xe135_3-2+") simFile = "/home/mmendenhall/geant4/output/20131015_Xe135_3-2+/analyzed_";
 			unsigned int nTot = 54;
 			unsigned int stride = 23;
 			for(unsigned int i=0; i<stride; i++)
 				GSM.addFile(simFile+itos((stride*r+i)%nTot)+".root");
-			XAMi.back()->loadSimData(GSM, nToSim*(isots[n]=="Xe135_3-2+"?1.5:0.25));
+			XAMi.back()->loadSimData(GSM, nToSim*(isots[n]=="Xe135_3-2+"?4.:0.25));
 			LHC.addTerm(XAMi.back()->myXeSpec->energySpectrum->h[GV_OPEN]);
 			printf("Done.\n");
 		}
@@ -353,7 +357,7 @@ void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle, unsigned int nRings) {
 	float simFactor = 4.0;
 	if(rsingle) {
 		if(!CalDBSQL::getCDB()->findRuns("run_type = 'Xenon'",rsingle,rsingle).size()) return;
-		std::string singleName = "Xenon_"+itos(rsingle)+"_"+itos(nRings)+"_"+dtos(PositionBinnedAnalyzer::fidRadius);
+		std::string singleName = "Xenon_"+itos(rsingle)+"_"+itos(nRings)+"_"+dtos(PositionBinnedPlugin::fidRadius);
 		XenonAnalyzer XA1(&OM, singleName, basePath+"/SingleRuns/"+singleName+"/"+singleName);
 		simulate_one_xenon(rsingle,OM1,XA1,simFactor,true);
 		return;

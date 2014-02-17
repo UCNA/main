@@ -83,6 +83,9 @@ public:
 			return myData->valueAt(i,(void*)(x+1));
 		return myData->valueAt(i+1,(void*)(x+1));
 	}
+	/// make a new interpolator (interchangeable function pointer)
+	static Interpolator* newInterpolator(DataSequence* L, double s = 1.0, double o = 0.0) { return new Interpolator(L,s,o); }
+	
 protected:
 	/// locate position in data coordinates, remainder in [0,1)
 	virtual int locate(double x, double* remainder = NULL) {
@@ -107,7 +110,11 @@ public:
 		int i = locate(*x,&y);
 		return myData->valueAt(i,(void*)(x+1))*(1-y)+myData->valueAt(i+1,(void*)(x+1))*y;
 	}
+	/// make a new interpolator (interchangeable function pointer)
+	static Interpolator* newLinTerpolator(DataSequence* L, double s = 1.0, double o = 0.0) { return new LinTerpolator(L,s,o); }
 };
+
+
 
 /// cubic interpolator
 class CubiTerpolator: public Interpolator {
@@ -128,6 +135,9 @@ public:
 				+A*p3*(1-y)*y*y );
 
 	}
+	/// make a new interpolator (interchangeable function pointer)
+	static Interpolator* newCubiTerpolator(DataSequence* L, double s = 1.0, double o = 0.0) { return new CubiTerpolator(L,s,o); }
+	
 protected:
 	double A;	//< "sharpening" coefficient, default = -0.5
 };

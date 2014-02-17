@@ -7,6 +7,7 @@
 #include "TagCounter.hh"
 #include "ProcessedDataScanner.hh"
 #include "G4toPMT.hh"
+#include "Octet.hh"
 #include <TRandom3.h>
 
 class AnalyzerPlugin;
@@ -73,7 +74,7 @@ public:
 	fgbgPair* cloneFGBGPair(const fgbgPair& p, const std::string& newName, const std::string& newTitle);
 
 	/// get total run time for given state
-	BlindTime getTotalTime(AFPState afp, bool fg) const;
+	BlindTime getTotalTime(AFPState afp, GVState gv) const;
 	/// get total counts for given state
 	float getTotalCounts(AFPState afp, GVState gv) const { return totalCounts[afp][gv]; }
 	/// get time contributed from given rumber
@@ -102,6 +103,7 @@ public:
 	GVState currentGV;				//< current foreground/background status during data scanning
 	bool needsSubtraction;			//< whether background subtraction is pending
 	bool isSimulated;				//< flag for whether this is based on simulated data
+	int depth;						//< octet division depth
 	
 	TagCounter<RunNum> runCounts;	//< type-0 event counts by run, for re-simulation
 	
@@ -115,6 +117,8 @@ public:
 	virtual void uploadAnaResults();
 	/// make plots from each plugin
 	virtual void makePlots();
+	/// run calculations and plots, save output files
+	virtual void makeOutput(bool doPlots = true);
 	/// MC/Data comparison plots/calculations from each plugin
 	virtual void compareMCtoData(RunAccumulator& OAdata);
 	/// add an analyzer plugin
@@ -123,12 +127,27 @@ public:
 	AnalyzerPlugin* getPlugin(const std::string& nm);
 	
 	/// location of errorbar estimates for low-rate histograms
-	virtual std::string estimatorHistoLocation() const { return ""; }
+	virtual std::string estimatorHistoLocation() const { return processedLocation; }
+	static std::string processedLocation;		//< processed data location global variable for background estimation
+
 	
 	std::map<std::string,fgbgPair*> fgbgHists;	//< background-subtractable quantities
-	float totalCounts[AFP_OTHER+1][2];			//< total type-0 event counts by [flipper][fg/bg], for re-simulation
-	BlindTime totalTime[AFP_OTHER+1][2]; 		//< total time for [flipper][fg/bg]
+	float totalCounts[AFP_OTHER+1][GV_OPEN+1];	//< total type-0 event counts by [flipper][fg/bg], for re-simulation
+	BlindTime totalTime[AFP_OTHER+1][GV_OPEN+1];//< total time for [flipper][fg/bg]
 	TagCounter<RunNum> runTimes;				//< time spent on each run
+	
+	/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs
+	unsigned int simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor = 1., double replaceIfOlder = 0., bool doPlots = true, bool doCompare = true);
+	/// merge every subdirectory of basePath containing analyzed data
+	unsigned int mergeDir();
+	/// merge simulations, checking match against data
+	void mergeSims(const std::string& basedata, RunAccumulator* origRA=NULL);
+	/// merge individual analyzed octets
+	void mergeOcts(const std::vector<Octet>& Octs);
+	/// load total time from another RunAccumulator (for simulations)
+	void loadTotalTime(const RunAccumulator& RA);
+	
+	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
 	
 protected:
 	
@@ -173,5 +192,14 @@ public:
 	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
 	virtual void compareMCtoData(AnalyzerPlugin* AP) {}
 };
+
+/// process one pulse-pair worth of data
+unsigned int processPulsePair(RunAccumulator& RA, const Octet& PP);
+
+/// process a set of octets; return number of processed pulse-pairs
+unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& O, double replaceIfOlder = 0,
+						   bool doPlots = true, unsigned int oMin = 0, unsigned int oMax = 10000);
+/// re-process a set of octets using previously booked histograms; return number of processed pulse-pairs
+unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bool doPlots);
 
 #endif
