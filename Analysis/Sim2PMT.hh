@@ -89,6 +89,8 @@ public:
 	bool reSimulate;				//< whether to re-simulate energy or use "raw" values
 	bool fakeClip;					//< whether to fake clipping on wirechamber entrance edge
 	bool weightAsym;				//< whether to weight simulated events by beta asymmetry
+	double basePhysWeight;			//< event weight multiplier
+	Side simSide;					//< which side to simulate events for (default BOTH)
 	
 	double eQ[BOTH];						//< Scintillator quenched energy [keV]
 	double eDep[BOTH];						//< Scintillator deposited energy [keV]

@@ -415,10 +415,20 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 	PDS.writeCalInfo(qOut,"runcal");
 }
 
-void RunAccumulator::loadTotalTime(const RunAccumulator& RA) {
+void RunAccumulator::copyTimes(const RunAccumulator& RA) {
+	runTimes = RA.runTimes;
 	for(AFPState afp = AFP_OFF; afp<=AFP_OTHER; ++afp)
 		for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv)
 			totalTime[afp][gv] = RA.totalTime[afp][gv];
+}
+
+void RunAccumulator::loadSimPoint(Sim2PMT& simData) {
+	if(!simData.physicsWeight) return;
+	fillCoreHists(simData,simData.physicsWeight);
+	if(double evtc = simData.simEvtCounts()) {
+		runCounts.add(simData.getRun(),evtc);
+		totalCounts[currentAFP][GV_OPEN] += evtc;
+	}	
 }
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
@@ -443,17 +453,9 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool cou
 	printf("\n--Scan complete.--\n");
 }
 
-void RunAccumulator::loadSimPoint(Sim2PMT& simData) {
-	fillCoreHists(simData,simData.physicsWeight);
-	if(double evtc = simData.simEvtCounts()) {
-		runCounts.add(simData.getRun(),evtc);
-		totalCounts[currentAFP][GV_OPEN] += evtc;
-	}	
-}
-
 void RunAccumulator::simForRun(Sim2PMT& simData, RunNum rn, unsigned int nToSim, bool countAll) {
 	RunInfo RI = CalDBSQL::getCDB()->getRunInfo(rn);
-	if(RI.gvState != GV_OPEN) return;
+	if(RI.gvState != GV_OPEN) { printf("Skipping simulation for background run "); RI.display(); return; }
 	assert(RI.afpState <= AFP_OTHER);
 	
 	PMTCalibrator PCal(rn);

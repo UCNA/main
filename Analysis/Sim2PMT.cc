@@ -37,7 +37,7 @@ void SourcedropPositioner::calcOffset(const Sim2PMT& S) {
 
 
 Sim2PMT::Sim2PMT(const std::string& treeName): ProcessedDataScanner(treeName,false),
-SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true),
+SP(NULL), reSimulate(true), fakeClip(false), weightAsym(true), basePhysWeight(1.0), simSide(BOTH),
 nSimmed(0), nToSim(INT_MAX), nCounted(0), afp(AFP_OTHER), simCathodes(false) {
 	for(Side s = EAST; s <= WEST; ++s) {
 		PGen[s].setSide(s);
@@ -59,7 +59,8 @@ Stringmap Sim2PMT::evtInfo() {
 }
 
 void Sim2PMT::calcReweight() {
-	physicsWeight = 1.0;
+	if(fType==TYPE_NONEVENT) { physicsWeight = 0; return; }
+	physicsWeight = basePhysWeight;
 	if(weightAsym && (afp==AFP_ON || afp==AFP_OFF))
 		physicsWeight *= (1.0+correctedAsymmetry(ePrim,costheta*(afp==AFP_ON?1:-1)))*neutronSpectrumCorrectionFactor(ePrim);
 	if(fakeClip) {
@@ -106,6 +107,7 @@ void Sim2PMT::reverseCalibrate() {
 	updateClock();
 	doUnits();
 	
+	
 	// apply position offsets; set wires position
 	if(SP) SP->applyOffset(*this);
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d)
@@ -134,18 +136,23 @@ void Sim2PMT::reverseCalibrate() {
 				ActiveCal->fCathMaxSum[s].val = mwpcCathMaxSum(s);
 				fPassedCathMaxSum[s] = ActiveCal->fCathMaxSum[s].inRange();
 			} else {
-				fPassedCathMaxSum[s] = fPassedCathMax[s] = fPassedAnode[s] = mwpcEnergy[s] > 0;
+				fPassedCathMaxSum[s] = fPassedCathMax[s] = fPassedAnode[s] = (mwpcEnergy[s] > 0);
 			}
 			
 		} else {
 			scints[s].energy = eQ[s];
 			fPassedScint[s] = (eQ[s] > 0);
-			fPassedCathMaxSum[s] = mwpcEnergy[s] > 0;
+			fPassedCathMaxSum[s] = fPassedCathMax[s] = fPassedAnode[s] = (mwpcEnergy[s] > 0);
 		}
 	}
 	
 	primSide = costheta>0?WEST:EAST;
 	classifyEvent();
+	if(simSide != BOTH && fSide != simSide) {
+		fSide = NOSIDE;
+		fPID = PID_UNKNOWN;
+		fType = TYPE_NONEVENT;
+	}
 }
 
 float Sim2PMT::getErecon() const {

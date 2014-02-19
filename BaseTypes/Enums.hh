@@ -151,11 +151,12 @@ char choiceLetter(AnalysisChoice a);
 
 /// enumeration for Jianglai particle ID
 enum PID {
-	PID_SINGLE = 0,	//< "single" gamma event
-	PID_BETA = 1,	//< beta event
-	PID_MUON = 2,	//< muon event
-	PID_LED = 3,	//< tagged LED event
-	PID_PULSER = 4	//< tagged Bi pulser event
+	PID_SINGLE = 0,		//< "single" gamma event
+	PID_BETA = 1,		//< beta event
+	PID_MUON = 2,		//< muon event
+	PID_LED = 3,		//< tagged LED event
+	PID_PULSER = 4,		//< tagged Bi pulser event
+	PID_UNKNOWN = 666	//< unknown/non-event
 };
 
 /// names for particle ID
@@ -167,7 +168,8 @@ enum EventType {
 	TYPE_I_EVENT	= 1,	//< Scatters to hit both scintillators and wirechambers
 	TYPE_II_EVENT	= 2,	//< Scatters off wirechamber, hits scintillator and wirechamber on opposite side
 	TYPE_III_EVENT	= 3,	//< Triggers and scatters off scintillator; triggers only wirechamber on opposite side
-	TYPE_IV_EVENT	= 4		//< Undetectable backscatters (also used for "unclassifiable" events)
+	TYPE_IV_EVENT	= 4,	//< Undetectable backscatters (also used for "unclassifiable" events)
+	TYPE_NONEVENT	= 666	//< Unclassified discard event
 };
 
 /// iteration to next event type

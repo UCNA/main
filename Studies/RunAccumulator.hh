@@ -148,8 +148,8 @@ public:
 	void mergeSims(const std::string& basedata, RunAccumulator* origRA=NULL);
 	/// merge individual analyzed octets
 	void mergeOcts(const std::vector<Octet>& Octs);
-	/// load total time from another RunAccumulator (for simulations)
-	void loadTotalTime(const RunAccumulator& RA);
+	/// copy times from another RunAccumulator (for simulations)
+	void copyTimes(const RunAccumulator& RA);
 	
 	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
 	

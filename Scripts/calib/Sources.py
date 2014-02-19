@@ -148,7 +148,7 @@ class SourceDatDirectory:
 		return self.getQFile(rn).dat.get(key,[])
 	def getSourceRates(self,rn):
 		if rn not in self.sourcerates:
-			self.sourcerates[rn] = [SourceRate(r) for r in self.getKey(rn,"rate")]
+			self.sourcerates[rn] = [SourceRate(r) for r in self.getKey(rn,"sourceRate")]
 			for rt in self.sourcerates[rn]:
 				rt.run = rn
 		return self.sourcerates[rn]

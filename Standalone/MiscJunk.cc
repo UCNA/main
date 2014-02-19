@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
 		AH.addSegment(AH3);
 		
 		NGBGAnalyzer AHdat(&OM,"NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
-		AH.loadTotalTime(AHdat);
+		AH.copyTimes(AHdat);
 		AHdat.calculateResults();
 		
 		AH.calculateResults();

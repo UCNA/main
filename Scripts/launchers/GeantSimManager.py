@@ -97,7 +97,7 @@ class GeantSimManager:
 			self.type_dir += "_%.1fkeV"%self.settings["gunenergy"]
 		
 		if not self.g4_out_dir_base:
-			self.g4_out_dir_base = self.g4_workdir++"/output/"
+			self.g4_out_dir_base = self.g4_workdir+"/output/"
 		self.g4_out_dir = self.g4_out_dir_base+"/%s/"%self.type_dir
 		self.g4_log_dir = self.g4_workdir+"/logs/%s/"%self.type_dir
 		self.g4_macro_dir = self.g4_workdir+"/macros/%s/"%self.type_dir
@@ -235,7 +235,7 @@ if __name__ == "__main__":
 	####################
 	
 	# unpolarized beta baseline: 5e7 in 520 clusters
-	if 1:
+	if 0:
 		betaSim = GeantSimManager("20120823")
 		betaSim.settings["physlist"]="livermore"
 		#betaSim.set_generator("neutronBetaUnpol")
@@ -244,7 +244,7 @@ if __name__ == "__main__":
 		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 		betaSim.settings["ana_args"] += " cathodes"
 		betaSim.g4_out_dir_base = "/data2/mmendenhall/G4Out/2010/"
-		#betaSim.launch_sims(nEvents=5e7,nClusters=520,hours_old=10*24)
+		### DON'T RE-SIMULATE ### betaSim.launch_sims(nEvents=5e7,nClusters=520,hours_old=10*24)
 		betaSim.launch_postanalyzer()
 		exit(0)
 		
@@ -273,7 +273,17 @@ if __name__ == "__main__":
 	####################
 	# calibration sources
 	####################
-	
+
+	# 2010 sources, **postanalyzer only**
+	if 1:
+		for g in ["Bi207","Sn113","Ce139"]:
+			sourceSim = GeantSimManager("20120823",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt",geometry="C")
+			sourceSim.g4_out_dir_base = "/data2/mmendenhall/G4Out/2010/"
+			sourceSim.settings["ana_args"] += " undead cathodes"
+			sourceSim.set_evtsrc(g)
+			sourceSim.launch_postanalyzer()
+		exit(0)
+		
 	# sources ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"] 1e6 each
 	if 0:
 		for g in ["In114E","In114W"]:
@@ -305,7 +315,7 @@ if __name__ == "__main__":
 	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
 	# 3M for most; do lots more for important Xe135_3-2+
 	####################
-	if 1:
+	if 0:
 		for g in [ "Xe135_3-2+" ]:
 			sourceSim = GeantSimManager("20131015",vacuum="1.e-3 torr")
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
