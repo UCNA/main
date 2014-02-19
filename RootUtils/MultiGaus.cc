@@ -43,7 +43,7 @@ TF1* MultiGaus::getFitter() {
 	return myTF1;
 }
 
-void MultiGaus::fit(TH1F* h, bool draw) {
+void MultiGaus::fit(TH1* h, bool draw) {
 	for(unsigned int i=0; i<npks; i++)
 		iguess[3*i+0] = h->GetBinContent(h->FindBin(iguess[3*i+1]));
 	if(draw)

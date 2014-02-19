@@ -146,6 +146,9 @@ BlindTime RunAccumulator::getTotalTime(AFPState afp, GVState gv) const {
 	return totalTime[afp][gv];
 }
 
+BlindTime RunAccumulator::getTotalTime(GVState gv) const {
+	return getTotalTime(AFP_OFF,gv) + getTotalTime(AFP_ON,gv) + getTotalTime(AFP_OTHER,gv);
+}
 
 void RunAccumulator::addPlugin(AnalyzerPlugin* AP) {
 	if(myPlugins.find(AP->name) != myPlugins.end()) {
@@ -323,6 +326,7 @@ void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor, 
 }
 
 void RunAccumulator::makeRatesSummary() {
+	qOut.erase("rate");
 	for(std::map<std::string,fgbgPair*>::const_iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
 		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
 			Stringmap rt;
@@ -340,6 +344,16 @@ void RunAccumulator::makeRatesSummary() {
 			qOut.insert("rate",rt);
 		}
 	}
+}
+
+TH1* RunAccumulator::rateHisto(const fgbgPair* p, GVState gv) const {
+	assert(p);
+	assert(gv == GV_OPEN || gv == GV_CLOSED);
+	TH1* h = (TH1*)p->h[gv]->Clone();
+	h->SetTitle(p->getTitle().c_str());
+	Side s = p->mySide;
+	h->Scale(1.0/h->GetXaxis()->GetBinWidth(1)/getTotalTime(gv)[s]);
+	return h;
 }
 
 void RunAccumulator::write(std::string outName) {

@@ -131,7 +131,7 @@ void Sim2PMT::reverseCalibrate() {
 					PGen[s].calcCathodeSignals(s,d,cath_chg[s][d],cathodes[s][d],wires[s][d]);
 					mwpcs[s].cathodeSum += wires[s][d].cathodeSum;
 				}
-				ActiveCal->fCathMaxSum[s].val = wires[s][X_DIRECTION].maxValue+wires[s][Y_DIRECTION].maxValue;
+				ActiveCal->fCathMaxSum[s].val = mwpcCathMaxSum(s);
 				fPassedCathMaxSum[s] = ActiveCal->fCathMaxSum[s].inRange();
 			} else {
 				fPassedCathMaxSum[s] = fPassedCathMax[s] = fPassedAnode[s] = mwpcEnergy[s] > 0;

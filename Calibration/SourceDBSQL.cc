@@ -54,6 +54,8 @@ void SourceDBSQL::clearPeaks(unsigned int sID) {
 }
 
 void SourceDBSQL::addPeak(const SpectrumPeak& pk) {
-	sprintf(query,"INSERT INTO sourcepeaks%s",sm2insert(pk.toStringmap()).c_str());
+	Stringmap m = pk.toStringmap();
+	m.erase("peak_name");
+	sprintf(query,"INSERT INTO sourcepeaks%s",sm2insert(m).c_str());
 	execute();
 }

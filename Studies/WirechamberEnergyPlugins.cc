@@ -130,13 +130,18 @@ void MWPCGainPlugin::calculateResults() {
 void MWPCGainPlugin::makePlots() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
-			if(hSlices[s][tp].size()) {
-				std::vector<TH1*> hToPlot;
-				for(unsigned int i=0; i<hSlices[s][tp].size(); i++)
-					hToPlot.push_back(hSlices[s][tp][i]);
-				drawSimulHistos(hToPlot, "L E0");
-				printCanvas(sideSubst("MWPC_Ecal/hEw_%c_",s)+itos(tp));
-			}
+			// count successful fits; skip plots with no useful data
+			unsigned int nfit = 0;
+			for(unsigned int i=0; i<fitParams[s][tp].size(); i++)
+				nfit += fitParams[s][tp][i].size() > 0;
+			if(!nfit) continue;
+
+			std::vector<TH1*> hToPlot;
+			for(unsigned int i=0; i<hSlices[s][tp].size(); i++)
+				hToPlot.push_back(hSlices[s][tp][i]);
+			drawSimulHistos(hToPlot, "L E0");
+			printCanvas(sideSubst("MWPC_Ecal/hEw_%c_",s)+itos(tp));
+
 			if(!gEw[s][tp]) continue;
 			gEw[s][tp]->Draw("AP");
 			gEw[s][tp]->SetTitle((sideSubst("%s Type ",s)+itos(tp)+" Events").c_str());
@@ -636,6 +641,8 @@ WirechamberSimTrigEfficPlugin::WirechamberSimTrigEfficPlugin(RunAccumulator* RA)
 		for(unsigned int i=0; i<2; i++) {
 			mwpcHitEffic[s][i] = RA->registerSavedHist(sideSubst("mwpcSimHitEffic_%c_",s)+itos(i),"MWPC Hits",100,0,4);
 			mwpcHitEffic[s][i]->GetXaxis()->SetTitle("MWPC Energy [keV]");
+			mwpcCathMax[s][i] = RA->registerSavedHist(sideSubst("mwpcSimCathMax_%c_",s)+itos(i),"Simulated Cath. Max. Sum",200,-200,8200);
+			mwpcCathMax[s][i]->GetXaxis()->SetTitle("Cathode Maximum Sum [ADC channels]");
 		}
 	}
 }
@@ -643,9 +650,14 @@ WirechamberSimTrigEfficPlugin::WirechamberSimTrigEfficPlugin(RunAccumulator* RA)
 void WirechamberSimTrigEfficPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	Sim2PMT& S2P = *(Sim2PMT*)(&PDS);
 	for(Side s = EAST; s <= WEST; ++s) {
-		if(!S2P.eW[s]) continue;
-		mwpcHitEffic[s][true]->Fill(S2P.mwpcEnergy[s],weight);
-		if(S2P.passedMWPC(s)) mwpcHitEffic[s][false]->Fill(S2P.mwpcEnergy[s],weight);
+		float cmaxsum = S2P.mwpcCathMaxSum(s);
+		if(S2P.eW[s]) {
+			mwpcCathMax[s][true]->Fill(cmaxsum,weight);
+			mwpcHitEffic[s][true]->Fill(S2P.mwpcEnergy[s],weight);
+			if(S2P.passedMWPC(s)) mwpcHitEffic[s][false]->Fill(S2P.mwpcEnergy[s],weight);
+		} else {
+			mwpcCathMax[s][false]->Fill(cmaxsum,weight);
+		}
 	}
 }
 
@@ -655,6 +667,11 @@ void WirechamberSimTrigEfficPlugin::makePlots() {
 		drawHistoPair(mwpcHitEffic[s][true], mwpcHitEffic[s][false]);
 		printCanvas(sideSubst("MWPC_TrigSpectra_%c",s));
 		
+		myA->defaultCanvas->SetLogy(true);
+		drawHistoPair(mwpcCathMax[s][true], mwpcCathMax[s][false]);
+		printCanvas(sideSubst("CathMaxSum_%c",s));
+		myA->defaultCanvas->SetLogy(false);
+
 		TGraphAsymmErrors* gEffic = new TGraphAsymmErrors(mwpcHitEffic[s][true]->GetNbinsX());
 		gEffic->BayesDivide(mwpcHitEffic[s][false],mwpcHitEffic[s][true],"w");
 		
@@ -672,5 +689,56 @@ void WirechamberSimTrigEfficPlugin::makePlots() {
 	}
 }
 
+//---------------------------------------------------
 
 
+WirechamberCathMaxSumPlugin::WirechamberCathMaxSumPlugin(RunAccumulator* RA): AnalyzerPlugin(RA,"mwpcCathMaxSum") {
+	for(Side s = EAST; s <= WEST; ++s) {
+		mwpcCathMax[s] = registerFGBGPair("hCathMaxSum","Cathode Max Sum",200,-200,8200,AFP_OTHER,s);
+		mwpcCathMax[s]->setAxisTitle(X_DIRECTION,"ADC channels");
+	}
+}
+
+void WirechamberCathMaxSumPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+	for(Side s = EAST; s <= WEST; ++s)
+		if(PDS.fPID == PID_BETA || PDS.fPID == PID_SINGLE)
+			mwpcCathMax[s]->h[currentGV]->Fill(PDS.mwpcCathMaxSum(s),weight);
+}
+
+void WirechamberCathMaxSumPlugin::compareMCtoData(AnalyzerPlugin* AP) {
+	// re-cast to correct type
+	WirechamberCathMaxSumPlugin& dat = *(WirechamberCathMaxSumPlugin*)AP;
+	
+	myA->defaultCanvas->SetRightMargin(0.04);
+	myA->defaultCanvas->SetLeftMargin(0.12);
+	
+	for(Side s = EAST; s <= WEST; ++s) {
+		myA->defaultCanvas->SetLogy(true);
+		
+		TH1* rDat = myA->rateHisto(dat.mwpcCathMax[s]);
+		rDat->Scale(1000);
+		rDat->GetYaxis()->SetTitle("event rate [mHz/channel]");
+		rDat->GetYaxis()->SetTitleOffset(1.45);
+		rDat->SetMinimum(0.01);
+		rDat->SetMaximum(1000);
+		rDat->SetLineColor(2);
+		
+		TH1* rSim = myA->rateHisto(mwpcCathMax[s]);
+		rSim->Scale(1000);
+		rSim->GetYaxis()->SetTitle("event rate [mHz/channel]");
+		rSim->GetYaxis()->SetTitleOffset(1.45);
+		rSim->SetMinimum(0.01);
+		rSim->SetMaximum(1000);
+		rSim->SetLineColor(4);
+		
+		rDat->Draw();
+		rSim->Draw("Same");
+		drawVLine(300, myA->defaultCanvas, 1);
+		printCanvas(sideSubst("DataComparison/CathMaxSum_%c",s));
+		
+		myA->defaultCanvas->SetLogy(false);
+		
+		delete rDat;
+		delete rSim;
+	}
+}

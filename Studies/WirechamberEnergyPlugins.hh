@@ -48,6 +48,18 @@ public:
 	fgbgPair* EwNormCoords[BOTH][TYPE_III_EVENT+1];	//< anode energy spectrum in cut-normalized coordinates by [side][type]
 };
 
+/// analyzer plugin for showing CathMaxSum calibration
+class WirechamberCathMaxSumPlugin: public AnalyzerPlugin {
+public:
+	/// constructor
+	WirechamberCathMaxSumPlugin(RunAccumulator* RA);
+	/// fill histograms
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
+	/// MC/data comparison
+	virtual void compareMCtoData(AnalyzerPlugin* AP);
+
+	fgbgPair* mwpcCathMax[BOTH];		//< cathode max sum spectra on each side
+};
 
 /// analyzer plugin for evaluting wirechamber trigger efficiency curves
 class WirechamberSimTrigEfficPlugin: public AnalyzerPlugin {
@@ -60,6 +72,7 @@ public:
 	virtual void makePlots();
 	
 	TH1* mwpcHitEffic[BOTH][2];			//< MWPC event spectra for [side][triggered]
+	TH1* mwpcCathMax[BOTH][2];			//< max cathode signal for events with and without actual energy deposition
 };
 
 

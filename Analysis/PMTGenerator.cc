@@ -222,9 +222,14 @@ void PMTGenerator::calcCathodeSignals(Side s, AxisDirection d, const float* cath
 	for(unsigned int c=0; c<currentCal->nWires(s,d); c++) {
 		// base ADC conversion
 		cath_adc[c] = currentCal->ccloud_eta[s]->eval(s,0,xw,yw,true) * currentCal->cathseg_energy_norm[s][d][c] * cath_chg[c];
-		// pedestals and electronics noise
-		double ped = currentCal->cathPeds0[s][d][c];
-		cath_adc[c] += ped + sim_rnd_source.Gaus(0.,currentCal->cathPedW0[s][d][c]);
+		// pedestal and electronics noise (smoothed poisson)
+		double ped = currentCal->cathPeds0[s][d][c]; // pedestal mean value
+		double n1 = 1.5;
+		double w1 = 1.0;
+		double n2 = 16;
+		double w2 = 0.3;
+		double pedw = currentCal->cathPedW0[s][d][c] * (w1*sim_rnd_source.PoissonD(n1)/n1 + w2*sim_rnd_source.PoissonD(n2)/n2-w1-w2)/sqrt(w1*w1+w2*w2);
+		cath_adc[c] += ped + pedw;
 		// clamp to ADC range and quantize
 		cath_adc[c] = int(cath_adc[c]<0 ? 0 : (cath_adc[c]>4095 ? 4095:cath_adc[c]));
 		// pedestal subtract

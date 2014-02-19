@@ -82,6 +82,7 @@ Stringmap SpectrumPeak::toStringmap() const {
 	m.insert("side",s==EAST?"'East'":"'West'");
 	m.insert("tube",t);
 	m.insert("peak_num",type);
+	m.insert("peak_name",name());
 	m.insert("peak_data",simulated?"'simulation'":"'data'");
 	m.insert("adc",center.x);
 	m.insert("dadc",center.err);

@@ -54,7 +54,7 @@ void CathodeGainPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 			double gi_gcc = PDS.ActiveCal->getCathCCloudGain(s,d,i);
 			double c_enorm = PDS.ActiveCal->cathseg_energy_norm[s][d][i];
 			((TH2F*)cathNorm[s][d][i]->h[currentGV])->Fill(c+(int(n)-int(i)), PDS.cathodes[s][d][i] / (c_enorm*eta_cc*PDS.mwpcEnergy[s]), weight);
-			((TProfile*)prevGain[s][d]->h[currentGV])->Fill(c,gi_gcc,weight);
+			((TProfile*)prevGain[s][d]->h[currentGV])->Fill(i,gi_gcc,weight);
 		}
 	}
 }
@@ -101,6 +101,7 @@ void CathodeGainPlugin::calculateResults() {
 				m.insert("d_center",fCathCenter.GetParError(1));
 				m.insert("width",fCathCenter.GetParameter(2));
 				m.insert("d_width",fCathCenter.GetParError(2));
+				m.insert("prev_gain",((TProfile*)prevGain[s][d]->h[GV_OPEN])->GetBinContent(c));
 				for(unsigned int i=0; i<3; i++) {
 					m.insert("cx_lo_a"+itos(i),fLowCX.GetParameter(i));
 					m.insert("d_cx_lo_a"+itos(i),fLowCX.GetParError(i));

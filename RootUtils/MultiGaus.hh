@@ -37,8 +37,8 @@ public:
 	/// get TF1 with appropriate pre-set values
 	TF1* getFitter();	
 	
-	/// fit a TH1F after initial peak centers/widths have been guessed; update inital guess
-	void fit(TH1F* h, bool draw = true);
+	/// fit a TH1 after initial peak centers/widths have been guessed; update inital guess
+	void fit(TH1* h, bool draw = true);
 	
 	/// gaussian evaluation function
 	double operator() (double* x, double* par);

@@ -4,7 +4,7 @@
 
 bool yrevsort(std::pair<float,float> a, std::pair<float,float> b) { return (b.second < a.second); }
 
-std::vector<TSpectrumPeak> tspectrumSearch(TH1F* hin, float sigma, float thresh) {
+std::vector<TSpectrumPeak> tspectrumSearch(TH1* hin, float sigma, float thresh) {
 	TSpectrum* TS = new TSpectrum();
 	int npks = TS->Search(hin,sigma,"",thresh);
 	if(npks<0)
@@ -20,7 +20,7 @@ typedef Double_t TSpectrum_Data_t;
 typedef Float_t TSpectrum_Data_t;
 #endif
 
-std::vector<float> tspectrumSearch(TH1F* hin, TH1F** hout, float sigma, float thresh) {
+std::vector<float> tspectrumSearch(TH1* hin, TH1** hout, float sigma, float thresh) {
 	
 	// temporary data arrays
 	unsigned int nbins = hin->GetNbinsX();
@@ -48,7 +48,7 @@ std::vector<float> tspectrumSearch(TH1F* hin, TH1F** hout, float sigma, float th
 	
 	// output histogram
 	if(hout) {
-		*hout = (TH1F*)hin->Clone("hout");
+		*hout = (TH1*)hin->Clone("hout");
 		for(unsigned int i=0; i<nbins; i++)
 			(*hout)->SetBinContent(i+1,datout[i]);
 		(*hout)->SetBinContent(0,0);
@@ -64,8 +64,8 @@ std::vector<float> tspectrumSearch(TH1F* hin, TH1F** hout, float sigma, float th
 	return vx;
 }
 
-std::vector<SpectrumPeak> tspectrumPrefit(TH1F* indat, float searchsigma, const std::vector<SpectrumPeak>& expectedPeaks,
-										  TH1F*& htout, float pkMin, float pkMax) {
+std::vector<SpectrumPeak> tspectrumPrefit(TH1* indat, float searchsigma, const std::vector<SpectrumPeak>& expectedPeaks,
+										  TH1*& htout, float pkMin, float pkMax) {
 	
 	// use TSpectrum peak fitting to find initial guesses for peak locations
 	float binsigma = searchsigma/indat->GetBinWidth(1);
@@ -105,7 +105,7 @@ std::vector<SpectrumPeak> tspectrumPrefit(TH1F* indat, float searchsigma, const 
 	return foundPeaks;
 }
 
-MultiGaus multiPeakFitter(TH1F* indat, const std::vector<SpectrumPeak>& expectedPeaks, float nSigma) {
+MultiGaus multiPeakFitter(TH1* indat, const std::vector<SpectrumPeak>& expectedPeaks, float nSigma) {
 	unsigned int npks = expectedPeaks.size();
 	MultiGaus mg(npks,"SpectrumFitter",nSigma);	
 	for(unsigned int n=0; n<npks; n++) {
@@ -120,11 +120,11 @@ MultiGaus multiPeakFitter(TH1F* indat, const std::vector<SpectrumPeak>& expected
 	return mg;
 }
 
-std::vector<SpectrumPeak> fancyMultiFit(TH1F* indat, float searchsigma, const std::vector<SpectrumPeak>& expectedPeaks,
+std::vector<SpectrumPeak> fancyMultiFit(TH1* indat, float searchsigma, const std::vector<SpectrumPeak>& expectedPeaks,
 										bool bgsubtract, const std::string& drawName, float nSigma, float pkMin, float pkMax) {
 	
 	// use TSpectrum peak fitting to find initial guesses for peak locations
-	TH1F* htout;
+	TH1* htout;
 	std::vector<SpectrumPeak> foundPeaks = tspectrumPrefit(indat, searchsigma, expectedPeaks, htout, pkMin, pkMax);
 	
 	if(bgsubtract) {

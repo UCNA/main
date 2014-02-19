@@ -72,9 +72,13 @@ public:
 	const fgbgPair& getFGBGPair(const std::string& qname) const;
 	/// make a new (unregistered) fgbgPair copy
 	fgbgPair* cloneFGBGPair(const fgbgPair& p, const std::string& newName, const std::string& newTitle);
-
+	/// get copy of FGBG histogram as rate
+	TH1* rateHisto(const fgbgPair* p, GVState gv = GV_OPEN) const;
+	
 	/// get total run time for given state
 	BlindTime getTotalTime(AFPState afp, GVState gv) const;
+	/// get total time summed over AFP states
+	BlindTime getTotalTime(GVState gv) const;
 	/// get total counts for given state
 	float getTotalCounts(AFPState afp, GVState gv) const { return totalCounts[afp][gv]; }
 	/// get time contributed from given rumber

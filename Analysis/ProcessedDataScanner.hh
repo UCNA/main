@@ -28,6 +28,8 @@ public:
 	virtual float radius(Side s) const { return sqrt(radius2(s)); }
 	/// MWPC charge cloud volume
 	virtual float mwpcCharge(Side s) const { return wires[s][X_DIRECTION].ccloud_size() + wires[s][Y_DIRECTION].ccloud_size(); }
+	/// MWPC cathode maximum sum
+	virtual float mwpcCathMaxSum(Side s) const { return wires[s][X_DIRECTION].maxValue + wires[s][Y_DIRECTION].maxValue; }
 	/// event energy
 	virtual float getEnergy() const { return scints[EAST].energy.x + scints[WEST].energy.x; }
 	/// get event true (reconstructed) energy

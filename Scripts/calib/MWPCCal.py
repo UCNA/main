@@ -23,7 +23,7 @@ class cathnorm_fits(KVMap):
 	"""cathnorm_fits from CathodeGainPlugin analysis, indicating shape of cathode charge distribution"""
 	def __init__(self,m=KVMap()):
 		self.dat = m.dat
-		self.loadFloats(["center","d_center","height","d_height","width","d_width","cathode"])
+		self.loadFloats(["center","d_center","height","d_height","width","d_width","cathode","prev_gain"])
 		self.cathode = int(self.cathode)
 		for i in range(3):
 			self.loadFloats(["cx_lo_a%i"%i,"d_cx_lo_a%i"%i,"cx_hi_a%i"%i,"d_cx_hi_a%i"%i])
@@ -689,10 +689,10 @@ def assign_MWPC_calib_from_anode_table(conn):
 # set approximate default cathode scale factors in DB
 def set_default_cathode_scalefactors(conn):
 	for s in ["East","West"]:
-		for p in ["X","Y"]:
+		for p in ["x","y"]:
 			C = CthCclScl(0,100000,s,p)
 			C.delete_from_db(conn)
-			C.cfacts = [ [i,0,655./(0.27*8840.),0] for i in range(16)]
+			C.cfacts = [ [i,0,0.32,0] for i in range(16)]
 			C.upload_to_db(conn)
 
 ##################
@@ -738,6 +738,33 @@ def MWPC_calib_for_beta_octets(conn,basedir):
 		gGC.plot(graph.data.points([(g[0],g[1][s]) for g in gdat],x=1,y=2,title=gtitle),[graph.style.symbol(tpsymbs[0],symbolattrs=sideStyles[s])])
 	gGC.writetofile(basedir+"/MWPC_GainCal_%i.pdf"%depth)
 
+def MWPC_Cathode_CCloud_Scaling(conn,datfName,simfName,start_run=0,end_run=100000):
+	"""Set MWPC individual cathode to charge cloud size scaling factors"""
+	
+	dat = CathnormFile(datfName)
+	sim = CathnormFile(simfName)
+	
+	for s in ["East","West"]:
+		for p in ["x","y"]:
+			C = CthCclScl(start_run,end_run,s,p.upper())
+			C.cfacts = [ [i,0,0.32,0] for i in range(16)]
+						
+			print "Cathode gain factor changes",s,p
+			for c in range(16)[1:-1]:
+				delta = dat.cathnorms[(s[0],p,c)].height/sim.cathnorms[(s[0],p,c)].height
+				C.cfacts[c][2] = delta * dat.cathnorms[(s[0],p,c)].prev_gain
+				print c,delta
+
+			# end cathodes lacking independent data... fill in with neighbor's values
+			C.cfacts[0][2] = C.cfacts[1][2]
+			C.cfacts[-1][2] = C.cfacts[-2][2]
+
+			print C.cfacts
+			print musigma([c[2] for c in C.cfacts[1:-1]])
+
+			C.delete_from_db(conn)
+			C.upload_to_db(conn)
+
 
 
 ###############
@@ -761,7 +788,8 @@ if __name__ == "__main__":
 	#########
 	#make_mwpc_posmap(conn,167,169) # only run this once
 	#assign_MWPC_calib(conn,0,100000,10,181,"ccloud") # default calibration for all runs
-	MWPC_calib_for_beta_octets(conn,ppath+"/MWPC_ECal_8_Sim0823/")
+	#MWPC_calib_for_beta_octets(conn, ppath+"/MWPC_ECal_8_Sim0823/")
+	#MWPC_Cathode_CCloud_Scaling(conn, ppath+"/MWPC_ECal_8/MWPC_ECal_8.txt", ppath+"/MWPC_ECal_8_Sim0823/MWPC_ECal_8_Sim0823.txt")
 	exit(0)
 	
 	
