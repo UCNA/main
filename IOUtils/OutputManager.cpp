@@ -2,6 +2,8 @@
 #include "PathUtils.hh"
 #include <TH1.h>
 
+bool OutputManager::squelchAllPrinting = false;
+
 OutputManager::OutputManager(std::string nm, std::string bp): rootOut(NULL), defaultCanvas(new TCanvas()),
 parent(NULL), writeRootOnDestruct(false) {
 	TH1::AddDirectory(kFALSE);
@@ -101,8 +103,9 @@ TH2F* OutputManager::registeredTH2F(std::string hname, std::string htitle, unsig
 }
 
 void OutputManager::printCanvas(std::string fname, std::string suffix) const {
-	makePath(plotPath+"/"+fname+suffix,true);
 	printf("Printing canvas '%s' in '%s'\n",(fname+suffix).c_str(), plotPath.c_str());
+	if(squelchAllPrinting) { printf("Printing squelched!\n"); return; }
+	makePath(plotPath+"/"+fname+suffix,true);
 	defaultCanvas->Print((plotPath+"/"+fname+suffix).c_str());
 }
 

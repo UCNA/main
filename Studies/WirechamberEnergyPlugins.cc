@@ -84,12 +84,13 @@ void MWPCGainPlugin::calculateResults() {
 			TH2F* hEw = (TH2F*)(mwpcE[s][tp]->h[GV_OPEN]);
 			hSlices[s][tp] = sliceTH2(*hEw,X_DIRECTION);
 			gEw[s][tp] = new TGraphErrors(hSlices[s][tp].size());
-			TGraphErrors gAvg(hSlices[s][tp].size());
+			fitParams[s][tp].clear();
+			fitErrs[s][tp].clear();
 			for(unsigned int i=0; i<hSlices[s][tp].size(); i++) {
 				double e0 = hEw->GetBinCenter(i+1);
 				double c = hSlices[s][tp][i]->GetBinCenter(hSlices[s][tp][i]->GetMaximumBin());
 				double mx = hSlices[s][tp][i]->GetMaximum();
-				if(mx<50) {
+				if(mx<40) {
 					// skip extra-low-counts bins
 					fitParams[s][tp].push_back(std::vector<double>());
 					fitErrs[s][tp].push_back(std::vector<double>());
@@ -120,8 +121,6 @@ void MWPCGainPlugin::calculateResults() {
 				myA->qOut.insert("MWPC_gainCalFit",m);
 				gEw[s][tp]->SetPoint(i,e0,fLandau.GetParameter(1));
 				gEw[s][tp]->SetPointError(i,hEw->GetBinWidth(i+1)*0.5,fLandau.GetParameter(2));
-				gAvg.SetPoint(i,e0,fLandau.GetParameter(1));
-				gAvg.SetPointError(i,0,fLandau.GetParError(1));
 			}
 		}
 	}
@@ -173,7 +172,7 @@ void MWPCGainPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 		std::vector<TH1*> hToPlot;
 		norm23[s]->h[GV_OPEN]->SetLineColor(4);
 		dat.norm23[s]->h[GV_OPEN]->SetLineColor(2);
-		norm23[s]->h[GV_OPEN]->Scale(dat.norm23[s]->h[GV_OPEN]->Integral()/norm23[s]->h[GV_OPEN]->Integral());
+		norm23[s]->h[GV_OPEN]->Scale(dat.norm23[s]->h[GV_OPEN]->Integral()/norm23[s]->h[GV_OPEN]->Integral());		
 		hToPlot.push_back(norm23[s]->h[GV_OPEN]);
 		hToPlot.push_back(dat.norm23[s]->h[GV_OPEN]);
 		drawSimulHistos(hToPlot);
@@ -222,7 +221,7 @@ void MWPCGainPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 			}
 			while(gGain[tp]->GetN()>j) gGain[tp]->RemovePoint(j);
 			
-			if(gGain[tp]->GetN() < 2) continue;
+			if(!gGain[tp]->GetN()) continue;
 			
 			TF1 lineFit("lineFit","pol1",0,10);
 			lineFit.FixParameter(0,0);
@@ -662,6 +661,7 @@ void WirechamberSimTrigEfficPlugin::fillCoreHists(ProcessedDataScanner& PDS, dou
 }
 
 void WirechamberSimTrigEfficPlugin::makePlots() {
+	TGraphAsymmErrors* gEffic[BOTH];
 	for(Side s = EAST; s <= WEST; ++s) {
 		
 		drawHistoPair(mwpcHitEffic[s][true], mwpcHitEffic[s][false]);
@@ -672,21 +672,25 @@ void WirechamberSimTrigEfficPlugin::makePlots() {
 		printCanvas(sideSubst("CathMaxSum_%c",s));
 		myA->defaultCanvas->SetLogy(false);
 
-		TGraphAsymmErrors* gEffic = new TGraphAsymmErrors(mwpcHitEffic[s][true]->GetNbinsX());
-		gEffic->BayesDivide(mwpcHitEffic[s][false],mwpcHitEffic[s][true],"w");
+		gEffic[s] = new TGraphAsymmErrors(mwpcHitEffic[s][true]->GetNbinsX());
+		gEffic[s]->BayesDivide(mwpcHitEffic[s][false],mwpcHitEffic[s][true],"w");
 		
-		gEffic->SetMinimum(-0.10);
-		gEffic->SetMaximum(1.10);
-		gEffic->Draw("AP");
-		gEffic->SetTitle("Trigger Efficiency");
-		gEffic->GetXaxis()->SetTitle("MWPC energy [keV]");
-		//gEffic->GetXaxis()->SetLimits(xmin,xmax);
-		gEffic->GetYaxis()->SetTitle("Efficiency");
-		gEffic->Draw("AP");
-		printCanvas(sideSubst("MWPC_TrigEffic_%c",s));
-		
-		delete(gEffic);
+		gEffic[s]->SetMinimum(-0.10);
+		gEffic[s]->SetMaximum(1.10);
+		gEffic[s]->Draw("AP");
+		gEffic[s]->SetTitle("Trigger Efficiency");
+		gEffic[s]->GetXaxis()->SetTitle("MWPC energy [keV]");
+		gEffic[s]->GetXaxis()->SetLimits(0,4);
+		gEffic[s]->GetYaxis()->SetTitle("Efficiency");
+		gEffic[s]->SetLineColor(2+2*s);
 	}
+	
+	gEffic[EAST]->Draw("AP");
+	gEffic[WEST]->Draw("P");
+	printCanvas("MWPC_TrigEffic");
+	
+	for(Side s = EAST; s <= WEST; ++s)
+		delete(gEffic[s]);
 }
 
 //---------------------------------------------------

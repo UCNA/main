@@ -131,21 +131,27 @@ class SourceDatDirectory:
 		self.rundat = {}
 		self.sourcerates = {}
 		for d in os.listdir(self.basepath):
+			if not d.split("_")[0].isdigit():
+				continue
 			for d2 in os.listdir(self.basepath+'/'+d):
 				rn = d2.split("_")[0]
 				if rn.isdigit():
-					self.runpaths[int(rn)]=self.basepath+'/'+d+'/'+d2
+					self.runpaths[int(rn)]=self.basepath+'/'+d+'/'+d2+'/'+d2+'.txt'
 		print "SourceDatDirectory loaded for",len(self.runpaths),"runs."
-	def getQFile(self,rn):
+	def getQFile(self,rn,obj=QFile):
 		if rn not in self.rundat:
 			assert rn in self.runpaths
-			self.rundat[rn] = QFile(self.runpaths[rn]+"/Run_%i.txt"%rn)
+			self.rundat[rn] = obj(self.runpaths[rn])
 		return self.rundat[rn]
 	def getKey(self,rn,key):
 		if rn not in self.runpaths:
 			print "No data for",rn,"to get key",key
 			return []
 		return self.getQFile(rn).dat.get(key,[])
+	def getRunlist(self):
+		rlist = self.runpaths.keys()
+		rlist.sort()
+		return rlist
 	def getSourceRates(self,rn):
 		if rn not in self.sourcerates:
 			self.sourcerates[rn] = [SourceRate(r) for r in self.getKey(rn,"sourceRate")]

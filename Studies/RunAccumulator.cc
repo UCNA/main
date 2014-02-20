@@ -174,6 +174,7 @@ void RunAccumulator::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 
 void RunAccumulator::calculateResults() {
 	printf("Calculating results for %s...\n",name.c_str());
+	if(isCalculated) printf("*** Warning: repeat calculation!\n");
 	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++) {
 		printf("... results in '%s' ...\n",it->first.c_str());
 		it->second->calculateResults();
@@ -200,13 +201,13 @@ void RunAccumulator::makePlots() {
 
 void RunAccumulator::compareMCtoData(RunAccumulator& OAdata) {
 	defaultCanvas->cd();
+	if(!isCalculated) calculateResults();
+	if(!OAdata.isCalculated) OAdata.calculateResults();
 	printf("Comparing MC %s and data %s...\n",name.c_str(),OAdata.name.c_str());
 	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++) {
 		AnalyzerPlugin* AP = OAdata.getPlugin(it->second->name);
 		if(AP) {
 			printf("... comparison in '%s' ...\n",it->first.c_str());
-			if(!isCalculated) it->second->calculateResults();
-			if(!OAdata.isCalculated) AP->calculateResults();
 			it->second->compareMCtoData(AP);
 		}
 	}

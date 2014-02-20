@@ -481,8 +481,10 @@ void reSource(RunNum rn) {
 		delete g2p;
 	}
 	
-	SHAsim.makeOutput(true);
+	SHAsim.makePlots();
 	SHAsim.compareMCtoData(SHAdat);
+	SHAsim.write();
+	SHAsim.setWriteRoot(true);
 }
 
 

@@ -1,4 +1,5 @@
 from QFile import *
+from PyxUtils import *
 
 # runs in pulse pair, half octet, and octet groups			  		  
 #ppSegments = [["A1","A2","A3","A4","A5","A6"],["A7","A8","A9","A10","A11","A12"],["B1","B2","B3","B4","B5","B6"],["B7","B8","B9","B10","B11","B12"]]
@@ -91,3 +92,18 @@ def collectOctetFiles(basedir,depth,baseClass=RunAccumulatorFile):
 		else:
 			datfls += collectOctetFiles(f[0],depth-1)
 	return datfls
+
+def make_runaxis(rmin,rmax):
+	
+	tckdist = [5,1]
+	if rmax-rmin > 100:
+		tckdist = [10,1]
+	if rmax-rmin > 500:
+		tckdist = [100,10]	
+	if rmax-rmin > 1000:
+		tckdist = [100,20]
+				
+	return graph.axis.lin(title="Run Number",min=rmin,max=rmax,
+							parter=graph.axis.parter.linear(tickdists=tckdist),
+							texter = graph.axis.texter.rational(),
+							painter=graph.axis.painter.regular(labeldist=0.1,labeldirection=graph.axis.painter.rotatetext(135)))

@@ -278,13 +278,14 @@ int main(int argc, char *argv[]) {
 		G4toPMT G2P;
 		G2P.runCathodeSim();
 		G2P.addFile(getEnvSafe("G4OUTDIR")+"/2014013_GeomC_n1_f_n/analyzed_*.root");
-		PMTCalibrator PCal(14127);
+		PMTCalibrator PCal(14741);
 		G2P.setCalibrator(PCal);
 		
 		OutputManager OM("SimCathShape",getEnvSafe("UCNA_ANA_PLOTS")+"/test/SimCathShape/");
 		Sim_Cathode_Shape_Analyzer SCTA(&OM,"SimCathodeShape");
 
-		SCTA.loadSimData(G2P);
+		for(int i=0; i<5; i++)
+			SCTA.loadSimData(G2P);
 		SCTA.makePlots();
 		SCTA.write();
 	}

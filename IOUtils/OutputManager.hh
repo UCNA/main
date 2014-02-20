@@ -88,6 +88,8 @@ public:
 	std::string name;			//< name for this subsystem			
 	bool writeRootOnDestruct;	//< whether to write ROOT file when destructed
 	
+	static bool squelchAllPrinting;	//< whether to cancel all printCanvas output
+	
 protected:
 	
 	/// set name of this detector

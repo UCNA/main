@@ -5,6 +5,7 @@ sys.path.append("..")
 from ucnacore.EncalDB import *
 from ucnacore.RunAccumulatorFile import *
 from review.Asymmetries import *
+from Sources import SourceDatDirectory
 from math import *
 from ucnacore.QFile import *
 from ucnacore.PyxUtils import *
@@ -701,18 +702,26 @@ def set_default_cathode_scalefactors(conn):
 def MWPC_calib_from_RunAccumulatorFile(conn,RAcF,M):
 	"""Generate adjusted MWPC energy calibrations from file"""
 	calruns = RAcF.getRuns()
-	gcals = dict([ ((c.side,c.type),c) for c in [mwpcGainCal(c) for c in RAcF.dat["mwpcGainCal"]]])
+	gcals = dict([ ((c.side,c.type),c) for c in [mwpcGainCal(c) for c in RAcF.dat.get("mwpcGainCal",[])]])
+	if ("East",0) not in gcals or ("West",0) not in gcals or not calruns:
+		print calruns
+		print "No data found in",RAcF.fname
+		M.gain = None
+		return None
+		
 	M.start_run = calruns[0]
 	M.end_run = calruns[-1]
+	
 	sgains = {}
 	for M.side in ["East","West"]:
 		M.gain = gcals[(M.side,0)].g0_avg / gcals[(M.side,0)].fit_gain
 		sgains[M.side] = M.gain
 		print M
-		M.upload(conn)
+		if conn:
+			M.upload(conn)
 	return sgains
 
-def MWPC_calib_for_beta_octets(conn,basedir):
+def MWPC_calib_for_beta_octets(conn,basedir,runAxis=None):
 	"""Set MWPC ccloud gain factors for runs in each beta decay octet"""
 	depth = 0
 	
@@ -723,20 +732,57 @@ def MWPC_calib_for_beta_octets(conn,basedir):
 	
 	gdat = []
 	for (n,f) in enumerate(collectOctetFiles(basedir,0)):
-		gdat.append((n,MWPC_calib_from_RunAccumulatorFile(conn,f,M)))
+		gdat.append( (n, MWPC_calib_from_RunAccumulatorFile(conn,f,M), 0.5*(f.getRuns()[0]+f.getRuns()[-1])) )
 
 	# plot
+	xaxis = graph.axis.lin(title=unitNames[depth],min=0,max=len(gdat)-1)
+	if runAxis:
+		xaxis = runAxis
 	gGC=graph.graphxy(width=25,height=10,
-					  x=graph.axis.lin(title=unitNames[depth],min=0,max=len(gdat)-1),
-					  y=graph.axis.lin(title="MWPC gain calibration $g_Q$"),
+					  x=xaxis,
+					  y=graph.axis.lin(title="MWPC gain calibration $g_Q$",min=2e-4,max=3.5e-4),
 					  key = graph.key.key(pos="bl"))
 	setTexrunner(gGC)
 	tpsymbs = {0:symbol.circle,1:symbol.triangle,2:symbol.plus}
 	sideStyles = {"East":[scols["East"]], "West":[scols["West"],deco.filled]}
 	for s in ["East","West"]:
 		gtitle = s # + " Type " + {0:"0",1:"I",2:"II/III"}[tp]
-		gGC.plot(graph.data.points([(g[0],g[1][s]) for g in gdat],x=1,y=2,title=gtitle),[graph.style.symbol(tpsymbs[0],symbolattrs=sideStyles[s])])
+		gpts = [(g[0],g[1][s]) for g in gdat]
+		if runAxis:
+			gpts = [(g[-1],g[1][s]) for g in gdat]
+		gGC.plot(graph.data.points(gpts,x=1,y=2,title=gtitle),[graph.style.symbol(tpsymbs[0],symbolattrs=sideStyles[s])])
+
 	gGC.writetofile(basedir+"/MWPC_GainCal_%i.pdf"%depth)
+
+def MWPC_calib_for_source_runs(conn,basedir,runAxis=None):
+	"""Set MWPC ccloud gain factors for each calibration source run"""
+	
+	M = MWPC_Ecal()
+	M.priority = 10
+	M.pmid = 181
+	M.charge_meas = "ccloud"
+
+	SDD = SourceDatDirectory(basedir)
+	gdat = [(rn,MWPC_calib_from_RunAccumulatorFile(conn,SDD.getQFile(rn,RunAccumulatorFile),M)) for rn in SDD.getRunlist()]
+
+	if not runAxis:
+		runAxis = make_runaxis(gdat[0][0],gdat[-1][0])
+		
+	# plot
+	gGC=graph.graphxy(width=25,height=10,
+					  x=runAxis,
+					  y=graph.axis.lin(title="MWPC gain calibration $g_Q$",min=2e-4,max=3.5e-4),
+					  key = graph.key.key(pos="bl"))
+	setTexrunner(gGC)
+	tpsymbs = {0:symbol.circle,1:symbol.triangle,2:symbol.plus}
+	#sideStyles = {"East":[scols["East"]], "West":[scols["West"],deco.filled]}
+	sideStyles = {"East":[rgb.red], "West":[rgb.red,deco.filled]}
+	for s in ["East","West"]:
+		gtitle = s # + " Type " + {0:"0",1:"I",2:"II/III"}[tp]
+		gGC.plot(graph.data.points([(g[0],g[1][s]) for g in gdat if g[1]],x=1,y=2,title=gtitle),[graph.style.symbol(tpsymbs[0],symbolattrs=sideStyles[s])])
+	gGC.writetofile(basedir+"/MWPC_GainCal.pdf")
+
+
 
 def MWPC_Cathode_CCloud_Scaling(conn,datfName,simfName,start_run=0,end_run=100000):
 	"""Set MWPC individual cathode to charge cloud size scaling factors"""
@@ -774,6 +820,7 @@ def MWPC_Cathode_CCloud_Scaling(conn,datfName,simfName,start_run=0,end_run=10000
 if __name__ == "__main__":
 
 	conn = open_connection()
+	conn = None
 	ppath = os.environ["UCNA_ANA_PLOTS"]
 	
 	#########
@@ -786,10 +833,16 @@ if __name__ == "__main__":
 	#########
 	# 2010 cathode-based calibration
 	#########
+	
 	#make_mwpc_posmap(conn,167,169) # only run this once
 	#assign_MWPC_calib(conn,0,100000,10,181,"ccloud") # default calibration for all runs
-	#MWPC_calib_for_beta_octets(conn, ppath+"/MWPC_ECal_8_Sim0823/")
-	#MWPC_Cathode_CCloud_Scaling(conn, ppath+"/MWPC_ECal_8/MWPC_ECal_8.txt", ppath+"/MWPC_ECal_8_Sim0823/MWPC_ECal_8_Sim0823.txt")
+	
+	#rxs = make_runaxis(14000,16400)
+	#MWPC_calib_for_beta_octets(conn, ppath+"/MWPC_ECal_8_Sim0823/",rxs)
+	#MWPC_calib_for_source_runs(conn,ppath+"/SourceFitsSim2010",rxs)
+	
+	#MWPC_Cathode_CCloud_Scaling(conn, ppath+"/MWPC_ECal_8/MWPC_ECal_8.txt", ppath+"/MWPC_ECal_8_Sim0823/MWPC_ECal_8_Sim0823.txt") # cathode to charge-cloud scaling
+	
 	exit(0)
 	
 	
