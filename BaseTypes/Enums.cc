@@ -121,7 +121,7 @@ char choiceLetter(AnalysisChoice a) {
 
 //----------------------------------------
 
-std::string chargeProxyName(ChargeProxyType& tp) {
+std::string chargeProxyName(ChargeProxyType tp) {
 	if(tp==CHARGE_PROXY_ANODE) return "anode";
 	else if(tp==CHARGE_PROXY_CCLOUD) return "ccloud";
 	return "None";

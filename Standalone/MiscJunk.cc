@@ -16,11 +16,13 @@ public:
 	Sim_Cathode_Shape_Analyzer(OutputManager* pnt, const std::string& nm, const std::string& inflname = ""):
 	RunAccumulator(pnt,nm,inflname) {
 		addPlugin(cgain_plgn = new CathodeGainPlugin(this));
+		addPlugin(wste_plugin = new WirechamberSimTrigEfficPlugin(this));
 	}
 	/// cloning generator: just return another of the same subclass (with any settings you want to preserve)
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
 									   const std::string& inflname) { return new Sim_Cathode_Shape_Analyzer(this, nm, inflname); }
 	CathodeGainPlugin* cgain_plgn;
+	WirechamberSimTrigEfficPlugin* wste_plugin;
 };
 
 int main(int argc, char *argv[]) {
@@ -165,7 +167,7 @@ int main(int argc, char *argv[]) {
 		AH.addSegment(AH3);
 		
 		NGBGAnalyzer AHdat(&OM,"NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/OctetAsym_Offic/OctetAsym_Offic");
-		AH.loadTotalTime(AHdat);
+		AH.copyTimes(AHdat);
 		AHdat.calculateResults();
 		
 		AH.calculateResults();
@@ -276,13 +278,14 @@ int main(int argc, char *argv[]) {
 		G4toPMT G2P;
 		G2P.runCathodeSim();
 		G2P.addFile(getEnvSafe("G4OUTDIR")+"/2014013_GeomC_n1_f_n/analyzed_*.root");
-		PMTCalibrator PCal(14127);
+		PMTCalibrator PCal(14741);
 		G2P.setCalibrator(PCal);
 		
 		OutputManager OM("SimCathShape",getEnvSafe("UCNA_ANA_PLOTS")+"/test/SimCathShape/");
 		Sim_Cathode_Shape_Analyzer SCTA(&OM,"SimCathodeShape");
 
-		SCTA.loadSimData(G2P);
+		for(int i=0; i<5; i++)
+			SCTA.loadSimData(G2P);
 		SCTA.makePlots();
 		SCTA.write();
 	}

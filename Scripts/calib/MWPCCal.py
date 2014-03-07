@@ -3,10 +3,12 @@
 import sys
 sys.path.append("..")
 from ucnacore.EncalDB import *
+from ucnacore.RunAccumulatorFile import *
+from review.Asymmetries import *
+from Sources import SourceDatDirectory
 from math import *
 from ucnacore.QFile import *
 from ucnacore.PyxUtils import *
-from review.Asymmetries import *
 import numpy
 from numpy import zeros,matrix,linalg
 import os
@@ -22,7 +24,7 @@ class cathnorm_fits(KVMap):
 	"""cathnorm_fits from CathodeGainPlugin analysis, indicating shape of cathode charge distribution"""
 	def __init__(self,m=KVMap()):
 		self.dat = m.dat
-		self.loadFloats(["center","d_center","height","d_height","width","d_width","cathode"])
+		self.loadFloats(["center","d_center","height","d_height","width","d_width","cathode","prev_gain"])
 		self.cathode = int(self.cathode)
 		for i in range(3):
 			self.loadFloats(["cx_lo_a%i"%i,"d_cx_lo_a%i"%i,"cx_hi_a%i"%i,"d_cx_hi_a%i"%i])
@@ -79,6 +81,13 @@ class hitdist(KVMap):
 	def cathkey(self):
 		return (self.side,self.plane,self.cathode)
 
+class mwpcGainCal(KVMap):
+	"""MWPC gain calibration fit data"""
+	def __init__(self,m=KVMap()):
+		self.dat = m.dat
+		self.loadFloats(["fit_gain","d_fit_gain","g0_avg","g0_d_avg","type"])
+		self.type = int(self.type)
+		self.loadStrings(["side"])
 
 class CathFillFile(QFile):
 	"""QFile containing cathseg entries with fill fraction vs MC"""
@@ -592,36 +601,51 @@ def make_mwpc_posmap(conn,charge_pmid,energy_pmid):
 	
 	return pinfo
 
-# assign calibration for range of runs
-def assign_MWPC_calib(conn,start_run,end_run,priority=0,pmid=None,charge_meas="ccloud",gain=None,side="BOTH"):
-	
-	if side=="BOTH":
-		for s in ["East","West"]:
-			assign_MWPC_calib(conn,start_run,end_run,priority,pmid,charge_meas,gain,s)
-		return
+# Wirechamber gain/position calibrations class
+class MWPC_Ecal:
+	def __init__(self):
+		self.charge_meas="ccloud"
+		self.gain=None
+		self.side="BOTH"
+		self.start_run = self.end_run = 0
+		self.priority = 0
+		self.pmid = None
+
+	def upload(self,conn):
+		if self.side == "BOTH":
+			for self.side in ["East","West"]:
+				self.upload(conn)
+			self.side = "BOTH"
+			return
+
+		# delete old entries for same run range
+		wh = "WHERE start_run = %i AND end_run = %i AND side = '%s' AND charge_meas='%s'"%(self.start_run,self.end_run,self.side,self.charge_meas)
+		conn.execute("SELECT count(*) FROM mwpc_ecal "+wh)
+		nold = conn.fetchone()[0]
+		if nold:
+			print "Deleting",nold,"previous entries."
+			cmd = "DELETE FROM mwpc_ecal "+wh
+			print cmd
+			conn.execute(cmd)
 		
-	# delete old entries for same run range
-	conn.execute("SELECT count(*) FROM mwpc_ecal WHERE start_run = %i AND end_run = %i AND side = '%s' AND charge_meas='%s'"%(start_run,end_run,side,charge_meas))
-	nold = conn.fetchone()[0]
-	if nold:
-		print "Deleting",nold,"previous entries."
-		cmd = "DELETE FROM mwpc_ecal WHERE start_run = %i AND end_run = %i AND side = '%s' AND charge_meas='%s'"%(start_run,end_run,side,charge_meas)
+		if self.pmid is None:
+			return
+		
+		print "Setting up MWPC calibrations for",self.start_run,"-",self.end_run,self.side,"using",self.charge_meas
+		if self.gain is None: # synthesize gain from position map
+			self.gain = 1.0/getPosmapSet(conn,self.pmid)[(self.side,0)].avg_val()
+			print "Applying average gain factor",self.gain,"from position map",self.pmid
+		else:
+			print "Gain factor",self.gain,"and position map",self.pmid
+
+		cmd = "INSERT INTO mwpc_ecal (start_run,end_run,priority,side,charge_meas,gain_posmap_id,gain_factor) "
+		cmd += "VALUES (%i,%i,%i,'%s','%s',%i,%g)"%(self.start_run,self.end_run,self.priority,self.side,self.charge_meas,self.pmid,self.gain)
 		print cmd
 		conn.execute(cmd)
-	
-	if pmid is None:
-		return
-	
-	print "Setting up MWPC calibrations for",start_run,"-",end_run,side,"using",charge_meas
-	if gain is None: # synthesize gain from position map
-		gain = 1.0/getPosmapSet(conn,pmid)[(side,0)].avg_val()
-		print "Applying average gain factor",gain,"from position map",pmid
-	else:
-		print "Gain factor",gain,"and position map",pmid
 
-	cmd = "INSERT INTO mwpc_ecal (start_run,end_run,priority,side,charge_meas,gain_posmap_id,gain_factor) VALUES (%i,%i,%i,'%s','%s',%i,%g)"%(start_run,end_run,priority,side,charge_meas,pmid,gain)
-	print cmd
-	conn.execute(cmd)
+	def __repr__(self):
+		return "<MWPC Ecal %i-%i %s %s %i %g p%i>"%(self.start_run,self.end_run,self.side,self.charge_meas,self.pmid,self.gain,self.priority)
+
 
 def delete_cath_ccloud_scale(conn,ccsid):
 	print "Deleting cathode cloud scaling set",ccsid
@@ -655,19 +679,140 @@ class CthCclScl:
 def assign_MWPC_calib_from_anode_table(conn):
 	conn.execute("SELECT start_run,end_run,anode_posmap_id,calfactor_E,calfactor_W FROM anode_cal")
 	for r in conn.fetchall():
-		for s in ["East","West"]:
-			assign_MWPC_calib(conn,r[0],r[1],r[2],"anode",{"East":r[3],"West":r[4]}[s],s)
+		M = MWPC_Ecal()
+		M.start_run,M.end_run = r[0],r[1]
+		M.pmid = r[2]
+		M.charge_meas = "anode"
+		for M.side in ["East","West"]:
+			M.gain = {"East":r[3],"West":r[4]}[M.side]
+			M.upload(conn)
 
 # set approximate default cathode scale factors in DB
 def set_default_cathode_scalefactors(conn):
 	for s in ["East","West"]:
-		for p in ["X","Y"]:
+		for p in ["x","y"]:
 			C = CthCclScl(0,100000,s,p)
 			C.delete_from_db(conn)
-			C.cfacts = [ [i,0,655./(0.27*8840.),0] for i in range(16)]
+			C.cfacts = [ [i,0,0.32,0] for i in range(16)]
 			C.upload_to_db(conn)
 
+##################
+# New wirechamber calibrations
+
+def MWPC_calib_from_RunAccumulatorFile(conn,RAcF,M):
+	"""Generate adjusted MWPC energy calibrations from file"""
+	calruns = RAcF.getRuns()
+	gcals = dict([ ((c.side,c.type),c) for c in [mwpcGainCal(c) for c in RAcF.dat.get("mwpcGainCal",[])]])
+	if ("East",0) not in gcals or ("West",0) not in gcals or not calruns:
+		print calruns
+		print "No data found in",RAcF.fname
+		M.gain = None
+		return None
 		
+	M.start_run = calruns[0]
+	M.end_run = calruns[-1]
+	
+	sgains = {}
+	for M.side in ["East","West"]:
+		M.gain = gcals[(M.side,0)].g0_avg / gcals[(M.side,0)].fit_gain
+		sgains[M.side] = M.gain
+		print M
+		if conn:
+			M.upload(conn)
+	return sgains
+
+def MWPC_calib_for_beta_octets(conn,basedir,runAxis=None):
+	"""Set MWPC ccloud gain factors for runs in each beta decay octet"""
+	depth = 0
+	
+	M = MWPC_Ecal()
+	M.priority = 10
+	M.pmid = 181
+	M.charge_meas = "ccloud"
+	
+	gdat = []
+	for (n,f) in enumerate(collectOctetFiles(basedir,0)):
+		gdat.append( (n, MWPC_calib_from_RunAccumulatorFile(conn,f,M), 0.5*(f.getRuns()[0]+f.getRuns()[-1])) )
+
+	# plot
+	xaxis = graph.axis.lin(title=unitNames[depth],min=0,max=len(gdat)-1)
+	if runAxis:
+		xaxis = runAxis
+	gGC=graph.graphxy(width=25,height=10,
+					  x=xaxis,
+					  y=graph.axis.lin(title="MWPC gain calibration $g_Q$",min=2e-4,max=3.5e-4),
+					  key = graph.key.key(pos="bl"))
+	setTexrunner(gGC)
+	tpsymbs = {0:symbol.circle,1:symbol.triangle,2:symbol.plus}
+	sideStyles = {"East":[scols["East"]], "West":[scols["West"],deco.filled]}
+	for s in ["East","West"]:
+		gtitle = s # + " Type " + {0:"0",1:"I",2:"II/III"}[tp]
+		gpts = [(g[0],g[1][s]) for g in gdat]
+		if runAxis:
+			gpts = [(g[-1],g[1][s]) for g in gdat]
+		gGC.plot(graph.data.points(gpts,x=1,y=2,title=gtitle),[graph.style.symbol(tpsymbs[0],symbolattrs=sideStyles[s])])
+
+	gGC.writetofile(basedir+"/MWPC_GainCal_%i.pdf"%depth)
+
+def MWPC_calib_for_source_runs(conn,basedir,runAxis=None):
+	"""Set MWPC ccloud gain factors for each calibration source run"""
+	
+	M = MWPC_Ecal()
+	M.priority = 10
+	M.pmid = 181
+	M.charge_meas = "ccloud"
+
+	SDD = SourceDatDirectory(basedir)
+	gdat = [(rn,MWPC_calib_from_RunAccumulatorFile(conn,SDD.getQFile(rn,RunAccumulatorFile),M)) for rn in SDD.getRunlist()]
+
+	if not runAxis:
+		runAxis = make_runaxis(gdat[0][0],gdat[-1][0])
+		
+	# plot
+	gGC=graph.graphxy(width=25,height=10,
+					  x=runAxis,
+					  y=graph.axis.lin(title="MWPC gain calibration $g_Q$",min=2e-4,max=3.5e-4),
+					  key = graph.key.key(pos="bl"))
+	setTexrunner(gGC)
+	tpsymbs = {0:symbol.circle,1:symbol.triangle,2:symbol.plus}
+	#sideStyles = {"East":[scols["East"]], "West":[scols["West"],deco.filled]}
+	sideStyles = {"East":[rgb.red], "West":[rgb.red,deco.filled]}
+	for s in ["East","West"]:
+		gtitle = s # + " Type " + {0:"0",1:"I",2:"II/III"}[tp]
+		gGC.plot(graph.data.points([(g[0],g[1][s]) for g in gdat if g[1]],x=1,y=2,title=gtitle),[graph.style.symbol(tpsymbs[0],symbolattrs=sideStyles[s])])
+	gGC.writetofile(basedir+"/MWPC_GainCal.pdf")
+
+
+
+def MWPC_Cathode_CCloud_Scaling(conn,datfName,simfName,start_run=0,end_run=100000):
+	"""Set MWPC individual cathode to charge cloud size scaling factors"""
+	
+	dat = CathnormFile(datfName)
+	sim = CathnormFile(simfName)
+	
+	for s in ["East","West"]:
+		for p in ["x","y"]:
+			C = CthCclScl(start_run,end_run,s,p.upper())
+			C.cfacts = [ [i,0,0.32,0] for i in range(16)]
+						
+			print "Cathode gain factor changes",s,p
+			for c in range(16)[1:-1]:
+				delta = dat.cathnorms[(s[0],p,c)].height/sim.cathnorms[(s[0],p,c)].height
+				C.cfacts[c][2] = delta * dat.cathnorms[(s[0],p,c)].prev_gain
+				print c,delta
+
+			# end cathodes lacking independent data... fill in with neighbor's values
+			C.cfacts[0][2] = C.cfacts[1][2]
+			C.cfacts[-1][2] = C.cfacts[-2][2]
+
+			print C.cfacts
+			print musigma([c[2] for c in C.cfacts[1:-1]])
+
+			C.delete_from_db(conn)
+			C.upload_to_db(conn)
+
+
+
 ###############
 #             #
 ###############
@@ -675,6 +820,8 @@ def set_default_cathode_scalefactors(conn):
 if __name__ == "__main__":
 
 	conn = open_connection()
+	conn = None
+	ppath = os.environ["UCNA_ANA_PLOTS"]
 	
 	#########
 	# transition from DB before mwpc calibrations
@@ -686,16 +833,20 @@ if __name__ == "__main__":
 	#########
 	# 2010 cathode-based calibration
 	#########
+	
 	#make_mwpc_posmap(conn,167,169) # only run this once
 	#assign_MWPC_calib(conn,0,100000,10,181,"ccloud") # default calibration for all runs
+	
+	#rxs = make_runaxis(14000,16400)
+	#MWPC_calib_for_beta_octets(conn, ppath+"/MWPC_ECal_8_Sim0823/",rxs)
+	#MWPC_calib_for_source_runs(conn,ppath+"/SourceFitsSim2010",rxs)
+	
+	#MWPC_Cathode_CCloud_Scaling(conn, ppath+"/MWPC_ECal_8/MWPC_ECal_8.txt", ppath+"/MWPC_ECal_8_Sim0823/MWPC_ECal_8_Sim0823.txt") # cathode to charge-cloud scaling
+	
 	exit(0)
 	
 	
 	
-	
-	
-	
-	ppath = os.environ["UCNA_ANA_PLOTS"]
 	
 	#anodeGainCal(None)
 	

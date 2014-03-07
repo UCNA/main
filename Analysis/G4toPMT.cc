@@ -12,10 +12,7 @@ void G4toPMT::setReadpoints() {
 	SetBranchAddress("time",time);
 	SetBranchAddress("primTheta",&costheta);
 	SetBranchAddress("primKE",&ePrim);
-	if(Tch->GetBranch("primPos"))
-		SetBranchAddress("primPos",primPos);
-	else
-		primPos[0] = primPos[1] = primPos[2] = primPos[3] = 0;
+	SetBranchAddress("primPos",primPos);
 	
 	if(extended) {
 		SetBranchAddress("EdepSD",eDepSD);
@@ -38,8 +35,10 @@ void G4toPMT::runCathodeSim(bool b) {
 }
 
 void G4toPMT::doUnits() {
-	for(unsigned int i=0; i<4; i++)
-		primPos[i] *= 1000.0;	// convert m to mm
+	
+	for(AxisDirection d=X_DIRECTION; d<=T_DIRECTION; ++d)
+		primPos[d] *= 1000.0;	// convert m to mm
+		
 	// wirechamber position projection plus empirical window-diameter-matching fudge factor
 	const double wcPosConversion = 10.0*sqrt(0.6)*(51.96/52.4);
 	for(Side s = EAST; s <= WEST; ++s) {

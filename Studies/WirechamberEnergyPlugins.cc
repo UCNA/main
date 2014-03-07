@@ -84,12 +84,13 @@ void MWPCGainPlugin::calculateResults() {
 			TH2F* hEw = (TH2F*)(mwpcE[s][tp]->h[GV_OPEN]);
 			hSlices[s][tp] = sliceTH2(*hEw,X_DIRECTION);
 			gEw[s][tp] = new TGraphErrors(hSlices[s][tp].size());
-			TGraphErrors gAvg(hSlices[s][tp].size());
+			fitParams[s][tp].clear();
+			fitErrs[s][tp].clear();
 			for(unsigned int i=0; i<hSlices[s][tp].size(); i++) {
 				double e0 = hEw->GetBinCenter(i+1);
 				double c = hSlices[s][tp][i]->GetBinCenter(hSlices[s][tp][i]->GetMaximumBin());
 				double mx = hSlices[s][tp][i]->GetMaximum();
-				if(mx<50) {
+				if(mx<40) {
 					// skip extra-low-counts bins
 					fitParams[s][tp].push_back(std::vector<double>());
 					fitErrs[s][tp].push_back(std::vector<double>());
@@ -120,8 +121,6 @@ void MWPCGainPlugin::calculateResults() {
 				myA->qOut.insert("MWPC_gainCalFit",m);
 				gEw[s][tp]->SetPoint(i,e0,fLandau.GetParameter(1));
 				gEw[s][tp]->SetPointError(i,hEw->GetBinWidth(i+1)*0.5,fLandau.GetParameter(2));
-				gAvg.SetPoint(i,e0,fLandau.GetParameter(1));
-				gAvg.SetPointError(i,0,fLandau.GetParError(1));
 			}
 		}
 	}
@@ -130,13 +129,18 @@ void MWPCGainPlugin::calculateResults() {
 void MWPCGainPlugin::makePlots() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
-			if(hSlices[s][tp].size()) {
-				std::vector<TH1*> hToPlot;
-				for(unsigned int i=0; i<hSlices[s][tp].size(); i++)
-					hToPlot.push_back(hSlices[s][tp][i]);
-				drawSimulHistos(hToPlot, "L E0");
-				printCanvas(sideSubst("MWPC_Ecal/hEw_%c_",s)+itos(tp));
-			}
+			// count successful fits; skip plots with no useful data
+			unsigned int nfit = 0;
+			for(unsigned int i=0; i<fitParams[s][tp].size(); i++)
+				nfit += fitParams[s][tp][i].size() > 0;
+			if(!nfit) continue;
+
+			std::vector<TH1*> hToPlot;
+			for(unsigned int i=0; i<hSlices[s][tp].size(); i++)
+				hToPlot.push_back(hSlices[s][tp][i]);
+			drawSimulHistos(hToPlot, "L E0");
+			printCanvas(sideSubst("MWPC_Ecal/hEw_%c_",s)+itos(tp));
+
 			if(!gEw[s][tp]) continue;
 			gEw[s][tp]->Draw("AP");
 			gEw[s][tp]->SetTitle((sideSubst("%s Type ",s)+itos(tp)+" Events").c_str());
@@ -168,7 +172,7 @@ void MWPCGainPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 		std::vector<TH1*> hToPlot;
 		norm23[s]->h[GV_OPEN]->SetLineColor(4);
 		dat.norm23[s]->h[GV_OPEN]->SetLineColor(2);
-		norm23[s]->h[GV_OPEN]->Scale(dat.norm23[s]->h[GV_OPEN]->Integral()/norm23[s]->h[GV_OPEN]->Integral());
+		norm23[s]->h[GV_OPEN]->Scale(dat.norm23[s]->h[GV_OPEN]->Integral()/norm23[s]->h[GV_OPEN]->Integral());		
 		hToPlot.push_back(norm23[s]->h[GV_OPEN]);
 		hToPlot.push_back(dat.norm23[s]->h[GV_OPEN]);
 		drawSimulHistos(hToPlot);
@@ -200,23 +204,28 @@ void MWPCGainPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 		
 		TGraphErrors* gGain[TYPE_III_EVENT+1];
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
+			
+			// compile Data/MC comparison data
 			assert(fitParams[s][tp].size()==dat.fitParams[s][tp].size());
 			gGain[tp] = new TGraphErrors((int)fitParams[s][tp].size());
 			int j=0;
 			for(unsigned int i=0; i<fitParams[s][tp].size(); i++) {
-				if(!dat.fitParams[s][tp][i].size() || !fitParams[s][tp][i].size()) continue;
-				if(dat.fitParams[s][tp][i][0] < 100 || fitParams[s][tp][i][0] < 100) continue;
-				if(dat.fitErrs[s][tp][i][1] > 0.1 || fitErrs[s][tp][i][1] > 0.1) continue;
+				if(!dat.fitParams[s][tp][i].size() || !fitParams[s][tp][i].size()) continue;		// skip failed fits
+				if(dat.fitParams[s][tp][i][0] < 100 || fitParams[s][tp][i][0] < 100) continue;		// skip low-counts fits
+				if(!(dat.fitParams[s][tp][i][1] < 10 && fitParams[s][tp][i][1] < 10)) continue;		// skip out-of-range fits
+				if(!(dat.fitParams[s][tp][i][1] > 0.1 && fitParams[s][tp][i][1] > 0.1)) continue;	// skip out-of-range fits
+				if(!(dat.fitErrs[s][tp][i][1] < 0.1 && fitErrs[s][tp][i][1] < 0.1)) continue;		// skip large-errorbars fits
 				gGain[tp]->SetPoint(j, fitParams[s][tp][i][1], dat.fitParams[s][tp][i][1]);
 				gGain[tp]->SetPointError(j, fitErrs[s][tp][i][1], dat.fitErrs[s][tp][i][1]);
 				j++;
 			}
 			while(gGain[tp]->GetN()>j) gGain[tp]->RemovePoint(j);
 			
-			if(gGain[tp]->GetN() < 2) continue;
+			if(!gGain[tp]->GetN()) continue;
 			
 			TF1 lineFit("lineFit","pol1",0,10);
 			lineFit.FixParameter(0,0);
+			lineFit.SetParameter(1,1);
 			lineFit.SetLineStyle(1+tp);
 			lineFit.SetLineWidth(1);
 			gGain[tp]->Fit(&lineFit,"RB");
@@ -619,5 +628,121 @@ void WirechamberSimBackscattersPlugin::make23SepInfo(OutputManager& OM) {
 		for(Side s = EAST; s <= WEST; ++s)
 			sgraphs[s]->Draw("*");
 		OM.printCanvas("ProbFitParam_"+itos(n));
+	}
+}
+
+
+//---------------------------------------------------
+
+
+WirechamberSimTrigEfficPlugin::WirechamberSimTrigEfficPlugin(RunAccumulator* RA): AnalyzerPlugin(RA,"mwpcSimHitEffic") {
+	for(Side s = EAST; s <= WEST; ++s) {
+		for(unsigned int i=0; i<2; i++) {
+			mwpcHitEffic[s][i] = RA->registerSavedHist(sideSubst("mwpcSimHitEffic_%c_",s)+itos(i),"MWPC Hits",100,0,4);
+			mwpcHitEffic[s][i]->GetXaxis()->SetTitle("MWPC Energy [keV]");
+			mwpcCathMax[s][i] = RA->registerSavedHist(sideSubst("mwpcSimCathMax_%c_",s)+itos(i),"Simulated Cath. Max. Sum",200,-200,8200);
+			mwpcCathMax[s][i]->GetXaxis()->SetTitle("Cathode Maximum Sum [ADC channels]");
+		}
+	}
+}
+
+void WirechamberSimTrigEfficPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+	Sim2PMT& S2P = *(Sim2PMT*)(&PDS);
+	for(Side s = EAST; s <= WEST; ++s) {
+		float cmaxsum = S2P.mwpcCathMaxSum(s);
+		if(S2P.eW[s]) {
+			mwpcCathMax[s][true]->Fill(cmaxsum,weight);
+			mwpcHitEffic[s][true]->Fill(S2P.mwpcEnergy[s],weight);
+			if(S2P.passedMWPC(s)) mwpcHitEffic[s][false]->Fill(S2P.mwpcEnergy[s],weight);
+		} else {
+			mwpcCathMax[s][false]->Fill(cmaxsum,weight);
+		}
+	}
+}
+
+void WirechamberSimTrigEfficPlugin::makePlots() {
+	TGraphAsymmErrors* gEffic[BOTH];
+	for(Side s = EAST; s <= WEST; ++s) {
+		
+		drawHistoPair(mwpcHitEffic[s][true], mwpcHitEffic[s][false]);
+		printCanvas(sideSubst("MWPC_TrigSpectra_%c",s));
+		
+		myA->defaultCanvas->SetLogy(true);
+		drawHistoPair(mwpcCathMax[s][true], mwpcCathMax[s][false]);
+		printCanvas(sideSubst("CathMaxSum_%c",s));
+		myA->defaultCanvas->SetLogy(false);
+
+		gEffic[s] = new TGraphAsymmErrors(mwpcHitEffic[s][true]->GetNbinsX());
+		gEffic[s]->BayesDivide(mwpcHitEffic[s][false],mwpcHitEffic[s][true],"w");
+		
+		gEffic[s]->SetMinimum(-0.10);
+		gEffic[s]->SetMaximum(1.10);
+		gEffic[s]->Draw("AP");
+		gEffic[s]->SetTitle("Trigger Efficiency");
+		gEffic[s]->GetXaxis()->SetTitle("MWPC energy [keV]");
+		gEffic[s]->GetXaxis()->SetLimits(0,4);
+		gEffic[s]->GetYaxis()->SetTitle("Efficiency");
+		gEffic[s]->SetLineColor(2+2*s);
+	}
+	
+	gEffic[EAST]->Draw("AP");
+	gEffic[WEST]->Draw("P");
+	printCanvas("MWPC_TrigEffic");
+	
+	for(Side s = EAST; s <= WEST; ++s)
+		delete(gEffic[s]);
+}
+
+//---------------------------------------------------
+
+
+WirechamberCathMaxSumPlugin::WirechamberCathMaxSumPlugin(RunAccumulator* RA): AnalyzerPlugin(RA,"mwpcCathMaxSum") {
+	for(Side s = EAST; s <= WEST; ++s) {
+		mwpcCathMax[s] = registerFGBGPair("hCathMaxSum","Cathode Max Sum",200,-200,8200,AFP_OTHER,s);
+		mwpcCathMax[s]->setAxisTitle(X_DIRECTION,"ADC channels");
+	}
+}
+
+void WirechamberCathMaxSumPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+	for(Side s = EAST; s <= WEST; ++s)
+		if(PDS.fPID == PID_BETA || PDS.fPID == PID_SINGLE)
+			mwpcCathMax[s]->h[currentGV]->Fill(PDS.mwpcCathMaxSum(s),weight);
+}
+
+void WirechamberCathMaxSumPlugin::compareMCtoData(AnalyzerPlugin* AP) {
+	// re-cast to correct type
+	WirechamberCathMaxSumPlugin& dat = *(WirechamberCathMaxSumPlugin*)AP;
+	
+	myA->defaultCanvas->SetRightMargin(0.04);
+	myA->defaultCanvas->SetLeftMargin(0.12);
+	
+	for(Side s = EAST; s <= WEST; ++s) {
+		myA->defaultCanvas->SetLogy(true);
+		
+		TH1* rDat = myA->rateHisto(dat.mwpcCathMax[s]);
+		rDat->Scale(1000);
+		rDat->GetYaxis()->SetTitle("event rate [mHz/channel]");
+		rDat->GetYaxis()->SetTitleOffset(1.45);
+		rDat->SetMinimum(0.01);
+		rDat->SetMaximum(1000);
+		rDat->SetLineColor(2);
+		
+		TH1* rSim = myA->rateHisto(mwpcCathMax[s]);
+		rSim->Scale(1000);
+		rSim->GetYaxis()->SetTitle("event rate [mHz/channel]");
+		rSim->GetYaxis()->SetTitleOffset(1.45);
+		rSim->SetMinimum(0.01);
+		rSim->SetMaximum(1000);
+		rSim->SetLineColor(4);
+		
+		rDat->Draw();
+		rSim->Draw("Same");
+		drawVLine(300, myA->defaultCanvas, 1);
+		printCanvas(sideSubst("DataComparison/CathMaxSum_%c",s));
+		
+		myA->defaultCanvas->SetLogy(false);
+		
+		delete rDat;
+		delete rSim;
 	}
 }

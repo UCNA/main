@@ -146,6 +146,9 @@ BlindTime RunAccumulator::getTotalTime(AFPState afp, GVState gv) const {
 	return totalTime[afp][gv];
 }
 
+BlindTime RunAccumulator::getTotalTime(GVState gv) const {
+	return getTotalTime(AFP_OFF,gv) + getTotalTime(AFP_ON,gv) + getTotalTime(AFP_OTHER,gv);
+}
 
 void RunAccumulator::addPlugin(AnalyzerPlugin* AP) {
 	if(myPlugins.find(AP->name) != myPlugins.end()) {
@@ -171,6 +174,7 @@ void RunAccumulator::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 
 void RunAccumulator::calculateResults() {
 	printf("Calculating results for %s...\n",name.c_str());
+	if(isCalculated) printf("*** Warning: repeat calculation!\n");
 	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++) {
 		printf("... results in '%s' ...\n",it->first.c_str());
 		it->second->calculateResults();
@@ -197,13 +201,13 @@ void RunAccumulator::makePlots() {
 
 void RunAccumulator::compareMCtoData(RunAccumulator& OAdata) {
 	defaultCanvas->cd();
+	if(!isCalculated) calculateResults();
+	if(!OAdata.isCalculated) OAdata.calculateResults();
 	printf("Comparing MC %s and data %s...\n",name.c_str(),OAdata.name.c_str());
 	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++) {
 		AnalyzerPlugin* AP = OAdata.getPlugin(it->second->name);
 		if(AP) {
 			printf("... comparison in '%s' ...\n",it->first.c_str());
-			if(!isCalculated) it->second->calculateResults();
-			if(!OAdata.isCalculated) AP->calculateResults();
 			it->second->compareMCtoData(AP);
 		}
 	}
@@ -323,6 +327,7 @@ void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor, 
 }
 
 void RunAccumulator::makeRatesSummary() {
+	qOut.erase("rate");
 	for(std::map<std::string,fgbgPair*>::const_iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
 		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
 			Stringmap rt;
@@ -342,8 +347,25 @@ void RunAccumulator::makeRatesSummary() {
 	}
 }
 
+TH1* RunAccumulator::rateHisto(const fgbgPair* p, GVState gv) const {
+	assert(p);
+	assert(gv == GV_OPEN || gv == GV_CLOSED);
+	TH1* h = (TH1*)p->h[gv]->Clone();
+	h->SetTitle(p->getTitle().c_str());
+	Side s = p->mySide;
+	h->Scale(1.0/h->GetXaxis()->GetBinWidth(1)/getTotalTime(gv)[s]);
+	return h;
+}
+
 void RunAccumulator::write(std::string outName) {
 	printf("Writing data to file '%s'...\n",outName.c_str());
+	
+	// clear previous tallies
+	qOut.erase("totalTime");
+	qOut.erase("totalCounts");
+	qOut.erase("runCounts");
+	qOut.erase("runTimes");
+	
 	// record total times, counts
 	for(AFPState afp = AFP_OFF; afp <= AFP_OTHER; ++afp) {
 		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
@@ -358,9 +380,11 @@ void RunAccumulator::write(std::string outName) {
 			qOut.insert("totalCounts",ct);
 		}
 	}
+	
 	// record run counts, times
 	qOut.insert("runCounts",runCounts.toStringmap());
 	qOut.insert("runTimes",runTimes.toStringmap());
+	
 	// base class write
 	SegmentSaver::write(outName);
 }
@@ -392,10 +416,20 @@ void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataSc
 	PDS.writeCalInfo(qOut,"runcal");
 }
 
-void RunAccumulator::loadTotalTime(const RunAccumulator& RA) {
+void RunAccumulator::copyTimes(const RunAccumulator& RA) {
+	runTimes = RA.runTimes;
 	for(AFPState afp = AFP_OFF; afp<=AFP_OTHER; ++afp)
 		for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv)
 			totalTime[afp][gv] = RA.totalTime[afp][gv];
+}
+
+void RunAccumulator::loadSimPoint(Sim2PMT& simData) {
+	if(!simData.physicsWeight) return;
+	fillCoreHists(simData,simData.physicsWeight);
+	if(double evtc = simData.simEvtCounts()) {
+		runCounts.add(simData.getRun(),evtc);
+		totalCounts[currentAFP][GV_OPEN] += evtc;
+	}	
 }
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
@@ -420,17 +454,9 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool cou
 	printf("\n--Scan complete.--\n");
 }
 
-void RunAccumulator::loadSimPoint(Sim2PMT& simData) {
-	fillCoreHists(simData,simData.physicsWeight);
-	if(double evtc = simData.simEvtCounts()) {
-		runCounts.add(simData.getRun(),evtc);
-		totalCounts[currentAFP][GV_OPEN] += evtc;
-	}	
-}
-
 void RunAccumulator::simForRun(Sim2PMT& simData, RunNum rn, unsigned int nToSim, bool countAll) {
 	RunInfo RI = CalDBSQL::getCDB()->getRunInfo(rn);
-	if(RI.gvState != GV_OPEN) return;
+	if(RI.gvState != GV_OPEN) { printf("Skipping simulation for background run "); RI.display(); return; }
 	assert(RI.afpState <= AFP_OTHER);
 	
 	PMTCalibrator PCal(rn);

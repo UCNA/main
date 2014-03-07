@@ -95,7 +95,7 @@ def pairAsyms(as1,as2):
 
 def compareMichaelRobbyAsyms(depth):
 	rasyms = collectRobbyAsymmetries("/Users/michael/Desktop/octet_debugging/",depth)
-	masyms = collectAsymmetries("../../PostPlots/OctetAsym_Offic/",depth)
+	masyms = collectOctetFiles("../../PostPlots/OctetAsym_Offic/",depth)
 	pairs = pairAsyms(rasyms,masyms)
 
 	gdat = [ (p,pairs[p][0].getAsym(200,675),pairs[p][1].getAsym(200,675)) for p in pairs]

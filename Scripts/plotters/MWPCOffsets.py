@@ -86,7 +86,7 @@ def offsetHistory(basedir,depth=0):
 
 	shiftHist = []
 	n = 0
-	for AF in collectAsymmetries(basedir,depth):
+	for AF in collectOctetFiles(basedir,depth):
 		
 		print n,AF.getRuns()
 		

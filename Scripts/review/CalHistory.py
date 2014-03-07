@@ -10,22 +10,6 @@ from Asymmetries import runCal
 import os
 from datetime import datetime
 
-def make_runaxis(rmin,rmax):
-	
-	tckdist = [5,1]
-	if rmax-rmin > 100:
-		tckdist = [10,1]
-	if rmax-rmin > 500:
-		tckdist = [100,10]	
-	if rmax-rmin > 1000:
-		tckdist = [100,20]
-				
-	return graph.axis.lin(title="Run Number",min=rmin,max=rmax,
-							parter=graph.axis.parter.linear(tickdists=tckdist),
-							texter = graph.axis.texter.rational(),
-							painter=graph.axis.painter.regular(labeldist=0.1,labeldirection=graph.axis.painter.rotatetext(135)))
-
-
 
 class RuncalFile:
 	def __init__(self,fname):

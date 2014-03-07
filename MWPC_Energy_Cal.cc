@@ -12,11 +12,14 @@ public:
 	/// constructor
 	MWPC_Ecal_Analyzer(unsigned int nr, OutputManager* pnt, const std::string& nm, const std::string& inflname = ""):
 	RunAccumulator(pnt,nm,inflname), nRings(nr) {
+		ignoreMissingHistos = true;
 		addPlugin(anode_plgn = new AnodeGainMapPlugin(this,nRings));
 		addPlugin(ccloud_plgn = new CCloudGainMapPlugin(this,nRings));
 		addPlugin(nedep_plgn = new WirechamberNullEdepMapPlugin(this,nRings));
 		addPlugin(wgain_plgn = new MWPCGainPlugin(this));
 		addPlugin(cgain_plgn = new CathodeGainPlugin(this));
+		addPlugin(cms_plgn = new WirechamberCathMaxSumPlugin(this));
+		ignoreMissingHistos = false;
 	}
 	
 	/// cloning generator: just return another of the same subclass (with any settings you want to preserve)
@@ -29,6 +32,7 @@ public:
 	MWPCGainPlugin* wgain_plgn;
 	WirechamberNullEdepMapPlugin* nedep_plgn;
 	CathodeGainPlugin* cgain_plgn;
+	WirechamberCathMaxSumPlugin* cms_plgn;
 };
 
 /// Simulated wirechamber data energy calibrations analyzer
@@ -42,6 +46,8 @@ public:
 		addPlugin(wgain_plgn = new MWPCGainPlugin(this));
 		addPlugin(sim23_plgn = new WirechamberSimBackscattersPlugin(this));
 		addPlugin(cgain_plgn = new CathodeGainPlugin(this));
+		addPlugin(cms_plgn = new WirechamberCathMaxSumPlugin(this));
+		addPlugin(ste_plgn = new WirechamberSimTrigEfficPlugin(this));
 		ignoreMissingHistos = false;
 	}
 	/// cloning generator: just return another of the same subclass (with any settings you want to preserve)
@@ -52,6 +58,8 @@ public:
 	MWPCGainPlugin* wgain_plgn;
 	WirechamberSimBackscattersPlugin* sim23_plgn;
 	CathodeGainPlugin* cgain_plgn;
+	WirechamberCathMaxSumPlugin* cms_plgn;
+	WirechamberSimTrigEfficPlugin* ste_plgn;
 };
 
 /// run MWPC analyzers over beta decay data or simulation octets

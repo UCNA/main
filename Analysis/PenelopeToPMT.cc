@@ -47,7 +47,7 @@ void PenelopeToPMT::setReadpoints() {
 }
 
 void PenelopeToPMT::calcReweight() {
-	physicsWeight = 1.0;
+	physicsWeight = basePhysWeight;
 	//Sim2PMT::calcReweight();
 	// remove baked-in asymmetry and spectrum corrections
 	//if(afp != AFP_OTHER)

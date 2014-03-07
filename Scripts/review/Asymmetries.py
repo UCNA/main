@@ -3,9 +3,9 @@
 import sys
 sys.path.append("..")
 import os
+from ucnacore.RunAccumulatorFile import *
 from ucnacore.LinFitter import *
 from ucnacore.PyxUtils import *
-from ucnacore.QFile import *
 from ucnacore.EncalDB import *
 from ucnacore.Histogram import *
 from ucnacore.AnaDB import *
@@ -13,14 +13,6 @@ try:
 	from scipy import stats
 except:
 	stats = None
-	
-# runs in pulse pair, half octet, and octet groups			  		  
-#ppSegments = [["A1","A2","A3","A4","A5","A6"],["A7","A8","A9","A10","A11","A12"],["B1","B2","B3","B4","B5","B6"],["B7","B8","B9","B10","B11","B12"]]
-ppSegments = [["A1","A2","A4","A5"],["A7","A9","A10","A12"],["B1","B2","B4","B5"],["B7","B9","B10","B12"]]
-hoSegments = [ppSegments[0]+ppSegments[1],ppSegments[2]+ppSegments[3]]
-octSegments = [hoSegments[0]+hoSegments[1],]
-divSegments = [octSegments,hoSegments,ppSegments]
-unitNames = {0:"Octet",1:"Half Octet",2:"Pulse Pair",3:"Run"}
 
 scols = {"East":rgb.red,"West":rgb.blue}
 if "PUBLICATION_PLOTS" in os.environ:
@@ -46,17 +38,6 @@ class instAsym(KVMap):
 		self.loadFloats(["fitMin","fitMax","IA","dIA"])
 	def __repr__(self):
 		return "<Asym: %.2f +- %.2f, (%g,%g)>"%(self.A0,self.dA0,self.fitMin,self.fitMax)
-
-
-class eventRate(KVMap):
-	def __init__(self,m):
-		self.dat = m.dat
-		self.loadFloats(["counts","d_counts","rate","d_rate"])
-		self.loadStrings(["side","afp","fg","name"])
-	def dRate(self):
-		if not self.counts:
-			return 0
-		return self.rate/sqrt(self.counts)
 		
 class kurieFit(KVMap):
 	def __init__(self,m):
@@ -80,87 +61,14 @@ class betarateInfo(KVMap):
 		self.loadInts(["type"])
 
 
-
-class runCal(KVMap):
-	def __init__(self,m):
-		self.dat = m.dat
-		self.loadInts(["run","tstart","tend"])
-		self.eOrig = self.get_tubesparam("eOrig")
-		self.eFinal = self.get_tubesparam("eFinal")
-		self.gms = self.get_tubesparam("gms")
-		self.gms0 = self.get_tubesparam("gms0")
-
-	def get_tubesparam(self,pname):
-		return dict( [ ((s,t),self.getFirstF("%s%i_%s"%(s,t,pname))) for s in ['E','W'] for t in range(5) ] )
-
-	def getGMSTweak(self,side,tube):
-		return self.eFinal[(side,tube)]/self.eOrig[(side,tube)]
-
-	def midTime(self):
-		return 0.5*(self.tend+self.tstart)
-
-class asymData:
-	"""Asymmetry data extracted from a group of runs"""
-	def __init__(self):
-		self.octruns = {}
-		self.asyms = []
-		
-	def getRuns(self):
-		rns = []
-		for k in self.octruns:
-			rns += self.octruns[k]
-		rns.sort()
-		return rns
-
-	def whichSegment(self,divlev):
-		sn = 0
-		smax = 0
-		ntot = len(self.octruns)
-		for (n,sg) in enumerate(divSegments[divlev]):
-			sc = 0
-			for k in self.octruns:
-				if k in sg:
-					sc += len(self.octruns[k])
-			if sc > smax:
-				smax = sc
-				sn = n
-		print self.octruns.keys(),smax,"of",ntot,"in div",sn
-		return sn
-		
-	def addRun(self,rtype,rn):
-		self.octruns.setdefault(rtype,[]).append(int(rn))
-	
-	def getAsym(self,fitMin=225,fitMax=675):
-		matchAsyms = [a for a in self.asyms if a.fitMin==fitMin and a.fitMax==fitMax]
-		if len(matchAsyms)==1:
-			return matchAsyms[0]
-		assert not len(matchAsyms)
-		return None
-	
-		
-		
-class AsymmetryFile(QFile,asymData):
+class AsymmetryFile(QFile,RunAccumulatorFile):
 
 	def __init__(self,fname):
-		QFile.__init__(self,fname)
-		asymData.__init__(self)
+		RunAccumulatorFile.__init__(self,fname)
 		self.asyms = [asymmetryFit(m) for m in self.dat.get("asymmetry",[])]
 		self.kuries = [kurieFit(m) for m in self.dat.get("kurieFit",[])]
-		self.rates = [eventRate(m) for m in self.dat.get("rate",[])]
 		self.betarates = dict([((m.side,m.afp,m.gv,m.type),m) for m in [betarateInfo(m) for m in self.dat.get("betarate_info",[])]])
 		self.muons = dict([((m.side,m.afp,m.gv),m) for m in [muonInfo(m) for m in self.dat.get("muons_info",[])]])
-		for m in self.dat.get("Octet",[]):
-			for k in m.dat:
-				if k in octSegments[0]:
-					for rns in m.dat[k]:
-						for rn in rns.split(","):
-							self.addRun(k,rn)
-		if not self.getRuns():
-			rns = self.fname.split("/")[-1].split("_")[0].split("-")
-			if len(rns)==2:
-				self.addRun("start",int(rns[0]))
-				self.addRun("end",int(rns[1]))
-		self.runcals = dict([(r.run,r) for r in [runCal(m) for m in self.dat.get("runcal",[])]])
 		
 	def kepDelta(self,side,type="0"):
 		"""Calculate difference between On/Off endpoint"""
@@ -173,16 +81,6 @@ class AsymmetryFile(QFile,asymData):
 			if k.side==side and k.afp==afp and k.type==type and k.tube==tube:
 				return k
 		print "*** Can't find kurie in",side,afp,type,self.fname
-		return None
-	
-	def getRate(self,side,afp,fg,name):
-		hname = name
-		if hname[-1] == "_":
-			hname = "%s%s_%s"%(name,side,afp)
-		for r in self.rates:
-			if r.side==side and r.afp==afp and r.fg==fg and r.name==hname:
-				return r
-		print "Missing rate for",hname,fg
 		return None
 		
 	def totalBetaRate(self,side,afp,gv):
@@ -199,18 +97,28 @@ class AsymmetryFile(QFile,asymData):
 		
 	def getInstAsym(self):
 		return instAsym(self.dat.get("instasym",[KVMap()])[0])
-				
-def collectAsymmetries(basedir,depth):
-	print "Collecting asymmetry data from",basedir,"at depth",depth
-	asyms = []
-	fls = os.listdir(basedir)
-	fls.sort()
-	for f in [ (basedir+'/'+f+'/',basedir+'/'+f+'/'+f+'.txt') for f in fls if os.path.isdir(basedir+'/'+f) and '-' in f and f[:3]!="139"]:
-		if not depth and os.path.exists(f[1]):
-			asyms.append(AsymmetryFile(f[1]))
-		else:
-			asyms += collectAsymmetries(f[0],depth-1)
-	return asyms
+
+	def whichSegment(self,divlev):
+		sn = 0
+		smax = 0
+		ntot = len(self.octruns)
+		for (n,sg) in enumerate(divSegments[divlev]):
+			sc = 0
+			for k in self.octruns:
+				if k in sg:
+					sc += len(self.octruns[k])
+			if sc > smax:
+				smax = sc
+				sn = n
+		print self.octruns.keys(),smax,"of",ntot,"in div",sn
+		return sn
+	
+	def getAsym(self,fitMin=225,fitMax=675):
+		matchAsyms = [a for a in self.asyms if a.fitMin==fitMin and a.fitMax==fitMax]
+		if len(matchAsyms)==1:
+			return matchAsyms[0]
+		assert not len(matchAsyms)
+		return None
 	
 def plot_octet_asymmetries(basedir,depth=0):
 	
@@ -226,7 +134,7 @@ def plot_octet_asymmetries(basedir,depth=0):
 	kepDelta = {'E':[],'W':[],'C':[]}
 	n=0
 	print "--------------------- Division",depth,"-------------------------"
-	for af in collectAsymmetries(basedir,depth):
+	for af in collectOctetFiles(basedir,depth):
 		# asymmetry data
 		a = af.getAsym()
 		if a:
@@ -525,8 +433,8 @@ class MC_Comparator:
 		self.basedir = basedir
 		self.simdir = simdir
 		self.depth = abs(depth)
-		self.datAsyms = sortByRuns(collectAsymmetries(basedir,depth))
-		self.simAsyms = sortByRuns(collectAsymmetries(simdir,depth))
+		self.datAsyms = sortByRuns(collectOctetFiles(basedir,depth))
+		self.simAsyms = sortByRuns(collectOctetFiles(simdir,depth))
 		self.rungrps = self.datAsyms.keys()
 		self.rungrps.sort()
 		for rns in self.rungrps:

@@ -9,7 +9,7 @@ def plot_bgSubtrHist(basedir,depth=2):
 	bgs = {}
 	n = 0
 	conn = open_connection()
-	for af in collectAsymmetries(basedir,depth):
+	for af in collectOctetFiles(basedir,depth):
 		for k in af.bgs:
 			bgs.setdefault(k,[]).append((getRunStartTime(conn,af.getRuns()[0]),af.bgs[k],af))
 		n += 1
@@ -50,7 +50,7 @@ def plot_TypeIV_resid(basedir,depth=2):
 	rts = {}
 	n = -1
 	hname = "ExcessTheta"
-	for af in collectAsymmetries(basedir,depth):
+	for af in collectOctetFiles(basedir,depth):
 		n += 1
 		if [badrun for badrun in [14166,14888,15518] if badrun in af.getRuns()]:
 			continue
