@@ -8,10 +8,10 @@
 #include "Types.hh"
 
 void quadHists::setFillPoint(AFPState afp, GVState gv) {
-	assert(gv==GV_CLOSED || gv==GV_OPEN);
-	assert(afp==AFP_OFF||afp==AFP_ON);
+	smassert(gv==GV_CLOSED || gv==GV_OPEN);
+	smassert(afp==AFP_OFF||afp==AFP_ON);
 	fillPoint = fgbg[afp]->h[gv];
-	assert(fillPoint);
+	smassert(fillPoint);
 }
 
 bool quadHists::isEquivalent(const quadHists& qh) const {
@@ -72,7 +72,7 @@ OctetAnalyzer::~OctetAnalyzer() {
 quadHists* OctetAnalyzer::registerCoreHist(const std::string& hname, const std::string& title,
 										  unsigned int nbins, float xmin, float xmax, Side s) {
 	quadHists* qh = new quadHists(hname,title,s);
-	assert(coreHists.find(qh->getName())==coreHists.end());	// don't duplicate names!
+	smassert(coreHists.find(qh->getName())==coreHists.end());	// don't duplicate names!
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		qh->fgbg[afp] = registerFGBGPair(hname,title,nbins,xmin,xmax,afp,s);
 	coreHists.insert(std::make_pair(qh->getName(),qh));
@@ -81,7 +81,7 @@ quadHists* OctetAnalyzer::registerCoreHist(const std::string& hname, const std::
 
 quadHists* OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s) {
 	quadHists* qh = new quadHists(hTemplate.GetName(),hTemplate.GetTitle(),s);
-	assert(coreHists.find(qh->getName())==coreHists.end());	// don't duplicate names!
+	smassert(coreHists.find(qh->getName())==coreHists.end());	// don't duplicate names!
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		qh->fgbg[afp] = registerFGBGPair(hTemplate,AFPState(afp),s);
 	coreHists.insert(std::make_pair(qh->getName(),qh));
@@ -89,7 +89,7 @@ quadHists* OctetAnalyzer::registerCoreHist(const TH1& hTemplate, Side s) {
 }
 
 quadHists* OctetAnalyzer::cloneQuadHist(const quadHists* qh, const std::string& newName, const std::string& newTitle) {
-	assert(qh);
+	smassert(qh);
 	quadHists* qnew = new quadHists(newName,newTitle,qh->mySide);
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 		qnew->fgbg[afp] = cloneFGBGPair(*qh->fgbg[afp],newName,newTitle);
@@ -107,13 +107,13 @@ void OctetAnalyzer::setFillPoints(AFPState afp, GVState gv) {
 
 quadHists* OctetAnalyzer::getCoreHist(const std::string& qname) {
 	std::map<std::string,quadHists*>::iterator it = coreHists.find(qname);
-	assert(it != coreHists.end());
+	smassert(it != coreHists.end());
 	return it->second;
 }
 
 const quadHists* OctetAnalyzer::getCoreHist(const std::string& qname) const {
 	std::map<std::string,quadHists*>::const_iterator it = coreHists.find(qname);
-	assert(it != coreHists.end());
+	smassert(it != coreHists.end());
 	return it->second;
 }
 
@@ -148,8 +148,8 @@ void OctetAnalyzer::loadBothAFP(Sim2PMT& simData, unsigned int nToSim) {
 }
 
 TH1* OctetAnalyzer::flipperSummedRate(const quadHists* qh, GVState gv, bool doNorm) const {
-	assert(qh);
-	assert(gv == GV_OPEN || gv == GV_CLOSED);
+	smassert(qh);
+	smassert(gv == GV_OPEN || gv == GV_CLOSED);
 	TH1* h = (TH1*)qh->fgbg[AFP_OFF]->h[gv]->Clone();
 	h->SetTitle(qh->title.c_str());
 	h->Add(qh->fgbg[AFP_ON]->h[gv]);
@@ -162,7 +162,7 @@ TH1* OctetAnalyzer::flipperSummedRate(const quadHists* qh, GVState gv, bool doNo
 /* --------------------------------------------------- */
 
 TH1* OctetAnalyzerPlugin::calculateSR(const std::string& hname, const quadHists* qEast, const quadHists* qWest, bool fg, bool instr) {
-	assert(qEast && qWest);
+	smassert(qEast && qWest);
 	// first calculate R = E+W-/E-W+
 	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[fg]->Clone("SR_intermediate_R");
 	if(instr) {
@@ -220,8 +220,8 @@ void sqrtHist(TH1* h) {
 }
 
 TH1* OctetAnalyzerPlugin::calculateSuperSum(const std::string& hname, const quadHists* qEast, const quadHists* qWest, GVState gv, bool toRate) {
-	assert(qEast && qWest);
-	assert(gv <= GV_OPEN);
+	smassert(qEast && qWest);
+	smassert(gv <= GV_OPEN);
 	TH1* hR = (TH1*)qEast->fgbg[AFP_ON]->h[gv]->Clone("SuperSum_intermediate");
 	hR->Multiply(qWest->fgbg[AFP_OFF]->h[gv]);
 	if(toRate) hR->Scale(1.0/(myA->totalTime[AFP_ON][gv][EAST]*myA->totalTime[AFP_OFF][gv][WEST]));
@@ -245,7 +245,7 @@ TH1* OctetAnalyzerPlugin::calculateSuperSum(const std::string& hname, const quad
 }
 
 void OctetAnalyzerPlugin::drawQuad(quadHists* qh, const std::string& subfolder, const char* opt) {
-	assert(qh);
+	smassert(qh);
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
 			if(!qh->fgbg[afp]->h[gv]->Integral()) continue; // automatically skip empty histograms
@@ -256,7 +256,7 @@ void OctetAnalyzerPlugin::drawQuad(quadHists* qh, const std::string& subfolder, 
 }
 
 void OctetAnalyzerPlugin::drawQuadSides(quadHists* qhE, quadHists* qhW, bool combineAFP, const std::string& subfolder, const std::string& opt) {
-	assert(qhE && qhW);
+	smassert(qhE && qhW);
 	std::vector<TH1*> hToPlot;
 	for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {

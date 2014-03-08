@@ -1,5 +1,5 @@
 #include "TChainScanner.hh"
-#include <cassert>
+#include "SMExcept.hh"
 #include <stdlib.h>
 #include <time.h>
 #include <SMExcept.hh>
@@ -35,7 +35,7 @@ int TChainScanner::addFile(const std::string& filename) {
 void TChainScanner::gotoEvent(unsigned int e) {
 	currentEvent = e;
 	Tch->GetEvent(currentEvent);
-	assert(Tch->GetTree());
+	smassert(Tch->GetTree());
 	nLocalEvents = noffset = 0;
 }
 
@@ -62,7 +62,7 @@ void TChainScanner::startScan(bool startRandom) {
 }
 
 void TChainScanner::SetBranchAddress(const std::string& bname, void* bdata) {
-	assert(bdata);
+	smassert(bdata);
 	Int_t err = Tch->SetBranchAddress(bname.c_str(),bdata);
 	if(err && err != TTree::kNoCheck) {
 		SMExcept e("TTreeBranchError");

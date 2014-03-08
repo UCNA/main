@@ -10,7 +10,7 @@
 class SMExcept: public std::exception, public Stringmap {
 public:
 	/// constructor
-	SMExcept(std::string tp);
+	SMExcept(const std::string& tp);
 	/// destructor
 	~SMExcept() throw() {}
 	/// display error
@@ -18,5 +18,7 @@ public:
 	/// string for holding error message
 	mutable std::string msg;
 };
+
+void smassert(bool b, const std::string& tp = "assert_error", const Stringmap& m = Stringmap());
 
 #endif

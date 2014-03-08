@@ -14,7 +14,7 @@
 #include "TagCounter.hh"
 
 #include <map>
-#include <cassert>
+#include "SMExcept.hh"
 
 /// Generic class for processed data TChains
 class ProcessedDataScanner: public RunSetScanner, public EventClassifier {
@@ -46,7 +46,7 @@ public:
 	virtual Stringmap evtInfo();
 	
 	/// Type I initial hit side determination --- not available here
-	virtual Side getFirstScint() const { assert(false); }
+	virtual Side getFirstScint() const { smassert(false); return BOTH; }
 	/// Type II/III separation probability
 	virtual float getProbIII() const { return WirechamberCalibrator::sep23Prob(fSide,getEnergy(),mwpcEnergy[fSide]); }
 	

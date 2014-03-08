@@ -1,6 +1,6 @@
 #include "ControlMenu.hh"
 #include <utility>
-#include <cassert>
+#include "SMExcept.hh"
 
 inputRequester::inputRequester(std::string d, void (*f)(std::deque<std::string>&,std::stack<std::string>&), unsigned int n):
 namedInteractor(d), myFunc(f) {
@@ -21,7 +21,7 @@ void inputRequester::doIt(std::deque<std::string>& args, std::stack<std::string>
 			if(defaultArgs[i].size())
 				printf(" [%s]",defaultArgs[i].c_str());
 			printf(" > ");
-			assert(fgets(indata,1024,stdin));
+			smassert(fgets(indata,1024,stdin));
 			std::string argin = strip(indata);
 			if(!argin.size())
 				stack.push(defaultArgs[i]);
@@ -43,14 +43,14 @@ void inputRequester::addArg(const std::string& s, const std::string& dflt, const
 }
 
 void inputRequester::setArgOpts(unsigned int i, std::string s, std::string dflt, namedInteractor* filter) { 
-	assert(i<argNames.size()); 
+	smassert(i<argNames.size()); 
 	argNames[i] = s;
 	defaultArgs[i] = dflt;
 	inputFilters[i] = filter;
 }
 
 std::string inputRequester::getArgname(unsigned int i) const { 
-	assert(i<argNames.size()); 
+	smassert(i<argNames.size()); 
 	return argNames[i];
 }
 
@@ -86,7 +86,7 @@ NameSelector::NameSelector(std::string t, std::string promptval, bool persist): 
 void NameSelector::addChoice(std::string d, std::string nm, Selector_Option_Flags o, std::string mname, streamInteractor* action) {
 	if(!nm.size())
 		nm = itos(choiceNames.size()+1);
-	assert(nameMap.find(nm) == nameMap.end());
+	smassert(nameMap.find(nm) == nameMap.end());
 	if(!mname.size())
 		mname = nm;
 	nameMap.insert(std::make_pair(nm,choiceNames.size()));
@@ -99,7 +99,7 @@ void NameSelector::addChoice(std::string d, std::string nm, Selector_Option_Flag
 
 void NameSelector::addSynonym(std::string arg0, std::string syn) {
 	std::map<std::string,unsigned int>::iterator it = nameMap.find(arg0);
-	assert(it != nameMap.end());
+	smassert(it != nameMap.end());
 	NameSelector::addChoice(choiceDescrips[it->second],syn,
 			  Selector_Option_Flags(oflags[it->second] | SELECTOR_SYNONYM | SELECTOR_HIDDEN),
 			  choiceOut[it->second],actions[it->second]);

@@ -5,7 +5,7 @@
 #include <TStyle.h>
 #include <TRandom.h>
 #include <map>
-#include <cassert>
+#include "SMExcept.hh"
 #include <vector>
 #include "GraphicsUtils.hh"
 #include "QFile.hh"
@@ -342,7 +342,7 @@ void PosPlotter::diffPlot(const PositioningCorrector& P1, const PositioningCorre
 	r0 = Sects.r;
 	
 	for(Side s = EAST; s<=WEST; ++s) {
-		assert(P1.getNMaps(s)==P2.getNMaps(s));
+		smassert(P1.getNMaps(s)==P2.getNMaps(s));
 		for(unsigned int t=0; t<P1.getNMaps(s); t++) {
 			std::string hTitle = sideSubst("Position Maps %c",s)+itos(t+1)+" Difference";
 			TH2F* interpogrid = makeHisto(sideSubst("%c ",s)+itos(t+1), hTitle);
@@ -541,7 +541,7 @@ void decomposeXenon(RunNum rn, bool includeFast) {
 		std::string g4dat = "/data2/mmendenhall/G4Out/2010/20120917_";
 		G4SegmentMultiplier g2p(SC);
 		g2p.addFile(g4dat + isots[i] + "/analyzed_*.root");
-		assert(g2p.getnFiles());
+		smassert(g2p.getnFiles());
 		g2p.setCalibrator(*POA.ActiveCal);
 		TH1F* hSim = OM.registeredTH1F(isots[i]+"_Sim","",nbins,0,emax);
 		hSim->GetXaxis()->SetTitle("Energy [keV]");

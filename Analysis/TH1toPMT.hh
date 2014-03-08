@@ -5,7 +5,7 @@
 #include "PMTGenerator.hh"
 #include "G4toPMT.hh"
 #include "SectorCutter.hh"
-#include <cassert>
+#include "SMExcept.hh"
 
 /// base class for generating event positions
 class PosGen {
@@ -43,7 +43,7 @@ public:
 	
 	// ----- inapplicable disabled functions ----- //
 	/// speedload: doesn't make sense for this class
-	virtual void speedload(unsigned int e) { assert(false); }
+	virtual void speedload(unsigned int e) { smassert(false); }
 	
 	TH1* mySpectrum;		//< spectrum to throw events from
 	PosGen* PG;				//< for generating event positions

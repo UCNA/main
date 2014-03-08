@@ -8,7 +8,7 @@
 #include "QFile.hh"
 #include "strutils.hh"
 #include <vector>
-#include <cassert>
+#include "SMExcept.hh"
 #include <TGraph.h>
 #include <fstream>
 
@@ -36,7 +36,7 @@ public:
 	/// destructor
 	~PositioningInterpolator();	
 	/// forbid copying
-	PositioningInterpolator& operator=(PositioningInterpolator&) { assert(false); return *this; }
+	PositioningInterpolator& operator=(PositioningInterpolator&) { smassert(false); return *this; }
 	/// evaluate from interpolation table
 	double eval(double x, double y);	
 	
@@ -66,7 +66,7 @@ public:
 	const std::vector<PosmapInfo>& getData() const { return myData; }
 	
 	/// get sector cutter
-	const SectorCutter& getSectors(Side s, unsigned int t) const { assert((s==EAST||s==WEST) && t<tubes[s].size() && tubes[s][t]); return tubes[s][t]->S; }
+	const SectorCutter& getSectors(Side s, unsigned int t) const { smassert((s==EAST||s==WEST) && t<tubes[s].size() && tubes[s][t]); return tubes[s][t]->S; }
 	/// get positioning correction for given tube
 	double eval(Side s, unsigned int t, double x, double y, bool normalize = false) const;
 	/// set normalization to c at center
@@ -75,7 +75,7 @@ public:
 	void setNormAvg(double c = 1.0);
 	
 	/// get number of maps available on side
-	unsigned int getNMaps(Side s) const { assert(s==EAST||s==WEST); return tubes[s].size(); }
+	unsigned int getNMaps(Side s) const { smassert(s==EAST||s==WEST); return tubes[s].size(); }
 	
 	/// interpolation type
 	Interpolator* (*interpType)(DataSequence*, double, double);

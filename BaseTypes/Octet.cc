@@ -1,5 +1,5 @@
 #include "Octet.hh"
-#include <cassert>
+#include "SMExcept.hh"
 #include <climits>
 #include <utility>
 
@@ -108,7 +108,7 @@ Stringmap Octet::toStringmap() const {
 }
 
 std::vector<Octet> Octet::getSubdivs(Octet_Division_t divlvl, bool onlyComplete) const {
-	assert(divlvl <= DIV_RUN);
+	smassert(divlvl <= DIV_RUN);
 	std::vector<Octet> pps;
 	
 	if(divlvl == DIV_RUN) {

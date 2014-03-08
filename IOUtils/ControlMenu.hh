@@ -2,7 +2,7 @@
 #define CONTROLMENU_HH 1
 
 #include "strutils.hh"
-#include <cassert>
+#include "SMExcept.hh"
 #include <algorithm>
 #include <deque>
 #include <stack>
@@ -104,9 +104,9 @@ public:
 	/// set catchall action
 	virtual void setCatchall(streamInteractor* I) { catchAll = I; }
 	/// prevent adding arguments (doesn't make sense in this context)
-	virtual void addArg(const std::string&, const std::string& = "", const std::string& = "", namedInteractor* = NULL) { assert(false); }
+	virtual void addArg(const std::string&, const std::string& = "", const std::string& = "", namedInteractor* = NULL) { smassert(false); }
 	/// prevent adding arguments (doesn't make sense in this context)
-	virtual void addArg(namedInteractor*) { assert(false); }
+	virtual void addArg(namedInteractor*) { smassert(false); }
 	/// add a synonym for an existing argument
 	virtual void addSynonym(std::string arg0, std::string syn);
 	/// set soft-matching function (set to NULL to disable soft matching)
@@ -136,7 +136,7 @@ public:
 	/// add choice to selections list
 	virtual void addChoice(namedInteractor* M, std::string nm = "", Selector_Option_Flags o = SELECTOR_NORMAL);
 	/// prevent adding choices through base mechanism
-	virtual void addChoice(std::string, std::string, Selector_Option_Flags, std::string, streamInteractor*) { assert(false); }
+	virtual void addChoice(std::string, std::string, Selector_Option_Flags, std::string, streamInteractor*) { smassert(false); }
 };
 
 

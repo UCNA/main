@@ -46,7 +46,7 @@
 void bmEventAction::BeginOfEventAction(const G4Event* evt) {
 	timer.Start();	
 	G4cout<<"Beginning of event "<<evt->GetEventID()<<G4endl;
-	assert(!system("date"));
+	smassert(!system("date"));
 	((bmSteppingAction*)fpEventManager->GetUserSteppingAction())->Reset();
 }
 

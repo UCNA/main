@@ -54,18 +54,18 @@ currentCal(NULL), TProb(new TriggerProb()), mySide(s) {
 }
 
 void PMTGenerator::setCalibrator(PMTCalibrator* P) { 
-	assert(P);
+	smassert(P);
 	currentCal = P;
 	setPosition(x,y,xw-x,yw-y);
 }
 
 void PMTGenerator::setTriggerProb(TriggerProb* TP) {
-	assert(TP);
+	smassert(TP);
 	TProb = TP;
 }
 
 void PMTGenerator::setPosition(float xx, float yy, float dxw, float dyw) {
-	assert(currentCal);
+	smassert(currentCal);
 	x = xx;
 	y = yy;
 	xw = x+dxw;
@@ -78,7 +78,7 @@ void PMTGenerator::setPosition(float xx, float yy, float dxw, float dyw) {
 void PMTGenerator::setSide(Side s) { mySide = s; }
 
 void PMTGenerator::setLightbal(Side s, float l1, float l2, float l3, float l4) {
-	assert(s==EAST || s==WEST);
+	smassert(s==EAST || s==WEST);
 	lightBal[s][0] = l1;
 	lightBal[s][1] = l2;
 	lightBal[s][2] = l3;

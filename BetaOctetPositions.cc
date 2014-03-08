@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[]) {
 	
-	assert(argc >= 2);
+	smassert(argc >= 2);
 	int octn = atoi(argv[1]);
 	ROOTStyleSetup();
 	

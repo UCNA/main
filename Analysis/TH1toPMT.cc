@@ -4,7 +4,7 @@
 #include <climits>
 
 TH1toPMT::TH1toPMT(TH1* h, PosGen* P): Sim2PMT(""), mySpectrum(h), PG(P), nToSim(0) {
-	assert(PG);
+	smassert(PG);
 	fakeClip = true;
 	ePrim = costheta = eW[EAST] = eW[WEST] = 0;
 }

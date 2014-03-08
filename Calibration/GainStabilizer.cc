@@ -95,7 +95,7 @@ TweakedGainStabilizer::TweakedGainStabilizer(GainStabilizer* BG): GainStabilizer
 			CDB->getGainTweak(rn,s,t,eOrig[s][t],eFinal[s][t]);
 }
 float TweakedGainStabilizer::gmsFactor(Side s, unsigned int t, float time) const {
-	assert(s<=WEST && t<=nBetaTubes);
+	smassert(s<=WEST && t<=nBetaTubes);
 	if(t==nBetaTubes) return baseGain->gmsFactor(s,t,time)*eFinal[s][t]/eOrig[s][t];
 	return baseGain->gmsFactor(s,t,time)*LCor->invertLinearityStabilized(s,t,eFinal[s][t])/LCor->invertLinearityStabilized(s,t,eOrig[s][t]);
 }
@@ -133,7 +133,7 @@ void TweakedGainStabilizer::printSummary() {
  }
  for(Side s = EAST; s<=WEST; ++s) {
  refLinearity[s] = CDB->getLinearity(myRun,s,4);
- assert(refLinearity[s]);
+ smassert(refLinearity[s]);
  refInverses[s] = invertGraph(refLinearity[s]);
  for(unsigned int p=0; p<2; p++)
  co60Peaks[s][p] = CDB->getCo60(myRun, s, p);
@@ -181,7 +181,7 @@ void TweakedGainStabilizer::printSummary() {
  LinearityCorrector* LCRef = NULL;
  if(!isRefRun()) {
  LCRef= getCachedRun(rGMS,CDB);
- assert(LCRef->setMuonGMS());
+ smassert(LCRef->setMuonGMS());
  }
  for(Side s = EAST; s <= WEST; ++s) {
  for(unsigned int t=0; t<nBetaTubes; t++) {
@@ -208,7 +208,7 @@ void TweakedGainStabilizer::printSummary() {
  LinearityCorrector* LCRef = NULL;
  if(!isRefRun()) {
  LCRef= getCachedRun(rGMS,CDB);
- assert(LCRef->setLEDGMS());
+ smassert(LCRef->setLEDGMS());
  }	
  for(Side s = EAST; s<=WEST; ++s) {
  for(unsigned int t=0; t<nBetaTubes; t++) {
@@ -245,7 +245,7 @@ void TweakedGainStabilizer::printSummary() {
  if(linearityInverses[s][t]->GetN())
  kgms[s][t] = linearityInverses[s][t]->Eval(eta(s,t,0,0)*ken)/kadc;
  else
- assert(IGNORE_DEAD_DB);
+ smassert(IGNORE_DEAD_DB);
  }
  }
  if(!kurieGMS)

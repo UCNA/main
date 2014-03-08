@@ -109,7 +109,7 @@ void XenonSpectrumPlugin::fitSpectrum(TH1* hSpec,SectorDat& sd) {
 }
 
 void XenonSpectrumPlugin::fitSectors() {
-	assert(myA->runCounts.counts.size());
+	smassert(myA->runCounts.counts.size());
 	PMTCalibrator PCal(myA->runCounts.counts.begin()->first);
 	printf("\n\n---- Using Calibrator: ----\n");
 	PCal.printSummary();

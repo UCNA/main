@@ -332,10 +332,10 @@ void SourcePositionsPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weig
 }
 
 void SourcePositionsPlugin::makePlots() {
-	SourceHitsAnalyzer* SHA = (SourceHitsAnalyzer*)myA;
 	for(Side s = EAST; s <= WEST; ++s) {
 		hitPos[s]->Draw("Col");
 #ifndef PUBLICATION_PLOTS
+		SourceHitsAnalyzer* SHA = (SourceHitsAnalyzer*)myA;
 	 	for(std::vector<SourceHitsPlugin*>::const_iterator it = SHA->srcPlugins.begin(); it != SHA->srcPlugins.end(); it++)
 			if((*it)->mySource.mySide==s)
 				drawEllipseCut((*it)->mySource,4.0,(*it)->mySource.name());
@@ -362,7 +362,7 @@ SegmentSaver* SourceHitsAnalyzer::makeAnalyzer(const std::string& nm,const std::
 }
 
 void SourceHitsAnalyzer::addSource(const Source& s) {
-	assert(PCal);
+	smassert(PCal);
 	srcPlugins.push_back(new SourceHitsPlugin(this,s,PCal));
 	addPlugin(srcPlugins.back());
 	Stringmap m = s.toStringmap();

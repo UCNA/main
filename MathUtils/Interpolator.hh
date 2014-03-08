@@ -3,7 +3,7 @@
 
 #include <math.h>
 #include <vector>
-#include <cassert>
+#include "SMExcept.hh"
 #include <stdio.h>
 
 /// boundary conditions for interpolation
@@ -38,7 +38,7 @@ protected:
 			if(i>=npts) return npts-1;
 			return (unsigned int)i;
 		} else if (bc == BC_DERIVCLAMP_ZERO) {
-			assert(npts>=2);
+			smassert(npts>=2);
 			if(i<0) return 1;
 			if(i>=npts) return npts-1;
 			return (unsigned int)i;

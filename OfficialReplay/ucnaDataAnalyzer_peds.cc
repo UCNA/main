@@ -73,7 +73,7 @@ void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const
 	printf("Monitoring data '%s'\n",mon_name.c_str());
 	// collect data
 	Size_t npts = vdata.size();
-	assert(vtime.size()==npts); assert(npts);
+	smassert(vtime.size()==npts); smassert(npts);
 	float t0 = vtime[0];
 	float t1 = vtime.back();
 	printf("\tfound %i points over %.2f minutes.\n",(int)npts,(t1-t0)/60.0);

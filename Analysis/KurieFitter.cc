@@ -2,7 +2,7 @@
 
 float_err kuriePlotter(TH1* spectrum, float endpoint, TGraphErrors** tgout, float targetEP, float fitStart, float fitEnd) {
 	
-	assert(spectrum);
+	smassert(spectrum);
 	printf("Endpoint %.3f (%i points)\n",endpoint,spectrum->GetNbinsX());
 	fflush(stdout);
 	
@@ -63,7 +63,7 @@ float_err kuriePlotter(TH1* spectrum, float endpoint, TGraphErrors** tgout, floa
 		return float_err(0,0);
 	}
 	
-	assert(lf.GetParameter(1));
+	smassert(lf.GetParameter(1));
 	
 	if(tgout) {
 		// normalize to endpoint
@@ -83,7 +83,7 @@ float_err kuriePlotter(TH1* spectrum, float endpoint, TGraphErrors** tgout, floa
 	} else
 		delete(tg);
 	
-	assert(lf.GetParameter(1));
+	smassert(lf.GetParameter(1));
 	
 	return float_err(lf.GetParameter(1)*endpoint/targetEP,lf.GetParError(1)*endpoint/targetEP);
 	

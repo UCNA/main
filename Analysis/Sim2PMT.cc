@@ -1,7 +1,7 @@
 #include "Sim2PMT.hh"
 #include "PathUtils.hh"
 #include "BetaSpectrum.hh"
-#include <cassert>
+#include "SMExcept.hh"
 #include <cmath>
 #include <climits>
 
@@ -102,7 +102,7 @@ void Sim2PMT::updateClock() { runClock = mc_rnd_source.Uniform(0.,ActiveCal->tot
 
 void Sim2PMT::reverseCalibrate() {
 	
-	assert(ActiveCal);
+	smassert(ActiveCal);
 	evtRun = ActiveCal->rn;
 	updateClock();
 	doUnits();
@@ -169,10 +169,10 @@ void MixSim::startScan(bool startRandom) {
 }
 
 bool MixSim::nextPoint() {
-	assert(cumStrength.size());
+	smassert(cumStrength.size());
 	std::vector<double>::iterator sline = std::lower_bound(cumStrength.begin(),cumStrength.end(),mc_rnd_source.Uniform(0,cumStrength.back()));
 	unsigned int i = sline-cumStrength.begin();
-	assert(i<subSims.size());
+	smassert(i<subSims.size());
 	currentSim = subSims[i];
 	currentSim->nextPoint();
 	

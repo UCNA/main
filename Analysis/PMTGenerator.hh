@@ -4,7 +4,7 @@
 #include "EnergyCalibrator.hh"
 #include "Types.hh"
 #include "EfficCurve.hh"
-#include <cassert>
+#include "SMExcept.hh"
 #include <vector>
 #include <TRandom3.h>
 #include <TMultiLayerPerceptron.h>
@@ -27,7 +27,7 @@ public:
 class TriggerProbMLP: public TriggerProb {
 public:
 	/// constructor
-	TriggerProbMLP(TMultiLayerPerceptron* M): TriggerProb(), TMLP(M) { assert(TMLP); }
+	TriggerProbMLP(TMultiLayerPerceptron* M): TriggerProb(), TMLP(M) { smassert(TMLP); }
 	/// calculate 2-fold trigger probability
 	virtual double calcProb();
 	

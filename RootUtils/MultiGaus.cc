@@ -1,5 +1,5 @@
 #include "MultiGaus.hh"
-#include <cassert>
+#include "SMExcept.hh"
 
 MultiGaus::~MultiGaus() { 
 	delete(iguess);
@@ -7,7 +7,7 @@ MultiGaus::~MultiGaus() {
 }
 
 void MultiGaus::setParameter(unsigned int n, double p) {
-	assert(n<3*npks);
+	smassert(n<3*npks);
 	if(n%3==2)
 		p = fabs(p);
 	iguess[n] = p;
@@ -15,12 +15,12 @@ void MultiGaus::setParameter(unsigned int n, double p) {
 }
 
 double MultiGaus::getParameter(unsigned int n) const {
-	assert(n<3*npks);
+	smassert(n<3*npks);
 	return myTF1->GetParameter(n);
 }
 
 double MultiGaus::getParError(unsigned int n) const {
-	assert(n<3*npks);
+	smassert(n<3*npks);
 	return myTF1->GetParError(n);
 }
 
@@ -61,7 +61,7 @@ void MultiGaus::fit(TH1* h, bool draw) {
 
 
 void MultiGaus::addCorrelated(unsigned int n, double relCenter, double relHeight, double relWidth) {
-	assert(n<npks);
+	smassert(n<npks);
 	corrPeak p;
 	p.mainPeak = n;
 	p.relCenter = relCenter;

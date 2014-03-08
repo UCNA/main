@@ -1,6 +1,6 @@
 #include "RollingWindow.hh"
 #include <utility>
-#include <cassert>
+#include "SMExcept.hh"
 
 void RollingWindow::addCount(double t, double w) {
 	itms.push_front(std::make_pair(t,w));
@@ -17,7 +17,7 @@ void RollingWindow::moveTimeLimit(double t) {
 }
 
 void RollingWindow::popExcess() {
-	assert(itms.size());
+	smassert(itms.size());
 	double w = itms.back().second;
 	sw -= w;
 	sww -= w*w;

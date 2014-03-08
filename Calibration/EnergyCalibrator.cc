@@ -90,7 +90,7 @@ scaleNoiseWithL(true), P(cdb->getPositioningCorrector(myRun)), GS(NULL), rn(myRu
 		return;
 	}
 	
-	assert(P);
+	smassert(P);
 	P->setNormAvg();
 	
 	rGMS = CDB->getGMSRun(myRun);
@@ -140,19 +140,19 @@ LinearityCorrector::~LinearityCorrector() {
 
 
 float LinearityCorrector::linearityCorrector(Side s, unsigned int t, float adc, float time) const {
-	assert(t<=nBetaTubes);
+	smassert(t<=nBetaTubes);
 	if(t<nBetaTubes) {
 		if(linearityFunctions[s][t]->GetN())
 			return linearityFunctions[s][t]->Eval(adc*gmsFactor(s,t,time));
 		else {
-			assert(IGNORE_DEAD_DB);
+			smassert(IGNORE_DEAD_DB);
 			return 0;
 		}
 	}
 	return 0; //< TODO ref linearity PMT?
 }
 float LinearityCorrector::invertLinearityStabilized(Side s, unsigned int t, float l) const {
-	assert(s<=WEST && t<nBetaTubes && linearityInverses[s][t]);
+	smassert(s<=WEST && t<nBetaTubes && linearityInverses[s][t]);
 	return linearityInverses[s][t]->Eval(l);
 }
 float LinearityCorrector::invertLinearity(Side s, unsigned int t, float l, float time) const {
@@ -299,9 +299,9 @@ float_err PMTCalibrator::calibratedEnergy(Side s, unsigned int t, float x, float
 }
 
 float PMTCalibrator::trigEff(Side s, unsigned int t, float adc) const {
-	assert(s==EAST || s==WEST);
-	assert(t<nBetaTubes);
-	assert(pmtEffic[s][t]);
+	smassert(s==EAST || s==WEST);
+	smassert(t<nBetaTubes);
+	smassert(pmtEffic[s][t]);
 	return pmtEffic[s][t]->effic(adc);
 }
 

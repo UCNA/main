@@ -1,6 +1,6 @@
 #include "G4toPMT.hh"
 #include "PathUtils.hh"
-#include <cassert>
+#include "SMExcept.hh"
 #include <cmath>
 
 void G4toPMT::setReadpoints() {

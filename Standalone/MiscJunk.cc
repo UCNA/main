@@ -1,4 +1,4 @@
-#include <cassert>
+#include "SMExcept.hh"
 #include "StyleSetup.hh"
 #include "strutils.hh"
 #include "GraphicsUtils.hh"

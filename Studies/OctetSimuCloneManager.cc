@@ -45,7 +45,7 @@ void OctetSimuCloneManager::setOctetSimdata(unsigned int octn) {
 
 void OctetSimuCloneManager::simOct(RunAccumulator& SimRA, const Octet& oct) {
 	if(!oct.getNRuns()) return;
-	assert(simData);
+	smassert(simData);
 	RunAccumulator* octSim = (RunAccumulator*)SimRA.makeAnalyzer(oct.octName(),"");
 	octSim->simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), *simData, simFactor, hoursOld*3600, doPlots, doCompare);
 	delete octSim;

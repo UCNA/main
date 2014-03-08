@@ -9,7 +9,7 @@ fgbgPair::fgbgPair(const std::string& nm, const std::string& ttl, AFPState a, Si
 baseName(nm), baseTitle(ttl), afp(a), mySide(s), doSubtraction(true), doTimeScale(true), isSubtracted(false) { }
 
 void fgbgPair::bgSubtract(BlindTime tFG, BlindTime tBG) {
-	assert(!isSubtracted); // don't BG subtract twice!
+	smassert(!isSubtracted); // don't BG subtract twice!
 	double bgScale = (doTimeScale && tBG[BOTH])?tFG[BOTH]/tBG[BOTH]:1.0;
 	if(doSubtraction)
 		h[GV_OPEN]->Add(h[GV_CLOSED],-bgScale);
@@ -20,14 +20,14 @@ void fgbgPair::bgSubtract(BlindTime tFG, BlindTime tBG) {
 
 void fgbgPair::operator+=(const fgbgPair& p) {
 	for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
-		assert(h[gv] && p.h[gv]);
+		smassert(h[gv] && p.h[gv]);
 		h[gv]->Add(p.h[gv]);
 	}
 }
 
 void fgbgPair::operator*=(double c) {
 	for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
-		assert(h[gv]);
+		smassert(h[gv]);
 		h[gv]->Scale(c);
 	}
 }
@@ -106,7 +106,7 @@ SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false), dept
 		for(std::vector<Stringmap>::iterator it = times.begin(); it != times.end(); it++) {
 			AFPState afp = strToAfp(it->getDefault("afp","Other"));
 			unsigned int fg = (unsigned int)(it->getDefault("fg",3));
-			assert(afp<=AFP_OTHER && fg <= GV_OPEN);
+			smassert(afp<=AFP_OTHER && fg <= GV_OPEN);
 			totalTime[afp][fg] = BlindTime(*it);
 		}
 		// fetch total counts
@@ -114,7 +114,7 @@ SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false), dept
 		for(std::vector<Stringmap>::iterator it = counts.begin(); it != counts.end(); it++) {
 			AFPState afp = strToAfp(it->getDefault("afp","Other"));
 			unsigned int fg = (unsigned int)(it->getDefault("fg",3));
-			assert(fg <= GV_OPEN);
+			smassert(fg <= GV_OPEN);
 			totalCounts[afp][fg] = it->getDefault("counts",0);
 		}
 		// fetch run counts, run times
@@ -140,7 +140,7 @@ void RunAccumulator::setCurrentState(AFPState afp, GVState gv) {
 }
 
 BlindTime RunAccumulator::getTotalTime(AFPState afp, GVState gv) const {
-	assert(gv==GV_OPEN || gv==GV_CLOSED);
+	smassert(gv==GV_OPEN || gv==GV_CLOSED);
 	if(afp==AFP_OTHER)
 		return totalTime[AFP_ON][gv]+totalTime[AFP_OFF][gv]+totalTime[AFP_OTHER][gv];
 	return totalTime[afp][gv];
@@ -259,13 +259,13 @@ bool RunAccumulator::hasFGBGPair(const std::string& qname) const {
 
 fgbgPair& RunAccumulator::getFGBGPair(const std::string& qname) {
 	std::map<std::string,fgbgPair*>::iterator it = fgbgHists.find(qname);
-	assert(it != fgbgHists.end());
+	smassert(it != fgbgHists.end());
 	return *(it->second);
 }
 
 const fgbgPair& RunAccumulator::getFGBGPair(const std::string& qname) const {
 	std::map<std::string,fgbgPair*>::const_iterator it = fgbgHists.find(qname);
-	assert(it != fgbgHists.end());
+	smassert(it != fgbgHists.end());
 	return *(it->second);
 }
 
@@ -286,10 +286,10 @@ RunAccumulator* RunAccumulator::getErrorEstimator() {
 
 /// estimate errorbars for low-rate histogram from high-rate total events; assume both histograms are unscaled counts
 void errorbarsFromMasterHisto(TH1* lowrate, const TH1* master) {
-	assert(lowrate && master);
+	smassert(lowrate && master);
 	if(!master->Integral()) return;
 	float errscaling = sqrt(lowrate->Integral()/master->Integral());
-	assert(errscaling==errscaling);
+	smassert(errscaling==errscaling);
 	for(unsigned int i=0; i<totalBins(lowrate); i++)
 		if(lowrate->GetBinContent(i)<25)
 			lowrate->SetBinError(i,errscaling*master->GetBinError(i));
@@ -348,8 +348,8 @@ void RunAccumulator::makeRatesSummary() {
 }
 
 TH1* RunAccumulator::rateHisto(const fgbgPair* p, GVState gv) const {
-	assert(p);
-	assert(gv == GV_OPEN || gv == GV_CLOSED);
+	smassert(p);
+	smassert(gv == GV_OPEN || gv == GV_CLOSED);
 	TH1* h = (TH1*)p->h[gv]->Clone();
 	h->SetTitle(p->getTitle().c_str());
 	Side s = p->mySide;
@@ -391,8 +391,8 @@ void RunAccumulator::write(std::string outName) {
 
 void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS) {
 	printf("Loading AFP=%i, fg=%i processed data...\n",afp,gv);
-	assert(afp <= AFP_OTHER);
-	assert(gv==GV_CLOSED || gv==GV_OPEN);
+	smassert(afp <= AFP_OTHER);
+	smassert(gv==GV_CLOSED || gv==GV_OPEN);
 	setCurrentState(afp,gv);
 	if(!PDS.getnFiles())
 		return;
@@ -457,7 +457,7 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool cou
 void RunAccumulator::simForRun(Sim2PMT& simData, RunNum rn, unsigned int nToSim, bool countAll) {
 	RunInfo RI = CalDBSQL::getCDB()->getRunInfo(rn);
 	if(RI.gvState != GV_OPEN) { printf("Skipping simulation for background run "); RI.display(); return; }
-	assert(RI.afpState <= AFP_OTHER);
+	smassert(RI.afpState <= AFP_OTHER);
 	
 	PMTCalibrator PCal(rn);
 	simData.setCalibrator(PCal);
@@ -479,7 +479,7 @@ unsigned int RunAccumulator::simMultiRuns(Sim2PMT& simData, const TagCounter<Run
 		}
 	} else {
 		double nRequested = runReqs.total();
-		assert(nRequested);
+		smassert(nRequested);
 		double nGranted = 0;
 		printf("Dividing %i simulation events between %i runs requesting %i events...\n",nCounts,runReqs.nTags(),(int)nRequested);
 		for(std::map<RunNum,double>::const_iterator it = runReqs.counts.begin(); it != runReqs.counts.end(); it++) {
@@ -583,7 +583,7 @@ unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& sim
 	
 	// load original data for comparison
 	std::vector<std::string> datpath = split(strip(basedata,"/"),"/");
-	assert(datpath.size()>0);
+	smassert(datpath.size()>0);
 	isSimulated = false;
 	RunAccumulator* origRA = (RunAccumulator*)makeAnalyzer("nameUnused",basedata+"/"+datpath.back());
 	isSimulated = true;
@@ -627,7 +627,7 @@ unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& sim
 				runTimes.add(it->first,0);
 				continue;
 			}
-			assert(RI.afpState <= AFP_ON);	// are you really trying to clone non-beta-octet runs here??
+			smassert(RI.afpState <= AFP_ON);	// are you really trying to clone non-beta-octet runs here??
 			// estimate background count share for this run (and reduce simulation by this amount)
 			double bgEst = origRA->getTotalCounts(RI.afpState,GV_CLOSED)*origRA->getRunTime(it->first)/origRA->getTotalTime(RI.afpState,GV_CLOSED)[BOTH];
 			if(it->second <= bgEst) continue;
@@ -639,7 +639,7 @@ unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& sim
 		// see which kind of run got more AFP counts; clone first
 		AFPState bigafp = countRequests[AFP_OFF].total()>=countRequests[AFP_ON].total()?AFP_OFF:AFP_ON;
 		AFPState smallafp = bigafp?AFP_OFF:AFP_ON;
-		assert(countRequests[bigafp].nTags());
+		smassert(countRequests[bigafp].nTags());
 		// determine starting point in simulation data to which we can return later
 		unsigned int startEvt = 0;
 		while(!startEvt) {

@@ -24,7 +24,7 @@ public:
 	/// add list of runs to data; return number successfully added
 	unsigned int addRuns(const std::vector<RunNum>& rns);
 	/// return path to run .root file
-	virtual std::string locateRun(RunNum r) { assert(false); return ""; }
+	virtual std::string locateRun(RunNum r) { smassert(false); return ""; }
 	
 	/// speedload, keeping track of currently loaded run number
 	virtual void speedload(unsigned int e);

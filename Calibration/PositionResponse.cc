@@ -14,8 +14,8 @@ PositioningInterpolator::PositioningInterpolator(const PosmapInfo& PMI,
 	Interpolator* (*rInterp)(DataSequence*, double, double)):
 S(PMI.nRings,PMI.radius), sRadial(BC_DERIVCLAMP_ZERO), L((*rInterp)(&sRadial, PMI.radius*(1.0+1.0/(2*PMI.nRings-1.0)), 0)) {
 	
-	assert(PMI.signal.size() == S.nSectors());
-	assert(PMI.norm.size() == S.nSectors());
+	smassert(PMI.signal.size() == S.nSectors());
+	smassert(PMI.norm.size() == S.nSectors());
 	
 	// set up sequences/interpolators
 	for(unsigned int n=0; n<PMI.nRings; n++) {
@@ -55,10 +55,10 @@ void PositioningCorrector::loadData(const std::vector<PosmapInfo>& indat) {
 	
 	// build interpolators
 	for(std::vector<PosmapInfo>::const_iterator it = indat.begin(); it != indat.end(); it++) {
-		assert(it->s==EAST || it->s==WEST);
+		smassert(it->s==EAST || it->s==WEST);
 		while(tubes[it->s].size()<=it->t)
 			tubes[it->s].push_back(NULL);
-		assert(!tubes[it->s][it->t]);
+		smassert(!tubes[it->s][it->t]);
 		tubes[it->s][it->t] = new PositioningInterpolator(*it,interpType,interpType);
 	}
 	setNormCenter();
@@ -94,7 +94,7 @@ void PositioningCorrector::loadData(const QFile& qin) {
 	// init PosmapInfo vector
 	int nRings = atoi(qin.getDefault("SectorCutter","nRings","0").c_str());
 	float radius = atof(qin.getDefault("SectorCutter","radius","0").c_str());
-	assert(nRings && radius);
+	smassert(nRings && radius);
 	SectorCutter S(nRings,radius);
 	std::vector<PosmapInfo> pinf;
 	pinf.resize(2*nBetaTubes);
@@ -114,13 +114,13 @@ void PositioningCorrector::loadData(const QFile& qin) {
 	std::vector<Stringmap> dpts =  qin.retrieve("PosmapPoint");
 	for(std::vector<Stringmap>::iterator it = dpts.begin(); it != dpts.end(); it++) {
 		std::string ss = it->getDefault("side","N");
-		assert(ss=="E" || ss=="W");
+		smassert(ss=="E" || ss=="W");
 		Side s = ss=="E"?EAST:WEST;
 		unsigned int t = (unsigned int)it->getDefault("tube",nBetaTubes);
 		unsigned int n = (unsigned int)it->getDefault("sector",S.nSectors());
 		float z = it->getDefault("light",1.0);
 		float z0 = it->getDefault("energy",1.0);
-		assert(t<nBetaTubes && n<S.nSectors());
+		smassert(t<nBetaTubes && n<S.nSectors());
 		pinf[nBetaTubes*s+t].signal[n] = z;
 		pinf[nBetaTubes*s+t].norm[n] = z0;
 	}

@@ -143,7 +143,7 @@ public:
 	/// stringmap energy calibrations summary
 	Stringmap calSummary() const;
 	/// get clipping threshold for a PMT
-	float getClipThreshold(Side s, unsigned int t) { assert(s<=WEST && t<nBetaTubes); return clipThreshold[s][t]; }
+	float getClipThreshold(Side s, unsigned int t) { smassert(s<=WEST && t<nBetaTubes); return clipThreshold[s][t]; }
 	
 protected:
 	

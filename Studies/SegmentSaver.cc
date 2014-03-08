@@ -24,7 +24,7 @@ TH1* SegmentSaver::tryLoad(const std::string& hname) {
 }
 
 TH1* SegmentSaver::registerSavedHist(const std::string& hname, const std::string& title,unsigned int nbins, float xmin, float xmax) {
-	assert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
+	smassert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
 	TH1* h = tryLoad(hname);
 	if(!h)
 		h = registeredTH1F(hname,title,nbins,xmin,xmax);
@@ -33,7 +33,7 @@ TH1* SegmentSaver::registerSavedHist(const std::string& hname, const std::string
 }
 
 TH1* SegmentSaver::registerSavedHist(const std::string& hname, const TH1& hTemplate) {
-	assert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
+	smassert(saveHists.find(hname)==saveHists.end());	// don't duplicate names!
 	TH1* h = tryLoad(hname);
 	if(!h) {
 		h = (TH1*)addObject(hTemplate.Clone(hname.c_str()));
@@ -47,7 +47,7 @@ SegmentSaver::SegmentSaver(OutputManager* pnt, const std::string& nm, const std:
 OutputManager(nm,pnt), ignoreMissingHistos(false), inflname(inflName), isCalculated(false), inflAge(0) {
 	// open file to load existing data
 	fIn = (inflname.size())?(new TFile((inflname+".root").c_str(),"READ")):NULL;
-	assert(!fIn || !fIn->IsZombie());
+	smassert(!fIn || !fIn->IsZombie());
 	if(fIn) {
 		inflAge = fileAge(inflname+".root");
 		printf("Loading data from %s [%.1f hours old]...\n",inflname.c_str(),inflAge/3600.);
@@ -67,13 +67,13 @@ bool SegmentSaver::inflExists(const std::string& inflName) {
 
 TH1* SegmentSaver::getSavedHist(const std::string& hname) {
 	std::map<std::string,TH1*>::iterator it = saveHists.find(hname);
-	assert(it != saveHists.end());
+	smassert(it != saveHists.end());
 	return it->second;
 }
 
 const TH1* SegmentSaver::getSavedHist(const std::string& hname) const {
 	std::map<std::string,TH1*>::const_iterator it = saveHists.find(hname);
-	assert(it != saveHists.end());
+	smassert(it != saveHists.end());
 	return it->second;
 }
 
@@ -100,7 +100,7 @@ bool SegmentSaver::isEquivalent(const SegmentSaver& S) const {
 }
 
 void SegmentSaver::addSegment(const SegmentSaver& S) {
-	assert(isEquivalent(S));
+	smassert(isEquivalent(S));
 	// add histograms
 	for(std::map<std::string,TH1*>::const_iterator it = saveHists.begin(); it != saveHists.end(); it++)
 		it->second->Add(S.getSavedHist(it->first));

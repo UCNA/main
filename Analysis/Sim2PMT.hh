@@ -128,7 +128,7 @@ public:
 	
 protected:
 	/// perform unit conversions, etc.
-	virtual void doUnits() { assert(false); }
+	virtual void doUnits() { smassert(false); }
 	/// generate event time stamp
 	virtual void updateClock();
 	/// "reverse calibration" from simulated data

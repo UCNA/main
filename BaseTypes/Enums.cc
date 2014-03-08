@@ -2,19 +2,19 @@
 #include "strutils.hh"
 #include <math.h>
 #include <stdio.h>
-#include <cassert>
+#include "SMExcept.hh"
 
 //---------------------------------------
 
 char sideNames(Side s, bool clower) {
-	assert(s<BADSIDE);
+	smassert(s<BADSIDE);
 	const char snm[] = {'E','W','B','N'};
 	const char snml[] = {'e','w','b','n'};
 	return clower?snml[s]:snm[s];
 }
 
 const char* sideWords(Side s) {
-	assert(s<=BADSIDE);
+	smassert(s<=BADSIDE);
 	const char* swd[] = {"East","West","Both","None","BadSide"};
 	return swd[s];
 }
@@ -26,13 +26,13 @@ std::string pidWords(PID p) {
 }
 
 std::string typeWords(EventType tp) {
-	assert(tp<=TYPE_IV_EVENT);
+	smassert(tp<=TYPE_IV_EVENT);
 	const char* twd[] = {"Type0","TypeI","TypeII","TypeIII","TypeIV"};
 	return twd[tp];
 }
 
 const char* dbSideName(Side s) {
-	assert(s<=BADSIDE);
+	smassert(s<=BADSIDE);
 	const char* swd[] = {"'East'","'West'","'Both'","'None'","'BadSide'"};
 	return swd[s];
 }

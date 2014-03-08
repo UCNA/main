@@ -97,7 +97,7 @@ void AnalysisDB::deleteAnaResult(unsigned int arid) {
 	sprintf(query,"SELECT COUNT(*) FROM analysis_results WHERE cut_spec_id = %i",csid);
 	Query();
 	r = getFirst();
-	assert(r);
+	smassert(r);
 	if(!fieldAsInt(r))
 		deleteCutSpec(csid);
 	delete(r);

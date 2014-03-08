@@ -721,7 +721,7 @@ def MWPC_calib_from_RunAccumulatorFile(conn,RAcF,M):
 			M.upload(conn)
 	return sgains
 
-def MWPC_calib_for_beta_octets(conn,basedir,runAxis=None):
+def MWPC_calib_for_beta_octets(conn, basedir, runAxis=None, gGC=None):
 	"""Set MWPC ccloud gain factors for runs in each beta decay octet"""
 	depth = 0
 	
@@ -735,26 +735,28 @@ def MWPC_calib_for_beta_octets(conn,basedir,runAxis=None):
 		gdat.append( (n, MWPC_calib_from_RunAccumulatorFile(conn,f,M), 0.5*(f.getRuns()[0]+f.getRuns()[-1])) )
 
 	# plot
-	xaxis = graph.axis.lin(title=unitNames[depth],min=0,max=len(gdat)-1)
-	if runAxis:
-		xaxis = runAxis
-	gGC=graph.graphxy(width=25,height=10,
-					  x=xaxis,
-					  y=graph.axis.lin(title="MWPC gain calibration $g_Q$",min=2e-4,max=3.5e-4),
-					  key = graph.key.key(pos="bl"))
-	setTexrunner(gGC)
+	if gGC is None:
+		xaxis = graph.axis.lin(title=unitNames[depth],min=0,max=len(gdat)-1)
+		if runAxis:
+			xaxis = runAxis
+		gGC=graph.graphxy(width=25,height=10,
+						  x=xaxis,
+						  y=graph.axis.lin(title="MWPC gain calibration $g_Q$",min=2e-4,max=3.5e-4),
+						  key = graph.key.key(pos="bl"))
+		setTexrunner(gGC)
 	tpsymbs = {0:symbol.circle,1:symbol.triangle,2:symbol.plus}
 	sideStyles = {"East":[scols["East"]], "West":[scols["West"],deco.filled]}
 	for s in ["East","West"]:
-		gtitle = s # + " Type " + {0:"0",1:"I",2:"II/III"}[tp]
+		gtitle = s + " $\\beta$ octets"		# + " Type " + {0:"0",1:"I",2:"II/III"}[tp]
 		gpts = [(g[0],g[1][s]) for g in gdat]
 		if runAxis:
 			gpts = [(g[-1],g[1][s]) for g in gdat]
 		gGC.plot(graph.data.points(gpts,x=1,y=2,title=gtitle),[graph.style.symbol(tpsymbs[0],symbolattrs=sideStyles[s])])
 
-	gGC.writetofile(basedir+"/MWPC_GainCal_%i.pdf"%depth)
+	#gGC.writetofile(basedir+"/MWPC_GainCal_%i.pdf"%depth)
+	return gGC
 
-def MWPC_calib_for_source_runs(conn,basedir,runAxis=None):
+def MWPC_calib_for_source_runs(conn,basedir,gGC=None):
 	"""Set MWPC ccloud gain factors for each calibration source run"""
 	
 	M = MWPC_Ecal()
@@ -764,23 +766,23 @@ def MWPC_calib_for_source_runs(conn,basedir,runAxis=None):
 
 	SDD = SourceDatDirectory(basedir)
 	gdat = [(rn,MWPC_calib_from_RunAccumulatorFile(conn,SDD.getQFile(rn,RunAccumulatorFile),M)) for rn in SDD.getRunlist()]
-
-	if not runAxis:
-		runAxis = make_runaxis(gdat[0][0],gdat[-1][0])
 		
 	# plot
-	gGC=graph.graphxy(width=25,height=10,
-					  x=runAxis,
-					  y=graph.axis.lin(title="MWPC gain calibration $g_Q$",min=2e-4,max=3.5e-4),
-					  key = graph.key.key(pos="bl"))
-	setTexrunner(gGC)
+	if gGC is None:
+		gGC=graph.graphxy(width=25,height=10,
+						  x=make_runaxis(gdat[0][0],gdat[-1][0]),
+						  y=graph.axis.lin(title="MWPC gain calibration $g_Q$"),
+						  key = graph.key.key(pos="bl"))
+		setTexrunner(gGC)
 	tpsymbs = {0:symbol.circle,1:symbol.triangle,2:symbol.plus}
 	#sideStyles = {"East":[scols["East"]], "West":[scols["West"],deco.filled]}
 	sideStyles = {"East":[rgb.red], "West":[rgb.red,deco.filled]}
 	for s in ["East","West"]:
-		gtitle = s # + " Type " + {0:"0",1:"I",2:"II/III"}[tp]
+		gtitle = s + " source calibrations" # + " Type " + {0:"0",1:"I",2:"II/III"}[tp]
 		gGC.plot(graph.data.points([(g[0],g[1][s]) for g in gdat if g[1]],x=1,y=2,title=gtitle),[graph.style.symbol(tpsymbs[0],symbolattrs=sideStyles[s])])
 	gGC.writetofile(basedir+"/MWPC_GainCal.pdf")
+
+	return gGC
 
 
 
@@ -837,9 +839,14 @@ if __name__ == "__main__":
 	#make_mwpc_posmap(conn,167,169) # only run this once
 	#assign_MWPC_calib(conn,0,100000,10,181,"ccloud") # default calibration for all runs
 	
-	#rxs = make_runaxis(14000,16400)
-	#MWPC_calib_for_beta_octets(conn, ppath+"/MWPC_ECal_8_Sim0823/",rxs)
-	#MWPC_calib_for_source_runs(conn,ppath+"/SourceFitsSim2010",rxs)
+	gGC = graph.graphxy(width=25,height=10,
+					x=make_runaxis(14000,16400),
+					y=graph.axis.lin(title="MWPC gain calibration $g_Q$",min=2e-4,max=3.5e-4),
+					key = graph.key.key(pos="bl"))
+	setTexrunner(gGC)
+
+	MWPC_calib_for_beta_octets(conn, ppath+"/MWPC_ECal_8_Sim0823/", True, gGC)
+	MWPC_calib_for_source_runs(conn, ppath+"/SourceFitsSim2010", gGC)
 	
 	#MWPC_Cathode_CCloud_Scaling(conn, ppath+"/MWPC_ECal_8/MWPC_ECal_8.txt", ppath+"/MWPC_ECal_8_Sim0823/MWPC_ECal_8_Sim0823.txt") # cathode to charge-cloud scaling
 	

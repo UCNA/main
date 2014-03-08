@@ -20,7 +20,7 @@ EvisConverter::~EvisConverter() {
 }
 
 float EvisConverter::Erecon(Side s, EventType tp, float EvisE, float EvisW) const {
-	assert((s==EAST || s==WEST));
+	smassert((s==EAST || s==WEST));
 	float Evis = (tp==TYPE_I_EVENT)? EvisE+EvisW:(s==EAST?EvisE:EvisW);
 	if(tp>TYPE_III_EVENT || !conversions[s][tp]) return Evis;
 	return conversions[s][tp]->Eval(Evis);

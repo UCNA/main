@@ -41,7 +41,7 @@ void WirechamberGainMapPluginBase::genPosmap(const std::string& pmapNameBase) co
 	std::string pmapname = pmapNameBase+"_"+itos(myA->runCounts.counts.begin()->first)+"-"+itos(myA->runCounts.counts.rbegin()->first)+"/"+itos(time(NULL));
 	// Calibration DB to write output to
 	CalDBSQL* CDBout = CalDBSQL::getCDB(false);
-	assert(CDBout);
+	smassert(CDBout);
 	// reserve new position map ID number
 	unsigned int pmid = CDBout->newPosmap(pmapname,sects.n,sects.r);
 	

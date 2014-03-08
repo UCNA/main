@@ -3,7 +3,7 @@
 #include "strutils.hh"
 #include "PathUtils.hh"
 #include <math.h>
-#include <cassert>
+#include "SMExcept.hh"
 #include <cfloat>
 #include <stdlib.h>
 #include <algorithm>
@@ -12,10 +12,10 @@
 unsigned int PSelector::select(double* x) const {
 	static double rnd_tmp;
 	if(!x) { x=&rnd_tmp; rnd_tmp=gRandom->Uniform(0,cumprob.back()); }
-	else { assert(0. <= *x && *x <= 1.); (*x) *= cumprob.back(); }
+	else { smassert(0. <= *x && *x <= 1.); (*x) *= cumprob.back(); }
 	std::vector<double>::const_iterator itsel = std::upper_bound(cumprob.begin(),cumprob.end(),*x);
 	unsigned int selected = (unsigned int)(itsel-cumprob.begin()-1);
-	assert(selected<cumprob.size()-1);
+	smassert(selected<cumprob.size()-1);
 	(*x) = ((*x) - cumprob[selected])/(cumprob[selected+1]-cumprob[selected]);
 	return selected;
 }
@@ -26,7 +26,7 @@ void PSelector::scale(double s) {
 }
 
 double PSelector::getProb(unsigned int n) const {
-	assert(n<cumprob.size()-1);
+	smassert(n<cumprob.size()-1);
 	return (cumprob[n+1]-cumprob[n])/cumprob.back();
 }
 
@@ -62,7 +62,7 @@ void randomDirection(double& x, double& y, double& z, double* rnd) {
 NucLevel::NucLevel(const Stringmap& m): fluxIn(0), fluxOut(0) {
 	name = m.getDefault("nm","0.0.0");
 	std::vector<std::string> v = split(name,".");
-	assert(v.size()==3);
+	smassert(v.size()==3);
 	A = atoi(v[0].c_str());
 	Z = atoi(v[1].c_str());
 	n = atoi(v[2].c_str());
@@ -88,7 +88,7 @@ DecayAtom::DecayAtom(BindingEnergyTable const* B): BET(B), Iauger(0), Ikxr(0), I
 
 void DecayAtom::load(const Stringmap& m) {
 	for(std::multimap< std::string, std::string >::const_iterator it = m.dat.begin(); it != m.dat.end(); it++) {
-		assert(it->first.size());
+		smassert(it->first.size());
 		if(it->first[0]=='a') Iauger += atof(it->second.c_str())/100.0;
 		else if(it->first[0]=='k') Ikxr += atof(it->second.c_str())/100.0;
 	}
@@ -196,7 +196,7 @@ double ConversionGamma::getConversionEffic() const {
 }
 
 double ConversionGamma::shellAverageE(unsigned int n) const {
-	assert(n<subshells.size());
+	smassert(n<subshells.size());
 	double e = 0;
 	double w = 0;
 	for(unsigned int i=0; i<subshells[n].getN(); i++) {
@@ -282,7 +282,7 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 	}
 	std::sort(levels.begin(),levels.end(),sortLevels);
 	for(std::vector<NucLevel>::iterator it = levels.begin(); it != levels.end(); it++) {
-		assert(levelIndex.find(it->name) == levelIndex.end());
+		smassert(levelIndex.find(it->name) == levelIndex.end());
 		it->n = it-levels.begin();
 		levelIndex.insert(std::make_pair(it->name,it->n));
 	}
@@ -350,7 +350,7 @@ NucDecaySystem::NucDecaySystem(const QFile& Q, const BindingEnergyLibrary& B, do
 			}
 		} else {
 			NucLevel& Ldest = levels[levIndex(to)];
-			assert(Ldest.A == Lorig.A && Ldest.Z+1 == Lorig.Z && Ldest.E < Lorig.E);
+			smassert(Ldest.A == Lorig.A && Ldest.Z+1 == Lorig.Z && Ldest.E < Lorig.E);
 			ECapture* EC = new ECapture(Lorig,Ldest);
 			EC->Itotal = it->getDefault("I",0.);
 			addTransition(EC);

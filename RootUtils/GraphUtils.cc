@@ -1,7 +1,7 @@
 #include "GraphUtils.hh"
 #include "strutils.hh"
 #include "SMExcept.hh"
-#include <cassert>
+#include "SMExcept.hh"
 #include <math.h> 
 #include <TROOT.h>
 #include <TMath.h>
@@ -9,7 +9,7 @@
 #include <cfloat>
 
 Stringmap histoToStringmap(const TH1* h) {
-	assert(h);
+	smassert(h);
 	Stringmap m;
 	m.insert("nbins",h->GetNbinsX());
 	m.insert("name",h->GetName());
@@ -33,13 +33,13 @@ TH1F* stringmapToTH1F(const Stringmap& m) {
 	std::string hName = m.getDefault("name","hFoo");
 	std::string hTitle = m.getDefault("name","hFoo");
 	unsigned int nBins = (unsigned int)(m.getDefault("nbins",0));
-	assert(nBins >= 1);
+	smassert(nBins >= 1);
 	std::vector<Float_t> binEdges = sToFloats(m.getDefault("binEdges",""));
 	std::vector<float> binConts = sToFloats(m.getDefault("binConts",""));
 	std::vector<float> binErrs = sToFloats(m.getDefault("binErrs",""));
-	assert(binEdges.size()==nBins+1);
-	assert(binConts.size()==nBins+2);
-	assert(binErrs.size()==nBins+2);
+	smassert(binEdges.size()==nBins+1);
+	smassert(binConts.size()==nBins+2);
+	smassert(binErrs.size()==nBins+2);
 	
 	// TODO does this work right?
 	TH1F* h = new TH1F(hName.c_str(),hTitle.c_str(),nBins,&binEdges[0]);
@@ -99,7 +99,7 @@ void comboErr(double a, double da, double b, double db, double& x, double& dx) {
 }
 
 void accumPoints(TGraphErrors& a, const TGraphErrors& b, bool errorWeight, bool yonly) {
-	assert(a.GetN()==b.GetN());
+	smassert(a.GetN()==b.GetN());
 	for(int i=0; i<a.GetN(); i++) {
 		double ax,ay,bx,by;
 		a.GetPoint(i,ax,ay);
@@ -143,7 +143,7 @@ TH1F* cumulativeHist(const TH1F& h, bool normalize) {
 }
 
 TGraph* invertGraph(const TGraph* g) {
-	assert(g);
+	smassert(g);
 	TGraph* gi = new TGraph(g->GetN());
 	double x,y;
 	for(int i=0; i<g->GetN(); i++) {
@@ -294,14 +294,14 @@ TGraphErrors* interpolate(TGraphErrors& tg, float dx) {
 }
 
 double invCDF(TH1* h, double p) {
-	assert(h);
+	smassert(h);
 	unsigned int nbins = h->GetNbinsX()-2;
 	if(p<=0) return 0;
 	if(p>=1) return h->GetBinLowEdge(nbins+1);
 	Double_t* cdf = h->GetIntegral();
 	unsigned int mybin = std::upper_bound(cdf,cdf+nbins,p)-cdf;
-	assert(mybin>0);
-	assert(mybin<=nbins);
+	smassert(mybin>0);
+	smassert(mybin<=nbins);
 	double l = (p-cdf[mybin-1])/(cdf[mybin]-cdf[mybin-1]);
 	return h->GetBinLowEdge(mybin)*(1.0-l)+h->GetBinLowEdge(mybin+1)*l;
 }
@@ -318,7 +318,7 @@ void fixNaNs(TH1* h) {
 }
 
 std::vector<TH2F*> sliceTH3(const TH3& h3, AxisDirection d) {
-	assert(d<=Z_DIRECTION);
+	smassert(d<=Z_DIRECTION);
 	
 	TAxis* Ax1 = d==X_DIRECTION?h3.GetYaxis():h3.GetXaxis();
 	TAxis* Ax2 = d==Z_DIRECTION?h3.GetYaxis():h3.GetZaxis();
@@ -360,7 +360,7 @@ std::vector<TH2F*> sliceTH3(const TH3& h3, AxisDirection d) {
 }
 
 std::vector<TH1F*> sliceTH2(const TH2& h2, AxisDirection d, bool includeOverflow) {
-	assert(d==X_DIRECTION || d==Y_DIRECTION);
+	smassert(d==X_DIRECTION || d==Y_DIRECTION);
 	std::vector<TH1F*> h1s;
 	const unsigned int nx = h2.GetNbinsX();
 	const unsigned int ny = h2.GetNbinsY();
@@ -424,7 +424,7 @@ TH1* projectTH2(const TH2& h, double nb, double cx, double cy) {
 
 TH1* histsep(const TH1& h1, const TH1& h2) {
 	int nb = h1.GetNbinsX();
-	assert(nb==h2.GetNbinsX());
+	smassert(nb==h2.GetNbinsX());
 	TH1* hDiv = (TH1*)h1.Clone("hDivision");
 	hDiv->SetBinContent(0,0);
 	hDiv->SetBinContent(nb+1,0);
@@ -441,7 +441,7 @@ TH1* histsep(const TH1& h1, const TH1& h2) {
 
 void histoverlap(const TH1& h1, const TH1& h2, double& o, double& xdiv) {
 	int nb = h1.GetNbinsX();
-	assert(nb==h2.GetNbinsX());
+	smassert(nb==h2.GetNbinsX());
 	double* csum = new double[nb+2];
 	csum[0] = csum[nb+1] = 0;
 	for(int b=1; b<=nb; b++)
@@ -464,7 +464,7 @@ void histoverlap(const TH1& h1, const TH1& h2, double& o, double& xdiv) {
 TF1_Quantiles::TF1_Quantiles(TF1& f): npx(f.GetNpx()), xMin(f.GetXmin()), xMax(f.GetXmax()), dx((xMax-xMin)/npx),
 integral(npx+1), alpha(npx), beta(npx), gamma(npx) {
 	
-	assert(npx);
+	smassert(npx);
 	
 	integral[0] = 0;
 	Int_t intNegative = 0;

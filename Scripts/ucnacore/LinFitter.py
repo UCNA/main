@@ -426,7 +426,7 @@ def multiGroupFit(datagroups,fitter,normlGuess=None):
 	# default normalization guess
 	if not normlGuess:
 		normlGuess = [1.0 for d in datagroups]
-	assert(len(normlGuess)==len(datagroups))
+	smassert(len(normlGuess)==len(datagroups))
 	
 	# fit combined, rescaled data
 	combodat = []

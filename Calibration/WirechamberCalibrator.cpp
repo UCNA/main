@@ -2,7 +2,7 @@
 #include "SMExcept.hh"
 #include "GraphicsUtils.hh"
 #include <cmath>
-#include <cassert>
+#include "SMExcept.hh"
 #include <algorithm>
 
 #define kUndefinedPosition 666
@@ -14,9 +14,9 @@ WirechamberCalibrator::WirechamberCalibrator(RunNum rn, CalDB* cdb): sigma(5.90)
 		
 		// load energy calibration methods
 		std::vector<MWPC_Ecal_Spec> ecalList = cdb->get_MWPC_Ecals(rn,s);
-		assert(ecalList.size());
+		smassert(ecalList.size());
 		for(std::vector<MWPC_Ecal_Spec>::iterator it = ecalList.begin(); it != ecalList.end(); it++) {
-			assert(it->pcorr);
+			smassert(it->pcorr);
 			it->pcorr->setNormAvg();
 			ecalMethods[s].insert(std::pair<ChargeProxyType,MWPC_Ecal_Spec>(it->charge_meas,*it));
 		}
@@ -90,7 +90,7 @@ float WirechamberCalibrator::chargeProxy(Side s, ChargeProxyType c, const wireHi
 }
 
 float WirechamberCalibrator::wirechamberEnergy(Side s, const wireHit& x_wires, const wireHit& y_wires, const MWPCevent& mwpc) const {
-	assert(s==EAST||s==WEST);
+	smassert(s==EAST||s==WEST);
 	float eta_w = chargeP[s]->eval(s,0,x_wires.center, y_wires.center,true);
 	float Q = chargeProxy(s,myChargeProxy[s],x_wires,y_wires,mwpc);
 	return mwpcGainCorr[s]*Q/eta_w;
@@ -98,7 +98,7 @@ float WirechamberCalibrator::wirechamberEnergy(Side s, const wireHit& x_wires, c
 
 const MWPC_Ecal_Spec& WirechamberCalibrator::getAltEcal(Side s, ChargeProxyType tp) const {
 	std::map<ChargeProxyType,MWPC_Ecal_Spec>::const_iterator it = ecalMethods[s].find(tp);
-	assert(it != ecalMethods[s].end());
+	smassert(it != ecalMethods[s].end());
 	return it->second;
 }
 
@@ -112,7 +112,7 @@ void WirechamberCalibrator::tweakPosition(Side s, AxisDirection d, wireHit& h, d
 }
 
 std::vector<std::string> WirechamberCalibrator::getCathChans(Side s, AxisDirection d) const {
-	assert(s<=WEST && d<=Y_DIRECTION);
+	smassert(s<=WEST && d<=Y_DIRECTION);
 	std::vector<std::string> chans;
 	for(std::vector<CathSegCalibrator*>::const_iterator it = cathsegs[s][d].begin(); it != cathsegs[s][d].end(); it++)
 		chans.push_back((*it)->channel);
@@ -180,18 +180,18 @@ void WirechamberCalibrator::toLocal(Side s, AxisDirection d, float x, unsigned i
 }
 
 float WirechamberCalibrator::fromLocal(Side s, AxisDirection d, unsigned int n, float c) const {
-	assert(n>=0 && n<=wirePos[s][d].size()-1);
+	smassert(n<=wirePos[s][d].size()-1);
 	return domains[s][d][n]*(0.5-c)+domains[s][d][n+1]*(0.5+c);
 }
 
 float WirechamberCalibrator::getCathNorm(Side s, AxisDirection d, unsigned int c) const {
-	assert(s<=WEST && d<=Y_DIRECTION && c<nCaths[s][d]);
+	smassert(s<=WEST && d<=Y_DIRECTION && c<nCaths[s][d]);
 	return cathsegs[s][d][c]->norm;
 }
 
 float WirechamberCalibrator::getCathCCloudGain(Side s, AxisDirection d, unsigned int c) const {
-	assert(s<=WEST && d<=Y_DIRECTION);
-	assert(c<nCaths[s][d]);
+	smassert(s<=WEST && d<=Y_DIRECTION);
+	smassert(c<nCaths[s][d]);
 	return cath_ccloud_gains[s][d][c];
 }
 
@@ -223,7 +223,7 @@ void WirechamberCalibrator::calcDoubletHitPos(wireHit& h, float x0, float x1, fl
 
 wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d, const float* cathADC, const float* cathPed) const {
 	
-	assert(s<=WEST && d<=Y_DIRECTION);
+	smassert(s<=WEST && d<=Y_DIRECTION);
 	const unsigned int nWires = nCaths[s][d];
 	float x1,x2,x3,y1,y2,y3;
 	
@@ -381,8 +381,8 @@ wireHit WirechamberCalibrator::calcHitPos(Side s, AxisDirection d, const float* 
 }
 
 void WirechamberCalibrator::drawWires(Side s, AxisDirection p, TVirtualPad* C, Int_t color, AxisDirection onAxis) const {
-	assert(C);
-	assert(s<=WEST && p<=Y_DIRECTION);
+	smassert(C);
+	smassert(s<=WEST && p<=Y_DIRECTION);
 	for(std::vector<double>::const_iterator it = wirePos[s][p].begin(); it != wirePos[s][p].end(); it++)
 		if(onAxis==X_DIRECTION) drawVLine(*it,C,color);
 		else drawHLine(*it,C,color);

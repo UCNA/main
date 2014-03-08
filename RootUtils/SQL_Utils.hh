@@ -5,7 +5,7 @@
 #include <TSQLServer.h>
 #include <TSQLRow.h>
 #include <TSQLResult.h>
-#include <cassert>
+#include "SMExcept.hh"
 #include <vector>
 #include <string>
 #include <map>

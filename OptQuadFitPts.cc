@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <cmath>
 #include <set>
-#include <cassert>
+#include "SMExcept.hh"
 
 #include "OutputManager.hh"
 #include "PathUtils.hh"
@@ -86,7 +86,7 @@ inline double set_vector(unsigned int n_coeff, unsigned int n_pt) {
 }
 
 void new_searchpts(bool use_prev) {
-	assert(N_COEFFS + N_SEARCHBALL*N_COEFFS*2 < N_SEARCHPTS);
+	smassert(N_COEFFS + N_SEARCHBALL*N_COEFFS*2 < N_SEARCHPTS);
 	
 	printf("Selecting new search points...\n");
 	

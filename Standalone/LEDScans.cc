@@ -138,7 +138,7 @@ LEDAnalyzer::LEDAnalyzer(std::string nm, std::string bp): OutputManager(nm,bp), 
 }
 
 std::vector<unsigned int> LEDAnalyzer::findJumps(ProcessedDataScanner& LSS, float emin, float emax, Side s) {
-	assert(s<=WEST);
+	smassert(s<=WEST);
 	printf("Locating LED scan transition points...\n");
 	std::vector<unsigned int> jumps;
 	bool isHi = false;
@@ -777,7 +777,7 @@ int main(int argc, char *argv[]) {
 		TriggerProbMLP* TProb[2];
 		for(Side s = EAST; s <= WEST; ++s) {
 			TMLP[s] = (TMultiLayerPerceptron*)f.Get(sideSubst("TrigMLP_%c",s).c_str());
-			assert(TMLP[s]);
+			smassert(TMLP[s]);
 			TMLP[s]->Print();
 			TProb[s] = new TriggerProbMLP(TMLP[s]);
 			L2P.PGen[s].setTriggerProb(TProb[s]);

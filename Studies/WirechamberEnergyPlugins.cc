@@ -206,7 +206,7 @@ void MWPCGainPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 			
 			// compile Data/MC comparison data
-			assert(fitParams[s][tp].size()==dat.fitParams[s][tp].size());
+			smassert(fitParams[s][tp].size()==dat.fitParams[s][tp].size());
 			gGain[tp] = new TGraphErrors((int)fitParams[s][tp].size());
 			int j=0;
 			for(unsigned int i=0; i<fitParams[s][tp].size(); i++) {
@@ -316,7 +316,7 @@ WirechamberSimBackscattersPlugin::WirechamberSimBackscattersPlugin(RunAccumulato
 }
 
 void WirechamberSimBackscattersPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
-	assert(PDS.isSimulated());
+	smassert(PDS.isSimulated());
 	Sim2PMT& SDS = *(Sim2PMT*)&PDS;
 	const Side s = SDS.fSide; // should be primary side
 	EventType tp = SDS.fType;

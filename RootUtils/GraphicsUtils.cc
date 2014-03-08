@@ -1,6 +1,6 @@
 #include "GraphicsUtils.hh"
 #include "strutils.hh"
-#include <cassert>
+#include "SMExcept.hh"
 #include <algorithm>
 
 #include <TEllipse.h>
@@ -14,19 +14,19 @@
 #include <TColor.h>
 
 bool compareHistosByMax(TH1* i, TH1* j) {
-	assert(i && j);
+	smassert(i && j);
 	return i->GetMaximum() < j->GetMaximum();
 }
 
-double getXmin(const TH1* h) { assert(h); return h->GetBinLowEdge(1); }
-double getXmax(const TH1* h) { assert(h); return h->GetBinLowEdge(h->GetNbinsX()+1); }
+double getXmin(const TH1* h) { smassert(h); return h->GetBinLowEdge(1); }
+double getXmax(const TH1* h) { smassert(h); return h->GetBinLowEdge(h->GetNbinsX()+1); }
 
 bool compareHistosByXmin(TH1* i, TH1* j) {
-	assert(i && j);
+	smassert(i && j);
 	return getXmin(i) < getXmin(j);
 }
 bool compareHistosByXmax(TH1* i, TH1* j) {
-	assert(i && j);
+	smassert(i && j);
 	return getXmax(i) < getXmax(j);
 }
 
@@ -39,7 +39,7 @@ double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt, const s
 	double xmax = getXmax(*std::max_element(hists.begin(),hists.end(),compareHistosByXmax));
 	printf("%g), ",xmax); fflush(stdout);
 	TH1* maxHist = *std::max_element(hists.begin(),hists.end(),compareHistosByMax);
-	assert(maxHist);
+	smassert(maxHist);
 	printf("with ymax = %g...",maxHist->GetMaximum()); fflush(stdout);
 	//maxHist->SetAxisRange(xmin,xmax,"X");
 	std::string oldTitle = maxHist->GetTitle();
@@ -47,7 +47,7 @@ double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt, const s
 		maxHist->SetTitle(newTitle.c_str());
 	maxHist->Draw(opt.c_str());
 	for(std::vector<TH1*>::iterator it = hists.begin(); it != hists.end(); it++) {
-		assert(*it);
+		smassert(*it);
 		if(*it == maxHist)
 			continue;
 		if(opt.size())
@@ -62,7 +62,7 @@ double drawSimulHistos(std::vector<TH1*>& hists, const std::string& opt, const s
 }
 
 void drawHistoPair(TH1* hRed, TH1* hBlue, const std::string& opt, Int_t c1, Int_t c2) {
-	assert(hRed && hBlue);
+	smassert(hRed && hBlue);
 	hRed->SetLineColor(c1);
 	hRed->SetMarkerColor(c1);
 	hBlue->SetLineColor(c2);

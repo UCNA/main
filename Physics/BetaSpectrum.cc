@@ -5,7 +5,7 @@
 #include <TMath.h>
 #include <vector>
 #include <map>
-#include <cassert>
+#include "SMExcept.hh"
 
 /// hyperbolic sine
 double my_sinh(double x) { return (exp(x)-exp(-x))*0.5; }
@@ -256,7 +256,7 @@ double WilkinsonQ(double, double W, double W0, double M) {
 
 
 double SpenceL(double x, unsigned int N=20) {
-	assert(-1.<x && x<=1.);
+	smassert(-1.<x && x<=1.);
 	double s = 0;
 	double xk = x;
 	for(unsigned int k=1; k<=N; k++) {

@@ -1,5 +1,5 @@
 #include "Types.hh"
-#include <cassert>
+#include "SMExcept.hh"
 
 double binterpolate(const TAxis* ax, double binloc) {
 	return ax->GetBinCenter(1) + (ax->GetBinCenter(2)-ax->GetBinCenter(1))*binloc;

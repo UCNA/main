@@ -49,7 +49,7 @@ void CathodeGainPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 	float c;
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 		PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].center,n,c);
-		assert(n<kMaxCathodes);
+		smassert(n<kMaxCathodes);
 		for(unsigned int i=0; i<PDS.ActiveCal->nWires(s,d); i++) {
 			double gi_gcc = PDS.ActiveCal->getCathCCloudGain(s,d,i);
 			double c_enorm = PDS.ActiveCal->cathseg_energy_norm[s][d][i];
@@ -168,7 +168,7 @@ void CathodeTweakPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 		unsigned int n;
 		float c;
 		PDS.ActiveCal->toLocal(s,d,PDS.wires[s][d].rawCenter,n,c);
-		assert(n<kMaxCathodes);
+		smassert(n<kMaxCathodes);
 		((TH2F*)cathHitpos[s][d][n]->h[currentGV])->Fill(c,PDS.scints[s].energy.x,weight);
 	}
 	((TH2F*)(hitPos[s]->h[currentGV]))->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);

@@ -6,7 +6,7 @@
 #include "BetaSpectrum.hh"
 #include <TRandom.h>
 #include <stdio.h>
-#include <cassert>
+#include "SMExcept.hh"
 #include <TLatex.h>
 #include "SMExcept.hh"
 
@@ -382,7 +382,7 @@ ErrTables::~ErrTables() {
 }
 
  double ErrTables::energyErrorEnvelope(double e, unsigned int year) const {
- 	assert(year==2010);
+ 	smassert(year==2010);
 	double err = e*0.0125;
 	if(err<2.5) return 2.5;
 	if(err>500*0.0125) return 500*0.0125;

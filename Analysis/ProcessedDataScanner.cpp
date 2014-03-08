@@ -2,7 +2,7 @@
 #include "PathUtils.hh"
 #include "CalDBSQL.hh"
 #include "SMExcept.hh"
-#include <cassert>
+#include "SMExcept.hh"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -33,13 +33,13 @@ Stringmap ProcessedDataScanner::evtInfo() {
 }
 
 float ProcessedDataScanner::probTrig(Side s, unsigned int t) {
-	assert(ActiveCal);
-	assert(s<=WEST && t<=nBetaTubes);
+	smassert(ActiveCal);
+	smassert(s<=WEST && t<=nBetaTubes);
 	return ActiveCal->trigEff(s, t, scints[s].adc[0]);
 }
 
 void ProcessedDataScanner::recalibrateEnergy() {
-	assert(ActiveCal);
+	smassert(ActiveCal);
 	for(Side s = EAST; s<=WEST; ++s) {
 		if(redoPositions && fPID==PID_BETA && fSide==s) {
 			for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
@@ -57,7 +57,7 @@ bool ProcessedDataScanner::passesPositionCut(Side s) {
 }
 
 float ProcessedDataScanner::getErecon() const {
-	assert(ActiveCal);
+	smassert(ActiveCal);
 	return ActiveCal->Erecon(fSide,fType,scints[EAST].energy.x,scints[WEST].energy.x);
 }
 

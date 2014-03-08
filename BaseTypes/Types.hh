@@ -16,6 +16,7 @@
 #include <TFile.h>
 #include <TMath.h>
 #include <map>
+#include "SMExcept.hh"
 #include <cassert>
 #include <Rtypes.h>
 

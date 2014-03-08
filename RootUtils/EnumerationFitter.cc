@@ -2,12 +2,12 @@
 #include "SMExcept.hh"
 #include "strutils.hh"
 #include "PathUtils.hh"
-#include <cassert>
+#include "SMExcept.hh"
 
 
 
 double EnumerationFitter::Evaluate(double *x, double *p) {
-	assert(x);
+	smassert(x);
 	int i = (int)(*x);
 	double s = 0;
 	for(unsigned int n=0; n<fterms.size(); n++) {

@@ -57,7 +57,7 @@ void SQLHelper::Query() {
 }
 
 std::string SQLHelper::fieldAsString(TSQLRow* row, unsigned int fieldnum, const std::string& dflt) {
-	assert(row);
+	smassert(row);
 	const char* s = row->GetField(fieldnum);
 	isNullResult = !s;
 	if(isNullResult)

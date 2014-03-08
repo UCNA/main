@@ -246,7 +246,7 @@ unsigned int CalDBSQL::getTubecalID(RunNum R, Side s, unsigned int t) {
 
 float CalDBSQL::getTubecalData(RunNum rn, Side s, unsigned int t, const char* field) {
 	unsigned int tsid = getTubecalID(rn, s, t);
-	assert(tsid || IGNORE_DEAD_DB);
+	smassert(tsid || IGNORE_DEAD_DB);
 	sprintf(query,"SELECT %s FROM tube_calibration WHERE tubecal_id = %i",field,tsid);
 	TSQLRow* r = getFirst();
 	if(!r)
@@ -258,7 +258,7 @@ float CalDBSQL::getTubecalData(RunNum rn, Side s, unsigned int t, const char* fi
 
 int CalDBSQL::getTubecalInt(RunNum rn, Side s, unsigned int t, const char* field) {
 	unsigned int tsid = getTubecalID(rn, s, t);
-	assert(tsid || IGNORE_DEAD_DB);
+	smassert(tsid || IGNORE_DEAD_DB);
 	sprintf(query,"SELECT %s FROM tube_calibration WHERE tubecal_id = %i",field,tsid);
 	TSQLRow* r = getFirst();
 	if(!r)
@@ -491,7 +491,7 @@ std::vector<double> CalDBSQL::getCathCCloudGains(RunNum rn, Side s, AxisDirectio
 	unsigned int gid = fieldAsInt(r,0);
 	delete r;
 	TGraph* g = getGraph(gid);
-	assert(g);
+	smassert(g);
 	std::vector<double> v;
 	double x,y;
 	for(int i=0; i<g->GetN(); i++) {
@@ -715,7 +715,7 @@ void CalDBSQL::addRunMonitor(RunNum rn, const std::string& sensorName, const std
 }
 
 unsigned int CalDBSQL::newPosmap(const std::string& descrip, unsigned int nrings, double radius) {
-	assert(descrip.size()<1024);
+	smassert(descrip.size()<1024);
 	sprintf(query,"INSERT INTO posmap_set(descrip,n_rings,radius) VALUES ('%s',%i,%g)",descrip.c_str(),nrings,radius);
 	execute();
 	return getInsertID();
@@ -750,12 +750,12 @@ void CalDBSQL::listPosmaps() {
 void CalDBSQL::deletePosmap(unsigned int pmid) {
 	sprintf(query,"SELECT COUNT(*) FROM energy_calibration WHERE posmap_set_id=%i",pmid);
 	TSQLRow* r = getFirst();
-	assert(r);
+	smassert(r);
 	unsigned int ncals = fieldAsInt(r,0);
 	delete(r);
 	sprintf(query,"SELECT COUNT(*) FROM mwpc_ecal WHERE gain_posmap_id=%i",pmid);
 	r = getFirst();
-	assert(r);
+	smassert(r);
 	ncals += fieldAsInt(r,0);
 	delete(r);	
 	if(ncals) {
