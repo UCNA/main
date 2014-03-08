@@ -214,8 +214,13 @@ PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) 
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(std::vector<std::string>::const_iterator it = cathNames[s][d].begin(); it != cathNames[s][d].end(); it++) {
-				cathPeds0[s][d].push_back(getPedestal(*it,0));
-				cathPedW0[s][d].push_back(getPedwidth(*it,0));
+				if(checkPedestals(*it)) {
+					cathPeds0[s][d].push_back(getPedestal(*it,0));
+					cathPedW0[s][d].push_back(getPedwidth(*it,0));
+				} else {
+					cathPeds0[s][d].push_back(0);
+					cathPedW0[s][d].push_back(0);
+				}
 			}
 		}
 	}
