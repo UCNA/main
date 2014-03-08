@@ -15,6 +15,7 @@ PositioningInterpolator::PositioningInterpolator(const PosmapInfo& PMI,
 S(PMI.nRings,PMI.radius), sRadial(BC_DERIVCLAMP_ZERO), L((*rInterp)(&sRadial, PMI.radius*(1.0+1.0/(2*PMI.nRings-1.0)), 0)) {
 	
 	assert(PMI.signal.size() == S.nSectors());
+	assert(PMI.norm.size() == S.nSectors());
 	
 	// set up sequences/interpolators
 	for(unsigned int n=0; n<PMI.nRings; n++) {
