@@ -90,6 +90,7 @@ scaleNoiseWithL(true), P(cdb->getPositioningCorrector(myRun)), GS(NULL), rn(myRu
 		return;
 	}
 	
+	assert(P);
 	P->setNormAvg();
 	
 	rGMS = CDB->getGMSRun(myRun);

@@ -160,7 +160,7 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 	if(it != pcors.end())
 		return it->second;
 	
-	printf("Loading positioning corrector %i...\n",psid);
+	printf("Loading positioning corrector %i...",psid); fflush(stdout);
 	std::vector<PosmapInfo> pinf;
 	TSQLRow* r;
 	sprintf(query,"SELECT n_rings,radius FROM posmap_set WHERE posmap_set_id = %i",psid);
@@ -211,6 +211,7 @@ PositioningCorrector* CalDBSQL::getPositioningCorrectorByID(unsigned int psid) {
 	PositioningCorrector* PC = new PositioningCorrector();
 	PC->loadData(pinf);
 	pcors.insert(std::make_pair(psid,PC));
+	printf(" Done.\n");
 	return getPositioningCorrectorByID(psid);
 }
 

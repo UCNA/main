@@ -16,6 +16,7 @@ rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), nLive
 nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	plotPath = bp+"/figures/run_"+itos(R)+"/";
 	dataPath = bp+"/data/";
+	printf("Official replay for run %i!\b",R);
 }
 
 void ucnaDataAnalyzer11b::analyze() {
