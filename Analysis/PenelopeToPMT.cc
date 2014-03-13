@@ -7,7 +7,7 @@ void PenelopeToPMT::setReadpoints() {
 	
 	for(Side s = EAST; s <= WEST; ++s) {
 		SetBranchAddress(sideSubst("Ep%c",s,true),&fEdep[s]);
-		SetBranchAddress(sideSubst("nph%c",s,true),&fEquench[s]);
+		SetBranchAddress(sideSubst("Ph%cn",s,true),&fEquench[s]);
 		SetBranchAddress(sideSubst("Ep%cd",s,true),&fedepDeadScint[s]);
 		
 		SetBranchAddress(sideSubst("Eg%ca",s,true),&fEW[s]);
@@ -25,7 +25,7 @@ void PenelopeToPMT::setReadpoints() {
 			SetBranchAddress(sideSubst("%cpos",s,true)+(d==X_DIRECTION?"x":"y"),&fMWPCpos[s][d]);
 		
 		SetBranchAddress(sideSubst("Efl%c",s,true),&fedepFoils[s]);
-		SetBranchAddress(sideSubst("t%c",s,true),&fTime[s]);
+		SetBranchAddress(sideSubst("trg%c1",s,true),&fTime[s]);
 	}
 	
 	for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d)

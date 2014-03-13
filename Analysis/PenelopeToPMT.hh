@@ -7,7 +7,7 @@
 class PenelopeToPMT: public Sim2PMT {
 public:
 	/// constructor
-	PenelopeToPMT(): Sim2PMT("h34") { }	
+	PenelopeToPMT(): Sim2PMT("tree") { }	
 	/// unit conversions
 	virtual void doUnits();
 	/// calculate physics weighting factor (undo pre-baked asymmetry)
