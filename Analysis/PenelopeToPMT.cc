@@ -23,6 +23,9 @@ void PenelopeToPMT::setReadpoints() {
 		
 		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
 			SetBranchAddress(sideSubst("%cpos",s,true)+(d==X_DIRECTION?"x":"y"),&fMWPCpos[s][d]);
+
+		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
+                        SetBranchAddress(sideSubst("%c",s,true)+(d==X_DIRECTION?"xsci":"ysci"),&fSCINTpos[s][d]);
 		
 		SetBranchAddress(sideSubst("Efl%c",s,true),&fedepFoils[s]);
 		SetBranchAddress(sideSubst("trg%c1",s,true),&fTime[s]);
@@ -33,14 +36,21 @@ void PenelopeToPMT::setReadpoints() {
 	
 	
 	SetBranchAddress("W1",&fcosThetaInFoils[EAST]);
+	SetBranchAddress("W2",&fcosThetaOutFoils[EAST]);
 	SetBranchAddress("W3",&fcosThetaInWinIn[EAST]);
 	SetBranchAddress("W4",&fcosThetaInWinOut[EAST]);
-	SetBranchAddress("W6",&fcosThetaInScint[EAST]);
-	
-	SetBranchAddress("W7",&fcosThetaOutFoils[EAST]);
-	SetBranchAddress("W9",&fcosThetaOutWinIn[EAST]);
-	SetBranchAddress("W10",&fcosThetaOutWinOut[EAST]);
-	SetBranchAddress("W12",&fcosThetaOutScint[EAST]);
+	SetBranchAddress("W5",&fcosThetaOutWinIn[EAST]);
+	SetBranchAddress("W6",&fcosThetaOutWinOut[EAST]);
+	SetBranchAddress("W7",&fcosThetaInScint[EAST]);
+        SetBranchAddress("W8",&fcosThetaOutScint[EAST]);
+	SetBranchAddress("W9",&fcosThetaInFoils[WEST]);
+        SetBranchAddress("W10",&fcosThetaOutFoils[WEST]);
+        SetBranchAddress("W11",&fcosThetaInWinIn[WEST]);
+        SetBranchAddress("W12",&fcosThetaInWinOut[WEST]);
+        SetBranchAddress("W13",&fcosThetaOutWinIn[WEST]);
+        SetBranchAddress("W14",&fcosThetaOutWinOut[WEST]);
+        SetBranchAddress("W15",&fcosThetaInScint[WEST]);
+        SetBranchAddress("W16",&fcosThetaOutScint[WEST]);
 	
 	SetBranchAddress("E",&fEprim);
 	SetBranchAddress("W",&fCostheta);
@@ -58,16 +68,16 @@ void PenelopeToPMT::doUnits() {
 	const double posConversion = 10.0;
 	for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
 		primPos[d] = fPrimPos[d]*posConversion;
-		for(Side s = EAST; s <= WEST; ++s)
+		for(Side s = EAST; s <= WEST; ++s) {
 			mwpcPos[s][d] = fMWPCpos[s][d]*posConversion*sqrt(0.6);
+			scintPos[s][d] = fSCINTpos[s][d]*posConversion*sqrt(0.6);
+		}
 	}
 	for(Side s = EAST; s <= WEST; ++s) {
 		eDep[s] = fEdep[s]*0.001;
 		eQ[s] = fEquench[s];
 		eW[s] = (fEW[s]+0.5*(fEMWPCDead[s][0]+fEMWPCDead[s][1]))*0.001;
 		time[s] = fTime[s]*1e-9; // convert from nanoseconds to seconds
-		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
-			scintPos[s][d] = mwpcPos[s][d];	// fake scintillator pos from MWPC
 	}
 	ePrim = fEprim*0.001;
 	costheta = -fCostheta;

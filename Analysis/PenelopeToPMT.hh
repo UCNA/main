@@ -18,6 +18,7 @@ public:
 	float fEquench[2];			//< float version for quenched energy
 	float fEW[2];				//< float version of wirechamber energy
 	float fMWPCpos[2][2];		//< float version of MWPC position
+	float fSCINTpos[2][2];           //< float version of Scintillator absorption position
 	float fEWd[2];				//< float version of MWPC dead gas energy
 	float fEMWPCDead[2][2];		//< float version of MWPC deead gas energy for each [side][front/back]
 	float fEMWPCWires[2][3];	//< float version of wire plane energy
