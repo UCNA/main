@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from Asymmetries import *
+from pyx import *
 import sys
 import traceback
 
@@ -149,19 +150,20 @@ def XeTimeEvolution(rmin,rmax,nrings):
 def ep_v_eta(fname):
 	
 	basepath = os.environ["UCNA_ANA_PLOTS"]+"/PositionMaps/"+fname+"/"
-	xdat = XeFile(basepath+"/"+fname+".txt")
-				  
+	writepath = os.environ["UCNA_ANA_PLOTS"]+"/PositionMaps/Endpts/"
+        xdat = XeFile(basepath+"/"+fname+".txt")
+	
 	gEp=graph.graphxy(width=20,height=10,
 					  x=graph.axis.lin(title="eta",min=0,max=2.5),
-					  y=graph.axis.lin(title="Endpoint",min=800,max=1000),
+					  y=graph.axis.lin(title="Endpoint (keV)"),
 					  key = graph.key.key(pos="tr"))
-	setTexrunner(gEp)
+        #setTexrunner(gEp)
 	
 	gHvL=graph.graphxy(width=20,height=20,
-					  x=graph.axis.lin(title="Low Peak",min=0),
-					  y=graph.axis.lin(title="Endpoint",min=0),
+					  x=graph.axis.lin(title="Low Peak (keV)",min=0),
+					  y=graph.axis.lin(title="Endpoint (keV)",min=0),
 					  key = graph.key.key(pos="tl"))
-	setTexrunner(gHvL)
+	#setTexrunner(gHvL)
 
 	
 	tcols = rainbow(4)
@@ -169,21 +171,26 @@ def ep_v_eta(fname):
 	for s in ["E","W"]:
 		for t in range(4):
 			print s,t
+                        print "Processing Endpoint data..."
 			gdat = [xdat.sectdat[(s,t,m)] for m in range(xdat.sects.nSectors)]
 			#        0      1        2          3              4         
 			gdat = [(g.eta, g.xe_hi, g.d_xe_hi, g.xe_lo*g.eta, g.xe_hi*g.eta) for g in gdat]
-			gEp.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
+			gEp.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=s+"%i"%t),
 					 [graph.style.symbol(ssymbs[s],size=0.2,symbolattrs=[tcols[t],]),
 					  graph.style.errorbar(errorbarattrs=[tcols[t],])])
+			gEp.text(gEp.width/2, gEp.height + 0.2, "Runs 19891-19898", 
+       					[text.halign.center, text.valign.bottom, text.size.Large])
 			gHvL.plot(graph.data.points(gdat,x=4,y=5,title=None),
 					[graph.style.symbol(ssymbs[s],size=0.2,symbolattrs=[tcols[t],])])
 			LF = LinearFitter(terms = [polyterm(0),polyterm(1)])
 			LF.fit(gdat,cols=(3,4))
 			gHvL.plot(graph.data.points(LF.fitcurve(0,250),x=1,y=2,title=s+" %i: $%s$"%(t,LF.toLatex())),
 					 [graph.style.line(lineattrs=[tcols[t],])])
+                        gHvL.text(gHvL.width/2, gHvL.height + 0.2, "Runs 19891-19898",
+                                        [text.halign.center, text.valign.bottom, text.size.Large])
 
-	gEp.writetofile(basepath+"/Ep_v_Eta.pdf")
-	gHvL.writetofile(basepath+"/Hi_v_Lo_Raw.pdf")
+	gEp.writetofile(writepath+"/Ep_v_Eta_"+fname+".pdf")
+	gHvL.writetofile(writepath+"/Hi_v_Lo_Raw_"+fname+".pdf")
 
 
 def data_v_sim(rmin,rmax,nrings):
@@ -219,19 +226,19 @@ def data_v_sim(rmin,rmax,nrings):
 if __name__ == "__main__":
 	
 	#XeTimeEvolution(14283,14333,11)
-	XeTimeEvolution(15992,16077,15)
-	exit(0)
+	#XeTimeEvolution(15992,16077,15)
+	#exit(0)
 	
 	#data_v_sim(14282,14347,12)
 	#exit(0)
 	
-	#ep_v_eta("Xenon_14282-14347")
+	ep_v_eta("Xenon_19891-19898_12")
 	#ep_v_eta("SimXe_14282-14347")
-	#exit(0)
+	exit(0)
 	
 	conn = open_connection()
 	conn = None
-	for rn in range(14282,14347+1):
+	#for rn in range(14282,14347+1):
 	#for rn in range(15991,16077+1):
-		XeGainTweak(rn,conn,15)
+	#	XeGainTweak(rn,conn,15)
 
