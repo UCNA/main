@@ -77,6 +77,9 @@ public:
 	/// make flipper-summed histogram normalized to rate
 	TH1* flipperSummedRate(const quadHists* qh, GVState gv, bool doNorm = true) const;
 	
+	/// clone this class
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new OctetAnalyzer(this,nm,inflname); }
+	
 private:
 	
 	std::map<std::string,quadHists*> coreHists;	//< core histograms for merging, BG subtraction

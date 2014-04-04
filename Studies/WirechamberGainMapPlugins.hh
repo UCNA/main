@@ -38,6 +38,8 @@ class WirechamberNullEdepMapPlugin: public PositionBinnedPlugin {
 public:
 	/// constructor
 	WirechamberNullEdepMapPlugin(RunAccumulator* RA, unsigned int nr): PositionBinnedPlugin(RA,"MWPC_SimEdepPos",nr) {}
+	/// fill histograms
+	virtual void fillCoreHists(ProcessedDataScanner&, double) {}
 };
 
 

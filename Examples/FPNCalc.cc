@@ -137,7 +137,7 @@ void RPNCalc() {
 	menutils_PrintQue(&CalcMain);
 }
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
 	printf("Starting calculator...\n");
 	RPNCalc();
 	printf("Goodbye.\n");

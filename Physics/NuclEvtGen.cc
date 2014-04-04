@@ -260,7 +260,7 @@ double BetaDecayTrans::evalBeta(double* x, double*) { return BSG.decayProb(x[0])
 
 //-----------------------------------------
 
-void ECapture::run(std::vector<NucDecayEvent>&, double* rnd) {
+void ECapture::run(std::vector<NucDecayEvent>&, double*) {
 	isKCapt = gRandom->Uniform(0,1) < toAtom->IMissing;
 }
 

@@ -73,7 +73,7 @@ double Wilkinson_g_a2pi(double W,double W0=beta_W0, double M=proton_M0);
 double Davidson_C1T(double W, double W0, double Z, double R);
 /// shape factor for Cs137 second forbidden beta decay, per L.M. Langer and R.J.D. Moffat,  Phys. Rev. 82(5), p. 635, 1951
 double Langer_Cs137_C2T(double W, double W0);
-/// shape factor for Cs137 second forbidden beta decay, per H. Behrens and P. Christmas, Nucl. Phys. A399, pp. 131-140, 1983
+/// shape factor for Cs137 second forbidden beta decay, per H. Behrens and P. Christmas, Nucl. Phys. A399, pp. 131-140, 1983 [Eq. 4]
 double Behrens_Cs137_C(double W, double W0);
 
 /// combined spectrum correction factor for unpolarized neutron beta decay

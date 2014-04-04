@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <TGraphErrors.h>
 
-int main(int argc, char *argv[]) {
+int main(int, char**) {
 
 	ROOTStyleSetup();
 	

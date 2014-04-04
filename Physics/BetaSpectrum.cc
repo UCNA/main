@@ -343,7 +343,8 @@ double Langer_Cs137_C2T(double W, double W0) {
 	return (W0-W)*(W0-W)+k*(W*W-1);
 }
 
-double Behrens_l2(double W, double W0, double Z, double R) {
+// "lambda_2" Coulomb correction used in Behrens_Cs137_C()... TODO: where did I get this??
+double Behrens_lambda_2(double W, double W0, double Z, double R) {
 	double p = sqrt(W*W-1);
 	double y = alpha*Z*W/p;
 	double a2Z2 = alpha*alpha*Z*Z;
@@ -359,12 +360,12 @@ double Behrens_l2(double W, double W0, double Z, double R) {
 double Behrens_Cs137_C(double W, double W0) {
 	double q2 = (W0-W)*(W0-W);
 	double p2 = W*W-1;
-	double l2 = Behrens_l2(W,W0,56,pow(137,1./3.)*neutron_R0);
+	double l2 = Behrens_lambda_2(W,W0,56,pow(137,1./3.)*neutron_R0);
 	double a1 = 0.000346865*q2 + 0.00331725*l2*p2 - 0.000050327*q2*W + 0.000155636*l2*p2*W + 0.000114834*q2/W;
 	double a2 = -0.00427141*q2 - 0.00645269*l2*p2 + 0.000063321*q2*W - 0.000913829*l2*p2*W - 0.000566409*q2/W + 0.0000576232*l2*p2/W;
 	double a3 =   0.0131499*q2 + 0.00313793*l2*p2 + 0.00151806*q2*W  + 0.000741562*l2*p2*W - 0.000865957*q2/W - 0.000272219*l2*p2/W;
 	double x = 1.07;
-	return a1+a2*x+a3*x*x;
+	return a1 + a2*x + a3*x*x;
 }
 
 //-----------------------------------------------------//

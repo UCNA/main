@@ -1,7 +1,7 @@
 #include "GainStabilizer.hh"
 #include "EnergyCalibrator.hh"
 
-float GainStabilizer::gmsFactor(Side s, unsigned int t, float time) const {
+float GainStabilizer::gmsFactor(Side s, unsigned int t, float) const {
 	return LCor->getGMS0(s,t);
 }
 

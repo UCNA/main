@@ -218,6 +218,7 @@ void MixSim::addSim(Sim2PMT* S, double r0, double thalf) {
 }
 
 void MixSim::setTime(double t) {
+	t1 = t;
 	for(unsigned int i=0; i<halflife.size(); i++)
 		cumStrength[i] = (i?cumStrength[i-1]:0)+exp((t0-t1)*log(2)/halflife[i])*initStrength[i];
 }

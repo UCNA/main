@@ -458,7 +458,7 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
         OM.printCanvas("Foils_Costheta");
 }
 
-int main(int argc, char *argv[]) {
+int main(int, char**) {
 
 	gROOT->SetStyle("Plain");
 	gStyle->SetPalette(1);

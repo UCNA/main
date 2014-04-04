@@ -24,12 +24,12 @@ public:
 	/// add list of runs to data; return number successfully added
 	unsigned int addRuns(const std::vector<RunNum>& rns);
 	/// return path to run .root file
-	virtual std::string locateRun(RunNum r) { smassert(false); return ""; }
+	virtual std::string locateRun(RunNum) { smassert(false); return ""; }
 	
 	/// speedload, keeping track of currently loaded run number
 	virtual void speedload(unsigned int e);
 	/// subclass this for routines when new run is loaded
-	virtual void loadNewRun(RunNum rn) {}
+	virtual void loadNewRun(RunNum) {}
 	/// get run number of current event
 	virtual RunNum getRun() const { return evtRun; }
 	/// check whether this is simulated data

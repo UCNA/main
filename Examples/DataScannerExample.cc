@@ -2,7 +2,7 @@
 #include "G4toPMT.hh"
 #include "CalDBSQL.hh"
 
-int main(int argc, char *argv[]) {
+int main(int, char**) {
 	
 	// Geant4 MC data scanner object
 	G4toPMT G2P;

@@ -46,7 +46,7 @@ public:
 	// ----- Subclass me! ----- //
 	
 	/// create a new instance of this object (cloning self settings) for given directory
-	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { smassert(false); return NULL; }
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) = 0;
 	/// virtual routine for generating output plots
 	virtual void makePlots() {}
 	/// virtual routine for generating calculated hists

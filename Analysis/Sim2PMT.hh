@@ -20,7 +20,7 @@ public:
 	
 protected:	
 	/// calculate offset based on primary position
-	virtual void calcOffset(const Sim2PMT& S) {}
+	virtual void calcOffset(const Sim2PMT&) {}
 	
 	double offPos[2];		//< position offset to apply
 };

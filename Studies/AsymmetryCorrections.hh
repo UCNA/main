@@ -44,9 +44,9 @@ public:
 	/// constructor
 	ConstAsymCorr(const std::string& nm, double c, double e): AsymCorr(nm), corr(c), uncert(e) {}
 	/// get correction at energy
-	virtual double getCor(double KE) { return corr; }
+	virtual double getCor(double) { return corr; }
 	/// get uncertainty at energy
-	virtual double getUnc(double KE) { return uncert; }
+	virtual double getUnc(double) { return uncert; }
 protected:
 	double corr;
 	double uncert;

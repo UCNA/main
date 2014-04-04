@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 /// an example of how to use the energy calibration classes
-int main(int argc, char *argv[]) {
+int main(int, char**) {
 	
 	// get pointer to default calibration DB
 	CalDBSQL* CDB = CalDBSQL::getCDB();

@@ -140,6 +140,9 @@ public:
 	BlindTime totalTime[AFP_OTHER+1][GV_OPEN+1];//< total time for [flipper][fg/bg]
 	TagCounter<RunNum> runTimes;				//< time spent on each run
 	
+	/// create a new instance of this object (cloning self settings) for given directory
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new RunAccumulator(this,nm,inflname); }
+	
 	/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs
 	unsigned int simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor = 1., double replaceIfOlder = 0., bool doPlots = true, bool doCompare = true);
 	/// merge every subdirectory of basePath containing analyzed data
@@ -184,7 +187,7 @@ public:
 	GVState currentGV;				//< current foreground/background status during data scanning
 	
 	/// virtual routine for filling core histograms from data point
-	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight) {}
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight) = 0;
 	
 	/// generate output plots
 	virtual void makePlots() {}
@@ -194,7 +197,7 @@ public:
 	virtual void uploadAnaResults() {}
 	/// virtual routine for MC/Data comparison plots/calculations
 	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
-	virtual void compareMCtoData(AnalyzerPlugin* AP) {}
+	virtual void compareMCtoData(AnalyzerPlugin*) {}
 };
 
 /// process one pulse-pair worth of data

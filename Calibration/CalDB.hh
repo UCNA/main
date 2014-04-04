@@ -87,13 +87,13 @@ public:
 	virtual std::vector<double> getCathCCloudGains(RunNum rn, Side s, AxisDirection d) = 0;
 	
 	/// run start time
-	virtual int startTime(RunNum rn, int t0 = 0) { return 0; }
+	virtual int startTime(RunNum rn, int t0 = 0) = 0;
 	/// run end time
-	virtual int endTime(RunNum rn, int t0 = 0) { return 0; }
+	virtual int endTime(RunNum rn, int t0 = 0) = 0;
 	/// run time after cuts, blinded
 	virtual BlindTime fiducialTime(RunNum rn) = 0;
 	/// total run time
-	virtual float totalTime(RunNum rn) { return 0; }
+	virtual float totalTime(RunNum rn) = 0;
 	/// get RunInfo for given run
 	virtual RunInfo getRunInfo(RunNum r) = 0;
 };
