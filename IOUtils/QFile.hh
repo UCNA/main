@@ -14,7 +14,7 @@ public:
 	/// copy constructor from another Stringmap
 	Stringmap(const Stringmap& m);
 	/// destructor
-	~Stringmap() {}
+	virtual ~Stringmap() {}
 	
 	
 	/// insert key/(string)value pair
