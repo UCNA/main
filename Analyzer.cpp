@@ -41,30 +41,30 @@ std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
 	return CalDBSQL::getCDB()->findRuns("0 = 1",r0,r1);
 }
 
-void mi_EndpointStudy(std::deque<std::string>&, std::stack<std::string>& stack) {
-	unsigned int nr = streamInteractor::popInt(stack);
-	RunNum r1 = streamInteractor::popInt(stack);
-	RunNum r0 = streamInteractor::popInt(stack);
+void mi_EndpointStudy(StreamInteractor* S) {
+	unsigned int nr = S->popInt();
+	RunNum r1 = S->popInt();
+	RunNum r0 = S->popInt();
 	process_xenon(r0,r1,nr);
 }
 
-void mi_EndpointStudySim(std::deque<std::string>&, std::stack<std::string>& stack) {
-	unsigned int nRings = streamInteractor::popInt(stack);
-	RunNum rsingle = streamInteractor::popInt(stack);
-	RunNum r1 = streamInteractor::popInt(stack);
-	RunNum r0 = streamInteractor::popInt(stack);
+void mi_EndpointStudySim(StreamInteractor* S) {
+	unsigned int nRings = S->popInt();
+	RunNum rsingle = S->popInt();
+	RunNum r1 = S->popInt();
+	RunNum r0 = S->popInt();
 	simulate_xenon(r0,r1,rsingle,nRings);
 }
 
-void mi_EndpointStudyReSim(std::deque<std::string>&, std::stack<std::string>& stack) {
-	unsigned int nRings = streamInteractor::popInt(stack);
-	RunNum r1 = streamInteractor::popInt(stack);
-	RunNum r0 = streamInteractor::popInt(stack);
+void mi_EndpointStudyReSim(StreamInteractor* S) {
+	unsigned int nRings = S->popInt();
+	RunNum r1 = S->popInt();
+	RunNum r0 = S->popInt();
 	xenon_posmap(r0,r1,nRings);
 }
 
-void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
-	unsigned int pmid = streamInteractor::popInt(stack);
+void mi_PosmapPlot(StreamInteractor* S) {
+	unsigned int pmid = S->popInt();
 	if(CalDBSQL::getCDB()->isValid(13883)) {
 		OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Posmap_"+itos(pmid));
 		PosPlotter PP(&OM);
@@ -74,8 +74,8 @@ void mi_PosmapPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	}
 }
 
-void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
-	RunNum rn = streamInteractor::popInt(stack);
+void mi_nPEPlot(StreamInteractor* S) {
+	RunNum rn = S->popInt();
 	PMTCalibrator PCal(rn);
 	OutputManager OM("NPE",getEnvSafe("UCNA_ANA_PLOTS")+"/nPE/Run_"+itos(rn));
 	PosPlotter PP(&OM);
@@ -83,9 +83,9 @@ void mi_nPEPlot(std::deque<std::string>&, std::stack<std::string>& stack) {
 	OM.write();
 }
 
-void mi_PostprocessSources(std::deque<std::string>&, std::stack<std::string>& stack) {
-	RunNum r1 = streamInteractor::popInt(stack);
-	RunNum r0 = streamInteractor::popInt(stack);
+void mi_PostprocessSources(StreamInteractor* S) {
+	RunNum r1 = S->popInt();
+	RunNum r0 = S->popInt();
 	std::vector<RunNum> C = selectRuns(r0,r1,"source");
 	if(!C.size()) {
 		printf("No source runs found in Analysis DB; attempting manual scan...\n");
@@ -98,28 +98,28 @@ void mi_PostprocessSources(std::deque<std::string>&, std::stack<std::string>& st
 		reSource(*it);
 }
 
-void mi_DumpCalInfo(std::deque<std::string>&, std::stack<std::string>& stack) {
-	std::string typeSelect = streamInteractor::popString(stack);
-	RunNum r1 = streamInteractor::popInt(stack);
-	RunNum r0 = streamInteractor::popInt(stack);
+void mi_DumpCalInfo(StreamInteractor* S) {
+	std::string typeSelect = S->popString();
+	RunNum r1 = S->popInt();
+	RunNum r0 = S->popInt();
 	QFile QOut(getEnvSafe("UCNA_ANA_PLOTS")+"/test/CalDump.txt",false);
 	dumpCalInfo(selectRuns(r0,r1,typeSelect),QOut);
 }
 
-void mi_dumpPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
-	int pnum = streamInteractor::popInt(stack);
+void mi_dumpPosmap(StreamInteractor* S) {
+	int pnum = S->popInt();
 	dumpPosmap(getEnvSafe("UCNA_ANA_PLOTS")+"/PosmapDump/",pnum);
 }
 
-void mi_delPosmap(std::deque<std::string>&, std::stack<std::string>& stack) {
-	int pnum = streamInteractor::popInt(stack);
+void mi_delPosmap(StreamInteractor* S) {
+	int pnum = S->popInt();
 	CalDBSQL::getCDB(false)->deletePosmap(pnum);
 }
 
-void mi_listPosmaps(std::deque<std::string>&, std::stack<std::string>&) { CalDBSQL::getCDB()->listPosmaps(); }
+void mi_listPosmaps(StreamInteractor*) { CalDBSQL::getCDB()->listPosmaps(); }
 
-void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
-	int octn = streamInteractor::popInt(stack);
+void mi_processOctet(StreamInteractor* S) {
+	int octn = S->popInt();
 	
 	OctetSimuCloneManager OSCM("OctetAsym_Offic");
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
@@ -168,9 +168,9 @@ void mi_processOctet(std::deque<std::string>&, std::stack<std::string>& stack) {
 }
 
 /*
-void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
-	int octMax = streamInteractor::popInt(stack);
-	int octMin = streamInteractor::popInt(stack);
+void mi_anaOctRange(StreamInteractor* S) {
+	int octMax = S->popInt();
+	int octMin = S->popInt();
 	std::string inPath = getEnvSafe("UCNA_ANA_PLOTS");
 	std::string datset = "OctetAsym_Offic_datFid45";
 	std::string outPath = inPath+"/"+datset+"/Range_"+itos(octMin)+"-"+itos(octMax);
@@ -190,7 +190,7 @@ void mi_anaOctRange(std::deque<std::string>&, std::stack<std::string>& stack) {
 }
 */
 
-void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
+void mi_evis2etrue(StreamInteractor*) {
 	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/20120810/");
 	G4toPMT g2p;
 	g2p.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
@@ -201,17 +201,17 @@ void mi_evis2etrue(std::deque<std::string>&, std::stack<std::string>&) {
 	OM.write();
 }
 
-void mi_sourcelog(std::deque<std::string>&, std::stack<std::string>&) { uploadRunSources("UCNA Run Log 2012.txt"); }
+void mi_sourcelog(StreamInteractor*) { uploadRunSources("UCNA Run Log 2012.txt"); }
 
-void mi_radcor(std::deque<std::string>&, std::stack<std::string>& stack) {
-	float Ep = streamInteractor::popFloat(stack);
-	int Z = streamInteractor::popInt(stack);
-	int A = streamInteractor::popInt(stack);
+void mi_radcor(StreamInteractor* S) {
+	float Ep = S->popFloat();
+	int Z = S->popInt();
+	int A = S->popInt();
 	makeCorrectionsFile(A,Z,Ep);
 }
 
-void mi_showGenerator(std::deque<std::string>&, std::stack<std::string>& stack) {
-	std::string sName = streamInteractor::popString(stack);
+void mi_showGenerator(StreamInteractor* S) {
+	std::string sName = S->popString();
 	OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/EventGenerators/"+sName+"/");
 	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
 	PMTCalibrator PCal(21300);
@@ -219,14 +219,14 @@ void mi_showGenerator(std::deque<std::string>&, std::stack<std::string>& stack) 
 	return;
 }
 
-void mi_showCal(std::deque<std::string>&, std::stack<std::string>& stack) {
-	RunNum rn = streamInteractor::popInt(stack);
+void mi_showCal(StreamInteractor* S) {
+	RunNum rn = S->popInt();
 	PMTCalibrator PCal(rn);
 }
 
-void mi_makeSimSpectrum(std::deque<std::string>&, std::stack<std::string>& stack) {
-	float eMax = streamInteractor::popFloat(stack);
-	std::string simName = streamInteractor::popString(stack);
+void mi_makeSimSpectrum(StreamInteractor* S) {
+	float eMax = S->popFloat();
+	std::string simName = S->popString();
 	
 	RunNum rn = 16194;
 	
@@ -261,8 +261,8 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	
 	ROOTStyleSetup();
 	
-	inputRequester exitMenu("Exit Menu",&menutils_Exit);
-	inputRequester peek("Show stack",&menutils_PrintStack);
+	InputRequester exitMenu("Exit Menu",&menutils_Exit);
+	InputRequester peek("Show stack",&menutils_PrintStack);
 	
 	// selection utilities
 	NameSelector selectRuntype("Run Type");
@@ -276,27 +276,27 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	selectRuntype.setDefault("all");
 	
 	// position map routines and menu
-	inputRequester pm_posmap("Generate Position Map",&mi_EndpointStudy);
+	InputRequester pm_posmap("Generate Position Map",&mi_EndpointStudy);
 	pm_posmap.addArg("Start Run");
 	pm_posmap.addArg("End Run");
 	pm_posmap.addArg("n Rings","12");
-	inputRequester pm_posmap_sim("Simulate Position Map",&mi_EndpointStudySim);
+	InputRequester pm_posmap_sim("Simulate Position Map",&mi_EndpointStudySim);
 	pm_posmap_sim.addArg("Start Run");
 	pm_posmap_sim.addArg("End Run");
 	pm_posmap_sim.addArg("Single Run","0");
 	pm_posmap_sim.addArg("n Rings","12");
-	inputRequester pm_posmap_resim("Reupload Position Map",&mi_EndpointStudyReSim);
+	InputRequester pm_posmap_resim("Reupload Position Map",&mi_EndpointStudyReSim);
 	pm_posmap_resim.addArg("Start Run");
 	pm_posmap_resim.addArg("End Run");
 	pm_posmap_resim.addArg("n Rings","12");
-	inputRequester posmapLister("List Posmaps",&mi_listPosmaps);
-	inputRequester posmapPlot("Plot Position Map",&mi_PosmapPlot);
+	InputRequester posmapLister("List Posmaps",&mi_listPosmaps);
+	InputRequester posmapPlot("Plot Position Map",&mi_PosmapPlot);
 	posmapPlot.addArg("Posmap ID");
-	inputRequester posmapDumper("Dump Posmap",&mi_dumpPosmap);
+	InputRequester posmapDumper("Dump Posmap",&mi_dumpPosmap);
 	posmapDumper.addArg("Posmap ID");
-	inputRequester posmapDel("Delete Posmap",&mi_delPosmap);
+	InputRequester posmapDel("Delete Posmap",&mi_delPosmap);
 	posmapDel.addArg("Posmap ID");
-	inputRequester nPEPlot("Plot nPE/MeV",&mi_nPEPlot);
+	InputRequester nPEPlot("Plot nPE/MeV",&mi_nPEPlot);
 	nPEPlot.addArg("Run Number");
 	OptionsMenu PMapR("Position Map Routines");
 	PMapR.addChoice(&pm_posmap,"gen");
@@ -310,21 +310,21 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	PMapR.addChoice(&exitMenu,"x");
 	
 	// postprocessing/plots routines
-	inputRequester dumpCalInfo("Dump calibration info to file",&mi_DumpCalInfo);
+	InputRequester dumpCalInfo("Dump calibration info to file",&mi_DumpCalInfo);
 	dumpCalInfo.addArg("Start Run");
 	dumpCalInfo.addArg("End Run");
 	dumpCalInfo.addArg(&selectRuntype);
 	
-	inputRequester showCal("Show run calibration",&mi_showCal);
+	InputRequester showCal("Show run calibration",&mi_showCal);
 	showCal.addArg("Run");
 	
-	inputRequester octetProcessor("Process Octet",&mi_processOctet);
+	InputRequester octetProcessor("Process Octet",&mi_processOctet);
 	octetProcessor.addArg("Octet number");
 
-	inputRequester showGenerator("Event generator test",&mi_showGenerator);
+	InputRequester showGenerator("Event generator test",&mi_showGenerator);
 	showGenerator.addArg("Generator name");
 	
-	inputRequester makeSimSpectrum("Sim Spectrum",&mi_makeSimSpectrum);
+	InputRequester makeSimSpectrum("Sim Spectrum",&mi_makeSimSpectrum);
 	makeSimSpectrum.addArg("Sim name");
 	makeSimSpectrum.addArg("energy range");
 	
@@ -338,14 +338,14 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	PostRoutines.addChoice(&exitMenu,"x");
 	
 	// sources
-	inputRequester postSources("Fit source data",&mi_PostprocessSources);
+	InputRequester postSources("Fit source data",&mi_PostprocessSources);
 	postSources.addArg("Start Run");
 	postSources.addArg("End Run");
-	inputRequester uploadSources("Upload runlog sources",&mi_sourcelog);
+	InputRequester uploadSources("Upload runlog sources",&mi_sourcelog);
 	// evis2etrue
-	inputRequester evis2etrue("Caluculate eVis->eTrue curves",&mi_evis2etrue);
+	InputRequester evis2etrue("Caluculate eVis->eTrue curves",&mi_evis2etrue);
 	// radiative corrections
-	inputRequester radcor("Make radiative corrections table",&mi_radcor);
+	InputRequester radcor("Make radiative corrections table",&mi_radcor);
 	radcor.addArg("A","1");
 	radcor.addArg("Z","1");
 	radcor.addArg("Endpoint",dtos(neutronBetaEp));
@@ -365,7 +365,9 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OM.addChoice(&peek,"peek",SELECTOR_HIDDEN);
 	
 	std::stack<std::string> stack;
-	OM.doIt(args,stack);
+	OM.mydeque = &args;
+	OM.mystack = &stack;
+	OM.doIt();
 	
 	printf("\n\n\n>>>>> Goodbye. <<<<<\n\n\n");
 }

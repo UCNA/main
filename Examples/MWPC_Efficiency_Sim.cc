@@ -60,6 +60,8 @@ void runSimulation() {
 }
 
 void SnMWPCEffic() {
+	assert(false); // new wirechamber trigger calculations make calculation below obsolete...
+/*
 	unsigned int nToSim = 1e5;
 	
 	printf("Simulating MWPC threshold variation...\n");
@@ -115,6 +117,7 @@ void SnMWPCEffic() {
 	OM.printCanvas("SnEffic");
 	drawHistoPair(hSnMWPC[EAST],hSnMWPC[WEST]);
 	OM.printCanvas("SnMWPC");
+*/
 }
 
 void processSimulation() {

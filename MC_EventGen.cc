@@ -9,15 +9,15 @@
 
 using namespace ROOT::Math;
 
-void mi_evtgen(std::deque<std::string>&, std::stack<std::string>& stack) {
+void mi_evtgen(StreamInteractor* S) {
 
 	// load arguments
-	const unsigned int nTrees = streamInteractor::popInt(stack);
-	const unsigned int nPerTree = streamInteractor::popInt(stack);
-	const std::string rtSelect = streamInteractor::popString(stack);
-	const std::string vpSelect = streamInteractor::popString(stack);
-	std::string outPath = streamInteractor::popString(stack);
-	const std::string genName = streamInteractor::popString(stack);
+	const unsigned int nTrees = S->popInt();
+	const unsigned int nPerTree = S->popInt();
+	const std::string rtSelect = S->popString();
+	const std::string vpSelect = S->popString();
+	std::string outPath = S->popString();
+	const std::string genName = S->popString();
 	
 	// load generators
 	static NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays/",1e-6);
@@ -96,7 +96,7 @@ void mi_evtgen(std::deque<std::string>&, std::stack<std::string>& stack) {
 
 int main(int argc, char *argv[]) {
 
-	inputRequester exitMenu("Exit Menu",&menutils_Exit);
+	InputRequester exitMenu("Exit Menu",&menutils_Exit);
 	
 	// discrete selectors
 	NameSelector selectRandomType("Random Source");
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 	selectVertexPos.setDefault("f");
 	
 	// event generator routine
-	inputRequester run_evt_gen("Run event generator",&mi_evtgen);
+	InputRequester run_evt_gen("Run event generator",&mi_evtgen);
 	run_evt_gen.addArg("Generator name");
 	run_evt_gen.addArg("Output path",getEnvSafe("G4EVTDIR"));
 	run_evt_gen.addArg(&selectVertexPos);
@@ -131,7 +131,9 @@ int main(int argc, char *argv[]) {
 	for(int i=1; i<argc; i++)
 		args.push_back(argv[i]);
 	std::stack<std::string> stack;
-	OM.doIt(args,stack);
+	OM.mydeque = &args;
+	OM.mystack = &stack;
+	OM.doIt();
 	
 	printf("\n\n\n>>>>> Goodbye. <<<<<\n\n\n");
 	return 0;

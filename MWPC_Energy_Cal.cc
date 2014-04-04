@@ -63,11 +63,11 @@ public:
 };
 
 /// run MWPC analyzers over beta decay data or simulation octets
-void mi_MWPCCal(std::deque<std::string>&, std::stack<std::string>& stack) {
+void mi_MWPCCal(StreamInteractor* S) {
 
-	unsigned int nRings = streamInteractor::popInt(stack);
-	std::string tpSelect = streamInteractor::popString(stack);
-	int octn = streamInteractor::popInt(stack);
+	unsigned int nRings = S->popInt();
+	std::string tpSelect = S->popString();
+	int octn = S->popInt();
 	
 	OctetSimuCloneManager OSCM("MWPC_ECal_"+itos(nRings));
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
@@ -120,9 +120,9 @@ int main(int argc, char *argv[]) {
 	selectDatSim.addChoice("Simulated octet","sim");
 	selectDatSim.setDefault("dat");
 				
-	inputRequester exitMenu("Exit Menu",&menutils_Exit);
+	InputRequester exitMenu("Exit Menu",&menutils_Exit);
 	
-	inputRequester pm_MWPC_Oct("Process Beta Octets",&mi_MWPCCal);
+	InputRequester pm_MWPC_Oct("Process Beta Octets",&mi_MWPCCal);
 	pm_MWPC_Oct.addArg("Octet number","","Beta decay octet in list, or 1000 to combine previously processed octets.");
 	pm_MWPC_Oct.addArg(&selectDatSim);
 	pm_MWPC_Oct.addArg("n rings","8","Number of rings for subdividing fiducial volume");
@@ -137,7 +137,9 @@ int main(int argc, char *argv[]) {
 	for(int i=1; i<argc; i++)
 		args.push_back(argv[i]);
 	std::stack<std::string> stack;
-	OM.doIt(args,stack);
+	OM.mystack = &stack;
+	OM.mydeque = &args;
+	OM.doIt();
 	
 	printf("\n\n\n>>>>> Goodbye. <<<<<\n\n\n");
 	return 0;
