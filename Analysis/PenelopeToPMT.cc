@@ -2,12 +2,13 @@
 #include "Types.hh"
 #include "strutils.hh"
 #include "BetaSpectrum.hh"
+#include <iostream>
 
 void PenelopeToPMT::setReadpoints() {
 	
 	for(Side s = EAST; s <= WEST; ++s) {
 		SetBranchAddress(sideSubst("Ep%c",s,true),&fEdep[s]);
-		SetBranchAddress(sideSubst("nph%c",s,true),&fEquench[s]);
+		SetBranchAddress(sideSubst("Ph%cn",s,true),&fEquench[s]);
 		SetBranchAddress(sideSubst("Ep%cd",s,true),&fedepDeadScint[s]);
 		
 		SetBranchAddress(sideSubst("Eg%ca",s,true),&fEW[s]);
@@ -23,9 +24,12 @@ void PenelopeToPMT::setReadpoints() {
 		
 		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
 			SetBranchAddress(sideSubst("%cpos",s,true)+(d==X_DIRECTION?"x":"y"),&fMWPCpos[s][d]);
-		
+
+		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
+                        SetBranchAddress(sideSubst("%c",s,true)+(d==X_DIRECTION?"xsci":"ysci"),&fSCINTpos[s][d]);
+
 		SetBranchAddress(sideSubst("Efl%c",s,true),&fedepFoils[s]);
-		SetBranchAddress(sideSubst("t%c",s,true),&fTime[s]);
+		SetBranchAddress(sideSubst("trg%c1",s,true),&fTime[s]);
 	}
 	
 	for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d)
@@ -33,14 +37,13 @@ void PenelopeToPMT::setReadpoints() {
 	
 	
 	SetBranchAddress("W1",&fcosThetaInFoils[EAST]);
+	SetBranchAddress("W9",&fcosThetaOutFoils[EAST]);
 	SetBranchAddress("W3",&fcosThetaInWinIn[EAST]);
-	SetBranchAddress("W4",&fcosThetaInWinOut[EAST]);
-	SetBranchAddress("W6",&fcosThetaInScint[EAST]);
-	
-	SetBranchAddress("W7",&fcosThetaOutFoils[EAST]);
-	SetBranchAddress("W9",&fcosThetaOutWinIn[EAST]);
-	SetBranchAddress("W10",&fcosThetaOutWinOut[EAST]);
-	SetBranchAddress("W12",&fcosThetaOutScint[EAST]);
+	SetBranchAddress("W5",&fcosThetaInWinOut[EAST]);
+	SetBranchAddress("W11",&fcosThetaOutWinIn[EAST]);
+	SetBranchAddress("W13",&fcosThetaOutWinOut[EAST]);
+	SetBranchAddress("W7",&fcosThetaInScint[EAST]);
+        SetBranchAddress("W15",&fcosThetaOutScint[EAST]);
 	
 	SetBranchAddress("E",&fEprim);
 	SetBranchAddress("W",&fCostheta);
@@ -58,16 +61,16 @@ void PenelopeToPMT::doUnits() {
 	const double posConversion = 10.0;
 	for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
 		primPos[d] = fPrimPos[d]*posConversion;
-		for(Side s = EAST; s <= WEST; ++s)
-			mwpcPos[s][d] = fMWPCpos[s][d]*posConversion*sqrt(0.6);
 	}
 	for(Side s = EAST; s <= WEST; ++s) {
 		eDep[s] = fEdep[s]*0.001;
-		eQ[s] = fEquench[s];
+                eQ[s] = fEquench[s];
 		eW[s] = (fEW[s]+0.5*(fEMWPCDead[s][0]+fEMWPCDead[s][1]))*0.001;
 		time[s] = fTime[s]*1e-9; // convert from nanoseconds to seconds
-		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
-			scintPos[s][d] = mwpcPos[s][d];	// fake scintillator pos from MWPC
+		for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
+			mwpcPos[s][d] = fMWPCpos[s][d]*posConversion*sqrt(0.6);
+                        scintPos[s][d] = fSCINTpos[s][d]*posConversion*sqrt(0.6);
+		}
 	}
 	ePrim = fEprim*0.001;
 	costheta = -fCostheta;
@@ -81,7 +84,7 @@ void PenelopeToPMT::doUnits() {
 		
 		cosThetaInFoils[s] = fcosThetaInFoils[s];
 		cosThetaInWinOut[s] = fcosThetaInWinOut[s];
-		cosThetaInWinIn[s] = fcosThetaInWinIn[s];
+                cosThetaInWinIn[s] = fcosThetaInWinIn[s];
 		cosThetaInScint[s] = fcosThetaInScint[s];
 		
 		cosThetaOutFoils[s] = fcosThetaOutFoils[s];
