@@ -40,6 +40,7 @@
 #include "G4ios.hh"
 #include "bmSteppingAction.hh"
 #include <cassert>
+#include "SMExcept.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
