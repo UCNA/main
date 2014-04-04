@@ -135,7 +135,7 @@ class GeantSimManager:
 			self.settings["jobname"] = self.settings["simName"]+"_%i"%self.settings["run_num"]
 			self.settings["outfile"]=self.g4_out_name%str(self.settings["run_num"])
 			self.settings["evtfile"]=self.g4_evtsdir+"/"+inflist[rn]
-			self.settings["nevt"] = 10000 # assume this many events per input file... TODO something more elegant
+			self.settings["nevt"] = 1000 # assume this many events per input file... TODO something more elegant
 			self.settings["joblog"] = "%s/gen_macro_%i.txt"%(self.g4_log_dir,self.settings["run_num"])
 			g4_sub_file = "%s/geantjob_%i.sub"%(self.g4_macro_dir,self.settings["run_num"])
 			
@@ -275,7 +275,7 @@ if __name__ == "__main__":
 	####################
 
 	# 2010 sources, **postanalyzer only**
-	if 1:
+	if 0:
 		for g in ["Bi207","Sn113","Ce139"]:
 			sourceSim = GeantSimManager("20120823",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt",geometry="C")
 			sourceSim.g4_out_dir_base = "/data2/mmendenhall/G4Out/2010/"
@@ -315,15 +315,18 @@ if __name__ == "__main__":
 	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
 	# 3M for most; do lots more for important Xe135_3-2+
 	####################
-	if 0:
+	if 1:
+		start = time.time()
 		for g in [ "Xe135_3-2+" ]:
-			sourceSim = GeantSimManager("20131015",vacuum="1.e-3 torr")
+			sourceSim = GeantSimManager("time_test_MPM7",geometry="2012/2013", vacuum="1.e-3 torr")
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
+			sourceSim.settings["ana_args"] += " saveall"
 			sourceSim.settings["physlist"]="livermore"
-			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=30e6,nClusters=54,hours_old=0)
+			sourceSim.set_evtsrc(g+"_g_n")
+			sourceSim.launch_sims(maxIn=50000000, hours_old=0)
 			sourceSim.launch_postanalyzer()
-
+		Time = time.time()-start
+		print time.time()-start
 	
 	####################				
 	# silicon detector
