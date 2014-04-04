@@ -37,6 +37,7 @@ private:
 	vector<G4double> Zpoints;	//< field profile z positions
 	G4double rmax2;				//< max radius squared (position in world volume) to apply field
 	G4double fieldScale;		//< scaling factor for field strength
+        bool RobbyField;
 };
 
 #endif

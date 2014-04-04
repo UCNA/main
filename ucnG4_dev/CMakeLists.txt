@@ -7,7 +7,7 @@
 #----------------------------------------------------------------------------
 # Setup the project
 cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
-project(ucnG4_prod)
+project(ucnG4_prod Fortran CXX)
 
 # build libUCNA.a dependency
 add_custom_target(
@@ -24,12 +24,12 @@ add_custom_target(
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 include_directories(${PROJECT_SOURCE_DIR}/include
-					${PROJECT_SOURCE_DIR}/../Physics
-					${PROJECT_SOURCE_DIR}/../IOUtils
-					${PROJECT_SOURCE_DIR}/../BaseTypes
-					${PROJECT_SOURCE_DIR}/../Calibration
-					${PROJECT_SOURCE_DIR}/../MathUtils
-					${PROJECT_SOURCE_DIR}/../RootUtils)
+	${PROJECT_SOURCE_DIR}/../Physics
+	${PROJECT_SOURCE_DIR}/../IOUtils
+	${PROJECT_SOURCE_DIR}/../BaseTypes
+	${PROJECT_SOURCE_DIR}/../Calibration
+	${PROJECT_SOURCE_DIR}/../MathUtils
+	${PROJECT_SOURCE_DIR}/../RootUtils)
 link_directories(${PROJECT_SOURCE_DIR}/..)
 
 #-------------------------------
@@ -68,20 +68,21 @@ set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 ###############
 
 set(ucnG4_LINKDEF ${PROJECT_SOURCE_DIR}/ucnG4_LinkDef.h)
-set(ucnG4_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ucnG4_Dict.cxx) 
+set(ucnG4_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ucnG4_Dict.cxx)
 MESSAGE("Generating dictionary ${ucnG4_DICTIONARY}")
 set(DICTFILES "${PROJECT_SOURCE_DIR}/include/bmMCEvent.hh;${PROJECT_SOURCE_DIR}/include/bmTrackInfo.hh;${PROJECT_SOURCE_DIR}/include/bmPrimaryInfo.hh")
 ROOT_GENERATE_DICTIONARY("${DICTFILES}" "${ucnG4_LINKDEF}" "${ucnG4_DICTIONARY}" "")
 LIST(APPEND sources ${ucnG4_DICTIONARY})
 
 add_library(ucnG4 SHARED ${sources} ${headers})
+add_library(b_field SHARED ${PROJECT_SOURCE_DIR}/src/b_field.f) 
 add_dependencies(ucnG4 extern_lib)
-target_link_libraries(ucnG4 ${ROOT_LIBRARIES} ${Geant4_LIBRARIES} UCNA)
+target_link_libraries(ucnG4 ${ROOT_LIBRARIES} ${Geant4_LIBRARIES} UCNA b_field)
 SET(ucnG4_LIBRARY_PROPERTIES
-		${ucnG4_LIBRARY_PROPERTIES}
-		VERSION "0"
-		SOVERSION "0"
-		SUFFIX ".so"
+	${ucnG4_LIBRARY_PROPERTIES}
+	VERSION "0"
+	SOVERSION "0"
+	SUFFIX ".so"
 )
 set_target_properties(ucnG4 PROPERTIES ${ucnG4_LIBRARY_PROPERTIES})
 install(TARGETS ucnG4 DESTINATION ${LIBRARY_OUTPUT_PATH})
@@ -93,7 +94,7 @@ link_directories(${LIBRARY_OUTPUT_PATH})
 #################
 
 add_executable(ucnG4_prod ucnG4_prod.cc)
-target_link_libraries(ucnG4_prod ucnG4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a)
+target_link_libraries(ucnG4_prod ucnG4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} libUCNA.a b_field)
 add_dependencies(ucnG4_prod extern_lib ucnG4)
 
 add_executable(UCNA_MC_Analyzer UCNA_MC_Analyzer.cc)
@@ -114,4 +115,3 @@ install(TARGETS ucnG4_prod UCNA_MC_Analyzer SiDet_Analyzer DESTINATION ${EXECUTA
 #set(CMAKE_BUILD_TYPE debug)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 set(CMAKE_BUILD_TYPE release)
-

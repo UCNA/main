@@ -1,1 +1,4 @@
-*.o
+*.[oa]
+ucnG4_dev-build/
+UCNAnalyzer
+*~

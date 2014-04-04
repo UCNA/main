@@ -5,7 +5,12 @@
 #include <cmath>
 #include <fstream>
 
-bmField::bmField(const TString filename): addAFP(false), rmax2(20*20*cm2), fieldScale(1.0) {
+extern "C" {
+	      void b_field_(double *bx, double *by, double *bz, 
+			     const double *x, const double *y, const double *z);
+	    }
+
+bmField::bmField(const TString filename): addAFP(false), rmax2(20*20*cm2), fieldScale(1.0), RobbyField(false) {
 	LoadFieldMap(filename);
 }
 
@@ -62,32 +67,47 @@ void addAFPFringeField(const G4double Point[3], G4double *Bfield) {
 }
 
 void bmField::GetFieldValue(const G4double Point[3], G4double *Bfield) const {
+  
+  if (RobbyField) 
+    {
+      G4double p0 = Point[0]/cm, p1 = Point[1]/cm, p2 = Point[2]/cm;
+      G4double b0, b1, b2;
+      b0 = b1 = b2 = 0.;
+      //cout << Bfield[0] << " " << Bfield[1] << " " << Bfield[2] << endl;
+      b_field_(&b0, &b1, &b2, &p0, &p1, &p2);
+      Bfield[0] = b0;
+      Bfield[1] = b1;
+      Bfield[2] = b2;
+    }
+      
+      
+  else 
+    {
+      G4double z=Point[2];	// point z
+      unsigned int zindex = int(lower_bound(Zpoints.begin(), Zpoints.end(), z)-Zpoints.begin());	// location in points list
+      
+      // no field defined outside experimental volume
+      if(zindex==0 || zindex>=Zpoints.size() || Point[0]*Point[0]+Point[1]*Point[1]>rmax2 || !fieldScale) {
+	Bfield[0] = Bfield[1] = Bfield[2] = 0;
+	return;
+      }
 	
-	G4double z=Point[2];	// point z
-	unsigned int zindex = int(lower_bound(Zpoints.begin(), Zpoints.end(), z)-Zpoints.begin());	// location in points list
-	
-	// no field defined outside experimental volume
-	if(zindex==0 || zindex>=Zpoints.size() || Point[0]*Point[0]+Point[1]*Point[1]>rmax2 || !fieldScale) {
-		Bfield[0] = Bfield[1] = Bfield[2] = 0;
-		return;
-	}
-	
-	// interpolate between defined regions
-	G4double base = 0.5*(Bpoints[zindex-1]+Bpoints[zindex]);// midpoint value
-	G4double amp = 0.5*(Bpoints[zindex-1]-Bpoints[zindex]);	// variation amplitude between ends
-	G4double dz = Zpoints[zindex]-Zpoints[zindex-1];		// z distance between ends
-	G4double l = (z-Zpoints[zindex-1])/dz;					// fractional distance between ends
-	
-	Bfield[2] = base*fieldScale;
-	if(amp) {
-		Bfield[2] += amp*cos(l*M_PI)*fieldScale; // interpolate B_z component with cosine
-		// B_r component to obey Maxwell equation grad dot B = dB_z/dz + 1/r d(r B_r)/dr = 0
-		G4double Brtemp = amp*M_PI*sin(l*M_PI)/(2*dz)*fieldScale;
-		Bfield[0]=Point[0]*Brtemp;
-		Bfield[1]=Point[1]*Brtemp;
-	} else {
-		Bfield[0]=Bfield[1]=0.0;
-	}
-	
-	if(addAFP) addAFPFringeField(Point,Bfield);
+      // interpolate between defined regions
+      G4double base = 0.5*(Bpoints[zindex-1]+Bpoints[zindex]);// midpoint value
+      G4double amp = 0.5*(Bpoints[zindex-1]-Bpoints[zindex]);	// variation amplitude between ends
+      G4double dz = Zpoints[zindex]-Zpoints[zindex-1];		// z distance between ends
+      G4double l = (z-Zpoints[zindex-1])/dz;					// fractional distance between ends
+      
+      Bfield[2] = base*fieldScale;
+      if(amp) {
+	Bfield[2] += amp*cos(l*M_PI)*fieldScale; // interpolate B_z component with cosine
+	// B_r component to obey Maxwell equation grad dot B = dB_z/dz + 1/r d(r B_r)/dr = 0
+	G4double Brtemp = amp*M_PI*sin(l*M_PI)/(2*dz)*fieldScale;
+	Bfield[0]=Point[0]*Brtemp;
+	Bfield[1]=Point[1]*Brtemp;
+      } else {
+	Bfield[0]=Bfield[1]=0.0;
+      }
+    }	
+  if(addAFP) addAFPFringeField(Point,Bfield);
 }
