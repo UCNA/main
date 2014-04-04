@@ -229,13 +229,15 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 	// geometry-dependent settings
 	///////////////////////////////////////
 	G4cout<<"Using geometry '"<<sGeometry<<"' ..."<<G4endl;
-	if(sGeometry=="A"){
+	trap.fCoatingThick[EAST]=trap.fCoatingThick[WEST]=0.150*um;
+        trap.fWindowThick[EAST]=trap.fWindowThick[WEST]=0.50*um;
+        if(sGeometry=="A"){
 		// thick MWPC windows
 		dets[EAST].mwpc.fWindowThick=dets[WEST].mwpc.fWindowThick=25*um;
 	} else if(sGeometry=="B") {
 		// thick MWPC, decay trap windows
 		dets[EAST].mwpc.fWindowThick=dets[WEST].mwpc.fWindowThick=25*um;
-		trap.fWindowThick=(0.7+12.5)*um;
+		trap.fWindowThick[EAST]=trap.fWindowThick[WEST]=(0.7+12.5)*um;
 	} else if(sGeometry=="C") {
 		// "default" thin-windows configuration
 	} else if(sGeometry=="D") {
@@ -245,12 +247,29 @@ G4VPhysicalVolume* bmDetectorConstruction::Construct() {
 	} else if(sGeometry=="2007") {
 		// thick windows
 		dets[EAST].mwpc.fWindowThick=dets[WEST].mwpc.fWindowThick=25*um;
-		trap.fWindowThick=2.5*um;
+		trap.fWindowThick[EAST]=trap.fWindowThick[WEST]=2.5*um;
 	} else if(sGeometry=="siDet") {
 	
 	} else if(sGeometry=="thinFoil") {
-		trap.fWindowThick=0.180*um;
-		trap.fCoatingThick=0.150*um;
+		trap.fWindowThick[EAST]=0.130*um;
+                trap.fWindowThick[WEST]=0.180*um;
+		trap.fWindowMat=SixFSixF;
+	} else if(sGeometry=="2011/2012") {
+	        trap.fWindowThick[EAST]=trap.fWindowThick[WEST]=0.500*um;
+		trap.fWindowMat=Mylar;
+		trap.fIRcollimator=2.3*inch;
+		trap.fColThickness=0.7*inch;
+		dets[EAST].mwpc.activeRegion.anode_R=dets[WEST].mwpc.activeRegion.anode_R=5*um;
+		dets[EAST].mwpc.activeRegion.cathode_R=dets[WEST].mwpc.activeRegion.cathode_R=39.1*um;
+	} else if(sGeometry=="2012/2013") {
+		trap.fWindowThick[EAST]=0.130*um;
+                trap.fWindowThick[WEST]=0.180*um;
+		trap.fWindowMat=SixFSixF;
+		trap.fIRcollimator=2.25*inch;
+		trap.fColThickness=0.75*inch; 
+		trap.fColLength=0.25*inch;
+		dets[EAST].mwpc.activeRegion.anode_R=dets[WEST].mwpc.activeRegion.anode_R=5*um;
+		dets[EAST].mwpc.activeRegion.cathode_R=dets[WEST].mwpc.activeRegion.cathode_R=39.1*um;
 	} else {
 		SMExcept e("UnknownGeometry");
 		e.insert("name",sGeometry);

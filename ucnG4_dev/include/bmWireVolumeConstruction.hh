@@ -23,8 +23,8 @@ public:
 	/// construct logical container volume
 	void Construct(Side s);
 	
-	const G4double anode_R;				//< anode wire radius
-	const G4double cathode_R;			//< cathode wire radius
+	G4double anode_R;				//< anode wire radius
+	G4double cathode_R;			//< cathode wire radius
 	const G4double plating_thick;		//< thickness of gold plating on wires
 	const G4double spacing;				//< wire spacing
 	const G4int NbOfWires;				//< number of wires
