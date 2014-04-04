@@ -32,9 +32,6 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #include "bmDetectorConstruction.hh"
-#include "bmPhysicsList.hh"
-#include "bmPenelope2008_EMPhysList.hh"
-#include "bmLivermore_EMPhysList.hh"
 #include "bmPhysList495.hh"
 #include "bmPrimaryGeneratorAction.hh"
 #include "bmRunAction.hh"
@@ -73,13 +70,9 @@ int main(int argc, char** argv) {
 	runManager->SetUserInitialization(detector);
 	
 	if(physlist=="livermore") {
-		//runManager->SetUserInitialization(new bmLivermore_EMPhysList());
 		runManager->SetUserInitialization(new bmPhysList495(false));
-		//else if(physlist=="g4default")
-		//	runManager->SetUserInitialization(new bmPhysicsList());
 	} else if(physlist=="penelope") {
 		runManager->SetUserInitialization(new bmPhysList495(true));
-		//runManager->SetUserInitialization(new bmPenelope2008_EMPhysList());
 	} else {
 		G4cout << "***ERROR*** Unknown physics list: " << physlist << G4endl;
 		exit(-1);

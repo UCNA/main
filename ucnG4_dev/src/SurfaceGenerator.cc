@@ -1,4 +1,5 @@
 #include "SurfaceGenerator.hh"
+#include "G4SystemOfUnits.hh"
 #include <Randomize.hh>
 #include <algorithm>
 #include <cmath>

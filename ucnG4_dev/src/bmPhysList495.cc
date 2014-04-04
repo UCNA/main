@@ -2,6 +2,7 @@
 
 #include "bmPhysList495.hh"
 
+#include "G4SystemOfUnits.hh"
 #include "G4EmLivermorePhysics.hh"
 #include "G4EmPenelopePhysics.hh"
 

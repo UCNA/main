@@ -31,6 +31,8 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #include "bmTrackerSD.hh"
+
+#include "G4SystemOfUnits.hh"
 #include "G4HCofThisEvent.hh"
 #include "G4Step.hh"
 #include "G4ThreeVector.hh"
@@ -40,6 +42,7 @@
 #include "G4LossTableManager.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4Gamma.hh"
+
 #include "SMExcept.hh"
 #include "strutils.hh"
 #include <cmath>

@@ -4,6 +4,7 @@
 #include "G4LogicalVolume.hh"
 #include "G4VSensitiveDetector.hh"
 #include "G4VisAttributes.hh"
+#include "G4SystemOfUnits.hh"
 #include <vector>
 
 /// build a wavy sheet of materials

@@ -1,7 +1,5 @@
-//2-19-02 J. Yuan: magnet field for UCNA experiment
-////////////////////////////////////////////////////
-
 #include "bmField.hh"
+#include "G4SystemOfUnits.hh"
 #include <cmath>
 #include <fstream>
 

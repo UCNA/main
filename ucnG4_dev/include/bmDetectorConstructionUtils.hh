@@ -14,6 +14,7 @@
 #include "G4PVReplica.hh"
 #include "G4RotationMatrix.hh"
 #include "G4VisAttributes.hh"
+#include "G4SystemOfUnits.hh"
 
 const G4double inch = 2.54*cm;
 const G4double torr = atmosphere/760.;
