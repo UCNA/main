@@ -31,7 +31,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #ifndef bmTrackerHit_h
-#define bmTrackerHit_h 1
+#define bmTrackerHit_h
 
 #include "G4VHit.hh"
 #include "G4THitsCollection.hh"

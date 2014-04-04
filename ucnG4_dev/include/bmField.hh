@@ -2,7 +2,7 @@
 ////////////////////////////////////////////////////
 
 #ifndef bmField_H
-#define bmField_H 1
+#define bmField_H
 
 #include "globals.hh"
 #include "G4MagneticField.hh"

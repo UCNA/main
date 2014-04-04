@@ -1,5 +1,5 @@
 #ifndef bmWireVolumeConstruction_HH
-#define bmWireVolumeConstruction_HH 1
+#define bmWireVolumeConstruction_HH
 
 #include "bmDetectorConstructionUtils.hh"
 

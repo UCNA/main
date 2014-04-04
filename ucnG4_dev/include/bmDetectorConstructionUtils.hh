@@ -1,5 +1,5 @@
 #ifndef bmDetectorConstructionUtils_HH
-#define bmDetectorConstructionUtils_HH 1
+#define bmDetectorConstructionUtils_HH
 
 #include "globals.hh"
 #include "Enums.hh"

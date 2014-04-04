@@ -5,7 +5,7 @@
 ///Created based on IcaG4 from http://root.cern.ch/root/HowtoMC.html
 // Jianglai 05/26/2006 --- Modified MPM 9/2011
 #ifndef bmAnalysisManager_h
-#define bmAnalysisManager_h 1
+#define bmAnalysisManager_h
 
 class G4VPhysicalVolume;
 class G4Event;

@@ -31,7 +31,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #ifndef bmEventAction_h
-#define bmEventAction_h 1
+#define bmEventAction_h
 
 #include "G4UserEventAction.hh"
 #include "TStopwatch.h"

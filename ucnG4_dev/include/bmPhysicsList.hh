@@ -1,5 +1,5 @@
 #ifndef bmPhysicsList_h
-#define bmPhysicsList_h 1
+#define bmPhysicsList_h
 
 #include "globals.hh"
 #include "G4VUserPhysicsList.hh"

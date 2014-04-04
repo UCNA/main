@@ -37,7 +37,7 @@
 class bmSteppingVerbose;
 
 #ifndef bmSteppingVerbose_h
-#define bmSteppingVerbose_h 1
+#define bmSteppingVerbose_h
 
 #include "G4SteppingVerbose.hh"
 

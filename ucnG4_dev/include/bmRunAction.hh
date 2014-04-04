@@ -31,7 +31,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #ifndef bmRunAction_h
-#define bmRunAction_h 1
+#define bmRunAction_h
 
 #include "G4UserRunAction.hh"
 #include "globals.hh"

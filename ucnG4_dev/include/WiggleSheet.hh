@@ -1,5 +1,5 @@
 #ifndef WIGGLESHEET_HH
-#define WIGGLESHEET_HH 1
+#define WIGGLESHEET_HH
 
 #include "G4LogicalVolume.hh"
 #include "G4VSensitiveDetector.hh"

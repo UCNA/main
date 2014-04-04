@@ -1,5 +1,5 @@
 #ifndef bmScintillatorConstruction_HH
-#define bmScintillatorConstruction_HH 1
+#define bmScintillatorConstruction_HH
 
 #include "bmDetectorConstructionUtils.hh"
 

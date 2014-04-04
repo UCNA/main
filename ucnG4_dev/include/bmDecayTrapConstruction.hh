@@ -1,5 +1,5 @@
 #ifndef bmDecayTrapConstruction_HH
-#define bmDecayTrapConstruction_HH 1
+#define bmDecayTrapConstruction_HH
 
 #include "bmDetectorConstructionUtils.hh"
 #include "G4LogicalVolume.hh"

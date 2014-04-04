@@ -1,5 +1,5 @@
 #ifndef bmWirechamberConstruction_HH
-#define bmWirechamberConstruction_HH 1
+#define bmWirechamberConstruction_HH
 
 #include "G4ElectroMagneticField.hh"
 #include "G4MagneticField.hh"

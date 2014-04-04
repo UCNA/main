@@ -1,5 +1,5 @@
 #ifndef bmSourceHolderConstruction_HH
-#define bmSourceHolderConstruction_HH 1
+#define bmSourceHolderConstruction_HH
 
 #include "bmDetectorConstructionUtils.hh"
 #include "G4UImessenger.hh"

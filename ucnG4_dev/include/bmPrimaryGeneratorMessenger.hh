@@ -33,7 +33,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #ifndef bmPrimaryGeneratorMessenger_h
-#define bmPrimaryGeneratorMessenger_h 1
+#define bmPrimaryGeneratorMessenger_h
 
 #include "G4UImessenger.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"

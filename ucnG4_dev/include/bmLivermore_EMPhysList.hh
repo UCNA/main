@@ -1,5 +1,5 @@
 #ifndef bmLivermore_EMPhysList_hh
-#define bmLivermore_EMPhysList_hh 1
+#define bmLivermore_EMPhysList_hh
 
 #include "G4VUserPhysicsList.hh"
 

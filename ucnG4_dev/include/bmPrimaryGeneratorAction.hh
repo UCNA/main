@@ -31,7 +31,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #ifndef bmPrimaryGeneratorAction_h
-#define bmPrimaryGeneratorAction_h 1
+#define bmPrimaryGeneratorAction_h
 
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4String.hh"

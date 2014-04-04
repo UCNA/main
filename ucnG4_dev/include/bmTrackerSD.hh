@@ -31,7 +31,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #ifndef bmTrackerSD_h
-#define bmTrackerSD_h 1
+#define bmTrackerSD_h
 
 #include "G4VSensitiveDetector.hh"
 #include "bmTrackerHit.hh"

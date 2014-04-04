@@ -29,7 +29,7 @@
 //
 
 #ifndef bmDetectorConstruction_H
-#define bmDetectorConstruction_H 1
+#define bmDetectorConstruction_H
 
 #include "bmDetectorConstructionUtils.hh"
 #include "G4VUserDetectorConstruction.hh"

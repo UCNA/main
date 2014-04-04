@@ -1,5 +1,5 @@
 #ifndef bmDetectorPackageConstruction_HH
-#define bmDetectorPackageConstruction_HH 1
+#define bmDetectorPackageConstruction_HH
 
 #include "bmDetectorConstructionUtils.hh"
 #include "bmWirechamberConstruction.hh"

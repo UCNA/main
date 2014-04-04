@@ -1,5 +1,5 @@
 #ifndef bmSiliconDetectorConstruction_HH
-#define bmSiliconDetectorConstruction_HH 1
+#define bmSiliconDetectorConstruction_HH
 
 #include "bmDetectorConstructionUtils.hh"
 

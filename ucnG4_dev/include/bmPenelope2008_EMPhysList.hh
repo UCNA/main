@@ -1,5 +1,5 @@
 #ifndef bmPenelope2008_EMPhysList_hh
-#define bmPenelope2008_EMPhysList_hh 1
+#define bmPenelope2008_EMPhysList_hh
 
 #include "G4VUserPhysicsList.hh"
 

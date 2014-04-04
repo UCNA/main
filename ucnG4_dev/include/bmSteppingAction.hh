@@ -31,7 +31,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #ifndef bmSteppingAction_h
-#define bmSteppingAction_h 1
+#define bmSteppingAction_h
 
 #include "G4UserSteppingAction.hh"
 #include "globals.hh"

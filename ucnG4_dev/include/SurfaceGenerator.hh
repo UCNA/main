@@ -1,5 +1,5 @@
 #ifndef SURFACEGNERATOR_HH
-#define SURFACEGNERATOR_HH 1
+#define SURFACEGNERATOR_HH
 
 #include <G4ThreeVector.hh>
 #include <vector>
