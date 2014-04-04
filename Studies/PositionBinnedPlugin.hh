@@ -1,5 +1,5 @@
 #ifndef POSITIONBINNEDANALYZER_HH
-#define POSITIONBINNEDANALYZER_HH 1
+#define POSITIONBINNEDANALYZER_HH
 
 #include "RunAccumulator.hh"
 #include "SectorCutter.hh"

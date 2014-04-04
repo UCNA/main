@@ -1,5 +1,5 @@
 #ifndef GRAPHUTILS_HH
-#define GRAPHUTILS_HH 1
+#define GRAPHUTILS_HH
 
 #include "QFile.hh"
 #include "Enums.hh"

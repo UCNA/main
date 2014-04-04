@@ -1,5 +1,5 @@
 #ifndef CALDBFake_HH
-#define CALDBFake_HH 1
+#define CALDBFake_HH
 
 #include "CalDB.hh"
 #include "QFile.hh"

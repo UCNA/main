@@ -1,5 +1,5 @@
 #ifndef OCTETANALYZER_HH
-#define OCTETANALYZER_HH 1
+#define OCTETANALYZER_HH
 
 #include "Enums.hh"
 #include "SegmentSaver.hh"

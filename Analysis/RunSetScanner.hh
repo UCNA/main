@@ -1,5 +1,5 @@
 #ifndef RUNSETSCANNER_HH
-#define RUNSETSCANNER_HH 1
+#define RUNSETSCANNER_HH
 
 #include "Enums.hh"
 #include "TChainScanner.hh"

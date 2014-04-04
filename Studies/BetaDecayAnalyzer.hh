@@ -1,5 +1,5 @@
 #ifndef BETADECAYANALYZER_HH
-#define BETADECAYANALYZER_HH 1
+#define BETADECAYANALYZER_HH
 
 #include "MuonPlugin.hh"
 #include "PositionsPlugin.hh"

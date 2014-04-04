@@ -1,5 +1,5 @@
 #ifndef EVISCONVERTER_HH
-#define EVISCONVERTER_HH 1
+#define EVISCONVERTER_HH
 
 #include "Enums.hh"
 #include "CalDB.hh"

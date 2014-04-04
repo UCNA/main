@@ -1,5 +1,5 @@
 #ifndef TAGCOUNTER_HH
-#define TAGCOUNTER_HH 1
+#define TAGCOUNTER_HH
 
 #include <map>
 #include <iostream>

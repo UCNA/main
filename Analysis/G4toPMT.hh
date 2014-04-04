@@ -1,5 +1,5 @@
 #ifndef G4TOPMT_HH
-#define G4TOPMT_HH 1
+#define G4TOPMT_HH
 
 #include "Sim2PMT.hh"
 #define N_SD 24

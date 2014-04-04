@@ -1,5 +1,5 @@
 #ifndef CALDBSQL_HH
-#define CALDBSQL_HH 1
+#define CALDBSQL_HH
 
 #include "SQL_Utils.hh"
 #include "CalDB.hh"

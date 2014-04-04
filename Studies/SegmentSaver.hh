@@ -1,5 +1,5 @@
 #ifndef SEGMENTSAVER_HH
-#define SEGMENTSAVER_HH 1
+#define SEGMENTSAVER_HH
 
 #include "OutputManager.hh"
 #include <TH1.h>

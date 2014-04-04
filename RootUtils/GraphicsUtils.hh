@@ -1,5 +1,5 @@
 #ifndef GRAPHICSUTILS_HH
-#define GRAPHICSUTILS_HH 1
+#define GRAPHICSUTILS_HH
 
 #include <math.h>
 #include <TVirtualPad.h>

@@ -1,5 +1,5 @@
 #ifndef FLOATERR_HH
-#define FLOATERR_HH 1
+#define FLOATERR_HH
 
 #include <string>
 

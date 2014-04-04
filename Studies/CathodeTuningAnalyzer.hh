@@ -1,5 +1,5 @@
 #ifndef CATHODETWEAKANALYZER_HH
-#define CATHODETWEAKANALYZER_HH 1
+#define CATHODETWEAKANALYZER_HH
 
 #include "RunAccumulator.hh"
 #include "OctetAnalyzer.hh"

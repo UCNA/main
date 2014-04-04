@@ -1,5 +1,5 @@
 #ifndef SIMCALIBRATIONS_HH
-#define SIMCALIBRATIONS_HH 1
+#define SIMCALIBRATIONS_HH
 
 #include "EnergyCalibrator.hh"
 #include "Types.hh"

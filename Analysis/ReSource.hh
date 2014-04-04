@@ -1,5 +1,5 @@
 #ifndef RESOURCE_HH
-#define RESOURCE_HH 1
+#define RESOURCE_HH
 
 #include "Source.hh"
 #include "Types.hh"

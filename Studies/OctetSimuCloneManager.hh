@@ -1,5 +1,5 @@
 #ifndef OCTETSIMUCLONEMANAGER_HH
-#define OCTETSIMUCLONEMANAGER_HH 1
+#define OCTETSIMUCLONEMANAGER_HH
 
 #include "RunAccumulator.hh"
 #include "PathUtils.hh"

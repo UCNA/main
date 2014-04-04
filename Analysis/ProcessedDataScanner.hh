@@ -1,5 +1,5 @@
 #ifndef PROCESSEDDATASCANNER_HH
-#define PROCESSEDDATASCANNER_HH 1
+#define PROCESSEDDATASCANNER_HH
 
 #include "Types.hh"
 #include "Enums.hh"

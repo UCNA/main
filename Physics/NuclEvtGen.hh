@@ -1,5 +1,5 @@
 #ifndef NUCLEVTGEN_HH
-#define NUCLEVTGEN_HH 1
+#define NUCLEVTGEN_HH
 
 #include "ElectronBindingEnergy.hh"
 #include "BetaSpectrum.hh"

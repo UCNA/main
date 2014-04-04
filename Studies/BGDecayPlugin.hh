@@ -1,5 +1,5 @@
 #ifndef BGDECAYANALYZER_HH
-#define BGDECAYANALYZER_HH 1
+#define BGDECAYANALYZER_HH
 
 #include "OctetAnalyzer.hh"
 

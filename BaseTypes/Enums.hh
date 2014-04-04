@@ -1,7 +1,7 @@
 /// \file Enums.hh \brief various enumerations
 #ifndef ENUMS_HH
 /// make sure this file is only included once
-#define ENUMS_HH 1
+#define ENUMS_HH
 
 #include <math.h>
 #include <string>

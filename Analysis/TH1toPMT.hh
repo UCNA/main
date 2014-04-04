@@ -1,5 +1,5 @@
 #ifndef TH1TOPMT_HH
-#define TH1TOPMT_HH 1
+#define TH1TOPMT_HH
 
 #include "ProcessedDataScanner.hh"
 #include "PMTGenerator.hh"

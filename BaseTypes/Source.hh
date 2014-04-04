@@ -1,5 +1,5 @@
 #ifndef SOURCE_HH
-#define SOURCE_HH 1
+#define SOURCE_HH
 
 #include "SpectrumPeak.hh"
 #include "QFile.hh"

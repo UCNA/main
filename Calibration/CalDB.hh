@@ -1,5 +1,5 @@
 #ifndef CALDB_HH
-#define CALDB_HH 1
+#define CALDB_HH
 
 #include <TGraphErrors.h>
 #include <vector>

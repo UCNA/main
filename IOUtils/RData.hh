@@ -1,5 +1,5 @@
 #ifndef KDATA_HH
-#define KDATA_HH 1
+#define KDATA_HH
 
 #include <string>
 #include <vector>

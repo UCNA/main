@@ -1,5 +1,5 @@
 #ifndef STRUTILS_HH
-#define STRUTILS_HH 1
+#define STRUTILS_HH
 
 #include <string>
 #include <vector>

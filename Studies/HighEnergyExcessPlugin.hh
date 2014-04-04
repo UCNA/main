@@ -1,5 +1,5 @@
 #ifndef HIGHENERGYEXCESS_HH
-#define HIGHENERGYEXCESS_HH 1
+#define HIGHENERGYEXCESS_HH
 
 #include "OctetAnalyzer.hh"
 #include "MuonPlugin.hh"

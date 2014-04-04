@@ -1,5 +1,5 @@
 #ifndef GAINSTABILIZER_HH
-#define GAINSTABILIZER_HH 1
+#define GAINSTABILIZER_HH
 
 #include "CalDB.hh"
 class LinearityCorrector;

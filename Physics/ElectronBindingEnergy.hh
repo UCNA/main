@@ -1,5 +1,5 @@
 #ifndef ELECTRONBINDINGENERGY_HH
-#define ELECTRONBINDINGENERGY_HH 1
+#define ELECTRONBINDINGENERGY_HH
 
 #include "QFile.hh"
 #include "SMExcept.hh"

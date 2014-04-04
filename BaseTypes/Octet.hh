@@ -1,5 +1,5 @@
 #ifndef OCTET_HH
-#define OCTET_HH 1
+#define OCTET_HH
 
 #include "QFile.hh"
 #include "strutils.hh"

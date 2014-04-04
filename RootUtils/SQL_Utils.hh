@@ -1,5 +1,5 @@
 #ifndef SQL_UTILS_HH
-#define SQL_UTILS_HH 1
+#define SQL_UTILS_HH
 
 
 #include <TSQLServer.h>

@@ -1,5 +1,5 @@
 #ifndef CATHSEGCALIBRATOR_HH
-#define CATHSEGCALIBRATOR_HH 1
+#define CATHSEGCALIBRATOR_HH
 
 #include <string>
 #include <TGraph.h>

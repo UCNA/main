@@ -1,5 +1,5 @@
 #ifndef ROLLINGWINDOW_HH
-#define ROLLINGWINDOW_HH 1
+#define ROLLINGWINDOW_HH
 
 #include <utility>
 #include <deque>

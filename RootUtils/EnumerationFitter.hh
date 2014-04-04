@@ -1,5 +1,5 @@
 #ifndef ENUMERATIONFITTER_HH
-#define ENUMERATIONFITTER_HH 1
+#define ENUMERATIONFITTER_HH
 
 #include <vector>
 #include <string>

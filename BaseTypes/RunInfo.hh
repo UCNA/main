@@ -1,5 +1,5 @@
 #ifndef RUNINFO_HH
-#define RUNINFO_HH 1
+#define RUNINFO_HH
 
 #include <map>
 #include <vector>

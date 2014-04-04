@@ -1,5 +1,5 @@
 #ifndef EVENTCLASSIFIER_HH
-#define EVENTCLASSIFIER_HH 1
+#define EVENTCLASSIFIER_HH
 
 #include "Enums.hh"
 #include "Types.hh"

@@ -1,7 +1,7 @@
 /// \file Types.hh \brief basic utility classes and functions
 #ifndef TYPES_HH
 /// make sure this file is included only once
-#define TYPES_HH 1
+#define TYPES_HH
 
 #include "Enums.hh"
 #include "QFile.hh"

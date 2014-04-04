@@ -1,5 +1,5 @@
 #ifndef QFILE_HH
-#define QFILE_HH 1
+#define QFILE_HH
 
 #include <map>
 #include <vector>

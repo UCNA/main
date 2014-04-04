@@ -1,5 +1,5 @@
 #ifndef WIRECHAMBERCALIBRATOR_HH
-#define WIRECHAMBERCALIBRATOR_HH 1
+#define WIRECHAMBERCALIBRATOR_HH
 
 #include "Types.hh"
 #include "CalDB.hh"

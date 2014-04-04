@@ -1,5 +1,5 @@
 #ifndef OCTETANALYZEREXAMPLE_HH
-#define OCTETANALYZEREXAMPLE_HH 1
+#define OCTETANALYZEREXAMPLE_HH
 
 #include "OctetAnalyzer.hh"
 #include "RunAccumulator.hh"

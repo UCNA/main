@@ -1,5 +1,5 @@
 #ifndef SIM2PMT_HH
-#define SIM2PMT_HH 1
+#define SIM2PMT_HH
 
 #include "PMTGenerator.hh"
 #include "ProcessedDataScanner.hh"

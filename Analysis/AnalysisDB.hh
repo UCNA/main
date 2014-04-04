@@ -1,5 +1,5 @@
 #ifndef ANALYSISDB_HH
-#define ANALYSISDB_HH 1
+#define ANALYSISDB_HH
 
 #include "SQL_Utils.hh"
 #include "Enums.hh"

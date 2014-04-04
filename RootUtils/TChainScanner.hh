@@ -1,5 +1,5 @@
 #ifndef TCHAINSCANNER_HH
-#define TCHAINSCANNER_HH 1
+#define TCHAINSCANNER_HH
 
 #include <TChain.h>
 #include <string>

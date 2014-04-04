@@ -1,5 +1,5 @@
 #ifndef ASYMMETRYANALYZER_HH
-#define ASYMMETRYANALYZER_HH 1
+#define ASYMMETRYANALYZER_HH
 
 #include "OctetAnalyzer.hh"
 #include "MuonPlugin.hh"

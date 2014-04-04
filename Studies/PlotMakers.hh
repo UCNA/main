@@ -1,5 +1,5 @@
 #ifndef PLOTMAKERS_HH
-#define PLOTMAKERS_HH 1
+#define PLOTMAKERS_HH
 
 #include <TCanvas.h>
 #include "EnergyCalibrator.hh"

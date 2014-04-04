@@ -1,5 +1,5 @@
 #ifndef XENONANALYZER_HH
-#define XENONANALYZER_HH 1
+#define XENONANALYZER_HH
 
 #include "PositionBinnedPlugin.hh"
 #include "WirechamberGainMapPlugins.hh"

@@ -1,5 +1,5 @@
 #ifndef RUNACCUMULATOR_HH
-#define RUNACCUMULATOR_HH 1
+#define RUNACCUMULATOR_HH
 
 #include "SegmentSaver.hh"
 #include "Enums.hh"

@@ -1,5 +1,5 @@
 #ifndef POSTOFFICIALANALYZER_HH
-#define POSTOFFICIALANALYZER_HH 1
+#define POSTOFFICIALANALYZER_HH
 
 #include "ProcessedDataScanner.hh"
 

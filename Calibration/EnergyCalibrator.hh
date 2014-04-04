@@ -1,5 +1,5 @@
 #ifndef ENERGYCALIBRATOR_HH
-#define ENERGYCALIBRATOR_HH 1
+#define ENERGYCALIBRATOR_HH
 
 #include "Types.hh"
 #include "CalDB.hh"

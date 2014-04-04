@@ -1,5 +1,5 @@
 #ifndef INTERPOLATOR_HH
-#define INTERPOLATOR_HH 1
+#define INTERPOLATOR_HH
 
 #include <math.h>
 #include <vector>

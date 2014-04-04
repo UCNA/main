@@ -1,5 +1,5 @@
 #ifndef LEDSCANS_HH
-#define LEDSCANS_HH 1
+#define LEDSCANS_HH
 
 #include "ProcessedDataScanner.hh"
 #include "RollingWindow.hh"

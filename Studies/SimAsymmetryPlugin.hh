@@ -1,5 +1,5 @@
 #ifndef SIMASYMMETRYANALYZER_HH
-#define SIMASYMMETRYANALYZER_HH 1
+#define SIMASYMMETRYANALYZER_HH
 
 #include "OctetAnalyzer.hh"
 #include "AsymmetryPlugin.hh"

@@ -1,5 +1,5 @@
 #ifndef GRAVITYSPECTROMETER_HH
-#define GRAVITYSPECTROMETER_HH 1
+#define GRAVITYSPECTROMETER_HH
 
 #include "OctetAnalyzer.hh"
 

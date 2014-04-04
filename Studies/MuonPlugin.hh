@@ -1,5 +1,5 @@
 #ifndef MUONANALYZER_HH
-#define MUONANALYZER_HH 1
+#define MUONANALYZER_HH
 
 #include "OctetAnalyzer.hh"
 

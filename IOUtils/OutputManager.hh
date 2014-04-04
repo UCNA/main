@@ -1,5 +1,5 @@
 #ifndef OUTPUTMANAGER_HH
-#define OUTPUTMANAGER_HH 1
+#define OUTPUTMANAGER_HH
 
 #include "QFile.hh"
 #include "SMExcept.hh"

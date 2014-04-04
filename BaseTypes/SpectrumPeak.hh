@@ -1,5 +1,5 @@
 #ifndef PEAK_HH
-#define PEAK_HH 1
+#define PEAK_HH
 
 #include <vector>
 #include <TF1.h>

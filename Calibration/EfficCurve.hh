@@ -1,5 +1,5 @@
 #ifndef EFFICCURVE_HH
-#define EFFICCURVE_HH 1
+#define EFFICCURVE_HH
 
 #include "OutputManager.hh"
 #include <TH1F.h>

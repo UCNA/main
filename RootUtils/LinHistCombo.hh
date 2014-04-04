@@ -1,5 +1,5 @@
 #ifndef LINHISTCOMBO_HH
-#define LINHISTCOMBO_HH 1
+#define LINHISTCOMBO_HH
 
 #include <vector>
 #include <string>

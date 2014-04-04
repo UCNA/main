@@ -1,5 +1,5 @@
 #ifndef POSITIONANALYZER_HH
-#define POSITIONANALYZER_HH 1
+#define POSITIONANALYZER_HH
 
 #include "OctetAnalyzer.hh"
 #include "SectorCutter.hh"

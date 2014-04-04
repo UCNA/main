@@ -1,6 +1,6 @@
 /// \file BetaSpectrum.hh calculations for the beta spectrum and various related corrections
 #ifndef BETASPECTRUM_HH
-#define BETASPECTRUM_HH 1
+#define BETASPECTRUM_HH
 
 // references:
 // [0] Wilkinson, Analysis of Neutron Beta-Decay, Nucl. Phys. A 377 (1982) 474-504

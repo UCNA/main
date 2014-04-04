@@ -1,5 +1,5 @@
 #ifndef MANUALINFO_HH
-#define MANUALINFO_HH 1
+#define MANUALINFO_HH
 
 #include "QFile.hh"
 #include "Types.hh"

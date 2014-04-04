@@ -1,5 +1,5 @@
 #ifndef PENELOPETOPMT_HH
-#define PENELOPETOPMT_HH 1
+#define PENELOPETOPMT_HH
 
 #include "Sim2PMT.hh"
 

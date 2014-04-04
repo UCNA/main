@@ -1,5 +1,5 @@
 #ifndef POSITIONRESPONSE_HH
-#define POSITIONRESPONSE_HH 1
+#define POSITIONRESPONSE_HH
 
 #include "Enums.hh"
 #include "Types.hh"

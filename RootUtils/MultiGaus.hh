@@ -1,5 +1,5 @@
 #ifndef MULTIGAUS_HH
-#define MULTIGAUS_HH 1
+#define MULTIGAUS_HH
 
 #include <TF1.h>
 #include <TH1F.h>

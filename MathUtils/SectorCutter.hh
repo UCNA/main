@@ -1,5 +1,5 @@
 #ifndef SECTORCUTTER_HH
-#define SECTORCUTTER_HH 1
+#define SECTORCUTTER_HH
 
 #include <vector>
 

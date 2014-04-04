@@ -1,5 +1,5 @@
 #ifndef BIMAP_HH
-#define BIMAP_HH 1
+#define BIMAP_HH
 
 #include <multimap>
 

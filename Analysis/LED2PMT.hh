@@ -1,5 +1,5 @@
 #ifndef LED2PMT_HH
-#define LED2PMT_HH 1
+#define LED2PMT_HH
 
 #include "Sim2PMT.hh"
 

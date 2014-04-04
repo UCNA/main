@@ -1,5 +1,5 @@
 #ifndef ASYMMETRYCORRECTIONS_HH
-#define ASYMMETRYCORRECTIONS_HH 1
+#define ASYMMETRYCORRECTIONS_HH
 
 #include "SimAsymmetryPlugin.hh"
 #include "BetaDecayAnalyzer.hh"
