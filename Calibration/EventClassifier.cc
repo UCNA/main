@@ -33,4 +33,4 @@ void EventClassifier::classifyEvent() {
 	// Type II/III separation
 	fProbIII = (fType==TYPE_II_EVENT) ? getProbIII() : 0.;
 	if(fProbIII>0.5) fType = TYPE_III_EVENT;
-};
+}

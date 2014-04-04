@@ -513,7 +513,7 @@ void uploadRunSources(const std::string& rlogname) {
 			if(words.size() < 2)
 				continue;
 			RunNum rn;
-			if(!sscanf(words[0].c_str(),"*%i",&rn) || words[1] != "SourcesCal")
+			if(!sscanf(words[0].c_str(),"*%u",&rn) || words[1] != "SourcesCal")
 				continue;
 			
 			bool needsUpdate = false;
