@@ -10,7 +10,7 @@ class Stringmap {
 public:
 	
 	/// constructor
-	Stringmap(const std::string& s = "");
+	Stringmap(const std::string& str = "");
 	/// copy constructor from another Stringmap
 	Stringmap(const Stringmap& m);
 	/// destructor
@@ -18,26 +18,26 @@ public:
 	
 	
 	/// insert key/(string)value pair
-	void insert(const std::string& s, const std::string& v);
+	void insert(const std::string& str, const std::string& v);
 	/// insert key/(double)value
-	void insert(const std::string& s, double d);
+	void insert(const std::string& str, double d);
 	/// retrieve key values
-	std::vector<std::string> retrieve(const std::string& s) const;	
+	std::vector<std::string> retrieve(const std::string& str) const;
 	/// get first key value (string) or default
-	std::string getDefault(const std::string& s, const std::string& d) const;
+	std::string getDefault(const std::string& str, const std::string& d) const;
 	/// return number of elements
 	unsigned int size() const { return dat.size(); }
 	/// return count of entries with key
-	unsigned int count(const std::string& s) const { return dat.count(s); }
+	unsigned int count(const std::string& str) const { return dat.count(str); }
 	/// serialize to a string
 	std::string toString() const;
 	
 	/// get first key value (double) or default
-	double getDefault(const std::string& s, double d) const;
+	double getDefault(const std::string& str, double d) const;
 	/// retrieve key values as doubles
-	std::vector<double> retrieveDouble(const std::string& s) const;
+	std::vector<double> retrieveDouble(const std::string& str) const;
 	/// remove a key
-	void erase(const std::string& s);
+	void erase(const std::string& str);
 	
 	/// display to screen
 	void display(std::string linepfx = "") const;
@@ -65,15 +65,15 @@ public:
 	virtual ~StringmapProvider() {}
 	
 	/// insert key/(string)value pair
-	void insert(const std::string& s, const std::string& v) { Sxtra.insert(s,v); }
+	void insert(const std::string& str, const std::string& v) { Sxtra.insert(str,v); }
 	/// insert key/(double)value
-	void insert(const std::string& s, double d) { Sxtra.insert(s,d); }
+	void insert(const std::string& str, double d) { Sxtra.insert(str,d); }
 	
 	/// provide stringmap from self properties
 	Stringmap toStringmap() const {
-		Stringmap m = getProperties();
-		m += Sxtra;
-		return m;
+		Stringmap sm = getProperties();
+		sm += Sxtra;
+		return sm;
 	}
 	
 	/// display
@@ -92,13 +92,13 @@ public:
 	QFile(const std::string& s = "", bool readit = true);
 	
 	/// insert key/(string)value pair
-	void insert(const std::string& s, const Stringmap& v);
+	void insert(const std::string& str, const Stringmap& v);
 	/// remove a key
-	void erase(const std::string& s);
+	void erase(const std::string& str);
 	/// retrieve values for key
 	std::vector<Stringmap> retrieve(const std::string& s) const;
 	/// retrieve first value for key
-	Stringmap getFirst(const std::string& s, const Stringmap& dflt = Stringmap()) const;
+	Stringmap getFirst(const std::string& str, const Stringmap& dflt = Stringmap()) const;
 	/// retrieve all sub-key values
 	std::vector<std::string> retrieve(const std::string& k1, const std::string& k2) const;
 	/// retreive sub-key with default
@@ -113,7 +113,7 @@ public:
 	void transfer(const QFile& Q, const std::string& k);
 	
 	/// set output file location
-	void setOutfile(std::string nm) { name = nm; }
+	void setOutfile(std::string fnm) { name = fnm; }
 	/// commit data to file
 	void commit(std::string outname = "") const;
 	/// display to stdout

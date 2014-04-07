@@ -108,7 +108,7 @@ UFE = frontend
 ####################################################################
 
 # MIDAS library
-LIB = $(LIB_DIR)/libmidas.a
+LIB = $(LIB_DIR)/liidas.a
 
 # compiler
 CC = gcc

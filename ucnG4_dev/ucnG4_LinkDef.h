@@ -4,8 +4,8 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class bmMCEvent+;
-#pragma link C++ class bmTrackInfo+;
-#pragma link C++ class bmPrimaryInfo+;
+#pragma link C++ class MCEvent+;
+#pragma link C++ class TrackInfo+;
+#pragma link C++ class PrimaryInfo+;
 
 #endif

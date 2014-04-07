@@ -11,9 +11,9 @@
 #include <TVector3.h>
 #include <Rtypes.h>
 
-#include "bmMCEvent.hh"
-#include "bmTrackInfo.hh"
-#include "bmPrimaryInfo.hh"
+#include "MCEvent.hh"
+#include "TrackInfo.hh"
+#include "PrimaryInfo.hh"
 
 using namespace std;
 
@@ -46,9 +46,9 @@ protected:
 	
 	TTree* anaTree;				//< analysis results output tree
 	TFile* outf;				//< output file
-	bmMCEvent* myevt;			//< current event being analyzed
-	bmTrackInfo* trackinfo;		//< current track info
-	bmPrimaryInfo* priminfo;	//< current primary info
+	MCEvent* myevt;			//< current event being analyzed
+	TrackInfo* trackinfo;		//< current track info
+	PrimaryInfo* priminfo;	//< current primary info
 	
 	/// add additional branches to output tree
 	virtual void setupOutputTree() {}

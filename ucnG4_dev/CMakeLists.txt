@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------
 # Usage:
-# cmake -DGeant4_DIR=~/geant4.9.6/geant4.9.6-install/lib/ ../ucnG4_dev/
+# cmake -DGeant4_DIR=~/geant4.10/lib/ ../ucnG4_dev/
 # cmake -DGeant4_DIR=~/Applications/geant4.10/lib/ ../ucnG4_dev/
 # make -j6
 
@@ -70,7 +70,7 @@ set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 set(ucnG4_LINKDEF ${PROJECT_SOURCE_DIR}/ucnG4_LinkDef.h)
 set(ucnG4_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ucnG4_Dict.cxx) 
 MESSAGE("Generating dictionary ${ucnG4_DICTIONARY}")
-set(DICTFILES "${PROJECT_SOURCE_DIR}/include/bmMCEvent.hh;${PROJECT_SOURCE_DIR}/include/bmTrackInfo.hh;${PROJECT_SOURCE_DIR}/include/bmPrimaryInfo.hh")
+set(DICTFILES "${PROJECT_SOURCE_DIR}/include/MCEvent.hh;${PROJECT_SOURCE_DIR}/include/TrackInfo.hh;${PROJECT_SOURCE_DIR}/include/PrimaryInfo.hh")
 ROOT_GENERATE_DICTIONARY("${DICTFILES}" "${ucnG4_LINKDEF}" "${ucnG4_DICTIONARY}" "")
 LIST(APPEND sources ${ucnG4_DICTIONARY})
 

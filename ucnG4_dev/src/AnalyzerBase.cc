@@ -1,7 +1,7 @@
 #include "AnalyzerBase.hh"
 
 ucnG4_analyzer::ucnG4_analyzer(const std::string& outfname): anaTree(NULL),
-outf(new TFile(outfname.c_str(),"RECREATE")), myevt(new bmMCEvent()) { }
+outf(new TFile(outfname.c_str(),"RECREATE")), myevt(new MCEvent()) { }
 
 void ucnG4_analyzer::analyzeFileList(const string& flist) {
 	ifstream file;
@@ -69,8 +69,8 @@ void ucnG4_analyzer::analyzeFile(const string& fname) {
 		// scan each track segment
 		Int_t nTracks = trackinfo_array.GetEntries();			
 		for(int n=0; n<nTracks; n++) {
-			trackinfo = (bmTrackInfo*)trackinfo_array[n];
-			priminfo = (bmPrimaryInfo*)priminfo_array[n];
+			trackinfo = (TrackInfo*)trackinfo_array[n];
+			priminfo = (PrimaryInfo*)priminfo_array[n];
 			pID = trackinfo->pID;
 			detectorID = trackinfo->hcID;
 			trackID = trackinfo->trackID;
@@ -78,7 +78,7 @@ void ucnG4_analyzer::analyzeFile(const string& fname) {
 		}
 		
 		// primary event info
-		priminfo = (bmPrimaryInfo*)priminfo_array[0];
+		priminfo = (PrimaryInfo*)priminfo_array[0];
 		primKE = priminfo->KE;
 		primWeight = priminfo->weight;
 		for(unsigned int i=0; i<3; i++)
