@@ -2,8 +2,9 @@
 #define DecayTrapConstruction_HH
 
 #include "DetectorConstructionUtils.hh"
-#include "G4LogicalVolume.hh"
 #include "WiggleSheet.hh"
+
+#include <G4LogicalVolume.hh>
 
 /// gas-filled region containing anode, cathode planes
 class DecayTrapConstruction: public MaterialUser {

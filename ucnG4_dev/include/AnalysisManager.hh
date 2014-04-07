@@ -7,15 +7,6 @@
 #ifndef AnalysisManager_h
 #define AnalysisManager_h
 
-class G4VPhysicalVolume;
-class G4Event;
-class G4Run;
-class G4Track;
-class G4Step;
-class G4PrimaryVertex;
-class G4PrimaryParticle;
-
-#include "globals.hh"
 #include <TH1.h>
 #include <TTree.h>
 #include <TFile.h>
@@ -29,6 +20,15 @@ class G4PrimaryParticle;
 #include "MCEvent.hh"
 #include <vector>
 
+#include <globals.hh>
+
+class G4VPhysicalVolume;
+class G4Event;
+class G4Run;
+class G4Track;
+class G4Step;
+class G4PrimaryVertex;
+class G4PrimaryParticle;
 class AnalysisManager;
 
 extern AnalysisManager *gAnalysisManager; // global AnalysisManager
@@ -79,7 +79,6 @@ private:
 	TFile *fROOTOutputFile;		//< ROOT output file
 	TTree *fEventTree;			//< ROOT output TTree
 	Int_t fRunNumber;  			//< MC run number
-	UInt_t fSeed;				//< MC random seed
 	vector<G4int> detectorIDs;	//< list of SD ID numbers
 	vector<G4String> fSDNames;	//< list of SD names corresponding to ID numbers
 };

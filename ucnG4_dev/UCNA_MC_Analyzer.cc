@@ -1,7 +1,8 @@
-#include "UCNA_MC_Analyzer.hh"
 #include <TMath.h>
 #include <cfloat>
 #include <string.h>
+
+#include "UCNA_MC_Analyzer.hh"
 
 UCNA_MC_Analyzer::UCNA_MC_Analyzer(const std::string& outfname): ucnG4_analyzer(outfname), saveAllEvents(false), undeadLayer(false), calcCathCharge(false) {
 	// set up cathode wire positions array, 0.1 inch wire spacing in cm
@@ -44,25 +45,25 @@ void UCNA_MC_Analyzer::setupOutputTree() {
 	anaTree->Branch("ScintPosSigma",ScintPosSigma,"ScintPosSigmaE[3]/D:ScintPosSigmaW[3]/D");
 	
 	if(calcCathCharge) {
-		for(Side s = EAST; s <= WEST; ++s) {
+		for(Side sd = EAST; sd <= WEST; ++sd) {
 			for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
-				std::string cname = sideSubst("Cath_%c",s)+(d==X_DIRECTION?"X":"Y");
-				anaTree->Branch(cname.c_str(),cathCharge[s][d],(cname+"["+itos(kMaxCathodes)+"]/F").c_str());
+				std::string cname = sideSubst("Cath_%c",sd)+(d==X_DIRECTION?"X":"Y");
+				anaTree->Branch(cname.c_str(),cathCharge[sd][d],(cname+"["+itos(kMaxCathodes)+"]/F").c_str());
 			}
 		}
 	}
 }
 
 void UCNA_MC_Analyzer::resetAnaEvt() {
-	for(Side s = EAST; s <= WEST; ++s) {
-		Edep[s] = EdepQ[s] = 0;
-		fMWPCEnergy[s]=0;
-		hitTime[s]=trapMonTime[s]=FLT_MAX;
+	for(Side sd = EAST; sd <= WEST; ++sd) {
+		Edep[sd] = EdepQ[sd] = 0;
+		fMWPCEnergy[sd]=0;
+		hitTime[sd]=trapMonTime[sd]=FLT_MAX;
 		for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d)
-			MWPCPos[s][d] = ScintPos[s][d] = MWPCPosSigma[s][d] = ScintPosSigma[s][d] = 0;
+			MWPCPos[sd][d] = ScintPos[sd][d] = MWPCPosSigma[sd][d] = ScintPosSigma[sd][d] = 0;
 		if(calcCathCharge)
 			for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d)
-				memset(cathCharge[s][d],0,sizeof(cathCharge[s][d][0])*kMaxCathodes);
+				memset(cathCharge[sd][d],0,sizeof(cathCharge[sd][d][0])*kMaxCathodes);
 	}
 	EdepAll = 0;
 	for(size_t ii=0; ii<N_SD; ii++) {
@@ -116,40 +117,40 @@ void UCNA_MC_Analyzer::processTrack() {
 		}
 	}
 	
-	for(Side s = EAST; s <= WEST; ++s) {
+	for(Side sd = EAST; sd <= WEST; ++sd) {
 		
 		// scintillator deposited energy, position, hit time
-		if(detectorID==ID_scint[s] || (undeadLayer && detectorID==ID_dscint[s])) {
-			Edep[s] += trackinfo->Edep;
-			EdepQ[s] += trackinfo->EdepQuenched;
+		if(detectorID==ID_scint[sd] || (undeadLayer && detectorID==ID_dscint[sd])) {
+			Edep[sd] += trackinfo->Edep;
+			EdepQ[sd] += trackinfo->EdepQuenched;
 			for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
-				ScintPos[s][d] += trackinfo->edepPos[d];
-				ScintPosSigma[s][d] += trackinfo->edepPos2[d];
+				ScintPos[sd][d] += trackinfo->edepPos[d];
+				ScintPosSigma[sd][d] += trackinfo->edepPos2[d];
 			}
 			//earliest hit time with possibly detectable (not really) Edep; hitTime[EAST,WEST] have been initialized to FLT_MAX
-			if(trackinfo->Edep>5.0 && trackinfo->hitTime<hitTime[s]) 
-				hitTime[s] = trackinfo->hitTime;
+			if(trackinfo->Edep>5.0 && trackinfo->hitTime<hitTime[sd]) 
+				hitTime[sd] = trackinfo->hitTime;
 		}
 		
 		// trap monitor timing for electrons, initialized to FLT_MAX
-		if(detectorID==ID_trapmon[s] && (pID==PDG_ELECTRON||pID==PDG_POSITRON)){
-			if(trackinfo->hitTime<trapMonTime[s]) 
-				trapMonTime[s] = trackinfo->hitTime; //earliest hit time 
+		if(detectorID==ID_trapmon[sd] && (pID==PDG_ELECTRON||pID==PDG_POSITRON)){
+			if(trackinfo->hitTime<trapMonTime[sd]) 
+				trapMonTime[sd] = trackinfo->hitTime; //earliest hit time 
 		}
 		
 		// wirechamber deposited energy and position
 		double anodeScale = 0;
-		if(detectorID==ID_deadmwpc[s]) // contribution from "dead" gas
+		if(detectorID==ID_deadmwpc[sd]) // contribution from "dead" gas
 			anodeScale = 0.5;
-		if(detectorID==ID_mwpc[s])
+		if(detectorID==ID_mwpc[sd])
 			anodeScale = 1.0;
 		if(anodeScale && trackinfo->Edep) {
 			Double_t Ew = anodeScale*trackinfo->Edep;
 			
-			fMWPCEnergy[s] += Ew;
+			fMWPCEnergy[sd] += Ew;
 			for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
-				MWPCPos[s][d] += anodeScale*trackinfo->edepPos[d];
-				MWPCPosSigma[s][d] += anodeScale*trackinfo->edepPos2[d];
+				MWPCPos[sd][d] += anodeScale*trackinfo->edepPos[d];
+				MWPCPosSigma[sd][d] += anodeScale*trackinfo->edepPos2[d];
 			}
 			if(calcCathCharge) {
 				double c[Y_DIRECTION+1]; // track center
@@ -164,17 +165,17 @@ void UCNA_MC_Analyzer::processTrack() {
 				const double dlambda = dx/h;	// wire spacing in plane spacing units
 				
 				// Matthieson 5.41+
-				static const double K3 = 0.18; // read off chart for h/s=3.93, r_a/s=0.002
+				static const double K3 = 0.18; // read off chart for h/sd=3.93, r_a/sd=0.002
 				static const double K2 = M_PI/2*(1-0.5*sqrt(K3));
 				static const double K1 = K2*sqrt(K3)/(4.*atan(sqrt(K3))*N_CHG_CIRC_PTS);
 				
 				for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
 					for(int i = 0; i<kWiresPerCathode*kMaxCathodes; i++) {
 						for(int j=0; j<N_CHG_CIRC_PTS; j++) {
-							int flip = (s==EAST && d==X_DIRECTION)?-1:1; // flip for East X because of mirrored position coordinates
+							int flip = (sd==EAST && d==X_DIRECTION)?-1:1; // flip for East X because of mirrored position coordinates
 							const double lambda = (c[d]+cr*circ_pts[d][j]-cathWirePos[i]*flip)/h;
 							const double tkl = tanh(K2*lambda);
-							cathCharge[s][d][i/kWiresPerCathode] += Ew * dlambda * K1 * (1-tkl*tkl) / (1+K3*tkl*tkl);
+							cathCharge[sd][d][i/kWiresPerCathode] += Ew * dlambda * K1 * (1-tkl*tkl) / (1+K3*tkl*tkl);
 						}
 					}
 				}
@@ -185,15 +186,15 @@ void UCNA_MC_Analyzer::processTrack() {
 
 void UCNA_MC_Analyzer::processEvent() {
 	// normalize position variables
-	for(Side s = EAST; s <= WEST; ++s) {
+	for(Side sd = EAST; sd <= WEST; ++sd) {
 		for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
-			if(Edep[s]>0) {
-				ScintPos[s][d] /= Edep[s];
-				ScintPosSigma[s][d] = sqrt(ScintPosSigma[s][d]/Edep[s]-ScintPos[s][d]*ScintPos[s][d]);
+			if(Edep[sd]>0) {
+				ScintPos[sd][d] /= Edep[sd];
+				ScintPosSigma[sd][d] = sqrt(ScintPosSigma[sd][d]/Edep[sd]-ScintPos[sd][d]*ScintPos[sd][d]);
 			}
-			if(fMWPCEnergy[s] > 0) {
-				MWPCPos[s][d] /= fMWPCEnergy[s];
-				MWPCPosSigma[s][d] = sqrt(MWPCPosSigma[s][d]/fMWPCEnergy[s]-MWPCPos[s][d]*MWPCPos[s][d]);
+			if(fMWPCEnergy[sd] > 0) {
+				MWPCPos[sd][d] /= fMWPCEnergy[sd];
+				MWPCPosSigma[sd][d] = sqrt(MWPCPosSigma[sd][d]/fMWPCEnergy[sd]-MWPCPos[sd][d]*MWPCPos[sd][d]);
 			}
 		}
 	}

@@ -1,7 +1,9 @@
-#include "Field.hh"
-#include "G4SystemOfUnits.hh"
 #include <cmath>
 #include <fstream>
+
+#include "Field.hh"
+
+#include <G4SystemOfUnits.hh>
 
 Field::Field(const TString filename): addAFP(false), rmax2(20*20*cm2), fieldScale(1.0) {
 	LoadFieldMap(filename);
@@ -50,11 +52,11 @@ void addAFPFringeField(const G4double Point[3], G4double *Bfield) {
 	double z0 = 100.-Point[0]/cm;								// z distance from dipole center
 	double l = sqrt(Point[1]*Point[1]+Point[2]*Point[2])/cm;	// perpendicular distance from dipole center
 	double r = sqrt(z0*z0+l*l);									// total distance from dipole center
-	const double m = 1.2e3*tesla;								// dipole strength
+	const double dipole_m = 1.2e3*tesla;						// dipole strength
 	
 	double r3 = r*r*r;
-	double b0 = 3*m*(z0/r)/r3;
-	Bfield[0] += b0*(z0/r)-m/r3;
+	double b0 = 3*dipole_m*(z0/r)/r3;
+	Bfield[0] += b0*(z0/r)-dipole_m/r3;
 	Bfield[1] += b0*(Point[1]/cm/r);
 	Bfield[2] += b0*(Point[2]/cm/r);
 }

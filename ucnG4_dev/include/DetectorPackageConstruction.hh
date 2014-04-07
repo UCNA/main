@@ -38,7 +38,7 @@ public:
 	G4double exit_frame_pos;			//< exit window frame pos
 	
 	/// construct logical container volume
-	void Construct(Side s);
+	void Construct(Side sd);
 	
 protected:
 	G4VPhysicalVolume* scint_phys;

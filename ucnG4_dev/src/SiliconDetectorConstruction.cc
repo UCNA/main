@@ -1,4 +1,5 @@
 #include "SiliconDetectorConstruction.hh"
+
 #include <cassert>
 
 void SiliconDetectorConstruction::Construct() {

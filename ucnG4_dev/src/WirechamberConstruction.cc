@@ -1,12 +1,14 @@
-#include "WirechamberConstruction.hh"
-#include "G4PVReplica.hh"
-#include "G4FieldManager.hh"
-#include "G4ChordFinder.hh"
-#include "G4EqMagElectricField.hh"
-#include "G4ClassicalRK4.hh"
 #include <math.h>
 
-void WirechamberConstruction::Construct(Side s) {
+#include "WirechamberConstruction.hh"
+
+#include <G4PVReplica.hh>
+#include <G4FieldManager.hh>
+#include <G4ChordFinder.hh>
+#include <G4EqMagElectricField.hh>
+#include <G4ClassicalRK4.hh>
+
+void WirechamberConstruction::Construct(Side sd) {
 	
 	///////////////////////////////////////////////////
 	// main volume
@@ -14,20 +16,20 @@ void WirechamberConstruction::Construct(Side s) {
 	
 	// construct active gas volume
 	activeRegion.fMWPCGas = fMWPCGas;
-	activeRegion.Construct(s);
+	activeRegion.Construct(sd);
 	
 	mwpcContainer_halfZ = 0.5*(entranceToCathodes+exitToCathodes+activeRegion.GetWidth());
 	const G4double mwpc_volume_width=8.0*inch;		// MWPC gas box width
 	
 	// container volume for all MWPC
 	G4Box* mwpcContainer_box = new G4Box("mwpcContainer_box",mwpc_volume_width/2,mwpc_volume_width/2,mwpcContainer_halfZ);
-	container_log = new G4LogicalVolume(mwpcContainer_box, fMWPCGas,sideSubst("mwpcContainer_log%c",s));
+	container_log = new G4LogicalVolume(mwpcContainer_box, fMWPCGas,sideSubst("mwpcContainer_log%c",sd));
 	container_log->SetVisAttributes(G4VisAttributes::Invisible);
 	
 	// MWPC active gas volume placement with wireplane, relative to MWPC container volume
 	myTranslation = G4ThreeVector(0.,0.,(entranceToCathodes-exitToCathodes)/2);
 	new G4PVPlacement(NULL,myTranslation,
-					  activeRegion.gas_log,sideSubst("mwpc_phys%c",s),container_log,false,0);
+					  activeRegion.gas_log,sideSubst("mwpc_phys%c",sd),container_log,false,0);
 	
 	d = activeRegion.spacing;
 	L = activeRegion.planeSpacing;
@@ -53,7 +55,7 @@ void WirechamberConstruction::Construct(Side s) {
 	G4Box* kevSeg_box = new G4Box("kevSeg_box",kevlar_spacing/2.,kevLength/2.,kev_eff_t/2);
 	G4Box* kevStrip_box = new G4Box("kevStrip_box",kev_eff_w/2.,kevLength/2.,kev_eff_t/2.);
 	
-	kevContainer_log = new G4LogicalVolume(kevContainer_box,Vacuum,sideSubst("kevContainer_log%c",s));
+	kevContainer_log = new G4LogicalVolume(kevContainer_box,Vacuum,sideSubst("kevContainer_log%c",sd));
 	kevSeg_log = new G4LogicalVolume(kevSeg_box,Vacuum,"kevSeg_log");
 	kevStrip_log = new G4LogicalVolume(kevStrip_box,Kevlar,"kevStrip_log");
 	
@@ -62,10 +64,10 @@ void WirechamberConstruction::Construct(Side s) {
 	
 	// place components and replicate array
 	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,kevlarPosZ),
-					  kevContainer_log,sideSubst("kevContainer_phys%c",s),container_log,false,0);
+					  kevContainer_log,sideSubst("kevContainer_phys%c",sd),container_log,false,0);
 	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,0.),
 					  kevStrip_log,"kevStrip_phys",kevSeg_log,false,0);	
-	new G4PVReplica(sideSubst("kevlar_plane_%c",s),
+	new G4PVReplica(sideSubst("kevlar_plane_%c",sd),
 					kevSeg_log,
 					kevContainer_log,
 					kXAxis,
@@ -79,13 +81,13 @@ void WirechamberConstruction::Construct(Side s) {
 	G4Tubs* winInner_tube = new G4Tubs("winInner_tube",0.,mwpc_entrance_R,fWindowThick/2,0.,2*M_PI);  
 	G4Tubs* winOuter_tube = new G4Tubs("winOuter_tube",0.,mwpc_exit_R,fWindowThick/2,0.,2*M_PI); 
 	G4VisAttributes* visWindow = new G4VisAttributes(G4Colour(0,1.0,0,1));
-	winIn_log = new G4LogicalVolume(winInner_tube,Mylar,sideSubst("winIn_log%c",s));
+	winIn_log = new G4LogicalVolume(winInner_tube,Mylar,sideSubst("winIn_log%c",sd));
 	winIn_log->SetVisAttributes(visWindow);
-	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,-mwpcContainer_halfZ+kev_eff_t+fWindowThick/2),winIn_log,sideSubst("winIn%c",s),
+	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,-mwpcContainer_halfZ+kev_eff_t+fWindowThick/2),winIn_log,sideSubst("winIn%c",sd),
 					  container_log,false,0);
-	winOut_log = new G4LogicalVolume(winOuter_tube,Mylar,sideSubst("winOut_log%c",s));
+	winOut_log = new G4LogicalVolume(winOuter_tube,Mylar,sideSubst("winOut_log%c",sd));
 	winOut_log->SetVisAttributes(visWindow);
-	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,mwpcContainer_halfZ-fWindowThick/2),winOut_log,sideSubst("winOut%c",s),
+	new G4PVPlacement(NULL,G4ThreeVector(0.,0.,mwpcContainer_halfZ-fWindowThick/2),winOut_log,sideSubst("winOut%c",sd),
 					  container_log,false,0);
 	
 }

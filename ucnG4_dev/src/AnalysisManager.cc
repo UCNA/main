@@ -6,30 +6,30 @@
 ///Jianglai 05/26/2006
 ///Updated MPM 10/2011
 
-#include "G4ios.hh"
-#include "G4Run.hh"
-#include "G4Event.hh"
-#include "G4Track.hh"
-#include "G4VVisManager.hh"
-#include "G4TrajectoryContainer.hh"
-#include "G4Trajectory.hh"
-#include "G4IonTable.hh"
-#include "G4SDManager.hh"
-#include "G4PrimaryVertex.hh"
-#include "G4PrimaryParticle.hh"
-#include "G4SDManager.hh"
-#include "G4EventManager.hh"
-#include "Randomize.hh"
 #include "SMExcept.hh"
-
-#include "AnalysisManager.hh"
-#include "PrimaryGeneratorAction.hh"
 
 #include <vector>
 #include <string>
 #include <cassert>
 
-using namespace CLHEP;
+#include "AnalysisManager.hh"
+#include "PrimaryGeneratorAction.hh"
+
+#include <Randomize.hh>
+#include <G4ios.hh>
+#include <G4Run.hh>
+#include <G4Event.hh>
+#include <G4Track.hh>
+#include <G4VVisManager.hh>
+#include <G4TrajectoryContainer.hh>
+#include <G4Trajectory.hh>
+#include <G4IonTable.hh>
+#include <G4SDManager.hh>
+#include <G4PrimaryVertex.hh>
+#include <G4PrimaryParticle.hh>
+#include <G4SDManager.hh>
+#include <G4EventManager.hh>
+
 using namespace std;
 
 //a global analysis manager

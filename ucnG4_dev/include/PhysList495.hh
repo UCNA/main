@@ -1,12 +1,8 @@
 #ifndef PhysList495_h
 #define PhysList495_h
 
-#include "G4VModularPhysicsList.hh"
-
-class G4VPhysicsConstructor;
-//class StepMax;
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+#include <G4VModularPhysicsList.hh>
+#include <G4VPhysicsConstructor.hh>
 
 class PhysList495: public G4VModularPhysicsList {
 public:
@@ -37,7 +33,5 @@ private:
     
 	//StepMax* stepMaxProcess;
 };
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #endif

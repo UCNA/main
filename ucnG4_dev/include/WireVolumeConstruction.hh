@@ -21,7 +21,7 @@ public:
 	G4LogicalVolume* anode_wire_log;	//< anode wires logical volume
 	
 	/// construct logical container volume
-	void Construct(Side s);
+	void Construct(Side sd);
 	
 	const G4double anode_R;				//< anode wire radius
 	const G4double cathode_R;			//< cathode wire radius

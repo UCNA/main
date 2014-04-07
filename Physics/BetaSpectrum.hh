@@ -16,7 +16,7 @@ const double neutronBetaEp = 782.347;			//< neutron beta decay endpoint, keV
 const double m_e = 511.00;						//< electron mass, keV/c^2
 const double m_p = 938272.046;					//< proton mass, keV/c^2
 const double m_n = m_p+m_e+neutronBetaEp;		//< neutron mass, keV/c^2
-const double alpha = 1./137.036;				//< fine structure constant
+const double fs_alpha = 1./137.036;				//< fine structure constant
 const double lambda = fabs(-1.2694);			//< +/-0.0028, PDG 2010 value, Wilkinson sign convention
 const double A0_PDG = -0.1173;					//< +/-0.0013, PDG 2010 value
 const double beta_W0 = (neutronBetaEp+m_e)/m_e;	//< beta spectrum endpoint, ``natural'' units
@@ -35,7 +35,7 @@ inline double plainPhaseSpace(double W, double W0=beta_W0) { return (1.<W && W<W
 inline double beta(double KE, double m = m_e) { return sqrt(KE*KE+2*m*KE)/(m+KE); }
 
 /// lowest order approximation of F
-inline double crudeF(double Z, double W) { return 1+M_PI*alpha*Z*W/sqrt(W*W-1.); }
+inline double crudeF(double Z, double W) { return 1+M_PI*fs_alpha*Z*W/sqrt(W*W-1.); }
 /// power series approximation of F(Z,W;R) in [1]
 double WilkinsonF_PowerSeries(double Z, double W, double R=neutron_R0);
 /// Wilkinson's F0(Z,W;R) as in [0],[1],[2],[3]; using complex gamma approximation to N terms

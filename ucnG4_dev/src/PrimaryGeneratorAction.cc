@@ -1,52 +1,15 @@
-//// ********************************************************************
-// * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE  and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
-// ********************************************************************
-//
-//
-// $Id: PrimaryGeneratorAction.cc,v 1.34 2011-12-12 01:29:37 mmendenhall Exp $
-// GEANT4 tag $Name:  $
-//
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-#include "PrimaryGeneratorAction.hh"
-#include "G4ParticleTable.hh"
-#include "G4ParticleDefinition.hh"
 #include "BetaSpectrum.hh"
 #include "Enums.hh"
-#include "globals.hh"
-#include "Randomize.hh"
-#include "AnalysisManager.hh"
 #include "PathUtils.hh"
 #include "SMExcept.hh"
-#include "SurfaceGenerator.hh"
+
+#include <TRandom.h>
+#include <TF2.h>
+
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <TString.h>
-#include <TRandom.h>
-#include <TF2.h>
-
 #include <unistd.h>
 #include <vector>
 #include <algorithm>
@@ -54,8 +17,14 @@
 #include <numeric>
 #include <bitset>  // djaffe 2aug06
 
-namespace CLHEP {}
-using namespace CLHEP;
+#include "AnalysisManager.hh"
+#include "SurfaceGenerator.hh"
+#include "PrimaryGeneratorAction.hh"
+
+#include <globals.hh>
+#include <Randomize.hh>
+#include <G4ParticleTable.hh>
+#include <G4ParticleDefinition.hh>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -166,7 +135,7 @@ void PrimaryGeneratorAction::initEventRandomSeed(G4Event* anEvent) {
 	if ( seed.test(31) ) seed.reset(31) ;
 	
 	myseed = seed.to_ulong();
-	HepRandom::setTheSeed(myseed);	// random seed for Geant
+	CLHEP::HepRandom::setTheSeed(myseed);	// random seed for Geant
 	gRandom->SetSeed(myseed);		// random seed for ROOT
 	G4cout<<"run "<<gAnalysisManager->GetRunNumber()<<" evt "<<anEvent->GetEventID()<<" seed "<<myseed<<G4endl;
 }

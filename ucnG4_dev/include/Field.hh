@@ -1,14 +1,16 @@
 //2-19-02 J. Yuan: magnet field for UCNA experiment
+//Modified MPM 2011-2014
 ////////////////////////////////////////////////////
 
-#ifndef Field_H
-#define Field_H
+#ifndef FIELD_HH
+#define FIELD_HH
 
-#include "globals.hh"
-#include "G4MagneticField.hh"
 #include <TString.h>
-#include "G4ThreeVector.hh"
 #include <vector>
+
+#include <globals.hh>
+#include <G4MagneticField.hh>
+#include <G4ThreeVector.hh>
 
 using namespace std;
 

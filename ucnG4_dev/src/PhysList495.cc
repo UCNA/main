@@ -1,22 +1,18 @@
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 #include "PhysList495.hh"
 
-#include "G4SystemOfUnits.hh"
-#include "G4EmLivermorePhysics.hh"
-#include "G4EmPenelopePhysics.hh"
+#include <G4SystemOfUnits.hh>
+#include <G4EmLivermorePhysics.hh>
+#include <G4EmPenelopePhysics.hh>
 
-#include "G4Gamma.hh"
-#include "G4Electron.hh"
-#include "G4Positron.hh"
+#include <G4Gamma.hh>
+#include <G4Electron.hh>
+#include <G4Positron.hh>
 
-#include "G4LossTableManager.hh"
-#include "G4EmConfigurator.hh"
-#include "G4UnitsTable.hh"
+#include <G4LossTableManager.hh>
+#include <G4EmConfigurator.hh>
+#include <G4UnitsTable.hh>
 
-#include "G4ProcessManager.hh"
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+#include <G4ProcessManager.hh>
 
 PhysList495::PhysList495(bool usePenelope) : G4VModularPhysicsList() {
 	
@@ -38,13 +34,10 @@ PhysList495::PhysList495(bool usePenelope) : G4VModularPhysicsList() {
 	}
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 PhysList495::~PhysList495() {
 	delete emPhysicsList;
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 ////////////////////////////////////////////////////////////////////////////
 // Construct Particles /////////////////////////////////////////////////////
 
@@ -52,16 +45,12 @@ void PhysList495::ConstructParticle() {
 	emPhysicsList->ConstructParticle();
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 void PhysList495::ConstructProcess() {
 	// transportation process
 	AddTransportation();
 	// electromagnetic physics list
 	emPhysicsList->ConstructProcess();
 }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 /*
 void Livermore_EMPhysList::AddStepMax()
@@ -79,8 +68,6 @@ void Livermore_EMPhysList::AddStepMax()
 	}
 }
 */
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void PhysList495::SetCuts() {
 	
@@ -103,25 +90,17 @@ void PhysList495::SetCuts() {
 	if (verboseLevel>0) DumpCutValuesTable();
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 void PhysList495::SetCutForGamma(G4double cut) {
 	cutForGamma = cut;
 	SetParticleCuts(cutForGamma, G4Gamma::Gamma());
 }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void PhysList495::SetCutForElectron(G4double cut) {
 	cutForElectron = cut;
 	SetParticleCuts(cutForElectron, G4Electron::Electron());
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 void PhysList495::SetCutForPositron(G4double cut) {
 	cutForPositron = cut;
 	SetParticleCuts(cutForPositron, G4Positron::Positron());
 }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

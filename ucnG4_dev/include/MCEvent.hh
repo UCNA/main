@@ -1,8 +1,9 @@
 #ifndef __MCEvent_hh__
 #define __MCEvent_hh__
 
-#include "TObject.h"
-#include "TClonesArray.h"
+#include <TObject.h>
+#include <TClonesArray.h>
+
 #include "TrackInfo.hh"
 #include "PrimaryInfo.hh"
 

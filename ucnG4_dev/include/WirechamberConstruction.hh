@@ -1,12 +1,12 @@
 #ifndef WirechamberConstruction_HH
 #define WirechamberConstruction_HH
 
-#include "G4ElectroMagneticField.hh"
-#include "G4MagneticField.hh"
-#include "G4RotationMatrix.hh"
-
 #include "DetectorConstructionUtils.hh"
 #include "WireVolumeConstruction.hh"
+
+#include <G4ElectroMagneticField.hh>
+#include <G4MagneticField.hh>
+#include <G4RotationMatrix.hh>
 
 /// class for constructing entire wirechamber
 class WirechamberConstruction: public MaterialUser, G4ElectroMagneticField {
@@ -36,7 +36,7 @@ public:
 	G4LogicalVolume* kevStrip_log;		//< kevlar strip in one segment
 	
 	/// construct logical container volume
-	void Construct(Side s);
+	void Construct(Side sd);
 	
 	/// electromagnetic field
 	virtual void  GetFieldValue(const G4double Point[4], G4double* Bfield) const;

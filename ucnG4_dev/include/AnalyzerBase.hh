@@ -1,3 +1,9 @@
+#include <TFile.h>
+#include <TTree.h>
+#include <TClonesArray.h>
+#include <TVector3.h>
+#include <Rtypes.h>
+
 #include <vector>
 #include <stdlib.h>
 #include <math.h>
@@ -5,14 +11,8 @@
 #include <fstream>
 #include <cassert>
 
-#include <TFile.h>
-#include <TTree.h>
-#include <TClonesArray.h>
-#include <TVector3.h>
-#include <Rtypes.h>
-
-#include "MCEvent.hh"
 #include "TrackInfo.hh"
+#include "MCEvent.hh"
 #include "PrimaryInfo.hh"
 
 using namespace std;

@@ -1,7 +1,8 @@
-#include "MCEvent.hh"
 #include <iostream>
 #include <cassert>
-#include "TClonesArray.h"
+#include <TClonesArray.h>
+
+#include "MCEvent.hh"
 
 ClassImp(MCEvent)
 

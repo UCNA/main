@@ -1,55 +1,22 @@
-//
-// ********************************************************************
-// * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE  and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
-// ********************************************************************
-//
-//
-// $Id: DetectorConstruction.cc,v 1.41 2011-12-18 10:15:42 mmendenhall Exp $
-// GEANT4 tag $Name:  $
-//
+#include "SMExcept.hh"
+#include <cassert>
 
-#include "DetectorConstruction.hh"
 #include "AnalysisManager.hh"
-
-#include "G4SubtractionSolid.hh"
-#include "G4SDManager.hh"
-#include "G4RunManager.hh"
-
-#include "G4MagneticField.hh"
-#include "G4FieldManager.hh"
-#include "G4ChordFinder.hh"
-#include "G4PropagatorInField.hh"
-#include "G4TransportationManager.hh"
-
-#include "G4UserLimits.hh"
-#include "G4PVParameterised.hh"
-
 #include "TrackerSD.hh"
 #include "Field.hh"
+#include "DetectorConstruction.hh"
 
-#include "SMExcept.hh"
+#include <G4SubtractionSolid.hh>
+#include <G4SDManager.hh>
+#include <G4RunManager.hh>
 
-#include <cassert>
+#include <G4MagneticField.hh>
+#include <G4FieldManager.hh>
+#include <G4ChordFinder.hh>
+#include <G4PropagatorInField.hh>
+#include <G4TransportationManager.hh>
+#include <G4UserLimits.hh>
+#include <G4PVParameterised.hh>
 
 DetectorConstruction::DetectorConstruction(): fpMagField(NULL) {
 	
@@ -116,11 +83,11 @@ DetectorConstruction::DetectorConstruction(): fpMagField(NULL) {
 	fCrinkleAngleCmd->AvailableForStates(G4State_PreInit);
 	fCrinkleAngle = 0.;
 
-	for(Side s = EAST; s <= WEST; ++s) {
-		fMatterScaleCmd[s] = new G4UIcmdWithADouble(sideSubst("/detector/matterscale%c",s).c_str(),this);
-		fMatterScaleCmd[s]->SetGuidance("Matter interaction scaling factor");
-		fMatterScaleCmd[s]->SetDefaultValue(1.0);
-		fMatterScale[s] = 1.0;
+	for(Side sd = EAST; sd <= WEST; ++sd) {
+		fMatterScaleCmd[sd] = new G4UIcmdWithADouble(sideSubst("/detector/matterscale%c",sd).c_str(),this);
+		fMatterScaleCmd[sd]->SetGuidance("Matter interaction scaling factor");
+		fMatterScaleCmd[sd]->SetDefaultValue(1.0);
+		fMatterScale[sd] = 1.0;
 	}
 	
 	fScintStepLimitCmd = new G4UIcmdWithADoubleAndUnit("/detector/scintstepsize",this);
@@ -276,98 +243,98 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 		// beta decay setup components
 		////////////////////////////////////////
 		trap.Construct(experimentalHall_log, fCrinkleAngle);
-		for(Side s = EAST; s <= WEST; ++s) {
-			dets[s].mwpc.entranceToCathodes += fMWPCBowing;
-			//dets[s].mwpc.exitToCathodes += fMWPCBowing/2.;
+		for(Side sd = EAST; sd <= WEST; ++sd) {
+			dets[sd].mwpc.entranceToCathodes += fMWPCBowing;
+			//dets[sd].mwpc.exitToCathodes += fMWPCBowing/2.;
 			
-			dets[s].Construct(s);
+			dets[sd].Construct(sd);
 			G4RotationMatrix* sideFlip = new G4RotationMatrix();
-			sideFlip->rotateZ(fDetRot*ssign(s)*rad);
-			if(s==EAST)
+			sideFlip->rotateZ(fDetRot*ssign(sd)*rad);
+			if(sd==EAST)
 				sideFlip->rotateY(M_PI*rad);
-			G4ThreeVector sideTrans = G4ThreeVector(0.,0.,ssign(s)*(2.2*m-dets[s].getScintFacePos()))+fDetOffset*ssign(s);
+			G4ThreeVector sideTrans = G4ThreeVector(0.,0.,ssign(sd)*(2.2*m-dets[sd].getScintFacePos()))+fDetOffset*ssign(sd);
 			
-			detPackage_phys[s] = new G4PVPlacement(sideFlip,sideTrans,
-												   dets[s].container_log,sideSubst("detPackage_phys%c",s),experimentalHall_log,false,0);
+			detPackage_phys[sd] = new G4PVPlacement(sideFlip,sideTrans,
+												   dets[sd].container_log,sideSubst("detPackage_phys%c",sd),experimentalHall_log,false,0);
 			
-			dets[s].mwpc.myRotation = sideFlip;
-			dets[s].mwpc.myTranslation = (*sideFlip)(dets[s].mwpc.myTranslation);
-			dets[s].mwpc.myTranslation += sideTrans;
-			dets[s].mwpc.setPotential(2700*volt);
+			dets[sd].mwpc.myRotation = sideFlip;
+			dets[sd].mwpc.myTranslation = (*sideFlip)(dets[sd].mwpc.myTranslation);
+			dets[sd].mwpc.myTranslation += sideTrans;
+			dets[sd].mwpc.setPotential(2700*volt);
 			
-			trap.trap_win_log[s]->SetUserLimits(UserSolidLimits);
-			dets[s].mwpc.container_log->SetUserLimits(UserGasLimits);
-			dets[s].mwpc.winIn_log->SetUserLimits(UserSolidLimits);
-			dets[s].mwpc.winOut_log->SetUserLimits(UserSolidLimits);
-			dets[s].mwpc.kevStrip_log->SetUserLimits(UserSolidLimits);
-			dets[s].scint.container_log->SetUserLimits(UserSolidLimits);
+			trap.trap_win_log[sd]->SetUserLimits(UserSolidLimits);
+			dets[sd].mwpc.container_log->SetUserLimits(UserGasLimits);
+			dets[sd].mwpc.winIn_log->SetUserLimits(UserSolidLimits);
+			dets[sd].mwpc.winOut_log->SetUserLimits(UserSolidLimits);
+			dets[sd].mwpc.kevStrip_log->SetUserLimits(UserSolidLimits);
+			dets[sd].scint.container_log->SetUserLimits(UserSolidLimits);
 		}
 		
-		for(Side s = EAST; s <= WEST; ++s ) {
+		for(Side sd = EAST; sd <= WEST; ++sd ) {
 			
-			scint_SD[s] = registerSD(sideSubst("scint_SD%c",s));
-			dets[s].scint.scint_log->SetSensitiveDetector(scint_SD[s]);
+			scint_SD[sd] = registerSD(sideSubst("scint_SD%c",sd));
+			dets[sd].scint.scint_log->SetSensitiveDetector(scint_SD[sd]);
 			
-			Dscint_SD[s] = registerSD(sideSubst("Dscint_SD%c",s));
-			dets[s].scint.Dscint_log->SetSensitiveDetector(Dscint_SD[s]);
-			dets[s].scint.container_log->SetSensitiveDetector(Dscint_SD[s]);
-			dets[s].mwpc_exit_N2_log->SetSensitiveDetector(Dscint_SD[s]);		// include N2 volume here
-			dets[s].scint.lightguide_log->SetSensitiveDetector(Dscint_SD[s]);	// and also light guides
+			Dscint_SD[sd] = registerSD(sideSubst("Dscint_SD%c",sd));
+			dets[sd].scint.Dscint_log->SetSensitiveDetector(Dscint_SD[sd]);
+			dets[sd].scint.container_log->SetSensitiveDetector(Dscint_SD[sd]);
+			dets[sd].mwpc_exit_N2_log->SetSensitiveDetector(Dscint_SD[sd]);		// include N2 volume here
+			dets[sd].scint.lightguide_log->SetSensitiveDetector(Dscint_SD[sd]);	// and also light guides
 
-			backing_SD[s] = registerSD(sideSubst("backing_SD%c",s));
-			dets[s].scint.backing_log->SetSensitiveDetector(backing_SD[s]);
+			backing_SD[sd] = registerSD(sideSubst("backing_SD%c",sd));
+			dets[sd].scint.backing_log->SetSensitiveDetector(backing_SD[sd]);
 			
-			winOut_SD[s] = registerSD(sideSubst("winOut_SD%c",s));
-			dets[s].mwpc.winOut_log->SetSensitiveDetector(winOut_SD[s]);
+			winOut_SD[sd] = registerSD(sideSubst("winOut_SD%c",sd));
+			dets[sd].mwpc.winOut_log->SetSensitiveDetector(winOut_SD[sd]);
 			
-			winIn_SD[s] = registerSD(sideSubst("winIn_SD%c",s));
-			dets[s].mwpc.winIn_log->SetSensitiveDetector(winIn_SD[s]);
+			winIn_SD[sd] = registerSD(sideSubst("winIn_SD%c",sd));
+			dets[sd].mwpc.winIn_log->SetSensitiveDetector(winIn_SD[sd]);
 			
-			trap_win_SD[s] = registerSD(sideSubst("trap_win_SD%c",s));
-			trap.mylar_win_log[s]->SetSensitiveDetector(trap_win_SD[s]);
-			trap.be_win_log[s]->SetSensitiveDetector(trap_win_SD[s]);
-			trap.wigglefoils[s].SetSensitiveDetector(trap_win_SD[s]);
+			trap_win_SD[sd] = registerSD(sideSubst("trap_win_SD%c",sd));
+			trap.mylar_win_log[sd]->SetSensitiveDetector(trap_win_SD[sd]);
+			trap.be_win_log[sd]->SetSensitiveDetector(trap_win_SD[sd]);
+			trap.wigglefoils[sd].SetSensitiveDetector(trap_win_SD[sd]);
 			
-			mwpc_SD[s] = registerSD(sideSubst("mwpc_SD%c",s));
-			dets[s].mwpc.activeRegion.gas_log->SetSensitiveDetector(mwpc_SD[s]);
-			dets[s].mwpc.activeRegion.anodeSeg_log->SetSensitiveDetector(mwpc_SD[s]);
-			dets[s].mwpc.activeRegion.cathSeg_log->SetSensitiveDetector(mwpc_SD[s]);
+			mwpc_SD[sd] = registerSD(sideSubst("mwpc_SD%c",sd));
+			dets[sd].mwpc.activeRegion.gas_log->SetSensitiveDetector(mwpc_SD[sd]);
+			dets[sd].mwpc.activeRegion.anodeSeg_log->SetSensitiveDetector(mwpc_SD[sd]);
+			dets[sd].mwpc.activeRegion.cathSeg_log->SetSensitiveDetector(mwpc_SD[sd]);
 			
-			mwpc_planes_SD[s] = registerSD(sideSubst("mwpc_planes_SD%c",s));
-			dets[s].mwpc.activeRegion.cathode_wire_log->SetSensitiveDetector(mwpc_planes_SD[s]);
-			dets[s].mwpc.activeRegion.cath_plate_log->SetSensitiveDetector(mwpc_planes_SD[s]);
-			dets[s].mwpc.activeRegion.anode_wire_log->SetSensitiveDetector(mwpc_planes_SD[s]);
+			mwpc_planes_SD[sd] = registerSD(sideSubst("mwpc_planes_SD%c",sd));
+			dets[sd].mwpc.activeRegion.cathode_wire_log->SetSensitiveDetector(mwpc_planes_SD[sd]);
+			dets[sd].mwpc.activeRegion.cath_plate_log->SetSensitiveDetector(mwpc_planes_SD[sd]);
+			dets[sd].mwpc.activeRegion.anode_wire_log->SetSensitiveDetector(mwpc_planes_SD[sd]);
 			
-			mwpcDead_SD[s] = registerSD(sideSubst("mwpcDead_SD%c",s));
-			dets[s].mwpc.container_log->SetSensitiveDetector(mwpcDead_SD[s]);
+			mwpcDead_SD[sd] = registerSD(sideSubst("mwpcDead_SD%c",sd));
+			dets[sd].mwpc.container_log->SetSensitiveDetector(mwpcDead_SD[sd]);
 			
-			kevlar_SD[s] = registerSD(sideSubst("kevlar_SD%c",s));
-			dets[s].mwpc.kevStrip_log->SetSensitiveDetector(kevlar_SD[s]);
+			kevlar_SD[sd] = registerSD(sideSubst("kevlar_SD%c",sd));
+			dets[sd].mwpc.kevStrip_log->SetSensitiveDetector(kevlar_SD[sd]);
 			
 		}
 		
 		// source holder
 		source_SD = registerSD("source_SD");
 		source.window_log->SetSensitiveDetector(source_SD);
-		for(Side s = EAST; s <= WEST; ++s)
-			source.coating_log[s]->SetSensitiveDetector(source_SD);
+		for(Side sd = EAST; sd <= WEST; ++sd)
+			source.coating_log[sd]->SetSensitiveDetector(source_SD);
 		
 		// decay trap monitor volumes
-		for(Side s = EAST; s <= WEST; ++s ) {
-			trap_monitor_SD[s] = registerSD(sideSubst("trap_monitor_SD%c",s));
-			trap.trap_monitor_log[s]->SetSensitiveDetector(trap_monitor_SD[s]);
+		for(Side sd = EAST; sd <= WEST; ++sd ) {
+			trap_monitor_SD[sd] = registerSD(sideSubst("trap_monitor_SD%c",sd));
+			trap.trap_monitor_log[sd]->SetSensitiveDetector(trap_monitor_SD[sd]);
 		}
 		
 		// experimental hall vacuum, decay tube, other inert parts
 		hall_SD = registerSD("hall_SD");
 		experimentalHall_log->SetSensitiveDetector(hall_SD);
 		trap.decayTube_log->SetSensitiveDetector(hall_SD);
-		for(Side s = EAST; s <= WEST; ++s ) {
-			dets[s].mwpc_entrance_log->SetSensitiveDetector(hall_SD);
-			dets[s].mwpc_exit_log->SetSensitiveDetector(hall_SD);
-			dets[s].container_log->SetSensitiveDetector(hall_SD);
-			trap.collimator_log[s]->SetSensitiveDetector(hall_SD);
-			trap.collimatorBack_log[s]->SetSensitiveDetector(hall_SD);
+		for(Side sd = EAST; sd <= WEST; ++sd ) {
+			dets[sd].mwpc_entrance_log->SetSensitiveDetector(hall_SD);
+			dets[sd].mwpc_exit_log->SetSensitiveDetector(hall_SD);
+			dets[sd].container_log->SetSensitiveDetector(hall_SD);
+			trap.collimator_log[sd]->SetSensitiveDetector(hall_SD);
+			trap.collimatorBack_log[sd]->SetSensitiveDetector(hall_SD);
 		}
 		
 		// construct magnetic field
@@ -430,9 +397,9 @@ void DetectorConstruction::ConstructField(const TString filename) {
 		
 		fieldIsInitialized = true;
 		
-		for(Side s = EAST; s <= WEST; ++s) {
-			dets[s].mwpc.myBField = fpMagField;
-			dets[s].mwpc.ConstructField();
+		for(Side sd = EAST; sd <= WEST; ++sd) {
+			dets[sd].mwpc.myBField = fpMagField;
+			dets[sd].mwpc.ConstructField();
 		}
 	}
 }

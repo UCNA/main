@@ -29,7 +29,7 @@ public:
 	G4LogicalVolume* lightguide_log;	//< lightguide material logical volume
 	
 	/// construct logical container volume
-	void Construct(Side s);
+	void Construct(Side sd);
 	
 protected:
 	G4double scintFacePos;				//< position of scintillator face in container

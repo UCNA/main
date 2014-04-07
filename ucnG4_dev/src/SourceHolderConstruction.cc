@@ -1,5 +1,6 @@
 #include "SourceHolderConstruction.hh"
-#include "G4SubtractionSolid.hh"
+
+#include <G4SubtractionSolid.hh>
 
 
 SourceHolderConstruction::SourceHolderConstruction():
@@ -52,11 +53,11 @@ void SourceHolderConstruction::Construct() {
 	
 	// source foil coating
 	G4Tubs* coating_tube = new G4Tubs("source_coating_tube",0.,fSourceWindowRadius,fCoatingThick*0.5,0.,2*M_PI);
-	for(Side s = EAST; s <= WEST; ++s) {
-		coating_log[s] = new G4LogicalVolume(coating_tube,fCoatingMat,sideSubst("source_coating_log_%c",s));
-		coating_log[s]->SetVisAttributes(new G4VisAttributes(G4Colour(0,1,0,0.5)));
-		coating_phys[s] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(s)*(fWindowThick+fCoatingThick*0.5)),
-											coating_log[s],sideSubst("source_coating_phys_%c",s),container_log,false,0);
+	for(Side sd = EAST; sd <= WEST; ++sd) {
+		coating_log[sd] = new G4LogicalVolume(coating_tube,fCoatingMat,sideSubst("source_coating_log_%c",sd));
+		coating_log[sd]->SetVisAttributes(new G4VisAttributes(G4Colour(0,1,0,0.5)));
+		coating_phys[sd] = new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(sd)*(fWindowThick+fCoatingThick*0.5)),
+											coating_log[sd],sideSubst("source_coating_phys_%c",sd),container_log,false,0);
 	}
 	
 	// source retaining ring

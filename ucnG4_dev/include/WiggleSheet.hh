@@ -1,20 +1,20 @@
 #ifndef WIGGLESHEET_HH
 #define WIGGLESHEET_HH
 
-#include "G4LogicalVolume.hh"
-#include "G4VSensitiveDetector.hh"
-#include "G4VisAttributes.hh"
-#include "G4SystemOfUnits.hh"
 #include <vector>
+
+#include <G4SystemOfUnits.hh>
+#include <G4LogicalVolume.hh>
+#include <G4VSensitiveDetector.hh>
+#include <G4VisAttributes.hh>
 
 /// build a wavy sheet of materials
 class WiggleSheet {
 public:
 	/// constructor
-	WiggleSheet(double tm = M_PI/4., double pd = 2*mm, unsigned int n = 75, double l = 75*mm):
-	thetaMax(tm), period(pd), nseg(n), length(l), containerMat(NULL), ttotal(0) {}
+	WiggleSheet(double tm = M_PI/4., double pd = 2*mm, unsigned int n = 75, double l = 75*mm);
 	/// add material layer of given thickness (optionally "stretched" to preserve equivalent flat thickness)
-	void addLayer(G4Material* m, double t, bool stretched = false, G4VisAttributes* va = NULL);
+	void addLayer(G4Material* mt, double t, bool stretched = false, G4VisAttributes* va = NULL);
 	/// build geometry
 	void Construct();
 	/// set sensitive detector for all volumes

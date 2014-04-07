@@ -1,15 +1,20 @@
-#include "WiggleSheet.hh"
-#include "G4Box.hh"
-#include "G4Tubs.hh"
-#include "G4PVPlacement.hh"
 #include "SMExcept.hh"
 #include <cmath>
 
-void WiggleSheet::addLayer(G4Material* m, double t, bool stretched, G4VisAttributes* va) {
+#include "WiggleSheet.hh"
+
+#include <G4Box.hh>
+#include <G4Tubs.hh>
+#include <G4PVPlacement.hh>
+
+WiggleSheet::WiggleSheet(double tm, double pd, unsigned int n, double l):
+thetaMax(tm), period(pd), nseg(n), length(l), containerMat(NULL), ttotal(0) {}
+
+void WiggleSheet::addLayer(G4Material* mt, double t, bool stretched, G4VisAttributes* va) {
 	if(!t) return;
-	assert(m);
+	assert(mt);
 	if(stretched) t /= getStretch();
-	layerMat.push_back(m);
+	layerMat.push_back(mt);
 	layerThick.push_back(t);
 	layerVis.push_back(va);
 	ttotal += t;

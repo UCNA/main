@@ -2,9 +2,10 @@
 #define SourceHolderConstruction_HH
 
 #include "DetectorConstructionUtils.hh"
-#include "G4UImessenger.hh"
-#include "G4UIdirectory.hh"
-#include "G4UIcmdWithADoubleAndUnit.hh"
+
+#include <G4UImessenger.hh>
+#include <G4UIdirectory.hh>
+#include <G4UIcmdWithADoubleAndUnit.hh>
 
 /// gas-filled region containing anode, cathode planes
 class SourceHolderConstruction: public MaterialUser, G4UImessenger {

@@ -1,9 +1,10 @@
 #ifndef SURFACEGNERATOR_HH
 #define SURFACEGNERATOR_HH
 
-#include <G4ThreeVector.hh>
 #include <vector>
 #include <cmath>
+
+#include <G4ThreeVector.hh>
 
 /// base class for portion of a surface
 class SurfaceSeg {
@@ -61,7 +62,7 @@ public:
 	/// get surface area
 	virtual double getArea() const { return cumweights.back(); }
 	/// add sub-segment
-	void addSegment(SurfaceSeg* s, double w = 1.0);
+	void addSegment(SurfaceSeg* sg, double w = 1.0);
 	
 protected:
 	/// get random point in local coordinates
