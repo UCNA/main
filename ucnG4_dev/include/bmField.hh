@@ -27,9 +27,14 @@ public:
 	void SetFieldScale(const G4double val) { fieldScale=val; }
 	/// load fieldmap from file
 	void LoadFieldMap(const TString filename);
+        //stuff added to use Robby's method rewritted in C++
+        G4double calculate_BZ(double x, double y, double z) const;
+        G4double calculate_BP(double x, double y, double z) const;
+  //G4double BP, BX, BY, BZ, P;
+        const double A, B, C, D;
 	
 	bool addAFP;	//< whether to add the AFP fringe field
-	
+
 private:
 	/// add point to field profile
 	void addPoint(G4double z, G4double B) { Zpoints.push_back(z); Bpoints.push_back(B); }
@@ -38,6 +43,8 @@ private:
 	G4double rmax2;				//< max radius squared (position in world volume) to apply field
 	G4double fieldScale;		//< scaling factor for field strength
         bool RobbyField;
+        
+        
 };
 
 #endif
