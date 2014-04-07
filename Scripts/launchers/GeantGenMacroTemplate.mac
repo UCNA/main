@@ -9,7 +9,7 @@
 /files/output %(outfile)s
 
 # run number
-/bm/run/runNumber %(run_num)i
+/run/runNumber %(run_num)i
 
 # spectrometer decay trap geometry name
 /detector/geometry %(geometry)s

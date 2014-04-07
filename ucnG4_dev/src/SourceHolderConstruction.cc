@@ -41,7 +41,6 @@ void SourceHolderConstruction::Construct() {
 	G4SubtractionSolid* holder = new G4SubtractionSolid("source_holder", holder_box, holder_hole);
 	G4LogicalVolume* holder_log = new G4LogicalVolume(holder,Brass,"source_holder_log");
 	holder_log->SetVisAttributes(new G4VisAttributes(G4Colour(0.7,0.7,0,0.5)));
-	G4VPhysicalVolume* holder_phys = NULL;
 	holder_phys = new G4PVPlacement(NULL,G4ThreeVector(),holder_log,"source_holder_phys",container_log,false,0);
 	
 	// sealed source foil
@@ -65,6 +64,5 @@ void SourceHolderConstruction::Construct() {
 								   fSourceRingThickness/2,0.,2*M_PI);
 	G4LogicalVolume* ring_log = new G4LogicalVolume(ring_tube,Al,"source_ring_log");
 	ring_log->SetVisAttributes(new G4VisAttributes(G4Colour(0.7,0.7,0.7,0.5)));
-	G4VPhysicalVolume* ring_phys;
 	ring_phys = new G4PVPlacement(NULL,G4ThreeVector(),ring_log,"source_ring_phys",container_log,false,0);
 }

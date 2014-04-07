@@ -34,6 +34,9 @@ public:
 protected:
 	G4VPhysicalVolume* window_phys;
 	G4VPhysicalVolume* coating_phys[2];
+	G4VPhysicalVolume* holder_phys;
+	G4VPhysicalVolume* ring_phys;
+		
 	G4double fSourceHolderThickness;
 
 private:

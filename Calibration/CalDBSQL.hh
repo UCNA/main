@@ -114,12 +114,12 @@ public:
 
 protected:
 	/// constructor (use CalDBSQL::getCDB() if you need access to DB)
-	CalDBSQL(const std::string& dbName = getEnvSafe("UCNADB"),
+	CalDBSQL(const std::string& mydbName = getEnvSafe("UCNADB"),
 			 const std::string& dbAddress = getEnvSafe("UCNADBADDRESS"),
 			 const std::string& dbUser =  getEnvSafe("UCNADBUSER_READONLY"),
 			 const std::string& dbPass = getEnvSafe("UCNADBPASS_READONLY"),
 			 unsigned int port = atoi(getEnvSafe("UCNADBPORT","3306").c_str())
-			 ): SQLHelper(dbName,dbAddress,dbUser,dbPass,port) {}
+			 ): SQLHelper(mydbName,dbAddress,dbUser,dbPass,port) {}
 	/// get sensor ID for given name
 	unsigned int getSensorID(const std::string& sname);
 	/// get calibration set table info for given run

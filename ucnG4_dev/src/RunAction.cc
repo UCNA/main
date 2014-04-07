@@ -22,9 +22,9 @@ RunAction::RunAction() {
 	//So create a run number UI command, and a variable in
 	//dywAnalysisManager::fRunNumber.
 	//Jianglai 10-01-2006
-	fRunDir = new G4UIdirectory("//run/");
+	fRunDir = new G4UIdirectory("/run/");
 	fRunDir->SetGuidance(" customized run control");
-	fRunNumberCmd = new G4UIcommand("//run/runNumber",this);
+	fRunNumberCmd = new G4UIcommand("/run/runNumber",this);
 	fRunNumberCmd->SetGuidance("Set the run Number.");
 	fRunNumberCmd->SetParameter( new G4UIparameter("run number", 'i', true) ); 
 }
