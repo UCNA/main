@@ -2,7 +2,6 @@
 #include "SMExcept.hh"
 #include "GraphicsUtils.hh"
 #include <cmath>
-#include "SMExcept.hh"
 #include <algorithm>
 
 #define kUndefinedPosition 666

@@ -2,7 +2,6 @@
 #include "PathUtils.hh"
 #include "CalDBSQL.hh"
 #include "SMExcept.hh"
-#include "SMExcept.hh"
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -1,7 +1,6 @@
 #include "GraphUtils.hh"
 #include "strutils.hh"
 #include "SMExcept.hh"
-#include "SMExcept.hh"
 #include <math.h> 
 #include <TROOT.h>
 #include <TMath.h>

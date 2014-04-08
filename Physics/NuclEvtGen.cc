@@ -3,7 +3,6 @@
 #include "strutils.hh"
 #include "PathUtils.hh"
 #include <math.h>
-#include "SMExcept.hh"
 #include <cfloat>
 #include <stdlib.h>
 #include <algorithm>

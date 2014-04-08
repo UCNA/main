@@ -4,11 +4,10 @@
 #include "GraphUtils.hh"
 #include "PathUtils.hh"
 #include "BetaSpectrum.hh"
+#include "SMExcept.hh"
 #include <TRandom.h>
 #include <stdio.h>
-#include "SMExcept.hh"
 #include <TLatex.h>
-#include "SMExcept.hh"
 
 TRandom3 acRndSrc;
 
