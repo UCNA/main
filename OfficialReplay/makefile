@@ -7,7 +7,7 @@ ROOTCFLAGS    = $(shell root-config --cflags)
 
 CXX           = g++ 
 INCLUDEPATH   = -I./ -I../IOUtils -I../RootUtils -I../BaseTypes -I../Detectors -I../MathUtils -I../Calibration -I../Analysis -I../Studies
-CXXFLAGS      = -O3 -Wall -fPIC $(ROOTCFLAGS) $(INCLUDEPATH)
+CXXFLAGS      = --std=c++0x -O3 -pedantic -Wall -Wextra -fPIC $(ROOTCFLAGS) $(INCLUDEPATH)
 LDFLAGS       = -L.. -lUCNA $(ROOTLIBS) $(ROOTGLIBS) -lSpectrum -lstdc++ -lz
 
 ifdef TSPECTRUM_USES_DOUBLE

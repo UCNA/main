@@ -18,9 +18,6 @@ public:
 	void SetCutForPositron(G4double);
 	
 	void ConstructProcess();
-    
-	//void AddStepMax();       
-	//StepMax* GetStepMaxProcess() {return stepMaxProcess;};
 	
 private:
 		
@@ -30,8 +27,6 @@ private:
     
 	G4String emName;
 	G4VPhysicsConstructor* emPhysicsList;
-    
-	//StepMax* stepMaxProcess;
 };
 
 #endif

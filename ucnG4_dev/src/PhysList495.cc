@@ -52,23 +52,6 @@ void PhysList495::ConstructProcess() {
 	emPhysicsList->ConstructProcess();
 }
 
-/*
-void Livermore_EMPhysList::AddStepMax()
-{
-	// Step limitation seen as a process
-	stepMaxProcess = new StepMax();
-	
-	theParticleIterator->reset();
-	while ((*theParticleIterator)()){
-		G4ParticleDefinition* particle = theParticleIterator->value();
-		G4ProcessManager* pmanager = particle->GetProcessManager();
-		if (stepMaxProcess->IsApplicable(*particle) && pmanager) {
-			pmanager->AddDiscreteProcess(stepMaxProcess);
-		}
-	}
-}
-*/
-
 void PhysList495::SetCuts() {
 	
 	if (verboseLevel >0) {

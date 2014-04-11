@@ -15,8 +15,6 @@
 #include <G4VisExecutive.hh>
 #endif
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 int main(int argc, char** argv) {
 	
 	if(argc < 2) {
@@ -46,8 +44,6 @@ int main(int argc, char** argv) {
 	G4cout << "Using physics list: " << physlist << G4endl;
 	
 	new G4UnitDefinition("torr","torr","Pressure",atmosphere/760.);
-	//G4UnitDefinition::PrintUnitsTable();
-	//G4ParticleTable::GetParticleTable()->DumpTable();
 	
 #ifdef G4VIS_USE
 	// Visualization, if you choose to have it!
@@ -84,6 +80,3 @@ int main(int argc, char** argv) {
 	
 	return 0;
 }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-

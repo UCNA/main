@@ -112,6 +112,6 @@ install(TARGETS ucnG4_prod UCNA_MC_Analyzer SiDet_Analyzer DESTINATION ${EXECUTA
 #################
 
 #set(CMAKE_BUILD_TYPE debug)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -pedantic -Wall -Wextra")
 set(CMAKE_BUILD_TYPE release)
 

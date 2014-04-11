@@ -22,7 +22,7 @@ public:
 	G4double frontwin_frame_thick;		//< MWPC front window frame thickness
 	G4double backwin_frame_thick;		//< MWPC exit window frame thickness
 	
-	ScintillatorConstruction scint;	//< scintillator assembly
+	ScintillatorConstruction scint;		//< scintillator assembly
 	WirechamberConstruction mwpc;		//< wirechamber assembly
 	G4LogicalVolume* container_log;		//< overall positioning container
 	G4LogicalVolume* mwpc_entrance_log;	//< entrance port container
