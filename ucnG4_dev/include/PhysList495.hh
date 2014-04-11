@@ -4,10 +4,13 @@
 #include <G4VModularPhysicsList.hh>
 #include <G4VPhysicsConstructor.hh>
 
+class PhysicsListMessenger;
+
 class PhysList495: public G4VModularPhysicsList {
 public:
-	
-	PhysList495(bool usePenelope);
+	/// constructor
+	PhysList495();
+	/// destructor
 	virtual ~PhysList495();
 	
 	void ConstructParticle();
@@ -19,8 +22,11 @@ public:
 	
 	void ConstructProcess();
 	
+	void setPhysicsList(const G4String& plname);
+	
 private:
-		
+	PhysicsListMessenger* myMessenger;
+	
 	G4double cutForGamma;
 	G4double cutForElectron;
 	G4double cutForPositron;

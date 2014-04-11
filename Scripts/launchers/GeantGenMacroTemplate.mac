@@ -1,4 +1,4 @@
-######### Generating macro template ##########
+######### ucnG4_prod macro template ##########
 
 # set verbosity levels
 /run/verbose 2
@@ -23,23 +23,19 @@
 /detector/sourceholderpos %(sourceholderpos)s
 /detector/infoil %(makeinfoil)s
 
+# set physics list
+/phys/physlist Livermore
+
 # insert extra pre-initialization commands here
 %(extra_cmds)s
 
 /run/initialize
 
-# generator initial position offset (0,0,0 = decay trap center)
-/gun/position %(gunpos)s
 # optional added radius for decay source events spot
-/benchmark/gun/sourceRadius %(sourceRadius)s
-# file for events input
-/benchmark/gun/evtfile %(evtfile)s
+/generator/sourceRadius %(sourceRadius)s
 
-# source generator: optional settings
-# /gun/energy <gunenergy> keV
-# /benchmark/gun/particle <particle_name>
-# /benchmark/gun/type <generator_name>
-# /benchmark/gun/positioner <positioner_name>
+# file for events input
+/generator/evtfile %(evtfile)s
 
 /run/beamOn %(nevt)i
 

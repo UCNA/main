@@ -4,7 +4,7 @@
 ///in the MC, e.g. detector construction, tracking, etc.
 ///Created based on IcaG4 from http://root.cern.ch/root/HowtoMC.html
 ///Jianglai 05/26/2006
-///Updated MPM 10/2011
+///Updated MPM 2011-2014
 
 #include "SMExcept.hh"
 
@@ -36,9 +36,7 @@ using namespace std;
 AnalysisManager *gAnalysisManager = (AnalysisManager *)0;
 
 ////////////////////////////////////////////////////////////////////////////////////
-AnalysisManager::AnalysisManager(): pMcEvent(&mcEvent) {
-	fROOTOutputFile=0;
-	fEventTree=0;
+AnalysisManager::AnalysisManager(): pMcEvent(&mcEvent), fROOTOutputFile(NULL), fEventTree(NULL) {
 	if (gAnalysisManager)
 		delete gAnalysisManager;
 	gAnalysisManager = this;
@@ -47,29 +45,29 @@ AnalysisManager::AnalysisManager(): pMcEvent(&mcEvent) {
 }
 
 void AnalysisManager::OpenFile(const G4String filename) {
-	if(fROOTOutputFile != 0)
-		CloseFile();  
+	if(fROOTOutputFile) CloseFile();
 	
 	G4cout<<"Opening root file "<<filename<<G4endl;
 	
-	fROOTOutputFile= new TFile(filename.c_str(), "RECREATE", "Geant4 benchmark simulation output file");  
+	fROOTOutputFile = new TFile(filename.c_str(), "RECREATE", "Geant4 benchmark simulation output file");
 	
-	if (fROOTOutputFile == 0) {
+	if (!fROOTOutputFile) {
 		SMExcept e("CannotOpenOutputFile");
 		e.insert("filename",filename);
 		throw(e);
     }
+	
 	CreateTrees();
 }
 
 void AnalysisManager::CloseFile() { 
-	if(fROOTOutputFile != 0) {
+	if(fROOTOutputFile) {
 		G4cout << "Closing " << fROOTOutputFile->GetName() << G4endl;
 		fROOTOutputFile->cd();
 		fEventTree->Write();
 		delete fROOTOutputFile;
-		fROOTOutputFile=0;
-		fEventTree=0;
+		fROOTOutputFile = NULL;
+		fEventTree = NULL;
     }
 }
 
@@ -147,6 +145,7 @@ void AnalysisManager::FillTrackerData(const G4Event *evt) {
 }
 
 void AnalysisManager::FillEventTree() {
-	fEventTree->Fill();
+	if(fEventTree) fEventTree->Fill();
+	else G4cout << "No output file specified; event not stored." << G4endl;
 	mcEvent.ClearEvent();
 }

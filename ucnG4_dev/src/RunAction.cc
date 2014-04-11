@@ -47,8 +47,7 @@ void RunAction::BeginOfRunAction(const G4Run* aRun) {
 }
 
 void RunAction::EndOfRunAction(const G4Run* aRun) { 
-	G4cout << "number of event = " << aRun->GetNumberOfEvent()<< G4endl;
-	//write to root file
+	G4cout << "\nProduced " << aRun->GetNumberOfEvent() << " events.\n\n";
 	if(gAnalysisManager) gAnalysisManager->CloseFile();
 }
 

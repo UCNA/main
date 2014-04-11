@@ -68,16 +68,16 @@ public:
 	/// fill output tree
 	void FillEventTree();
 	
-	MCEvent mcEvent;		///< saveable event
-	MCEvent* pMcEvent;	///< pointer to said event for TTree branch setup
+	MCEvent mcEvent;			///< saveable event
+	MCEvent* pMcEvent;			///< pointer to said event for TTree branch setup
 	
 	/// store a sensitive detector name to record tracking info for
 	void SaveSDName(const G4String name){ fSDNames.push_back(name); }
 		
 private:
 	
-	TFile *fROOTOutputFile;		///< ROOT output file
-	TTree *fEventTree;			///< ROOT output TTree
+	TFile* fROOTOutputFile;		///< ROOT output file
+	TTree* fEventTree;			///< ROOT output TTree
 	Int_t fRunNumber;  			///< MC run number
 	vector<G4int> detectorIDs;	///< list of SD ID numbers
 	vector<G4String> fSDNames;	///< list of SD names corresponding to ID numbers

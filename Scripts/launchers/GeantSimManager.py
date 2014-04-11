@@ -18,7 +18,6 @@ class GeantSimManager:
 		self.settings["geometry"] = geometry
 		self.settings["vacuum"] = vacuum
 		self.settings["sourceholderpos"] = sourceHolderPos
-		self.settings["gunpos_mm"] = [0.,0.,0.]
 		self.settings["sourceRadius"] = "0 mm"
 		self.settings["sourceScan"] = 0.
 		self.settings["makeinfoil"] = "false"
@@ -26,7 +25,6 @@ class GeantSimManager:
 		self.settings["fieldmapcmd"] = "#/detector/fieldmapfile UNUSED"
 		if fmap:
 			self.settings["fieldmapcmd"] = "/detector/fieldmapfile "+fmap
-		self.settings["physlist"] = "livermore"
 		self.settings["ana_args"] = ""
 		self.settings["extra_cmds"] = ""
 		
@@ -83,7 +81,7 @@ class GeantSimManager:
 		if not self.settings["sourceholderpos"]:
 			if self.needsHolder:
 				self.settings["sourceholderpos"] = "0 0	0 m"
-				self.settings["extra_cmds"] += "/benchmark/gun/relholder true\n"
+				self.settings["extra_cmds"] += "/generator/relholder true\n"
 			else:
 				self.settings["sourceholderpos"] = "0 0.5 0 m"
 
@@ -145,9 +143,7 @@ class GeantSimManager:
 			#	xpos = (((rn%self.anagroup)*nClusters+(rn/self.anagroup))/float(nruns-1)-0.5)*self.settings["sourceScan"]
 			#	if self.settings["sourceholderpos"] != "0 0.5 0 m":
 			#		self.settings["sourceholderpos"] = "%g 0 0 mm"%xpos
-			
-			self.settings["gunpos"] = "%g %g %g mm"%tuple(self.settings["gunpos_mm"])
-			
+						
 			# skip recently-run jobs
 			if os.path.exists(self.g4_out_name%str(self.settings["run_num"])) and os.stat(self.g4_out_name%str(self.settings["run_num"])).st_mtime > oldtime:
 				continue;
@@ -155,7 +151,7 @@ class GeantSimManager:
 			# generate macro file
 			open(os.path.expanduser("%s/geantgen_%i.mac"%(self.g4_macro_dir,self.settings["run_num"])),"w").write(open("GeantGenMacroTemplate.mac","r").read()%self.settings)
 			# single job execution command, appended to batch job file
-			onejob = ucnG4_prod + " %s/geantgen_%i.mac %s"%(self.g4_macro_dir,self.settings["run_num"],self.settings["physlist"])
+			onejob = ucnG4_prod + " %s/geantgen_%i.mac"%(self.g4_macro_dir,self.settings["run_num"])
 			jobsout.write(onejob+" > %s 2>&1\n"%self.settings["joblog"])
 		
 		jobsout.close()
@@ -237,7 +233,6 @@ if __name__ == "__main__":
 	# unpolarized beta baseline: 5e7 in 520 clusters
 	if 0:
 		betaSim = GeantSimManager("20120823")
-		betaSim.settings["physlist"]="livermore"
 		#betaSim.set_generator("neutronBetaUnpol")
 		betaSim.set_evtsrc("neutronBetaUnpol")
 		betaSim.set_detector_offsets()
@@ -251,7 +246,6 @@ if __name__ == "__main__":
 	# beta decay in magnetic field wiggles, 1e-3 vacuum: 1e7 in 104 clusters
 	if 0:
 		betaSim = GeantSimManager("20120824_MagF",vacuum="1.e-3 torr",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
-		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
 		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
 		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
@@ -262,7 +256,6 @@ if __name__ == "__main__":
 	# thin foils
 	if 0:
 		betaSim = GeantSimManager("endcap_180_150",geometry="thinFoil")
-		betaSim.settings["physlist"]="livermore"
 		betaSim.set_generator("neutronBetaUnpol")
 		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
 		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
@@ -288,7 +281,6 @@ if __name__ == "__main__":
 	if 0:
 		for g in ["In114E","In114W"]:
 			sourceSim = GeantSimManager("thinfoil",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt",geometry="thinFoil")
-			sourceSim.settings["physlist"]="livermore"
 			sourceSim.settings["sourceScan"]=80.
 			sourceSim.settings["extra_cmds"] += "/detector/sourcefoilthick 9.5 um\n"
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
@@ -300,7 +292,6 @@ if __name__ == "__main__":
 	if 0:
 		for g in ["Bi207","Sn113","Ce139"]:
 			sourceSim = GeantSimManager("DeepCrinkle",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
-			sourceSim.settings["physlist"]="livermore"
 			sourceSim.settings["sourceScan"]=80.
 			sourceSim.settings["extra_cmds"] += "/detector/foilcrinkle 1.5708\n"
 			sourceSim.set_generator(g)
@@ -319,7 +310,6 @@ if __name__ == "__main__":
 		for g in [ "Xe135_3-2+" ]:
 			sourceSim = GeantSimManager("20131015",vacuum="1.e-3 torr")
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
-			sourceSim.settings["physlist"]="livermore"
 			sourceSim.set_generator(g)
 			sourceSim.launch_sims(nEvents=30e6,nClusters=54,hours_old=0)
 			sourceSim.launch_postanalyzer()
@@ -383,7 +373,6 @@ if __name__ == "__main__":
 	if 0:
 		for l in [100,200,300,400,600,800,1200,1600]:
 			gammaSim = GeantSimManager("SourceHolderGammas")
-			gammaSim.settings["physlist"]="livermore"
 			gammaSim.settings["particle"] = "gamma"
 			gammaSim.set_generator("eGunRandMomentum")
 			gammaSim.settings["positioner"] = "Fixed"
@@ -400,7 +389,6 @@ if __name__ == "__main__":
 		vtest = GeantSimManager("DetShift")
 		vtest.set_generator("eGunRandMomentum")
 		vtest.settings["positioner"] = "Fixed"
-		self.settings["gunpos_mm"] = [-30,0.,0.]
 		vtest.settings["gunenergy"] = 500
 		vtest.settings["extra_cmds"] += "/detector/rotation 0.037\n"
 		vtest.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"

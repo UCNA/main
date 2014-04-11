@@ -1,4 +1,7 @@
 #include "PhysList495.hh"
+#include "PhysicsListMessenger.hh"
+
+#include <cassert>
 
 #include <G4SystemOfUnits.hh>
 #include <G4EmLivermorePhysics.hh>
@@ -14,7 +17,7 @@
 
 #include <G4ProcessManager.hh>
 
-PhysList495::PhysList495(bool usePenelope) : G4VModularPhysicsList() {
+PhysList495::PhysList495() : G4VModularPhysicsList(), myMessenger(new PhysicsListMessenger(this)), emPhysicsList(NULL) {
 	
 	G4LossTableManager::Instance();
 	defaultCutValue = 1.*um;
@@ -24,28 +27,38 @@ PhysList495::PhysList495(bool usePenelope) : G4VModularPhysicsList() {
 	
 	SetVerboseLevel(1);
 	
-	// EM physics
-	if(usePenelope) {
-		emName = G4String("Penelope");  
-		emPhysicsList = new G4EmPenelopePhysics();
-	} else {
-		emName = G4String("Livermore");  
-		emPhysicsList = new G4EmLivermorePhysics();
-	}
+	setPhysicsList("Livermore");
 }
 
 PhysList495::~PhysList495() {
-	delete emPhysicsList;
+	if(emPhysicsList) delete emPhysicsList;
+}
+
+void PhysList495::setPhysicsList(const G4String& plname) {
+	emName = plname;
+	if(emPhysicsList) delete emPhysicsList;
+	emPhysicsList = NULL;
+	G4cout << "Using physics list '" << emName << "'." << G4endl;
+	if(emName == "Penelope") {
+		emPhysicsList = new G4EmPenelopePhysics();
+	} else if(emName == "Livermore") {
+		emPhysicsList = new G4EmLivermorePhysics();
+	} else {
+		G4cout << "** Unknown physics list '" << emName << "'!" << G4endl;
+		assert(false);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////
 // Construct Particles /////////////////////////////////////////////////////
 
-void PhysList495::ConstructParticle() {	
+void PhysList495::ConstructParticle() {
+	assert(emPhysicsList);
 	emPhysicsList->ConstructParticle();
 }
 
 void PhysList495::ConstructProcess() {
+	assert(emPhysicsList);
 	// transportation process
 	AddTransportation();
 	// electromagnetic physics list
