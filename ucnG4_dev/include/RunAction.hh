@@ -24,11 +24,11 @@ public:
 	void SetNewValue(G4UIcommand * command,G4String newValue);
 
 protected:
-	G4UIdirectory  *fFileDir;		//< UI directory for opening output file
-	G4UIcommand    *fFileCmd;		//< UI command for opening output file
-	G4UIdirectory  *fRunDir;		//< UI directory for setting run number
-	G4UIcommand    *fRunNumberCmd;	//< UI command for setting run number
-	G4int          fRunNumber;		//< run number
+	G4UIdirectory  *fFileDir;		///< UI directory for opening output file
+	G4UIcommand    *fFileCmd;		///< UI command for opening output file
+	G4UIdirectory  *fRunDir;		///< UI directory for setting run number
+	G4UIcommand    *fRunNumberCmd;	///< UI command for setting run number
+	G4int          fRunNumber;		///< run number
 };
 
 #endif

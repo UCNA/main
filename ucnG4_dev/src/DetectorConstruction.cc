@@ -82,13 +82,6 @@ DetectorConstruction::DetectorConstruction(): fpMagField(NULL) {
 	fCrinkleAngleCmd->SetDefaultValue(0.);
 	fCrinkleAngleCmd->AvailableForStates(G4State_PreInit);
 	fCrinkleAngle = 0.;
-
-	for(Side sd = EAST; sd <= WEST; ++sd) {
-		fMatterScaleCmd[sd] = new G4UIcmdWithADouble(sideSubst("/detector/matterscale%c",sd).c_str(),this);
-		fMatterScaleCmd[sd]->SetGuidance("Matter interaction scaling factor");
-		fMatterScaleCmd[sd]->SetDefaultValue(1.0);
-		fMatterScale[sd] = 1.0;
-	}
 	
 	fScintStepLimitCmd = new G4UIcmdWithADoubleAndUnit("/detector/scintstepsize",this);
 	fScintStepLimitCmd->SetGuidance("step size limit in scintillator, windows");
@@ -120,10 +113,6 @@ void DetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValue)
 		G4cout<<"setting the source at "<<fSourceHolderPos/m<<G4endl;
 	} else if (command == fVacuumLevelCmd) {
 		fVacuumPressure = fVacuumLevelCmd->GetNewDoubleValue(newValue);
-	} else if (command == fMatterScaleCmd[EAST]) {
-		fMatterScale[EAST] = fMatterScaleCmd[EAST]->GetNewDoubleValue(newValue);
-	} else if (command == fMatterScaleCmd[WEST]) {
-		fMatterScale[WEST] = fMatterScaleCmd[WEST]->GetNewDoubleValue(newValue);
 	} else if (command == fInFoilCmd) {
 		makeInFoil = fInFoilCmd->GetNewBoolValue(newValue);
 		G4cout << "Setting In source foil construction to " << makeInFoil << G4endl;

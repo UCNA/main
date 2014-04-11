@@ -22,17 +22,17 @@ public:
 	/// require coefficients to be non-negative
 	void forceNonNegative();
 	
-	std::vector<double> coeffs;		//< fit coefficients
-	std::vector<double> dcoeffs;	//< fit coefficient errors
-	bool interpolate;				//< whether to interpolate between bins
+	std::vector<double> coeffs;		///< fit coefficients
+	std::vector<double> dcoeffs;	///< fit coefficient errors
+	bool interpolate;				///< whether to interpolate between bins
 	
 	/// fit evaluation
 	double Evaluate(double* x, double* p);
 	
 protected:
-	TF1* myFit;						//< fit function
-	std::vector<TH1*> terms;		//< fit terms
-	static unsigned int nFitters;	//< naming counter
+	TF1* myFit;						///< fit function
+	std::vector<TH1*> terms;		///< fit terms
+	static unsigned int nFitters;	///< naming counter
 };
 
 #endif

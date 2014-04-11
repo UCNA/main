@@ -37,8 +37,8 @@ public:
 	/// pop float off stack
 	float popFloat() { return atof(popString().c_str()); }
 	
-	std::deque<std::string>* mydeque;	//< command arguments deque
-	std::stack<std::string>* mystack;	//< working space stack
+	std::deque<std::string>* mydeque;	///< command arguments deque
+	std::stack<std::string>* mystack;	///< working space stack
 };
 
 /// stream interactor with a name for screen display
@@ -49,7 +49,7 @@ public:
 	/// get my name/description
 	virtual std::string getDescription() { return name; }
 
-	std::string name;	//< name for this interactor
+	std::string name;	///< name for this interactor
 };
 
 
@@ -74,21 +74,21 @@ public:
 	static InputRequester exitMenu;
 	
 protected:
-	std::vector<std::string> argNames;				//< names of arguments
-	std::vector<std::string> argDescrips;			//< extended descriptions of arguments
-	std::vector<std::string> defaultArgs;			//< default values for arguments
-	std::vector<NamedInteractor*> inputFilters;		//< input data filters
-	StreamInteractor* myFuncObject;					//< object called with function
-	void (*myFunc)(StreamInteractor*);				//< function to do when selected
+	std::vector<std::string> argNames;				///< names of arguments
+	std::vector<std::string> argDescrips;			///< extended descriptions of arguments
+	std::vector<std::string> defaultArgs;			///< default values for arguments
+	std::vector<NamedInteractor*> inputFilters;		///< input data filters
+	StreamInteractor* myFuncObject;					///< object called with function
+	void (*myFunc)(StreamInteractor*);				///< function to do when selected
 };
 
 
 /// option display/activity flags
 enum Selector_Option_Flags {
-	SELECTOR_NORMAL = 0,		//< normal mode
-	SELECTOR_HIDDEN = 1<<0,		//< option is hidden in menu
-	SELECTOR_DISABLED = 1<<1,	//< option is inactive in menu
-	SELECTOR_SYNONYM = 1<<2		//< option is a synonym for another option
+	SELECTOR_NORMAL = 0,		///< normal mode
+	SELECTOR_HIDDEN = 1<<0,		///< option is hidden in menu
+	SELECTOR_DISABLED = 1<<1,	///< option is inactive in menu
+	SELECTOR_SYNONYM = 1<<2		///< option is a synonym for another option
 };
 
 /// default soft-matching routine
@@ -123,15 +123,15 @@ public:
 	static std::string exit_control;
 	
 protected:
-	std::map<std::string,unsigned int> nameMap;		//< map from choice names to selected content
-	std::vector<std::string> choiceNames;			//< choice names
-	std::vector<std::string> choiceDescrips;		//< choice descriptions
-	std::vector<std::string> choiceOut;				//< output for each choice
-	std::vector<StreamInteractor*> actions;			//< output action for each choice
-	std::vector<Selector_Option_Flags> oflags;		//< option display flags
-	StreamInteractor* catchAll;						//< catch-all action for unidentified choices
-	bool isPersistent;								//< whether menu is persistent (repeats after selection is made)
-	bool (*softmatch)(const std::string& a, const std::string& b);	//< function for "soft matching" comparison of selections
+	std::map<std::string,unsigned int> nameMap;		///< map from choice names to selected content
+	std::vector<std::string> choiceNames;			///< choice names
+	std::vector<std::string> choiceDescrips;		///< choice descriptions
+	std::vector<std::string> choiceOut;				///< output for each choice
+	std::vector<StreamInteractor*> actions;			///< output action for each choice
+	std::vector<Selector_Option_Flags> oflags;		///< option display flags
+	StreamInteractor* catchAll;						///< catch-all action for unidentified choices
+	bool isPersistent;								///< whether menu is persistent (repeats after selection is made)
+	bool (*softmatch)(const std::string& a, const std::string& b);	///< function for "soft matching" comparison of selections
 };
 
 /// Text menu of selectable items (simplified NameSelector specifically for actions)

@@ -19,7 +19,7 @@ bool quadHists::isEquivalent(const quadHists& qh) const {
 	return true;
 	//return (h[AFP_OFF][1]->GetNbinsX() == qh.h[AFP_OFF][1]->GetNbinsX()
 	//		&& h[AFP_OFF][1]->GetNbinsY() == qh.h[AFP_OFF][1]->GetNbinsY()
-	//		&& h[AFP_OFF][1]->GetNbinsZ() == qh.h[AFP_OFF][1]->GetNbinsZ());	//< TODO more rigorous check
+	//		&& h[AFP_OFF][1]->GetNbinsZ() == qh.h[AFP_OFF][1]->GetNbinsZ());	///< TODO more rigorous check
 }
 
 void quadHists::operator+=(const quadHists& qh) {

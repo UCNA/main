@@ -9,14 +9,14 @@
 
 /// Struct for cathode calibration data
 struct CathodeSeg {
-	Side s;					//< side
-	AxisDirection d;		//< plane measuring direction
-	unsigned int i;			//< cathode number
-	float n_exp;			//< expected number from data
-	float n_obs;			//< observed number from simulation
-	float dndx_lo;			//< dn/dx at low edge, observed, normalized corrected position
-	float dndx_hi;			//< dn/dx at high edge, observed, normalized corrected position
-	float pos;				//< cathode position
+	Side s;					///< side
+	AxisDirection d;		///< plane measuring direction
+	unsigned int i;			///< cathode number
+	float n_exp;			///< expected number from data
+	float n_obs;			///< observed number from simulation
+	float dndx_lo;			///< dn/dx at low edge, observed, normalized corrected position
+	float dndx_hi;			///< dn/dx at high edge, observed, normalized corrected position
+	float pos;				///< cathode position
 };
 /// convert cathode segment to Stringmap
 Stringmap cathseg2sm(const CathodeSeg& c);
@@ -33,9 +33,9 @@ public:
 	/// make output plots
 	virtual void makePlots();
 	
-	fgbgPair* cathNorm[BOTH][2][kMaxCathodes];				//< cathode normalization histograms by [side][plane][cathode]
-	fgbgPair* prevGain[BOTH][2];							//< TProfiles of gain factors used to produce normalization plots
-	std::vector<TH1D*> slicefits[BOTH][2][kMaxCathodes];	//< Gaussian fit parameters for cathode response shape at each position
+	fgbgPair* cathNorm[BOTH][2][kMaxCathodes];				///< cathode normalization histograms by [side][plane][cathode]
+	fgbgPair* prevGain[BOTH][2];							///< TProfiles of gain factors used to produce normalization plots
+	std::vector<TH1D*> slicefits[BOTH][2][kMaxCathodes];	///< Gaussian fit parameters for cathode response shape at each position
 };
 
 /// analyzer plugin for wirechamber position/calibration analysis
@@ -48,9 +48,9 @@ public:
 	/// make output plots
 	virtual void makePlots();
 	
-	fgbgPair* hitPos[2];						//< corrected hit positions on each side
-	fgbgPair* hitPosRaw[2];						//< uncorrected hit positions on each side
-	fgbgPair* cathHitpos[2][2][kMaxCathodes];	//< raw position distribution around each cathode by energy
+	fgbgPair* hitPos[2];						///< corrected hit positions on each side
+	fgbgPair* hitPosRaw[2];						///< uncorrected hit positions on each side
+	fgbgPair* cathHitpos[2][2][kMaxCathodes];	///< raw position distribution around each cathode by energy
 };
 
 /// analyzer for wirechamber gain and position tweaking
@@ -61,9 +61,9 @@ public:
 	/// create a new instance of this analyzer
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new CathodeTuningAnalyzer(this,nm,inflname); }
 	
-	CathodeGainPlugin* myCG;			//< cathode gain
-	CathodeTweakPlugin* myCT;			//< cathode position tweaking
-	GravitySpectrometerPlugin* myGS;	//< gravity spectrometer: event height vs time
+	CathodeGainPlugin* myCG;			///< cathode gain
+	CathodeTweakPlugin* myCT;			///< cathode position tweaking
+	GravitySpectrometerPlugin* myGS;	///< gravity spectrometer: event height vs time
 };
 
 /// comparison analyzer for simulation
@@ -74,7 +74,7 @@ public:
 	/// create a new instance of this analyzer
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new SimCathodeTuningAnalyzer(this,nm,inflname); }
 	
-	CathodeTweakPlugin* myCT;		//< cathode position tweaking
+	CathodeTweakPlugin* myCT;		///< cathode position tweaking
 };
 
 /// fit/plot CathodeTweakPlugin cathode shape correction data

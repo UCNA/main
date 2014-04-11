@@ -16,14 +16,14 @@ public:
 	/// constructor
 	AnaCutSpec(): csid(0), postp(AnaCutSpec::POS_PLAIN) {}
 	
-	unsigned int csid;	//< ID number
-	double emin;		//< minimum energy
-	double emax;		//< maximum energy
-	double radius;		//< maximum radius
+	unsigned int csid;	///< ID number
+	double emin;		///< minimum energy
+	double emax;		///< maximum energy
+	double radius;		///< maximum radius
 	enum PosType {
-		POS_PLAIN,		//< plain positions
-		POS_ROTATED		//< positions corrected for rotation
-	} postp;			//< positioning method used
+		POS_PLAIN,		///< plain positions
+		POS_ROTATED		///< positions corrected for rotation
+	} postp;			///< positioning method used
 };
 
 /// description of an analysis result
@@ -36,34 +36,34 @@ public:
 	/// string representation of types set for DB
 	std::string typeSetString() const;
 	
-	unsigned int arid;		//< analysis result ID number in database
-	std::string	author;		//< author of analysis result
-	time_t timestamp;		//< timestamp of analysis result
+	unsigned int arid;		///< analysis result ID number in database
+	std::string	author;		///< author of analysis result
+	time_t timestamp;		///< timestamp of analysis result
 	enum AnaType {
-		ANA_ASYM,			//< asymmetry analysis
-		ANA_COUNTS			//< counts analysis
-	} anatp;				//< type of analysis result
+		ANA_ASYM,			///< asymmetry analysis
+		ANA_COUNTS			///< counts analysis
+	} anatp;				///< type of analysis result
 	enum DataSource {
-		REAL_DATA,			//< actual replay data
-		G4_DATA,			//< Geant4 MC
-		PEN_DATA			//< Penelope MC
-	} datp;					//< data/MC source for analysis
+		REAL_DATA,			///< actual replay data
+		G4_DATA,			///< Geant4 MC
+		PEN_DATA			///< Penelope MC
+	} datp;					///< data/MC source for analysis
 	enum RunGrouping {
-		GROUP_RUN=0,		//< single run (or grouped runs with same purpose)
-		GROUP_PAIR=1,		//< AFP On/Off pulse pair
-		GROUP_QUARTET=2,	//< A or B pair of pulse pairs
-		GROUP_OCTET=3		//< A->B or B->A octet
+		GROUP_RUN=0,		///< single run (or grouped runs with same purpose)
+		GROUP_PAIR=1,		///< AFP On/Off pulse pair
+		GROUP_QUARTET=2,	///< A or B pair of pulse pairs
+		GROUP_OCTET=3		///< A->B or B->A octet
 	} grouping;
-	RunNum startRun;		//< start of run range analyzed
-	RunNum endRun;			//< end of run range analyzed
-	std::set<EventType> etypes;	//< event types considered
-	AnalysisChoice anach;	//< ``analysis choice'' used
-	Side s;					//< side for result
-	AFPState afp;			//< AFP state for result
-	GVState gv;				//< gate valve state for FG/BG
-	double value;			//< value of result
-	double err;				//< uncertainty on result
-	unsigned int csid;		//< cut specification ID
+	RunNum startRun;		///< start of run range analyzed
+	RunNum endRun;			///< end of run range analyzed
+	std::set<EventType> etypes;	///< event types considered
+	AnalysisChoice anach;	///< ``analysis choice'' used
+	Side s;					///< side for result
+	AFPState afp;			///< AFP state for result
+	GVState gv;				///< gate valve state for FG/BG
+	double value;			///< value of result
+	double err;				///< uncertainty on result
+	unsigned int csid;		///< cut specification ID
 	
 	/// words for analysis type
 	static std::string atypeWord(AnaType t);

@@ -24,14 +24,14 @@ public:
 	/// clear event data
 	void  ClearEvent();
 	
-	Int_t eventID;						//< ID number for event
-	Int_t trapped;						//< "trapped" event flag
-	Double_t compTime;					//< computation time for event
+	Int_t eventID;						///< ID number for event
+	Int_t trapped;						///< "trapped" event flag
+	Double_t compTime;					///< computation time for event
 	
-	static const unsigned int reserveArraySize;	//< size of array to reserve in memory
+	static const unsigned int reserveArraySize;	///< size of array to reserve in memory
 	
-	TClonesArray* trackInfo;			//< event tracks, with space allocated for 10000 tracks
-	TClonesArray* primaryInfo;			//< primary info array, with space allocated for 10000 primaries
+	TClonesArray* trackInfo;			///< event tracks, with space allocated for 10000 tracks
+	TClonesArray* primaryInfo;			///< primary info array, with space allocated for 10000 primaries
 	
 	ClassDef(MCEvent, 1);
 };

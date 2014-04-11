@@ -30,15 +30,15 @@ public:
 	/// load fieldmap from file
 	void LoadFieldMap(const TString filename);
 	
-	bool addAFP;	//< whether to add the AFP fringe field
+	bool addAFP;	///< whether to add the AFP fringe field
 	
 private:
 	/// add point to field profile
 	void addPoint(G4double z, G4double B) { Zpoints.push_back(z); Bpoints.push_back(B); }
-	vector<G4double> Bpoints;	//< field profile B values
-	vector<G4double> Zpoints;	//< field profile z positions
-	G4double rmax2;				//< max radius squared (position in world volume) to apply field
-	G4double fieldScale;		//< scaling factor for field strength
+	vector<G4double> Bpoints;	///< field profile B values
+	vector<G4double> Zpoints;	///< field profile z positions
+	G4double rmax2;				///< max radius squared (position in world volume) to apply field
+	G4double fieldScale;		///< scaling factor for field strength
 };
 
 #endif

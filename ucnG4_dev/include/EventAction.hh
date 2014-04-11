@@ -18,7 +18,7 @@ public:
 	/// get computation time spent so far
 	double getCPUTime();
 protected:
-	TStopwatch timer;	//< event computation time timer
+	TStopwatch timer;	///< event computation time timer
 };
 
 #endif

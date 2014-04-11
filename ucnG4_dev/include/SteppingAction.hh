@@ -21,8 +21,8 @@ public:
     void Reset(){ fTrappedFlag = timeSpentSoFar = 0.; }
 	
 private:
-    int fTrappedFlag;		//< whether current event is "trapped"
-	double timeSpentSoFar;	//< CPU time spent on current event
+    int fTrappedFlag;		///< whether current event is "trapped"
+	double timeSpentSoFar;	///< CPU time spent on current event
 };
 
 #endif

@@ -48,7 +48,7 @@ public:
 	/// convert to RData format
 	//RData* toRData() const;
 	
-	std::multimap< std::string, std::string > dat;	//< key-value multimap
+	std::multimap< std::string, std::string > dat;	///< key-value multimap
 	
 protected:
 	
@@ -124,8 +124,8 @@ public:
 
 protected:
 	
-	std::string name;								//< name for this object
-	std::multimap< std::string, Stringmap > dat;	//< key-value multimap
+	std::string name;								///< name for this object
+	std::multimap< std::string, Stringmap > dat;	///< key-value multimap
 
 };
 

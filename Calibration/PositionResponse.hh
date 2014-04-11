@@ -14,12 +14,12 @@
 
 /// info for building a positioning interpolator
 struct PosmapInfo {
-	unsigned int nRings;		//< number of rings
-	float radius;				//< radius of sampled area
-	Side s;						//< side this calibration applies to
-	unsigned int t;				//< tube number for this calibration
-	std::vector<float> signal;	//< light signal at each position
-	std::vector<float> norm;	//< normalization at each position (accounting for energy resolution smearing, etc.)
+	unsigned int nRings;		///< number of rings
+	float radius;				///< radius of sampled area
+	Side s;						///< side this calibration applies to
+	unsigned int t;				///< tube number for this calibration
+	std::vector<float> signal;	///< light signal at each position
+	std::vector<float> norm;	///< normalization at each position (accounting for energy resolution smearing, etc.)
 };
 
 /// StringMap info for SectorCutter
@@ -85,9 +85,9 @@ public:
 private:
 	/// delete existing interpolators
 	void deleteInterpolators();
-	std::vector<PosmapInfo> myData;					//< position map building data
-	std::vector<PositioningInterpolator*> tubes[2];	//< interpolated position response maps for each tube
-	std::vector<float> neta[2];						//< position map center normalization
+	std::vector<PosmapInfo> myData;					///< position map building data
+	std::vector<PositioningInterpolator*> tubes[2];	///< interpolated position response maps for each tube
+	std::vector<float> neta[2];						///< position map center normalization
 };
 
 #endif

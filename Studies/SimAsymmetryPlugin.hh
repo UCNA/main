@@ -19,12 +19,12 @@ public:
 	/// "old style" corrections calculation
 	std::vector<TH1*> calculateCorrectionsOld(AsymmetryPlugin& Asim);
 	
-	quadHists* qBCT[2][TYPE_IV_EVENT+1];		//< average beta cos theta TProfiles by [side][event type]
-	quadHists* qCosth[2][TYPE_IV_EVENT+1];		//< average cos theta TProfiles by [side][type]
-	quadHists* qBeta[2][TYPE_IV_EVENT+1];		//< average energy TProfiles by [side][type]
-	quadHists* qAsymAcc[2][TYPE_IV_EVENT+1];	//< average asymmetry acceptance
-	quadHists* qWrongSide[2][TYPE_III_EVENT+1];	//< Energy spectra of events ID'd on wrong side by [side][type]
-	quadHists* qMissedSpectrum;					//< energy spectrum of missed events
+	quadHists* qBCT[2][TYPE_IV_EVENT+1];		///< average beta cos theta TProfiles by [side][event type]
+	quadHists* qCosth[2][TYPE_IV_EVENT+1];		///< average cos theta TProfiles by [side][type]
+	quadHists* qBeta[2][TYPE_IV_EVENT+1];		///< average energy TProfiles by [side][type]
+	quadHists* qAsymAcc[2][TYPE_IV_EVENT+1];	///< average asymmetry acceptance
+	quadHists* qWrongSide[2][TYPE_III_EVENT+1];	///< Energy spectra of events ID'd on wrong side by [side][type]
+	quadHists* qMissedSpectrum;					///< energy spectrum of missed events
 };
 
 #endif

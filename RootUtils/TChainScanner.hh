@@ -37,7 +37,7 @@ public:
 	/// get number of files
 	virtual unsigned int getnFiles() const { return nFiles; }
 		
-	UInt_t nEvents;						//< number of events in current TChain
+	UInt_t nEvents;						///< number of events in current TChain
 	
 protected:
 	
@@ -46,13 +46,13 @@ protected:
 	/// "string friendly" SetBranchAddress
 	void SetBranchAddress(const std::string& bname, void* bdata);
 	
-	std::vector<unsigned int> nnEvents;	//< number of events in each loaded TChain;
-	unsigned int nFiles;				//< get number of loaded files
+	std::vector<unsigned int> nnEvents;	///< number of events in each loaded TChain;
+	unsigned int nFiles;				///< get number of loaded files
 	
-	TChain* Tch;						//< TChain of relevant runs
-	unsigned int currentEvent;			//< event number of current event in chain
-	unsigned int noffset;				//< offset of current event relative to currently loaded tree
-	unsigned int nLocalEvents;			//< number of events in currently loaded tree
+	TChain* Tch;						///< TChain of relevant runs
+	unsigned int currentEvent;			///< event number of current event in chain
+	unsigned int noffset;				///< offset of current event relative to currently loaded tree
+	unsigned int nLocalEvents;			///< number of events in currently loaded tree
 };
 
 #endif

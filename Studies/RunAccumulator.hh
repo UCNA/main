@@ -35,14 +35,14 @@ public:
 	/// scale by a constant
 	void operator*=(double c);
 	
-	std::string baseName;	//< base naming convention
-	std::string baseTitle;	//< title naming convention
-	TH1* h[2];				//< background, foreground pair
-	AFPState afp;			//< AFP state for data (determines which time to use for BG subtraction)
-	Side mySide;			//< side for data
-	bool doSubtraction;		//< whether to do background subtraction
-	bool doTimeScale;		//< whether to scale the BG by relative time for subtraction
-	bool isSubtracted;		//< whether this pair is already background-subtracted
+	std::string baseName;	///< base naming convention
+	std::string baseTitle;	///< title naming convention
+	TH1* h[2];				///< background, foreground pair
+	AFPState afp;			///< AFP state for data (determines which time to use for BG subtraction)
+	Side mySide;			///< side for data
+	bool doSubtraction;		///< whether to do background subtraction
+	bool doTimeScale;		///< whether to scale the BG by relative time for subtraction
+	bool isSubtracted;		///< whether this pair is already background-subtracted
 };
 
 class RunAccumulator: public SegmentSaver, private NoCopy {
@@ -103,13 +103,13 @@ public:
 	/// perform background subtraction
 	virtual void bgSubtractAll();
 	
-	AFPState currentAFP;			//< current state of AFP during data scanning
-	GVState currentGV;				//< current foreground/background status during data scanning
-	bool needsSubtraction;			//< whether background subtraction is pending
-	bool isSimulated;				//< flag for whether this is based on simulated data
-	int depth;						//< octet division depth
+	AFPState currentAFP;			///< current state of AFP during data scanning
+	GVState currentGV;				///< current foreground/background status during data scanning
+	bool needsSubtraction;			///< whether background subtraction is pending
+	bool isSimulated;				///< flag for whether this is based on simulated data
+	int depth;						///< octet division depth
 	
-	TagCounter<RunNum> runCounts;	//< type-0 event counts by run, for re-simulation
+	TagCounter<RunNum> runCounts;	///< type-0 event counts by run, for re-simulation
 	
 	/// set current AFP, GV state
 	void setCurrentState(AFPState afp, GVState gv);
@@ -132,13 +132,13 @@ public:
 	
 	/// location of errorbar estimates for low-rate histograms
 	virtual std::string estimatorHistoLocation() const { return processedLocation; }
-	static std::string processedLocation;		//< processed data location global variable for background estimation
+	static std::string processedLocation;		///< processed data location global variable for background estimation
 
 	
-	std::map<std::string,fgbgPair*> fgbgHists;	//< background-subtractable quantities
-	float totalCounts[AFP_OTHER+1][GV_OPEN+1];	//< total type-0 event counts by [flipper][fg/bg], for re-simulation
-	BlindTime totalTime[AFP_OTHER+1][GV_OPEN+1];//< total time for [flipper][fg/bg]
-	TagCounter<RunNum> runTimes;				//< time spent on each run
+	std::map<std::string,fgbgPair*> fgbgHists;	///< background-subtractable quantities
+	float totalCounts[AFP_OTHER+1][GV_OPEN+1];	///< total type-0 event counts by [flipper][fg/bg], for re-simulation
+	BlindTime totalTime[AFP_OTHER+1][GV_OPEN+1];///< total time for [flipper][fg/bg]
+	TagCounter<RunNum> runTimes;				///< time spent on each run
 	
 	/// create a new instance of this object (cloning self settings) for given directory
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new RunAccumulator(this,nm,inflname); }
@@ -154,12 +154,12 @@ public:
 	/// copy times from another RunAccumulator (for simulations)
 	void copyTimes(const RunAccumulator& RA);
 	
-	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
+	bool simPerfectAsym;	///< whether to simulate "perfect" asymmetry by re-using simulation events
 	
 protected:
 	
-	std::map<std::string,AnalyzerPlugin*> myPlugins;	//< analysis plugins
-	static TRandom3 rnd_source;							//< random number source
+	std::map<std::string,AnalyzerPlugin*> myPlugins;	///< analysis plugins
+	static TRandom3 rnd_source;							///< random number source
 	
 	/// get matching RunAccumulator with "master" histograms for estimating error bars on low-counts bins
 	RunAccumulator* getErrorEstimator();
@@ -181,10 +181,10 @@ public:
 	/// save canvas image
 	void printCanvas(std::string fname, std::string suffix=".pdf") const { myA->printCanvas(fname,suffix); }
 	
-	std::string name;				//< plugin name
-	RunAccumulator* myA;			//< RunAccumulator with which this plugin is associated
-	AFPState currentAFP;			//< current state of AFP during data scanning
-	GVState currentGV;				//< current foreground/background status during data scanning
+	std::string name;				///< plugin name
+	RunAccumulator* myA;			///< RunAccumulator with which this plugin is associated
+	AFPState currentAFP;			///< current state of AFP during data scanning
+	GVState currentGV;				///< current foreground/background status during data scanning
 	
 	/// virtual routine for filling core histograms from data point
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight) = 0;

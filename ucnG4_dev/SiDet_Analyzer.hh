@@ -6,8 +6,8 @@ public:
 	/// constructor
 	SiDet_Analyzer(const std::string& outfname): ucnG4_analyzer(outfname) {}
 	
-	Double_t Edep;				//< deposited energy in Si detector
-	Double_t Pos[3];			//< average position in Si detector
+	Double_t Edep;				///< deposited energy in Si detector
+	Double_t Pos[3];			///< average position in Si detector
 		
 protected:
 	

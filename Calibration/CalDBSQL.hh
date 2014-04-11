@@ -137,7 +137,7 @@ protected:
 	/// get run group name for run
 	std::string getGroupName(RunNum rn);
 	
-	std::map<unsigned int,PositioningCorrector*> pcors;	//< cached positioning correctors
+	std::map<unsigned int,PositioningCorrector*> pcors;	///< cached positioning correctors
 };
 
 #endif

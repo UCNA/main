@@ -12,12 +12,12 @@ public:
 	/// constructor
 	PrimaryInfo() {}
 	
-	Float_t vertex[3];	//< primary vertex position [m]
-	Float_t p[3];		//< primary momentum [keV]
+	Float_t vertex[3];	///< primary vertex position [m]
+	Float_t p[3];		///< primary momentum [keV]
 	
-	Float_t KE;			//< primary KE
-	Float_t weight;		//< event generator weight
-	Long_t  seed;		//< primary random seed
+	Float_t KE;			///< primary KE
+	Float_t weight;		///< event generator weight
+	Long_t  seed;		///< primary random seed
 	
 	ClassDef(PrimaryInfo, 1);
 };

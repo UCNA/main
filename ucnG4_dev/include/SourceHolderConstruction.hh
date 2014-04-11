@@ -16,10 +16,10 @@ public:
 	/// get thickness
 	G4double getHolderThick() const { return fSourceHolderThickness; }
 	
-	G4double fWindowThick;		//< source foil window single-side thickness
-	G4double fCoatingThick;		//< source foil coating thickness
-	G4Material* fWindowMat;		//< source foil window material
-	G4Material* fCoatingMat;	//< source foil coating material
+	G4double fWindowThick;		///< source foil window single-side thickness
+	G4double fCoatingThick;		///< source foil coating thickness
+	G4Material* fWindowMat;		///< source foil window material
+	G4Material* fCoatingMat;	///< source foil coating material
 	
 	G4LogicalVolume* container_log;
 	G4LogicalVolume* window_log;
@@ -40,8 +40,8 @@ protected:
 	G4double fSourceHolderThickness;
 
 private:
-	G4UIdirectory* pUIdir;						//< UI Directory for source holder construction
-	G4UIcmdWithADoubleAndUnit* pWindowThickCmd;	//< source holder window thickness command
+	G4UIdirectory* pUIdir;						///< UI Directory for source holder construction
+	G4UIcmdWithADoubleAndUnit* pWindowThickCmd;	///< source holder window thickness command
 };
 
 #endif

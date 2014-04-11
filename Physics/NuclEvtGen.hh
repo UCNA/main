@@ -33,7 +33,7 @@ public:
 	void scale(double s);
 		
 protected:
-	std::vector<double> cumprob;	//< cumulative probabilites
+	std::vector<double> cumprob;	///< cumulative probabilites
 };
 
 /// generate an isotropic random direction, from optional random in [0,1]^2
@@ -49,15 +49,15 @@ public:
 	/// scale probabilities
 	void scale(double s) { fluxIn *= s; fluxOut *= s; }
 	
-	std::string name;	//< name for this level
-	unsigned int A;		//< nucleus A
-	unsigned int Z;		//< nucleus Z
-	unsigned int n;		//< level number
-	double E;			//< energy
-	double hl;			//< half-life
-	std::string jpi;	//< spin/parity
-	double fluxIn;		//< net flux into level
-	double fluxOut;		//< net flux out of level
+	std::string name;	///< name for this level
+	unsigned int A;		///< nucleus A
+	unsigned int Z;		///< nucleus Z
+	unsigned int n;		///< level number
+	double E;			///< energy
+	double hl;			///< half-life
+	std::string jpi;	///< spin/parity
+	double fluxIn;		///< net flux into level
+	double fluxOut;		///< net flux out of level
 };
 
 /// primary particle types
@@ -84,13 +84,13 @@ public:
 	/// randomize momentum direction
 	void randp(double* rnd = NULL) { randomDirection(p[0],p[1],p[2],rnd); }
 	
-	unsigned int eid;	//< event ID number
-	double E;			//< particle energy
-	double p[3];		//< particle momentum direction
-	double x[3];		//< vertex position
-	DecayType d;		//< particle type
-	double t;			//< time of event
-	double w;			//< weighting for event
+	unsigned int eid;	///< event ID number
+	double E;			///< particle energy
+	double p[3];		///< particle momentum direction
+	double x[3];		///< vertex position
+	DecayType d;		///< particle type
+	double t;			///< time of event
+	double w;			///< weighting for event
 };
 
 /// Atom/electron information
@@ -105,13 +105,13 @@ public:
 	/// display info
 	void display(bool verbose = false) const;
 	
-	BindingEnergyTable const* BET;	//< binding energy table
-	double Eauger;		//< Auger K energy
-	double Iauger;		//< intensity of Auger electron emissions
-	double Ikxr;		//< intensity of k X-Ray emissions
-	double ICEK;		//< intensity of CE K events
-	double IMissing;	//< intensity of un-accounted for Augers (from initial capture)
-	double pAuger;		//< probability of auger given any opening
+	BindingEnergyTable const* BET;	///< binding energy table
+	double Eauger;		///< Auger K energy
+	double Iauger;		///< intensity of Auger electron emissions
+	double Ikxr;		///< intensity of k X-Ray emissions
+	double ICEK;		///< intensity of CE K events
+	double IMissing;	///< intensity of un-accounted for Augers (from initial capture)
+	double pAuger;		///< probability of auger given any opening
 };
 
 /// Transition base class
@@ -138,10 +138,10 @@ public:
 	/// how many of given electron type were knocked out
 	virtual unsigned int nVacant(unsigned int) const { return 0; }
 	
-	DecayAtom* toAtom;	//< final state atom info
-	NucLevel& from;	//< level this transition is from
-	NucLevel& to;	//< level this transition is to
-	double Itotal;	//< total transition intensity
+	DecayAtom* toAtom;	///< final state atom info
+	NucLevel& from;	///< level this transition is from
+	NucLevel& to;	///< level this transition is to
+	double Itotal;	///< total transition intensity
 };
 
 
@@ -167,15 +167,15 @@ public:
 	/// scale probability
 	virtual void scale(double s);
 	
-	double Egamma;		//< gamma energy
-	int shell;			//< selected conversion electron shell
-	int subshell;		//< selected conversion electron subshell
-	double Igamma;		//< total gamma intensity
+	double Egamma;		///< gamma energy
+	int shell;			///< selected conversion electron shell
+	int subshell;		///< selected conversion electron subshell
+	double Igamma;		///< total gamma intensity
 	
 protected:
-	PSelector shells;					//< conversion electron shells
-	std::vector<float> shellUncert;		//< uncertainty on shell selection probability
-	std::vector<PSelector> subshells;	//< subshell choices for each shell
+	PSelector shells;					///< conversion electron shells
+	std::vector<float> shellUncert;		///< uncertainty on shell selection probability
+	std::vector<PSelector> subshells;	///< subshell choices for each shell
 };
 
 /// electron capture transitions
@@ -195,7 +195,7 @@ public:
 	/// return number of continuous degrees of freedom needed to specify transition
 	virtual unsigned int getNDF() const { return 0; }
 	
-	bool isKCapt;	//< whether transition was a K capture
+	bool isKCapt;	///< whether transition was a K capture
 };
 
 /// beta decay transitions
@@ -213,14 +213,14 @@ public:
 	/// return number of continuous degrees of freedom needed to specify transition
 	virtual unsigned int getNDF() const { return 3; }
 	
-	bool positron;		//< whether this is positron decay
-	BetaSpectrumGenerator BSG;	//< spectrum shape generator
+	bool positron;		///< whether this is positron decay
+	BetaSpectrumGenerator BSG;	///< spectrum shape generator
 
 protected:
 	/// evaluate beta spectrum probability
 	double evalBeta(double* x, double*);
-	TF1 betaTF1;					//< TF1 for beta spectrum shape
-	TF1_Quantiles* betaQuantiles;	//< inverse CDF of beta spectrum shape for random point selection
+	TF1 betaTF1;					///< TF1 for beta spectrum shape
+	TF1_Quantiles* betaQuantiles;	///< inverse CDF of beta spectrum shape for random point selection
 };
 
 /// Decay system
@@ -259,16 +259,16 @@ protected:
 	/// add a transition
 	void addTransition(TransitionBase* T);
 	
-	BindingEnergyLibrary const&  BEL;					//< electron binding energy info
+	BindingEnergyLibrary const&  BEL;					///< electron binding energy info
 	double tcut;
-	std::vector<NucLevel> levels;						//< levels, enumerated
-	std::map<std::string,unsigned int> levelIndex;		//< energy levels by name
-	PSelector lStart;									//< selector for starting level (for breaking up long decays)
-	std::vector<PSelector> levelDecays;					//< probabilities for transitions from each level
-	std::map<unsigned int, DecayAtom*> atoms;			//< atom information
-	std::vector<TransitionBase*> transitions;			//< transitions, enumerated
-	std::vector< std::vector<TransitionBase*> > transIn;	//< transitions into each level
-	std::vector< std::vector<TransitionBase*> > transOut;	//< transitions out of each level
+	std::vector<NucLevel> levels;						///< levels, enumerated
+	std::map<std::string,unsigned int> levelIndex;		///< energy levels by name
+	PSelector lStart;									///< selector for starting level (for breaking up long decays)
+	std::vector<PSelector> levelDecays;					///< probabilities for transitions from each level
+	std::map<unsigned int, DecayAtom*> atoms;			///< atom information
+	std::vector<TransitionBase*> transitions;			///< transitions, enumerated
+	std::vector< std::vector<TransitionBase*> > transIn;	///< transitions into each level
+	std::vector< std::vector<TransitionBase*> > transOut;	///< transitions out of each level
 };
 
 /// manager for loading decay event generators
@@ -283,13 +283,13 @@ public:
 	/// get decay generator by name
 	NucDecaySystem& getGenerator(const std::string& nm);
 	
-	std::string datpath;	//< path to data folder
-	double tcut;			//< event generator default cutoff time
-	BindingEnergyLibrary  BEL;	//< electron binding energy info
+	std::string datpath;	///< path to data folder
+	double tcut;			///< event generator default cutoff time
+	BindingEnergyLibrary  BEL;	///< electron binding energy info
 
 protected:
-	std::map<std::string,NucDecaySystem*> NDs;	//< loaded decay systems
-	std::set<std::string> cantdothis;			//< list of decay systems that can't be loaded
+	std::map<std::string,NucDecaySystem*> NDs;	///< loaded decay systems
+	std::set<std::string> cantdothis;			///< list of decay systems that can't be loaded
 };
 
 /// class for throwing from large list of gammas
@@ -302,8 +302,8 @@ public:
 	/// generate cluster of gamma decays
 	void genDecays(std::vector<NucDecayEvent>& v, double n = 1.0);
 protected:
-	std::vector<double> gammaE;	//< gamma energies
-	PSelector gammaProb;		//< gamma probabilities selector
+	std::vector<double> gammaE;	///< gamma energies
+	PSelector gammaProb;		///< gamma probabilities selector
 };
 
 //------------------------------------------------------------------------------
@@ -333,8 +333,8 @@ public:
 	/// generate vertex position
 	virtual void genPos(double* v, double* rnd = NULL) const;
 	
-	double dz;	//< length of cylinder
-	double r;	//< radius of cylinder
+	double dz;	///< length of cylinder
+	double r;	///< radius of cylinder
 };
 
 /// uniform cube [0,1]^3 positions, for later transform
@@ -374,14 +374,14 @@ public:
 	/// load next event into vector; return number of primaries
 	unsigned int loadEvt(std::vector<NucDecayEvent>& v);
 
-	bool firstpass;	//< whether read is on first pass through data
+	bool firstpass;	///< whether read is on first pass through data
 	
 protected:
 	/// set tree readpoints
 	virtual void setReadpoints();
 
-	NucDecayEvent evt;	//< event readpoint
-	unsigned int prevN;	//< previous event number
+	NucDecayEvent evt;	///< event readpoint
+	unsigned int prevN;	///< previous event number
 };
 
 #endif

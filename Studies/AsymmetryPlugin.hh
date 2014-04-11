@@ -27,22 +27,22 @@ public:
 	/// get base AnaResult to fill in
 	AnaResult getResultBase() const;
 	
-	unsigned int nEnergyBins;		//< number of bins for energy histograms
-	double energyMax;				//< energy range for energy histograms
+	unsigned int nEnergyBins;		///< number of bins for energy histograms
+	double energyMax;				///< energy range for energy histograms
 	
-	TH1*  hAsym;						//< asymmetry
-	TH1*  hTpAsym[TYPE_III_EVENT+1];	//< asymmetry by event type
-	TH1*  hInstAsym;					//< instrumental asymmetry
-	TH1*  hSuperSum[2];					//< super-sum spectrum for FG/BG
-	TH1F* hCxn;							//< applied asymmetry correction
-	TH1*  hEvtSS[TYPE_III_EVENT+1];		//< super-sum for each event type
+	TH1*  hAsym;						///< asymmetry
+	TH1*  hTpAsym[TYPE_III_EVENT+1];	///< asymmetry by event type
+	TH1*  hInstAsym;					///< instrumental asymmetry
+	TH1*  hSuperSum[2];					///< super-sum spectrum for FG/BG
+	TH1F* hCxn;							///< applied asymmetry correction
+	TH1*  hEvtSS[TYPE_III_EVENT+1];		///< super-sum for each event type
 	
-	quadHists* qEnergySpectra[BOTH][nBetaTubes+1][TYPE_IV_EVENT+1];	//< energy spectra quad hists for [side][tube][event type]
-	quadHists* qPassesWC[BOTH];										//< events passing wirechamber cut, no other cuts
-	quadHists* q23ProbCut[BOTH][TYPE_III_EVENT+1];					//< Type II/III spectra by probability cut for [side][type]
-	quadHists* qTotalSpectrum[BOTH];								//< total spectrum based on analysis choice
+	quadHists* qEnergySpectra[BOTH][nBetaTubes+1][TYPE_IV_EVENT+1];	///< energy spectra quad hists for [side][tube][event type]
+	quadHists* qPassesWC[BOTH];										///< events passing wirechamber cut, no other cuts
+	quadHists* q23ProbCut[BOTH][TYPE_III_EVENT+1];					///< Type II/III spectra by probability cut for [side][type]
+	quadHists* qTotalSpectrum[BOTH];								///< total spectrum based on analysis choice
 	
-	AnalysisChoice anChoice;	//< asymmetry analysis choice
+	AnalysisChoice anChoice;	///< asymmetry analysis choice
 
 protected:
 	
@@ -53,12 +53,12 @@ protected:
 	/// various beta spectrum endpoint fits
 	void endpointFits();
 	
-	AnaResult ARtot;					//< temporary analysis result holder
-	std::vector<AnaResult> asymFits;	//< list of asymmetry fits available for upload
-	std::vector<AnaCutSpec> asymCuts;	//< list of cut specifications for asymmetry fits
+	AnaResult ARtot;					///< temporary analysis result holder
+	std::vector<AnaResult> asymFits;	///< list of asymmetry fits available for upload
+	std::vector<AnaCutSpec> asymCuts;	///< list of cut specifications for asymmetry fits
 	
-	static TF1 asymmetryFit;		//< fit function for asymmetry
-	static TF1 averagerFit;			//< pol0 line fit for averaging
+	static TF1 asymmetryFit;		///< fit function for asymmetry
+	static TF1 averagerFit;			///< pol0 line fit for averaging
 };
 
 #endif

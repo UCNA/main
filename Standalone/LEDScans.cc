@@ -583,8 +583,8 @@ void LEDAnalyzer::CalcCorrelations() {
 	return;
 	/*
 	for(Side s = EAST; s <= WEST; ++s) {
-		float s0[nBetaTubes];	//< zero-signal noise
-		float k[nBetaTubes];	//< noise proportionality
+		float s0[nBetaTubes];	///< zero-signal noise
+		float k[nBetaTubes];	///< noise proportionality
 				
 				TF1 corrFit("corrFit","([0]*[1]*[2]+[5]*sqrt([3]*[4])*(x-[6])*(x-[6]>0))/sqrt(([1]*[1]+[3]*(x-[6])*(x-[6]>0))*([2]*[2]+[4]*(x-[6])*(x-[6]>0)))",-10.,emax);
 				

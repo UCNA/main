@@ -18,8 +18,8 @@ public:
 	/// get 50% trigger threshold
 	virtual float getThreshold() const { return params[0]; }
 	
-	double params[4];			//< efficiency curve fit parameters
-	TGraphAsymmErrors* gEffic;	//< full curve as TGraph
+	double params[4];			///< efficiency curve fit parameters
+	TGraphAsymmErrors* gEffic;	///< full curve as TGraph
 };
 
 /// CDF for poisson function (for trigger efficiency fits)

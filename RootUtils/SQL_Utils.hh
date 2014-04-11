@@ -31,9 +31,9 @@ public:
 	/// get name of DB in use
 	std::string getDBName() const { return dbName; }
 	
-	bool isNullResult;	//< whether field query returned NULL
+	bool isNullResult;	///< whether field query returned NULL
 	
-	char query[9182];			//< buffer space for SQL query strings
+	char query[9182];			///< buffer space for SQL query strings
 	/// execute a non-info-returning query
 	void execute();
 	
@@ -58,9 +58,9 @@ protected:
 	void Query();
 
 protected:	
-	TSQLServer* db;				//< DB server connection
-	TSQLResult* res;			//< result of most recent query
-	std::string dbName;			//< name of DB in use
+	TSQLServer* db;				///< DB server connection
+	TSQLResult* res;			///< result of most recent query
+	std::string dbName;			///< name of DB in use
 };
 
 /// convert a stringmap to "(vars,...) VALUES (vals,...)" for DB insert query

@@ -25,7 +25,7 @@ public:
 	/// update event clock
 	virtual void updateClock() { runClock = BlindTime(0.01*currentEvent); }
 
-	double brightToEnergy[2];	//< conversion factor from LED brightness to equivalent energy on each side
+	double brightToEnergy[2];	///< conversion factor from LED brightness to equivalent energy on each side
 };
 
 #endif

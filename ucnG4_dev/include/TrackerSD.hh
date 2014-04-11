@@ -22,9 +22,9 @@ public:
 	void EndOfEvent(G4HCofThisEvent*);
 	
 private:
-	std::map<const G4Track*,double> originEnergy;	//< energy at track origin, for Equenched calculaiton
-	std::map<G4int,TrackerHit*> tracks;				//< event tracks listed by ID			
-	TrackerHitsCollection* trackerCollection;		//< hits objects
+	std::map<const G4Track*,double> originEnergy;	///< energy at track origin, for Equenched calculaiton
+	std::map<G4int,TrackerHit*> tracks;				///< event tracks listed by ID			
+	TrackerHitsCollection* trackerCollection;		///< hits objects
 };
 
 #endif

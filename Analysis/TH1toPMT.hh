@@ -17,7 +17,7 @@ public:
 	/// generate next position
 	virtual void next() {}
 	
-	float pos[3];	//< position
+	float pos[3];	///< position
 };
 
 /// position generator from sector cutter
@@ -28,8 +28,8 @@ public:
 	/// generate next position
 	virtual void next() { sects.randPos(m,pos[X_DIRECTION],pos[Y_DIRECTION]); }
 	
-	SectorCutter sects;	//< position-generating sector cutter
-	unsigned int m;		//< sector to generator positions for
+	SectorCutter sects;	///< position-generating sector cutter
+	unsigned int m;		///< sector to generator positions for
 };
 
 /// supply event data from an input energy spectrum
@@ -45,10 +45,10 @@ public:
 	/// speedload: doesn't make sense for this class
 	virtual void speedload(unsigned int) { smassert(false); }
 	
-	TH1* mySpectrum;		//< spectrum to throw events from
-	PosGen* PG;				//< for generating event positions
-	Side genside;			//< side to generate events on
-	unsigned int nToSim;	//< total number of events to simulate (set to 0 for random energy selection)
+	TH1* mySpectrum;		///< spectrum to throw events from
+	PosGen* PG;				///< for generating event positions
+	Side genside;			///< side to generate events on
+	unsigned int nToSim;	///< total number of events to simulate (set to 0 for random energy selection)
 	
 protected:
 	/// select energy for simulation

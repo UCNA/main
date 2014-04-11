@@ -451,9 +451,9 @@ INT adc_calib(EVENT_HEADER *pheader, void *pevent)
   float adcsum_west;
   float anode_east;
   float anode_west;
-  float cathode_sum[2];		//< cathode sum on each side
-  float mwpc_cut_var[2];	//< variable for doing wirechamber cuts
-  float mwpc_cut_level[2];	//< cut level for mwpc cut
+  float cathode_sum[2];		///< cathode sum on each side
+  float mwpc_cut_var[2];	///< variable for doing wirechamber cuts
+  float mwpc_cut_level[2];	///< cut level for mwpc cut
   float east_twofold;
   float west_twofold;
 

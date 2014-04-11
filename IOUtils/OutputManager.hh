@@ -32,16 +32,16 @@ public:
 	}
 	/// register a root object for output (and eventual deletion)
 	virtual TObject* addObject(TObject* o, bool noWrite=false) { if(noWrite) deleteItems.push_back(o); else rootItems.push_back(o); return o; }
-	std::vector<TObject*> rootItems;	//< objects held until deleted
-	std::vector<TObject*> deleteItems;	//< other objects never written to file
+	std::vector<TObject*> rootItems;	///< objects held until deleted
+	std::vector<TObject*> deleteItems;	///< other objects never written to file
 };
 
 /// indicator for level of problem with analysis
 enum WarningLevel {
-	BENIGN_WARNING,		//< just FYI for troubleshooting
-	MODERATE_WARNING,	//< might be a problem to look at
-	SEVERE_WARNING,		//< almost certainly something is very wrong
-	FATAL_WARNING		//< data is corrupted and cannot be analyzed
+	BENIGN_WARNING,		///< just FYI for troubleshooting
+	MODERATE_WARNING,	///< might be a problem to look at
+	SEVERE_WARNING,		///< almost certainly something is very wrong
+	FATAL_WARNING		///< data is corrupted and cannot be analyzed
 };
 
 /// manages output directory for grouping related information; manages a canvas, output QFile, output ROOT file, recursive subdirectories
@@ -77,18 +77,18 @@ public:
 	/// set whether to write ROOT output when destructed
 	void setWriteRoot(bool w) { writeRootOnDestruct = w; }
 
-	QFile qOut;					//< QFile output
-	TFile* rootOut;				//< ROOT file output
-	TCanvas* defaultCanvas;		//< canvas for drawing plots
-	OutputManager* parent;		//< parent output manager
-	std::string basePath;		//< general output path
-	std::string plotPath;		//< specific output path for plots
-	std::string dataPath;		//< specific output path for output data
-	std::string rootPath;		//< specific output path for ROOT files
-	std::string name;			//< name for this subsystem			
-	bool writeRootOnDestruct;	//< whether to write ROOT file when destructed
+	QFile qOut;					///< QFile output
+	TFile* rootOut;				///< ROOT file output
+	TCanvas* defaultCanvas;		///< canvas for drawing plots
+	OutputManager* parent;		///< parent output manager
+	std::string basePath;		///< general output path
+	std::string plotPath;		///< specific output path for plots
+	std::string dataPath;		///< specific output path for output data
+	std::string rootPath;		///< specific output path for ROOT files
+	std::string name;			///< name for this subsystem			
+	bool writeRootOnDestruct;	///< whether to write ROOT file when destructed
 	
-	static bool squelchAllPrinting;	//< whether to cancel all printCanvas output
+	static bool squelchAllPrinting;	///< whether to cancel all printCanvas output
 	
 protected:
 	

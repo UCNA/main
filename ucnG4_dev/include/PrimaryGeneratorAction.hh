@@ -26,7 +26,7 @@ public:
 	/// print info
 	void Print() const { G4cout << "Primary weighting " << w <<  G4endl; }
 	
-	double w;	//< event primary weight
+	double w;	///< event primary weight
 };
 
 using namespace std;
@@ -60,20 +60,20 @@ public:
 	void SetEventFile(G4String val);
 	
 private:
-	G4ParticleGun* particleGun;					//< particle gun primary event thrower
-	DetectorConstruction* myDetector;			//< detector geometry
-	PrimaryGeneratorMessenger* gunMessenger;	//< messenger of this class
-	G4String gunType;							//< event generator gun to use
-	G4String particleType;						//< particle type to throw
-	G4String positioner;						//< how to position initial events
+	G4ParticleGun* particleGun;					///< particle gun primary event thrower
+	DetectorConstruction* myDetector;			///< detector geometry
+	PrimaryGeneratorMessenger* gunMessenger;	///< messenger of this class
+	G4String gunType;							///< event generator gun to use
+	G4String particleType;						///< particle type to throw
+	G4String positioner;						///< how to position initial events
 	
-	EventTreeScanner* ETS;						//< Reader for saved input events
+	EventTreeScanner* ETS;						///< Reader for saved input events
 	
 	// positioning related variables
-	G4ThreeVector posOffset;	//< base positioning offset
-	double sourceRadius;		//< spread radius for source droplets
-	bool relToSourceHolder;		//< make positions relative to source holder, instead of geometry origin
-	void setVertices(std::vector<NucDecayEvent>& evts);	//< set vertex positions for each primary
+	G4ThreeVector posOffset;	///< base positioning offset
+	double sourceRadius;		///< spread radius for source droplets
+	bool relToSourceHolder;		///< make positions relative to source holder, instead of geometry origin
+	void setVertices(std::vector<NucDecayEvent>& evts);	///< set vertex positions for each primary
 	
 	/// throw a cluster of events
 	void throwEvents(const std::vector<NucDecayEvent>& evts, G4Event* anEvent);
@@ -81,7 +81,7 @@ private:
 	/// print what the particle gun is set up to do
 	void displayGunStatus();
 	
-	long myseed;	//< random seed for event
+	long myseed;	///< random seed for event
 	/// initialize random seed for event
 	void initEventRandomSeed(G4Event* anEvent);
 	

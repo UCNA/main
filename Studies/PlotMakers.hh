@@ -29,8 +29,8 @@ public:
 	/// compare nPE between to PMTCalibrators
 	void npeDiffPlot(const PMTCalibrator& P1, const PMTCalibrator& P2);
 	
-	float rscale; 		//< extra radius to plot beyond edge of measured area
-	unsigned int nbin;	//< number of position bins
+	float rscale; 		///< extra radius to plot beyond edge of measured area
+	unsigned int nbin;	///< number of position bins
 	
 protected:
 	/// generate new position histogram

@@ -13,15 +13,15 @@ public:
 	/// calculate physics weighting factor (undo pre-baked asymmetry)
 	void calcReweight();
 	
-	double fEprim;				//< float version for primary energy
-	double fEdep[2];				//< float version for scintillator energy
-	double fEquench[2];			//< float version for quenched energy
-	double fEW[2];				//< float version of wirechamber energy
-	double fMWPCpos[2][2];		//< float version of MWPC position
-	double fSCINTpos[2][2];           //< float version of Scintillator absorption position
-	double fEWd[2];				//< float version of MWPC dead gas energy
-	double fEMWPCDead[2][2];		//< float version of MWPC deead gas energy for each [side][front/back]
-	double fEMWPCWires[2][3];	//< float version of wire plane energy
+	double fEprim;				///< float version for primary energy
+	double fEdep[2];				///< float version for scintillator energy
+	double fEquench[2];			///< float version for quenched energy
+	double fEW[2];				///< float version of wirechamber energy
+	double fMWPCpos[2][2];		///< float version of MWPC position
+	double fSCINTpos[2][2];           ///< float version of Scintillator absorption position
+	double fEWd[2];				///< float version of MWPC dead gas energy
+	double fEMWPCDead[2][2];		///< float version of MWPC deead gas energy for each [side][front/back]
+	double fEMWPCWires[2][3];	///< float version of wire plane energy
 	
 	double fedepFoils[2];
 	double fedepWinOut[2];
@@ -41,9 +41,9 @@ public:
 	double fcosThetaOutWinIn[2];
 	double fcosThetaOutScint[2];
 	
-	double fPrimPos[3];			//< float version of primary position
-	double fTime[2];				//< float version of time
-	double fCostheta;			//< float version of cos theta
+	double fPrimPos[3];			///< float version of primary position
+	double fTime[2];				///< float version of time
+	double fCostheta;			///< float version of cos theta
 	
 protected:
 	virtual void setReadpoints();

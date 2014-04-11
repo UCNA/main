@@ -4,9 +4,9 @@
 
 void WireVolumeConstruction::Construct(Side sd) {
 	
-	G4Material* fCathodeWireMaterial = Al;			//< cathode wire material
-	G4Material* fAnodeWireMaterial = Wu;			//< anode wire material
-	G4Material* fCathodePlateMaterial = Au;			//< cathode plating material
+	G4Material* fCathodeWireMaterial = Al;			///< cathode wire material
+	G4Material* fAnodeWireMaterial = Wu;			///< anode wire material
+	G4Material* fCathodePlateMaterial = Au;			///< cathode plating material
 	
 	assert(fMWPCGas);
 	assert(fCathodeWireMaterial);

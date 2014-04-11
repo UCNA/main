@@ -28,16 +28,16 @@ public:
 	/// get pedestal values summary
 	Stringmap getPedSummary(const std::string& sensorName, const std::string& baseKey) const;
 	
-	RunNum myRun;			//< run number for this run
-	float totalTime;		//< run time for this run
+	RunNum myRun;			///< run number for this run
+	float totalTime;		///< run time for this run
 	
 	/// insert a pedestal graph
 	void insertPedestal(const std::string& sensorName, TGraph* g);
 
 private:
-	std::map<std::string,TGraph*> pedestals;	//< pedestals history for each sensor
-	std::map<std::string,TGraph*> pedwidths;	//< pedestal width history for each sensor
-	CalDB* pCDB;								//< pedestal-containing DB
+	std::map<std::string,TGraph*> pedestals;	///< pedestals history for each sensor
+	std::map<std::string,TGraph*> pedwidths;	///< pedestal width history for each sensor
+	CalDB* pCDB;								///< pedestal-containing DB
 };
 
 
@@ -74,29 +74,29 @@ public:
 	/// whether this is a reference run
 	bool isRefRun() const { return rGMS == rn || !rGMS; }
 		
-	bool scaleNoiseWithL;	//< whether to scale noise with sqrt(Light) or sqrt(ADC)
+	bool scaleNoiseWithL;	///< whether to scale noise with sqrt(Light) or sqrt(ADC)
 	
-	PositioningCorrector* P;		//< endpoint map for this run
-	GainStabilizer* GS;				//< PMT gain stabilizer
+	PositioningCorrector* P;		///< endpoint map for this run
+	GainStabilizer* GS;				///< PMT gain stabilizer
 	
-	std::string sensorNames[2][nBetaTubes];	//< names for the PMT sensors
-	RunNum rn;						//< run number for this run
-	RunNum rGMS;					//< run number this is GMS corrected to
-	LinearityCorrector* LCRef;		//< linearity corrector for GMS reference run
-	CalDB* CDB;						//< Calibration DB link
+	std::string sensorNames[2][nBetaTubes];	///< names for the PMT sensors
+	RunNum rn;						///< run number for this run
+	RunNum rGMS;					///< run number this is GMS corrected to
+	LinearityCorrector* LCRef;		///< linearity corrector for GMS reference run
+	CalDB* CDB;						///< Calibration DB link
 	
 protected:
 
-	float deltaL[2][nBetaTubes];		//< energy resolution for each tube delta(eta*E)/sqrt(eta*E)
-	float deltaADC[2][nBetaTubes];		//< energy resolution for each tube delta(ADC)/sqrt(ADC)
-	float gms0[2][nBetaTubes];			//< GMS factor at reference run t=0
-	float expected_adc[2][nBetaTubes];	//< expected ADC value for calibration peak
+	float deltaL[2][nBetaTubes];		///< energy resolution for each tube delta(eta*E)/sqrt(eta*E)
+	float deltaADC[2][nBetaTubes];		///< energy resolution for each tube delta(ADC)/sqrt(ADC)
+	float gms0[2][nBetaTubes];			///< GMS factor at reference run t=0
+	float expected_adc[2][nBetaTubes];	///< expected ADC value for calibration peak
 	
-	TGraph* linearityFunctions[2][nBetaTubes];	//< linearity correction for each side, tube (including ref. pmt)
-	TGraph* linearityInverses[2][nBetaTubes];	//< inverse linearity correction for each side, tube
+	TGraph* linearityFunctions[2][nBetaTubes];	///< linearity correction for each side, tube (including ref. pmt)
+	TGraph* linearityInverses[2][nBetaTubes];	///< inverse linearity correction for each side, tube
 	
-	static std::map<RunNum,LinearityCorrector*> cachedRuns;			//< cache of run correctors for faster access
-	static LinearityCorrector* getCachedRun(RunNum r,CalDB* cdb);	//< retrieve a cached corrector, creating if necessary
+	static std::map<RunNum,LinearityCorrector*> cachedRuns;			///< cache of run correctors for faster access
+	static LinearityCorrector* getCachedRun(RunNum r,CalDB* cdb);	///< retrieve a cached corrector, creating if necessary
 };
 
 /// Energy reconstruction class
@@ -147,8 +147,8 @@ public:
 	
 protected:
 	
-	float clipThreshold[2][nBetaTubes];		//< threshold to de-weight ADC in tube combination due to "clipping"
-	EfficCurve* pmtEffic[2][nBetaTubes];	//< efficiency curves for each PMT
+	float clipThreshold[2][nBetaTubes];		///< threshold to de-weight ADC in tube combination due to "clipping"
+	EfficCurve* pmtEffic[2][nBetaTubes];	///< efficiency curves for each PMT
 };
 
 #endif

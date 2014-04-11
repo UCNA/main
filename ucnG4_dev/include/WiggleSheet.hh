@@ -24,21 +24,21 @@ public:
 	/// get constructed thickness of container volume
 	double getContainerThick() const { return containerThick; }
 	
-	double thetaMax;	//< maximum wiggle angle, radians
-	double period;		//< wiggle period
-	unsigned int nseg;	//< number of wiggle segments
-	double length;		//< sheet length
-	G4Material* containerMat;		//< material for container volume
-	G4LogicalVolume* container_log; 		//< overall container volume
-	std::vector<G4LogicalVolume*> zigs_log;	//< segments for each material
-	std::vector<G4LogicalVolume*> zags_log;	//< segments for each material
+	double thetaMax;	///< maximum wiggle angle, radians
+	double period;		///< wiggle period
+	unsigned int nseg;	///< number of wiggle segments
+	double length;		///< sheet length
+	G4Material* containerMat;		///< material for container volume
+	G4LogicalVolume* container_log; 		///< overall container volume
+	std::vector<G4LogicalVolume*> zigs_log;	///< segments for each material
+	std::vector<G4LogicalVolume*> zags_log;	///< segments for each material
 	
 protected:
-	std::vector<G4Material*> layerMat;	//< layer materials
-	std::vector<G4VisAttributes*> layerVis;	//< layer visualization attributes
-	std::vector<double> layerThick;		//< layer thicknesses
-	double ttotal;						//< total thickness
-	double containerThick;				//< thickness of container volume
+	std::vector<G4Material*> layerMat;	///< layer materials
+	std::vector<G4VisAttributes*> layerVis;	///< layer visualization attributes
+	std::vector<double> layerThick;		///< layer thicknesses
+	double ttotal;						///< total thickness
+	double containerThick;				///< thickness of container volume
 };
 
 

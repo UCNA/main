@@ -15,11 +15,11 @@ public:
 	/// constructor
 	quadHists(const std::string& nm="", const std::string& ttl="", Side s = BOTH): name(nm), title(ttl), mySide(s), fillPoint(NULL) {}
 	
-	std::string name;	//< histogram base name
-	std::string title;	//< histogram base title
-	Side mySide;		//< side for these histograms (for blind time rates)
-	TH1* fillPoint;		//< pointer to currently active fill histogram
-	fgbgPair* fgbg[2];	//< background-subtracted pair for each flipper state
+	std::string name;	///< histogram base name
+	std::string title;	///< histogram base title
+	Side mySide;		///< side for these histograms (for blind time rates)
+	TH1* fillPoint;		///< pointer to currently active fill histogram
+	fgbgPair* fgbg[2];	///< background-subtracted pair for each flipper state
 	
 	/// add another quadHists
 	void operator+=(const quadHists& p);
@@ -82,7 +82,7 @@ public:
 	
 private:
 	
-	std::map<std::string,quadHists*> coreHists;	//< core histograms for merging, BG subtraction
+	std::map<std::string,quadHists*> coreHists;	///< core histograms for merging, BG subtraction
 };
 
 /// plug-in for OctetAnalyzer
@@ -109,7 +109,7 @@ public:
 	/// draw East/West pair of quadHists together, optionally also drawing AFP states together
 	void drawQuadSides(quadHists* qhE, quadHists* qhW, bool combineAFP = false,  const std::string& subfolder = ".", const std::string& opt = "");
 	
-	OctetAnalyzer* myA;	//< OctetAnalyzer with which this plugin is associated
+	OctetAnalyzer* myA;	///< OctetAnalyzer with which this plugin is associated
 };
 	
 #endif

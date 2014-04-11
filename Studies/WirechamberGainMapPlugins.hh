@@ -18,11 +18,11 @@ public:
 	/// generate position map, upload to CalDB
 	void genPosmap(const std::string& pmapNameBase) const;
 	
-	std::vector<fgbgPair*> sectHists[BOTH];	//< reconstructed energy histograms for each sector
-	fgbgPair* sectGains[BOTH];				//< prior average gains in each sector
+	std::vector<fgbgPair*> sectHists[BOTH];	///< reconstructed energy histograms for each sector
+	fgbgPair* sectGains[BOTH];				///< prior average gains in each sector
 	
 protected:
-	ChargeProxyType myChgPrx;				//< what charge measure is being used
+	ChargeProxyType myChgPrx;				///< what charge measure is being used
 };
 
 /// simulated wirechamber energy deposition position map

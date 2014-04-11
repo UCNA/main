@@ -61,25 +61,25 @@ public:
 	G4ThreeVector GetVertex() const { return vertex; };
 	G4String GetCreatorVolumeName() const { return creatorVolumeName; }
 	
-	G4double		originEnergy;			//< energy at split from "originating" track for EdepQ tracking
-	unsigned int	nSecondaries;			//< number of secondaries produced along track
+	G4double		originEnergy;			///< energy at split from "originating" track for EdepQ tracking
+	unsigned int	nSecondaries;			///< number of secondaries produced along track
 private:
 	
-	G4int			trackID;				//< ID number for this track
-	G4double		incidentEnergy;			//< incident energy at start of track
-	G4double		eDepSoFar;				//< accumulator for energy deposition
-	G4double		eDepQuenchedSoFar;		//< accumulator for quenched energy
-	G4double		hitTime;				//< entry time into volume
-	G4ThreeVector	hitPosition;			//< position where this track entered volume
-	G4ThreeVector	edepWeightedPosition;	//< track position weighted by deposited energy
-	G4ThreeVector	edepWeightedPosition2;	//< track position^2 weighted by deposited energy
-	G4ThreeVector	incidentMomentum;		//< momentum when entering volume
-	G4ThreeVector	exitMomentum;			//< momentum when exiting volume
-	G4int 			pID;					//< particle creating track (PDG code)
-	G4String processName;					//< name of process creating track
-	G4String volumeName;					//< name of volume where track is
-	G4ThreeVector	vertex;					//< track vertex position
-	G4String creatorVolumeName;				//< volume where track was created
+	G4int			trackID;				///< ID number for this track
+	G4double		incidentEnergy;			///< incident energy at start of track
+	G4double		eDepSoFar;				///< accumulator for energy deposition
+	G4double		eDepQuenchedSoFar;		///< accumulator for quenched energy
+	G4double		hitTime;				///< entry time into volume
+	G4ThreeVector	hitPosition;			///< position where this track entered volume
+	G4ThreeVector	edepWeightedPosition;	///< track position weighted by deposited energy
+	G4ThreeVector	edepWeightedPosition2;	///< track position^2 weighted by deposited energy
+	G4ThreeVector	incidentMomentum;		///< momentum when entering volume
+	G4ThreeVector	exitMomentum;			///< momentum when exiting volume
+	G4int 			pID;					///< particle creating track (PDG code)
+	G4String processName;					///< name of process creating track
+	G4String volumeName;					///< name of volume where track is
+	G4ThreeVector	vertex;					///< track vertex position
+	G4String creatorVolumeName;				///< volume where track was created
 };
 
 typedef G4THitsCollection<TrackerHit> TrackerHitsCollection;

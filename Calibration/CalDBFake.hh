@@ -100,7 +100,7 @@ protected:
 		return g;
 	}
 	
-	QFile calfile;	//< calibration defaults file
+	QFile calfile;	///< calibration defaults file
 	
 };
 

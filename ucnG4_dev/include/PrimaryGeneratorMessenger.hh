@@ -24,14 +24,14 @@ public:
     void SetNewValue(G4UIcommand*, G4String);
     
 private:
-    PrimaryGeneratorAction* Action;				//< primary generator action being controlled
-    G4UIdirectory*			gunDir;					//< '/gun/' commands directory
-    G4UIcmdWithAString*		gunTypeCmd;				//< control momentum generator (beam, random, file-specified)
-	G4UIcmdWithAString*		gunPtclCmd;				//< control default particle to throw
-	G4UIcmdWithAString*		positionerCmd;			//< control event positioner to use
-	G4UIcmdWithABool*		srcrelCmd;				//< control positions relative to source holder
-	G4UIcmdWithAString*		eventFileCmd;			//< control file to read events from
-	G4UIcmdWithADoubleAndUnit* sourceRadiusCmd;		//< control radius of "source drop" positioner
+    PrimaryGeneratorAction* Action;				///< primary generator action being controlled
+    G4UIdirectory*			gunDir;					///< '/gun/' commands directory
+    G4UIcmdWithAString*		gunTypeCmd;				///< control momentum generator (beam, random, file-specified)
+	G4UIcmdWithAString*		gunPtclCmd;				///< control default particle to throw
+	G4UIcmdWithAString*		positionerCmd;			///< control event positioner to use
+	G4UIcmdWithABool*		srcrelCmd;				///< control positions relative to source holder
+	G4UIcmdWithAString*		eventFileCmd;			///< control file to read events from
+	G4UIcmdWithADoubleAndUnit* sourceRadiusCmd;		///< control radius of "source drop" positioner
 };
 
 #endif

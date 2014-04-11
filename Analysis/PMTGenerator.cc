@@ -162,8 +162,8 @@ ScintEvent PMTGenerator::generate(float en) {
 	}
 	preuncorrelate(nPE, crosstalk);
 	for(unsigned int t=0; t<nBetaTubes; t++) {
-		nPE[t] = sim_rnd_source.PoissonD(nPE[t]>0?nPE[t]:0);				//< primary photoelectrons
-		nPE[t] = sim_rnd_source.PoissonD(dgain*(nPE[t]>0?nPE[t]:0))/dgain;	//< first gain stage electron multiplication
+		nPE[t] = sim_rnd_source.PoissonD(nPE[t]>0?nPE[t]:0);				///< primary photoelectrons
+		nPE[t] = sim_rnd_source.PoissonD(dgain*(nPE[t]>0?nPE[t]:0))/dgain;	///< first gain stage electron multiplication
 	}
 	recorrelate(nPE, crosstalk);
 	for(unsigned int t=0; t<nBetaTubes; t++)

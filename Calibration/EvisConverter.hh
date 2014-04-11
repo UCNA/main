@@ -14,7 +14,7 @@ public:
 	/// get true energy for side given Evis on each side
 	float Erecon(Side s, EventType tp, float EvisE, float EvisW) const;			
 protected:
-	TGraph* conversions[2][TYPE_III_EVENT+1];	//< energy conversion curves by [side][type]
+	TGraph* conversions[2][TYPE_III_EVENT+1];	///< energy conversion curves by [side][type]
 };
 
 #endif

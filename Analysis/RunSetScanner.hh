@@ -35,23 +35,23 @@ public:
 	/// check whether this is simulated data
 	virtual bool isSimulated() const { return false; }
 	
-	PMTCalibrator* ActiveCal;	//< PMTCalibrator currently active for loaded run
+	PMTCalibrator* ActiveCal;	///< PMTCalibrator currently active for loaded run
 	
 	/// print info about this scanner
 	virtual void display();
 	/// write run calibrations info to QFile
 	void writeCalInfo(QFile& qout, std::string tag);
 	
-	RunNum evtRun;					//< run number for current event
-	BlindTime totalTime;			//< combined length of runs in seconds	
-	unsigned int nAFP[2];			//< number of events in each AFP state
-	TagCounter<RunNum>	runTimes;	//< times for each run loaded
-	bool withCals;					//< whether to use energy recalibrators
+	RunNum evtRun;					///< run number for current event
+	BlindTime totalTime;			///< combined length of runs in seconds	
+	unsigned int nAFP[2];			///< number of events in each AFP state
+	TagCounter<RunNum>	runTimes;	///< times for each run loaded
+	bool withCals;					///< whether to use energy recalibrators
 	
 protected:
 	
-	std::vector<RunNum> runlist;			//< list of loaded runs
-	std::map<RunNum,PMTCalibrator*> PCals;	//< calibrators for each run
+	std::vector<RunNum> runlist;			///< list of loaded runs
+	std::map<RunNum,PMTCalibrator*> PCals;	///< calibrators for each run
 };
 
 #endif

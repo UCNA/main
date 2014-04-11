@@ -22,7 +22,7 @@ public:
 	/// get uncertainty at energy
 	virtual double getUnc(double e) = 0;
 	
-	std::string name;	//< correction name
+	std::string name;	///< correction name
 };
 
 class AsymCorrFile: public AsymCorr {
@@ -34,8 +34,8 @@ public:
 	/// get uncertainty at energy
 	virtual double getUnc(double KE) { return gUnc.Eval(KE); }
 protected:
-	TGraph gCor;		//< amount of correction
-	TGraph gUnc;		//< uncertainty
+	TGraph gCor;		///< amount of correction
+	TGraph gUnc;		///< uncertainty
 };
 
 /// energy independent asymmetry correction
@@ -85,9 +85,9 @@ public:
 	double energyErrorEnvelope(double e, unsigned int year = 2010) const;
 	
 protected:
-	OutputManager OM;		//< unused OutputManager
-	BetaDecayAnalyzer Adat;	//< data for error estimation
-	TGraphErrors* S[2][2];	//< observed energy spectra for [side][afp] as TGraphs
+	OutputManager OM;		///< unused OutputManager
+	BetaDecayAnalyzer Adat;	///< data for error estimation
+	TGraphErrors* S[2][2];	///< observed energy spectra for [side][afp] as TGraphs
 };
 
 /// calculate MC-based corrections given data, MC filenames

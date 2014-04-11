@@ -12,18 +12,18 @@
 	
 #include <math.h>
 // useful physics constants; several in hbar=m_e=c=1 "natural units"
-const double neutronBetaEp = 782.347;			//< neutron beta decay endpoint, keV
-const double m_e = 511.00;						//< electron mass, keV/c^2
-const double m_p = 938272.046;					//< proton mass, keV/c^2
-const double m_n = m_p+m_e+neutronBetaEp;		//< neutron mass, keV/c^2
-const double fs_alpha = 1./137.036;				//< fine structure constant
-const double lambda = fabs(-1.2694);			//< +/-0.0028, PDG 2010 value, Wilkinson sign convention
-const double A0_PDG = -0.1173;					//< +/-0.0013, PDG 2010 value
-const double beta_W0 = (neutronBetaEp+m_e)/m_e;	//< beta spectrum endpoint, ``natural'' units
-const double neutron_R0 = 0.0025896*1.2;		//< neutron and proton radius approximation, in "natural" units (1.2fm)/(hbar/m_e*c)
-const double proton_M0 = m_p/m_e;				//< proton mass, ``natural'' units
-const double neutron_M0 = m_n/m_e;				//< neutron mass, ``natural'' units
-const double gamma_euler = 0.577215;			//< Euler's constant
+const double neutronBetaEp = 782.347;			///< neutron beta decay endpoint, keV
+const double m_e = 511.00;						///< electron mass, keV/c^2
+const double m_p = 938272.046;					///< proton mass, keV/c^2
+const double m_n = m_p+m_e+neutronBetaEp;		///< neutron mass, keV/c^2
+const double fs_alpha = 1./137.036;				///< fine structure constant
+const double lambda = fabs(-1.2694);			///< +/-0.0028, PDG 2010 value, Wilkinson sign convention
+const double A0_PDG = -0.1173;					///< +/-0.0013, PDG 2010 value
+const double beta_W0 = (neutronBetaEp+m_e)/m_e;	///< beta spectrum endpoint, ``natural'' units
+const double neutron_R0 = 0.0025896*1.2;		///< neutron and proton radius approximation, in "natural" units (1.2fm)/(hbar/m_e*c)
+const double proton_M0 = m_p/m_e;				///< proton mass, ``natural'' units
+const double neutron_M0 = m_n/m_e;				///< neutron mass, ``natural'' units
+const double gamma_euler = 0.577215;			///< Euler's constant
 
 // NOTE: functions of W are using Wilkinson's ``natural'' units for energy, W=(KE+m_e)/m_e
 
@@ -93,15 +93,15 @@ public:
 	/// decay probability at given KE
 	double decayProb(double KE) const;
 	
-	double A;				//< number of nucleons
-	double Z;				//< number of protons
-	double EP;				//< endpoint kinetic energy, keV
-	double W0;				//< endpoint total energy, m_e*c^2
-	double R;				//< effective nuclear radius
-	double M0;				//< nuclear mass, m_e*c^2
-	unsigned int forbidden;	//< "forbidden" level of decay
-	double M2_F;			//< |M_F|^2 Fermi decay matrix element
-	double M2_GT;			//< |M_GT|^2 Gamov-Teller decay matrix element
+	double A;				///< number of nucleons
+	double Z;				///< number of protons
+	double EP;				///< endpoint kinetic energy, keV
+	double W0;				///< endpoint total energy, m_e*c^2
+	double R;				///< effective nuclear radius
+	double M0;				///< nuclear mass, m_e*c^2
+	unsigned int forbidden;	///< "forbidden" level of decay
+	double M2_F;			///< |M_F|^2 Fermi decay matrix element
+	double M2_GT;			///< |M_GT|^2 Gamov-Teller decay matrix element
 };
 
 

@@ -12,8 +12,8 @@ public:
 	/// allocate histograms for each position segment
 	std::vector<fgbgPair*> allocateSegmentHistograms(TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH);
 	
-	SectorCutter sects;			//< sector cutter for position binning
-	static double fidRadius;	//< analysis fiducial radius
+	SectorCutter sects;			///< sector cutter for position binning
+	static double fidRadius;	///< analysis fiducial radius
 };
 
 #endif

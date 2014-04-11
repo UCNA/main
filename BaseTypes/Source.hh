@@ -25,15 +25,15 @@ public:
 	/// check whether a point is within this source's range
 	inline bool inSourceRegion(float xx, float yy, float nSigma=3.0) const { return (xx-x)*(xx-x)/(wx*wx)+(yy-y)*(yy-y)/(wy*wy) < nSigma*nSigma; }
 	
-	std::string t;		//< this source's type
-	Side mySide;		//< side on which this source appears
-	RunNum myRun;		//< run number for this source
-	float x;			//< x coordinate
-	float y;			//< y coordinate
-	float wx;			//< width in x
-	float wy;			//< width in y
-	float nCounts; 		//< number of counts in cut
-	unsigned int sID;	//< unique ID number when source is constructed
+	std::string t;		///< this source's type
+	Side mySide;		///< side on which this source appears
+	RunNum myRun;		///< run number for this source
+	float x;			///< x coordinate
+	float y;			///< y coordinate
+	float wx;			///< width in x
+	float wy;			///< width in y
+	float nCounts; 		///< number of counts in cut
+	unsigned int sID;	///< unique ID number when source is constructed
 
 protected:
 	

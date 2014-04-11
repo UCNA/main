@@ -31,10 +31,10 @@ public:
 	/// get outer radius of ring
 	float ringRadius(unsigned int rng) const { return rng<n?r*(rng+0.5)/(n-0.5):r; }
 	
-	unsigned int n;						//< number of concentric rings
-	float r;							//< radius of outermost ring
-	std::vector<unsigned int> ndivs;	//< number of phi divisions in each ring
-	std::vector<unsigned int> cumdivs;	//< cumulative number of divisions in lower rings
+	unsigned int n;						///< number of concentric rings
+	float r;							///< radius of outermost ring
+	std::vector<unsigned int> ndivs;	///< number of phi divisions in each ring
+	std::vector<unsigned int> cumdivs;	///< cumulative number of divisions in lower rings
 };
 
 #endif

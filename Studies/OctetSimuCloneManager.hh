@@ -32,23 +32,23 @@ public:
 	/// run re-calculation on all octets
 	unsigned int recalcAllOctets(RunAccumulator& RA, bool doPlots);
 	
-	std::string outputDir;	//< output directory naming
-	std::string baseDir;	//< base directory for output
-	bool doPlots;			//< whether to make individual octet plots
-	bool doCompare;			//< whether to run data/MC comparison on cloned octets
-	unsigned int hoursOld;	//< do not re-scan data for runs less than this number of hours old
-	std::string simFile;	//< location of Geant4 simulation data to use
-	float simFactor;		//< ratio of simulation to data events to produce
-	unsigned int nTot;		//< total number of individual sim files
-	unsigned int stride;	//< number of sim files to load in a chunk for each octet
+	std::string outputDir;	///< output directory naming
+	std::string baseDir;	///< base directory for output
+	bool doPlots;			///< whether to make individual octet plots
+	bool doCompare;			///< whether to run data/MC comparison on cloned octets
+	unsigned int hoursOld;	///< do not re-scan data for runs less than this number of hours old
+	std::string simFile;	///< location of Geant4 simulation data to use
+	float simFactor;		///< ratio of simulation to data events to produce
+	unsigned int nTot;		///< total number of individual sim files
+	unsigned int stride;	///< number of sim files to load in a chunk for each octet
 
 protected:
 
 	/// set up simulation data for specified octet
 	virtual void setOctetSimdata(unsigned int octn);
 
-	bool ownSimData;		//< whether this class ``owns'' simulation data
-	Sim2PMT* simData;		//< simulated data source to use
+	bool ownSimData;		///< whether this class ``owns'' simulation data
+	Sim2PMT* simData;		///< simulated data source to use
 };
 
 #endif

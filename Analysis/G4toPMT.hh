@@ -18,12 +18,12 @@ protected:
 	/// set read points for input tree
 	virtual void setReadpoints();
 	
-	bool extended;			//< whether to read in additional variables
-	double eDepSD[N_SD];		//< energy deposition array
-	double thetaInSD[N_SD];	//< entrance angle array
-	double thetaOutSD[N_SD];	//< exit angle array
-	double keInSD[N_SD];		//< entrance energy array
-	double keOutSD[N_SD];	//< exit energy array
+	bool extended;			///< whether to read in additional variables
+	double eDepSD[N_SD];		///< energy deposition array
+	double thetaInSD[N_SD];	///< entrance angle array
+	double thetaOutSD[N_SD];	///< exit angle array
+	double keInSD[N_SD];		///< entrance energy array
+	double keOutSD[N_SD];	///< exit energy array
 };
 
 /// For consistency checks, swaps E/W sides on Geant4 sim data
@@ -54,11 +54,11 @@ protected:
 	/// rotate a point
 	void rotpt(double& x0, double& y0);
 	
-	SectorCutter SC;			//< SectorCutter to determine event multiplication
-	unsigned int nrots;			//< number of remaining point rotations
-	unsigned int rcurrent;		//< current radial ring
-	std::vector<double> vc,vs;	//< pre-calculated rotation matrix cosines, sines for each ring
-	bool morePts;				//< whether the data still has more points to come
+	SectorCutter SC;			///< SectorCutter to determine event multiplication
+	unsigned int nrots;			///< number of remaining point rotations
+	unsigned int rcurrent;		///< current radial ring
+	std::vector<double> vc,vs;	///< pre-calculated rotation matrix cosines, sines for each ring
+	bool morePts;				///< whether the data still has more points to come
 };
 
 #endif

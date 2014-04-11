@@ -14,23 +14,23 @@ public:
 	/// constructor
 	TrackInfo() {}
 		
-	Int_t trackID;			//< ID number for this track
-	Int_t hcID;				//< sensitive detector ID number for this track
-	Double_t hitTime;		//< time of track start [ns]
-	Double_t KE;			//< KE at start of track
-	Double_t Edep;			//< accumulated deposited energy along track (not counting secondaries), [keV]
-	Double_t EdepQuenched;	//< accumulated "quenched" energy along track
-	Double_t pIn[3];		//< momentum at entry to volume
-	Double_t pOut[3];		//< momentum at exit to volume
+	Int_t trackID;			///< ID number for this track
+	Int_t hcID;				///< sensitive detector ID number for this track
+	Double_t hitTime;		///< time of track start [ns]
+	Double_t KE;			///< KE at start of track
+	Double_t Edep;			///< accumulated deposited energy along track (not counting secondaries), [keV]
+	Double_t EdepQuenched;	///< accumulated "quenched" energy along track
+	Double_t pIn[3];		///< momentum at entry to volume
+	Double_t pOut[3];		///< momentum at exit to volume
 
-	Double_t edepPos[3];	//< hit position weighted by deposited energy, [keV*cm]
-	Double_t edepPos2[3];	//< hit position^2 weighted by deposited energy, [kev*cm^2]
+	Double_t edepPos[3];	///< hit position weighted by deposited energy, [keV*cm]
+	Double_t edepPos2[3];	///< hit position^2 weighted by deposited energy, [kev*cm^2]
 	
-	Double_t inPos[3];		//< entry position to volume [cm]
-	Double_t vertexPos[3];	//< track vertex position [cm]
+	Double_t inPos[3];		///< entry position to volume [cm]
+	Double_t vertexPos[3];	///< track vertex position [cm]
 	
-	Int_t pID;				//< particle creating this track (PDG code)
-	bool isEntering;		//< whether this is initial track entering a volume
+	Int_t pID;				///< particle creating this track (PDG code)
+	bool isEntering;		///< whether this is initial track entering a volume
 	
 	ClassDef(TrackInfo, 2);
 };

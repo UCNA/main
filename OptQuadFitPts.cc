@@ -19,18 +19,18 @@ using namespace std;
 #define N_SEARCHPTS 200000
 #define N_SEARCHBALL 1000
 
-double searchpts[N_SEARCHPTS][N_DIM];	//< potential search points
-double best_pts[N_COEFFS][N_DIM];		//< best points ever found
-double ptvals[N_SEARCHPTS][N_COEFFS];	//< coefficient values at each point
-QuasiRandomNiederreiter rNied(N_DIM);	//< random generator
-unsigned int pt_idx[N_COEFFS];			//< selected indices of points to use
-set<unsigned int> pt_idx_set;			//< set of used point indices, to avoid duplication
-double best_val = 0;					//< optimum value found so far
-double best_ever = 0;					//< best value ever found
+double searchpts[N_SEARCHPTS][N_DIM];	///< potential search points
+double best_pts[N_COEFFS][N_DIM];		///< best points ever found
+double ptvals[N_SEARCHPTS][N_COEFFS];	///< coefficient values at each point
+QuasiRandomNiederreiter rNied(N_DIM);	///< random generator
+unsigned int pt_idx[N_COEFFS];			///< selected indices of points to use
+set<unsigned int> pt_idx_set;			///< set of used point indices, to avoid duplication
+double best_val = 0;					///< optimum value found so far
+double best_ever = 0;					///< best value ever found
 
-TMatrixD M(N_COEFFS,N_COEFFS);			//< matrix of fit vectors
-TMatrixD* Mm[N_COEFFS];					//< minors for fast row-swapping determinant calculation
-double DetMm[N_COEFFS];					//< determinants of minors
+TMatrixD M(N_COEFFS,N_COEFFS);			///< matrix of fit vectors
+TMatrixD* Mm[N_COEFFS];					///< minors for fast row-swapping determinant calculation
+double DetMm[N_COEFFS];					///< determinants of minors
 
 double rsearch = pow(pow(2.,N_DIM)/N_SEARCHPTS,1./N_DIM)/2.;
 

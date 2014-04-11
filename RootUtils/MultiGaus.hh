@@ -43,13 +43,13 @@ public:
 	/// gaussian evaluation function
 	double operator() (double* x, double* par);
 	
-	float nSigma;				//< number of sigma peak width to fit
+	float nSigma;				///< number of sigma peak width to fit
 	
 protected:
-	const unsigned int npks;			//< number of peaks being fitted
-	double* iguess;						//< inital guess at peak positions
-	TF1* myTF1;							//< TF1 using this class as its fit function
-	std::vector<corrPeak> corrPeaks;	//< correlated subpeaks
+	const unsigned int npks;			///< number of peaks being fitted
+	double* iguess;						///< inital guess at peak positions
+	TF1* myTF1;							///< TF1 using this class as its fit function
+	std::vector<corrPeak> corrPeaks;	///< correlated subpeaks
 };
 
 int iterGaus(TH1* h0, TF1* gf, unsigned int nit, float mu, float sigma, float nsigma = 1.5, float asym = 0);

@@ -13,8 +13,8 @@
 
 /// simple struct for peaks identified by TSpectrum
 struct TSpectrumPeak {
-	float x;	//< peak position
-	float y;	//< peak height
+	float x;	///< peak position
+	float y;	///< peak height
 };
 
 /// more convenient wrapper for TSpectrumSearch

@@ -61,11 +61,11 @@ public:
 	/// get first run, for sorting Octets
 	RunNum getFirstRun() const;
 	
-	Octet_Division_t divlevel;	//< dividion level of octet
+	Octet_Division_t divlevel;	///< dividion level of octet
 	
 protected:
 	
-	std::map< OctetRole,std::vector<RunNum> > runs;	//< list of octet runs
+	std::map< OctetRole,std::vector<RunNum> > runs;	///< list of octet runs
 };
 
 #endif

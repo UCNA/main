@@ -65,7 +65,7 @@ public:
 	Float_t operator[](Side s) const { assert(s<=NOSIDE); return t[s]; }
 #endif
 protected:
-	Float_t t[4];	//< blinded timings for each side
+	Float_t t[4];	///< blinded timings for each side
 };
 /// add blinded times
 BlindTime operator+(const BlindTime& a, const BlindTime& b);
@@ -76,27 +76,27 @@ BlindTime operator*(double x, const BlindTime& a);
 
 /// stored data for triggers/scalers
 struct TrigInfo {
-	float runClock;		//< time since begin of run (s)
-	float beamClock;	//< time since beam pulse (s)
-	RunNum runNum;		//< run number for this event (useful when output trees TChain'd together)
-	UInt_t e;			//< event number in raw data
-	Int_t trigflags;	//< trigger flags
-	float dt;			//< time since the previous event
+	float runClock;		///< time since begin of run (s)
+	float beamClock;	///< time since beam pulse (s)
+	RunNum runNum;		///< run number for this event (useful when output trees TChain'd together)
+	UInt_t e;			///< event number in raw data
+	Int_t trigflags;	///< trigger flags
+	float dt;			///< time since the previous event
 };
 
 /// stored data for a Beta Scintillator event
 struct ScintEvent {
-	Float_t adc[nBetaTubes];		//< raw pedestal-subtracted PMT ADCs
-	float_err tuben[nBetaTubes];	//< individual tube reconstructed energies
-	float_err energy;				//< total reconstructed energy
-	Float_t nPE[nBetaTubes];		//< number of PE seen by each PMT
+	Float_t adc[nBetaTubes];		///< raw pedestal-subtracted PMT ADCs
+	float_err tuben[nBetaTubes];	///< individual tube reconstructed energies
+	float_err energy;				///< total reconstructed energy
+	Float_t nPE[nBetaTubes];		///< number of PE seen by each PMT
 };
 
 /// stored data for an MWPC event
 struct MWPCevent {
-	Float_t cathodeSum;	//< sum of constituent wirechamber cathodes
-	Float_t anode;		//< anode ADC
-	Int_t errflags[2];	//< reconstruction error flags
+	Float_t cathodeSum;	///< sum of constituent wirechamber cathodes
+	Float_t anode;		///< anode ADC
+	Int_t errflags[2];	///< reconstruction error flags
 };
 
 #endif

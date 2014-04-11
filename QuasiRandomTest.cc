@@ -43,7 +43,7 @@ public:
 	AsymAnalyzer(OutputManager* pnt, const std::string& nm = "AsymAnalyzer", const std::string& inflName = ""): OctetAnalyzer(pnt,nm,inflName) { addPlugin(myAsym = new AsymmetryPlugin(this)); }
 	/// create a new instance of this object (cloning self settings) for given directory
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new AsymAnalyzer(this,nm,inflname); }
-	AsymmetryPlugin* myAsym;		//< asymmetry plugin
+	AsymmetryPlugin* myAsym;		///< asymmetry plugin
 };
 
 
