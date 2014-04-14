@@ -77,10 +77,10 @@ void AnalysisManager::CreateTrees() {
 	fEventTree->Branch("MC_event_output","MCEvent",&pMcEvent,64000,99); 
 }
 
-//do this only once for one run
 void AnalysisManager::StoreHitCollectionIDs() {
 	G4SDManager * SDman = G4SDManager::GetSDMpointer();
 	detectorIDs.clear();
+	G4cout << "\n---- sensitive detector ID numbers ----\n";
 	for(size_t ii=0;ii<fSDNames.size();ii++){
 		int id = SDman->GetCollectionID(fSDNames[ii]+"/trackerCollection");
 		if(id<0) {
@@ -90,8 +90,9 @@ void AnalysisManager::StoreHitCollectionIDs() {
 			throw(e);
 		}
 		detectorIDs.push_back(id);
-		G4cout<<fSDNames[ii]<<" : Id = "<<id<<G4endl;
-	} 
+		G4cout << "\t" << id << " :\t" << fSDNames[ii] << G4endl;
+	}
+	G4cout <<   "---------------------------------------\n\n";
 }
 
 void AnalysisManager::FillPrimaryData(const G4Event* evt_in, const long seed) {

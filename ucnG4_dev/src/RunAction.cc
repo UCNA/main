@@ -37,13 +37,8 @@ RunAction::~RunAction() {
 }
 
 void RunAction::BeginOfRunAction(const G4Run* aRun) {
-	G4cout << "### Run " << aRun->GetRunID() << " start." << G4endl;
-	
-	//This goes into the SD manager, and get the collection ID for 
-	//individual hit collections (grouped by physical detectors)
-	G4cout<<"Start storing hit collection IDs ..."<<G4endl;
+	G4cout << "### Run " << aRun->GetRunID() << " starting." << G4endl;
 	gAnalysisManager->StoreHitCollectionIDs();
-	
 }
 
 void RunAction::EndOfRunAction(const G4Run* aRun) { 

@@ -290,9 +290,7 @@ void PosPlotter::npePlot(PMTCalibrator* PCal) {
 			
 			TH2F* interpogrid = makeHisto(sideSubst("%c",s)+itos(t+1)+"_nPE",
 									(t==nBetaTubes?sideSubst("%s",s):sideSubst("%c",s)+itos(t+1))+" PE per MeV");
-			interpogrid->SetAxisRange(0,250,"Z");
-			if(t==nBetaTubes)
-				interpogrid->SetAxisRange(0,500,"Z");
+			interpogrid->SetAxisRange(0, t==nBetaTubes?600:250, "Z");
 			
 			startScan(interpogrid);
 			while(nextPoint())

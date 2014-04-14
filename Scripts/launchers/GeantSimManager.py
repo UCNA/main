@@ -21,10 +21,9 @@ class GeantSimManager:
 		self.settings["sourceRadius"] = "0 mm"
 		self.settings["sourceScan"] = 0.
 		self.settings["makeinfoil"] = "false"
-		self.settings["magf"] = "on"
-		self.settings["fieldmapcmd"] = "#/detector/fieldmapfile UNUSED"
+		self.settings["fieldmapcmd"] = "#/field/mapfile UNUSED"
 		if fmap:
-			self.settings["fieldmapcmd"] = "/detector/fieldmapfile "+fmap
+			self.settings["fieldmapcmd"] = "/field/mapfile "+fmap
 		self.settings["ana_args"] = ""
 		self.settings["extra_cmds"] = ""
 		

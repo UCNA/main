@@ -13,10 +13,6 @@
 
 # spectrometer decay trap geometry name
 /detector/geometry %(geometry)s
-# spectrometer magnetic field
-/detector/field %(magf)s
-# command for loading field map
-%(fieldmapcmd)s
 # detector vacuum pressure
 /detector/vacuum %(vacuum)s
 
@@ -30,6 +26,9 @@
 %(extra_cmds)s
 
 /run/initialize
+
+# command for loading field map
+%(fieldmapcmd)s
 
 # optional added radius for decay source events spot
 /generator/sourceRadius %(sourceRadius)s

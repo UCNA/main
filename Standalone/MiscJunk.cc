@@ -9,6 +9,11 @@
 #include "CathodeTuningAnalyzer.hh"
 #include "SimEdepPlugin.hh"
 
+#include <fstream>
+
+#include <TGraph2D.h>
+#include <TF2.h>
+
 /// Simulated wirechamber data energy calibrations analyzer
 class Sim_Cathode_Shape_Analyzer: public RunAccumulator {
 public:
@@ -24,6 +29,61 @@ public:
 	CathodeGainPlugin* cgain_plgn;
 	WirechamberSimTrigEfficPlugin* wste_plugin;
 };
+
+Double_t dipole_Bz(Double_t* x, Double_t* p) {
+	// B = (mu0 / 4pi) * (3 r m.r / r^5 - m / r^3)
+	// 4pi/mu0 * B . m/|m| = 3*(m.r)^2 / |m| r^5 - m^2 / |m| r^3
+
+	double m = p[0];
+	
+	double z = x[0]-p[1];
+	double r = sqrt(z*z + x[1]*x[1]);
+	return (3 * m * z*z/(r*r) - m)/(r*r*r);
+}
+
+void afp_dipole_fit() {
+	OutputManager OM("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/test/");
+	
+	std::ifstream fin((getEnvSafe("UCNA_AUX")+"/AFP_Fieldmap.txt").c_str());
+	//			z          r          Bz         Br         Bmod    ((Bmod-Bo)/Bo)
+ 	//	-500.000      0.000       2.2485       0.0000       2.2485 -9.999679e-01
+	std::string s;
+	TGraph2D gBz;
+	while (fin.good()) {
+		std::getline(fin,s);
+		std::vector<double> v = sToDoubles(s," \t");
+		if(v.size() != 6 || !v[4] || v[0]<100) continue;
+		if(v[4] < 10.)
+			gBz.SetPoint(gBz.GetN(),v[0],v[1],v[2]);
+	}
+	fin.close();
+	
+	printf("Loaded %i data points.\n",(int)gBz.GetN());
+	
+	TF2 dipoleFit("dipoleFit", dipole_Bz, 0, 1, 0, 1, 2);
+	dipoleFit.SetParameter(0, 1e7);
+	dipoleFit.SetParameter(1, 0.);
+	gBz.Fit(&dipoleFit,"V N");
+	
+	TGraph2D gBzF(gBz.GetN());
+	for(int i=0; i<gBz.GetN(); i++) {
+		double z = gBz.GetX()[i];
+		double r = gBz.GetY()[i];
+		double fBz = dipoleFit.Eval(z,r);
+		//printf("%g\t%g\t\t%g\t%g\n", z, r,  gBz.GetZ()[i], fBz);
+		gBzF.SetPoint(i, z, r, fBz);
+	}
+	
+	gBz.Draw("AP");
+	gBz.GetXaxis()->SetTitle("z [cm]");
+	gBz.GetYaxis()->SetTitle("r [cm]");
+	gBz.SetMarkerColor(2);
+	gBz.Draw("AP");
+	
+	gBzF.SetMarkerColor(4);
+	gBzF.Draw("P Same");
+	OM.printCanvas("AFP_FringeField");
+}
 
 int main(int argc, char *argv[]) {
 	
@@ -289,6 +349,8 @@ int main(int argc, char *argv[]) {
 		SCTA.makePlots();
 		SCTA.write();
 	}
+	
+	if(rname=="afp_dipole") afp_dipole_fit();
 	
 	return 0;
 }

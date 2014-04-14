@@ -49,7 +49,9 @@ public:
 	
 private:
 	/// construct detector (Electro-)Magnetic Field
-	void ConstructField(const TString filename);  
+	void ConstructField();  
+	
+	Field* fpMagField;								///< magnetic field
 	
 	// sensitive volumes
 	TrackerSD* scint_SD[2];
@@ -78,15 +80,6 @@ private:
 	G4UIcmdWithAString* fDetectorGeometry;			///< which detector geometry to construct
 	G4String sGeometry;
 	
-	G4UIcmdWithAString* fFieldCmd;					///< whether to turn on/off the magnetic field
-	G4String fieldSwitch;
-	
-	G4UIcmdWithABool* fAFPFieldCmd;					///< whether to enable the AFP fringe field
-	bool fAddAFPField;
-	
-	G4UIcmdWithAString* fFieldMapFileCmd;			///< which field map to use
-	TString sFieldMapFile;	
-	
 	G4UIcmdWith3VectorAndUnit* fSourceHolderPosCmd;	///< source holder position
 	G4ThreeVector fSourceHolderPos;
 	
@@ -113,11 +106,6 @@ private:
 
 	G4UIcmdWithADouble* fCrinkleAngleCmd;			///< decay trap foil crinkle angle
 	Float_t fCrinkleAngle;
-		
-	/// turn field on/off
-	void SetFieldOnOff(G4String);
-	
-	Field* fpMagField;
 };
 
 #endif

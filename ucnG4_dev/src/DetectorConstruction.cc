@@ -28,15 +28,6 @@ DetectorConstruction::DetectorConstruction(): fpMagField(NULL) {
 	fDetectorGeometry->AvailableForStates(G4State_PreInit);
 	sGeometry = "C";
 	
-	fFieldCmd = new G4UIcmdWithAString("/detector/field",this);
-	fFieldCmd->SetGuidance("Set B field switch");
-	fieldSwitch = "on";
-	
-	fAFPFieldCmd = new G4UIcmdWithABool("/detector/afpfield",this);
-	fAFPFieldCmd->SetGuidance("Set true to add AFP fringe field to magnetic field model");
-	fAFPFieldCmd->SetDefaultValue(false);
-	fAddAFPField = false;
-	
 	fDetOffsetCmd = new G4UIcmdWith3VectorAndUnit("/detector/offset",this);
 	fDetOffsetCmd->SetGuidance("antisymmetric offset of detector packages from central axis");
 	fDetOffsetCmd->SetDefaultValue(G4ThreeVector());
@@ -48,10 +39,6 @@ DetectorConstruction::DetectorConstruction(): fpMagField(NULL) {
 	fDetRotCmd->SetDefaultValue(0.);
 	fDetRotCmd->AvailableForStates(G4State_PreInit);
 	fDetRot = 0.;
-
-	fFieldMapFileCmd = new G4UIcmdWithAString("/detector/fieldmapfile",this);
-	fFieldMapFileCmd->SetGuidance("Set B field map file");
-	sFieldMapFile = "";
 	
 	fVacuumLevelCmd = new G4UIcmdWithADoubleAndUnit("/detector/vacuum",this);
 	fVacuumLevelCmd->SetGuidance("Set SCS vacuum pressure");
@@ -94,14 +81,6 @@ DetectorConstruction::DetectorConstruction(): fpMagField(NULL) {
 void DetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValue) {
 	if (command == fDetectorGeometry) {
 		sGeometry = G4String(newValue);
-	} else if (command == fFieldCmd) {
-		fieldSwitch = G4String(newValue);
-	} else if (command == fFieldMapFileCmd) {
-		sFieldMapFile = TString(newValue);
-	} else if(command == fAFPFieldCmd) {
-		fAddAFPField = fAFPFieldCmd->GetNewBoolValue(newValue);
-		if(fpMagField) fpMagField->addAFP = fAddAFPField;
-		G4cout << "Setting AFP field inclusion to " << fAddAFPField << G4endl;
 	} else if (command == fDetOffsetCmd) {
 		fDetOffset = fDetOffsetCmd->GetNew3VectorValue(newValue);
 		G4cout << "Setting detector offsets to " << fDetOffset/mm << " mm" << G4endl;
@@ -326,12 +305,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 			trap.collimatorBack_log[sd]->SetSensitiveDetector(hall_SD);
 		}
 		
-		// construct magnetic field
-		cout<<"##### "<<sFieldMapFile<<" #####"<<endl;
-		ConstructField(sFieldMapFile);
-		//then switch the field on or off based on the UI
-		SetFieldOnOff(fieldSwitch);
-		fpMagField->addAFP = fAddAFPField;
+		ConstructField();
 	}
 	
 	return experimentalHall_phys;
@@ -347,15 +321,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 #include "G4HelixSimpleRunge.hh"
 #include "G4HelixMixedStepper.hh"
 
-void DetectorConstruction::ConstructField(const TString filename) {
+void DetectorConstruction::ConstructField() {
 	
-	static G4bool fieldIsInitialized = false;
-	
-	if(!fieldIsInitialized) {
-		cout<<"##### Constructing Field #####"<<endl;
+	if(!fpMagField) {
+		cout << "##### Constructing Field #####" << endl;
 		
 		// get magnetic field profile
-		fpMagField = new Field(filename);
+		fpMagField = new Field();
 		// set up field manager for this profile
 		G4FieldManager* fieldMgr = G4TransportationManager::GetTransportationManager()->GetFieldManager();
 		fieldMgr->SetDetectorField(fpMagField);
@@ -383,27 +355,10 @@ void DetectorConstruction::ConstructField(const TString filename) {
 		fieldMgr->SetDeltaOneStep(0.1*um);
 		// allow lots of looping
 		G4TransportationManager::GetTransportationManager()->GetPropagatorInField()->SetMaxLoopCount(INT_MAX);
-		
-		fieldIsInitialized = true;
-		
+				
 		for(Side sd = EAST; sd <= WEST; ++sd) {
 			dets[sd].mwpc.myBField = fpMagField;
 			dets[sd].mwpc.ConstructField();
 		}
 	}
-}
-
-void DetectorConstruction::SetFieldOnOff(G4String aSwitch) {
-	if(aSwitch=="on") {
-		G4cout<<"##### Setting the magnetic field scale to full strength ..."<<G4endl;
-		fpMagField->SetFieldScale(1.0);
-	} else if (aSwitch=="off") {
-		G4cout<<"##### Switching off the magnetic field ..."<<G4endl;
-		fpMagField->SetFieldToZero();
-	} else {
-		G4cout<<"##### Setting the magnetic field scale to "<<aSwitch<<" ..."<<G4endl;
-		Double_t scale = atof(aSwitch.data());
-		fpMagField->SetFieldScale(scale);
-	}
-	cout<<"Done setting field scale"<<endl;
 }
