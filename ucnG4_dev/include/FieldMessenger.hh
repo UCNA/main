@@ -7,6 +7,7 @@
 #include <G4UIdirectory.hh>
 #include <G4UIcmdWithAString.hh>
 #include <G4UIcmdWithADouble.hh>
+#include <G4UIcmdWith3VectorAndUnit.hh>
 
 /// UI for controlling magnetic field settings
 class FieldMessenger: public G4UImessenger {
@@ -28,6 +29,7 @@ private:
 	G4UIcmdWithADouble* fFieldScaleCmd;			///< command for setting magnetic field scale factor
 	G4UIcmdWithADouble* fAfpDipoleCmd;			///< command for setting AFP dipole strength
 	G4UIcmdWithAString* fFieldMapFileCmd;		///< which field map to use
+	G4UIcmdWith3VectorAndUnit* fCheckFieldCmd;	///< display field at given location
 };
 
 #endif

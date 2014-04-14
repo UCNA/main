@@ -54,7 +54,7 @@ void Field::LoadFieldMap(const G4String& filename) {
 }
 
 void Field::addAFPFringeField(const G4double Point[3], G4double *Bfield) const {
-	double z0 = 250.*cm-Point[0];								// z distance from dipole center TODO: what is actual distance??
+	double z0 = 280.*cm-Point[0];								// z distance from dipole center TODO: what is actual distance??
 	double l = sqrt(Point[1]*Point[1]+Point[2]*Point[2]);		// perpendicular distance from dipole center
 	double r = sqrt(z0*z0+l*l);									// total distance from dipole center
 	

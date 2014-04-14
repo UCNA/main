@@ -1,5 +1,7 @@
 #include "FieldMessenger.hh"
 
+#include <G4SystemOfUnits.hh>
+
 FieldMessenger::FieldMessenger(Field* f): myField(f) {
 	
 	fFieldDir = new G4UIdirectory("/field/");
@@ -20,6 +22,10 @@ FieldMessenger::FieldMessenger(Field* f): myField(f) {
 	fAfpDipoleCmd->SetGuidance("AFP dipole strength in A*m^2");
 	fAfpDipoleCmd->SetDefaultValue(0.);
 	fAfpDipoleCmd->AvailableForStates(G4State_Idle);
+	
+	fCheckFieldCmd = new G4UIcmdWith3VectorAndUnit("/field/check",this);
+	fCheckFieldCmd->SetGuidance("Check field value at given position");
+	fCheckFieldCmd->AvailableForStates(G4State_Idle);
 }
 
 FieldMessenger::~FieldMessenger() {
@@ -33,4 +39,10 @@ void FieldMessenger::SetNewValue(G4UIcommand * command, G4String newValue) {
 	if(command == fFieldScaleCmd) myField->SetFieldScale(fFieldScaleCmd->GetNewDoubleValue(newValue));
 	else if(command == fFieldMapFileCmd) myField->LoadFieldMap(newValue);
 	else if(command == fAfpDipoleCmd) myField->SetAFPDipole(fAfpDipoleCmd->GetNewDoubleValue(newValue));
+	else if(command == fCheckFieldCmd) {
+		G4ThreeVector x = fCheckFieldCmd->GetNew3VectorValue(newValue);
+		G4ThreeVector B;
+		myField->GetFieldValue(&x[0], &B[0]);
+		G4cout << " B = " << B[0]/tesla << " " << B[1]/tesla << " " << B[2]/tesla << " T" << G4endl;
+	}
 }
