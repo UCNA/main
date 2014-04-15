@@ -14,18 +14,18 @@ TrackerHit::TrackerHit(): eDepSoFar(0), eDepQuenchedSoFar(0), hitPosition(), ede
 edepWeightedPosition2(), incidentMomentum(), exitMomentum(), vertex() {}
 
 void TrackerHit::Print() {
-  G4cout << "  trackID: " << trackID 
-	 << "  vertex: "<< G4BestUnit(vertex,"Length")
-	 << "  created in "<<creatorVolumeName
-	 << "  in "<<volumeName
-         << "  incident energy " << G4BestUnit(incidentEnergy,"Energy")
-	 << "  position: " << G4BestUnit(hitPosition,"Length") 
-	 << "  time: "<<G4BestUnit(hitTime,"Time")
-	 << "  edep: "<<G4BestUnit(eDepSoFar,"Energy")
-	 << "  edep quenched: "<<G4BestUnit(eDepQuenchedSoFar,"Energy")
-	 << "  incident momentm: "<<G4BestUnit(incidentMomentum,"Energy")
-	 << "  exit momentum "<<G4BestUnit(exitMomentum,"Energy")
-	 << G4endl;
+  G4cout	<< "  trackID: " << trackID
+			<< "  vertex: " << G4BestUnit(vertex,"Length")
+			<< "  created in " << creatorVolumeName
+			<< "  in " << volumeName
+			<< "  incident energy " << G4BestUnit(incidentEnergy,"Energy")
+			<< "  position: " << G4BestUnit(hitPosition,"Length")
+			<< "  time: " << G4BestUnit(hitTime,"Time")
+			<< "  edep: " << G4BestUnit(eDepSoFar,"Energy")
+			<< "  edep quenched: " << G4BestUnit(eDepQuenchedSoFar,"Energy")
+			<< "  incident momentm: " << G4BestUnit(incidentMomentum,"Energy")
+			<< "  exit momentum " << G4BestUnit(exitMomentum,"Energy")
+			<< G4endl;
 }
 
 void TrackerHit::fillTrackInfo(TrackInfo& h) const {

@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append("..")
+
 from ucnacore.QFile import *
 from ucnacore.PyxUtils import *
 from ucnacore.LinFitter import *
@@ -123,8 +126,10 @@ def offsetHistory(basedir,depth=0):
 
 
 if __name__ == "__main__":
-	
-	offsetPlot(os.environ["UCNA_ANA_PLOTS"]+"/test/SimReplay/Test_neutronBetaUnpol/","Test_neutronBetaUnpol.txt")
+
+	offsetPlot(os.environ["UCNA_ANA_PLOTS"]+"/test/SimPosOff/","SimPosOff.txt")
+		
+	#offsetPlot(os.environ["UCNA_ANA_PLOTS"]+"/test/SimReplay/Test_neutronBetaUnpol/","Test_neutronBetaUnpol.txt")
 	
 	if 0:
 		basedir = os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/"

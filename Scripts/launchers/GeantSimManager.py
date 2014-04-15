@@ -132,7 +132,7 @@ class GeantSimManager:
 			self.settings["jobname"] = self.settings["simName"]+"_%i"%self.settings["run_num"]
 			self.settings["outfile"]=self.g4_out_name%str(self.settings["run_num"])
 			self.settings["evtfile"]=self.g4_evtsdir+"/"+inflist[rn]
-			self.settings["nevt"] = 10000 # assume this many events per input file... TODO something more elegant
+			self.settings["nevt"] = 1000000000	# actual limit is number of events in file, nominally 10000
 			self.settings["joblog"] = "%s/gen_macro_%i.txt"%(self.g4_log_dir,self.settings["run_num"])
 			g4_sub_file = "%s/geantjob_%i.sub"%(self.g4_macro_dir,self.settings["run_num"])
 			
@@ -267,7 +267,7 @@ if __name__ == "__main__":
 	####################
 
 	# 2010 sources, **postanalyzer only**
-	if 1:
+	if 0:
 		for g in ["Bi207","Sn113","Ce139"]:
 			sourceSim = GeantSimManager("20120823",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt",geometry="C")
 			sourceSim.g4_out_dir_base = "/data2/mmendenhall/G4Out/2010/"
@@ -396,3 +396,14 @@ if __name__ == "__main__":
 		vtest.launch_sims(nEvents=1e4,nClusters=1,hours_old=0)
 		vtest.launch_postanalyzer()
 
+	####################
+	# neutrons with AFP fringe
+	####################
+	# unpolarized beta baseline: 5e7 in 520 clusters
+	if 1:
+		betaSim = GeantSimManager("AFP_Fringe")
+		betaSim.set_evtsrc("n1_f_n")
+		betaSim.settings["fieldmapcmd"] += "\n/field/AFP_dipole 14600\n"
+		betaSim.launch_sims(maxIn = 100)
+		betaSim.launch_postanalyzer()
+		exit(0)

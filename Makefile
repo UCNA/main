@@ -86,17 +86,15 @@ ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm CombinedAbFi
 
 examples: $(ExampleObjs)
 
-StandaloneObjs = GammaComptons BetaEndpoint BetaOctetPositions MC_Comparisons LEDScans MiscJunk \
-					MC_EventGen QuasiRandomTest MWPC_Energy_Cal
+StandaloneObjs = GammaComptons BetaEndpoint BetaOctetPositions MC_Comparisons MiscJunk \
+					MC_EventGen QuasiRandomTest MWPC_Energy_Cal MC_Plugin_Analyzer
 
 standalone: $(StandaloneObjs)
 
 
-
-
 ucnG4:
 	mkdir -p g4build/
-	cd g4build; cmake -DGeant4_DIR=~/geant4.9.5/geant4.9.5-install/lib/Geant4-9.5.0/ ../ucnG4_dev/; make
+	cd g4build; cmake -DGeant4_DIR=~/geant4.10/lib/ ../ucnG4_dev/; make -j6
 
 #
 # documentation via Doxygen
