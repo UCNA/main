@@ -48,17 +48,6 @@ void ucnaDataAnalyzer11b::analyze() {
 }
 
 void ucnaDataAnalyzer11b::loadCuts() {
-	for(Side s = EAST; s <= WEST; ++s) {
-		loadRangeCut(rn,fMWPC_anode[s], sideSubst("Cut_MWPC_%c_Anode",s));
-		loadRangeCut(rn,fCathMax[s],sideSubst("Cut_MWPC_%c_CathMax",s));
-		loadRangeCut(rn,fCathSum[s],sideSubst("Cut_MWPC_%c_CathSum",s));
-		loadRangeCut(rn,fCathMaxSum[s],sideSubst("Cut_MWPC_%c_CathMaxSum",s));
-		loadRangeCut(rn,fBacking_tdc[s], sideSubst("Cut_TDC_Back_%c",s));
-		loadRangeCut(rn,fDrift_tac[s], sideSubst("Cut_ADC_Drift_%c",s));
-	}
-	loadRangeCut(rn,fTop_tdc[EAST], "Cut_TDC_Top_E");
-	loadRangeCut(rn,fWindow,"Cut_ClusterEvt");
-	
 	// GV monitor rate cut
 	Stringmap gvm = loadCut(rn,"Cut_GVMon");
 	gvMonChecker = RollingWindow((int)gvm.getDefault("minCounts",5),gvm.getDefault("overTime",5));
@@ -79,9 +68,6 @@ void ucnaDataAnalyzer11b::convertReadin() {
 	SIS00 = int(r_Sis00);
 	iTriggerNumber = int(r_TriggerNumber);
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) 
-			for(unsigned int c=0; c<kMaxCathodes; c++)
-				fMWPC_caths[s][d][c] = r_MWPC_caths[s][d][c];
 		fMWPC_anode[s].val = r_MWPC_anode[s];
 		for(unsigned int t=0; t<nBetaTubes; t++)
 			sevt[s].adc[t] = r_PMTADC[s][t];
@@ -146,9 +132,9 @@ void ucnaDataAnalyzer11b::reconstructPosition() {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(unsigned int c=0; c<cathNames[s][d].size(); c++) {
 				cathPeds[c] = PCal.getPedestal(cathNames[s][d][c],fTimeScaler[BOTH]);
-				fMWPC_caths[s][d][c] -= cathPeds[c];
+				r_MWPC_caths[s][d][c] -= cathPeds[c];
 			}
-			wirePos[s][d] = PCal.calcHitPos(s,d,fMWPC_caths[s][d],cathPeds);
+			wirePos[s][d] = PCal.calcHitPos(s,d,r_MWPC_caths[s][d],cathPeds);
 		}
 		fMWPC_anode[s].val -= PCal.getPedestal(sideSubst("MWPC%cAnode",s),fTimeScaler[BOTH]);
 		fCathSum[s].val = wirePos[s][X_DIRECTION].cathodeSum + wirePos[s][Y_DIRECTION].cathodeSum;

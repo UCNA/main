@@ -1,50 +1,12 @@
 #include "ucnaDataAnalyzer11b.hh"
 
 void ucnaDataAnalyzer11b::setReadpoints() {
-			
-	// ucn monitors
-	const int ucn_mon_adc_nums[kNumUCNMons] = {38,39,310,311};
-	for(unsigned int n=0; n<kNumUCNMons; n++)
-		SetBranchAddress("Pdc"+itos(ucn_mon_adc_nums[n]),&r_MonADC[n]);
-	
-	// PMTs and TDCs, in quadrant order (+x towards SCS, +y up, +z from East to West)
-	const int pmt_adc_nums[] = {2,3,0,1,4,5,6,7};
-	for(Side s = EAST; s <= WEST; ++s)
-		for(unsigned int t=0; t<nBetaTubes; t++)
-			SetBranchAddress("Qadc"+itos(pmt_adc_nums[t+4*s]),&r_PMTADC[s][t]);
-	
-	// Wirechambers	
-	const int anode_pdc_nums[] = {30,34};
-	for(Side s = EAST; s<=WEST; ++s) {
-		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
-			cathNames[s][d].clear();
-			std::vector<std::string> cchans = PCal.getCathChans(s,d);
-			for(unsigned int i=0; i<cchans.size(); i++) {
-				SetBranchAddress(cchans[i],&r_MWPC_caths[s][d][i]);
-				cathNames[s][d].push_back(sideSubst("MWPC%c",s)+(d==X_DIRECTION?"x":"y")+itos(i+1));
-			}
-		}
-		SetBranchAddress("Pdc"+itos(anode_pdc_nums[s]),&r_MWPC_anode[s]);
-	}
-	
-	// muon vetos
-	const int back_tdc_nums[] = {18,20};
-	const int back_adc_nums[] = {8,10};
-	const int drift_tac_nums[] = {313,315};
-	for(Side s = EAST; s<=WEST; ++s) {
-		SetBranchAddress("Tdc0"+itos(back_tdc_nums[s]),&r_Backing_TDC[s]);
-		SetBranchAddress("Pdc"+itos(drift_tac_nums[s]),&r_Drift_TAC[s]);
-		SetBranchAddress("Qadc"+itos(back_adc_nums[s]),&r_Backing_ADC[s]);
-	}
-	SetBranchAddress("Tdc019",&r_Top_TDC[EAST]);
-	SetBranchAddress("Qadc9",&r_Top_ADC[EAST]);
-	
-	// header checks
-	for(size_t i=0; i<kNumModules; i++) {
-		SetBranchAddress("Evnb"+itos(i),&r_Evnb[i]);
-		SetBranchAddress("Bkhf"+itos(i),&r_Bkhf[i]);
-	}
-	
+	readInTiming();
+	readInWirechambers();
+	readInPMTADC();
+	readInUCNMon();
+	readInMuonVetos();
+	readInHeaderChecks();
 }
 
 void ucnaDataAnalyzer11b::setupOutputTree() {
@@ -69,7 +31,7 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 			TPhys->Branch((d==X_DIRECTION?sideSubst("x%cmpm",s):sideSubst("y%cmpm",s)).c_str(),
 						  &wirePos[s][d],"center/F:width/F:maxValue/F:cathSum/F:maxWire/i:nClipped/i:mult/i:err/I:rawCenter/F:height/F");
 			std::string cathname = sideSubst("Cathodes_%c",s)+(d==X_DIRECTION?"x":"y");
-			TPhys->Branch(cathname.c_str(),fMWPC_caths[s][d],(cathname+"["+itos(kMaxCathodes)+"]/F").c_str());
+			TPhys->Branch(cathname.c_str(),r_MWPC_caths[s][d],(cathname+"["+itos(kMaxCathodes)+"]/F").c_str());
 		}
 		
 		TPhys->Branch(sideSubst("Scint%c",s).c_str(),&sevt[s],

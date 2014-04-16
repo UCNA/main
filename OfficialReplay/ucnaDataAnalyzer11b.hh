@@ -45,37 +45,18 @@ public:
 	
 protected:
 
-	// read variables
-	Float_t r_MonADC[kNumUCNMons];				///< UCN monitor ADCs
-	Float_t r_MWPC_caths[BOTH][2][kMaxCathodes];///< cathodes on [side][xplane][wire]
-	Float_t r_MWPC_anode[BOTH];					///< MWPC anode on each side
-	Float_t r_Backing_TDC[BOTH];				///< Backing Veto TDC
-	Float_t r_Drift_TAC[BOTH];					///< Drift tubes TAC
-	Float_t r_Backing_ADC[BOTH];				///< Backing Veto ADC
-	Float_t r_Top_TDC[BOTH];					///< Top Veto TDC (for East only)
-	Float_t r_Top_ADC[BOTH];					///< Top Veto ADC (for East only)
-	Float_t r_Evnb[kNumModules];				///< header and footer counters per module
-	Float_t r_Bkhf[kNumModules];				///< header and footer counters per module
-	
 	// whole run variables
 	CalDBSQL* CDBout;							///< output database connection
 	Float_t wallTime;							///< initial estimate of run time before actually scanning events; after scanning, total run time
 	unsigned int nLiveTrigs;					///< number of triggers not removed by cuts
 	Float_t nFailedEvnb;						///< total Evnb failures
 	Float_t nFailedBkhf;						///< total Bkhf failures
-	std::vector<std::string> cathNames[BOTH][2];///< cathode sensor names on each [side][xplane]
 	std::vector<Blip> cutBlips;							///< keep track of cut run time
 		
 	// event-by-event calibrated variables
 	ScintEvent sevt[BOTH];						///< scintillator event, for reconstructing energy
-	CutVariable fMWPC_anode[BOTH];				///< anode ADC
-	float fMWPC_caths[BOTH][2][kMaxCathodes];	///< cathodes on [side][xplane][wire]
-	CutVariable fBacking_tdc[BOTH];				///< muon backing veto TDC
 	Float_t fBacking_adc[BOTH];					///< muon backing veto ADC
-	CutVariable fDrift_tac[BOTH];				///< muon veto drift tubes TAC
-	CutVariable fTop_tdc[BOTH];					///< top veto TDCs (only East)
 	Float_t fTop_adc[BOTH];						///< top veto ADCs (only East)
-	CutVariable fMonADC[kNumUCNMons];			///< UCN monitor ADCs = GV, Sw, Fe, SCS
 	RollingWindow gvMonChecker;					///< rolling window check on gv monitor rate
 	bool prevPassedCuts;						///< whether passed cuts on previous event
 	bool prevPassedGVRate;						///< whether passed GV rate on previous event
@@ -94,9 +75,6 @@ protected:
 	TTree* TLED;								///< LED pulser events output tree
 	Int_t fPassedGlobal;						///< whether this event passed global beam/misc cuts on each side (counts for total run time)
 	wireHit wirePos[BOTH][2];					///< wire positioning data for [side][direction]
-	CutVariable fCathSum[BOTH];					///< combined x+y cathode sum on each side
-	CutVariable fCathMax[BOTH];					///< min(max cathode each plane) for each side
-	CutVariable fCathMaxSum[BOTH];				///< sum of max cathode from each plane for each side
 	Float_t fEMWPC[BOTH];						///< reconstructed energy deposition in wirechamber
 	Float_t fEtrue;								///< event reconstructed true energy
 	

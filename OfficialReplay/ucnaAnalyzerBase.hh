@@ -51,7 +51,17 @@ protected:
 	Float_t r_AbsTime;							///< absolute time clock
 	Float_t r_PMTADC[BOTH][nBetaTubes];			///< PMT ADCs
 	Float_t r_PMTTDC[BOTH][nBetaTubes+1];		///< PMT TDCs
-	
+	Float_t r_MWPC_caths[BOTH][2][kMaxCathodes];///< cathodes on [side][xplane][wire]
+	Float_t r_MWPC_anode[BOTH];					///< MWPC anode on each side
+	Float_t r_MonADC[kNumUCNMons];				///< UCN monitor ADCs
+	Float_t r_Backing_TDC[BOTH];				///< Backing Veto TDC
+	Float_t r_Drift_TAC[BOTH];					///< Drift tubes TAC
+	Float_t r_Backing_ADC[BOTH];				///< Backing Veto ADC
+	Float_t r_Top_TDC[BOTH];					///< Top Veto TDC (for East only)
+	Float_t r_Top_ADC[BOTH];					///< Top Veto ADC (for East only)
+	Float_t r_Evnb[kNumModules];				///< header and footer counters per module
+	Float_t r_Bkhf[kNumModules];				///< header and footer counters per module
+
 	// whole run variables
 	RunNum rn;									///< run number for file being processed
 	PMTCalibrator PCal;							///< PMT Calibrator for this run
@@ -61,16 +71,38 @@ protected:
 	BlindTime deltaT;							///< time scaler wraparound fix
 	RangeCut ScintSelftrig[BOTH];				///< self-trigger range cut for each scintillator (used for Type I origin side determination)
 	std::vector< std::pair<double,double> > manualCuts;	///< manually cut time segments
-	
+	std::vector<std::string> cathNames[BOTH][2];///< cathode sensor names on each [side][xplane]
+
 	bool ignore_beam_out;						///< whether to ignore long beam outages (e.g. for a source run)
 
-	// event-by-event calibrated variables
+	// event-by-event calibrated variables and cuts
 	int iTriggerNumber;							///< trigger number
 	BlindTime fTimeScaler;						///< absolute event time scaler, blinded E, W, and unblinded
 	CutVariable fBeamclock;						///< time since last beam pulse scaler
 	Float_t fDelt0;								///< time since previous event
 	CutVariable fWindow;						///< time window between previous and next event
 	CutVariable fScint_tdc[BOTH][nBetaTubes+1];	///< TDC readout for each PMT and side
+	CutVariable fMWPC_anode[BOTH];				///< anode ADC
+	CutVariable fBacking_tdc[BOTH];				///< muon backing veto TDC
+	CutVariable fDrift_tac[BOTH];				///< muon veto drift tubes TAC
+	CutVariable fTop_tdc[BOTH];					///< top veto TDCs (only East)
+	CutVariable fMonADC[kNumUCNMons];			///< UCN monitor ADCs = GV, Sw, Fe, SCS
+	CutVariable fCathSum[BOTH];					///< combined x+y cathode sum on each side
+	CutVariable fCathMax[BOTH];					///< min(max cathode each plane) for each side
+	CutVariable fCathMaxSum[BOTH];				///< sum of max cathode from each plane for each side
+
+	/// set to read in timing variables
+	void readInTiming();
+	/// set to read in wirechamber variables
+	void readInWirechambers();
+	/// set to read in PMT ADC variables
+	void readInPMTADC();
+	/// set to read in UCN monitors
+	void readInUCNMon();
+	/// set to read in muon veto data
+	void readInMuonVetos();
+	/// set to read in header check variables
+	void readInHeaderChecks();
 
 	/// process timing variables
 	virtual void calibrateTimes();

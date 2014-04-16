@@ -47,7 +47,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 				mwpcTimes[s].push_back(fTimeScaler[BOTH]);
 				for(AxisDirection p = X_DIRECTION; p <= Y_DIRECTION; ++p)
 					for(unsigned int c=0; c<kMaxCathodes; c++)
-						cathPeds[s][p][c].push_back(fMWPC_caths[s][p][c]);
+						cathPeds[s][p][c].push_back(r_MWPC_caths[s][p][c]);
 				anodePeds[s].push_back(fMWPC_anode[s].val);
 			}
 		}
