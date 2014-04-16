@@ -18,7 +18,7 @@ ifdef PUBLICATION_PLOTS
 	CXXFLAGS += -DPUBLICATION_PLOTS
 endif
 
-ANA_OBJS      = ucnaDataAnalyzer_hists.o ucnaDataAnalyzer_tree.o ucnaDataAnalyzer_peds.o
+ANA_OBJS      = ucnaDataAnalyzer_hists.o ucnaDataAnalyzer_tree.o ucnaDataAnalyzer_peds.o ucnaAnalyzerBase.o
 
 all: ucnaDataAnalyzer11b
 
@@ -27,6 +27,9 @@ libUCNA:
 
 ucnaDataAnalyzer11b: ucnaDataAnalyzer11b.cc ucnaDataAnalyzer11b.hh $(ANA_OBJS) libUCNA
 	$(CXX) $(CXXFLAGS) ucnaDataAnalyzer11b.cc $(ANA_OBJS) $(LDFLAGS) -o ucnaDataAnalyzer11b
+
+TriggerTree: TriggerTree.cc $(ANA_OBJS) libUCNA
+	$(CXX) $(CXXFLAGS) TriggerTree.cc ucnaAnalyzerBase.o $(LDFLAGS) -o TriggerTree
 
 clean:
 	@rm -f *.o *~

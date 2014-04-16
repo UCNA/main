@@ -11,12 +11,12 @@
 #include <TDatime.h>
 
 ucnaDataAnalyzer11b::ucnaDataAnalyzer11b(RunNum R, std::string bp, CalDB* CDB):
-TChainScanner("h1"), OutputManager("spec_"+itos(R),bp+"/hists/"), analyzeLED(false), needsPeds(false), colorPlots(true),
-rn(R), PCal(R,CDB), CDBout(NULL), fAbsTimeEnd(0), deltaT(0), totalTime(0), nLiveTrigs(0), ignore_beam_out(false),
-nFailedEvnb(0), nFailedBkhf(0), gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
+ucnaAnalyzerBase(R, bp, "spec", CDB), analyzeLED(false), needsPeds(false), colorPlots(true), CDBout(NULL),
+nLiveTrigs(0), nFailedEvnb(0), nFailedBkhf(0),
+gvMonChecker(5,5.0), prevPassedCuts(true), prevPassedGVRate(true) {
 	plotPath = bp+"/figures/run_"+itos(R)+"/";
 	dataPath = bp+"/data/";
-	printf("Official replay for run %i!\b",R);
+	printf("Official replay for run %i!\n",R);
 }
 
 void ucnaDataAnalyzer11b::analyze() {
@@ -55,27 +55,14 @@ void ucnaDataAnalyzer11b::loadCuts() {
 		loadRangeCut(rn,fCathMaxSum[s],sideSubst("Cut_MWPC_%c_CathMaxSum",s));
 		loadRangeCut(rn,fBacking_tdc[s], sideSubst("Cut_TDC_Back_%c",s));
 		loadRangeCut(rn,fDrift_tac[s], sideSubst("Cut_ADC_Drift_%c",s));
-		loadRangeCut(rn,fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c_Selftrig",s));
-		ScintSelftrig[s] = fScint_tdc[s][nBetaTubes].R;
-		loadRangeCut(rn,fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c",s));
-		for(unsigned int t=0; t<nBetaTubes; t++)
-			loadRangeCut(rn,fScint_tdc[s][t], sideSubst("Cut_TDC_Scint_%c_",s)+itos(t));
 	}
 	loadRangeCut(rn,fTop_tdc[EAST], "Cut_TDC_Top_E");
-	loadRangeCut(rn,fBeamclock,"Cut_BeamBurst");
 	loadRangeCut(rn,fWindow,"Cut_ClusterEvt");
-	if(ignore_beam_out)
-		fBeamclock.R.end = FLT_MAX;
 	
 	// GV monitor rate cut
 	Stringmap gvm = loadCut(rn,"Cut_GVMon");
 	gvMonChecker = RollingWindow((int)gvm.getDefault("minCounts",5),gvm.getDefault("overTime",5));
 	printf("GV Monitor Rate Cut: expect %i counts (x10 prescaling) in %.1f s\n",gvMonChecker.nMax,gvMonChecker.lMax);
-	
-	// manually excluded times
-	manualCuts = ManualInfo::MI.getRanges(itos(rn)+"_timecut");
-	if(manualCuts.size())
-		printf("Manually cutting %i time ranges...\n",(int)manualCuts.size());
 }
 
 void ucnaDataAnalyzer11b::checkHeaderQuality() {
@@ -92,8 +79,6 @@ void ucnaDataAnalyzer11b::convertReadin() {
 	SIS00 = int(r_Sis00);
 	iTriggerNumber = int(r_TriggerNumber);
 	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t=0; t<=nBetaTubes; t++)
-			fScint_tdc[s][t].val = r_PMTTDC[s][t];
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) 
 			for(unsigned int c=0; c<kMaxCathodes; c++)
 				fMWPC_caths[s][d][c] = r_MWPC_caths[s][d][c];
@@ -107,30 +92,15 @@ void ucnaDataAnalyzer11b::convertReadin() {
 
 void ucnaDataAnalyzer11b::calibrateTimes() {
 	
-	// start/end times
+	BlindTime prevTime = totalTime;
+	ucnaAnalyzerBase::calibrateTimes();
+	
 	if(currentEvent==0) {
-		fAbsTimeStart = r_AbsTime;
 		prevPassedCuts = prevPassedGVRate = true;
-		totalTime = deltaT = 0;
 		nLiveTrigs = 0;
 	}
-	if(r_AbsTime>fAbsTimeEnd) fAbsTimeEnd = r_AbsTime;
 	
-	// convert microseconds to seconds
-	fTimeScaler = 1.e-6 * r_Clk;
-	fBeamclock.val = 1.e-6 * r_BClk;	
-	fDelt0 = 1.e-6 * r_Delt0;
-	
-	// check for overflow condition
-	if(fTimeScaler[BOTH] < totalTime[BOTH]-deltaT[BOTH]-1000.0) {
-		printf("\tFixing timing scaler overflow... ");
-		deltaT[BOTH] += pow(2,32)*1.e-6;
-		for(Side s = EAST; s<=WEST; ++s)
-			deltaT[s] = totalTime[s];
-	}
-	// add overflow wraparound time
-	fTimeScaler += deltaT;
-	
+	// ucn monitor rate cuts
 	if(isUCNMon(UCN_MON_GV))
 		gvMonChecker.addCount(fTimeScaler[BOTH]);
 	else
@@ -143,23 +113,15 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 	if(fPassedGlobal != prevPassedCuts) {
 		if(!fPassedGlobal) {
 			Blip b;
-			b.start = 0.5*(fTimeScaler+totalTime);
+			b.start = 0.5*(totalTime+prevTime);
 			cutBlips.push_back(b);
 		} else {
-			cutBlips.back().end = 0.5*(fTimeScaler+totalTime);
+			cutBlips.back().end = 0.5*(totalTime+prevTime);
 		}
 	}
 	
 	prevPassedCuts = fPassedGlobal;
-	totalTime = fTimeScaler;
 	nLiveTrigs += fPassedGlobal;
-}
-
-unsigned int ucnaDataAnalyzer11b::nFiring(Side s) const {
-	unsigned int nf = 0;
-	for(unsigned int t=0; t<nBetaTubes; t++)
-		nf += pmtFired(s,t);
-	return nf;
 }
 
 bool ucnaDataAnalyzer11b::isPulserTrigger() {
@@ -176,18 +138,6 @@ bool ucnaDataAnalyzer11b::isPulserTrigger() {
 			return true;
 	}
 	return false;
-}
-
-
-bool ucnaDataAnalyzer11b::passesBeamCuts() {
-	// basic time-since-beam cut
-	if(!fBeamclock.inRange())
-		return false;	
-	// remove manually tagged segments
-	for(std::vector< std::pair<double,double> >::const_iterator it = manualCuts.begin(); it != manualCuts.end(); it++)
-		if (it->first <= fTimeScaler[BOTH] && fTimeScaler[BOTH] <= it->second)
-			return false;
-	return true;
 }
 
 void ucnaDataAnalyzer11b::reconstructPosition() {

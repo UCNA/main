@@ -1,25 +1,7 @@
 #include "ucnaDataAnalyzer11b.hh"
 
 void ucnaDataAnalyzer11b::setReadpoints() {
-	
-	// clock, trigger
-	SetBranchAddress("Sis00",&r_Sis00);				// trigger type flags Sis00
-	SetBranchAddress("Number",&r_TriggerNumber);	// trigger number
-	SetBranchAddress("Clk0",&r_Clk[EAST]);		// E clock
-	SetBranchAddress("Clk1",&r_Clk[WEST]);		// W clock
-	SetBranchAddress("S83028",&r_Clk[BOTH]);		// unblinded runclock
-	SetBranchAddress("S8200",&r_BClk);				// protonClock
-	SetBranchAddress("Delt0",&r_Delt0);				// high resolution delta-t since previous event
-	SetBranchAddress("Time",&r_AbsTime);			// absolute time during run
-	
-	//TCh->SetBranchAddress("S8300","");					// E Beta Counter
-	//TCh->SetBranchAddress("S8301","");					// W Beta Counter
-	//TCh->SetBranchAddress("S8302","");					// UCN Mon 1 trigger counter
-	//TCh->SetBranchAddress("S8303","");					// UCN Mon 2 trigger counter
-	//TCh->SetBranchAddress("S8304","");					// UCN Mon 3 trigger counter
-	//TCh->SetBranchAddress("S8308","");					// E Gated trigger counter
-	//TCh->SetBranchAddress("S8309","");					// W Gated trigger counter
-	
+			
 	// ucn monitors
 	const int ucn_mon_adc_nums[kNumUCNMons] = {38,39,310,311};
 	for(unsigned int n=0; n<kNumUCNMons; n++)
@@ -27,15 +9,9 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 	
 	// PMTs and TDCs, in quadrant order (+x towards SCS, +y up, +z from East to West)
 	const int pmt_adc_nums[] = {2,3,0,1,4,5,6,7};
-	const int pmt_tdc_nums[] = {2,3,0,1,8,9,14,11};
-	for(Side s = EAST; s <= WEST; ++s) {
-		for(unsigned int t=0; t<nBetaTubes; t++) {
+	for(Side s = EAST; s <= WEST; ++s)
+		for(unsigned int t=0; t<nBetaTubes; t++)
 			SetBranchAddress("Qadc"+itos(pmt_adc_nums[t+4*s]),&r_PMTADC[s][t]);
-			SetBranchAddress("Tdc0"+itos(pmt_tdc_nums[t+4*s]),&r_PMTTDC[s][t]);
-		}
-	}
-	SetBranchAddress("Tdc016",&r_PMTTDC[EAST][nBetaTubes]);		// E 2of4 TDC
-	SetBranchAddress("Tdc017",&r_PMTTDC[WEST][nBetaTubes]);		// W 2of4 TDC
 	
 	// Wirechambers	
 	const int anode_pdc_nums[] = {30,34};
@@ -68,7 +44,6 @@ void ucnaDataAnalyzer11b::setReadpoints() {
 		SetBranchAddress("Evnb"+itos(i),&r_Evnb[i]);
 		SetBranchAddress("Bkhf"+itos(i),&r_Bkhf[i]);
 	}
-	
 	
 }
 
