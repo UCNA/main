@@ -11,7 +11,7 @@
 class PosOffsetAnalyzer: public RunAccumulator {
 public:
 	PosOffsetAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = ""): RunAccumulator(pnt,nm,inflName) {
-		addPlugin(new PositionOffsetsPlugin(this));
+		//addPlugin(new PositionOffsetsPlugin(this)); // TODO split this back out (restore lost changes)
 	}
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new PosOffsetAnalyzer(this,nm,inflname); }
 };

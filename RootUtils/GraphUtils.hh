@@ -30,6 +30,10 @@ TGraphErrors* TProf2TGraph(const TProfile& P, unsigned int minpts = 0);
 /// make cumulative histogram
 TH1F* cumulativeHist(const TH1F& h, bool normalize = false);
 
+/// inplace cumulative sum of TGraph, with switch to accumulate from top end
+void makeCumulative(TGraph& g, bool fromFirst = true);
+
+
 /// invert a TGraph
 TGraph* invertGraph(const TGraph* g);
 
@@ -80,6 +84,10 @@ TH1* projectTH2(const TH2& h, double nb, double cx, double cy);
 
 /// get plot indicating optimal separation point between two histograms
 TH1* histsep(const TH1& h1, const TH1& h2);
+
+/// get plot indicating optimal separation point between two TGraphs; note, converts graphs to cumulative form
+TGraph* graphsep(TGraph& g1, TGraph& g2, unsigned int npts = 400);
+
 
 /// calculate optimum dividing point and overlap error between two histograms
 void histoverlap(const TH1& h1, const TH1& h2, double& xdiv, double& o);

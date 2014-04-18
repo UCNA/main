@@ -1,10 +1,10 @@
 #include "ucnaAnalyzerBase.hh"
 
 /// mini-analyzer for PMT trigger region events
-class TriggerTreeScanner: public ucnaAnalyzerBase {
+class TriggerEventSelector: public ucnaAnalyzerBase {
 public:
 	/// constructor
-	TriggerTreeScanner(RunNum R, std::string bp, CalDB* CDB): ucnaAnalyzerBase(R, bp, "pmt_trig", CDB) {
+	TriggerEventSelector(RunNum R, std::string bp, CalDB* CDB): ucnaAnalyzerBase(R, bp, "pmt_trig", CDB) {
 		
 		// set up input
 		readInTiming();
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 	std::string outDir = getEnvSafe("UCNAOUTPUTDIR");
 	std::string inDir = getEnvSafe("UCNADATADIR");
 	
-	TriggerTreeScanner A(rn, outDir, CalDBSQL::getCDB());
+	TriggerEventSelector A(rn, outDir, CalDBSQL::getCDB());
 	A.addFile(inDir+"/full"+itos(rn)+".root");
 	A.analyze();
 	

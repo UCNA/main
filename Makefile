@@ -47,9 +47,12 @@ VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Stud
 
 Physics = BetaSpectrum.o ElectronBindingEnergy.o NuclEvtGen.o
 
-Utils = ControlMenu.o strutils.o ManualInfo.o PathUtils.o TSpectrumUtils.o QFile.o GraphUtils.o MultiGaus.o TagCounter.o \
-		SectorCutter.o LinHistCombo.o Enums.o Types.o FloatErr.o SMExcept.o Octet.o SpectrumPeak.o Source.o \
-		SQL_Utils.o GraphicsUtils.o OutputManager.o RollingWindow.o EnumerationFitter.o StyleSetup.o TChainScanner.o
+IOUtils =  ControlMenu.o ManualInfo.o OutputManager.o PathUtils.o QFile.o strutils.o SMExcept.o
+
+ROOTUtils = GraphicsUtils.o GraphUtils.o EnumerationFitter.o LinHistCombo.o MultiGaus.o \
+			PointCloudHistogram.o SQL_Utils.o StyleSetup.o TChainScanner.o TSpectrumUtils.o
+
+Utils = TagCounter.o SectorCutter.o Enums.o Types.o FloatErr.o Octet.o SpectrumPeak.o Source.o RollingWindow.o
 
 Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberCalibrator.o \
 		EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o EventClassifier.o
@@ -63,8 +66,7 @@ Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o OctetSimuCloneManager.
 	CathodeTuningAnalyzer.o PositionBinnedPlugin.o WirechamberGainMapPlugins.o XenonAnalyzer.o \
 	PlotMakers.o AsymmetryCorrections.o FierzFitter.o GravitySpectrometerPlugin.o SimEdepPlugin.o
 
-objects = $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
-
+objects = $(IOUtils) $(ROOTUtils) $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
 
 
@@ -87,7 +89,7 @@ ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm CombinedAbFi
 examples: $(ExampleObjs)
 
 StandaloneObjs = GammaComptons BetaEndpoint BetaOctetPositions MC_Comparisons MiscJunk \
-					MC_EventGen QuasiRandomTest MWPC_Energy_Cal MC_Plugin_Analyzer
+					MC_EventGen QuasiRandomTest MWPC_Energy_Cal MC_Plugin_Analyzer TriggerEfficMapper
 
 standalone: $(StandaloneObjs)
 
