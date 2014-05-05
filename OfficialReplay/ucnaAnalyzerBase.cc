@@ -15,8 +15,6 @@ fAbsTimeEnd(0), totalTime(0), deltaT(0), ignore_beam_out(false) {
 			
 	// beam burst time cut
 	loadRangeCut(rn,fBeamclock,"Cut_BeamBurst");
-	if(ignore_beam_out)
-		fBeamclock.R.end = FLT_MAX;
 	
 	// wirechamber and veto cuts
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -35,6 +33,12 @@ fAbsTimeEnd(0), totalTime(0), deltaT(0), ignore_beam_out(false) {
 	if(manualCuts.size())
 		printf("Manually cutting %i time ranges...\n",(int)manualCuts.size());
 
+}
+
+void ucnaAnalyzerBase::setIgnoreBeamOut(bool ibo) {
+	ignore_beam_out = ibo;
+	if(ignore_beam_out)
+		fBeamclock.R.end = FLT_MAX;
 }
 
 void ucnaAnalyzerBase::readInTiming() {

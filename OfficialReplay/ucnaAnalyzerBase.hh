@@ -28,7 +28,7 @@ public:
 	virtual ~ucnaAnalyzerBase() {}
 	
 	/// set to ignore beam cuts
-	void setIgnoreBeamOut(bool ibo) { ignore_beam_out = ibo; }
+	void setIgnoreBeamOut(bool ibo);
 	
 	/// whether one PMT fired
 	inline bool pmtFired(Side s, unsigned int t) const { return fScint_tdc[s][t].inRange(); }
