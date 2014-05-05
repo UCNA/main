@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <TMath.h>
 #include <vector>
+#include <cassert>
 #include <map>
 #include "SMExcept.hh"
 
@@ -389,14 +390,20 @@ double BetaSpectrumGenerator::spectrumCorrectionFactor(double W) const {
 	if(forbidden==1 && M2_GT>0 && M2_F==0)
 		c *= Davidson_C1T(W, W0, Z, R);
 	// Cs137 second-forbidden decay
-	if(forbidden==2 && A==137)
-		c *= Behrens_Cs137_C(W, W0);
+	if(forbidden==2 && A==137) {
+		//double cc = Behrens_Cs137_C(W, W0); // TODO unbreak this one
+		double cc = Langer_Cs137_C2T(W,W0);
+		assert(cc>=0);
+		c *= cc;
+	}
 	
+	assert(c>=0);
 	return c;
 }
 
 double BetaSpectrumGenerator::decayProb(double KE) const {
 	double W = (KE+m_e)/m_e;
+	if(W<1 || W>W0) return 0;
 	return plainPhaseSpace(W,W0)*spectrumCorrectionFactor(W);
 }
 
