@@ -124,6 +124,8 @@ protected:
 	void fillEarlyHistograms();
 	/// fill summary histograms from event data
 	void fillHistograms();
+	/// fill histograms requiring look-ahead capability to next event
+	void fillLookaheadHistograms();
 	/// locate sources on positions histogram
 	void locateSourcePositions();
 	/// output histograms of interest

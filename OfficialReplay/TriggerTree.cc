@@ -44,9 +44,9 @@ public:
 				for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 					for(unsigned int c=0; c<cathNames[s][d].size(); c++) {
 						cathPeds[c] = PCal.getPedestal(cathNames[s][d][c],fTimeScaler[BOTH]);
-						r_MWPC_caths[s][d][c] -= cathPeds[c];
+						f_MWPC_caths[s][d][c] = r_MWPC_caths[s][d][c] - cathPeds[c];
 					}
-					wirePos[s][d] = PCal.calcHitPos(s, d, r_MWPC_caths[s][d], cathPeds);
+					wirePos[s][d] = PCal.calcHitPos(s, d, f_MWPC_caths[s][d], cathPeds);
 				}
 				fCathMaxSum[s].val = wirePos[s][X_DIRECTION].maxValue+wirePos[s][Y_DIRECTION].maxValue;
 				if(fCathMaxSum[s].inRange()) trigFlags |= 1<<(2*(nBetaTubes+1)+s);

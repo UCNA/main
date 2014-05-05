@@ -132,9 +132,9 @@ void ucnaDataAnalyzer11b::reconstructPosition() {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(unsigned int c=0; c<cathNames[s][d].size(); c++) {
 				cathPeds[c] = PCal.getPedestal(cathNames[s][d][c],fTimeScaler[BOTH]);
-				r_MWPC_caths[s][d][c] -= cathPeds[c];
+				f_MWPC_caths[s][d][c] = r_MWPC_caths[s][d][c] - cathPeds[c];
 			}
-			wirePos[s][d] = PCal.calcHitPos(s,d,r_MWPC_caths[s][d],cathPeds);
+			wirePos[s][d] = PCal.calcHitPos(s,d,f_MWPC_caths[s][d],cathPeds);
 		}
 		fMWPC_anode[s].val -= PCal.getPedestal(sideSubst("MWPC%cAnode",s),fTimeScaler[BOTH]);
 		fCathSum[s].val = wirePos[s][X_DIRECTION].cathodeSum + wirePos[s][Y_DIRECTION].cathodeSum;
@@ -293,10 +293,6 @@ bool ucnaDataAnalyzer11b::processEvent() {
 	calibrateTimes();
 	checkMuonVetos();
 	
-	// load data for next point for look-ahead capability; overwrites r_* variables after this point
-	bool np = nextPoint();
-	fWindow.val = fDelt0 + 1.e-6*r_Delt0;
-	
 	// Stage II: processing and histograms for all events
 	for(Side s = EAST; s <= WEST; ++s)
 		PCal.pedSubtract(s, sevt[s].adc, fTimeScaler[BOTH]);
@@ -310,18 +306,22 @@ bool ucnaDataAnalyzer11b::processEvent() {
 		TLED->Fill();
 	}
 	
-	if(!isScintTrigger() || isLED())
-		return np;
+	if(isScintTrigger() && !isLED()) {
+		// Stage III: processing and histograms for beta trigger events
+		reconstructPosition();
+		reconstructVisibleEnergy();
+		classifyEvent();
+		reconstructTrueEnergy();
+		fillHistograms();
+	}
 	
-	// Stage III: processing and histograms for beta trigger events
-	reconstructPosition();
-	reconstructVisibleEnergy();
-	classifyEvent();
-	reconstructTrueEnergy();
-	fillHistograms();
+	// load data for next point for Delt0 window look-ahead capability; overwrites r_* variables after this point
+	bool np = nextPoint();
+	fWindow.val = fDelt0 + 1.e-6*r_Delt0;
+	fillLookaheadHistograms();
 	
-	if(fPassedGlobal)
-		TPhys->Fill();
+	// fill output tree
+	if(isScintTrigger() && !isLED() && fPassedGlobal) TPhys->Fill();
 	
 	return np;
 }

@@ -87,6 +87,7 @@ protected:
 	CutVariable fDrift_tac[BOTH];				///< muon veto drift tubes TAC
 	CutVariable fTop_tdc[BOTH];					///< top veto TDCs (only East)
 	CutVariable fMonADC[kNumUCNMons];			///< UCN monitor ADCs = GV, Sw, Fe, SCS
+	Float_t f_MWPC_caths[BOTH][2][kMaxCathodes];///< cathodes on [side][xplane][wire]
 	CutVariable fCathSum[BOTH];					///< combined x+y cathode sum on each side
 	CutVariable fCathMax[BOTH];					///< min(max cathode each plane) for each side
 	CutVariable fCathMaxSum[BOTH];				///< sum of max cathode from each plane for each side
