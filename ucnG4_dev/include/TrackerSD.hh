@@ -21,10 +21,42 @@ public:
 	/// run at end of event
 	void EndOfEvent(G4HCofThisEvent*);
 	
+	/// set kb
+	void SetKb(double c) { kb = c; }
+	/// sed density
+	void SetRho(double c) { rho = c; }
+	
+	/// calculate quenching factor for electron at given energy
+	double quenchFactor(double E) const;
+	
 private:
+	G4double kb;									///< Birk's law quenching constant
+	G4double rho;									///< material density
 	std::map<const G4Track*,double> originEnergy;	///< energy at track origin, for Equenched calculaiton
 	std::map<G4int,TrackerHit*> tracks;				///< event tracks listed by ID			
 	TrackerHitsCollection* trackerCollection;		///< hits objects
 };
+
+
+#include <G4UImessenger.hh>
+#include <G4UIcmdWithADouble.hh>
+
+/// UI for TrackerSD
+class TrackerSDMessenger: public G4UImessenger {
+public:
+	/// constructor
+    TrackerSDMessenger(TrackerSD*);
+	/// destructor
+	~TrackerSDMessenger();
+    
+	/// receive command
+    void SetNewValue(G4UIcommand*, G4String);
+    
+private:
+    TrackerSD* mySD;			///< TrackerSD being controlled
+    G4UIdirectory*		sdDir;	///< '/SD/<name>/' commands directory
+	G4UIcmdWithADouble*	kbCmd;	///< Birk's Law coefficient command
+};
+
 
 #endif

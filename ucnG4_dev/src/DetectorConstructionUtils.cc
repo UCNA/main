@@ -71,21 +71,21 @@ MaterialUser::MaterialUser() {
 	Polyethylene->AddElement(G4Element::GetElement("C"),nAtoms=2);
 	Polyethylene->AddElement(G4Element::GetElement("H"),nAtoms=4);
 	
-	//Wirechamber fill: pentane @ 100torr
+	// Wirechamber fill: pentane @ 100torr
 	double P_MWPC = 100*torr;
 	double T_MWPC = 298*kelvin;
 	WCPentane = new G4Material("Pentane",(72.17*mg)/(22.4*cm3)*P_MWPC/(760*torr)*(273.15*kelvin)/T_MWPC,2,kStateGas,T_MWPC,P_MWPC);
 	WCPentane->AddElement(G4Element::GetElement("C"),nAtoms=5);
 	WCPentane->AddElement(G4Element::GetElement("H"),nAtoms=12);
-	//Wirechamber fill: N2 @ 95torr
+	// Wirechamber fill: N2 @ 95torr
 	double P_N2 = P_MWPC - 5*torr;
 	WCNitrogen = new G4Material("MWPC_N2",(28*mg)/(22.4*cm3)*P_N2/(760*torr)*(273.15*kelvin)/T_MWPC,1,kStateGas,T_MWPC,P_N2);
 	WCNitrogen->AddElement(G4Element::GetElement("N"),nAtoms=2);
 	
-	//Scintillator
+	// Scintillator, per Eljen EJ-204 datasheet
 	Sci=new G4Material("Scintillator",1.032*g/cm3,2);
-	Sci->AddElement(G4Element::GetElement("C"),nAtoms=9);
-	Sci->AddElement(G4Element::GetElement("H"),nAtoms=10);
+	Sci->AddElement(G4Element::GetElement("C"),nAtoms=4.68);
+	Sci->AddElement(G4Element::GetElement("H"),nAtoms=5.15);
 	
 	isConstructed = true;
 }

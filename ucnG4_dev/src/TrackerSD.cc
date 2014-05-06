@@ -16,7 +16,33 @@
 #include <G4ParticleDefinition.hh>
 #include <G4Gamma.hh>
 
-TrackerSD::TrackerSD(G4String name): G4VSensitiveDetector(name) {
+TrackerSDMessenger::TrackerSDMessenger(TrackerSD* T): mySD(T) {
+	sdDir = new G4UIdirectory(("/SD/"+mySD->GetName()+"/").c_str());
+	sdDir->SetGuidance("Sensitive detector response settings");
+	
+	kbCmd = new G4UIcmdWithADouble((sdDir->GetCommandPath()+"kb").c_str(), this);
+	kbCmd->SetGuidance("Birk's Law quenching constant in cm/MeV");
+	kbCmd->SetDefaultValue(0.01907);
+	kbCmd->AvailableForStates(G4State_Idle);
+}
+
+TrackerSDMessenger::~TrackerSDMessenger() {
+	delete kbCmd;
+	delete sdDir;
+}
+
+void TrackerSDMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
+	if( command == kbCmd ) {
+		G4double k = kbCmd->GetNewDoubleValue(newValue);
+		G4cout << "Setting Birk's Law kb = " << k << " cm/MeV for " << mySD->GetName() << G4endl;
+		mySD->SetKb(k * cm/MeV);
+	}
+}
+
+//----------------------------------------------------------------
+
+TrackerSD::TrackerSD(G4String name): G4VSensitiveDetector(name), kb(0.01907*cm/MeV), rho(1.032*g/cm3) {
+	new TrackerSDMessenger(this);
 	collectionName.insert("trackerCollection");
 }
 
@@ -31,11 +57,9 @@ void TrackerSD::Initialize(G4HCofThisEvent* HCE) {
 }
 
 // quenching calculation... see Junhua's thesis
-double quenchFactor(double E) {
-	const G4double kb = 0.01907*cm/MeV;			// Birk's law quenching constant
+double TrackerSD::quenchFactor(double E) const {
 	const G4double a = 116.7*MeV*cm*cm/g;		// dEdx fit parameter a*e^(b*E)
 	const G4double b = -0.7287;					// dEdx fit parameter a*e^(b*E)
-	const G4double rho = 1.032*g/cm3;			// scintillator density
 	const G4double dEdx = a*rho*pow(E/keV,b);	// estimated dE/dx
 	return 1.0/(1+kb*dEdx);
 }
