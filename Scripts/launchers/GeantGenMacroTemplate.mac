@@ -17,7 +17,6 @@
 /detector/vacuum %(vacuum)s
 
 /detector/sourceholderpos %(sourceholderpos)s
-/detector/infoil %(makeinfoil)s
 
 # set physics list
 /phys/physlist Livermore
@@ -30,8 +29,8 @@
 # command for loading field map
 %(fieldmapcmd)s
 
-# optional added radius for decay source events spot
-/generator/sourceRadius %(sourceRadius)s
+# insert extra post-initialization commands here
+%(extra_post_cmds)s
 
 # file for events input
 /generator/evtfile %(evtfile)s

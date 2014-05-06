@@ -5,6 +5,7 @@ from math import *
 from optparse import OptionParser
 
 # killall -9 GeantSimManager.py; killall -9 parallel; killall -9 ucnG4_prod
+# nohup ./GeantSimManager.py --calsrcs < /dev/null > g4log.txt 2>&1 &
 
 class GeantSimManager:
 	
@@ -20,12 +21,16 @@ class GeantSimManager:
 		self.settings["sourceholderpos"] = sourceHolderPos
 		self.settings["sourceRadius"] = "0 mm"
 		self.settings["sourceScan"] = 0.
-		self.settings["makeinfoil"] = "false"
 		self.settings["fieldmapcmd"] = "#/field/mapfile UNUSED"
 		if fmap:
 			self.settings["fieldmapcmd"] = "/field/mapfile "+fmap
-		self.settings["ana_args"] = ""
+		self.settings["ana_args"] = " undead cathodes"
+		
 		self.settings["extra_cmds"] = ""
+		self.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
+		self.settings["extra_cmds"] += "/detector/sourcefoilthick 9.5 um\n"
+		
+		self.settings["extra_post_cmds"] = ""
 		
 		self.settings["vis_cmd"] = ""
 		
@@ -67,29 +72,44 @@ class GeantSimManager:
 		self.settings["vis_cmd"] += "/vis/viewer/flush\n"
 	
 	def set_evtsrc(self,evtsrc):
-		self.settings["evtsrc"] = evtsrc;
+	
+		self.settings["evtsrc"] = evtsrc
+		self.settings["evtsrc_name"] = evtsrc
 		self.needsHolder = False
 		
+		# special settings for asymmetric In114 source
+		if self.settings["evtsrc"] in ["In114E","In114W"]:
+			self.settings["extra_cmds"] += "/detector/infoil true\n"
+			if self.settings["evtsrc"][-1] == "E":
+				self.settings["extra_post_cmds"] += "/generator/offset 0 0 -4.975 um\n"
+			else:
+				self.settings["extra_post_cmds"] += "/generator/offset 0 0 4.975 um\n"
+			self.settings["evtsrc"] = "In114m"
+			
 		# special setting for calibration source generators
 		if self.settings["evtsrc"][:2] in ["Bi","Ce","Sn","Cd","In","Sr","Cs"]:
-			self.settings["sourceRadius"] = "1.5 mm"
+			srd = "1.5 mm"
+			if self.settings["evtsrc"][:2] in ["Ce","Cd"]:
+				srd = "1.25 mm"
+			self.settings["extra_post_cmds"] += "/generator/sourceRadius %s\n"%srd
 			self.needsHolder = True
-		if self.settings["evtsrc"][:2] in ["Ce","Cd"]:
-			self.settings["sourceRadius"] = "1.25 mm"
-	
+			self.settings["evtsrc"] += "_o_n"
+		
+		# set location of source holder
 		if not self.settings["sourceholderpos"]:
 			if self.needsHolder:
 				self.settings["sourceholderpos"] = "0 0	0 m"
-				self.settings["extra_cmds"] += "/generator/relholder true\n"
+				self.settings["extra_post_cmds"] += "/generator/relholder true\n"
 			else:
 				self.settings["sourceholderpos"] = "0 0.5 0 m"
+
 
 	def set_dirs(self):
 		self.g4_workdir = os.environ["G4WORKDIR"]
 		self.g4_bindir = os.environ["G4BINDIR"]
 		self.g4_evtsdir = os.environ["G4EVTDIR"]+"/"+self.settings["evtsrc"]
 		
-		self.type_dir = self.settings["simName"]+"_"+self.settings["evtsrc"]
+		self.type_dir = self.settings["simName"]+"_"+self.settings["evtsrc_name"]
 		if "gunenergy" in self.settings:
 			self.type_dir += "_%.1fkeV"%self.settings["gunenergy"]
 		
@@ -104,7 +124,7 @@ class GeantSimManager:
 		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
 		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
 
-	def launch_sims(self,maxIn=100000,hours_old=0):
+	def launch_sims(self, maxIn=100000, hours_old=0):
 		
 		self.set_dirs()
 		parallel_jobfile = "%s/jobs.txt"%self.g4_macro_dir
@@ -137,11 +157,10 @@ class GeantSimManager:
 			g4_sub_file = "%s/geantjob_%i.sub"%(self.g4_macro_dir,self.settings["run_num"])
 			
 			# source position scan
-			# TODO
-			#if self.settings["sourceScan"]:
-			#	xpos = (((rn%self.anagroup)*nClusters+(rn/self.anagroup))/float(nruns-1)-0.5)*self.settings["sourceScan"]
-			#	if self.settings["sourceholderpos"] != "0 0.5 0 m":
-			#		self.settings["sourceholderpos"] = "%g 0 0 mm"%xpos
+			if self.settings["sourceScan"]:
+				xpos = (((rn*self.anagroup + rn/(nruns/self.anagroup))%nruns)/float(nruns-1)-0.5)*self.settings["sourceScan"]
+				if self.settings["sourceholderpos"] != "0 0.5 0 m":
+					self.settings["sourceholderpos"] = "%g 0 0 mm"%xpos
 						
 			# skip recently-run jobs
 			if os.path.exists(self.g4_out_name%str(self.settings["run_num"])) and os.stat(self.g4_out_name%str(self.settings["run_num"])).st_mtime > oldtime:
@@ -201,7 +220,14 @@ if __name__ == "__main__":
 	
 	parser = OptionParser()
 	parser.add_option("-k", "--kill", dest="kill", action="store_true", default=False, help="kill running replays")
+	parser.add_option("--sevtgen", dest="sevtgen", action="store_true", default=False, help="run sealed source event generators")
+	parser.add_option("--xevtgen", dest="xevtgen", action="store_true", default=False, help="run xenon event generators")
+	parser.add_option("--calsrcs", dest="calsrcs", action="store_true", default=False, help="simulate sealed calibration sources")
+	parser.add_option("--xesrcs", dest="xesrcs", action="store_true", default=False, help="simulate xenon sources")
+	parser.add_option("--sim", dest="sim", action="store_true", default=False, help="run initial Geant4 simulation")
+	parser.add_option("--ana", dest="ana", action="store_true", default=False, help="run post-analyzer")
 	options, args = parser.parse_args()
+	
 	if options.kill:
 		os.system("killall -9 parallel")
 		os.system("killall -9 ucnG4_prod")
@@ -209,21 +235,51 @@ if __name__ == "__main__":
 		os.system("killall -9 GeantSimManager.py")
 		exit(0)
 	
+	######################
+	# calibration sources.
+	# sources ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"] 1e6 each
+	######################
+	if options.sevtgen:
+		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114m","Cd113m"]:
+			os.system("rm -rf %s/%s_o_n"%(os.environ["G4EVTDIR"],g))
+			os.system("../../MC_EventGen run %s %s o n 10000 100 x"%(g,os.environ["G4EVTDIR"]))
+	if options.calsrcs:
+		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"]:
+			sourceSim = GeantSimManager("thinfoil", fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt", geometry="thinFoil")
+			sourceSim.settings["sourceScan"] = 80.
+			sourceSim.set_evtsrc(g)
+			if options.sim:
+				sourceSim.launch_sims(maxIn=100)
+			if options.ana:
+				sourceSim.launch_postanalyzer()
+
+
+
+	####################				
+	# Xenon; run 3M for most isotopes; do lots more for important Xe135_3-2+
+	####################
+	XeIsots =  [	"Xe135_3-2+","Xe133_3-2+",
+					"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
+					"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+" ]
+	if options.xevtgen:
+		assert False # TODO
+		exit(-1)
+	if options.xesrcs:
+		for g in XeIsots:
+			sourceSim = GeantSimManager("20131015",vacuum="1.e-3 torr")
+			sourceSim.set_generator(g)
+			if options.sim:
+				sourceSim.launch_sims(maxIn=300)
+			if options.ana:
+				sourceSim.launch_postanalyzer()
+
+
+	exit(0)
+
+
+if False:
+
 	# self.settings["ana_args"] += " saveall"
-	
-	if 0:
-		betaSim = GeantSimManager("2014013_GeomC")
-		betaSim.set_evtsrc("n1_f_n")
-		betaSim.set_detector_offsets()
-		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
-		betaSim.settings["ana_args"] += " cathodes"
-		#betaSim.launch_sims(maxIn=100,hours_old=0)
-		betaSim.launch_postanalyzer()
-		exit(0)
-
-
-	
-	
 	
 	####################				
 	# neutrons: 2010
@@ -235,8 +291,6 @@ if __name__ == "__main__":
 		#betaSim.set_generator("neutronBetaUnpol")
 		betaSim.set_evtsrc("neutronBetaUnpol")
 		betaSim.set_detector_offsets()
-		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
-		betaSim.settings["ana_args"] += " cathodes"
 		betaSim.g4_out_dir_base = "/data2/mmendenhall/G4Out/2010/"
 		### DON'T RE-SIMULATE ### betaSim.launch_sims(nEvents=5e7,nClusters=520,hours_old=10*24)
 		betaSim.launch_postanalyzer()
@@ -248,7 +302,6 @@ if __name__ == "__main__":
 		betaSim.set_generator("neutronBetaUnpol")
 		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
 		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
-		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 		#betaSim.launch_sims(nEvents=1e7,nClusters=104,hours_old=0)
 		betaSim.launch_postanalyzer()
 	
@@ -258,85 +311,18 @@ if __name__ == "__main__":
 		betaSim.set_generator("neutronBetaUnpol")
 		betaSim.settings["extra_cmds"] += "/detector/rotation 0.037\n"
 		betaSim.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
-		betaSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 		#betaSim.launch_sims(nEvents=5e7,nClusters=520,hours_old=100*24)
 		betaSim.launch_postanalyzer()
 
-	####################
-	# calibration sources
-	####################
 
 	# 2010 sources, **postanalyzer only**
 	if 0:
 		for g in ["Bi207","Sn113","Ce139"]:
 			sourceSim = GeantSimManager("20120823",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt",geometry="C")
 			sourceSim.g4_out_dir_base = "/data2/mmendenhall/G4Out/2010/"
-			sourceSim.settings["ana_args"] += " undead cathodes"
 			sourceSim.set_evtsrc(g)
 			sourceSim.launch_postanalyzer()
 		exit(0)
-		
-	# sources ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"] 1e6 each
-	if 0:
-		for g in ["In114E","In114W"]:
-			sourceSim = GeantSimManager("thinfoil",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt",geometry="thinFoil")
-			sourceSim.settings["sourceScan"]=80.
-			sourceSim.settings["extra_cmds"] += "/detector/sourcefoilthick 9.5 um\n"
-			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
-			sourceSim.settings["ana_args"] += " undead"
-			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
-			sourceSim.launch_postanalyzer()
-	
-	if 0:
-		for g in ["Bi207","Sn113","Ce139"]:
-			sourceSim = GeantSimManager("DeepCrinkle",fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt")
-			sourceSim.settings["sourceScan"]=80.
-			sourceSim.settings["extra_cmds"] += "/detector/foilcrinkle 1.5708\n"
-			sourceSim.set_generator(g)
-			#sourceSim.enable_vis()
-			sourceSim.launch_sims(nEvents=1e6,nClusters=12,hours_old=0)
-			sourceSim.launch_postanalyzer()
-
-
-	####################				
-	# Xenon [	"Xe135_3-2+","Xe133_3-2+",
-	#			"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
-	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
-	# 3M for most; do lots more for important Xe135_3-2+
-	####################
-	if 0:
-		for g in [ "Xe135_3-2+" ]:
-			sourceSim = GeantSimManager("20131015",vacuum="1.e-3 torr")
-			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
-			sourceSim.set_generator(g)
-			sourceSim.launch_sims(nEvents=30e6,nClusters=54,hours_old=0)
-			sourceSim.launch_postanalyzer()
-
-	
-	####################				
-	# silicon detector
-	####################
-	
-	# Silicon detector test
-	if 0:
-		siDet = GeantSimManager("SiDet",geometry="siDet")
-		siDet.set_generator("Cs137")
-		siDet.settings["extra_cmds"] += "/sourceholder/windowthickness 1.5 mm\n"
-		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
-		siDet.launch_postanalyzer()
-
-	# Alpha particles through foil
-	if 0:
-		for th in range(11):
-			siDet = GeantSimManager("AlphaFoil_%i"%th,geometry="siDet")
-			siDet.set_generator("eGun")
-			siDet.settings["extra_cmds"] += "/sourceholder/windowthickness %i um\n"%th
-			siDet.settings["particle"] = "alpha"
-			siDet.settings["gunenergy"] = 5485.56
-			siDet.launch_sims(nEvents=1e4,nClusters=1,hours_old=0)
-			siDet.launch_postanalyzer()
-
 
 	####################				
 	# isotropic line
@@ -347,63 +333,9 @@ if __name__ == "__main__":
 			iline.set_generator("eGunRandMomentum")
 			iline.settings["positioner"] = "Fixed"
 			iline.settings["gunenergy"] = l
-			iline.settings["ana_args"] += " undead saveall"
+			iline.settings["ana_args"] += " saveall"
 			iline.settings["sourceholderpos"] = "0 0 0 m"
 			iline.launch_sims(nEvents=1e6,nClusters=36,hours_old=0)
 			iline.launch_postanalyzer()
-		
-	####################				
-	# neutron generated backgrounds
-	####################
-	if 0:
-		nCapt = GeantSimManager("TrapWall")
-		nCapt.set_generator("nCaptCu",forcePositioner="TrapWall")
-		nCapt.launch_sims(nEvents=1e7,nClusters=6,hours_old=0)
-		nCapt.launch_postanalyzer()
-	if 0:
-		nCapt = GeantSimManager("ScintFace")
-		nCapt.set_generator("nCaptH",forcePositioner="ScintFace")
-		nCapt.launch_sims(nEvents=1e7,nClusters=36,hours_old=0)
-		nCapt.launch_postanalyzer()
-	
-	####################				
-	# gammas from sealed sources
-	####################
-	if 0:
-		for l in [100,200,300,400,600,800,1200,1600]:
-			gammaSim = GeantSimManager("SourceHolderGammas")
-			gammaSim.settings["particle"] = "gamma"
-			gammaSim.set_generator("eGunRandMomentum")
-			gammaSim.settings["positioner"] = "Fixed"
-			gammaSim.settings["gunenergy"] = l
-			gammaSim.settings["ana_args"] += " undead"
-			gammaSim.settings["sourceholderpos"] = "0 0 0 m"
-			gammaSim.launch_sims(nEvents=10e6,nClusters=12,hours_old=0)
-			gammaSim.launch_postanalyzer()
 
-	##################
-	# visualization test
-	##################
-	if 0:
-		vtest = GeantSimManager("DetShift")
-		vtest.set_generator("eGunRandMomentum")
-		vtest.settings["positioner"] = "Fixed"
-		vtest.settings["gunenergy"] = 500
-		vtest.settings["extra_cmds"] += "/detector/rotation 0.037\n"
-		vtest.settings["extra_cmds"] += "/detector/offset -3.98 0.44 0 mm\n"
-		#vtest.settings["extra_cmds"] += "/detector/afpfield y\n"
-		#vtest.enable_vis()
-		vtest.launch_sims(nEvents=1e4,nClusters=1,hours_old=0)
-		vtest.launch_postanalyzer()
 
-	####################
-	# neutrons with AFP fringe
-	####################
-	# unpolarized beta baseline: 5e7 in 520 clusters
-	if 1:
-		betaSim = GeantSimManager("AFP_Fringe")
-		betaSim.set_evtsrc("n1_f_n")
-		betaSim.settings["fieldmapcmd"] += "\n/field/AFP_dipole 14600\n"
-		betaSim.launch_sims(maxIn = 100)
-		betaSim.launch_postanalyzer()
-		exit(0)

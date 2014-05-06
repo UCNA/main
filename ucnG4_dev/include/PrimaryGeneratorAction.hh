@@ -51,6 +51,8 @@ public:
 	void SetSourceRadius(double r) { sourceRadius = r; }
 	/// set positioning relative to holder
 	void SetPosRelHolder(bool b) { relToSourceHolder = b; }
+	/// set positioning offset
+	void SetPosOffset(const G4ThreeVector& v) { posOffset = v; }
 	
 private:
 	G4ParticleGun* particleGun;				///< particle gun primary event thrower

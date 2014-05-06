@@ -89,7 +89,7 @@ void DetectorConstruction::SetNewValue(G4UIcommand * command, G4String newValue)
 		G4cout << "Setting detector rotation to " << fDetRot << " radians" << G4endl;
 	} else if (command == fSourceHolderPosCmd) {
 		fSourceHolderPos = fSourceHolderPosCmd->GetNew3VectorValue(newValue);
-		G4cout<<"setting the source at "<<fSourceHolderPos/m<<G4endl;
+		G4cout<<"setting the source at "<<fSourceHolderPos/mm << " mm" << G4endl;
 	} else if (command == fVacuumLevelCmd) {
 		fVacuumPressure = fVacuumLevelCmd->GetNewDoubleValue(newValue);
 	} else if (command == fInFoilCmd) {

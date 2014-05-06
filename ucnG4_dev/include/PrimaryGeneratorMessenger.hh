@@ -8,6 +8,7 @@
 #include <G4UIcmdWithABool.hh>
 #include <G4UIcmdWithADoubleAndUnit.hh>
 #include <G4UIcmdWithAString.hh>
+#include <G4UIcmdWith3VectorAndUnit.hh>
 #include <G4UIdirectory.hh>
 
 class PrimaryGeneratorAction;
@@ -29,6 +30,7 @@ private:
 	G4UIcmdWithABool*		srcrelCmd;				///< control positions relative to source holder
 	G4UIcmdWithAString*		eventFileCmd;			///< control file to read events from
 	G4UIcmdWithADoubleAndUnit* sourceRadiusCmd;		///< spread vertices out by specified radius in x-y plane (for calibration source spots)
+	G4UIcmdWith3VectorAndUnit* offsetCmd;			///< offset event positions from default/input
 };
 
 #endif

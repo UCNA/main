@@ -37,7 +37,7 @@ void diskRandom(G4double radius, G4double& x, G4double& y) {
 }
 
 PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* myDC):
-myDetector(myDC), ETS(NULL), sourceRadius(0), relToSourceHolder(false) {
+myDetector(myDC), ETS(NULL), posOffset(), sourceRadius(0), relToSourceHolder(false) {
 	particleGun = new G4ParticleGun();
 	myMessenger = new PrimaryGeneratorMessenger(this);
 	
@@ -111,7 +111,7 @@ void PrimaryGeneratorAction::setVertices(std::vector<NucDecayEvent>& v) {
 	}
 	for(unsigned int i=0; i<v.size(); i++)
 		for(AxisDirection d = X_DIRECTION; d <= Z_DIRECTION; ++d)
-			v[i].x[d] += v0[d];
+			v[i].x[d] += v0[d]/m;
 }
 
 void PrimaryGeneratorAction::initEventRandomSeed(G4Event* anEvent) {

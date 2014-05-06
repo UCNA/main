@@ -208,7 +208,7 @@ public:
 	/// select transition outcome
 	virtual void run(std::vector<NucDecayEvent>& v, double* rnd = NULL);
 	/// display transition line info
-	virtual void display(bool verbose = false) const { printf("Beta(%.1f) ",from.E-to.E); TransitionBase::display(verbose); }
+	virtual void display(bool verbose = false) const;
 	
 	/// return number of continuous degrees of freedom needed to specify transition
 	virtual unsigned int getNDF() const { return 3; }

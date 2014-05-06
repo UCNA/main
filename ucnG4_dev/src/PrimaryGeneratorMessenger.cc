@@ -21,6 +21,11 @@ PrimaryGeneratorMessenger::PrimaryGeneratorMessenger(PrimaryGeneratorAction* Gun
 	sourceRadiusCmd->SetGuidance("Radius for SourceDrop generator");
 	sourceRadiusCmd->SetDefaultValue(1.5*mm);
 	sourceRadiusCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+	
+	offsetCmd = new G4UIcmdWith3VectorAndUnit("/generator/offset",this);
+	offsetCmd->SetGuidance("Event position offset");
+	offsetCmd->SetDefaultValue(G4ThreeVector());
+	offsetCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 }
 
 PrimaryGeneratorMessenger::~PrimaryGeneratorMessenger() {
@@ -37,4 +42,6 @@ void PrimaryGeneratorMessenger::SetNewValue(G4UIcommand* command, G4String newVa
 		Action->SetPosRelHolder(srcrelCmd->GetNewBoolValue(newValue));
 	if( command == eventFileCmd )
 		Action->SetEventFile(newValue);
+	if( command == offsetCmd )
+		Action->SetPosOffset(offsetCmd->GetNew3VectorValue(newValue));
 }

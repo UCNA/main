@@ -246,6 +246,12 @@ BetaDecayTrans::~BetaDecayTrans() {
 	delete betaQuantiles;
 }
 
+void BetaDecayTrans::display(bool verbose) const {
+	printf("Beta(%.1f) ",from.E-to.E);
+	if(BSG.forbidden) printf("%u-forbidden F=%g GT=%g ", BSG.forbidden, BSG.M2_F, BSG.M2_GT);
+	TransitionBase::display(verbose);
+}
+
 void BetaDecayTrans::run(std::vector<NucDecayEvent>& v, double* rnd) {
 	NucDecayEvent evt;
 	evt.d = positron?D_POSITRON:D_ELECTRON;
