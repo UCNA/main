@@ -417,7 +417,9 @@ void reSource(RunNum rn) {
 	
 	
 	// run simulations for each source
-	OutputManager OMsim("NameUnused", getEnvSafe("UCNA_ANA_PLOTS")+"/SourceFitsSim2010/"+replace(RI.groupName,' ','_')+"/");
+	std::string simOutName = getEnvSafe("UCNA_ANA_PLOTS")+"/SourceFitsSim/"+replace(RI.groupName,' ','_')+"/";
+	if(rn < 16300) simOutName = getEnvSafe("UCNA_ANA_PLOTS")+"/SourceFitsSim2010/"+replace(RI.groupName,' ','_')+"/";
+	OutputManager OMsim("NameUnused", simOutName);
 	SourceHitsAnalyzer SHAsim(&OMsim,itos(rn)+"_"+RI.roleName);
 	SHAsim.isSimulated = true;
 	SHAsim.PCal = &PCal;
@@ -462,7 +464,7 @@ void reSource(RunNum rn) {
 		printf("Preparing to simulate source data...\n");
 		g2p->setCalibrator(PCal);
 		g2p->simSide = src.mySide;
-		SourcedropPositioner SDP(src.x, src.y, (src.t=="Ce139" || src.t=="Cd109")?1.25:1.5 );
+		SourcedropPositioner SDP(src.x, src.y, src.t=="Ce139" ? 1.25 : src.t=="Cd109" ? 0.5 : 1.5 );
 		g2p->SP = &SDP;
 		
 		float nRealCounts = 50000;
