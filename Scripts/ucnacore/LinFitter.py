@@ -46,7 +46,16 @@ class polyterm:
 		return x**self.n
 	def toLatex(self,varname='x'):
 		return latexPoly(varname,self.n)
-		
+
+class expterm:
+	def __init__(self,c,x0=0):
+		self.c = c
+		self.x0 = x0
+	def __call__(self,x):
+		return exp(self.c*(x-self.x0))
+	def toLatex(self,varname='x'):
+		return "e^{%g %s} "%(self.c, varname)
+
 # polynomial term turning on after a certain point
 class halfpolyterm:
 	def __init__(self,n,x0):

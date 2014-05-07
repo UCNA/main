@@ -17,6 +17,18 @@
 
 using namespace std;
 
+/// event primary vertex information
+struct vtxInfo {
+	Int_t fTrapped;				///< whether this particle is trapped in mag field (lives too long)
+	Double_t fCompTime;			///< computer time needed to track this event
+	Long_t seed;				///< random seed used for this event
+	
+	Double_t primKE;			///< primary event kinetic energy
+	Double_t primTheta;			///< primary event emission angle
+	Double_t primWeight;		///< primary event generator weight
+	Double_t primPos[4];		///< primary event position (4th coordinate = radius)
+};
+
 /// base class for analyzing UCNA Geant4 MC simulations
 class ucnG4_analyzer {
 public:
@@ -30,24 +42,18 @@ public:
 	/// analyze all files in list file
 	void analyzeFileList(const string& flist);
 	
-	Int_t fTrapped;				///< whether this particle is trapped in mag field (lives too long)
-	Double_t fCompTime;			///< computer time needed to track this event
-	Long_t seed;				///< random seed used for this event
-	
-	Double_t primKE;			///< primary event kinetic energy
-	Double_t primTheta;			///< primary event emission angle
-	Double_t primWeight;		///< primary event generator weight
-	Double_t primPos[4];		///< primary event position (4th coordinate = radius)
+	vtxInfo vtx;				///< event vertex data write point
+	unsigned int pass_number;	///< event analysis pass number
 	int pID;					///< track pID
 	int detectorID;				///< track detector ID
 	int trackID;				///< track segment number
 	
 protected:
 	
-	TTree* anaTree;				///< analysis results output tree
-	TFile* outf;				///< output file
+	TTree* anaTree;			///< analysis results output tree
+	TFile* outf;			///< output file
 	MCEvent* myevt;			///< current event being analyzed
-	TrackInfo* trackinfo;		///< current track info
+	TrackInfo* trackinfo;	///< current track info
 	PrimaryInfo* priminfo;	///< current primary info
 	
 	/// add additional branches to output tree
@@ -55,10 +61,10 @@ protected:
 	
 	/// reset analysis values for new event
 	virtual void resetAnaEvt() {}
-	/// process current track segment
+	/// individual track segment processing
 	virtual void processTrack() {}
-	/// final whole-event processing
+	/// whole-event processing after scanning individual track segments
 	virtual void processEvent() {}
-	/// determine whether an event should be saved to output file
-	virtual bool saveEvent() { return true; }
+	/// write results to output TTree
+	virtual void writeEvent() { anaTree->Fill(); }
 };

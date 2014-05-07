@@ -20,6 +20,6 @@ protected:
 	virtual void processTrack();
 	/// final whole-event processing
 	virtual void processEvent();
-	/// determine whether an event should be saved to output file
-	virtual bool saveEvent() { return Edep>0; }
+	/// write results to output TTree
+	virtual void writeEvent() { if(Edep > 0) anaTree->Fill(); }
 };

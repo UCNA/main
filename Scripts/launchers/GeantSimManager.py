@@ -5,7 +5,7 @@ from math import *
 from optparse import OptionParser
 
 # killall -9 GeantSimManager.py; killall -9 parallel; killall -9 ucnG4_prod
-# nohup ./GeantSimManager.py --calsrcs < /dev/null > g4log.txt 2>&1 &
+# nohup ./GeantSimManager.py --calsrcs --ana < /dev/null > g4log.txt 2>&1 &
 
 class GeantSimManager:
 	
@@ -274,7 +274,7 @@ if __name__ == "__main__":
 				sourceSim.launch_postanalyzer()
 
 
-	exit(0)
+
 
 
 if False:

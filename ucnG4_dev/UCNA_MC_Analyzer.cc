@@ -1,6 +1,7 @@
 #include <TMath.h>
 #include <cfloat>
 #include <string.h>
+#include <algorithm>
 
 #include "UCNA_MC_Analyzer.hh"
 
@@ -18,43 +19,45 @@ UCNA_MC_Analyzer::UCNA_MC_Analyzer(const std::string& outfname): ucnG4_analyzer(
 
 void UCNA_MC_Analyzer::setupOutputTree() {
 	printf("Adding branches for UCNA_MC_Analyzer...\n");
-	anaTree->Branch("Edep",Edep,"EdepE/D:EdepW/D");
-	anaTree->Branch("EdepQ",EdepQ,"EdepQE/D:EdepQW/D");
-	anaTree->Branch("EdepAll",&EdepAll,"EdepAll/D");
-	anaTree->Branch("MWPCEnergy",fMWPCEnergy,"MWPCEnergyE/D:MWPCEnergyW/D");
-	anaTree->Branch("time",hitTime,"timeE/D:timeW/D");
-	anaTree->Branch("tmTime",trapMonTime,"tmTimeE/D:tmTimeW/D");
+	anaTree->Branch("Edep",DE0.Edep,"EdepE/D:EdepW/D");
+	anaTree->Branch("EdepQ",DE0.EdepQ,"EdepQE/D:EdepQW/D");
+	anaTree->Branch("EdepAll",&DE0.EdepAll,"EdepAll/D");
+	anaTree->Branch("MWPCEnergy",DE0.fMWPCEnergy,"MWPCEnergyE/D:MWPCEnergyW/D");
+	anaTree->Branch("time",DE0.hitTime,"timeE/D:timeW/D");
+	anaTree->Branch("tmTime",DE0.trapMonTime,"tmTimeE/D:tmTimeW/D");
+	anaTree->Branch("subEvt",&DE0.subEvt,"subEvt/I");
 	
 	char tmp[1024];
 	sprintf(tmp,"EdepSD[%i]/D",N_SD);
-	anaTree->Branch("EdepSD",EdepSD,tmp);
+	anaTree->Branch("EdepSD",DE0.EdepSD,tmp);
 	sprintf(tmp,"thetaInSD[%i]/D",N_SD);
-	anaTree->Branch("thetaInSD",thetaInSD,tmp);
+	anaTree->Branch("thetaInSD",DE0.thetaInSD,tmp);
 	sprintf(tmp,"thetaOutSD[%i]/D",N_SD);
-	anaTree->Branch("thetaOutSD",thetaOutSD,tmp);
+	anaTree->Branch("thetaOutSD",DE0.thetaOutSD,tmp);
 	sprintf(tmp,"keInSD[%i]/D",N_SD);
-	anaTree->Branch("keInSD",keInSD,tmp);
+	anaTree->Branch("keInSD",DE0.keInSD,tmp);
 	sprintf(tmp,"keOutSD[%i]/D",N_SD);
-	anaTree->Branch("keOutSD",keOutSD,tmp);
+	anaTree->Branch("keOutSD",DE0.keOutSD,tmp);
 	sprintf(tmp,"hitCountSD[%i]/I",N_SD);
-	anaTree->Branch("hitCountSD",hitCountSD,tmp);
+	anaTree->Branch("hitCountSD",DE0.hitCountSD,tmp);
 	
-	anaTree->Branch("MWPCPos",MWPCPos,"MWPCPosE[3]/D:MWPCPosW[3]/D");
-	anaTree->Branch("ScintPos",ScintPos,"ScintPosE[3]/D:ScintPosW[3]/D");
-	anaTree->Branch("MWPCPosSigma",MWPCPosSigma,"MWPCPosSigmaE[3]/D:MWPCPosSigmaW[3]/D");
-	anaTree->Branch("ScintPosSigma",ScintPosSigma,"ScintPosSigmaE[3]/D:ScintPosSigmaW[3]/D");
+	anaTree->Branch("MWPCPos",DE0.MWPCPos,"MWPCPosE[3]/D:MWPCPosW[3]/D");
+	anaTree->Branch("ScintPos",DE0.ScintPos,"ScintPosE[3]/D:ScintPosW[3]/D");
+	anaTree->Branch("MWPCPosSigma",DE0.MWPCPosSigma,"MWPCPosSigmaE[3]/D:MWPCPosSigmaW[3]/D");
+	anaTree->Branch("ScintPosSigma",DE0.ScintPosSigma,"ScintPosSigmaE[3]/D:ScintPosSigmaW[3]/D");
 	
 	if(calcCathCharge) {
 		for(Side sd = EAST; sd <= WEST; ++sd) {
 			for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) {
 				std::string cname = sideSubst("Cath_%c",sd)+(d==X_DIRECTION?"X":"Y");
-				anaTree->Branch(cname.c_str(),cathCharge[sd][d],(cname+"["+itos(kMaxCathodes)+"]/F").c_str());
+				anaTree->Branch(cname.c_str(),DE0.cathCharge[sd][d],(cname+"["+itos(kMaxCathodes)+"]/F").c_str());
 			}
 		}
 	}
 }
 
-void UCNA_MC_Analyzer::resetAnaEvt() {
+void ucnaDAQEvt::reset(bool calcCathCharge) {
+	subEvt = 0;
 	for(Side sd = EAST; sd <= WEST; ++sd) {
 		Edep[sd] = EdepQ[sd] = 0;
 		fMWPCEnergy[sd]=0;
@@ -70,7 +73,14 @@ void UCNA_MC_Analyzer::resetAnaEvt() {
 		hitCountSD[ii] = keInSD[ii] = keOutSD[ii] = thetaInSD[ii] = thetaOutSD[ii] = EdepSD[ii] = 0.;
 		hitTimeSD[ii]=FLT_MAX;
 	}
-	
+}
+
+void UCNA_MC_Analyzer::resetAnaEvt() {
+	DE0.reset(calcCathCharge);
+	subEvts.clear();
+	scintHitTimes.clear();
+	triggerTimes.clear();
+	pass_number = 2;
 }
 
 void UCNA_MC_Analyzer::processTrack() {
@@ -90,14 +100,46 @@ void UCNA_MC_Analyzer::processTrack() {
 	
 	const double kMe = 510.998910; // electron mass, keV
 	
+	// first pass to collect timing structure
+	if(pass_number == 2) {
+		for(Side sd = EAST; sd <= WEST; ++sd)
+			if(detectorID==ID_scint[sd] || (undeadLayer && detectorID==ID_dscint[sd]))
+				if(trackinfo->Edep > 1.0) scintHitTimes.push_back(trackinfo->hitTime * 1.e-9);
+		return;
+	}
+	
+	// select appropriate event to fill
+	ucnaDAQEvt* DE = &DE0;
+	if(triggerTimes.size()>2) {
+		// determine nearest trigger
+		double t = trackinfo->hitTime * 1e-9;
+		std::vector<double>::iterator it = std::lower_bound(triggerTimes.begin(), triggerTimes.end(), t); // first element >= t
+		assert(it != triggerTimes.end());
+		unsigned int i = it-triggerTimes.begin();
+		assert(i>0);
+		if(*it - t > t - triggerTimes[i-1]) i--;
+		double t0 = triggerTimes[i];
+		
+		if(i>0 && i < triggerTimes.size()-1) DE = &subEvts[i-1];	// by default, assign deposition to nearest-time trigger
+		if( detectorID==ID_scint[EAST] || detectorID==ID_scint[WEST] || (undeadLayer && (detectorID==ID_dscint[EAST] || detectorID==ID_dscint[WEST])) ) {
+			// PMT QADC gate, 140ns (with 5ns slop for prior events)
+			if(!(t0-5e-9 < t && t < t0 + 140.e-9)) DE = &DE0;
+		}
+		if(detectorID==ID_mwpc[EAST] || detectorID==ID_mwpc[WEST] || detectorID==ID_deadmwpc[EAST] || detectorID==ID_deadmwpc[WEST]) {
+			// MWPC PADC gate, 6us (with 1us slop for prior events)
+			if(!(t0-1e-6 < t && t < t0 + 6e-6)) DE = &DE0;
+		}
+	}
+	if(!saveAllEvents && DE==&DE0) return;
+	
 	// total deposited energy in all sensitive volumes
-	EdepAll += trackinfo->Edep;
+	DE->EdepAll += trackinfo->Edep;
 	if(detectorID < N_SD) {
-		EdepSD[detectorID] += trackinfo->Edep;
+		DE->EdepSD[detectorID] += trackinfo->Edep;
 		if(trackinfo->isEntering && pID==PDG_ELECTRON)
-			hitCountSD[detectorID]++;
-		if(pID==PDG_ELECTRON && trackinfo->hitTime<hitTimeSD[detectorID]) {
-			hitTimeSD[detectorID] = trackinfo->hitTime;
+			DE->hitCountSD[detectorID]++;
+		if(pID==PDG_ELECTRON && trackinfo->hitTime < DE->hitTimeSD[detectorID]) {
+			DE->hitTimeSD[detectorID] = trackinfo->hitTime;
 			double pin_x = trackinfo->pIn[0];
 			double pin_y = trackinfo->pIn[1];
 			double pin_z = trackinfo->pIn[2];
@@ -106,13 +148,13 @@ void UCNA_MC_Analyzer::processTrack() {
 			double pout_z = trackinfo->pOut[2];
 			if(pin_x || pin_y || pin_z) {
 				double magpin2 = pin_x*pin_x+pin_y*pin_y+pin_z*pin_z;
-				keInSD[detectorID] = sqrt(magpin2+kMe*kMe)-kMe;
-				thetaInSD[detectorID] = acos(fabs(pin_z/sqrt(magpin2)));
+				DE->keInSD[detectorID] = sqrt(magpin2+kMe*kMe)-kMe;
+				DE->thetaInSD[detectorID] = acos(fabs(pin_z/sqrt(magpin2)));
 			}
 			if(pout_x || pout_y || pout_z) {
 				double magpout2 = pout_x*pout_x+pout_y*pout_y+pout_z*pout_z;
-				keOutSD[detectorID] = sqrt(magpout2+kMe*kMe)-kMe;
-				thetaOutSD[detectorID] = acos(fabs(pout_z/sqrt(magpout2)));
+				DE->keOutSD[detectorID] = sqrt(magpout2+kMe*kMe)-kMe;
+				DE->thetaOutSD[detectorID] = acos(fabs(pout_z/sqrt(magpout2)));
 			}
 		}
 	}
@@ -121,21 +163,21 @@ void UCNA_MC_Analyzer::processTrack() {
 		
 		// scintillator deposited energy, position, hit time
 		if(detectorID==ID_scint[sd] || (undeadLayer && detectorID==ID_dscint[sd])) {
-			Edep[sd] += trackinfo->Edep;
-			EdepQ[sd] += trackinfo->EdepQuenched;
+			DE->Edep[sd] += trackinfo->Edep;
+			DE->EdepQ[sd] += trackinfo->EdepQuenched;
 			for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
-				ScintPos[sd][d] += trackinfo->edepPos[d];
-				ScintPosSigma[sd][d] += trackinfo->edepPos2[d];
+				DE->ScintPos[sd][d] += trackinfo->edepPos[d];
+				DE->ScintPosSigma[sd][d] += trackinfo->edepPos2[d];
 			}
 			//earliest hit time with possibly detectable (not really) Edep; hitTime[EAST,WEST] have been initialized to FLT_MAX
-			if(trackinfo->Edep>5.0 && trackinfo->hitTime<hitTime[sd]) 
-				hitTime[sd] = trackinfo->hitTime;
+			if(trackinfo->Edep>5.0 && trackinfo->hitTime < DE->hitTime[sd])
+				DE->hitTime[sd] = trackinfo->hitTime;
 		}
 		
 		// trap monitor timing for electrons, initialized to FLT_MAX
-		if(detectorID==ID_trapmon[sd] && (pID==PDG_ELECTRON||pID==PDG_POSITRON)){
-			if(trackinfo->hitTime<trapMonTime[sd]) 
-				trapMonTime[sd] = trackinfo->hitTime; //earliest hit time 
+		if(detectorID==ID_trapmon[sd] && (pID==PDG_ELECTRON || pID==PDG_POSITRON)){
+			if(trackinfo->hitTime < DE->trapMonTime[sd])
+				DE->trapMonTime[sd] = trackinfo->hitTime; //earliest hit time
 		}
 		
 		// wirechamber deposited energy and position
@@ -147,17 +189,17 @@ void UCNA_MC_Analyzer::processTrack() {
 		if(anodeScale && trackinfo->Edep) {
 			Double_t Ew = anodeScale*trackinfo->Edep;
 			
-			fMWPCEnergy[sd] += Ew;
+			DE->fMWPCEnergy[sd] += Ew;
 			for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
-				MWPCPos[sd][d] += anodeScale*trackinfo->edepPos[d];
-				MWPCPosSigma[sd][d] += anodeScale*trackinfo->edepPos2[d];
+				DE->MWPCPos[sd][d] += anodeScale*trackinfo->edepPos[d];
+				DE->MWPCPosSigma[sd][d] += anodeScale*trackinfo->edepPos2[d];
 			}
 			if(calcCathCharge) {
 				double c[Y_DIRECTION+1]; // track center
 				for(AxisDirection d=X_DIRECTION; d<=Y_DIRECTION; ++d) c[d] = trackinfo->edepPos[d]/trackinfo->Edep;
 				// charge radius
 				Double_t cr = sqrt((trackinfo->edepPos2[X_DIRECTION]+trackinfo->edepPos2[Y_DIRECTION])/trackinfo->Edep
-									-c[X_DIRECTION]*c[X_DIRECTION]-c[Y_DIRECTION]*c[Y_DIRECTION]);
+								   -c[X_DIRECTION]*c[X_DIRECTION]-c[Y_DIRECTION]*c[Y_DIRECTION]);
 				if(!(cr==cr)) cr=0; // avoid NAN
 				
 				const double dx = 0.254;		// distance between wires, cm
@@ -175,7 +217,7 @@ void UCNA_MC_Analyzer::processTrack() {
 							int flip = (sd==EAST && d==X_DIRECTION)?-1:1; // flip for East X because of mirrored position coordinates
 							const double lambda = (c[d]+cr*circ_pts[d][j]-cathWirePos[i]*flip)/h;
 							const double tkl = tanh(K2*lambda);
-							cathCharge[sd][d][i/kWiresPerCathode] += Ew * dlambda * K1 * (1-tkl*tkl) / (1+K3*tkl*tkl);
+							DE->cathCharge[sd][d][i/kWiresPerCathode] += Ew * dlambda * K1 * (1-tkl*tkl) / (1+K3*tkl*tkl);
 						}
 					}
 				}
@@ -184,8 +226,7 @@ void UCNA_MC_Analyzer::processTrack() {
 	}
 }
 
-void UCNA_MC_Analyzer::processEvent() {
-	// normalize position variables
+void ucnaDAQEvt::calcPositions() {
 	for(Side sd = EAST; sd <= WEST; ++sd) {
 		for(AxisDirection d=X_DIRECTION; d<=Z_DIRECTION; ++d) {
 			if(Edep[sd]>0) {
@@ -196,6 +237,39 @@ void UCNA_MC_Analyzer::processEvent() {
 				MWPCPos[sd][d] /= fMWPCEnergy[sd];
 				MWPCPosSigma[sd][d] = sqrt(MWPCPosSigma[sd][d]/fMWPCEnergy[sd]-MWPCPos[sd][d]*MWPCPos[sd][d]);
 			}
+		}
+	}
+}
+
+void UCNA_MC_Analyzer::processEvent() {
+	
+	if(pass_number==2) {
+		// determine trigger timing structure
+		const double busy_blackout = 12.e-6;	// DAQ "busy logic" blackout time [s]
+		std::sort(scintHitTimes.begin(),scintHitTimes.end());
+		triggerTimes.push_back(-1e6);
+		for(unsigned int i=0; i<scintHitTimes.size(); i++) {
+			if(scintHitTimes[i] > triggerTimes.back() + busy_blackout) {
+				triggerTimes.push_back(scintHitTimes[i]);
+				subEvts.push_back(DE0);
+			}
+		}
+		triggerTimes.push_back(1e6);
+		return;
+	}
+}
+
+void UCNA_MC_Analyzer::writeEvent() {
+	if(saveAllEvents) {
+		DE0.calcPositions();
+		anaTree->Fill();
+	}
+	for(unsigned int i=0; i<subEvts.size(); i++) {
+		DE0 = subEvts[i];
+		if(saveAllEvents || DE0.Edep[EAST]+DE0.Edep[WEST] > 0) {
+			DE0.calcPositions();
+			DE0.subEvt = i+1;
+			anaTree->Fill();
 		}
 	}
 }

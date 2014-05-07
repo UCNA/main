@@ -87,12 +87,17 @@ def gather_peakdat(conn,rlist):
 	slines = []
 	for src in srcs:
 		slines += get_source_lines(conn,src)
-		
+	slines = [l for l in slines if 10 < l.erecon < 2000 and 5 < l.enwidth < 1000]
+	
 	# connect data and simulations	
 	sims = dict([(l.uid,l) for l in slines if l.simulation])
 	for l in slines:
 		if l.uid in sims:
-			l.sim = sims[l.uid]
+			if 10 < sims[l.uid].erecon < 1500 and 5 < sims[l.uid].enwidth < 1000 :
+				l.sim = sims[l.uid]
+			else:
+				print "** Crazy simulation fit for",l.src.run,l.uid, sims[l.uid].erecon, sims[l.uid].derecon
+				sims.pop(l.uid)
 		else:
 			print "** Missing simulation for",l.src.run,l.uid
 	slines = [l for l in slines if l.uid in sims and not l.simulation]
@@ -167,8 +172,10 @@ class LinearityCurve:
 	def __init__(self,side,tube):
 		self.side = side
 		self.tube = tube
-		self.fitter = LinearFitter(terms=[polyterm(0),polyterm(1)])
-		self.axisType = graph.axis.lin
+		self.prefitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
+		#self.fitter = LinearFitter(terms=[polyterm(i) for i in range(2)]+[expterm(-0.03),expterm(-0.01)])
+		self.fitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
+		self.axisType = graph.axis.log
 	
 		
 	##
@@ -197,9 +204,12 @@ class LinearityCurve:
 		xrange = [0,1500]
 		yrange = [0,1500]
 		if adcmax > 1500:
+			xrange = (0,2000)
+		if adcmax > 2000:
 			xrange = (0,3000)
 		if self.axisType == graph.axis.log:
-			xrange = yrange[0] = [20,4000]
+			xrange = [10,4000]
+			yrange = [10,2000]
 			
 		self.gResid=graph.graphxy(width=10,height=2,
 				x=self.axisType(title="PMT ADC",min=xrange[0],max=xrange[1]),
@@ -222,6 +232,7 @@ class LinearityCurve:
 		combodat = []
 		for k in pks:
 			gdat = [ (l.adc*l.gms, l.sim.erecon*l.eta, l.dadc*l.gms, l.sim.erecon*l.eta*etaErr, l) for l in pks[k] if 0 < l.adc < 3500 and 5 < l.sim.erecon*l.eta < 2500 ]
+			gdat = [ g for g in gdat if xrange[0] < g[0] < xrange[1] and yrange[0] < g[1] < yrange[1] and 0 < g[3] < 100 ]
 			combodat += [g for g in gdat if g[-1].src.radius() <= 45. and k != 11]
 			if not gdat:
 				continue
@@ -239,10 +250,10 @@ class LinearityCurve:
 			return
 		dmin,dmax = min([p[0] for p in combodat]),max([p[0] for p in combodat])
 		dmin=min(dmin,100)
-		self.fitter.fit(combodat,cols=(0,1))
+		self.prefitter.fit([p for p in combodat if p[-1].type in  [8,9,11,15]],cols=(0,1))
 		trimcdat = []
 		for p in combodat:
-			if not 1/1.2 < p[1]/self.fitter(p[0]) < 1.2:
+			if not (1/1.2 < p[1]/self.prefitter(p[0]) < 1.2 or abs(p[1]-self.prefitter(p[0])) < 20):
 				print "--> Check fit",p[-1].src.run,p[-1].uid
 			else:
 				trimcdat.append(p)
@@ -254,8 +265,7 @@ class LinearityCurve:
 		print "chi^2/nu =",self.fitter.chisquared(),"/",self.fitter.nu()
 		self.fitter.displayCoeffErrCorr()
 		print
-		self.gEvis.plot(graph.data.points([ [x,self.fitter(x)] for x in self.fitter.unifPoints(xrange[0]+0.1,xrange[1],100)],x=1,y=2,title=None),
-			[graph.style.line(),])
+		self.gEvis.plot(graph.data.points(self.make_lcurve(),x=1,y=2,title=None), [graph.style.line(),])
 			
 		##
 		# residuals plotting
@@ -263,6 +273,7 @@ class LinearityCurve:
 		for k in pks:
 			gdat = [ (l.adc*l.gms, self.fitter(l.adc*l.gms), l.sim.erecon*l.eta, l.sim.erecon*l.eta*etaErr) for l in pks[k] if l.adc > 0]
 			gdat = [ (x,100.0*(y-yexp)/yexp,100*dy/yexp) for (x,yexp,y,dy) in gdat ]
+			gdat = [ g for g in gdat if xrange[0] < g[0] < xrange[1] and -100 < g[1] < 100 ]
 			if not gdat:
 				continue
 			self.gResid.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
@@ -385,16 +396,23 @@ class LinearityCurve:
 		self.gWidth.plot(graph.data.points(self.LFwid.fitcurve(0,maxWidth),x=1,y=2,title="$y=%.3f \\cdot x$"%self.LFwid.coeffs[0]),
 			[graph.style.line(lineattrs=[style.linestyle.dashed]),])
 				
+	def make_lcurve(self):
+		"""Construct linearity curve points for upload or plotting"""
+					
+		# generate points with logarithmic spacing, upload as linearity curve
+		lg = LogLogger(terms=[(lambda x: x)])
+		lindat = [ (x,self.fitter(x)) for x in lg.unifPoints(10,4100,100) ]
+		lindat = [(0,0)] + [ p for (n,p) in enumerate(lindat[:-1]) if 0 < p[1] < lindat[n+1][1] ]	# increasing only!
+		
+		return lindat
+	
 	##
 	# Upload linearity to calibrations DB
 	##
 	def dbUpload(self,conn,ecid,refline_id):
 		"""Upload PMT calibration curves to DB for given energy calibration ID."""
-				
-		# generate points with logarithmic spacing, upload as linearity curve
-		lg = LogLogger(terms=[(lambda x: x)])
-		#lindat = [(0,0),]+[ (x,self.fitter(x)) for x in lg.unifPoints(10,4000,50) ]
-		lindat = [ (x,self.fitter(x)) for x in lg.unifPoints(10,4000,100) ]
+	
+		lindat = self.make_lcurve()
 		lgid = upload_graph(conn,"Tube Linearity %s %i ID=%i"%(self.side,self.tube,ecid),lindat)
 		
 		# reference line for anchoring energy, resolution
@@ -516,7 +534,11 @@ def plotSourcePositions(conn,rlist):
 				
 	sname = {	"Ce139":"$^{139}$Ce",
 				"Sn113":"$^{113}$Sn",
-				"Bi207":"$^{207}$Bi" }
+				"Bi207":"$^{207}$Bi",
+				"Cd109":"$^{109}$Cd",
+				"Cs137":"$^{137}$Cs",
+				"In114E":"$^{114}$In (E)",
+				"In114W":"$^{114}$In (W)" }
 	
 	for s in ['East','West']:
 	
@@ -524,7 +546,7 @@ def plotSourcePositions(conn,rlist):
 		gSourcepos=graph.graphxy(width=gwid,height=gwid,
 			x=graph.axis.lin(title="x position [mm]",min=-60,max=60),
 			y=graph.axis.lin(title="y position [mm]",min=-60,max=60),
-			key = graph.key.key(pos="tl"))
+			key = graph.key.key(pos="tc", columns=3))
 		setTexrunner(gSourcepos)
 		
 		gSourcepos.dolayout()
@@ -600,12 +622,12 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	conn = open_connection() # connection to calibrations DB
-	replace = False	# whether to replace previous calibration data
+	replace = True 	# whether to replace previous calibration data
 	makePlots = True
 	
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2010:
+	for c in cal_2012[3:4]:
 	
 		rlist = range(c[0],c[1]+1)
 		fCalSummary.write("\n--------- %i-%i ----------\n"%(rlist[0],rlist[-1]))
@@ -632,7 +654,10 @@ if __name__=="__main__":
 					LC.fitLinearity(slines)
 					fCalSummary.write("%s %i\t%s\n"%(s,t,LC.fitter.toLatex()))
 					if LC.cnvs and makePlots:
+						#try:
 						LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
+						#except:
+						#	print "Warning: Linearity plots failure for",s,t,"!"
 				if makePlots:
 					LC.plot_erecon(slines)
 			
@@ -640,5 +665,8 @@ if __name__=="__main__":
 					LC.dbUpload(conn,ecid,c[5+sn])
 				if not (makePlots and LC.cnvs):
 						continue
-				LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
-				LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
+				try:
+					LC.cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
+					LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
+				except:
+					print "Plotting failure for",sn,s,t,"!"

@@ -18,10 +18,10 @@ void ucnaDataAnalyzer11b::setupOutputTree() {
 	TPhys->Branch("Sis00",&SIS00,"Sis00/I");
 	TPhys->Branch("DeltaT",&fDelt0,"DeltaT/F");
 	TPhys->Branch("EvtN",&currentEvent,"EvtN/I");
+	TPhys->Branch("Tof",&fBeamclock.val,"Tof/F");
 	
 	for(Side s = EAST; s <= WEST; ++s) {
 		TPhys->Branch(sideSubst("Time%c",s).c_str(),&fTimeScaler[s],sideSubst("Time%c/F",s).c_str());
-		TPhys->Branch(sideSubst("Tof%c",s).c_str(),&fBeamclock.val,sideSubst("Tof%c/F",s).c_str());
 		
 		TPhys->Branch(sideSubst("TDC%c",s).c_str(),&fScint_tdc[s][nBetaTubes].val,sideSubst("TDC%c/F",s).c_str());
 		for(unsigned int t=0; t<nBetaTubes; t++)

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # nohup ./ReplayManager.py --mwpccal_sim < /dev/null > scriptlog.txt 2>&1 &
+# nohup ./ReplayManager.py -s --rmin=21914 --rmax=21939 < /dev/null > scriptlog.txt 2>&1 &
 
 import os
 import time
@@ -103,7 +104,7 @@ if __name__ == "__main__":
 	parser.add_option("-z", "--simocts", dest="simocts", action="store_true", default=False, help="re-simulate octets")
 	parser.add_option("-x", "--xenon", dest="xenon", action="store_true", default=False, help="process Xenon runs for position map")
 	parser.add_option("-X", "--xesim", dest="xesim", action="store_true", default=False, help="simulate Xenon runs for position map")
-	parser.add_option("-s", "--sources", dest="sources", action="store_true", default=False, help="process (official) source data")
+	parser.add_option("-s", "--sources", dest="sources", action="store_true", default=False, help="process calibration source data")
 	parser.add_option("--mwpccal", dest="mwpccal", action="store_true", default=False, help="MWPC calibration octet analysis")
 	parser.add_option("--mwpccal_sim", dest="mwpccal_sim", action="store_true", default=False, help="MWPC calibration octet analysis, simulation")
 	parser.add_option("--rmin", type="int", dest="rmin", default=0)

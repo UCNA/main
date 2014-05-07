@@ -17,9 +17,9 @@ public:
 	Int_t trackID;			///< ID number for this track
 	Int_t hcID;				///< sensitive detector ID number for this track
 	Double_t hitTime;		///< time of track start [ns]
-	Double_t KE;			///< KE at start of track
+	Double_t KE;			///< KE at start of track [keV]
 	Double_t Edep;			///< accumulated deposited energy along track (not counting secondaries), [keV]
-	Double_t EdepQuenched;	///< accumulated "quenched" energy along track
+	Double_t EdepQuenched;	///< accumulated "quenched" energy along track [keV]
 	Double_t pIn[3];		///< momentum at entry to volume
 	Double_t pOut[3];		///< momentum at exit to volume
 

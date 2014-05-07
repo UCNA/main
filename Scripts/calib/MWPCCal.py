@@ -832,6 +832,12 @@ if __name__ == "__main__":
 	#set_default_cathode_scalefactors(conn)
 	#exit(0)
 	
+	gGC = graph.graphxy(width=25,height=10,
+					x=make_runaxis(21910,21940),
+					y=graph.axis.lin(title="MWPC gain calibration $g_Q$"), #,min=2e-4,max=3.5e-4),
+					key = graph.key.key(pos="bl"))
+	setTexrunner(gGC)
+
 	#########
 	# 2010 cathode-based calibration
 	#########
@@ -839,16 +845,19 @@ if __name__ == "__main__":
 	#make_mwpc_posmap(conn,167,169) # only run this once
 	#assign_MWPC_calib(conn,0,100000,10,181,"ccloud") # default calibration for all runs
 	
-	gGC = graph.graphxy(width=25,height=10,
-					x=make_runaxis(14000,16400),
-					y=graph.axis.lin(title="MWPC gain calibration $g_Q$",min=2e-4,max=3.5e-4),
-					key = graph.key.key(pos="bl"))
-	setTexrunner(gGC)
 
-	MWPC_calib_for_beta_octets(conn, ppath+"/MWPC_ECal_8_Sim0823/", True, gGC)
-	MWPC_calib_for_source_runs(conn, ppath+"/SourceFitsSim2010", gGC)
+
+	#MWPC_calib_for_beta_octets(conn, ppath+"/MWPC_ECal_8_Sim0823/", True, gGC)
+	#MWPC_calib_for_source_runs(conn, ppath+"/SourceFitsSim2010", gGC)
+	
 	
 	#MWPC_Cathode_CCloud_Scaling(conn, ppath+"/MWPC_ECal_8/MWPC_ECal_8.txt", ppath+"/MWPC_ECal_8_Sim0823/MWPC_ECal_8_Sim0823.txt") # cathode to charge-cloud scaling
+	
+	#########
+	# post-2010 sources
+	#########
+	
+	MWPC_calib_for_source_runs(conn, ppath+"/SourceFitsSim", gGC)
 	
 	exit(0)
 	
