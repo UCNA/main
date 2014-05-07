@@ -428,6 +428,7 @@ void PosPlotter::etaPlot(PositioningCorrector* P, double z0, double z1) {
 void showSimSpectrum(const std::string& nm, OutputManager& OM, NucDecayLibrary& NDL, PMTCalibrator& PCal) {
 	double emax = 1600;
 	int nbins = 1600;
+	if(nm == "Cs137") emax = nbins = 1000;
 	NucDecaySystem& NDS = NDL.getGenerator(nm);
 	NDS.display(true);
 	PMTGenerator PGen;
@@ -439,7 +440,7 @@ void showSimSpectrum(const std::string& nm, OutputManager& OM, NucDecayLibrary& 
 
 	std::vector<NucDecayEvent> v;
 	unsigned int npts = 0;
-	unsigned int nToGen = 5e5;
+	unsigned int nToGen = 5.15*(5e5);
 	while(npts<nToGen) {
 		if(!(npts%(nToGen/20))) { printf("*"); fflush(stdout); npts++; }
 		v.clear();

@@ -214,7 +214,7 @@ void mi_showGenerator(StreamInteractor* S) {
 	std::string sName = S->popString();
 	OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/EventGenerators/"+sName+"/");
 	NucDecayLibrary NDL(getEnvSafe("UCNA_AUX")+"/NuclearDecays",1e-6);
-	PMTCalibrator PCal(21300);
+	PMTCalibrator PCal(16000);
 	showSimSpectrum(sName,OMTest,NDL,PCal);
 	return;
 }

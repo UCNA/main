@@ -502,8 +502,9 @@ integral(npx+1), alpha(npx), beta(npx), gamma(npx) {
 	
 	if (intNegative > 0 || !total) {
 		SMExcept e("bad_probability_distribution");
-		e.insert("integral",total);
-		e.insert("negative_segs",intNegative);
+		e.insert("integral", total);
+		e.insert("negative_segs", intNegative);
+		e.insert("total_segs", npx);
 		throw(e);
 	}
 	
