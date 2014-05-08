@@ -68,6 +68,8 @@ std::vector<SpectrumPeak> Source::getPeaks(EventType tp) const {
 		}
 		if(t=="Sn113")
 			v.push_back(SpectrumPeak(SN_T1_PEAK,sID,mySide));
+		if(t=="Cs137")
+			v.push_back(SpectrumPeak(CS137_T1_PEAK,sID,mySide));
 	}
 	return v;
 }

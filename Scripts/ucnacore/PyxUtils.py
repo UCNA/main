@@ -122,14 +122,14 @@ if 0:
 				privatedata.text(privatedata.symbolcanvas, x_pt, y_pt, privatedata.size_pt, privatedata.symbolattrs + [color])
 							   
 							   
-def rainbow(n):
-	return [ hsb((1.0*x)/n,1,1) for x in range(n) ]
+def rainbow(n, b=1.0):
+	return [ hsb((1.0*x)/n,1,b) for x in range(n) ]
 	
-def rainbowDict(keys):
+def rainbowDict(keys, b=1.0):
 	n = len(keys)
 	knew = [k for k in keys]
 	knew.sort()
-	return dict([ (k,hsb((1.0*x)/n,1,1)) for (x,k) in enumerate(knew) ])
+	return dict([ (k,hsb((1.0*x)/n,1,b)) for (x,k) in enumerate(knew) ])
 
 # axis in fractions of pi
 class piaxis(graph.axis.linear):

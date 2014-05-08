@@ -20,7 +20,8 @@ Float_t SpectrumPeak::energy() const {
 	if(type==BI_T1_PEAK_1)	return 400;
 	if(type==BI_T1_PEAK_2)	return 900.0;
 	if(type==BI_T1_COINC)	return 1400;
-
+	if(type==CS137_T1_PEAK)	return 550;
+	
 	return 0;
 }
 
@@ -53,6 +54,7 @@ std::string SpectrumPeak::name() const {
 	if(type==BI_T1_PEAK_2)	return "Bi_T1_2";
 	if(type==BI_T1_COINC)	return "Bi_T1_COINC";
 	if(type==SN_T1_PEAK)	return "Sn_T1";
+	if(type==CS137_T1_PEAK)	return "Cs_T1";
 				
 	return "UnnamedPeak";
 }

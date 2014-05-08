@@ -37,7 +37,8 @@ enum PeakType {
 	BI_T1_PEAK_1	= 108,	///< 1st peak of Bi source ~481keV for Type 1 backscatters
 	BI_T1_PEAK_2	= 109,	///< 2nd peak of Bi source ~974keV + 1047keV for Type 1 backscatters
 	BI_T1_COINC		= 119,	///< Bi207 coincidence peak between 500 and 1000 for Type 1 backscatters
-	SN_T1_PEAK		= 111	///< Sn source ~364keV for Type 1 backscatters
+	SN_T1_PEAK		= 111,	///< Sn source ~364keV for Type 1 backscatters
+	CS137_T1_PEAK	= 120	///< Cs137 ~630keV peak for Type 1 backscatters
 };
 
 /// location of a peak in the spectrum

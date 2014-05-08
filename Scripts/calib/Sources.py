@@ -579,24 +579,37 @@ def plotSourcePositions(conn,rlist):
 def backscatterEnergy(conn, rlist):
 
 	rlist.sort()
-	pks = sort_by_type(gather_peakdat(conn, rlist, "AND peak_num > 100 AND tube=4"))
-	#pks0 = sort_by_type(gather_peakdat(conn, rlist, "AND peak_num < 100 AND tube=4"))
+	slines = gather_peakdat(conn, rlist, "AND peak_num > 100 AND tube=4")
+	slines0 = gather_peakdat(conn, rlist, "AND peak_num < 100 AND tube=4")
+	
+	# connect Type I to Type 0 lines
+	tp0s = dict([(l.uid,l) for l in slines0])
+	for l in slines:
+		u = (l.src.sID, l.side, l.tube, l.type-100)
+		l.tp0 = tp0s.get(u, None)
+	
+	pks = sort_by_type(slines)
+	
 	gB = graph.graphxy(width=15,height=15,
-			x=graph.axis.lin(title="expected energy [keV]", min=0, max=1500),
-			y=graph.axis.lin(title="observed energy [keV]", min=0, max=1500),
-			key = graph.key.key(pos="tl"))
+			x=graph.axis.lin(title="expected Type 0 - Type 1 difference [keV]", min=20, max=80),
+			y=graph.axis.lin(title="observed Type 0 - Type 1 difference [keV]", min=20, max=80),
+			key = graph.key.key(pos="br"))
 	setTexrunner(gB)
 
-	cP = rainbowDict(pks.keys())
+	cP = rainbowDict(pks.keys(), 0.6)
 	
 	for k in pks:
 		#		  0             1         2              3
-		gdat = [ (q.sim.erecon, q.erecon, q.sim.derecon, q.derecon) for q in pks[k] ]
-		#gdat = [ g for g in gdat if 0 < g[5] < 1000 and 0 < g[7] < 1000]
+		#gdat = [ (q.sim.erecon, q.erecon, q.sim.derecon, q.derecon) for q in pks[k] ]
+		
+		gdat = [ (q.tp0.sim.erecon - q.sim.erecon, q.tp0.erecon - q.erecon, q.sim.derecon, q.derecon) for q in pks[k] if q.tp0 ]
+		print gdat
+		
 		if not gdat:
 			continue
+			
 		gB.plot(graph.data.points(gdat,x=1,y=2,dx=3,dy=4, title=peakNames.get(k-100,k)),
-			[graph.style.symbol(peakSymbs.get(k,symbol.circle), size=0.2, symbolattrs=[cP[k]]),
+			[graph.style.symbol(peakSymbs.get(k,peakSymbs.get(k-100,symbol.circle)), size=0.2, symbolattrs=[cP[k]]),
 			 graph.style.errorbar(errorbarattrs=[cP[k]])])
 
 	gB.plot(graph.data.function("y(x)=x",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
