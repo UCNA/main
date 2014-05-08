@@ -50,7 +50,7 @@ public:
 	std::vector<SpectrumPeak> tubePeaks[nBetaTubes+1];	///< found peaks for each PMT
 	
 	/// get number of counts
-	unsigned int counts() const { return (unsigned int)(hTubes[nBetaTubes][TYPE_0_EVENT]->h[GV_OPEN]->Integral()); }
+	unsigned int counts(EventType tp = TYPE_0_EVENT) const { return (unsigned int)(hTubes[nBetaTubes][tp]->h[GV_OPEN]->Integral()); }
 };
 
 /// simple source hit positions plugin

@@ -9,13 +9,16 @@
 /// spectrum peak types
 enum PeakType {
 	UNKNOWN_PEAK= 0,		///< Unclassified peak type
+	
 	REF_CO60_1	= 1,		///< 1st peak of GMS reference Co60 source
 	REF_CO60_2	= 2,		///< 2nd peak of GMS reference Co60 source
+	
 	TUBE1_LED	= 3,		///< GMS PMT1 LED
 	TUBE2_LED	= 4,		///< GMS PMT2 LED
 	TUBE3_LED	= 5,		///< GMS PMT3 LED
 	TUBE4_LED	= 6,		///< GMS PMT4 LED
 	REF_LED		= 7,		///< GMS reference LED
+	
 	BI_PEAK_1	= 8,		///< 1st peak of Bi source ~481keV
 	BI_PEAK_2	= 9,		///< 2nd peak of Bi source ~974keV + 1047keV
 	BI_PEAK_3	= 10,		///< low energy auger peak of Bi source
@@ -24,11 +27,17 @@ enum PeakType {
 	CD109_PEAK	= 13,		///< Cd109 source ~75.2KeV
 	IN114_PEAK	= 14,		///< Indium 114 peak
 	CE139_PEAK	= 15,		///< Cerium 139 peak, 126.93 (17.1%) + 159.59 (2.3%)
+	
 	M000_PEAK	= 16,		///< imaginary Monosmuth peak
 	M500_PEAK	= 17,		///< imaginary 500keV monoenergetic peak
 	LINE_PEAK	= 18,		///< monoenergetic line peak
 	BI_COINC	= 19,		///< Bi207 coincidence peak between 500 and 1000
-	CS137_PEAK	= 20		///< Cs137 ~630keV peak
+	CS137_PEAK	= 20,		///< Cs137 ~630keV peak
+	
+	BI_T1_PEAK_1	= 108,	///< 1st peak of Bi source ~481keV for Type 1 backscatters
+	BI_T1_PEAK_2	= 109,	///< 2nd peak of Bi source ~974keV + 1047keV for Type 1 backscatters
+	BI_T1_COINC		= 119,	///< Bi207 coincidence peak between 500 and 1000 for Type 1 backscatters
+	SN_T1_PEAK		= 111	///< Sn source ~364keV for Type 1 backscatters
 };
 
 /// location of a peak in the spectrum

@@ -3,6 +3,7 @@
 
 #include "SpectrumPeak.hh"
 #include "QFile.hh"
+#include "Enums.hh"
 #include <vector>
 
 /// Class for representing a radioactive calibration source
@@ -15,7 +16,7 @@ public:
 	Source(Stringmap S);
 	
 	/// get a list of peaks associated with this source type
-	std::vector<SpectrumPeak> getPeaks() const;
+	std::vector<SpectrumPeak> getPeaks(EventType tp = TYPE_0_EVENT) const;
 		
 	/// printable name for this source
 	std::string name() const { return sID?t+"_"+itos(sID):t; }

@@ -5,7 +5,7 @@ from math import *
 from optparse import OptionParser
 
 # killall -9 GeantSimManager.py; killall -9 parallel; killall -9 ucnG4_prod
-# nohup ./GeantSimManager.py --calsrcs --ana < /dev/null > g4log.txt 2>&1 &
+# nohup ./GeantSimManager.py --calsrcs --sim --ana < /dev/null > g4log.txt 2>&1 &
 
 class GeantSimManager:
 	
@@ -244,14 +244,17 @@ if __name__ == "__main__":
 			os.system("rm -rf %s/%s_o_n"%(os.environ["G4EVTDIR"],g))
 			os.system("../../MC_EventGen run %s %s o n 10000 100 x"%(g,os.environ["G4EVTDIR"]))
 	if options.calsrcs:
-		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"]:
-			sourceSim = GeantSimManager("thinfoil", fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt", geometry="thinFoil")
+		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W"]: #,"Cd113m"]:
+			sourceSim = GeantSimManager("loQuench", fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt", geometry="thinFoil")
 			sourceSim.settings["sourceScan"] = 80.
+			sourceSim.settings["extra_post_cmds"] += "/SD/scint_SDE/kb 0.01\n"
+			sourceSim.settings["extra_post_cmds"] += "/SD/scint_SDW/kb 0.01\n"
 			sourceSim.set_evtsrc(g)
 			if options.sim:
 				sourceSim.launch_sims(maxIn=100)
 			if options.ana:
 				sourceSim.launch_postanalyzer()
+
 
 
 

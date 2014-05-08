@@ -8,7 +8,7 @@ from ucnacore.EncalDB import *
 from ucnacore.QFile import *
 import os
 
-peakNames = { 8:"$^{207}$Bi 1", 9:"$^{207}$Bi 2", 11:"$^{113}$Sn", 12:"Sr85", 13:"$^{109}$Cd", 14:"$^{114}$In", 15:"$^{139}$Ce", 20:"$^{137}$Cs" }  
+peakNames = { 8:"$^{207}$Bi 1", 9:"$^{207}$Bi 2", 19:"$^{207}$Bi $1+2$", 11:"$^{113}$Sn", 12:"Sr85", 13:"$^{109}$Cd", 14:"$^{114}$In", 15:"$^{139}$Ce", 20:"$^{137}$Cs" }
 peakSymbs = { 8:symbol.circle, 9:symbol.square, 11:symbol.triangle, 15:symbol.diamond }
 
 class SourcePos:
@@ -47,9 +47,9 @@ def get_run_sources(conn,rn):
 		srcs.append(src)
 	return srcs
 	
-def get_source_lines(conn,src):
+def get_source_lines(conn,src,xquery=""):
 	"""Get source peaks measured for source."""
-	conn.execute("SELECT side,tube,peak_num,peak_data,adc,dadc,adcwidth,erecon,derecon,ereconwidth,dereconwidth,eta,gms,nPE FROM sourcepeaks WHERE source_id = %i"%src.sID)
+	conn.execute("SELECT side,tube,peak_num,peak_data,adc,dadc,adcwidth,erecon,derecon,ereconwidth,dereconwidth,eta,gms,nPE FROM sourcepeaks WHERE source_id = %i %s"%(src.sID,xquery))
 	slines = []
 	for r in conn.fetchall():
 		sline = SourceLine()
@@ -68,6 +68,13 @@ def get_source_lines(conn,src):
 		sline.eta = r[11]
 		sline.gms = r[12]
 		sline.nPE = r[13]
+		
+		# unscramble occaisionally swapped points
+		if sline.type == 109 and sline.erecon > 1000:
+			sline.type = 119
+		elif sline.type == 119 and sline.erecon < 1000:
+			sline.type = 109
+
 		sline.uid = (sline.src.sID,sline.side,sline.tube,sline.type)
 		slines.append(sline)
 	return slines
@@ -79,14 +86,14 @@ def gather_sourcedat(conn,rlist):
 	print "Located",len(srcs),"sources."
 	return srcs
 	
-def gather_peakdat(conn,rlist):
+def gather_peakdat(conn,rlist,xquery=""):
 	"""Collect source peak data for runs in list."""
 	
 	# load all lines
 	srcs = gather_sourcedat(conn,rlist)
 	slines = []
 	for src in srcs:
-		slines += get_source_lines(conn,src)
+		slines += get_source_lines(conn,src,xquery)
 	slines = [l for l in slines if 10 < l.erecon < 2000 and 5 < l.enwidth < 1000]
 	
 	# connect data and simulations	
@@ -350,7 +357,7 @@ class LinearityCurve:
 		
 		# plot
 		combodat = []
-		for k in pks.keys():
+		for k in pks:
 			#		  0          1             2         3                                           4      5          6
 			gdat = [ (q.src.run, q.sim.erecon, q.erecon, 100.0*(q.erecon-q.sim.erecon)/q.sim.erecon, q.eta, q.enwidth, q.denwidth,
 			#           7              8               9                                     -1
@@ -510,7 +517,7 @@ def plotBackscatters(conn,rlist):
 	tpattrs = {1:[deco.filled],2:[]}
 	tplines = {1:[],2:[style.linestyle.dashed,]}
 	for s in ['E','W']:
-		for tp in typedat[s].keys():
+		for tp in typedat[s]:
 			for evtp in [1,2]:
 				gdat = [(rt.run,100.0*rt.type0frac) for rt in typedat[s][tp] if rt.type==evtp and rt.simulated == 'no']
 				gRuns.plot(graph.data.points(gdat,x=1,y=2,title="%s %s type %i"%(tp,s,evtp)),
@@ -569,6 +576,32 @@ def plotSourcePositions(conn,rlist):
 				
 		gSourcepos.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Sources/Positions/Pos_%i_%s.pdf"%(rlist[0],s))
 
+def backscatterEnergy(conn, rlist):
+
+	rlist.sort()
+	pks = sort_by_type(gather_peakdat(conn, rlist, "AND peak_num > 100 AND tube=4"))
+	#pks0 = sort_by_type(gather_peakdat(conn, rlist, "AND peak_num < 100 AND tube=4"))
+	gB = graph.graphxy(width=15,height=15,
+			x=graph.axis.lin(title="expected energy [keV]", min=0, max=1500),
+			y=graph.axis.lin(title="observed energy [keV]", min=0, max=1500),
+			key = graph.key.key(pos="tl"))
+	setTexrunner(gB)
+
+	cP = rainbowDict(pks.keys())
+	
+	for k in pks:
+		#		  0             1         2              3
+		gdat = [ (q.sim.erecon, q.erecon, q.sim.derecon, q.derecon) for q in pks[k] ]
+		#gdat = [ g for g in gdat if 0 < g[5] < 1000 and 0 < g[7] < 1000]
+		if not gdat:
+			continue
+		gB.plot(graph.data.points(gdat,x=1,y=2,dx=3,dy=4, title=peakNames.get(k-100,k)),
+			[graph.style.symbol(peakSymbs.get(k,symbol.circle), size=0.2, symbolattrs=[cP[k]]),
+			 graph.style.errorbar(errorbarattrs=[cP[k]])])
+
+	gB.plot(graph.data.function("y(x)=x",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed,]),])
+	gB.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Sources/Backscatter/Energy_%i.pdf"%(rlist[0]))
+
 
 
 
@@ -601,14 +634,14 @@ cal_2011 = [
 			]
 
 cal_2012 = [
-		  (		21087,	21098,	21094,	21087,	100000,		3146,	3149,		61),		# Bi/Ce/Sn only
-		  (		21299,	21328,	21314,	21274,	100000,		3302,	3305,		61),		# Thanksgiving; first Cs137
-		  (		21679,	21718,	21687,	21679,	100000,		4149,	4151,		61),		# Dec. 6 weekend betas
-		  (		21914,	21939,	21921,	21914,	100000,		4193,	4196,		61),		# Dec. 12
-		  (		22215,	22238,	22222,	22004,	100000,		4292,	4295,		61),
-		  (		22294,	22306),															# Jan. 11 Bi/Ce/Sn
-		  ]
-			
+			(		21087,	21098,	21094,	21087,	100000,		3146,	3149,		61),		# Bi/Ce/Sn only
+			(		21299,	21328,	21314,	21274,	100000,		3302,	3305,		61),		# Thanksgiving; first Cs137
+			(		21679,	21718,	21687,	21679,	100000,		4149,	4151,		61),		# Dec. 6 weekend betas
+			(		21914,	21939,	21921,	21914,	100000,		4193,	4196,		61),		# Dec. 12
+			(		22215,	22238,	22222,	22004,	100000,		4292,	4295,		61),
+			(		22294,	22306),																# Jan. 11 Bi/Ce/Sn
+			]
+
 			
 	
 if __name__=="__main__":
@@ -622,7 +655,7 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	conn = open_connection() # connection to calibrations DB
-	replace = True 	# whether to replace previous calibration data
+	replace = False 	# whether to replace previous calibration data
 	makePlots = True
 	
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
@@ -632,14 +665,13 @@ if __name__=="__main__":
 		rlist = range(c[0],c[1]+1)
 		fCalSummary.write("\n--------- %i-%i ----------\n"%(rlist[0],rlist[-1]))
 		
-		# plot source locations
 		#plotSourcePositions(conn,rlist)
+		backscatterEnergy(conn, rlist)
+		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
+		continue
 		
 		# gather source data from calibration runs
-		slines = gather_peakdat(conn,rlist)
-		
-		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
-		#continue
+		slines = gather_peakdat(conn, rlist, "AND peak_num<100")
 		
 		# make new calibrations set
 		ecid = None

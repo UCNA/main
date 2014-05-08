@@ -215,7 +215,7 @@ def fillRunsDB(runs,rmin=0,rmax=100000):
 	
 			if conn.fetchone()[0]:
 				cmd = "UPDATE run SET"
-				for k in rdata.keys():
+				for k in rdata:
 					cmd += " %s=%s,"%(k,str(rdata[k]).strip())
 				cmd = cmd[:-1]+" WHERE run_number = %i"%R.runNum				
 			else:

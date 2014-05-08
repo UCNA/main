@@ -89,16 +89,16 @@ void SourceHitsPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	}
 	for(unsigned int t=0; t<nBetaTubes; t++) {
 		if(PDS.scints[s].adc[t]>3750 || PDS.scints[s].tuben[t].x < 1.0)
-			continue;
+		continue;
 		hTubes[t][tp]->h[currentGV]->Fill(PDS.scints[s].tuben[t].x,weight);
 		if(tp == TYPE_0_EVENT)
-			hTubesRaw[t]->h[currentGV]->Fill(PDS.scints[s].adc[t]*PDS.ActiveCal->gmsFactor(mySource.mySide,t,PDS.runClock[BOTH]),weight);
+		hTubesRaw[t]->h[currentGV]->Fill(PDS.scints[s].adc[t]*PDS.ActiveCal->gmsFactor(mySource.mySide,t,PDS.runClock[BOTH]),weight);
 	}
 	hErec->h[currentGV]->Fill(PDS.getErecon(),weight);
 	if(tp == TYPE_0_EVENT)
-		hTubes[nBetaTubes][tp]->h[currentGV]->Fill(PDS.scints[s].energy.x,weight);
+	hTubes[nBetaTubes][tp]->h[currentGV]->Fill(PDS.scints[s].energy.x,weight);
 	else
-		hTubes[nBetaTubes][tp]->h[currentGV]->Fill(PDS.getEnergy(),weight);
+	hTubes[nBetaTubes][tp]->h[currentGV]->Fill(PDS.getEnergy(),weight);
 }
 
 void SourceHitsPlugin::calculateResults() {
@@ -143,74 +143,84 @@ void SourceHitsPlugin::calculateResults() {
 		hitPosR[d]->SetMinimum(0);
 	}
 	
-	if(counts()<1000) {
-		printf("\tToo few source events for fitting.\n");
-		return;
-	}
-	
-	// get expected peaks list
-	std::vector<SpectrumPeak> expectedPeaks = mySource.getPeaks();
-	if(!expectedPeaks.size()) return;
-	printf("Fitting peaks for %s source (%i hits, %.1f minutes, %i peaks)...\n",mySource.name().c_str(),counts(),runtime/60.0,(int)expectedPeaks.size());
-	
-	for(unsigned int t=0; t<=nBetaTubes; t++) {
+	for(EventType tp = TYPE_0_EVENT; tp <= TYPE_I_EVENT; ++tp) {
 		
-		// estimate for peak width
-		float searchsigma;
-		if(PCal)
+		// get expected peaks list
+		std::vector<SpectrumPeak> expectedPeaks = mySource.getPeaks(tp);
+		if(!expectedPeaks.size()) continue;
+		
+		if(counts(tp)<1000) {
+			printf("\tToo few source events for fitting.\n");
+			continue;
+		}
+		
+		printf("Fitting peaks for %s source (%i hits, %.1f minutes, %i peaks)...\n",mySource.name().c_str(),counts(tp),runtime/60.0,(int)expectedPeaks.size());
+		
+		for(unsigned int t=0; t<=nBetaTubes; t++) {
+			
+			if(tp>TYPE_0_EVENT && t<nBetaTubes) continue;
+			
+			// estimate for peak width
+			float searchsigma;
+			if(PCal)
 			searchsigma = 0.5*PCal->energyResolution(mySource.mySide, t, expectedPeaks[0].energy(), mySource.x, mySource.y, 0);
-		else
+			else
 			searchsigma = 0.5*sqrt((t==nBetaTubes?2.5:10)*expectedPeaks[0].energy());
-		if(!(searchsigma==searchsigma)) {
-			printf("Bad search range! Aborting!\n");
-			continue;
-		}
-		if(searchsigma > 120)
+			if(!(searchsigma==searchsigma)) {
+				printf("Bad search range! Aborting!\n");
+				continue;
+			}
+			if(searchsigma > 120)
 			searchsigma = 120;
-		if(searchsigma < 4)
+			if(searchsigma < 4)
 			searchsigma = 4;
-		
-		std::string fitPlotName = "";
-		if(dbgplots)
-			fitPlotName = myA->plotPath+"/"+mySource.name()+"/Fit_Spectrum_"+(t==nBetaTubes?"Combined":itos(t))+".pdf";
-		printf("Fitting %s for %i peaks in tube %i (sigma = %f)\n", mySource.name().c_str(), (int)expectedPeaks.size(), t, searchsigma);
-		tubePeaks[t] = fancyMultiFit(hTubesR[t][TYPE_0_EVENT], searchsigma, expectedPeaks, false, fitPlotName, nSigma, pkMin);
-		
-		// exit if fit finds too few peaks
-		if(tubePeaks[t].size()<expectedPeaks.size()) {
-			Stringmap m;
-			m.insert("peak",expectedPeaks.back().name());
-			m.insert("sID",mySource.sID);
-			m.insert("tube",t);
-			m.insert("simulated",myA->isSimulated?"yes":"no");
-			m.insert("side",sideSubst("%c",mySource.mySide));
-			myA->warn(MODERATE_WARNING,"Missing_Peak",m);
-			printf("Cancelling fit.\n");
-			continue;
-		}
-		
-		// display and upload peaks
-		for(std::vector<SpectrumPeak>::iterator it = tubePeaks[t].begin(); it != tubePeaks[t].end(); it++) {
-			it->simulated = myA->isSimulated;
-			it->t = t;
-			if(PCal) {
-				it->eta = PCal->eta(mySource.mySide,t,mySource.x,mySource.y);
-				it->nPE = PCal->nPE(mySource.mySide,t,it->energyCenter.x,mySource.x,mySource.y,0);
+			
+			std::string fitPlotName = ( myA->plotPath + "/"
+									   + mySource.name() + "/Fit_Spectrum_"
+									   + (t==nBetaTubes?"Combined":itos(t))
+									   + (tp>TYPE_0_EVENT?"_"+typeWords(tp):"") + ".pdf");
+			if(!(dbgplots || tp>TYPE_0_EVENT)) fitPlotName = "";
+			printf("Fitting %s for %i peaks in tube %i (sigma = %f)\n", mySource.name().c_str(), (int)expectedPeaks.size(), t, searchsigma);
+			double fitsigma = tp>TYPE_0_EVENT ? 1.3 : nSigma;
+			tubePeaks[t] = fancyMultiFit(hTubesR[t][tp], searchsigma, expectedPeaks, false, fitPlotName, fitsigma, pkMin);
+			
+			// exit if fit finds too few peaks
+			if(tubePeaks[t].size()<expectedPeaks.size()) {
+				Stringmap m;
+				m.insert("peak",expectedPeaks.back().name());
+				m.insert("sID",mySource.sID);
+				m.insert("tube",t);
+				m.insert("simulated",myA->isSimulated?"yes":"no");
+				m.insert("side",sideSubst("%c",mySource.mySide));
+				myA->warn(MODERATE_WARNING,"Missing_Peak",m);
+				printf("Cancelling fit.\n");
+				continue;
 			}
-			if(t<nBetaTubes && PCal && !myA->isSimulated) {
-				// individual PMT calibration inverse
-				float_err fx = it->energyCenter;	// center in energy
-				it->center = PCal->invertCorrections(mySource.mySide, t, fx, mySource.x, mySource.y, 0.0);
-				fx.err = it->energyWidth.x;
-				it->width.x = PCal->invertCorrections(mySource.mySide, t, fx, mySource.x, mySource.y, 0.0).err;
-				it->gms = PCal->gmsFactor(mySource.mySide, t, 0);
+			
+			// display and upload peaks
+			for(std::vector<SpectrumPeak>::iterator it = tubePeaks[t].begin(); it != tubePeaks[t].end(); it++) {
+				it->simulated = myA->isSimulated;
+				it->t = t;
+				if(PCal) {
+					it->eta = PCal->eta(mySource.mySide,t,mySource.x,mySource.y);
+					it->nPE = PCal->nPE(mySource.mySide,t,it->energyCenter.x,mySource.x,mySource.y,0);
+				}
+				if(t<nBetaTubes && PCal && !myA->isSimulated) {
+					// individual PMT calibration inverse
+					float_err fx = it->energyCenter;	// center in energy
+					it->center = PCal->invertCorrections(mySource.mySide, t, fx, mySource.x, mySource.y, 0.0);
+					fx.err = it->energyWidth.x;
+					it->width.x = PCal->invertCorrections(mySource.mySide, t, fx, mySource.x, mySource.y, 0.0).err;
+					it->gms = PCal->gmsFactor(mySource.mySide, t, 0);
+				}
+				printf("-------- %c%i %s --------\n",sideNames(mySource.mySide),t,it->name().c_str());
+				it->toStringmap().display();
+				myA->qOut.insert("sourcePeak",it->toStringmap());
+				SourceDBSQL::getSourceDBSQL()->addPeak(*it);
 			}
-			printf("-------- %c%i %s --------\n",sideNames(mySource.mySide),t,it->name().c_str());
-			it->toStringmap().display();
-			myA->qOut.insert("sourcePeak",it->toStringmap());
-			SourceDBSQL::getSourceDBSQL()->addPeak(*it);
 		}
 	}
+	
 	printf("Completed fitting procedure.\n");
 }
 
@@ -255,14 +265,14 @@ void SourceHitsPlugin::makePlots() {
 			}
 			myA->printCanvas(mySource.name()+"/Raw_ADC_"+itos(t)+(myA->isSimulated?"_Sim":""));
 		}
-	
+		
 		// combined energy plots
 		for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_0_EVENT; tp++) {
 			std::vector<TH1*> hToPlot;
 			for(unsigned int t=0; t<=nBetaTubes; t++) {
 				hTubesR[t][tp]->SetLineColor(t==nBetaTubes?2:3+t);
 				if(hTubesR[t][tp]->GetRMS() > 5)
-					hToPlot.push_back(hTubesR[t][tp]);
+				hToPlot.push_back(hTubesR[t][tp]);
 			}
 			drawSimulHistos(hToPlot);
 			myA->printCanvas(mySource.name()+"/Spectrum_Combined"+(tp==TYPE_0_EVENT?"":"_type_"+itos(tp))+(myA->isSimulated?"_Sim":""));
@@ -281,7 +291,7 @@ void SourceHitsPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 	// energy reconstruction
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
 		for(EventType tp=TYPE_0_EVENT; tp<=TYPE_III_EVENT; ++tp) {
-		
+			
 			if(tp>TYPE_0_EVENT && t!=nBetaTubes) continue;
 			
 			hTubesR[t][tp]->SetLineColor(4);
@@ -300,7 +310,7 @@ void SourceHitsPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 			printCanvas(mySource.name()+"/Spectrum_Comparison_Lin_"+itos(t)+(tp==TYPE_0_EVENT?"":"_type_"+itos(tp)));
 		}
 	}
-
+	
 	// positions
 	for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 #ifdef PUBLICATION_PLOTS
@@ -328,7 +338,7 @@ SourcePositionsPlugin::SourcePositionsPlugin(RunAccumulator* RA): AnalyzerPlugin
 void SourcePositionsPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	Side s = PDS.fSide;
 	if(PDS.fType <= TYPE_III_EVENT && PDS.fPID == PID_BETA && (s==EAST || s==WEST))
-		hitPos[s]->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
+	hitPos[s]->Fill(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center,weight);
 }
 
 void SourcePositionsPlugin::makePlots() {
@@ -337,8 +347,8 @@ void SourcePositionsPlugin::makePlots() {
 #ifndef PUBLICATION_PLOTS
 		SourceHitsAnalyzer* SHA = (SourceHitsAnalyzer*)myA;
 	 	for(std::vector<SourceHitsPlugin*>::const_iterator it = SHA->srcPlugins.begin(); it != SHA->srcPlugins.end(); it++)
-			if((*it)->mySource.mySide==s)
-				drawEllipseCut((*it)->mySource,4.0,(*it)->mySource.name());
+		if((*it)->mySource.mySide==s)
+		drawEllipseCut((*it)->mySource,4.0,(*it)->mySource.name());
 #endif
 		printCanvas(sideSubst("HitPos_%c",s));
 	}
@@ -357,7 +367,7 @@ SegmentSaver* SourceHitsAnalyzer::makeAnalyzer(const std::string& nm,const std::
 	SourceHitsAnalyzer* SHA = new SourceHitsAnalyzer(this,nm,inflname);
 	SHA->PCal = PCal;
 	for(std::vector<SourceHitsPlugin*>::const_iterator it = srcPlugins.begin(); it != srcPlugins.end(); it++)
-		SHA->addSource((*it)->mySource);
+	SHA->addSource((*it)->mySource);
 	return SHA;
 }
 
@@ -367,7 +377,7 @@ void SourceHitsAnalyzer::addSource(const Source& s) {
 	addPlugin(srcPlugins.back());
 	Stringmap m = s.toStringmap();
 	for(unsigned int t=0; t<nBetaTubes; t++)
-		m.insert("eta_"+itos(t),PCal->eta(s.mySide,t,s.x,s.y));
+	m.insert("eta_"+itos(t),PCal->eta(s.mySide,t,s.x,s.y));
 	qOut.insert("Source",m);
 }
 
@@ -435,7 +445,7 @@ void reSource(RunNum rn) {
 		std::string g4dat = "/data2/mmendenhall/G4Out/2010/FixGeom_";
 		printf("Loading source simulation data...\n");
 		if(src.t=="Bi207" || src.t=="Ce139" || src.t=="Sn113")
-			g4dat = "/data2/mmendenhall/G4Out/2010/20120823_";
+		g4dat = "/data2/mmendenhall/G4Out/2010/20120823_";
 		if(rn > 20200) {
 			g4dat = "/home/mmendenhall/geant4/output/thinfoil_";
 		}
@@ -478,7 +488,7 @@ void reSource(RunNum rn) {
 			SHAsim.loadSimPoint(*g2p);
 		}
 		printf("\n--Scan complete.--\n");
-
+		
 		//SHAsim.loadSimData(*g2p,nCounts);
 		delete g2p;
 	}
@@ -513,10 +523,10 @@ void uploadRunSources(const std::string& rlogname) {
 		
 		if(l[0]=='*') {
 			if(words.size() < 2)
-				continue;
+			continue;
 			RunNum rn;
 			if(!sscanf(words[0].c_str(),"*%u",&rn) || words[1] != "SourcesCal")
-				continue;
+			continue;
 			
 			bool needsUpdate = false;
 			for (Side s = EAST; s <= WEST; ++s) {
@@ -524,7 +534,7 @@ void uploadRunSources(const std::string& rlogname) {
 				if(expectedSources.size() != sources[s].size()) { needsUpdate = true; break; }
 				for(unsigned int n=0; n<expectedSources.size(); n++) {
 					if(expectedSources[n].t != sources[s][n])
-						needsUpdate = true;
+					needsUpdate = true;
 				}
 			}
 			if(needsUpdate) {
@@ -550,37 +560,37 @@ void uploadRunSources(const std::string& rlogname) {
 			notSide[EAST] = notSide[WEST] = false;
 			if(words.size() >= 2) {
 				if(words[1]=="E")
-					notSide[WEST] = true;
+				notSide[WEST] = true;
 				else if(words[1]=="W")
-					notSide[EAST] = true;
+				notSide[EAST] = true;
 			}
 			for(Side s = EAST; s<=WEST; ++s) {
 				if(notSide[s])
-					continue;
+				continue;
 				sources[s].clear();
 				for(std::vector<std::string>::const_iterator it = words.begin(); it != words.end(); it++) {
 					if(*it == "Sn")
-						sources[s].push_back("Sn113");
+					sources[s].push_back("Sn113");
 					else if(*it == "Bi")
-						sources[s].push_back("Bi207");
+					sources[s].push_back("Bi207");
 					else if(*it == "Cd")
-						sources[s].push_back("Cd109");
+					sources[s].push_back("Cd109");
 					else if(*it == "Cd113m")
-						sources[s].push_back("Cd113m");
+					sources[s].push_back("Cd113m");
 					else if(*it == "Sr85")
-						sources[s].push_back("Sr85");
+					sources[s].push_back("Sr85");
 					else if(*it == "Sr90")
-						sources[s].push_back("Sr90");
+					sources[s].push_back("Sr90");
 					else if(*it == "In")
-						sources[s].push_back("In114");
+					sources[s].push_back("In114");
 					else if(*it == "InE")
-						sources[s].push_back("In114E");
+					sources[s].push_back("In114E");
 					else if(*it == "InW")
-						sources[s].push_back("In114W");
+					sources[s].push_back("In114W");
 					else if(*it == "Ce")
-						sources[s].push_back("Ce139");
+					sources[s].push_back("Ce139");
 					else if(*it == "Cs")
-						sources[s].push_back("Cs137");
+					sources[s].push_back("Cs137");
 				}
 			}
 		}
