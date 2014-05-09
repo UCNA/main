@@ -18,7 +18,7 @@ class AsymCorrFile(QFile):
 				continue
 			p.loadFloats(["KE","cTot","cErr"])
 			self.cxns.setdefault("tot",[]).append((p.KE,p.cTot,p.cErr))
-			for k in p.dat.keys():
+			for k in p.dat:
 				if p.dat.has_key("d_"+k):
 					self.cxns.setdefault(k,[]).append((p.KE,p.getFirstF(k),p.getFirstF("d_"+k)))
 

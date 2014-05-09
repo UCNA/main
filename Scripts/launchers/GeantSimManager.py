@@ -24,7 +24,8 @@ class GeantSimManager:
 		self.settings["fieldmapcmd"] = "#/field/mapfile UNUSED"
 		if fmap:
 			self.settings["fieldmapcmd"] = "/field/mapfile "+fmap
-		self.settings["ana_args"] = " undead cathodes"
+		#self.settings["ana_args"] = "undead cathodes"
+		self.settings["ana_args"] = "cathodes"
 		
 		self.settings["extra_cmds"] = ""
 		self.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
@@ -205,7 +206,7 @@ class GeantSimManager:
 			os.system("cat "+outlist_name)
 			analyzer_bin = self.g4_bindir+"/"+self.settings["analyzer"]
 			if nMin <= nanalyzed <= nMax:
-				jobsout.write("%s %s %s/analyzed_%i.root%s\n"%(analyzer_bin,outlist_name,self.g4_out_dir,nanalyzed,self.settings["ana_args"]))
+				jobsout.write("%s %s %s/analyzed_%i.root %s\n"%(analyzer_bin,outlist_name,self.g4_out_dir,nanalyzed,self.settings["ana_args"]))
 			nanalyzed += 1
 		jobsout.close()
 		print "\n----- %s ------"%resim_jobfile
@@ -245,7 +246,7 @@ if __name__ == "__main__":
 			os.system("../../MC_EventGen run %s %s o n 10000 100 x"%(g,os.environ["G4EVTDIR"]))
 	if options.calsrcs:
 		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W"]: #,"Cd113m"]:
-			sourceSim = GeantSimManager("loQuench", fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt", geometry="thinFoil")
+			sourceSim = GeantSimManager("loQnch_bow", fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt", geometry="thinFoil")
 			sourceSim.settings["sourceScan"] = 80.
 			sourceSim.settings["extra_post_cmds"] += "/SD/scint_SDE/kb 0.01\n"
 			sourceSim.settings["extra_post_cmds"] += "/SD/scint_SDW/kb 0.01\n"

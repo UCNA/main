@@ -442,13 +442,11 @@ void reSource(RunNum rn) {
 		// load appropriate simulation data
 		Source& src = (*it)->mySource;
 		Sim2PMT* g2p = NULL;
-		std::string g4dat = "/data2/mmendenhall/G4Out/2010/FixGeom_";
 		printf("Loading source simulation data...\n");
-		if(src.t=="Bi207" || src.t=="Ce139" || src.t=="Sn113")
-		g4dat = "/data2/mmendenhall/G4Out/2010/20120823_";
-		if(rn > 20200) {
-			g4dat = "/home/mmendenhall/geant4/output/thinfoil_";
-		}
+		std::string g4dat = "/data2/mmendenhall/G4Out/2010/FixGeom_";
+		if(src.t=="Bi207" || src.t=="Ce139" || src.t=="Sn113") g4dat = "/data2/mmendenhall/G4Out/2010/20120823_";
+		if(rn > 20200) g4dat = getEnvSafe("UCNA_CALSRC_SIMS");
+		
 		if(src.t=="Ce139" || src.t=="Sn113" || src.t=="Bi207" ||
 		   src.t=="Cd109" || src.t=="In114E" || src.t=="In114W" || src.t=="Cs137") {
 			g2p = new G4toPMT();

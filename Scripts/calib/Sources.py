@@ -180,8 +180,17 @@ class LinearityCurve:
 		self.side = side
 		self.tube = tube
 		self.prefitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
-		#self.fitter = LinearFitter(terms=[polyterm(i) for i in range(2)]+[expterm(-0.03),expterm(-0.01)])
-		self.fitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
+		
+		fterms = [polyterm(i) for i in range(2)]
+		if not (tube in (2,3) and side=="West"):
+			fterms += [expterm(-0.03),expterm(-0.015)]
+		if (tube,side) == (2,"West"):
+			fterms.append(expterm(-0.03))
+		if (tube,side) == (1,"East"):
+			fterms = fterms[:-2] + [expterm(-0.02), expterm(-0.007)]
+		self.fitter = LinearFitter(terms=fterms)
+		
+		#self.fitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
 		self.axisType = graph.axis.log
 	
 		
@@ -240,7 +249,7 @@ class LinearityCurve:
 		for k in pks:
 			gdat = [ (l.adc*l.gms, l.sim.erecon*l.eta, l.dadc*l.gms, l.sim.erecon*l.eta*etaErr, l) for l in pks[k] if 0 < l.adc < 3500 and 5 < l.sim.erecon*l.eta < 2500 ]
 			gdat = [ g for g in gdat if xrange[0] < g[0] < xrange[1] and yrange[0] < g[1] < yrange[1] and 0 < g[3] < 100 ]
-			combodat += [g for g in gdat if g[-1].src.radius() <= 45. and k != 11]
+			combodat += [g for g in gdat if g[-1].src.radius() <= 45. and k != 11 and  g[-1].sim.erecon* g[-1].eta > 20]
 			if not gdat:
 				continue
 			self.gEvis.plot(graph.data.points(gdat,x=1,y=2,dy=4,title=peakNames.get(k,k)),
@@ -255,12 +264,11 @@ class LinearityCurve:
 			print "****** No data found!"
 			self.fitter = (lambda x: x)
 			return
-		dmin,dmax = min([p[0] for p in combodat]),max([p[0] for p in combodat])
-		dmin=min(dmin,100)
+		self.datrange = ( min([p[0] for p in combodat]), max([p[0] for p in combodat]) )
 		self.prefitter.fit([p for p in combodat if p[-1].type in  [8,9,11,15]],cols=(0,1))
 		trimcdat = []
 		for p in combodat:
-			if not (1/1.2 < p[1]/self.prefitter(p[0]) < 1.2 or abs(p[1]-self.prefitter(p[0])) < 20):
+			if not (1/1.3 < p[1]/self.prefitter(p[0]) < 1.3 or abs(p[1]-self.prefitter(p[0])) < 25):
 				print "--> Check fit",p[-1].src.run,p[-1].uid
 			else:
 				trimcdat.append(p)
@@ -408,8 +416,12 @@ class LinearityCurve:
 					
 		# generate points with logarithmic spacing, upload as linearity curve
 		lg = LogLogger(terms=[(lambda x: x)])
-		lindat = [ (x,self.fitter(x)) for x in lg.unifPoints(10,4100,100) ]
-		lindat = [(0,0)] + [ p for (n,p) in enumerate(lindat[:-1]) if 0 < p[1] < lindat[n+1][1] ]	# increasing only!
+		lindat = [ (x,self.fitter(x)) for x in lg.unifPoints(10,4100,100) if self.datrange[0] < x < self.datrange[1] ]
+		
+		lindat = [ p for (n,p) in enumerate(lindat[:-1]) if 0 < p[1] < lindat[n+1][1] ]	# increasing only!
+		d0 = nderiv(self.fitter, lindat[0][0])
+		d1 = nderiv(self.fitter, lindat[-1][0])
+		lindat = [(10, lindat[0][1] - (lindat[0][0]-10)*d0)] + lindat + [(3999, lindat[-1][1] + (3999-lindat[-1][0])*d1)]
 		
 		return lindat
 	
@@ -591,8 +603,8 @@ def backscatterEnergy(conn, rlist):
 	pks = sort_by_type(slines)
 	
 	gB = graph.graphxy(width=15,height=15,
-			x=graph.axis.lin(title="expected Type 0 - Type 1 difference [keV]", min=20, max=80),
-			y=graph.axis.lin(title="observed Type 0 - Type 1 difference [keV]", min=20, max=80),
+			x=graph.axis.lin(title="expected Type 0 - Type I difference [keV]", min=0, max=60),
+			y=graph.axis.lin(title="observed Type 0 - Type I difference [keV]", min=0, max=60),
 			key = graph.key.key(pos="br"))
 	setTexrunner(gB)
 
@@ -603,7 +615,6 @@ def backscatterEnergy(conn, rlist):
 		#gdat = [ (q.sim.erecon, q.erecon, q.sim.derecon, q.derecon) for q in pks[k] ]
 		
 		gdat = [ (q.tp0.sim.erecon - q.sim.erecon, q.tp0.erecon - q.erecon, q.sim.derecon, q.derecon) for q in pks[k] if q.tp0 ]
-		print gdat
 		
 		if not gdat:
 			continue
@@ -647,12 +658,12 @@ cal_2011 = [
 			]
 
 cal_2012 = [
-			(		21087,	21098,	21094,	21087,	100000,		3146,	3149,		61),		# Bi/Ce/Sn only
-			(		21299,	21328,	21314,	21274,	100000,		3302,	3305,		61),		# Thanksgiving; first Cs137
-			(		21679,	21718,	21687,	21679,	100000,		4149,	4151,		61),		# Dec. 6 weekend betas
-			(		21914,	21939,	21921,	21914,	100000,		4193,	4196,		61),		# Dec. 12
-			(		22215,	22238,	22222,	22004,	100000,		4292,	4295,		61),
-			(		22294,	22306),																# Jan. 11 Bi/Ce/Sn
+			(	21087,	21098,	21094,	21087,	100000,		3146,	3149,		61),	# Bi/Ce/Sn only
+			(	21299,	21328,	21314,	21274,	100000,		3302,	3305,		61),	# Thanksgiving; first Cs137
+			(	21679,	21718,	21687,	21679,	100000,		4149,	4151,		61),	# Dec. 6 weekend betas
+			(	21914,	21939,	21921,	21914,	100000,		4193,	4196,		61),	# Dec. 12
+			(	22215,	22238,	22222,	22004,	100000,		4292,	4295,		61),
+			(	22294,	22306),															# Jan. 11 Bi/Ce/Sn
 			]
 
 			
@@ -668,7 +679,7 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	conn = open_connection() # connection to calibrations DB
-	replace = False 	# whether to replace previous calibration data
+	replace = True 	# whether to replace previous calibration data
 	makePlots = True
 	
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
@@ -681,7 +692,7 @@ if __name__=="__main__":
 		#plotSourcePositions(conn,rlist)
 		backscatterEnergy(conn, rlist)
 		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
-		continue
+		#continue
 		
 		# gather source data from calibration runs
 		slines = gather_peakdat(conn, rlist, "AND peak_num<100")

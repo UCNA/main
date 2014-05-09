@@ -46,7 +46,7 @@ double TriggerProbMLP::calcProb() {
 // note, crosstalk = 0.010 was used for 2010 data analysis.
 
 PMTGenerator::PMTGenerator(Side s, float xx, float yy):
-x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), dgain(10.0), pedcorr(0.2), crosstalk(0.010), xscatter(0.), trigThreshScale(1.0),
+x(xx), y(yy), xw(xx), yw(yy), evtm(0), presmear(0), dgain(10.0), pedcorr(0.1), crosstalk(0.010), xscatter(0.), trigThreshScale(1.0),
 currentCal(NULL), TProb(new TriggerProb()), mySide(s) {
 	for(Side s = EAST; s <= WEST; ++s)
 		for(unsigned int t=0; t<nBetaTubes; t++)
