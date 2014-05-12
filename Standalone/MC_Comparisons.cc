@@ -119,18 +119,10 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
 		
 		// record normalization counts
 		t0norm.push_back(hEvis[TYPE_0_EVENT].back()->Integral());
-		if(SP->cosThetaInScint[SP->fSide] != 0){
-			scintnorm.push_back(hCTScint.back()->Integral());
-		}
-		if(SP->cosThetaInWinOut[SP->fSide] != 0){
-			mwpcoutnorm.push_back(hCTMWPCo.back()->Integral());
-		}
-		if(SP->cosThetaInWinIn[SP->fSide] != 0){
-			mwpcnorm.push_back(hCTMWPC.back()->Integral());
-		}
-		if(SP->cosThetaInFoils[SP->fSide] != 0){
-                        foilnorm.push_back(hCTFoil.back()->Integral());
-                }
+		scintnorm.push_back(hCTScint.back()->Integral());
+		mwpcoutnorm.push_back(hCTMWPCo.back()->Integral());
+		mwpcnorm.push_back(hCTMWPC.back()->Integral());
+		foilnorm.push_back(hCTFoil.back()->Integral());
 	}
 	
 	/////////////
