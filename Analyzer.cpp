@@ -121,14 +121,14 @@ void mi_listPosmaps(StreamInteractor*) { CalDBSQL::getCDB()->listPosmaps(); }
 void mi_processOctet(StreamInteractor* S) {
 	int octn = S->popInt();
 	
-	OctetSimuCloneManager OSCM("OctetAsym_Offic");
+	OctetSimuCloneManager OSCM("Asym_2011");
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 	
 	// simulations input setup
-	OSCM.simFile = "/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_";
+	//OSCM.simFile = "/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_";
 	//OSCM.simFile = getEnvSafe("G4OUTDIR")+"/20120824_MagF_neutronBetaUnpol/analyzed_";
 	//std::string simFile="/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_";
-	//std::string simFile="/home/mmendenhall/geant4/output/thinFoil_neutronBetaUnpol/analyzed_";
+	std::string simFile="/home/mmendenhall/geant4/output/thinFoil_neutronBetaUnpol/analyzed_";
 	//OSCM.simFile= getEnvSafe("G4OUTDIR")+"/endcap_180_150_neutronBetaUnpol/analyzed_";
 	OSCM.simFactor = 1.0;
 	OSCM.doPlots = true;
@@ -145,7 +145,7 @@ void mi_processOctet(StreamInteractor* S) {
 	//OSCM.nTot = 492;
 	//OSCM.stride = 73;
 
-	const std::string simOutName = "_Test2010";
+	const std::string simOutName = "_Sim";
 	const std::string simOutputDir=OSCM.outputDir+simOutName;
 	
 	if(octn < 0) {
@@ -166,29 +166,6 @@ void mi_processOctet(StreamInteractor* S) {
 		else { OSCM.scanOct(BDA, octn); }
 	}
 }
-
-/*
-void mi_anaOctRange(StreamInteractor* S) {
-	int octMax = S->popInt();
-	int octMin = S->popInt();
-	std::string inPath = getEnvSafe("UCNA_ANA_PLOTS");
-	std::string datset = "OctetAsym_Offic_datFid45";
-	std::string outPath = inPath+"/"+datset+"/Range_"+itos(octMin)+"-"+itos(octMax);
-	
-	if(true) {
-		OutputManager OM("CorrectedAsym",outPath+"/CorrectAsym/");
-		for(AnalysisChoice a = ANCHOICE_A; a <= ANCHOICE_D; ++a) {
-			OctetAnalyzer OAdat(&OM, "DataCorrector_"+ctos(choiceLetter(a)), outPath+"/"+datset);
-			AsymmetryPlugin* AAdat = new AsymmetryPlugin(&OAdat);
-			OAdat.addPlugin(AAdat);
-			AAdat->anChoice = a;
-			doFullCorrections(*AAdat,OM);
-		}
-		OM.write();
-		OM.setWriteRoot(true);
-	}
-}
-*/
 
 void mi_evis2etrue(StreamInteractor*) {
 	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/20120810/");

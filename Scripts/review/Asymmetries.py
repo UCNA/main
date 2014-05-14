@@ -15,8 +15,8 @@ except:
 	stats = None
 
 scols = {"East":rgb.red,"West":rgb.blue}
-if "PUBLICATION_PLOTS" in os.environ:
-	scols = {"East":rgb.black,"West":rgb.black}
+#if "PUBLICATION_PLOTS" in os.environ:
+#	scols = {"East":rgb.black,"West":rgb.black}
 afpSymbs = {"On":symbol.circle,"Off":symbol.triangle}
 afpLines = {"Off":style.linestyle.dashed,"On":style.linestyle.dotted}
 
@@ -24,42 +24,132 @@ afpLines = {"Off":style.linestyle.dashed,"On":style.linestyle.dotted}
 def addQuad(a,b):
 	return sqrt(a**2+b**2)
 
-class asymmetryFit(KVMap):
-	def __init__(self,m=KVMap()):
-		self.dat = m.dat
-		self.loadFloats(["fitMin","fitMax","A0_fit","dA0"])
-		self.A0 = self.A0_fit
-	def __repr__(self):
-		return "<Asym: %.2f +- %.2f, (%g,%g)>"%(self.A0,self.dA0,self.fitMin,self.fitMax)
 
-class instAsym(KVMap):
-	def __init__(self,m=KVMap()):
-		self.dat = m.dat
-		self.loadFloats(["fitMin","fitMax","IA","dIA"])
-	def __repr__(self):
-		return "<Asym: %.2f +- %.2f, (%g,%g)>"%(self.A0,self.dA0,self.fitMin,self.fitMax)
+#########################
+#########################
+#########################
+
+class AnalyzerNumberPlotter:
+
+	def __init__(self):
+		self.datsrc = "MPM_Data"
+		self.simsrc = None # "MPM_Sim"
+		self.grouping = "octet"
+		self.ADBL = AnaDBLocator()
+		self.ptcolor = rgb.black
+		self.ptsymb = symbol.circle
+		self.gkey = graph.key.key(pos="tl")
+		self.LF = LinearFitter(terms=[polyterm(0)])
+		self.showStats = True
+
+	def init_graph(self, gtitle):
+		self.g = graph.graphxy(width=35,height=12,
+				x=graph.axis.lin(title = self.grouping, min=0),
+				y=graph.axis.lin(title = gtitle),
+				key = self.gkey)
+		setTexrunner(self.g)
+
+	def gather_points(self,src,nm,conn):
 		
-class kurieFit(KVMap):
-	def __init__(self,m):
-		self.dat = m.dat
-		self.loadFloats(["endpoint","dendpoint","tube"])
-		self.loadStrings(["side","afp","type"])
-		self.ep = self.endpoint
-		self.dep = self.dendpoint
+		self.ADBL.req["grouping"] = self.grouping
+		self.ADBL.req["source"] = src
+		self.ADBL.req["name"] = nm
 
-class muonInfo(KVMap):
-	def __init__(self,m):
-		self.dat = m.dat
-		self.loadFloats(["mu_rate","d_mu_rate","ecut_mu_rate","d_ecut_mu_rate","ecut_eMin","ecut_eMax","mpv","d_mpv","sigma","d_sigma","height","d_height"])
-		self.loadStrings(["side","afp","gv"])
+		self.datpts = dict([ ((p.start_run,p.end_run),p) for p in self.ADBL.find(conn) ])
+		self.datkeys = self.datpts.keys()
+		self.datkeys.sort()
 
-class betarateInfo(KVMap):
-	def __init__(self,m):
-		self.dat = m.dat
-		self.loadFloats(["rate","d_rate","ecut_rate","d_ecut_rate","ecut_eMin","ecut_eMax"])
-		self.loadStrings(["side","afp","gv"])
-		self.loadInts(["type"])
+	def plot_data_key(self, nm, conn, gnm=None):
+	
+		self.gather_points(self.datsrc, nm, conn)
+		self.gdat = [ [n, self.datpts[k].value, self.datpts[k].err] for (n,k) in enumerate(self.datkeys) ]
+		
+		try:
+			self.LF.fit(self.gdat,cols=(0,1,2),errorbarWeights=True)
+			chi2 = self.LF.chisquared()
+			ndf = self.LF.nu()
+			if gnm and self.showStats:
+				gnm += " $= %.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(self.LF.coeffs[0],self.LF.rmsDeviation()/sqrt(self.LF.ydat.size),chi2,ndf)
+			
+			self.g.plot(graph.data.function("y(x)=%g"%self.LF.coeffs[0], title=None), [ graph.style.line(lineattrs=[self.ptcolor,style.linestyle.dashed]),])
+		except:
+			pass
+			
+		self.g.plot(graph.data.points(self.gdat,x=1,y=2,dy=3,title=gnm), [ graph.style.errorbar(errorbarattrs=[self.ptcolor]),
+																		graph.style.symbol(self.ptsymb, size=0.15, symbolattrs = [self.ptcolor])])
 
+
+#########################
+
+def plot_endpoint_history(grouping = "octet"):
+	
+	conn = open_anadb_connection()
+	
+	tcols = rainbow(5)
+	
+	for s in ["East","West"]:
+		ANP = AnalyzerNumberPlotter()
+		ANP.gkey = graph.key.key(pos="bl", columns=5)
+		ANP.init_graph("Beta Endpoint [keV]")
+		
+		for t in range(5):
+			for afp in ["On","Off"]:
+
+				ANP.ADBL.req["n"] = t
+				ANP.ADBL.req["side"] = s
+				ANP.ADBL.req["afp"] = afp
+				ANP.grouping = grouping
+				
+				ANP.ptcolor = tcols[t]
+				ANP.ptsymb = afpSymbs[afp]
+				ANP.showStats = False
+				
+				ANP.plot_data_key("kurie_150-700", conn, "t%i %s"%(t,afp))
+		
+		ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/Endpts_%s_%s.pdf"%(s,grouping))
+
+#########################
+
+def plot_murate_history(grouping = "octet"):
+
+	conn = open_anadb_connection()
+	ANP = AnalyzerNumberPlotter()
+	ANP.grouping = grouping
+	ANP.gkey = graph.key.key(pos="tl", columns=2)
+	ANP.init_graph("tagged muon rate [Hz]")
+	
+	
+	for s in ["East","West"]:
+		for afp in ["On","Off"]:
+			ANP.ADBL.req["side"] = s
+			ANP.ADBL.req["afp"] = afp
+			ANP.ADBL.req["gate_valve"] = "Open"
+			
+			ANP.ptcolor = scols[s]
+			ANP.ptsymb = afpSymbs[afp]
+			ANP.showStats = False
+			
+			ANP.plot_data_key("mu_rate_ecut", conn, "%s %s"%(s,afp))
+			
+	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/MuRate_%s.pdf"%(grouping))
+
+#########################
+
+def plot_raw_asym_history(grouping = "octet"):
+
+	conn = open_anadb_connection()
+	ANP = AnalyzerNumberPlotter()
+	ANP.grouping = grouping
+	ANP.init_graph("raw counts asymmetry")
+	ANP.plot_data_key("raw_count_asym", conn, "$A_{raw}$")
+		
+	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/AsymHistory_%s.pdf"%grouping)
+
+
+
+#########################
+#########################
+#########################
 
 class AsymmetryFile(QFile,RunAccumulatorFile):
 
@@ -327,85 +417,6 @@ def plot_octet_asymmetries(basedir,depth=0):
 	
 			
 
-
-
-def AnaDB_Asyms(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/"):
-
-	conn = open_anadb_connection()
-	ADBL = AnaDBLocator()
-	ADBL.req["grouping"]="octet"
-	asyms = ADBL.find(conn)
-	asyms = [(a.rrange,a) for a in asyms] # if a.rrange[1]-a.rrange[0]<50]
-	asyms.sort()
-	print len(asyms)
-	for a in asyms:
-		a[1].display()
-	
-	gdat = [[n,2*a[1].value,2*a[1].err,a[1].start_run] for (n,a) in enumerate(asyms)]
-
-	unitName="Octet"
-	
-	gAsyms=graph.graphxy(width=25,height=8,
-				x=graph.axis.lin(title=unitName,min=0,max=gdat[-1][0]),
-				y=graph.axis.lin(title="Asymmetry"),
-				key = graph.key.key(pos="bl"))
-	setTexrunner(gAsyms)
-
-	gAsyms.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
-				[graph.style.symbol(symbol.circle,size=0.2,symbolattrs=[rgb.red,]),
-				graph.style.errorbar(errorbarattrs=[rgb.red,])])
-			
-	LF = LinearFitter(terms=[polyterm(0)])
-	
-	rbreak = 14800 # 15400 = magnet ramp, calibration changes
-	gdat_A = [g for g in gdat if 14000 < g[3] < rbreak]
-	gdat_B = [g for g in gdat if rbreak < g[3] ]
-	
-	if gdat_A:
-		LF.fit(gdat_A,cols=(0,1,2),errorbarWeights=True)
-		chi2 = LF.chisquared()
-		ndf = LF.nu()
-		gtitle = "$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.rmsDeviation()/sqrt(LF.ydat.size),chi2,ndf)
-		if stats:
-			gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
-		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_A[0][0],gdat_A[-1][0]),x=1,y=2,title=gtitle),[graph.style.line()])
-	
-	if gdat_B:
-		LF.fit(gdat_B,cols=(0,1,2),errorbarWeights=True)
-		chi2 = LF.chisquared()
-		ndf = LF.nu()
-		gtitle = "$A=%.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(LF.coeffs[0],LF.rmsDeviation()/sqrt(LF.ydat.size),chi2,ndf)
-		if stats:
-			gtitle += " $(p=%.2f)$"%stats.chisqprob(chi2,ndf)
-		gAsyms.plot(graph.data.points(LF.fitcurve(gdat_B[0][0],gdat_B[-1][0]),x=1,y=2,title=gtitle),
-					[graph.style.line([style.linestyle.dashed,])])
-				
-	gAsyms.writetofile(basedir+"/OctetAsym.pdf")
-
-def AnaDB_Counts(basedir=os.environ["UCNA_ANA_PLOTS"]+"/test/"):
-	conn = open_anadb_connection()
-	ADBL = AnaDBLocator()
-	
-	ADBL.req = {"source":"Data", "grouping":"octet", "type":"Counts", "gate_valve":"Open", "ana_choice":"C", "radius":50, "start_run":14077, "end_run":16216}
-	datcounts = dict([((a.side,a.event_type,a.afp),a) for a in ADBL.find(conn)])
-	for a in datcounts:
-		datcounts[a].display()
-		
-	ADBL.req["source"] = "G4"
-	simcounts = dict([((a.side,a.event_type,a.afp),a) for a in ADBL.find(conn)])
-	for a in simcounts:
-		simcounts[a].display()
-
-	def sumsideafp(d,tp):
-		return sqrt(d[("East",tp,"On")].value*d[("West",tp,"Off")].value)+sqrt(d[("West",tp,"On")].value*d[("East",tp,"Off")].value)
-
-	dat0 = sumsideafp(datcounts,"0")
-	sim0 = sumsideafp(simcounts,"0")
-	for tp in ["0","I","II","III"]:
-		df = sumsideafp(datcounts,tp)/dat0
-		sf = sumsideafp(simcounts,tp)/sim0
-		print tp,df,sf,100*(sf-df)/df
-
 					
 def get_gain_tweak(conn,rn,s,t):
 	conn.execute("SELECT e_orig,e_final FROM gain_tweak WHERE start_run <= %i AND %i <= end_run AND side = '%s'\
@@ -605,29 +616,32 @@ def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
 
 
 if __name__=="__main__":
-	
-	#AnaDB_Asyms()
-	AnaDB_Counts()
+		
+	for grouping in ["octet","quartet","ppair"]:
+		plot_murate_history(grouping)
+		plot_raw_asym_history(grouping)
+		plot_endpoint_history(grouping)
 	exit(0)
 	
-	#backscatterFracTable("OctetAsym_Offic_Sim0823_4x")
-	#backscatterFracTable("OctetAsym_Offic_SimPen")
-	#exit(0)
-	
+
+
 	if 0:
 		MCC = MC_Comparator(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_SimMagF/")
 		#MCC.backscatter_fractions()
 		MCC.plot_endpoints()
 		#exit(0)
 		
+		#backscatterFracTable("OctetAsym_Offic_Sim0823_4x")
+		#backscatterFracTable("OctetAsym_Offic_SimPen")
+		#exit(0)
 	
 		conn=open_connection()
 		#conn=None
 		MCC.endpoint_gain_tweak(conn)
 		exit(0)
 	
-	for i in range(3):				
-		plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
-		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim0823/",i)
-		#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
-			
+		for i in range(3):
+			plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic/",2-i)
+			#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim0823/",i)
+			#plot_octet_asymmetries(os.environ["UCNA_ANA_PLOTS"]+"/OctetAsym_Offic_Sim_MagF_2",2-i)
+				

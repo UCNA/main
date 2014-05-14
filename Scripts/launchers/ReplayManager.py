@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # nohup ./ReplayManager.py --mwpccal_sim < /dev/null > scriptlog.txt 2>&1 &
 # nohup ./ReplayManager.py -s --rmin=21914 --rmax=21939 < /dev/null > scriptlog.txt 2>&1 &
+# nohup ./ReplayManager.py -o < /dev/null > scriptlog.txt 2>&1 &
 
 import os
 import time
@@ -15,7 +16,7 @@ anaBinDir = "../../"
 def processOctets(sim,omin,omax):
 	pcmd = "cd "+anaBinDir+"; ./UCNAnalyzer pr oct %i x x\n"
 	freplaylist = open("oct_replaylist.txt","w")
-	for r in range(60)[omin:omax+1]:
+	for r in range(100)[omin:omax+1]:
 		if sim:
 			freplaylist.write(pcmd%(-r-1));
 		else:
