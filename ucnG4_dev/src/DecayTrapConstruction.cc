@@ -70,7 +70,7 @@ void DecayTrapConstruction::Construct(G4LogicalVolume* world, double crinkleAngl
 			new G4PVPlacement(wigRot,G4ThreeVector(0.,0.,ssign(sd)*(decayTube_Length+wigglefoils[sd].getContainerThick())/2),
 							  wigglefoils[sd].container_log,sideSubst("trap_wigglefoil%c",sd),world,false,0);
 		} else {
-		  //<<<<<<< HEAD:ucnG4_dev/src/bmDecayTrapConstruction.cc
+		  /*/<<<<<<< HEAD:ucnG4_dev/src/bmDecayTrapConstruction.cc
 			new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(sd)*trap_winPosZ[sd]),trap_win_log[sd],
 							  sideSubst("trap_win%c",sd),world,false,0);
 		}
@@ -91,8 +91,8 @@ void DecayTrapConstruction::Construct(G4LogicalVolume* world, double crinkleAngl
 		new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(sd)*collimatorPosZ),collimator_log[sd],
 						  sideSubst("collimator%c",sd),world,false,0);
 		new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(sd)*collimatorBackZ),collimatorBack_log[sd],
-						  sideSubst("collimatorBack%c",sd),world,false,0);
-		/*=======
+						  sideSubst("collimatorBack%c",sd),world,false,0);*/
+		  //=======
 			new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(sd)*trap_winPosZ),trap_win_log[sd],
 							  sideSubst("trap_win%c",sd),world,false,0);
 		}
@@ -105,16 +105,16 @@ void DecayTrapConstruction::Construct(G4LogicalVolume* world, double crinkleAngl
 		new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(sd)*beWinPosZ),be_win_log[sd],
 						  sideSubst("be_win%c",sd),trap_win_log[sd],false,0);
 		
-		G4double collimatorPosZ = (decayTube_Length+collimator_thick)/2.;
+		G4double collimatorPosZ = (decayTube_Length+fColLength)/2.;
 		collimatorPosZ += (crinkleAngle?wigglefoils[sd].getContainerThick():thicknessOfTrapWindow)/2.;
 		collimator_log[sd] = new G4LogicalVolume(collimatorTube, fCollimatorMat, sideSubst("collimator_log%c",sd));
-		G4double collimatorBackZ = decayTube_Length/2.-collimator_thick;
+		G4double collimatorBackZ = decayTube_Length/2.-fColLength;
 		collimatorBack_log[sd] = new G4LogicalVolume(collimatorBackTube, fCollimatorMat, sideSubst("collimatorBack_log%c",sd));
 		new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(sd)*collimatorPosZ),collimator_log[sd],
 						  sideSubst("collimator%c",sd),world,false,0);
 		new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(sd)*collimatorBackZ),collimatorBack_log[sd],
 						  sideSubst("collimatorBack%c",sd),world,false,0);
->>>>>>> master:ucnG4_dev/src/DecayTrapConstruction.cc*/
+		//>>>>>>> master:ucnG4_dev/src/DecayTrapConstruction.cc
 		
 		trap_monitor_log[sd] = new G4LogicalVolume(trap_monitor_tube,Vacuum,sideSubst("trap_monitor_log%c",sd));
 		new G4PVPlacement(NULL,G4ThreeVector(0.,0.,ssign(sd)*trap_monitor_posZ),
