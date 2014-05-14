@@ -1,9 +1,11 @@
 #include "strutils.hh"
 #include <stdlib.h>
+#include <math.h>
 
-std::string dtos(double d) {
+std::string dtos(double d, const std::string& badnum) {
 	char c[16];
-	sprintf(c,"%g",d);
+	if(badnum.size() && !(d==d && !isinf(d))) sprintf(c,"%s",badnum.c_str());
+	else sprintf(c,"%g",d);
 	return std::string(c);
 }
 

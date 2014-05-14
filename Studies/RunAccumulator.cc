@@ -591,7 +591,7 @@ void RunAccumulator::mergeSims(const std::string& basedata, RunAccumulator* orig
 
 unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor, double replaceIfOlder, bool doPlots, bool doCompare) {
 	
-	printf("\n------ Cloning data in '%s'\n------                        to '%s'...\n",basedata.c_str(),basePath.c_str());
+	printf("\n------ Cloning data in '%s'\n------              to '%s'...\n",basedata.c_str(),basePath.c_str());
 	int nCloned = 0;
 	
 	// check if simulation is already up-to-date
@@ -755,8 +755,8 @@ unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bo
 		std::string inflname = RA.basePath+"/"+octit->octName()+"/"+octit->octName();
 		if(SegmentSaver::inflExists(inflname)) {
 			RunAccumulator* subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),inflname);
-			subRA->grouping = octit->divlevel;
-			nproc += recalcOctets(*subRA,octit->getSubdivs(subdivide(octit->divlevel),false), doPlots);
+			subRA->grouping = octit->grouping;
+			nproc += recalcOctets(*subRA,octit->getSubdivs(subdivide(octit->grouping),false), doPlots);
 			RA.addSegment(*subRA);
 			delete subRA;
 		}
@@ -770,7 +770,7 @@ unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bo
 unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, double replaceIfOlder, bool doPlots) {
 	
 	unsigned int nproc = 0;
-	if(Octs.size()==1) RA.grouping = Octs[0].divlevel;
+	if(Octs.size()==1) RA.grouping = Octs[0].grouping;
 	
 	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
 		
@@ -782,7 +782,7 @@ unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, d
 		}
 		RA.qOut.insert("Octet",octit->toStringmap());
 		
-		if(octit->divlevel > GROUP_FGBG) {
+		if(octit->grouping > GROUP_FGBG) {
 			// make sub-Analyzer for this octet, to load data if already available, otherwise re-process
 			RunAccumulator* subRA;
 			std::string inflname = RA.basePath+"/"+octit->octName()+"/"+octit->octName();
@@ -792,8 +792,8 @@ unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, d
 				subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),inflname);
 			} else {
 				subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),"");
-				subRA->grouping = octit->divlevel;
-				nproc += processOctets(*subRA,octit->getSubdivs(subdivide(octit->divlevel),false),replaceIfOlder, doPlots);
+				subRA->grouping = octit->grouping;
+				nproc += processOctets(*subRA,octit->getSubdivs(subdivide(octit->grouping),false),replaceIfOlder, doPlots);
 			}
 			RA.addSegment(*subRA);
 			delete(subRA);

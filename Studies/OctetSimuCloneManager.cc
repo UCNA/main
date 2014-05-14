@@ -9,8 +9,8 @@ outputDir(dname), baseDir(bdir), doPlots(false), doCompare(false), hoursOld(0), 
 void OctetSimuCloneManager::scanOct(RunAccumulator& RA, const Octet& oct) {
 	if(!oct.getNRuns()) return;
 	RunAccumulator* octRA = (RunAccumulator*)RA.makeAnalyzer(oct.octName(),"");
-	octRA->grouping = oct.divlevel;
-	processOctets(*octRA,oct.getSubdivs(subdivide(oct.divlevel),false),hoursOld*3600,doPlots);
+	octRA->grouping = oct.grouping;
+	processOctets(*octRA,oct.getSubdivs(subdivide(oct.grouping),false),hoursOld*3600,doPlots);
 	delete octRA;
 }
 
@@ -48,6 +48,7 @@ void OctetSimuCloneManager::simOct(RunAccumulator& SimRA, const Octet& oct) {
 	if(!oct.getNRuns()) return;
 	smassert(simData);
 	RunAccumulator* octSim = (RunAccumulator*)SimRA.makeAnalyzer(oct.octName(),"");
+	octSim->grouping = oct.grouping;
 	octSim->simuClone(getEnvSafe("UCNA_ANA_PLOTS")+"/"+outputDir+"/"+oct.octName(), *simData, simFactor, hoursOld*3600, doPlots, doCompare);
 	delete octSim;
 }

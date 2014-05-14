@@ -72,8 +72,10 @@ void AnalysisDB::uploadAnaNumber(AnaNumber& AN, bool replace) {
 		std::vector<AnaNumber> v = findMatching(AN);
 		if(v.size()) {
 			AN.anid = v[0].anid;
-			sprintf(query,"UPDATE analysis_numbers SET date=FROM_UNIXTIME(%u), value=%g, err=%g WHERE analysis_number_id = %u",
-					(unsigned int)AN.date, AN.value, AN.err, AN.anid);
+			std::string qry = ("UPDATE analysis_numbers SET date=FROM_UNIXTIME(" + itos((unsigned int)AN.date)
+							   +"), value=" + dtos(AN.value,"NULL") +", err= " + dtos(AN.err,"NULL")
+							   + " WHERE analysis_number_id = " + itos(AN.anid));
+			sprintf(query,"%s",qry.c_str());
 			Query();
 			return;
 		}
@@ -82,7 +84,7 @@ void AnalysisDB::uploadAnaNumber(AnaNumber& AN, bool replace) {
 	std::string qry = ("INSERT INTO analysis_numbers(analysis_runset_id,source,name,date,side,event_type,n,value,err) VALUES ("
 					   + itos(AN.rsid) + ",'" + AN.source + "','" + AN.name + "',FROM_UNIXTIME(" + itos((unsigned int)AN.date)
 					   + ")," + dbSideName(AN.s) + ",'" + typeSetString(AN.etypes) + "'," + itos(AN.n)
-					   + "," + dtos(AN.value) + "," + dtos(AN.err) +")");
+					   + "," + dtos(AN.value,"NULL") + "," + dtos(AN.err,"NULL") +")");
 	sprintf(query,"%s",qry.c_str());
 	Query();
 	sprintf(query,"SELECT LAST_INSERT_ID()");

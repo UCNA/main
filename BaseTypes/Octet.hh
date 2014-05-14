@@ -48,7 +48,7 @@ public:
 	/// get first run, for sorting Octets
 	RunNum getFirstRun() const;
 	
-	RunGrouping divlevel;	///< dividion level of octet
+	RunGrouping grouping;	///< dividion level of octet
 	
 protected:
 	

@@ -233,6 +233,8 @@ void AsymmetryPlugin::calculateResults() {
 			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 				for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
 					
+					if(myA->isSimulated && gv==GV_CLOSED) continue;
+					
 					ANc.s = s;
 					ANc.etypes.clear();
 					ANc.etypes.insert(tp);
@@ -242,7 +244,7 @@ void AsymmetryPlugin::calculateResults() {
 					int b1 = h->FindBin(emax-0.5);
 					
 					Double_t ierr;
-					double gvscale = gv==GV_OPEN?1.0:myA->totalTime[afp][GV_OPEN][BOTH]/myA->totalTime[afp][GV_CLOSED][BOTH];
+					double gvscale = gv==GV_OPEN? 1.0 : myA->totalTime[afp][GV_OPEN][BOTH]/myA->totalTime[afp][GV_CLOSED][BOTH];
 					ANc.value = h->IntegralAndError(b0,b1,ierr)*gvscale;
 					ANc.err = ierr*gvscale;
 					myA->uploadAnaNumber(ANc, gv, afp);

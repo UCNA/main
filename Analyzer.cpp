@@ -125,7 +125,7 @@ void mi_processOctet(StreamInteractor* S) {
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 	
 	// simulations input setup
-	OSCM.simFile = getEnvSafe("G4OUTDIR")+"/20120823_neutronBetaUnpol/analyzed_";
+	OSCM.simFile = "/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_";
 	//OSCM.simFile = getEnvSafe("G4OUTDIR")+"/20120824_MagF_neutronBetaUnpol/analyzed_";
 	//std::string simFile="/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_";
 	//std::string simFile="/home/mmendenhall/geant4/output/thinFoil_neutronBetaUnpol/analyzed_";
@@ -145,7 +145,7 @@ void mi_processOctet(StreamInteractor* S) {
 	//OSCM.nTot = 492;
 	//OSCM.stride = 73;
 
-	const std::string simOutName = "_Sim0823";
+	const std::string simOutName = "_Test2010";
 	const std::string simOutputDir=OSCM.outputDir+simOutName;
 	
 	if(octn < 0) {
