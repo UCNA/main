@@ -1,5 +1,5 @@
 #ifndef TAGCOUNTER_HH
-#define TAGCOUNTER_HH 1
+#define TAGCOUNTER_HH
 
 #include <map>
 #include <iostream>
@@ -29,7 +29,7 @@ public:
 	/// get count for given item
 	double operator[](const T& itm) const;
 
-	std::map<T,double> counts;	//< counts per object
+	std::map<T,double> counts;	///< counts per object
 };
 
 template<typename T>

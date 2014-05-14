@@ -56,16 +56,6 @@ void AsymmetryPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	}
 }
 
-AnaResult AsymmetryPlugin::getResultBase() const {
-	AnaResult AR;
-	AR.datp = myA->isSimulated?AnaResult::G4_DATA:AnaResult::REAL_DATA;
-	AR.startRun = myA->runCounts.counts.begin()->first;
-	AR.endRun = myA->runCounts.counts.rbegin()->first;
-	AR.anach = anChoice;
-	AR.grouping = AnaResult::RunGrouping(AnaResult::GROUP_OCTET-myA->depth-myA->isSimulated);
-	return AR;
-}
-
 void AsymmetryPlugin::fitAsym(float fmin, float fmax, unsigned int color, bool avg) {
 	Stringmap m;
 	TF1* fitter = avg?&averagerFit:&asymmetryFit;
@@ -74,41 +64,33 @@ void AsymmetryPlugin::fitAsym(float fmin, float fmax, unsigned int color, bool a
 	fitter->SetLineStyle(2);
 	fitter->SetLineWidth(2.0);
 	hAsym->Fit(fitter,(fmin==0 && myA->isSimulated?"Q":"QN"),"",fmin,fmax);
-	m.insert("A0_fit",fitter->GetParameter(0));
-	m.insert("dA0",fitter->GetParError(0));
-	m.insert("A0_chi2",fitter->GetChisquare());
-	m.insert("A0_NDF",fitter->GetNDF());
-	m.insert("fitMin",fmin);
-	m.insert("fitMax",fmax);
-	m.insert("anChoice",itos(anChoice));
-	m.insert("method",avg?"average":"fit");
-	myA->qOut.insert("asymmetry",m);
 	
-	// save results
-	ARtot.anatp = AnaResult::ANA_ASYM;
-	ARtot.value = fitter->GetParameter(0);
-	ARtot.err = fitter->GetParError(0);
-	AnaCutSpec c;
-	c.emin = fmin;
-	c.emax = fmax;
-	c.radius = 50.;
-	asymFits.push_back(ARtot);
-	asymCuts.push_back(c);
+	AnaNumber AN("asym_"+ctos(choiceLetter(anChoice))+"_"+itos(fmin)+"-"+itos(fmax));
+	if(avg) AN.name += "_avg";
+	AN.value = fitter->GetParameter(0);
+	AN.err = fitter->GetParError(0);
+	myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
+
+	AN.name += "_chisq";
+	AN.value = fitter->GetChisquare();
+	AN.err = fitter->GetNDF();
+	myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 }
 
 void AsymmetryPlugin::fitInstAsym(float fmin, float fmax, unsigned int color) {
 	Stringmap m;
 	averagerFit.SetLineColor(color);
 	hInstAsym->Fit(&averagerFit,"Q+","",fmin,fmax);
-	m.insert("IA",averagerFit.GetParameter(0));
-	m.insert("dIA",averagerFit.GetParError(0));
-	m.insert("IA_chi2",averagerFit.GetChisquare());
-	m.insert("IA_NDF",averagerFit.GetNDF());
-	m.insert("fitMin",fmin);
-	m.insert("fitMax",fmax);
-	m.insert("anChoice",itos(anChoice));
-	m.insert("method","average");
-	myA->qOut.insert("instasym",m);
+	
+	AnaNumber AN("instasym_"+ctos(choiceLetter(anChoice))+"_"+itos(fmin)+"-"+itos(fmax));
+	AN.value = averagerFit.GetParameter(0);
+	AN.err = averagerFit.GetParError(0);
+	myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
+	
+	AN.name += "_chisq";
+	AN.value = averagerFit.GetChisquare();
+	AN.err = averagerFit.GetNDF();
+	myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 }
 
 
@@ -120,18 +102,14 @@ void AsymmetryPlugin::endpointFits() {
 			for(unsigned int t=0; t<=nBetaTubes; t++) {
 				float_err ep = kurieIterator((TH1F*)qEnergySpectra[s][t][TYPE_0_EVENT]->fgbg[afp]->h[1],
 											 800., NULL, neutronBetaEp, fitStart, fitEnd);
-				Stringmap m;
-				m.insert("fitStart",fitStart);
-				m.insert("fitEnd",fitEnd);
-				m.insert("afp",afpWords(afp));
-				m.insert("side",ctos(sideNames(s)));
-				m.insert("tube",t);
-				m.insert("type",TYPE_0_EVENT);
-				m.insert("endpoint",ep.x);
-				m.insert("dendpoint",ep.err);
-				m.insert("counts",qEnergySpectra[s][t][TYPE_0_EVENT]->fgbg[afp]->h[1]->Integral());
-				m.display("--- ");
-				myA->qOut.insert("kurieFit",m);
+											 
+				AnaNumber AN("kurie_"+itos(fitStart)+"-"+itos(fitEnd));
+				AN.etypes.insert(TYPE_0_EVENT);
+				AN.s = s;
+				AN.n = t;
+				AN.value = ep.x;
+				AN.err = ep.err;
+				myA->uploadAnaNumber(AN, GV_OPEN, afp);
 			}
 		}
 	}
@@ -139,75 +117,46 @@ void AsymmetryPlugin::endpointFits() {
 
 void AsymmetryPlugin::calcSuperCombos() {
 	// build total spectra based on analysis choice
-	ARtot = getResultBase();
+	etypes.clear();
 	for(Side s = EAST; s <= WEST; ++s) {
 		qTotalSpectrum[s] = myA->cloneQuadHist(qEnergySpectra[s][nBetaTubes][TYPE_0_EVENT], "hTotalEvents", "All Events Energy");
 		if(!(ANCHOICE_A <= anChoice && anChoice <= ANCHOICE_E))
 			*qTotalSpectrum[s] *= 0;	// analysis choices without Type 0 events
-		else ARtot.etypes.insert(TYPE_0_EVENT);
+		else etypes.insert(TYPE_0_EVENT);
 		if(ANCHOICE_A <= anChoice && anChoice <= ANCHOICE_F && anChoice != ANCHOICE_D) {
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_I_EVENT];
-			ARtot.etypes.insert(TYPE_I_EVENT);
+			etypes.insert(TYPE_I_EVENT);
 		}
 		if(anChoice == ANCHOICE_A || anChoice == ANCHOICE_G) {
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_II_EVENT];
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
-			ARtot.etypes.insert(TYPE_II_EVENT);
-			ARtot.etypes.insert(TYPE_III_EVENT);
+			etypes.insert(TYPE_II_EVENT);
+			etypes.insert(TYPE_III_EVENT);
 		}
 		if(anChoice == ANCHOICE_C || anChoice == ANCHOICE_H) {
 			*qTotalSpectrum[s] += *qEnergySpectra[otherSide(s)][nBetaTubes][TYPE_II_EVENT];
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
-			ARtot.etypes.insert(TYPE_II_EVENT);
-			ARtot.etypes.insert(TYPE_III_EVENT);
+			etypes.insert(TYPE_II_EVENT);
+			etypes.insert(TYPE_III_EVENT);
 		}
 		if(anChoice == ANCHOICE_E || anChoice == ANCHOICE_I) {
 			*qTotalSpectrum[s] += *q23ProbCut[otherSide(s)][TYPE_II_EVENT];
 			*qTotalSpectrum[s] += *q23ProbCut[s][TYPE_III_EVENT];
-			ARtot.etypes.insert(TYPE_II_EVENT);
-			ARtot.etypes.insert(TYPE_III_EVENT);
+			etypes.insert(TYPE_II_EVENT);
+			etypes.insert(TYPE_III_EVENT);
 		}
 		if(anChoice == ANCHOICE_J) {
 			*qTotalSpectrum[s] += *qEnergySpectra[otherSide(s)][nBetaTubes][TYPE_II_EVENT];
-			ARtot.etypes.insert(TYPE_II_EVENT);
+			etypes.insert(TYPE_II_EVENT);
 		}
 		if(anChoice == ANCHOICE_K) {
 			*qTotalSpectrum[s] += *qEnergySpectra[s][nBetaTubes][TYPE_III_EVENT];
-			ARtot.etypes.insert(TYPE_III_EVENT);
+			etypes.insert(TYPE_III_EVENT);
 		}
 	}
 }
 
 void AsymmetryPlugin::calculateResults() {
-
-	// event rates in energy cut
-	double emin = 220;
-	double emax = 670;
-	for(Side s = EAST; s <= WEST; ++s) {
-		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
-			for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
-				for(EventType tp = TYPE_0_EVENT; tp <= TYPE_IV_EVENT; ++tp) {
-					Stringmap m;
-					m.insert("side",sideSubst("%c",s));
-					m.insert("afp",afpWords(afp));
-					m.insert("gv",gvWords(gv));
-					m.insert("type",itos(tp));
-					
-					TH1* h = qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[gv];
-					float tm = myA->totalTime[afp][gv][s];
-					Double_t ierr;
-					m.insert("ecut_eMin",emin);
-					m.insert("ecut_eMax",emax);
-					m.insert("rate",h->IntegralAndError(1,h->GetNbinsX(),ierr)/tm);
-					m.insert("d_rate",ierr/tm);
-					m.insert("ecut_rate",h->IntegralAndError(h->FindBin(emin),h->FindBin(emax),ierr)/tm);
-					m.insert("d_ecut_rate",ierr/tm);
-					
-					myA->qOut.insert("betarate_info",m);
-				}
-			}
-		}
-	}
 	
 	calcSuperCombos();
 	
@@ -229,102 +178,80 @@ void AsymmetryPlugin::calculateResults() {
 	
 	// perform data fits
 	fitAsym(200,675,1,true);	// match Robby's analysis
-	asymFits.pop_back(); asymCuts.pop_back();
 	fitAsym(50,800,7);
 	fitAsym(225,675,6);
 	fitAsym(0,1000,1);
 	fitInstAsym();
 	endpointFits();
-	for(Side s = EAST; s <= WEST; ++s) {
-		//highEnergyExcess(qMuonSpectra[s][true],1000,2000);
-		//highEnergyExcess(qBackMuons[s][true],1000,2000);
-		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_IV_EVENT; ++tp)
-			fitHighEnergyExcess(myA->qOut,qEnergySpectra[s][nBetaTubes][tp],1000,7000);
-	}
-	myA->makeRatesSummary();
-}
-
-void AsymmetryPlugin::uploadAnaResults() {
-	
-	AnalysisDB* ADB = AnalysisDB::getADB();
-	if(!ADB) return;
-	
-	// delete old fit results
-	for(unsigned int n=0; n<asymFits.size(); n++) {
-		std::vector<AnaResult> oldr = ADB->findMatching(asymFits[n]);
-		for(unsigned int i=0; i<oldr.size(); i++)
-			ADB->deleteAnaResult(oldr[i].arid);
-	}
-	// upload new fit results
-	for(unsigned int n=0; n<asymFits.size(); n++) {
-		asymFits[n].csid = ADB->uploadCutSpec(asymCuts[n]);
-		ADB->uploadAnaResult(asymFits[n]);
+	if(myA->grouping >= GROUP_OCTET) {
+		for(Side s = EAST; s <= WEST; ++s) {
+			for(EventType tp = TYPE_0_EVENT; tp <= TYPE_IV_EVENT; ++tp)
+				fitHighEnergyExcess(myA,qEnergySpectra[s][nBetaTubes][tp],1000,7000);
+		}
 	}
 	
-	AnaCutSpec c;
-	c.emin = 230;
-	c.emax = 660;
-	c.radius = 50.;
-	ARtot.csid = ADB->uploadCutSpec(c);
+	//------------------------------
+	// counts and counts asymmetries
+	//------------------------------
+	
+	double emin = 230;
+	double emax = 660;
+	
+	AnaNumber ANr("asym_energy_window");
+	ANr.value = emin;
+	ANr.err = emax;
+	myA->uploadAnaNumber(ANr, GV_OTHER, AFP_OTHER);
 	
 	// raw counts asymmetry
-	ARtot.anatp = AnaResult::ANA_ASYM;
 	double cts[2][2];
 	double cterr[2][2];
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			TH1* h = (TH1F*)qTotalSpectrum[s]->fgbg[afp]->h[GV_OPEN];
-			int b0 = h->FindBin(c.emin+0.5);
-			int b1 = h->FindBin(c.emax-0.5);
+			int b0 = h->FindBin(emin+0.5);
+			int b1 = h->FindBin(emax-0.5);
 			cts[s][afp] = h->IntegralAndError(b0,b1,cterr[s][afp])/myA->totalTime[afp][GV_OPEN][s];
 			cterr[s][afp] /= myA->totalTime[afp][GV_OPEN][s];
 		}
 	}
 	
 	double S = (cts[EAST][AFP_OFF]*cts[WEST][AFP_ON])/(cts[EAST][AFP_ON]*cts[WEST][AFP_OFF]);
-	ARtot.value = (1-sqrt(S))/(1+sqrt(S));
-	ARtot.err = 0;
+	AnaNumber ANa("raw_count_asym");
+	ANa.value = (1-sqrt(S))/(1+sqrt(S));
+	ANa.err = 0;
 	for(Side s = EAST; s <= WEST; ++s)
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
-			ARtot.err += pow(cterr[s][afp]/cts[s][afp],2);
-	ARtot.err = sqrt(ARtot.err);
-	ARtot.err *= sqrt(S)/pow(1+sqrt(S),2);
-	ADB->uploadAnaResult(ARtot);
-	
+			ANa.err += pow(cterr[s][afp]/cts[s][afp],2);
+	ANa.err = sqrt(ANa.err);
+	ANa.err *= sqrt(S)/pow(1+sqrt(S),2);
+	myA->uploadAnaNumber(ANa, GV_OTHER, AFP_OTHER);
 	
 	// event count results
-	ARtot.anatp = AnaResult::ANA_COUNTS;
+	AnaNumber ANc("ecut_evt_counts");
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(EventType tp = TYPE_0_EVENT; tp <= TYPE_III_EVENT; ++tp) {
 			for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 				for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
-					ARtot.s = s;
-					ARtot.afp = afp;
-					ARtot.gv = gv;
-					ARtot.etypes.clear();
-					ARtot.etypes.insert(tp);
 					
-					// delete old
-					std::vector<AnaResult> oldr = ADB->findMatching(ARtot);
-					for(unsigned int i=0; i<oldr.size(); i++)
-						ADB->deleteAnaResult(oldr[i].arid);
+					if(myA->isSimulated && gv==GV_CLOSED) continue;
+					
+					ANc.s = s;
+					ANc.etypes.clear();
+					ANc.etypes.insert(tp);
 					
 					TH1* h = (TH1F*)qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[gv];
-					int b0 = h->FindBin(c.emin+0.5);
-					int b1 = h->FindBin(c.emax-0.5);
+					int b0 = h->FindBin(emin+0.5);
+					int b1 = h->FindBin(emax-0.5);
 					
 					Double_t ierr;
-					double gvscale = gv==GV_OPEN?1.0:myA->totalTime[afp][GV_OPEN][BOTH]/myA->totalTime[afp][GV_CLOSED][BOTH];
-					ARtot.value = h->IntegralAndError(b0,b1,ierr)*gvscale;
-					ARtot.err = ierr*gvscale;
-					ADB->uploadAnaResult(ARtot);
+					double gvscale = gv==GV_OPEN? 1.0 : myA->totalTime[afp][GV_OPEN][BOTH]/myA->totalTime[afp][GV_CLOSED][BOTH];
+					ANc.value = h->IntegralAndError(b0,b1,ierr)*gvscale;
+					ANc.err = ierr*gvscale;
+					myA->uploadAnaNumber(ANc, gv, afp);
 				}
 			}
 		}
 	}
-	
-	
-	
 }
 
 void AsymmetryPlugin::makePlots() {

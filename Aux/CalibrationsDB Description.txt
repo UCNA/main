@@ -237,36 +237,32 @@ CREATE TABLE sourcepeaks (
 CREATE DATABASE IF NOT EXISTS analysis_results;
 use analysis_results;
 
-# generic specification of cuts
-CREATE TABLE cut_spec (
-	cut_spec_id SERIAL,		# unique ID for cut
-	energy_min DOUBLE,		# minimum energy
-	energy_max DOUBLE,		# maximum energy
-	radius DOUBLE,			# event radius
-	positioning ENUM('plain','rotated'),	# what type of positining scheme is used
-	INDEX(cut_spec_id), INDEX(energy_min,energy_max,radius,positioning)
+# analysis runs specifier
+CREATE TABLE analysis_runset (
+	analysis_runset_id SERIAL,								# unique ID for this run set type
+	start_run INT UNSIGNED,									# run range start for result
+	end_run INT UNSIGNED,									# run range end for result
+	grouping ENUM('run','fgbg','ppair','quartet','octet','range'),	# octet grouping level
+	gate_valve ENUM('Open','Closed','Other'),				# gate valve for run selection ('Other' for mixed)
+	afp ENUM('On','Off','Other','On2Off','Off2On'),			# AFP state for run selection
+	INDEX(start_run,end_run,grouping), INDEX(gate_valve,afp)
 );
 
-# generic analysis results
-CREATE TABLE analysis_results (
-	analysis_results_id SERIAL,				# unique ID for this result
-	author ENUM('MPM','RWP','BZ'),			# person generating result
-	date DATETIME,							# result generation date
-	type ENUM('Asymmetry','Counts'),		# type of result
-	source ENUM('Data','G4','Pen'),			# data or MC source
-	start_run INT UNSIGNED,					# run range start for result
-	end_run INT UNSIGNED,					# run range end for result
-	grouping ENUM('run','pair','quartet','octet'),	# octet grouping level
-	event_type SET('0','I','II','III'),		# event type used for result
-	ana_choice ENUM('A','B','C','D','E','F','G','H'),	# ``analysis choice''
-	side ENUM('East','West','Both'),		# event side of result
-	afp ENUM('On','Off','Other','On2Off','Off2On'),	# AFP state for result
-	gate_valve ENUM('Open','Closed'),		# gate valve for specifying background runs
-	value DOUBLE,							# result value
-	err DOUBLE,								# result uncertainty
-	cut_spec_id INT UNSIGNED,				# ID for cut specification
-	INDEX(author), INDEX(type,event_type,side,afp), INDEX(start_run,end_run), INDEX(date), INDEX(cut_spec_id), INDEX(grouping)
+# analysis data numbers
+CREATE TABLE analysis_numbers (
+	analysis_number_id SERIAL,					# unique ID for this entry
+	analysis_runset_id INT UNSIGNED,			# run selections involved
+	source VARCHAR(64),							# result source name (should include author and data/simulation)
+	name VARCHAR(128),							# name of entry
+	date DATETIME,								# result generation date
+	side ENUM('East','West','Both','None'),		# event side of result
+	event_type SET('0','I','II','III'),			# event type used for result
+	n INT,										# result enumeration
+	value DOUBLE,								# result value
+	err DOUBLE,									# result uncertainty
+	INDEX(analysis_runset_id), INDEX(source,name)
 );
+
 
 # permissions
 GRANT SELECT ON * to ucn;

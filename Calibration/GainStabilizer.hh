@@ -1,5 +1,5 @@
 #ifndef GAINSTABILIZER_HH
-#define GAINSTABILIZER_HH 1
+#define GAINSTABILIZER_HH
 
 #include "CalDB.hh"
 class LinearityCorrector;
@@ -18,9 +18,9 @@ public:
 	/// get a summary of GMS calibration parameters
 	virtual Stringmap gmsSummary() const;
 	
-	CalDB* CDB;					//< reference to calibration DB
-	LinearityCorrector* LCor;	//< reference to linearity corrector
-	RunNum rn;					//< run num of this run
+	CalDB* CDB;					///< reference to calibration DB
+	LinearityCorrector* LCor;	///< reference to linearity corrector
+	RunNum rn;					///< run num of this run
 };
 
 /// Chris Pulser gain stabilizer
@@ -35,8 +35,8 @@ public:
 	/// print gain stabilization info
 	virtual void printSummary();
 protected:
-	TGraph* pulserPeak[2][nBetaTubes];			//< Chris Pulser peak position
-	float pulser0[2][nBetaTubes];				//< Chris Pulser peak at reference time
+	TGraph* pulserPeak[2][nBetaTubes];			///< Chris Pulser peak position
+	float pulser0[2][nBetaTubes];				///< Chris Pulser peak at reference time
 };
 
 /// Gain stabilizer wrapper with final manual tweaks
@@ -51,9 +51,9 @@ public:
 	/// get a summary of GMS calibration parameters
 	virtual Stringmap gmsSummary() const;
 protected:
-	GainStabilizer* baseGain;		//< base gain stabilization before tweaks
-	float eOrig[2][nBetaTubes+1];	//< starting energy for each PMT
-	float eFinal[2][nBetaTubes+1];	//< where starting energy gets scaled to
+	GainStabilizer* baseGain;		///< base gain stabilization before tweaks
+	float eOrig[2][nBetaTubes+1];	///< starting energy for each PMT
+	float eFinal[2][nBetaTubes+1];	///< where starting energy gets scaled to
 };
 
 
@@ -71,14 +71,14 @@ protected:
  /// combine 2 Co60 peaks into one "combined" ADC
  float adc_Co(Side s, float time);
  
- CalDB* CDB;					//< reference to calibration DB
- RunNum rn;					//< run num of this run
+ CalDB* CDB;					///< reference to calibration DB
+ RunNum rn;					///< run num of this run
  
  protected:
- TGraph* refLED[2];			//< reference PMT LED ADC
- TGraph* co60Peaks[2][2];	//< reference PMT Co60 peaks
- TGraph* refLinearity[2];	//< reference PMT linearity
- TGraph* refInverses[2];		//< reference PMT inverse linearity
+ TGraph* refLED[2];			///< reference PMT LED ADC
+ TGraph* co60Peaks[2][2];	///< reference PMT Co60 peaks
+ TGraph* refLinearity[2];	///< reference PMT linearity
+ TGraph* refInverses[2];		///< reference PMT inverse linearity
  };
  */
 
@@ -87,10 +87,10 @@ protected:
 /// get muon peak ADC
 //float getMuonPeak(Side s, unsigned int t, float time) { if(muonPeaks[s][t]) return muonPeaks[s][t]->Eval(time); return 1000.0; }
 
-//float muon0[2][4];				//< muon peak ADC at reference run t=0
-//float kgms[2][4];				//< GMS factor for Kurie-endpoint based GMS
-//TGraph* ledPeaks[2][4];				//< GMS LED Peaks history
-//TGraph* muonPeaks[2][4];			//< Muon peaks history
-//float energy_peg[2][4];				//< light equivalent of stabilized LED peak to calibration source light
+//float muon0[2][4];				///< muon peak ADC at reference run t=0
+//float kgms[2][4];				///< GMS factor for Kurie-endpoint based GMS
+//TGraph* ledPeaks[2][4];				///< GMS LED Peaks history
+//TGraph* muonPeaks[2][4];			///< Muon peaks history
+//float energy_peg[2][4];				///< light equivalent of stabilized LED peak to calibration source light
 
 #endif

@@ -85,6 +85,17 @@ GVState strToGV(const std::string& s) {
 
 //---------------------------------------
 
+std::string groupWords(RunGrouping g) {
+	return (g==GROUP_RUN?"run" :
+			g==GROUP_FGBG?"fgbg" :
+			g==GROUP_PPAIR?"ppair" :
+			g==GROUP_QUARTET?"quartet" :
+			g==GROUP_OCTET?"octet" :
+			"range");
+}
+
+//---------------------------------------
+
 RunGeometry whichGeometry(RunNum rn) {
 	if( rn < 1000 )
 		return GEOMETRY_OTHER;

@@ -1,5 +1,5 @@
 #ifndef KDATA_HH
-#define KDATA_HH 1
+#define KDATA_HH
 
 #include <string>
 #include <vector>
@@ -51,7 +51,7 @@ public:
 	/// get all matching "path" style string
 	std::vector<RData*> getSubdataByPath(const std::string& path, const std::string& pathsep = "/");
 protected:
-	static RData* NullRData;	//< "null" return result for keys not found
+	static RData* NullRData;	///< "null" return result for keys not found
 };
 
 /// memory-resident RData
@@ -81,7 +81,7 @@ public:
 	RData* insert(const std::string& key, RData* KD);
 	
 protected:
-	std::multimap< std::string, RDataMem* > dat;	//< data
+	std::multimap< std::string, RDataMem* > dat;	///< data
 };
 
 #endif

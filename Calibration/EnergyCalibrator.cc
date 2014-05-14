@@ -149,7 +149,7 @@ float LinearityCorrector::linearityCorrector(Side s, unsigned int t, float adc, 
 			return 0;
 		}
 	}
-	return 0; //< TODO ref linearity PMT?
+	return 0; ///< TODO ref linearity PMT?
 }
 float LinearityCorrector::invertLinearityStabilized(Side s, unsigned int t, float l) const {
 	smassert(s<=WEST && t<nBetaTubes && linearityInverses[s][t]);
@@ -288,8 +288,8 @@ float PMTCalibrator::nPE(Side s, unsigned int t, float adc, float time) const {
 
 
 float_err PMTCalibrator::calibratedEnergy(Side s, unsigned int t, float x, float y, float adc, float time) const {
-	float l = linearityCorrector(s,t,adc,time); //< observed light
-	float eta0 = eta(s,t,x,y); //< positioning factor
+	float l = linearityCorrector(s,t,adc,time); ///< observed light
+	float eta0 = eta(s,t,x,y); ///< positioning factor
 	float_err E;
 	E.x = l/eta0;
 	E.err = energyResolution(s,t,E.x,x,y,time);

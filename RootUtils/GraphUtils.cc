@@ -1,12 +1,12 @@
 #include "GraphUtils.hh"
 #include "strutils.hh"
 #include "SMExcept.hh"
-#include "SMExcept.hh"
 #include <math.h> 
 #include <TROOT.h>
 #include <TMath.h>
 #include <TDirectory.h>
 #include <cfloat>
+#include <cassert>
 
 Stringmap histoToStringmap(const TH1* h) {
 	smassert(h);
@@ -439,6 +439,30 @@ TH1* histsep(const TH1& h1, const TH1& h2) {
 	return hDiv;
 }
 
+void makeCumulative(TGraph& g, bool fromFirst) {
+	if(fromFirst)
+		for(int i=1; i<g.GetN(); i++) g.SetPoint(i, g.GetX()[i], g.GetY()[i]+g.GetY()[i-1]);
+	else
+		for(int i = g.GetN()-2; i>=0; i--) g.SetPoint(i, g.GetX()[i], g.GetY()[i]+g.GetY()[i+1]);
+}
+
+TGraph* graphsep(TGraph& g1, TGraph& g2, unsigned int npts) {
+	assert(g1.GetN() && g2.GetN());
+	
+	makeCumulative(g1,true);
+	makeCumulative(g2,false);
+	
+	double x0 = std::min(g1.GetX()[0], g2.GetX()[0]);
+	double x1 = std::max(g1.GetX()[g1.GetN()-1], g2.GetX()[g2.GetN()-1]);
+	
+	TGraph* g = new TGraph(npts);
+	for(unsigned int i=0; i<npts; i++) {
+		double x = x0 + i*(x1-x0)/(npts-1);
+		g->SetPoint(i, x, g1.Eval(x) + g2.Eval(x));
+	}
+	return g;
+}
+
 void histoverlap(const TH1& h1, const TH1& h2, double& o, double& xdiv) {
 	int nb = h1.GetNbinsX();
 	smassert(nb==h2.GetNbinsX());
@@ -478,8 +502,9 @@ integral(npx+1), alpha(npx), beta(npx), gamma(npx) {
 	
 	if (intNegative > 0 || !total) {
 		SMExcept e("bad_probability_distribution");
-		e.insert("integral",total);
-		e.insert("negative_segs",intNegative);
+		e.insert("integral", total);
+		e.insert("negative_segs", intNegative);
+		e.insert("total_segs", npx);
 		throw(e);
 	}
 	

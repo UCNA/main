@@ -55,7 +55,7 @@ void NeutronEndpointSmearShift() {
 	}
 	OM.write();
 
-	double dL0 = 100/sqrt(1000); //< middle-range PMT energy resolution
+	double dL0 = 100/sqrt(1000); ///< middle-range PMT energy resolution
 	double r0 = 0.5;
 	double r1 = 2.0;
 	unsigned int npts = 3;

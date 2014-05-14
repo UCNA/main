@@ -1,5 +1,5 @@
 #ifndef OCTETANALYZEREXAMPLE_HH
-#define OCTETANALYZEREXAMPLE_HH 1
+#define OCTETANALYZEREXAMPLE_HH
 
 #include "OctetAnalyzer.hh"
 #include "RunAccumulator.hh"
@@ -21,9 +21,9 @@ public:
 	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
 	virtual void compareMCtoData(AnalyzerPlugin* AP);
 	
-	quadHists* qAnodeSpectrum[2];	//< set of histograms for extracting anode spectrum on each side
-	TH1* hAnodeSR;					//< super-ratio asymmetry of anode data
-	TH1* hAnodeSS;					//< super-sum of anode data
+	quadHists* qAnodeSpectrum[2];	///< set of histograms for extracting anode spectrum on each side
+	TH1* hAnodeSR;					///< super-ratio asymmetry of anode data
+	TH1* hAnodeSS;					///< super-sum of anode data
 };
 
 
@@ -38,7 +38,7 @@ public:
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm,
 									   const std::string& inflname) { return new OctetAnalyzerExample(this,nm,inflname); }
 
-	ExampleAnalyzerPlugin* myPlugin;	//< pointer to analyzer plugin
+	ExampleAnalyzerPlugin* myPlugin;	///< pointer to analyzer plugin
 };
 
 #endif

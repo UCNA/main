@@ -2,6 +2,7 @@
 #include "GraphUtils.hh"
 #include "SMExcept.hh"
 #include "PostOfficialAnalyzer.hh"
+#include <time.h>
 
 TRandom3 RunAccumulator::rnd_source;
 
@@ -41,9 +42,10 @@ void fgbgPair::setAxisTitle(AxisDirection d, const std::string& ttl) {
 //------------------------------------------------------------------------
 
 std::string RunAccumulator::processedLocation = "";
+std::string RunAccumulator::AnaDB_xtag = "";
 
 fgbgPair* RunAccumulator::registerFGBGPair(const std::string& hname, const std::string& title,
-										  unsigned int nbins, float xmin, float xmax, AFPState a, Side s) {
+										   unsigned int nbins, float xmin, float xmax, AFPState a, Side s) {
 	fgbgPair* p = new fgbgPair(hname,title,a,s);
 	if(fgbgHists.find(p->getName())!=fgbgHists.end()) {
 		SMExcept e("duplicateHistoName");
@@ -74,7 +76,7 @@ fgbgPair* RunAccumulator::registerFGBGPair(const TH1& hTemplate, AFPState a, Sid
 			p->h[fg]->Sumw2();
 		p->h[fg]->SetTitle(p->getHistoTitle(fg).c_str());
 	}
-	fgbgHists.insert(std::make_pair(p->getName(),p));	
+	fgbgHists.insert(std::make_pair(p->getName(),p));
 	return p;
 }
 
@@ -89,7 +91,7 @@ fgbgPair* RunAccumulator::cloneFGBGPair(const fgbgPair& p, const std::string& ne
 }
 
 RunAccumulator::RunAccumulator(OutputManager* pnt, const std::string& nm, const std::string& inflName):
-SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false), depth(-1), simPerfectAsym(false) {
+SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false), grouping(GROUP_RANGE), simPerfectAsym(false) {
 	
 	// initialize blind time to 0
 	zeroCounters();
@@ -121,6 +123,11 @@ SegmentSaver(pnt,nm,inflName), needsSubtraction(false), isSimulated(false), dept
 		runCounts += TagCounter<RunNum>(qOld.getFirst("runCounts"));
 		runTimes += TagCounter<RunNum>(qOld.getFirst("runTimes"));
 	}
+	
+	// initialize Analysis DB variables
+	for(GVState g = GV_CLOSED; g <= GV_OTHER; ++g)
+		for(AFPState a = AFP_OFF; a <= AFP_OTHER; ++a)
+			AR_IDs[g][a] = 0;
 }
 
 RunAccumulator::~RunAccumulator() {
@@ -164,7 +171,6 @@ void RunAccumulator::addPlugin(AnalyzerPlugin* AP) {
 AnalyzerPlugin* RunAccumulator::getPlugin(const std::string& nm) {
 	std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.find(nm);
 	return it != myPlugins.end() ? it->second : NULL;
-
 }
 
 void RunAccumulator::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
@@ -183,9 +189,47 @@ void RunAccumulator::calculateResults() {
 	isCalculated = true;
 }
 
+void RunAccumulator::uploadAnaNumber(AnaNumber& AN, GVState g, AFPState a) {
+	assert(g<=GV_OTHER && a <= AFP_OTHER);
+	AN.date = time(NULL);
+	AN.source = getEnvSafe("UCNA_ANA_AUTHOR") + (isSimulated?"_Sim":"_Data") + AnaDB_xtag;
+	anaResults[g][a].push_back(AN);
+}
+
 void RunAccumulator::uploadAnaResults() {
-	for(std::map<std::string,AnalyzerPlugin*>::iterator it = myPlugins.begin(); it != myPlugins.end(); it++)
-		it->second->uploadAnaResults();
+	for(GVState gv = GV_CLOSED; gv <= GV_OTHER; ++gv) {
+		for(AFPState afp = AFP_OFF; afp <= AFP_OTHER; ++afp) {
+			if(!anaResults[gv][afp].size()) continue;
+			unsigned int rsid = get_ADB_Runset_ID(gv,afp);
+			if(!rsid) continue;
+			for(std::vector<AnaNumber>::iterator it = anaResults[gv][afp].begin(); it != anaResults[gv][afp].end(); it++) {
+				it->rsid = rsid;
+				it->anid = 0;
+				printf("Analysis result '%s' [%i]:\t%g\t~ %g\n", it->name.c_str(), it->n, it->value, it->err);
+				AnalysisDB::getADB()->uploadAnaNumber(*it);
+			}
+		}
+	}
+}
+
+unsigned int RunAccumulator::get_ADB_Runset_ID(GVState g, AFPState a) {
+	AnalysisDB* ADB = AnalysisDB::getADB();
+	if(!ADB) return 0;
+	
+	smassert(g<=GV_OTHER && a<=AFP_OTHER);
+	if(!AR_IDs[g][a]) {
+		AnaRunset AR;
+		if(!runCounts.counts.empty()) {
+			AR.start_run = runCounts.counts.begin()->first;
+			AR.end_run = runCounts.counts.rbegin()->first;
+		}
+		AR.gate_valve = g;
+		AR.afp = a;
+		AR.grouping = grouping;
+		ADB->locateRunset(AR);
+		AR_IDs[g][a] = AR.rsid;
+	}
+	return AR_IDs[g][a];
 }
 
 void RunAccumulator::makePlots() {
@@ -299,7 +343,7 @@ void RunAccumulator::bgSubtractAll() {
 	for(std::map<std::string,fgbgPair*>::iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
 		if(getErrorEstimator())
 			errorbarsFromMasterHisto(it->second->h[GV_CLOSED],getErrorEstimator()->getFGBGPair(it->second->getName()).h[GV_CLOSED]);
-			it->second->bgSubtract(getTotalTime(it->second->afp,GV_OPEN),getTotalTime(it->second->afp,GV_CLOSED));
+		it->second->bgSubtract(getTotalTime(it->second->afp,GV_OPEN),getTotalTime(it->second->afp,GV_CLOSED));
 	}
 	needsSubtraction = false;
 }
@@ -323,27 +367,6 @@ void RunAccumulator::simBgFlucts(const RunAccumulator& RefOA, double simfactor, 
 		printf("\t%i counts for %s [%i bins]\n",int(it->second->h[0]->Integral()),it->second->getName().c_str(),totalBins(it->second->h[0]));
 		it->second->h[GV_OPEN]->Add(it->second->h[GV_CLOSED],-bgRatio);		// subtract back off simulated background
 		it->second->isSubtracted = true;
-	}
-}
-
-void RunAccumulator::makeRatesSummary() {
-	qOut.erase("rate");
-	for(std::map<std::string,fgbgPair*>::const_iterator it = fgbgHists.begin(); it != fgbgHists.end(); it++) {
-		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
-			Stringmap rt;
-			rt.insert("side",ctos(sideNames(it->second->mySide)));
-			rt.insert("afp",afpWords(it->second->afp));
-			rt.insert("name",it->second->getName());
-			rt.insert("fg",itos(gv));
-			Double_t d_counts;
-			double counts = it->second->h[gv]->IntegralAndError(-1, -1, d_counts);
-			double rtime = getTotalTime(it->second->afp,gv)[it->second->mySide];
-			rt.insert("counts",counts);
-			rt.insert("d_counts",d_counts);
-			rt.insert("rate",counts?counts/rtime:0);
-			rt.insert("d_rate",d_counts?d_counts/rtime:0);
-			qOut.insert("rate",rt);
-		}
 	}
 }
 
@@ -429,7 +452,7 @@ void RunAccumulator::loadSimPoint(Sim2PMT& simData) {
 	if(double evtc = simData.simEvtCounts()) {
 		runCounts.add(simData.getRun(),evtc);
 		totalCounts[currentAFP][GV_OPEN] += evtc;
-	}	
+	}
 }
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
@@ -531,8 +554,8 @@ void RunAccumulator::mergeOcts(const std::vector<Octet>& Octs) {
 	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
 		std::string inflname = basePath+"/"+octit->octName()+"/"+octit->octName();
 		if(!inflExists(inflname)) {
-				printf("Octet '%s' missing!\n",inflname.c_str());
-				continue;
+			printf("Octet '%s' missing!\n",inflname.c_str());
+			continue;
 		}
 		SegmentSaver* subRA = makeAnalyzer(octit->octName(),inflname);
 		addSegment(*subRA);
@@ -568,7 +591,7 @@ void RunAccumulator::mergeSims(const std::string& basedata, RunAccumulator* orig
 
 unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor, double replaceIfOlder, bool doPlots, bool doCompare) {
 	
-	printf("\n------ Cloning data in '%s'\n------                        to '%s'...\n",basedata.c_str(),basePath.c_str());
+	printf("\n------ Cloning data in '%s'\n------              to '%s'...\n",basedata.c_str(),basePath.c_str());
 	int nCloned = 0;
 	
 	// check if simulation is already up-to-date
@@ -598,12 +621,12 @@ unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& sim
 		// check whether data directory contains cloneable subdirectories
 		std::string datinfl = basedata+"/"+(*it)+"/"+(*it);
 		if(!RunAccumulator::inflExists(datinfl)) continue;
-		std::string siminfl = basePath+"/"+(*it)+"/"+(*it);		
+		std::string siminfl = basePath+"/"+(*it)+"/"+(*it);
 		nClonable++;
 		
 		// load cloned sub-data
 		RunAccumulator* subRA = (RunAccumulator*)makeAnalyzer(*it,RunAccumulator::inflExists(siminfl)?siminfl:"");
-		subRA->depth = depth+1;
+		subRA->grouping = subdivide(grouping);
 		subRA->simPerfectAsym = simPerfectAsym;
 		nCloned += subRA->simuClone(basedata+"/"+(*it),simData,simfactor,replaceIfOlder,doPlots,doCompare);
 		addSegment(*subRA);
@@ -659,7 +682,7 @@ unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& sim
 		} else {
 			simMultiRuns(simData, countRequests[smallafp]);
 		}
-					 
+		
 		// clone background counts in original data
 		simBgFlucts(*origRA,simfactor,!simPerfectAsym);
 		// scale back out simulation factor
@@ -680,29 +703,49 @@ unsigned int RunAccumulator::simuClone(const std::string& basedata, Sim2PMT& sim
 
 /* --------------------------------------------------- */
 
+fgbgPair* AnalyzerPlugin::registerFGBGPair(const std::string& hname, const std::string& title,
+										   unsigned int nbins, float xmin, float xmax,
+										   AFPState a, Side s) {
+	myHists.push_back(myA->registerFGBGPair(hname,title,nbins,xmin,xmax,a,s));
+	return myHists.back();
+}
 
-unsigned int processPulsePair(RunAccumulator& RA, const Octet& PP) {
-	unsigned int nproc = 0;
-	std::vector<Octet> triads = PP.getSubdivs(DIV_TRIAD,false);
-	printf("Processing pulse pair for %s containing %i triads...\n",PP.octName().c_str(),int(triads.size()));
-	for(std::vector<Octet>::iterator sd = triads.begin(); sd != triads.end(); sd++) {
-		nproc++;
+fgbgPair* AnalyzerPlugin::registerFGBGPair(const TH1& hTemplate, AFPState a, Side s) {
+	myHists.push_back(myA->registerFGBGPair(hTemplate,a,s));
+	return myHists.back();
+}
+
+void AnalyzerPlugin::makeRatesSummary() {
+	for(std::vector<fgbgPair*>::const_iterator it = myHists.begin(); it != myHists.end(); it++) {
 		for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
-			PostOfficialAnalyzer PDS(true);
-			PDS.addRuns(sd->getAsymRuns(gv));
-			if(PDS.getnFiles())
-				RA.loadProcessedData(sd->octAFPState(),gv,PDS);
+			
+			Double_t d_counts;
+			double counts = (*it)->h[gv]->IntegralAndError(-1, -1, d_counts);
+			double rtime = myA->getTotalTime((*it)->afp,gv)[(*it)->mySide];
+			
+			AnaNumber AN("counts_"+(*it)->baseName);
+			AN.s = (*it)->mySide;
+			
+			AN.value = counts;
+			AN.err = d_counts;
+			myA->uploadAnaNumber(AN,gv,(*it)->afp);
+			
+			AN.name = "rate_"+(*it)->baseName;
+			AN.value = counts?counts/rtime:0;
+			AN.err = d_counts?d_counts/rtime:0;
+			myA->uploadAnaNumber(AN,gv,(*it)->afp);
 		}
 	}
-	return nproc;
 }
+
+/* --------------------------------------------------- */
 
 unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bool doPlots) {
 	unsigned int nproc = 0;
 	
 	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
 		
-		printf("Reprocessing octet '%s' at division %i...\n",octit->octName().c_str(),octit->divlevel);
+		printf("Reprocessing octet '%s'...\n",octit->octName().c_str());
 		if(!octit->getNRuns()) {
 			printf("\tThat was too easy (octet contained zero runs).\n");
 			continue;
@@ -712,8 +755,8 @@ unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bo
 		std::string inflname = RA.basePath+"/"+octit->octName()+"/"+octit->octName();
 		if(SegmentSaver::inflExists(inflname)) {
 			RunAccumulator* subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),inflname);
-			subRA->depth = octit->divlevel;
-			nproc += recalcOctets(*subRA,octit->getSubdivs(nextDiv(octit->divlevel),false), doPlots);
+			subRA->grouping = octit->grouping;
+			nproc += recalcOctets(*subRA,octit->getSubdivs(subdivide(octit->grouping),false), doPlots);
 			RA.addSegment(*subRA);
 			delete subRA;
 		}
@@ -724,23 +767,22 @@ unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bo
 	return nproc;
 }
 
-unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, double replaceIfOlder, bool doPlots, unsigned int oMin, unsigned int oMax) {
+unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, double replaceIfOlder, bool doPlots) {
 	
 	unsigned int nproc = 0;
-		
+	if(Octs.size()==1) RA.grouping = Octs[0].grouping;
+	
 	for(std::vector<Octet>::const_iterator octit = Octs.begin(); octit != Octs.end(); octit++) {
-		unsigned int octn = (unsigned int)(octit-Octs.begin());
-		if(octn<oMin || oMax<octn) continue;
 		
 		// check if there are any runs to process
-		printf("Processing octet '%s' at division %i...\n",octit->octName().c_str(),octit->divlevel);
+		printf("Processing beta runs '%s'...\n",octit->octName().c_str());
 		if(!octit->getNRuns()) {
 			printf("\tThat was too easy (octet contained zero runs).\n");
 			continue;
 		}
 		RA.qOut.insert("Octet",octit->toStringmap());
 		
-		if(octit->divlevel<=DIV_PP) {
+		if(octit->grouping > GROUP_FGBG) {
 			// make sub-Analyzer for this octet, to load data if already available, otherwise re-process
 			RunAccumulator* subRA;
 			std::string inflname = RA.basePath+"/"+octit->octName()+"/"+octit->octName();
@@ -750,13 +792,20 @@ unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, d
 				subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),inflname);
 			} else {
 				subRA = (RunAccumulator*)RA.makeAnalyzer(octit->octName(),"");
-				subRA->depth = octit->divlevel;
-				nproc += processOctets(*subRA,octit->getSubdivs(nextDiv(octit->divlevel),false),replaceIfOlder, doPlots);
+				subRA->grouping = octit->grouping;
+				nproc += processOctets(*subRA,octit->getSubdivs(subdivide(octit->grouping),false),replaceIfOlder, doPlots);
 			}
 			RA.addSegment(*subRA);
 			delete(subRA);
 		} else {
-			nproc += processPulsePair(RA,*octit);
+			// add data from FG, BG runs pair
+			for(GVState gv=GV_CLOSED; gv<=GV_OPEN; ++gv) {
+				PostOfficialAnalyzer PDS(true);
+				PDS.addRuns(octit->getAsymRuns(gv));
+				if(PDS.getnFiles())
+					RA.loadProcessedData(octit->octAFPState(), gv, PDS);
+			}
+			nproc++;
 		}
 	}
 	

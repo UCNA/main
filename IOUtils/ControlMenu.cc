@@ -1,19 +1,40 @@
 #include "ControlMenu.hh"
 #include <utility>
-#include "SMExcept.hh"
+#include <cassert>
 
-inputRequester::inputRequester(std::string d, void (*f)(std::deque<std::string>&,std::stack<std::string>&), unsigned int n):
-namedInteractor(d), myFunc(f) {
-	for(unsigned int i=0; i<n; i++)
-		addArg("Option "+itos(i+1),"",NULL);
+bool StreamInteractor::menutils_CheckStackSize(unsigned int n) {
+	assert(mydeque && mystack);
+	menutils_StackSize(this);
+	unsigned int nstack = popInt();
+	if(nstack < n) {
+		mydeque->push_front(NameSelector::barf_control+" Insufficient Arguments ["+itos(n-nstack)+"]");
+		return false;
+	}
+	return true;
 }
 
-void inputRequester::doIt(std::deque<std::string>& args, std::stack<std::string>& stack) {
-		
+//---- InputRequester
+
+InputRequester InputRequester::exitMenu("Exit Menu", &menutils_Exit);
+
+InputRequester::InputRequester(std::string d, void (*f)(StreamInteractor*), StreamInteractor* fObj):
+NamedInteractor(d), myFuncObject(fObj), myFunc(f) { }
+
+void InputRequester::doIt() {
+
+	assert(mydeque && mystack);
+	
 	for(unsigned int i=0; i<inputFilters.size(); i++) {
 		if(inputFilters[i]) {
-			inputFilters[i]->doIt(args,stack);
-		} else if(!args.size()) {
+			// call input filter if set
+			inputFilters[i]->mydeque = mydeque;
+			inputFilters[i]->mystack = mystack;
+			inputFilters[i]->doIt();
+		} else if(mydeque->size()) {
+			// pull next item from deque, if available
+			mystack->push(popStringD());
+		} else {
+			// prompt stdin for entry
 			char indata[1024];
 			if(argDescrips[i].size())
 				printf("\n// %s\n",argDescrips[i].c_str());
@@ -21,40 +42,45 @@ void inputRequester::doIt(std::deque<std::string>& args, std::stack<std::string>
 			if(defaultArgs[i].size())
 				printf(" [%s]",defaultArgs[i].c_str());
 			printf(" > ");
-			smassert(fgets(indata,1024,stdin));
+			assert(fgets(indata,1024,stdin));
 			std::string argin = strip(indata);
 			if(!argin.size())
-				stack.push(defaultArgs[i]);
+				mystack->push(defaultArgs[i]);
 			else
-				stack.push(argin);
-		} else {
-			stack.push(popString(args));
+				mystack->push(argin);
 		}
 	}	
-		
-	if(myFunc) (*myFunc)(args,stack);
+	
+	// function call using collected results
+	if(myFunc) {
+		if(myFuncObject) {
+			myFuncObject->mydeque = mydeque;
+			myFuncObject->mystack = mystack;
+			(*myFunc)(myFuncObject);
+		} else (*myFunc)(this);
+	}
 }
 
-void inputRequester::addArg(const std::string& s, const std::string& dflt, const std::string& descrip, namedInteractor* filter) {
+void InputRequester::addArg(const std::string& s, const std::string& dflt, const std::string& descrip, NamedInteractor* filter) {
 	argNames.push_back(s);
 	argDescrips.push_back(descrip);
 	defaultArgs.push_back(dflt);
 	inputFilters.push_back(filter);
 }
 
-void inputRequester::setArgOpts(unsigned int i, std::string s, std::string dflt, namedInteractor* filter) { 
-	smassert(i<argNames.size()); 
+void InputRequester::setArgOpts(unsigned int i, std::string s, std::string dflt, NamedInteractor* filter) { 
+	assert(i<argNames.size()); 
 	argNames[i] = s;
 	defaultArgs[i] = dflt;
 	inputFilters[i] = filter;
 }
 
-std::string inputRequester::getArgname(unsigned int i) const { 
-	smassert(i<argNames.size()); 
+std::string InputRequester::getArgname(unsigned int i) const { 
+	assert(i<argNames.size()); 
 	return argNames[i];
 }
 
-std::string inputRequester::getDescription() {
+std::string InputRequester::getDescription() {
 	std::string s = name;
 	if(argNames.size() > 0) {
 		s += " (";
@@ -74,22 +100,30 @@ std::string inputRequester::getDescription() {
 	return s;
 }
 
-bool nameselector_default_softmatch(const std::string& a, const std::string& b) { return lower(a) == lower(b.substr(0,a.size())); }
+
+//---- NameSelector
+
+
+bool nameselector_default_softmatch(const std::string& a, const std::string& b) {
+	return lower(a) == lower(b.substr(0,a.size()));
+}
+
 std::string NameSelector::barf_control = "\033_BARF";
 std::string NameSelector::exit_control = "\033_EXIT";
 
-NameSelector::NameSelector(std::string t, std::string promptval, bool persist): inputRequester(t), catchAll(NULL), isPersistent(persist) {
-	inputRequester::addArg(promptval);
+NameSelector::NameSelector(std::string t, std::string promptval, bool persist): InputRequester(t), catchAll(NULL), isPersistent(persist) {
+	InputRequester::addArg(promptval);
 	setSoftmatch();
 }
 
-void NameSelector::addChoice(std::string d, std::string nm, Selector_Option_Flags o, std::string mname, streamInteractor* action) {
+void NameSelector::addChoice(std::string d, std::string nm, Selector_Option_Flags o, std::string mname, StreamInteractor* action) {
 	if(!nm.size())
 		nm = itos(choiceNames.size()+1);
-	smassert(nameMap.find(nm) == nameMap.end());
+	assert(nameMap.find(nm) == nameMap.end());
 	if(!mname.size())
 		mname = nm;
 	nameMap.insert(std::make_pair(nm,choiceNames.size()));
+	
 	choiceNames.push_back(nm);
 	choiceDescrips.push_back(d);
 	choiceOut.push_back(mname);
@@ -99,7 +133,7 @@ void NameSelector::addChoice(std::string d, std::string nm, Selector_Option_Flag
 
 void NameSelector::addSynonym(std::string arg0, std::string syn) {
 	std::map<std::string,unsigned int>::iterator it = nameMap.find(arg0);
-	smassert(it != nameMap.end());
+	assert(it != nameMap.end());
 	NameSelector::addChoice(choiceDescrips[it->second],syn,
 			  Selector_Option_Flags(oflags[it->second] | SELECTOR_SYNONYM | SELECTOR_HIDDEN),
 			  choiceOut[it->second],actions[it->second]);
@@ -119,32 +153,34 @@ std::string NameSelector::getDescription() {
 	return s; 
 }
 
-void NameSelector::doIt(std::deque<std::string>& args, std::stack<std::string>& stack) {
+void NameSelector::doIt() {
 	bool forceBreak = false;
+	assert(mystack && mydeque);
 	do {
 		
 		// display options if choice not already made
-		if(!args.size()) {
+		if(!mydeque->size()) {
 			displayOptions();
 			printf("---------------------------\n");
 		}
 		
 		// input request loop
 		while(1) {
+			// prompt for input value onto stack
+			InputRequester::doIt();
 			
-			inputRequester::doIt(args,stack);
-			
-			std::string myArg = popString(stack);
+			// get argument off stack
+			std::string myArg = popString();
 			
 			// break for control sequences
 			if(startsWith(myArg, exit_control) || startsWith(myArg, barf_control) ) {
 				if(startsWith(myArg, barf_control))
-					args.push_front(myArg);
+					mydeque->push_front(myArg);
 				forceBreak = true;
 				break;
 			}
 			
-			// try again on null input
+			// keep trying on empty input
 			if(!myArg.size())
 				continue;
 			
@@ -176,17 +212,22 @@ void NameSelector::doIt(std::deque<std::string>& args, std::stack<std::string>& 
 			
 			if(it == nameMap.end() || (oflags[it->second] & SELECTOR_DISABLED)) {
 				if(catchAll) {
-					stack.push(myArg);
-					catchAll->doIt(args,stack);
+					mystack->push(myArg);
+					catchAll->mystack = mystack;
+					catchAll->mydeque = mydeque;
+					catchAll->doIt();
 					break;
 				} else {
 					printf("Error: unknown selection '%s'\n",myArg.c_str());
 				}
 			} else {
-				if(actions[it->second])
-					actions[it->second]->doIt(args,stack);
-				else
-					stack.push(choiceOut[it->second]);
+				if(actions[it->second]) {
+					actions[it->second]->mystack = mystack;
+					actions[it->second]->mydeque = mydeque;
+					actions[it->second]->doIt();
+				} else {
+					mystack->push(choiceOut[it->second]);
+				}
 				break;
 			}
 		}
@@ -195,99 +236,112 @@ void NameSelector::doIt(std::deque<std::string>& args, std::stack<std::string>& 
 }
 
 
-void OptionsMenu::addChoice(namedInteractor* M, std::string nm, Selector_Option_Flags o) {
+void OptionsMenu::addChoice(NamedInteractor* M, std::string nm, Selector_Option_Flags o) {
 	NameSelector::addChoice(M->getDescription(),nm,o,"",M);
 }
 
-void menutils_PrintQue(std::deque<std::string>& args, std::stack<std::string>&) {
+
+//----------------------------
+
+void menutils_PrintQue(StreamInteractor* S) {
 	printf("[ ");
-	for(std::deque<std::string>::iterator it = args.begin(); it != args.end(); it++)
+	for(std::deque<std::string>::iterator it = S->mydeque->begin(); it != S->mydeque->end(); it++)
 		printf("'%s' ",it->c_str());
 	printf("]\n");
 }
-void menutils_PrintStack(std::deque<std::string>&, std::stack<std::string>& stack) {
+
+void menutils_PrintStack(StreamInteractor* S) {
 	std::stack<std::string> tmp;
-	while(stack.size())
-		tmp.push(streamInteractor::popString(stack));
+	while(S->mystack->size())
+		tmp.push(S->popString());
 	printf("[ ");
 	while(tmp.size()) {
-		stack.push(streamInteractor::popString(tmp));
-		printf("'%s' ",stack.top().c_str());
+		S->mystack->push(S->popString());
+		printf("'%s' ",S->mystack->top().c_str());
 	}
 	printf("]\n");
 }
-void menutils_StackSize(std::deque<std::string>&, std::stack<std::string>& stack) { stack.push(itos(stack.size())); }
-bool menutils_CheckStackSize(unsigned int n, std::deque<std::string>& args, std::stack<std::string>& stack) {
-	menutils_StackSize(args,stack);
-	unsigned int nstack = streamInteractor::popInt(stack);
-	if(nstack < n) {
-		args.push_front(NameSelector::barf_control+" Insufficient Arguments ["+itos(n-nstack)+"]");
-		return false;
-	}
-	return true;
+
+void menutils_StackSize(StreamInteractor* S) {
+	S->mystack->push(itos(S->mystack->size()));
 }
-void menutils_Drop(std::deque<std::string>& args, std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(1,args,stack))
+
+void menutils_Drop(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(1))
 		return;
-	stack.pop();
+	S->mystack->pop();
 }
-void menutils_Dup(std::deque<std::string>& args, std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(1,args,stack))
+
+void menutils_Dup(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(1))
 		return;
-	stack.push(stack.top());
+	S->mystack->push(S->mystack->top());
 }
-void menutils_DropN(std::deque<std::string>& args, std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(1,args,stack))
+
+void menutils_DropN(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(1))
 		return;
-	unsigned int n = streamInteractor::popInt(stack);
-	if(!menutils_CheckStackSize(n,args,stack))
+	unsigned int n = S->popInt();
+	if(!S->menutils_CheckStackSize(n))
 		return;
 	while(n--)
-		stack.pop();
+		S->mystack->pop();
 }
-void menutils_ClearStack(std::deque<std::string>&, std::stack<std::string>& stack) { while(!stack.empty()) stack.pop(); }
-void menutils_Swap(std::deque<std::string>& args, std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(2,args,stack))
-		return;
-	std::string a = streamInteractor::popString(stack);
-	std::string b = streamInteractor::popString(stack);
-	stack.push(a);
-	stack.push(b);
+
+void menutils_ClearStack(StreamInteractor* S) {
+	while(!S->mystack->empty())
+		S->mystack->pop();
 }
-void menutils_Rot(std::deque<std::string>& args, std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(1,args,stack))
+
+void menutils_Swap(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(2))
 		return;
-	unsigned int n = streamInteractor::popInt(stack);
-	if(!n || !menutils_CheckStackSize(n,args,stack))
+	std::string a = S->popString();
+	std::string b = S->popString();
+	S->mystack->push(a);
+	S->mystack->push(b);
+}
+
+void menutils_Rot(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(1))
+		return;
+	unsigned int n = S->popInt();
+	if(!n || !S->menutils_CheckStackSize(n))
 		return;
 	for(unsigned int i=0; i<n-1; i++)
-		args.push_front(streamInteractor::popString(stack));
-	std::string s = streamInteractor::popString(stack);
+		S->mydeque->push_front(S->popString());
+	std::string s = S->popString();
 	for(unsigned int i=0; i<n-1; i++)
-		stack.push(streamInteractor::popString(args));
-	stack.push(s);
+		S->mystack->push(S->popStringD());
+	S->mystack->push(s);
 }
-void menutils_Select(std::deque<std::string>& args, std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(3,args,stack))
+
+void menutils_Select(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(3))
 		return;
-	std::string c = streamInteractor::popString(stack);
-	std::string b = streamInteractor::popString(stack);
-	std::string a = streamInteractor::popString(stack);
+	std::string c = S->popString();
+	std::string b = S->popString();
+	std::string a = S->popString();
 	if(c == "true" || atof(c.c_str()))
-		stack.push(a);
+		S->mystack->push(a);
 	else
-		stack.push(b);
+		S->mystack->push(b);
 }
-void menutils_Exec(std::deque<std::string>& args, std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(1,args,stack))
+
+void menutils_Exec(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(1))
 		return;
-	std::vector<std::string> v = split(streamInteractor::popString(stack));
+	std::vector<std::string> v = split(S->popString());
 	while(v.size()) {
-		args.push_front(v.back());
+		S->mydeque->push_front(v.back());
 		v.pop_back();
 	}
 }
-void menutils_Barf(std::deque<std::string>& args, std::stack<std::string>&) { args.push_front(NameSelector::barf_control); }
-void menutils_Exit(std::deque<std::string>& args, std::stack<std::string>&) { args.push_front(NameSelector::exit_control); }
 
+void menutils_Barf(StreamInteractor* S) {
+	S->mydeque->push_front(NameSelector::barf_control);
+}
 
+void menutils_Exit(StreamInteractor* S) {
+	S->mydeque->push_front(NameSelector::exit_control);
+}

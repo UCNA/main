@@ -1,5 +1,5 @@
 #ifndef PLOTMAKERS_HH
-#define PLOTMAKERS_HH 1
+#define PLOTMAKERS_HH
 
 #include <TCanvas.h>
 #include "EnergyCalibrator.hh"
@@ -29,8 +29,8 @@ public:
 	/// compare nPE between to PMTCalibrators
 	void npeDiffPlot(const PMTCalibrator& P1, const PMTCalibrator& P2);
 	
-	float rscale; 		//< extra radius to plot beyond edge of measured area
-	unsigned int nbin;	//< number of position bins
+	float rscale; 		///< extra radius to plot beyond edge of measured area
+	unsigned int nbin;	///< number of position bins
 	
 protected:
 	/// generate new position histogram

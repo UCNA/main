@@ -1,5 +1,5 @@
 #ifndef SEGMENTSAVER_HH
-#define SEGMENTSAVER_HH 1
+#define SEGMENTSAVER_HH
 
 #include "OutputManager.hh"
 #include <TH1.h>
@@ -40,20 +40,20 @@ public:
 	/// check if this is equivalent layout to another SegmentSaver
 	virtual bool isEquivalent(const SegmentSaver& S) const;
 	
-	bool ignoreMissingHistos;	//< whether to quietly ignore missing histograms in input file
+	bool ignoreMissingHistos;	///< whether to quietly ignore missing histograms in input file
 	
 	
 	// ----- Subclass me! ----- //
 	
 	/// create a new instance of this object (cloning self settings) for given directory
-	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { smassert(false); return NULL; }
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) = 0;
 	/// virtual routine for generating output plots
 	virtual void makePlots() {}
 	/// virtual routine for generating calculated hists
 	virtual void calculateResults() { isCalculated = true; }
 	
-	TFile* fIn;									//< input file to read in histograms from
-	std::string inflname;						//< where to look for input file
+	TFile* fIn;									///< input file to read in histograms from
+	std::string inflname;						///< where to look for input file
 	bool isCalculated;	
 	
 protected:
@@ -61,8 +61,8 @@ protected:
 	/// attempt to load histogram from input file
 	TH1* tryLoad(const std::string& hname);
 	
-	std::map<std::string,TH1*> saveHists;		//< saved histograms
-	double inflAge;								//< age of input file [s]; 0 for brand-new files
+	std::map<std::string,TH1*> saveHists;		///< saved histograms
+	double inflAge;								///< age of input file [s]; 0 for brand-new files
 };
 
 #endif

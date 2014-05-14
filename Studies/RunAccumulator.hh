@@ -1,5 +1,5 @@
 #ifndef RUNACCUMULATOR_HH
-#define RUNACCUMULATOR_HH 1
+#define RUNACCUMULATOR_HH
 
 #include "SegmentSaver.hh"
 #include "Enums.hh"
@@ -8,6 +8,7 @@
 #include "ProcessedDataScanner.hh"
 #include "G4toPMT.hh"
 #include "Octet.hh"
+#include "AnalysisDB.hh"
 #include <TRandom3.h>
 
 class AnalyzerPlugin;
@@ -35,14 +36,14 @@ public:
 	/// scale by a constant
 	void operator*=(double c);
 	
-	std::string baseName;	//< base naming convention
-	std::string baseTitle;	//< title naming convention
-	TH1* h[2];				//< background, foreground pair
-	AFPState afp;			//< AFP state for data (determines which time to use for BG subtraction)
-	Side mySide;			//< side for data
-	bool doSubtraction;		//< whether to do background subtraction
-	bool doTimeScale;		//< whether to scale the BG by relative time for subtraction
-	bool isSubtracted;		//< whether this pair is already background-subtracted
+	std::string baseName;	///< base naming convention
+	std::string baseTitle;	///< title naming convention
+	TH1* h[2];				///< background, foreground pair
+	AFPState afp;			///< AFP state for data (determines which time to use for BG subtraction)
+	Side mySide;			///< side for data
+	bool doSubtraction;		///< whether to do background subtraction
+	bool doTimeScale;		///< whether to scale the BG by relative time for subtraction
+	bool isSubtracted;		///< whether this pair is already background-subtracted
 };
 
 class RunAccumulator: public SegmentSaver, private NoCopy {
@@ -83,8 +84,6 @@ public:
 	float getTotalCounts(AFPState afp, GVState gv) const { return totalCounts[afp][gv]; }
 	/// get time contributed from given rumber
 	float getRunTime(RunNum rn) const { return runTimes[rn]; }
-	/// save rates summary for core histograms to qOut
-	void makeRatesSummary();
 	/// write to QFile
 	virtual void write(std::string outName = "");
 	
@@ -103,13 +102,13 @@ public:
 	/// perform background subtraction
 	virtual void bgSubtractAll();
 	
-	AFPState currentAFP;			//< current state of AFP during data scanning
-	GVState currentGV;				//< current foreground/background status during data scanning
-	bool needsSubtraction;			//< whether background subtraction is pending
-	bool isSimulated;				//< flag for whether this is based on simulated data
-	int depth;						//< octet division depth
+	AFPState currentAFP;			///< current state of AFP during data scanning
+	GVState currentGV;				///< current foreground/background status during data scanning
+	bool needsSubtraction;			///< whether background subtraction is pending
+	bool isSimulated;				///< flag for whether this is based on simulated data
+	RunGrouping grouping;			///< octet grouping type
 	
-	TagCounter<RunNum> runCounts;	//< type-0 event counts by run, for re-simulation
+	TagCounter<RunNum> runCounts;	///< type-0 event counts by run, for re-simulation
 	
 	/// set current AFP, GV state
 	void setCurrentState(AFPState afp, GVState gv);
@@ -117,8 +116,6 @@ public:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// calculate results from filled histograms
 	virtual void calculateResults();
-	/// upload results to analysis DB
-	virtual void uploadAnaResults();
 	/// make plots from each plugin
 	virtual void makePlots();
 	/// run calculations and plots, save output files
@@ -132,13 +129,16 @@ public:
 	
 	/// location of errorbar estimates for low-rate histograms
 	virtual std::string estimatorHistoLocation() const { return processedLocation; }
-	static std::string processedLocation;		//< processed data location global variable for background estimation
+	static std::string processedLocation;		///< processed data location global variable for background estimation
 
 	
-	std::map<std::string,fgbgPair*> fgbgHists;	//< background-subtractable quantities
-	float totalCounts[AFP_OTHER+1][GV_OPEN+1];	//< total type-0 event counts by [flipper][fg/bg], for re-simulation
-	BlindTime totalTime[AFP_OTHER+1][GV_OPEN+1];//< total time for [flipper][fg/bg]
-	TagCounter<RunNum> runTimes;				//< time spent on each run
+	std::map<std::string,fgbgPair*> fgbgHists;	///< background-subtractable quantities
+	float totalCounts[AFP_OTHER+1][GV_OPEN+1];	///< total type-0 event counts by [flipper][fg/bg], for re-simulation
+	BlindTime totalTime[AFP_OTHER+1][GV_OPEN+1];///< total time for [flipper][fg/bg]
+	TagCounter<RunNum> runTimes;				///< time spent on each run
+	
+	/// create a new instance of this object (cloning self settings) for given directory
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new RunAccumulator(this,nm,inflname); }
 	
 	/// make a simulation clone (using simulation data from simData) of analyzed data in directory basedata; return number of cloned pulse-pairs
 	unsigned int simuClone(const std::string& basedata, Sim2PMT& simData, double simfactor = 1., double replaceIfOlder = 0., bool doPlots = true, bool doCompare = true);
@@ -151,12 +151,24 @@ public:
 	/// copy times from another RunAccumulator (for simulations)
 	void copyTimes(const RunAccumulator& RA);
 	
-	bool simPerfectAsym;	//< whether to simulate "perfect" asymmetry by re-using simulation events
+	bool simPerfectAsym;	///< whether to simulate "perfect" asymmetry by re-using simulation events
+	
+	/// store AnalysisDB number for uploading
+	void uploadAnaNumber(AnaNumber& AN, GVState g = GV_OTHER, AFPState a = AFP_OTHER);
+	/// upload results to analysis DB
+	virtual void uploadAnaResults();
+	
+	static std::string AnaDB_xtag;	//< optional extra tag for AnalysisDB entries
 	
 protected:
+
+	/// get AnalysisDB run set ID matching this analyzer
+	unsigned int get_ADB_Runset_ID(GVState g = GV_OTHER, AFPState a = AFP_OTHER);
+	unsigned int AR_IDs[GV_OTHER+1][AFP_OTHER+1];				///< analysis DB ID numbers for various run sets
+	std::vector<AnaNumber> anaResults[GV_OTHER+1][AFP_OTHER+1];	///< analysis results in each GV/AFP category
 	
-	std::map<std::string,AnalyzerPlugin*> myPlugins;	//< analysis plugins
-	static TRandom3 rnd_source;							//< random number source
+	std::map<std::string,AnalyzerPlugin*> myPlugins;	///< analysis plugins
+	static TRandom3 rnd_source;							///< random number source
 	
 	/// get matching RunAccumulator with "master" histograms for estimating error bars on low-counts bins
 	RunAccumulator* getErrorEstimator();
@@ -172,37 +184,37 @@ public:
 	/// create or load a FG/BG TH1F* set
 	fgbgPair* registerFGBGPair(const std::string& hname, const std::string& title,
 							   unsigned int nbins, float xmin, float xmax,
-							   AFPState a = AFP_OTHER, Side s = BOTH) { return myA->registerFGBGPair(hname,title,nbins,xmin,xmax,a,s); }
+							   AFPState a = AFP_OTHER, Side s = BOTH);
 	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
-	fgbgPair* registerFGBGPair(const TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH) { return myA->registerFGBGPair(hTemplate,a,s); }
+	fgbgPair* registerFGBGPair(const TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH);
 	/// save canvas image
 	void printCanvas(std::string fname, std::string suffix=".pdf") const { myA->printCanvas(fname,suffix); }
 	
-	std::string name;				//< plugin name
-	RunAccumulator* myA;			//< RunAccumulator with which this plugin is associated
-	AFPState currentAFP;			//< current state of AFP during data scanning
-	GVState currentGV;				//< current foreground/background status during data scanning
+	std::string name;				///< plugin name
+	RunAccumulator* myA;			///< RunAccumulator with which this plugin is associated
+	AFPState currentAFP;			///< current state of AFP during data scanning
+	GVState currentGV;				///< current foreground/background status during data scanning
 	
 	/// virtual routine for filling core histograms from data point
-	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight) {}
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight) = 0;
 	
 	/// generate output plots
 	virtual void makePlots() {}
 	/// generate calculated hists
 	virtual void calculateResults() {}
-	/// upload results to analysis DB
-	virtual void uploadAnaResults() {}
 	/// virtual routine for MC/Data comparison plots/calculations
 	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
-	virtual void compareMCtoData(AnalyzerPlugin* AP) {}
+	virtual void compareMCtoData(AnalyzerPlugin*) {}
+
+protected:
+	std::vector<fgbgPair*> myHists;	///< histograms registered by this plugin
+	
+	/// upload summary of histogram rates to AnalysisDB
+	void makeRatesSummary();
 };
 
-/// process one pulse-pair worth of data
-unsigned int processPulsePair(RunAccumulator& RA, const Octet& PP);
-
 /// process a set of octets; return number of processed pulse-pairs
-unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& O, double replaceIfOlder = 0,
-						   bool doPlots = true, unsigned int oMin = 0, unsigned int oMax = 10000);
+unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& O, double replaceIfOlder = 0, bool doPlots = true);
 /// re-process a set of octets using previously booked histograms; return number of processed pulse-pairs
 unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bool doPlots);
 

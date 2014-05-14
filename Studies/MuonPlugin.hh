@@ -1,5 +1,5 @@
 #ifndef MUONANALYZER_HH
-#define MUONANALYZER_HH 1
+#define MUONANALYZER_HH
 
 #include "OctetAnalyzer.hh"
 
@@ -16,12 +16,12 @@ public:
 	/// output plot generation
 	virtual void makePlots();
 	
-	unsigned int nEnergyBins;		//< number of bins for energy histograms
-	double energyMax;				//< energy range for energy histograms
-	quadHists* qMuonSpectra[2][2];	//< muon-veto event energy for [side][subtracted]
-	quadHists* qBackMuons[2][2];	//< back-veto tagged muon spectrum for [side][subtracted]
-	fgbgPair* pMuonPos[2];			//< muon event positions
-	fgbgPair* pBackMuPos[2];		//< backing veto muon event positions
+	unsigned int nEnergyBins;		///< number of bins for energy histograms
+	double energyMax;				///< energy range for energy histograms
+	quadHists* qMuonSpectra[2][2];	///< muon-veto event energy for [side][subtracted]
+	quadHists* qBackMuons[2][2];	///< back-veto tagged muon spectrum for [side][subtracted]
+	fgbgPair* pMuonPos[2];			///< muon event positions
+	fgbgPair* pBackMuPos[2];		///< backing veto muon event positions
 };
 
 #endif

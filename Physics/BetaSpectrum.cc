@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <TMath.h>
 #include <vector>
+#include <cassert>
 #include <map>
 #include "SMExcept.hh"
 
@@ -62,7 +63,7 @@ double sumCoeffs(const std::vector<coeff3>& coeffs, double x=1.0, double y=1.0, 
 }
 
 /// definition of \gamma in [1]
-double WilkinsonGamma(double Z = 1.) { return sqrt(1-(alpha*Z)*(alpha*Z)); }
+double WilkinsonGamma(double Z = 1.) { return sqrt(1-(fs_alpha*Z)*(fs_alpha*Z)); }
 
 double WilkinsonF_PowerSeries(double Z, double W, double R) {
 	// set up coeffs
@@ -83,14 +84,14 @@ double WilkinsonF_PowerSeries(double Z, double W, double R) {
 	double p = sqrt(W*W-1);
 	double gm = WilkinsonGamma(Z);
 	double z = TMath::Gamma(2.*gm+1.);
-	return 2.*(gm+1.)/(z*z)*pow(2*R,2*(gm-1))*sumCoeffs(coeffs,alpha*Z,W/p,log(p));
+	return 2.*(gm+1.)/(z*z)*pow(2*R,2*(gm-1))*sumCoeffs(coeffs,fs_alpha*Z,W/p,log(p));
 }
 
 /// approximation to |Gamma(gm+iaZW/p)|^2, as per [3] eq. 1
 double WilkinsonGammaMagSquaredApprox(double Z, double W, unsigned int N) {
 	double s = 0;
 	double gm = WilkinsonGamma(Z);
-	double y = alpha*Z*W/sqrt(W*W-1);
+	double y = fs_alpha*Z*W/sqrt(W*W-1);
 	double Ngm = N+gm;
 	double a = (N+1.)/Ngm;
 	double y1 = a*y;
@@ -106,13 +107,13 @@ double F_approx(double W, double Z, double R, bool fullterms) {
 	if(W<=1) return 1;
 	double F = 1;
 	double p = sqrt(W*W-1.);
-	double azn = alpha*Z;
+	double azn = fs_alpha*Z;
 	double x = 11./4.-gamma_euler-log(2*p*R);
 	F += azn*(M_PI*W/p);
 	if(!fullterms) return F;
-	azn *= alpha*Z;
+	azn *= fs_alpha*Z;
 	F += azn*(x+M_PI*M_PI*W*W/(3.*p*p));
-	azn *= alpha*Z;
+	azn *= fs_alpha*Z;
 	F += azn*(M_PI*W/p*x);
 	return F<20?F:20;
 }
@@ -123,7 +124,7 @@ double WilkinsonF0(double Z, double W, double R, unsigned int N) {
 	double gm = WilkinsonGamma(Z);
 	double GMi = 1./TMath::Gamma(2*gm+1);
 	double p = sqrt(W*W-1.);
-	double F0 = 4.*pow(2.*p*R,2.*gm-2.)*GMi*GMi*exp(M_PI*Z*alpha*W/p)*WilkinsonGammaMagSquaredApprox(Z,W,N);
+	double F0 = 4.*pow(2.*p*R,2.*gm-2.)*GMi*GMi*exp(M_PI*Z*fs_alpha*W/p)*WilkinsonGammaMagSquaredApprox(Z,W,N);
 	return F0<1e3?F0:0;
 }
 
@@ -213,34 +214,34 @@ double WilkinsonL0(double Z, double W, double R) {
 	if(!aiZ.count(Z)) {
 		std::vector<coeff1> aiZi;
 		for(unsigned int i=0; i<6; i++)
-			aiZi.push_back(coeff1(i,sumCoeffs(ai[i],alpha*Z)));
+			aiZi.push_back(coeff1(i,sumCoeffs(ai[i],fs_alpha*Z)));
 		aiZ.insert(std::make_pair(Z,aiZi));
-		aminus1Z.insert(std::make_pair(Z,sumCoeffs(aminus1,alpha*Z)));
+		aminus1Z.insert(std::make_pair(Z,sumCoeffs(aminus1,fs_alpha*Z)));
 	}
 	
 	if(W<=1)
 		return 0;
 	
 	double gm = WilkinsonGamma(Z);
-	double L0 = (1.+13.*(alpha*Z)*(alpha*Z)/60.-W*R*alpha*Z*(41.-26.*gm)/(15.*(2.*gm-1.))
-				 -alpha*Z*R*gm*(17.-2.*gm)/(30.*W*(2.*gm-1.))
+	double L0 = (1.+13.*(fs_alpha*Z)*(fs_alpha*Z)/60.-W*R*fs_alpha*Z*(41.-26.*gm)/(15.*(2.*gm-1.))
+				 -fs_alpha*Z*R*gm*(17.-2.*gm)/(30.*W*(2.*gm-1.))
 				 +aminus1Z[Z]*R/W+sumCoeffs(aiZ[Z],W*R)
-				 +0.41*(R-0.0164)*pow(alpha*Z,4.5) );
+				 +0.41*(R-0.0164)*pow(fs_alpha*Z,4.5) );
 	
 	return L0==L0?L0*2./(1.+gm):0;
 }
 
 double WilkinsonVC(double Z, double W, double W0, double R) {
 	double gm = WilkinsonGamma(Z);
-	return (1.-233.*alpha*Z*alpha*Z/630.-W0*R*W0*R/5.-6*W0*R*alpha*Z/35.
-			+(-13.*R*alpha*Z/35.+4.*W0*R*R/15.)*W
-			+(2.*gm*W0*R*R/15.+gm*R*alpha*Z/70.)/W
+	return (1.-233.*fs_alpha*Z*fs_alpha*Z/630.-W0*R*W0*R/5.-6*W0*R*fs_alpha*Z/35.
+			+(-13.*R*fs_alpha*Z/35.+4.*W0*R*R/15.)*W
+			+(2.*gm*W0*R*R/15.+gm*R*fs_alpha*Z/70.)/W
 			-4*R*R/15.*W*W);
 }
 
 double WilkinsonAC(double Z, double W, double W0, double R) {
-	return (1.-233.*alpha*Z*alpha*Z/630.-W0*R*W0*R/5.+2*W0*R*alpha*Z/35.
-			+(-21.*R*alpha*Z/35.+4.*W0*R*R/9.)*W
+	return (1.-233.*fs_alpha*Z*fs_alpha*Z/630.-W0*R*W0*R/5.+2*W0*R*fs_alpha*Z/35.
+			+(-21.*R*fs_alpha*Z/35.+4.*W0*R*R/9.)*W
 			-4.*R*R/9.*W*W);
 }
 
@@ -250,7 +251,7 @@ double CombinedC(double Z, double W, double M2_F, double M2_GT, double W0, doubl
 
 double WilkinsonQ(double, double W, double W0, double M) {
 	double B = (1.-lambda)/(1.+3.*lambda*lambda);
-	return 1.-M_PI*alpha/(M*sqrt(W*W-1))*(1+B*(W0-W)/(3.*W));
+	return 1.-M_PI*fs_alpha/(M*sqrt(W*W-1))*(1+B*(W0-W)/(3.*W));
 }
 
 
@@ -277,7 +278,7 @@ double Sirlin_g_a2pi(double KE,double KE0,double m) {
 			+4.*(athb/b-1.)*((E0-E)/(3.*E)-3./2.+log(2.*(E0-E)/m))
 			+4./b*SpenceL(2.*b/(1.+b))
 			+athb/b*(2.*(1.+b*b)+(E0-E)*(E0-E)/(6.*E*E)-4.*athb)
-			)*alpha/(2.*M_PI);
+			)*fs_alpha/(2.*M_PI);
 }
 
 double shann_h_a2pi(double KE, double KE0, double m) {
@@ -290,7 +291,7 @@ double shann_h_a2pi(double KE, double KE0, double m) {
 	return (3.*log(m_p/m)-3./4.
 			+ 4.*(athb/b-1.)*((E0-E)/(3.*E*b*b)+(E0-E)*(E0-E)/(24*E*E*b*b)-3./2.+log(2.*(E0-E)/m))
 			+ 4./b*SpenceL(2.*b/(1.+b))+4*athb/b*(1-athb)
-			)*alpha/(2.*M_PI);
+			)*fs_alpha/(2.*M_PI);
 }
 
 double Wilkinson_g_a2pi(double W, double W0, double M) {
@@ -302,7 +303,7 @@ double Wilkinson_g_a2pi(double W, double W0, double M) {
 				+4.*(athb/b-1.)*((W0-W)/(3.*W)-3./2.+log(2))
 				+4./b*SpenceL(2.*b/(1.+b))
 				+athb/b*(2.*(1.+b*b)+(W0-W)*(W0-W)/(6.*W*W)-4.*athb)
-				)*alpha/(2.*M_PI)+pow((W0-W),2*alpha/M_PI*(athb/b-1.))-1.;
+				)*fs_alpha/(2.*M_PI)+pow((W0-W),2*fs_alpha/M_PI*(athb/b-1.))-1.;
 	return g==g?g:0;
 }
 
@@ -325,8 +326,8 @@ double neutronCorrectedBetaSpectrum(double KE) {
 
 double Davidson_C1T(double W, double W0, double Z, double R) {
 	double p = sqrt(W*W-1);
-	double y = alpha*Z*W/p;
-	double a2Z2 = alpha*alpha*Z*Z;
+	double y = fs_alpha*Z*W/p;
+	double a2Z2 = fs_alpha*fs_alpha*Z*Z;
 	double S0 = sqrt(1-a2Z2);
 	double S1 = sqrt(4-a2Z2);
 	const double C = pow(TMath::Gamma(0.25),2)/sqrt(8*M_PI*M_PI*M_PI); // "Gauss number"
@@ -343,10 +344,12 @@ double Langer_Cs137_C2T(double W, double W0) {
 	return (W0-W)*(W0-W)+k*(W*W-1);
 }
 
-double Behrens_l2(double W, double W0, double Z, double R) {
+// "lambda_2" Coulomb correction used in Behrens_Cs137_C()... TODO: where did I get this??
+// ?? Behrens, Buhring, "Electron radial wave functions and nuclear beta decay", Clarendon Press, Oxford, 1982
+double Behrens_lambda_2(double W, double W0, double Z, double R) {
 	double p = sqrt(W*W-1);
-	double y = alpha*Z*W/p;
-	double a2Z2 = alpha*alpha*Z*Z;
+	double y = fs_alpha*Z*W/p;
+	double a2Z2 = fs_alpha*fs_alpha*Z*Z;
 	double S0 = sqrt(1-a2Z2);
 	double S1 = sqrt(4-a2Z2);
 	const double C = pow(TMath::Gamma(0.25),2)/sqrt(8*M_PI*M_PI*M_PI); // "Gauss number"
@@ -356,15 +359,16 @@ double Behrens_l2(double W, double W0, double Z, double R) {
 		   pow(2*p*R,a2Z2/2) * (pow(1-a2Z2/4,2)+y*y) * (1-a2Z2*C/2+a2Z2*y*y*sm/2) );
 }
 
+// Equation 4 from H. Berens and P. CHristmas, "The Beta Decay of 137Cs," Nucl. Phys. A 399, 1983, p.131--140
 double Behrens_Cs137_C(double W, double W0) {
 	double q2 = (W0-W)*(W0-W);
 	double p2 = W*W-1;
-	double l2 = Behrens_l2(W,W0,56,pow(137,1./3.)*neutron_R0);
+	double l2 = Behrens_lambda_2(W,W0,56,pow(137,1./3.)*neutron_R0);
 	double a1 = 0.000346865*q2 + 0.00331725*l2*p2 - 0.000050327*q2*W + 0.000155636*l2*p2*W + 0.000114834*q2/W;
 	double a2 = -0.00427141*q2 - 0.00645269*l2*p2 + 0.000063321*q2*W - 0.000913829*l2*p2*W - 0.000566409*q2/W + 0.0000576232*l2*p2/W;
 	double a3 =   0.0131499*q2 + 0.00313793*l2*p2 + 0.00151806*q2*W  + 0.000741562*l2*p2*W - 0.000865957*q2/W - 0.000272219*l2*p2/W;
 	double x = 1.07;
-	return a1+a2*x+a3*x*x;
+	return a1 + a2*x + a3*x*x;
 }
 
 //-----------------------------------------------------//
@@ -388,14 +392,20 @@ double BetaSpectrumGenerator::spectrumCorrectionFactor(double W) const {
 	if(forbidden==1 && M2_GT>0 && M2_F==0)
 		c *= Davidson_C1T(W, W0, Z, R);
 	// Cs137 second-forbidden decay
-	if(forbidden==2 && A==137)
-		c *= Behrens_Cs137_C(W, W0);
+	if(forbidden==2 && A==137) {
+		//double cc = Behrens_Cs137_C(W, W0); // TODO unbreak this one
+		double cc = Langer_Cs137_C2T(W,W0);
+		assert(cc>=0);
+		c *= cc;
+	}
 	
+	assert(c>=0);
 	return c;
 }
 
 double BetaSpectrumGenerator::decayProb(double KE) const {
 	double W = (KE+m_e)/m_e;
+	if(W<1 || W>W0) return 0;
 	return plainPhaseSpace(W,W0)*spectrumCorrectionFactor(W);
 }
 
@@ -408,7 +418,7 @@ double shann_h_minus_g_a2pi(double W, double W0) {
 	double b = sqrt(W*W-1)/W;
 	double athb = atanh(b);
 	return ( 4.*(athb/b-1.)*(1/(b*b)-1)*(W0-W)/(3*W)*(1+(W0-W)/(8*W))
-			+athb/b*(2.-2.*b*b) - (W0-W)*(W0-W)/(6.*W*W) )*alpha/(2.*M_PI);
+			+athb/b*(2.-2.*b*b) - (W0-W)*(W0-W)/(6.*W*W) )*fs_alpha/(2.*M_PI);
 }
 
 double WilkinsonACorrection(double W) {

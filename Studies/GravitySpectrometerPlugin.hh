@@ -1,5 +1,5 @@
 #ifndef GRAVITYSPECTROMETER_HH
-#define GRAVITYSPECTROMETER_HH 1
+#define GRAVITYSPECTROMETER_HH
 
 #include "OctetAnalyzer.hh"
 
@@ -16,12 +16,12 @@ public:
 	/// output plot generation
 	virtual void makePlots();
 	
-	quadHists* qTime;			//< event positions, by height and time
-	quadHists* qHeight;			//< event positions height
+	quadHists* qTime;			///< event positions, by height and time
+	quadHists* qHeight;			///< event positions height
 	
-	TH1* hAFPRat;				//< AFP off/on ratio vs position
-	TH1* timeProf[AFP_ON+1];	//< time profiles by [afp]
-	TH1* hTimeRat;				//< afp off/on counts vs time
+	TH1* hAFPRat;				///< AFP off/on ratio vs position
+	TH1* timeProf[AFP_ON+1];	///< time profiles by [afp]
+	TH1* hTimeRat;				///< afp off/on counts vs time
 	std::vector<TH1F*> timeSlices[AFP_ON+1];
 	TGraphErrors* timeEvol[AFP_ON+1];
 	

@@ -1,5 +1,5 @@
 #ifndef SOURCEDBSQL_HH
-#define SOURCEDBSQL_HH 1
+#define SOURCEDBSQL_HH
 
 #include "Enums.hh"
 #include "SQL_Utils.hh"

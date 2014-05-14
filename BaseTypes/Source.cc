@@ -43,21 +43,33 @@ std::string Source::lxname() const {
 	return t;
 }
 
-std::vector<SpectrumPeak> Source::getPeaks() const {
+std::vector<SpectrumPeak> Source::getPeaks(EventType tp) const {
 	std::vector<SpectrumPeak> v;
-	if(t=="Sn113")
-		v.push_back(SpectrumPeak(SN_PEAK,sID,mySide));
-	if(t=="Cd109")
-		v.push_back(SpectrumPeak(CD109_PEAK,sID,mySide));
-	if(t=="Cs137")
-		v.push_back(SpectrumPeak(CS137_PEAK,sID,mySide));
-	if(t=="In114" || t=="In114E" || t=="In114W")
-		v.push_back(SpectrumPeak(IN114_PEAK,sID,mySide));
-	if(t=="Ce139")
-		v.push_back(SpectrumPeak(CE139_PEAK,sID,mySide));
-	if(t=="Bi207") {
-		v.push_back(SpectrumPeak(BI_PEAK_1,sID,mySide));
-		v.push_back(SpectrumPeak(BI_PEAK_2,sID,mySide));
+	if(tp==TYPE_0_EVENT) {
+		if(t=="Sn113")
+			v.push_back(SpectrumPeak(SN_PEAK,sID,mySide));
+		if(t=="Cd109")
+			v.push_back(SpectrumPeak(CD109_PEAK,sID,mySide));
+		if(t=="Cs137")
+			v.push_back(SpectrumPeak(CS137_PEAK,sID,mySide));
+		if(t=="In114" || t=="In114E" || t=="In114W")
+			v.push_back(SpectrumPeak(IN114_PEAK,sID,mySide));
+		if(t=="Ce139")
+			v.push_back(SpectrumPeak(CE139_PEAK,sID,mySide));
+		if(t=="Bi207") {
+			v.push_back(SpectrumPeak(BI_PEAK_1,sID,mySide));
+			v.push_back(SpectrumPeak(BI_PEAK_2,sID,mySide));
+		}
+	} else if(tp==TYPE_I_EVENT) {
+		if(t=="Bi207") {
+			v.push_back(SpectrumPeak(BI_T1_PEAK_1, sID, mySide));
+			v.push_back(SpectrumPeak(BI_T1_PEAK_2, sID, mySide));
+			v.push_back(SpectrumPeak(BI_T1_COINC, sID, mySide));
+		}
+		if(t=="Sn113")
+			v.push_back(SpectrumPeak(SN_T1_PEAK,sID,mySide));
+		if(t=="Cs137")
+			v.push_back(SpectrumPeak(CS137_T1_PEAK,sID,mySide));
 	}
 	return v;
 }

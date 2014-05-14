@@ -1,5 +1,5 @@
 #ifndef SIM2PMT_HH
-#define SIM2PMT_HH 1
+#define SIM2PMT_HH
 
 #include "PMTGenerator.hh"
 #include "ProcessedDataScanner.hh"
@@ -20,9 +20,9 @@ public:
 	
 protected:	
 	/// calculate offset based on primary position
-	virtual void calcOffset(const Sim2PMT& S) {}
+	virtual void calcOffset(const Sim2PMT&) {}
 	
-	double offPos[2];		//< position offset to apply
+	double offPos[2];		///< position offset to apply
 };
 
 /// set positions for source droplet
@@ -33,9 +33,9 @@ public:
 	/// calculate offset based on primary position
 	virtual void calcOffset(const Sim2PMT& S);
 	
-	double x0;	//< x position center
-	double y0;	//< y position center
-	double r0;	//< spot radius
+	double x0;	///< x position center
+	double y0;	///< y position center
+	double r0;	///< spot radius
 };
 
 
@@ -84,47 +84,47 @@ public:
 	/// Type I initial hit side determination --- needed in subclass
 	virtual Side getFirstScint() const { return time[EAST]<time[WEST] ? EAST:WEST; }
 	
-	PMTGenerator PGen[BOTH];		//< PMT simulator for each side
-	SimPositioner* SP;				//< optional postion modifier
-	bool reSimulate;				//< whether to re-simulate energy or use "raw" values
-	bool fakeClip;					//< whether to fake clipping on wirechamber entrance edge
-	bool weightAsym;				//< whether to weight simulated events by beta asymmetry
-	double basePhysWeight;			//< event weight multiplier
-	Side simSide;					//< which side to simulate events for (default BOTH)
+	PMTGenerator PGen[BOTH];		///< PMT simulator for each side
+	SimPositioner* SP;				///< optional postion modifier
+	bool reSimulate;				///< whether to re-simulate energy or use "raw" values
+	bool fakeClip;					///< whether to fake clipping on wirechamber entrance edge
+	bool weightAsym;				///< whether to weight simulated events by beta asymmetry
+	double basePhysWeight;			///< event weight multiplier
+	Side simSide;					///< which side to simulate events for (default BOTH)
 	
-	double eQ[BOTH];						//< Scintillator quenched energy [keV]
-	double eDep[BOTH];						//< Scintillator deposited energy [keV]
-	double eW[BOTH];						//< Wirechamber active volume deposited energy [keV]
-	double scintPos[BOTH][Z_DIRECTION+1];	//< hit position in scintillator [mm in decay trap]
-	double mwpcPos[BOTH][Z_DIRECTION+1];	//< hit position in MWPC
-	double primPos[Z_DIRECTION+2];			//< primary event vertex position (4=radius)
-	double time[BOTH];						//< hit time [s] in each scintillator
-	double costheta;						//< primary event cos pitch angle
-	Side primSide;							//< side primary event is heading towards
-	double ePrim;							//< primary event energy
+	double eQ[BOTH];						///< Scintillator quenched energy [keV]
+	double eDep[BOTH];						///< Scintillator deposited energy [keV]
+	double eW[BOTH];						///< Wirechamber active volume deposited energy [keV]
+	double scintPos[BOTH][Z_DIRECTION+1];	///< hit position in scintillator [mm in decay trap]
+	double mwpcPos[BOTH][Z_DIRECTION+1];	///< hit position in MWPC
+	double primPos[Z_DIRECTION+2];			///< primary event vertex position (4=radius)
+	double time[BOTH];						///< hit time [s] in each scintillator
+	double costheta;						///< primary event cos pitch angle
+	Side primSide;							///< side primary event is heading towards
+	double ePrim;							///< primary event energy
 	
-	double edepFoils[BOTH];			//< energy deposition [keV] in decay trap foils
-	double edepWinOut[BOTH];		//< energy deposition [keV] in outer wirechamber window
-	double edepWinIn[BOTH];			//< energy deposition [keV] in inner wirechamber window
-	double edepDeadMWPC[BOTH];		//< energy deposition [keV] in MWPC dead volume
-	double edepKevlar[BOTH];		//< energy deposition [keV] in kevlar strings
-	double edepWires[BOTH];			//< energy deposition [keV] in wire planes
-	double edepDeadScint[BOTH];		//< energy deposition [keV] in dead scintillator
-	float cath_chg[BOTH][Y_DIRECTION+1][kMaxCathodes];	//< signal on each cathode segment (portion of eW)
+	double edepFoils[BOTH];			///< energy deposition [keV] in decay trap foils
+	double edepWinOut[BOTH];		///< energy deposition [keV] in outer wirechamber window
+	double edepWinIn[BOTH];			///< energy deposition [keV] in inner wirechamber window
+	double edepDeadMWPC[BOTH];		///< energy deposition [keV] in MWPC dead volume
+	double edepKevlar[BOTH];		///< energy deposition [keV] in kevlar strings
+	double edepWires[BOTH];			///< energy deposition [keV] in wire planes
+	double edepDeadScint[BOTH];		///< energy deposition [keV] in dead scintillator
+	float cath_chg[BOTH][Y_DIRECTION+1][kMaxCathodes];	///< signal on each cathode segment (portion of eW)
 	
-	double cosThetaInFoils[BOTH];	//< entrance angle cosine to decay trap foils
-	double cosThetaInWinOut[BOTH];	//< entrance angle cosine to outer wirechamber window
-	double cosThetaInWinIn[BOTH];	//< entrance angle cosine to inner wirechamber window
-	double cosThetaInScint[BOTH];	//< entrance angle cosine to scintillator
+	double cosThetaInFoils[BOTH];	///< entrance angle cosine to decay trap foils
+	double cosThetaInWinOut[BOTH];	///< entrance angle cosine to outer wirechamber window
+	double cosThetaInWinIn[BOTH];	///< entrance angle cosine to inner wirechamber window
+	double cosThetaInScint[BOTH];	///< entrance angle cosine to scintillator
 	
-	double cosThetaOutFoils[BOTH];	//< exit angle cosine from decay trap foils
-	double cosThetaOutWinOut[BOTH];	//< exit angle cosine from outer wirechamber windo
-	double cosThetaOutWinIn[BOTH];	//< exit angle cosine from inner wirechamber window
-	double cosThetaOutScint[BOTH];	//< exit angle cosine from scintillator
+	double cosThetaOutFoils[BOTH];	///< exit angle cosine from decay trap foils
+	double cosThetaOutWinOut[BOTH];	///< exit angle cosine from outer wirechamber windo
+	double cosThetaOutWinIn[BOTH];	///< exit angle cosine from inner wirechamber window
+	double cosThetaOutScint[BOTH];	///< exit angle cosine from scintillator
 	
-	unsigned int nSimmed;			//< count of number of events simulated
-	unsigned int nToSim;			//< number of events to simulate
-	double nCounted;				//< physics-weighted number of counted events
+	unsigned int nSimmed;			///< count of number of events simulated
+	unsigned int nToSim;			///< number of events to simulate
+	double nCounted;				///< physics-weighted number of counted events
 	
 protected:
 	/// perform unit conversions, etc.
@@ -134,8 +134,8 @@ protected:
 	/// "reverse calibration" from simulated data
 	virtual void reverseCalibrate();
 	
-	AFPState afp;				//< AFP state for data
-	bool simCathodes;			//< whether to simulate cathode response
+	AFPState afp;				///< AFP state for data
+	bool simCathodes;			///< whether to simulate cathode response
 };
 
 /// mixes several simulations
@@ -170,8 +170,8 @@ protected:
 	std::vector<double> halflife;
 	std::vector<double> cumStrength;
 	Sim2PMT* currentSim;
-	double t0;	//< initial time
-	double t1;	//< current time
+	double t0;	///< initial time
+	double t1;	///< current time
 	
 };
 

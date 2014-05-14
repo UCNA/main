@@ -24,13 +24,13 @@ public:
 	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
 	virtual void compareMCtoData(AnalyzerPlugin* AP);
 	
-	quadHists* qFullEnergySpectrum[2];		//< set of histograms for extracting anode spectrum on each side
-	TH1F* hFullEnergySR;					//< super-ratio asymmetry of anode data
-	TH1F* hFullEnergySS;					//< super-sum of anode data
+	quadHists* qFullEnergySpectrum[2];		///< set of histograms for extracting anode spectrum on each side
+	TH1F* hFullEnergySR;					///< super-ratio asymmetry of anode data
+	TH1F* hFullEnergySS;					///< super-sum of anode data
 	
-	PMTGenerator PGen;						//< event simulator for threshold extraction
-	fgbgPair* pTriggerThreshold[2][2];		//< trigger threshold extraction histograms for each [side][all/trig]
-	TGraphAsymmErrors* gTrigCurve[2];		//< extracted trigger efficiency curve
+	PMTGenerator PGen;						///< event simulator for threshold extraction
+	fgbgPair* pTriggerThreshold[2][2];		///< trigger threshold extraction histograms for each [side][all/trig]
+	TGraphAsymmErrors* gTrigCurve[2];		///< extracted trigger efficiency curve
 };
 
 /// Octet analyzer using Fierz plugin

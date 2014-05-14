@@ -69,14 +69,12 @@ void MWPCGainPlugin::calculateResults() {
 	TF1 fAvg("avgFit","pol0",400,800);
 	for(Side s = EAST; s <= WEST; ++s) {
 		
-		// average gain correction
-		avgGain[s] = mwpcGaincorr->h[GV_OPEN]->GetBinContent(s+1);
-		dAvgGain[s] = mwpcGaincorr->h[GV_OPEN]->GetBinError(s+1);
-		Stringmap mGC;
-		mGC.insert("side",ctos(sideNames(s)));
-		mGC.insert("avg",avgGain[s]);
-		mGC.insert("d_avg",dAvgGain[s]);
-		myA->qOut.insert("mwpcGaincorr",mGC);
+		// average applied gain correction
+		AnaNumber AN("mwpc_avg_gaincorr");
+		AN.s = s;
+		AN.value = mwpcGaincorr->h[GV_OPEN]->GetBinContent(s+1);
+		AN.err = mwpcGaincorr->h[GV_OPEN]->GetBinError(s+1);
+		myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 		
 		// fit each scintillator energy slice and record results
 		fLandau.SetLineColor(2+2*s);
@@ -230,14 +228,12 @@ void MWPCGainPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 			lineFit.SetLineWidth(1);
 			gGain[tp]->Fit(&lineFit,"RB");
 			
-			Stringmap m;
-			m.insert("side",sideWords(s));
-			m.insert("type",itos(tp));
-			m.insert("fit_gain",lineFit.GetParameter(1));
-			m.insert("d_fit_gain",lineFit.GetParError(1));
-			m.insert("g0_avg",dat.avgGain[s]);
-			m.insert("g0_d_avg",dat.dAvgGain[s]);
-			myA->qOut.insert("mwpcGainCal",m);
+			AnaNumber AN("mwpc_gain_fit");
+			AN.s = s;
+			AN.etypes.insert(tp);
+			AN.value = lineFit.GetParameter(1);
+			AN.err = lineFit.GetParError(1);
+			myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 		}
 		
 		gGain[TYPE_0_EVENT]->SetTitle("MWPC energy calibration");

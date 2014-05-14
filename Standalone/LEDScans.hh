@@ -1,5 +1,5 @@
 #ifndef LEDSCANS_HH
-#define LEDSCANS_HH 1
+#define LEDSCANS_HH
 
 #include "ProcessedDataScanner.hh"
 #include "RollingWindow.hh"
@@ -41,7 +41,7 @@ public:
 	/// get point-excluded average
 	double getAvgExcl() const { return RW.getAvgExcl(getP()); }
 	
-	double x;	//< point to add to average
+	double x;	///< point to add to average
 	
 
 protected:
@@ -51,9 +51,9 @@ protected:
 	/// clear averaging data
 	void clear();
 	
-	const unsigned int npts;	//< half window size
-	RollingWindow RW;			//< rolling window with average
-	std::deque<double> pts; 	//< cached points for later evaluation
+	const unsigned int npts;	///< half window size
+	RollingWindow RW;			///< rolling window with average
+	std::deque<double> pts; 	///< cached points for later evaluation
 };
 
 /// Class for handling and evaluating multiple averagers
@@ -78,9 +78,9 @@ public:
 	virtual void doWithAverage() {}
 	
 protected:
-	const unsigned int npts;		//< half window width
-	unsigned int ncached;			//< counter for cached points
-	std::vector<AveragerUnit*> AUs;	//< individual averaging units
+	const unsigned int npts;		///< half window width
+	unsigned int ncached;			///< counter for cached points
+	std::vector<AveragerUnit*> AUs;	///< individual averaging units
 };
 
 
@@ -112,17 +112,17 @@ protected:
 	/// calculate correlations between PMTs based on LED
 	void PMT_LED_Correlations();
 	
-	AveragerUnit* Eavg;						//< total energy averager
-	AveragerUnit* clockAvg;					//< access to event time data
-	AveragerUnit* Tavg[2][nBetaTubes];		//< PMT energy averager
+	AveragerUnit* Eavg;						///< total energy averager
+	AveragerUnit* clockAvg;					///< access to event time data
+	AveragerUnit* Tavg[2][nBetaTubes];		///< PMT energy averager
 	/// fill histograms from average
 	virtual void doWithAverage();
 	
-	float emax;											//< maximum energy for plot ranged
-	float wmax;											//< maximum deviation from mean to consider
+	float emax;											///< maximum energy for plot ranged
+	float wmax;											///< maximum deviation from mean to consider
 	
-	unsigned int pass;					//< analysis pass
-	std::vector<unsigned int> jumps;	//< start/end of scan segments
+	unsigned int pass;					///< analysis pass
+	std::vector<unsigned int> jumps;	///< start/end of scan segments
 	/// perform data pass over segments
 	void dataPass(ProcessedDataScanner& LSS);
 	/// scan one range of points
@@ -130,19 +130,19 @@ protected:
 	/// make plot of one segment
 	void TimePlot(ProcessedDataScanner& LSS, unsigned int jn);
 	
-	TProfile* pE0;						//< master energy correction profile
-	TProfile* pEi[2][nBetaTubes];		//< individual PMT rolling average deviations
-	TH1F* hPed;							//< low-energy histogram for locating pedestal energy
-	float EZero;						//< actual pedestal location on energy scale
-	TH1F* hAvgEnergy;					//< high-resolution averaged energy variable
-	TGraphErrors* gE0;					//< Interpolatable TGraph version of profile
-	TGraphErrors* gEi[2][nBetaTubes];	//< Interpolatable TGraph version of profile
+	TProfile* pE0;						///< master energy correction profile
+	TProfile* pEi[2][nBetaTubes];		///< individual PMT rolling average deviations
+	TH1F* hPed;							///< low-energy histogram for locating pedestal energy
+	float EZero;						///< actual pedestal location on energy scale
+	TH1F* hAvgEnergy;					///< high-resolution averaged energy variable
+	TGraphErrors* gE0;					///< Interpolatable TGraph version of profile
+	TGraphErrors* gEi[2][nBetaTubes];	///< Interpolatable TGraph version of profile
 	
-	TH2F* hE8;											//< combined energy spread
-	TProfile* pE8;										//< profile for combined energy spread
-	TH2F* corrs[2][nBetaTubes+1][nBetaTubes+1];			//< correlations histogram between each PMT pair
-	TProfile* corrsProf[2][nBetaTubes+1][nBetaTubes+1];	//< TProfile of correlations on same side
-	TProfile* corrsProfEW[nBetaTubes+1][nBetaTubes+1];	//< TProfile of correlations between sides
+	TH2F* hE8;											///< combined energy spread
+	TProfile* pE8;										///< profile for combined energy spread
+	TH2F* corrs[2][nBetaTubes+1][nBetaTubes+1];			///< correlations histogram between each PMT pair
+	TProfile* corrsProf[2][nBetaTubes+1][nBetaTubes+1];	///< TProfile of correlations on same side
+	TProfile* corrsProfEW[nBetaTubes+1][nBetaTubes+1];	///< TProfile of correlations between sides
 	
 	// time domain plot
 	TGraph* gRawVT;
@@ -150,14 +150,14 @@ protected:
 	TGraph* gCorVT;
 	unsigned int nVT;
 				
-	TH1F* hLowE[2][nBetaTubes+1][2];					//< low-energy events for each [side][PMT][triggered?]
-	TH1F* hLightBal[2][nBetaTubes];						//< PMT ``light balance'' from LED
-	TH1F* h2foldProb[2][2];								//< calculated 2-fold probability for [side][triggered]
-	TTree* MLPdat[2];									//< tree with data for MLP for triggers on each side
-	TriggerProb TP[2];									//< plain trigger probability calculator
-	Float_t ewt;										//< event weight for trigger tree
-	Float_t evtE[2];									//< event energy on each side
-	Float_t is2fold[2];									//< whether event was 2-fold trigger, for training MLP output
+	TH1F* hLowE[2][nBetaTubes+1][2];					///< low-energy events for each [side][PMT][triggered?]
+	TH1F* hLightBal[2][nBetaTubes];						///< PMT ``light balance'' from LED
+	TH1F* h2foldProb[2][2];								///< calculated 2-fold probability for [side][triggered]
+	TTree* MLPdat[2];									///< tree with data for MLP for triggers on each side
+	TriggerProb TP[2];									///< plain trigger probability calculator
+	Float_t ewt;										///< event weight for trigger tree
+	Float_t evtE[2];									///< event energy on each side
+	Float_t is2fold[2];									///< whether event was 2-fold trigger, for training MLP output
 };
 
 /// tests on spectrum generation

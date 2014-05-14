@@ -1,5 +1,5 @@
 #ifndef ASYMMETRYCORRECTIONS_HH
-#define ASYMMETRYCORRECTIONS_HH 1
+#define ASYMMETRYCORRECTIONS_HH
 
 #include "SimAsymmetryPlugin.hh"
 #include "BetaDecayAnalyzer.hh"
@@ -22,7 +22,7 @@ public:
 	/// get uncertainty at energy
 	virtual double getUnc(double e) = 0;
 	
-	std::string name;	//< correction name
+	std::string name;	///< correction name
 };
 
 class AsymCorrFile: public AsymCorr {
@@ -34,8 +34,8 @@ public:
 	/// get uncertainty at energy
 	virtual double getUnc(double KE) { return gUnc.Eval(KE); }
 protected:
-	TGraph gCor;		//< amount of correction
-	TGraph gUnc;		//< uncertainty
+	TGraph gCor;		///< amount of correction
+	TGraph gUnc;		///< uncertainty
 };
 
 /// energy independent asymmetry correction
@@ -44,9 +44,9 @@ public:
 	/// constructor
 	ConstAsymCorr(const std::string& nm, double c, double e): AsymCorr(nm), corr(c), uncert(e) {}
 	/// get correction at energy
-	virtual double getCor(double KE) { return corr; }
+	virtual double getCor(double) { return corr; }
 	/// get uncertainty at energy
-	virtual double getUnc(double KE) { return uncert; }
+	virtual double getUnc(double) { return uncert; }
 protected:
 	double corr;
 	double uncert;
@@ -85,9 +85,9 @@ public:
 	double energyErrorEnvelope(double e, unsigned int year = 2010) const;
 	
 protected:
-	OutputManager OM;		//< unused OutputManager
-	BetaDecayAnalyzer Adat;	//< data for error estimation
-	TGraphErrors* S[2][2];	//< observed energy spectra for [side][afp] as TGraphs
+	OutputManager OM;		///< unused OutputManager
+	BetaDecayAnalyzer Adat;	///< data for error estimation
+	TGraphErrors* S[2][2];	///< observed energy spectra for [side][afp] as TGraphs
 };
 
 /// calculate MC-based corrections given data, MC filenames

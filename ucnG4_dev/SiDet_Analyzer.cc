@@ -1,6 +1,7 @@
-#include "SiDet_Analyzer.hh"
 #include <TMath.h>
 #include <cfloat>
+
+#include "SiDet_Analyzer.hh"
 
 void SiDet_Analyzer::setupOutputTree() {
 	printf("Adding branches for SiDet_Analyzer...\n");

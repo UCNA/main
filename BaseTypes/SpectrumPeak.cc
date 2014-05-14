@@ -2,72 +2,60 @@
 #include <TH1F.h>
 
 Float_t SpectrumPeak::energy() const {
-	if(type==CD109_PEAK)
-		return 75.2;
-	if(type==SN_PEAK)
-		return 364;
-	if(type==SR85_PEAK)
-		return 500.1;
-	if(type==BI_PEAK_1)
-		return 502.6;
-	if(type==BI_PEAK_2)
-		return 1000.0;
-	if(type==CS137_PEAK)
-		return 629.;
-	if(type==M000_PEAK)
-		return 502.6;
-	if(type==M500_PEAK)
-		return 500;
-	if(type==CE139_PEAK)
-		return 131;
-	if(type==IN114_PEAK)
-		return 150;
-	if(type==LINE_PEAK)
-		return energyCenter.x;
+	if(type==CD109_PEAK)	return 75.2;
+	if(type==SN_PEAK)		return 364;
+	if(type==SR85_PEAK)		return 500.1;
+	if(type==BI_PEAK_1)		return 502.6;
+	if(type==BI_PEAK_2)		return 1000.0;
+	if(type==BI_COINC)		return 1500;
+	if(type==CS137_PEAK)	return 629.;
+	if(type==CE139_PEAK)	return 131;
+	if(type==IN114_PEAK)	return 150;
+	
+	if(type==M000_PEAK)		return 502.6;
+	if(type==M500_PEAK)		return 500;
+	if(type==LINE_PEAK)		return energyCenter.x;
+	
+	if(type==SN_T1_PEAK)	return 300;
+	if(type==BI_T1_PEAK_1)	return 400;
+	if(type==BI_T1_PEAK_2)	return 900.0;
+	if(type==BI_T1_COINC)	return 1400;
+	if(type==CS137_T1_PEAK)	return 550;
+	
 	return 0;
 }
 
 std::string SpectrumPeak::name() const {
 	
-	if(type==UNKNOWN_PEAK)
-		return "Unknown";
-	if(type==SN_PEAK)
-		return "Sn";
-	if(type==BI_PEAK_1)
-		return "Bi_1";
-	if(type==BI_PEAK_2)
-		return "Bi_2";
-	if(type==M000_PEAK)
-		return "M000";
-	if(type==M500_PEAK)
-		return "M500";
-	if(type==SR85_PEAK)
-		return "Sr85";
-	if(type==CD109_PEAK)
-		return "Cd109";
-	if(type==CS137_PEAK)
-		return "Cs137";
-	if(type==IN114_PEAK)
-		return "In114";
-	if(type==CE139_PEAK)
-		return "Ce139";
-	if(type==REF_CO60_1)
-		return "Ref_Co60_1";
-	if(type==REF_CO60_2)
-		return "Ref_Co60_2";
-	if(type==REF_LED)
-		return "Ref_LED";
-	if(type==TUBE1_LED)
-		return "Tube1_LED";
-	if(type==TUBE2_LED)
-		return "Tube2_LED";
-	if(type==TUBE3_LED)
-		return "Tube3_LED";
-	if(type==TUBE4_LED)
-		return "Tube4_LED";
-	if(type==LINE_PEAK)
-		return "Line_Peak";
+	if(type==UNKNOWN_PEAK)	return "Unknown";
 	
+	if(type==SN_PEAK)		return "Sn";
+	if(type==BI_PEAK_1)		return "Bi_1";
+	if(type==BI_PEAK_2)		return "Bi_2";
+	if(type==CD109_PEAK)	return "Cd109";
+	if(type==CS137_PEAK)	return "Cs137";
+	if(type==IN114_PEAK)	return "In114";
+	if(type==CE139_PEAK)	return "Ce139";
+	
+	if(type==M000_PEAK)		return "M000";
+	if(type==M500_PEAK)		return "M500";
+	if(type==SR85_PEAK)		return "Sr85";
+	
+	if(type==REF_CO60_1)	return "Ref_Co60_1";
+	if(type==REF_CO60_2)	return "Ref_Co60_2";
+	if(type==REF_LED)		return "Ref_LED";
+	if(type==TUBE1_LED)		return "Tube1_LED";
+	if(type==TUBE2_LED)		return "Tube2_LED";
+	if(type==TUBE3_LED)		return "Tube3_LED";
+	if(type==TUBE4_LED)		return "Tube4_LED";
+	if(type==LINE_PEAK)		return "Line_Peak";
+	
+	if(type==BI_T1_PEAK_1)	return "Bi_T1_1";
+	if(type==BI_T1_PEAK_2)	return "Bi_T1_2";
+	if(type==BI_T1_COINC)	return "Bi_T1_COINC";
+	if(type==SN_T1_PEAK)	return "Sn_T1";
+	if(type==CS137_T1_PEAK)	return "Cs_T1";
+				
 	return "UnnamedPeak";
 }
 

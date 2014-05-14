@@ -1,5 +1,5 @@
 #ifndef BETADECAYANALYZER_HH
-#define BETADECAYANALYZER_HH 1
+#define BETADECAYANALYZER_HH
 
 #include "MuonPlugin.hh"
 #include "PositionsPlugin.hh"
@@ -16,11 +16,11 @@ public:
 	/// create a new instance of this object (cloning self settings) for given directory
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new BetaDecayAnalyzer(this,nm,inflname); }
 	
-	MuonPlugin* myMuons;			//< muons plugin
-	PositionsPlugin* myPos;			//< positions plugin
-	HighEnergyExcessPlugin* myHEE;	//< high energy excess events, indicating neutron generated backgrounds
+	MuonPlugin* myMuons;			///< muons plugin
+	PositionsPlugin* myPos;			///< positions plugin
+	HighEnergyExcessPlugin* myHEE;	///< high energy excess events, indicating neutron generated backgrounds
 	
-	AsymmetryPlugin* myAsym;		//< asymmetry plugin
+	AsymmetryPlugin* myAsym;		///< asymmetry plugin
 };
 
 /// analyzer for beta decay simulation
@@ -31,11 +31,11 @@ public:
 	/// create a new instance of this object (cloning self settings) for given directory
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname);
 	
-	MuonPlugin* myMuons;			//< muons plugin
-	PositionsPlugin* myPos;			//< positions plugin
-	AsymmetryPlugin* myAsym;		//< asymmetry plugin
+	MuonPlugin* myMuons;			///< muons plugin
+	PositionsPlugin* myPos;			///< positions plugin
+	AsymmetryPlugin* myAsym;		///< asymmetry plugin
 
-	SimAsymmetryPlugin* mySimAsym;	//< simulated asymmetry plugin
+	SimAsymmetryPlugin* mySimAsym;	///< simulated asymmetry plugin
 };
 
 #endif

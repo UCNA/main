@@ -1,5 +1,5 @@
 #ifndef MANUALINFO_HH
-#define MANUALINFO_HH 1
+#define MANUALINFO_HH
 
 #include "QFile.hh"
 #include "Types.hh"
@@ -19,7 +19,7 @@ public:
 									  const std::string& k1="runStart",
 									  const std::string& k2="runEnd") const;
 	
-	static ManualInfo MI;	//< static global instance to use
+	static ManualInfo MI;	///< static global instance to use
 };
 
 /// simple class for cuts from Stringmap
@@ -33,8 +33,8 @@ public:
 	/// check if value is in range
 	inline bool inRange(double x) const { return start <= x && x <= end; }
 	
-	double start;	//< cut minimum
-	double end;		//< cut maximum
+	double start;	///< cut minimum
+	double end;		///< cut maximum
 };
 
 /// simple class for value + cuts range
@@ -44,9 +44,9 @@ public:
 	CutVariable(std::string sn=""): sname(sn) {}
 	/// check if in range
 	inline bool inRange() const { return R.inRange(val); }
-	std::string sname;	//< sensor name (for pedestal subtraction)
-	Float_t val;		//< stored value
-	RangeCut R;			//< cuts range
+	std::string sname;	///< sensor name (for pedestal subtraction)
+	Float_t val;		///< stored value
+	RangeCut R;			///< cuts range
 };
 
 Stringmap loadCut(RunNum rn, const std::string& cutName);

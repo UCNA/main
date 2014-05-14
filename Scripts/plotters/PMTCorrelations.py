@@ -25,7 +25,7 @@ def plotCorrelations(conn,rlist,outdir):
 
 	# plot
 	tcols = rainbow(4)
-	for kr in corrdat.keys():
+	for kr in corrdat:
 		for s in ['E','W']:
 		
 			# set up graph

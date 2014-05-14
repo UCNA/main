@@ -2,9 +2,6 @@
 #include "SMExcept.hh"
 #include "strutils.hh"
 #include "PathUtils.hh"
-#include "SMExcept.hh"
-
-
 
 double EnumerationFitter::Evaluate(double *x, double *p) {
 	smassert(x);

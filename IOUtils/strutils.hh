@@ -1,5 +1,5 @@
 #ifndef STRUTILS_HH
-#define STRUTILS_HH 1
+#define STRUTILS_HH
 
 #include <string>
 #include <vector>
@@ -9,8 +9,8 @@
 #include <cctype>
 #include <algorithm>
 
-/// convert a double to a string
-std::string dtos(double d);
+/// convert a double to a string, optionally with replacement for inf/NaN
+std::string dtos(double d, const std::string& badnum = "");
 /// convert an int to a string
 std::string itos(int i);
 /// small integer to roman numerals string

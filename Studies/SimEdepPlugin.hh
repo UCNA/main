@@ -1,5 +1,5 @@
 #ifndef SIMEDEPPLUGIN_HH
-#define SIMEDEPPLUGIN_HH 1
+#define SIMEDEPPLUGIN_HH
 
 #include "RunAccumulator.hh"
 #include <TProfile.h>

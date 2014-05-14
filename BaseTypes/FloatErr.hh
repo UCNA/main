@@ -1,5 +1,5 @@
 #ifndef FLOATERR_HH
-#define FLOATERR_HH 1
+#define FLOATERR_HH
 
 #include <string>
 
@@ -13,8 +13,8 @@ public:
 	/// converto to a string
 	std::string toString() const;
 	
-	float x;	//< central value
-	float err;	//< error
+	float x;	///< central value
+	float err;	///< error
 };
 
 /// add float_errs assuming independent statistics

@@ -7,7 +7,7 @@
 // utility function for query to select smallest inclusive run range
 std::string runRangeSelect(RunNum rn) {
 	return "start_run <= "+itos(rn)+" AND "+itos(rn)+" <= end_run ORDER BY end_run-start_run LIMIT 1";
-};
+}
 
 CalDBSQL* CalDBSQL::getCDB(bool readonly) {
 	if(readonly) {

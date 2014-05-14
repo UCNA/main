@@ -1,5 +1,5 @@
 #ifndef PATHUTILS_HH
-#define PATHUTILS_HH 1
+#define PATHUTILS_HH
 
 #include <string>
 #include <vector>

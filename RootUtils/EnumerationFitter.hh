@@ -1,5 +1,5 @@
 #ifndef ENUMERATIONFITTER_HH
-#define ENUMERATIONFITTER_HH 1
+#define ENUMERATIONFITTER_HH
 
 #include <vector>
 #include <string>
@@ -25,8 +25,8 @@ public:
 	
 protected:
 	
-	std::vector< std::vector<double> > fterms;	//< fit term sets
-	TF1* fitter;								//< fitter based on these terms
+	std::vector< std::vector<double> > fterms;	///< fit term sets
+	TF1* fitter;								///< fitter based on these terms
 };
 
 

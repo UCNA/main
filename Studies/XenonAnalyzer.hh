@@ -1,5 +1,5 @@
 #ifndef XENONANALYZER_HH
-#define XENONANALYZER_HH 1
+#define XENONANALYZER_HH
 
 #include "PositionBinnedPlugin.hh"
 #include "WirechamberGainMapPlugins.hh"
@@ -36,9 +36,9 @@ public:
 	/// fit endpoint in each sector
 	void fitSectors();
 	
-	fgbgPair* energySpectrum;							//< overall energy spectrum for isotope decomposition
-	std::vector<fgbgPair*> sectEnergy[2][nBetaTubes+1];	//< visible light histograms by position, PMT
-	std::vector<SectorDat> sectDat[2][nBetaTubes+1];	//< processed data for each sector
+	fgbgPair* energySpectrum;							///< overall energy spectrum for isotope decomposition
+	std::vector<fgbgPair*> sectEnergy[2][nBetaTubes+1];	///< visible light histograms by position, PMT
+	std::vector<SectorDat> sectDat[2][nBetaTubes+1];	///< processed data for each sector
 	
 protected:
 	
@@ -55,9 +55,9 @@ public:
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) {
 		return new XenonAnalyzer(this,nm,inflname,myXeSpec->sects.n,myAnode->sects.n); }
 	
-	XenonSpectrumPlugin* myXeSpec;	//< position-binned Xenon spectrum analysis
-	AnodeGainMapPlugin* myAnode;	//< anode position gain
-	MWPCGainPlugin* myWG;			//< MWPC energy calibration
+	XenonSpectrumPlugin* myXeSpec;	///< position-binned Xenon spectrum analysis
+	AnodeGainMapPlugin* myAnode;	///< anode position gain
+	MWPCGainPlugin* myWG;			///< MWPC energy calibration
 };
 
 /// analyzer for simulated xenon data
@@ -66,8 +66,8 @@ public:
 	/// constructor
 	SimXenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0);
 	
-	XenonSpectrumPlugin* myXeSpec;	//< position-binned Xenon spectrum analysis
-	MWPCGainPlugin* myWG;			//< MWPC energy calibration
+	XenonSpectrumPlugin* myXeSpec;	///< position-binned Xenon spectrum analysis
+	MWPCGainPlugin* myWG;			///< MWPC energy calibration
 };
 
 /// process xenon runs

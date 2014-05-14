@@ -4,7 +4,7 @@
 #include <vector>
 
 const unsigned int nThreshBins = 100;
-const double maxThresh = 1.0;
+//const double maxThresh = 1.0;
 
 void runSimulation() {
 	
@@ -60,6 +60,8 @@ void runSimulation() {
 }
 
 void SnMWPCEffic() {
+	assert(false); // new wirechamber trigger calculations make calculation below obsolete...
+/*
 	unsigned int nToSim = 1e5;
 	
 	printf("Simulating MWPC threshold variation...\n");
@@ -115,6 +117,7 @@ void SnMWPCEffic() {
 	OM.printCanvas("SnEffic");
 	drawHistoPair(hSnMWPC[EAST],hSnMWPC[WEST]);
 	OM.printCanvas("SnMWPC");
+*/
 }
 
 void processSimulation() {
@@ -163,18 +166,19 @@ void processSimulation() {
 }
 
 
-int main(int argc, char *argv[]) {
+int main(int argc, char**) {
 	
 	gStyle->SetOptStat("");
 	gStyle->SetPalette(1);
 	gStyle->SetNumberContours(255);
 	
 	SnMWPCEffic();
+	return 0;
 	
-	//if(argc<=1)
-	//	runSimulation();
-	//else
-	//	processSimulation();
+	if(argc<=1)
+		runSimulation();
+	else
+		processSimulation();
 	
 	return 0;
 }

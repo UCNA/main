@@ -1,5 +1,5 @@
 #ifndef STYLESETUP_HH
-#define STYLESETUP_HH 1
+#define STYLESETUP_HH
 
 #include <TStyle.h>
 #include <TROOT.h>

@@ -1,5 +1,5 @@
 #ifndef POSTOFFICIALANALYZER_HH
-#define POSTOFFICIALANALYZER_HH 1
+#define POSTOFFICIALANALYZER_HH
 
 #include "ProcessedDataScanner.hh"
 
@@ -12,7 +12,7 @@ public:
 	/// find path to processed run .root file
 	virtual std::string locateRun(RunNum r);	
 	
-	float Erecon;	//< reconstructed "true" energy
+	float Erecon;	///< reconstructed "true" energy
 	
 protected:
 	/// set TChain branch data readpoints

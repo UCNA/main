@@ -1,5 +1,5 @@
 #ifndef BIMAP_HH
-#define BIMAP_HH 1
+#define BIMAP_HH
 
 #include <multimap>
 
@@ -43,8 +43,8 @@ public:
 	void delete_B(T2 b);
 	
 protected:
-	std::multimap<T1,T2> m1;	//< internal map from A to B
-	std::multimap<T2,T1> m2;	//< internal map from B to A
+	std::multimap<T1,T2> m1;	///< internal map from A to B
+	std::multimap<T2,T1> m2;	///< internal map from B to A
 }
 
 #endif

@@ -1,5 +1,5 @@
 #ifndef BGDECAYANALYZER_HH
-#define BGDECAYANALYZER_HH 1
+#define BGDECAYANALYZER_HH
 
 #include "OctetAnalyzer.hh"
 
@@ -10,7 +10,7 @@ public:
 	/// fill from scan data point
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	
-	quadHists* qBGDecay[2];		//< 5min E vs. time plot to see decaying BG components
+	quadHists* qBGDecay[2];		///< 5min E vs. time plot to see decaying BG components
 };
 
 

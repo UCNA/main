@@ -2,7 +2,6 @@
 #include "SMExcept.hh"
 #include "GraphicsUtils.hh"
 #include <cmath>
-#include "SMExcept.hh"
 #include <algorithm>
 
 #define kUndefinedPosition 666
@@ -83,7 +82,7 @@ WirechamberCalibrator::~WirechamberCalibrator() {
 				delete(cathsegs[s][d][i]);
 }
 
-float WirechamberCalibrator::chargeProxy(Side s, ChargeProxyType c, const wireHit& x_wires, const wireHit& y_wires, const MWPCevent& mwpc) const {
+float WirechamberCalibrator::chargeProxy(Side, ChargeProxyType c, const wireHit& x_wires, const wireHit& y_wires, const MWPCevent& mwpc) const {
 	if(c==CHARGE_PROXY_ANODE) return mwpc.anode;
 	if(c==CHARGE_PROXY_CCLOUD) return x_wires.ccloud_size()+y_wires.ccloud_size();
 	return 0;

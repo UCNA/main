@@ -1,48 +1,48 @@
 #include "ControlMenu.hh"
 #include <cmath>
 
-void calc_Add(std::deque<std::string>& args,std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(2,args,stack))
+void calc_Add(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(2))
 		return;
-	float b = streamInteractor::popFloat(stack);
-	float a = streamInteractor::popFloat(stack);
+	float b = S->popFloat();
+	float a = S->popFloat();
 	printf("%g%+g = %g\n",a,b,a+b);
-	stack.push(dtos(a+b));
+	S->mystack->push(dtos(a+b));
 }
 
-void calc_Mul(std::deque<std::string>& args,std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(2,args,stack))
+void calc_Mul(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(2))
 		return;
-	float b = streamInteractor::popFloat(stack);
-	float a = streamInteractor::popFloat(stack);
+	float b = S->popFloat();
+	float a = S->popFloat();
 	printf("%g*%g = %g\n",a,b,a*b);
-	stack.push(dtos(a*b));
+	S->mystack->push(dtos(a*b));
 }
 
-void calc_Div(std::deque<std::string>& args,std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(2,args,stack))
+void calc_Div(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(2))
 		return;
-	float b = streamInteractor::popFloat(stack);
-	float a = streamInteractor::popFloat(stack);
+	float b = S->popFloat();
+	float a = S->popFloat();
 	printf("%g/%g = %g\n",a,b,a/b);
-	stack.push(dtos(a/b));
+	S->mystack->push(dtos(a/b));
 }
 
-void calc_Pow(std::deque<std::string>& args,std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(2,args,stack))
+void calc_Pow(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(2))
 		return;
-	float b = streamInteractor::popFloat(stack);
-	float a = streamInteractor::popFloat(stack);
+	float b = S->popFloat();
+	float a = S->popFloat();
 	printf("%g^%g = %g\n",a,b,pow(a,b));
-	stack.push(dtos(pow(a,b)));
+	S->mystack->push(dtos(pow(a,b)));
 }
 
-void calc_Neg(std::deque<std::string>& args,std::stack<std::string>& stack) {
-	if(!menutils_CheckStackSize(1,args,stack))
+void calc_Neg(StreamInteractor* S) {
+	if(!S->menutils_CheckStackSize(1))
 		return;
-	float a = streamInteractor::popFloat(stack);
+	float a = S->popFloat();
 	printf("%g -> %g\n",a,-a);
-	stack.push(dtos(-a));
+	S->mystack->push(dtos(-a));
 }
 
 
@@ -50,22 +50,22 @@ void FPNCalc() {
 	
 	OptionsMenu CalcMain("FPN Calculator",false);
 
-	inputRequester zAdd("Add x+y",&calc_Add);
-	zAdd.addArg("x","",&CalcMain);
-	zAdd.addArg("y","",&CalcMain);
-	inputRequester zMul("Multiply x*y",&calc_Mul);
-	zMul.addArg("x","",&CalcMain);
-	zMul.addArg("y","",&CalcMain);
-	inputRequester zDiv("Divide x/y",&calc_Div);
-	zDiv.addArg("x","",&CalcMain);
-	zDiv.addArg("y","",&CalcMain);
-	inputRequester zPow("Exponent x^y",&calc_Pow);
-	zPow.addArg("x","",&CalcMain);
-	zPow.addArg("y","",&CalcMain);
-	inputRequester zNeg("Negate -x",&calc_Neg);
-	zNeg.addArg("x","",&CalcMain);
+	InputRequester zAdd("Add x+y",&calc_Add);
+	zAdd.addArg("x","","",&CalcMain);
+	zAdd.addArg("y","","",&CalcMain);
+	InputRequester zMul("Multiply x*y",&calc_Mul);
+	zMul.addArg("x","","",&CalcMain);
+	zMul.addArg("y","","",&CalcMain);
+	InputRequester zDiv("Divide x/y",&calc_Div);
+	zDiv.addArg("x","","",&CalcMain);
+	zDiv.addArg("y","","",&CalcMain);
+	InputRequester zPow("Exponent x^y",&calc_Pow);
+	zPow.addArg("x","","",&CalcMain);
+	zPow.addArg("y","","",&CalcMain);
+	InputRequester zNeg("Negate -x",&calc_Neg);
+	zNeg.addArg("x","","",&CalcMain);
 	
-	streamInteractor identity;
+	StreamInteractor identity;
 	
 	CalcMain.addChoice(&zAdd,"+");
 	CalcMain.addChoice(&zMul,"*");
@@ -77,9 +77,11 @@ void FPNCalc() {
 	
 	std::deque<std::string> d;
 	std::stack<std::string> s;
+	CalcMain.mydeque = &d;
+	CalcMain.mystack = &s;
 	while(!d.size() || !startsWith(d.front(),NameSelector::exit_control)) {
-		CalcMain.doIt(d,s);
-		menutils_PrintStack(d,s);
+		CalcMain.doIt();
+		menutils_PrintStack(&CalcMain);
 	}
 }
 
@@ -87,19 +89,19 @@ void RPNCalc() {
 	
 	OptionsMenu CalcMain("RPN Calculator",false);
 	
-	inputRequester zAdd("Add x+y",&calc_Add);
-	inputRequester zMul("Multiply x*y",&calc_Mul);
-	inputRequester zDiv("Divide x/y",&calc_Div);
-	inputRequester zPow("Exponent x^y",&calc_Pow);
-	inputRequester zNeg("Negate -x",&calc_Neg);
+	InputRequester zAdd("Add x+y",&calc_Add);
+	InputRequester zMul("Multiply x*y",&calc_Mul);
+	InputRequester zDiv("Divide x/y",&calc_Div);
+	InputRequester zPow("Exponent x^y",&calc_Pow);
+	InputRequester zNeg("Negate -x",&calc_Neg);
 	
-	inputRequester zDrop("Drop top item",&menutils_Drop);
-	inputRequester zDup("Duplicate top item",&menutils_Dup);
-	inputRequester zSwap("Swap top 2 items",&menutils_Swap);
-	inputRequester zRot("Rotate top n items",&menutils_Rot);
-	inputRequester zClear("Clear stack",&menutils_ClearStack);
-	inputRequester zExec("Execute commands",&menutils_Exec);
-	inputRequester zSelect("Select c?a:b",&menutils_Select);
+	InputRequester zDrop("Drop top item",&menutils_Drop);
+	InputRequester zDup("Duplicate top item",&menutils_Dup);
+	InputRequester zSwap("Swap top 2 items",&menutils_Swap);
+	InputRequester zRot("Rotate top n items",&menutils_Rot);
+	InputRequester zClear("Clear stack",&menutils_ClearStack);
+	InputRequester zExec("Execute commands",&menutils_Exec);
+	InputRequester zSelect("Select c?a:b",&menutils_Select);
 	
 	CalcMain.addChoice(&zAdd,"+");
 	CalcMain.addChoice(&zMul,"*");
@@ -115,25 +117,27 @@ void RPNCalc() {
 	CalcMain.addChoice(&zExec,"exec");
 	CalcMain.addChoice(&zSelect,"sel");
 	
-	inputRequester exitMenu("Exit Menu",&menutils_Exit);
+	InputRequester exitMenu("Exit Menu",&menutils_Exit);
 	CalcMain.addChoice(&exitMenu,"x");
 	CalcMain.addSynonym("x","quit");
 	CalcMain.addSynonym("x","bye");
 	
-	streamInteractor identity;
+	StreamInteractor identity;
 	CalcMain.setCatchall(&identity);
 	
 	std::deque<std::string> d;
 	std::stack<std::string> s;
+	CalcMain.mydeque = &d;
+	CalcMain.mystack = &s;
 	while(!d.size() || (!startsWith(d.front(),NameSelector::exit_control) && !startsWith(d.front(),NameSelector::barf_control))) {
-		CalcMain.doIt(d,s);
-		menutils_PrintStack(d,s);
+		CalcMain.doIt();
+		menutils_PrintStack(&CalcMain);
 		printf("\n");
 	}
-	menutils_PrintQue(d,s);
+	menutils_PrintQue(&CalcMain);
 }
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
 	printf("Starting calculator...\n");
 	RPNCalc();
 	printf("Goodbye.\n");

@@ -1,5 +1,5 @@
 #ifndef KURIEFITTER_HH
-#define KURIEFITTER_HH 1
+#define KURIEFITTER_HH
 
 #include "PMTGenerator.hh"
 #include <TGraphErrors.h>

@@ -1,5 +1,5 @@
 #ifndef ELECTRONBINDINGENERGY_HH
-#define ELECTRONBINDINGENERGY_HH 1
+#define ELECTRONBINDINGENERGY_HH
 
 #include "QFile.hh"
 #include "SMExcept.hh"
@@ -25,9 +25,9 @@ public:
 	static const std::string shellnames;
 	
 protected:
-	unsigned int Z;									//< element number
-	std::string nm;									//< element name abbrev.
-	std::vector< std::vector<double> > eBinding;	//< binding energy by shell and subshell
+	unsigned int Z;									///< element number
+	std::string nm;									///< element name abbrev.
+	std::vector< std::vector<double> > eBinding;	///< binding energy by shell and subshell
 };
 
 /// catalog of many BindingEnergyTables
@@ -42,7 +42,7 @@ public:
 	/// display contents
 	void display() const;
 protected:
-	std::map<unsigned int,BindingEnergyTable*> tables;	//< binding energy tables by element
+	std::map<unsigned int,BindingEnergyTable*> tables;	///< binding energy tables by element
 };
 
 #endif

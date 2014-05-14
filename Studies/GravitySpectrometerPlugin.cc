@@ -16,8 +16,8 @@ GravitySpectrometerPlugin::GravitySpectrometerPlugin(OctetAnalyzer* OA): OctetAn
 void GravitySpectrometerPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	Side s = PDS.fSide;
 	if(PDS.fPID!=PID_BETA || !(s==EAST||s==WEST) || PDS.fType > TYPE_III_EVENT) return;
-	qHeight->fillPoint->Fill(PDS.wires[s][Y_DIRECTION].center,PDS.physicsWeight);
-	((TH2F*)qTime->fillPoint)->Fill(PDS.runClock[s],PDS.wires[s][Y_DIRECTION].center,PDS.physicsWeight);
+	qHeight->fillPoint->Fill(PDS.wires[s][Y_DIRECTION].center, weight);
+	((TH2F*)qTime->fillPoint)->Fill(PDS.runClock[s], PDS.wires[s][Y_DIRECTION].center, weight);
 }
 
 void GravitySpectrometerPlugin::calculateResults() {

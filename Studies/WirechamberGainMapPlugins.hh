@@ -1,5 +1,5 @@
 #ifndef WIRECHAMBERGAINMAPPLUGINS_HH
-#define WIRECHAMBERGAINMAPPLUGINS_HH 1
+#define WIRECHAMBERGAINMAPPLUGINS_HH
 
 #include "PositionBinnedPlugin.hh"
 
@@ -18,11 +18,11 @@ public:
 	/// generate position map, upload to CalDB
 	void genPosmap(const std::string& pmapNameBase) const;
 	
-	std::vector<fgbgPair*> sectHists[BOTH];	//< reconstructed energy histograms for each sector
-	fgbgPair* sectGains[BOTH];				//< prior average gains in each sector
+	std::vector<fgbgPair*> sectHists[BOTH];	///< reconstructed energy histograms for each sector
+	fgbgPair* sectGains[BOTH];				///< prior average gains in each sector
 	
 protected:
-	ChargeProxyType myChgPrx;				//< what charge measure is being used
+	ChargeProxyType myChgPrx;				///< what charge measure is being used
 };
 
 /// simulated wirechamber energy deposition position map
@@ -38,6 +38,8 @@ class WirechamberNullEdepMapPlugin: public PositionBinnedPlugin {
 public:
 	/// constructor
 	WirechamberNullEdepMapPlugin(RunAccumulator* RA, unsigned int nr): PositionBinnedPlugin(RA,"MWPC_SimEdepPos",nr) {}
+	/// fill histograms
+	virtual void fillCoreHists(ProcessedDataScanner&, double) {}
 };
 
 

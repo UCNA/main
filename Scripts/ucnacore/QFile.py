@@ -107,7 +107,7 @@ class QFile(KVMap):
 	# get KVMap with matching subkey:value pairs
 	def getMatching(self,key,value):
 		Q = QFile()
-		for k in self.dat.keys():
+		for k in self.dat:
 			for m in self.dat[k]:
 				if m.matches(key,value):
 					Q.insert(k,m)
@@ -116,7 +116,7 @@ class QFile(KVMap):
 	# get KVMap with matching subkeys:values pairs
 	def getMatchingMany(self,requirements):
 		Q = QFile()
-		for k in self.dat.keys():
+		for k in self.dat:
 			for m in self.dat[k]:
 				if m.matchesMany(requirements):
 					Q.insert(k,m)

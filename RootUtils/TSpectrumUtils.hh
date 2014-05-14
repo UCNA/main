@@ -1,5 +1,5 @@
 #ifndef TSPECTRUMUTILS_HH
-#define TSPECTRUMUTILS_HH 1
+#define TSPECTRUMUTILS_HH
 
 #include <vector>
 #include <TH1F.h>
@@ -13,8 +13,8 @@
 
 /// simple struct for peaks identified by TSpectrum
 struct TSpectrumPeak {
-	float x;	//< peak position
-	float y;	//< peak height
+	float x;	///< peak position
+	float y;	///< peak height
 };
 
 /// more convenient wrapper for TSpectrumSearch

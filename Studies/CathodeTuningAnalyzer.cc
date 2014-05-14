@@ -60,7 +60,7 @@ void CathodeGainPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) 
 }
 
 void CathodeGainPlugin::calculateResults() {
-
+	
 	TF1 fLowCX("fLowCX","pol2",-0.6,-0.4);
 	TF1 fHighCX("fHiCX","pol2",0.4,0.6);
 	TF1 fCathCenter("fCathCenter","gaus",-0.3,0.3);
@@ -71,7 +71,7 @@ void CathodeGainPlugin::calculateResults() {
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(unsigned int c=0; c<kMaxCathodes; c++) {
-			
+				
 				// cathode/anode vs normalized position TH2
 				TH2* hCathNorm =  (TH2*)cathNorm[s][d][c]->h[GV_OPEN];
 				
@@ -91,24 +91,36 @@ void CathodeGainPlugin::calculateResults() {
 				slicefits[s][d][c][1]->Fit(&fHighCX,"QR+");
 				
 				// write fits output
-				Stringmap m;
-				m.insert("side",sideSubst("%c",s));
-				m.insert("plane",d==X_DIRECTION?"x":"y");
-				m.insert("cathode",c);
-				m.insert("height",fCathCenter.GetParameter(0));
-				m.insert("d_height",fCathCenter.GetParError(0));
-				m.insert("center",fCathCenter.GetParameter(1));
-				m.insert("d_center",fCathCenter.GetParError(1));
-				m.insert("width",fCathCenter.GetParameter(2));
-				m.insert("d_width",fCathCenter.GetParError(2));
-				m.insert("prev_gain",((TProfile*)prevGain[s][d]->h[GV_OPEN])->GetBinContent(c));
-				for(unsigned int i=0; i<3; i++) {
-					m.insert("cx_lo_a"+itos(i),fLowCX.GetParameter(i));
-					m.insert("d_cx_lo_a"+itos(i),fLowCX.GetParError(i));
-					m.insert("cx_hi_a"+itos(i),fHighCX.GetParameter(i));
-					m.insert("d_cx_hi_a"+itos(i),fHighCX.GetParError(i));
+				std::string fitnm = "cathnorm_fit_"+std::string(d==X_DIRECTION?"x":"y")+"_"+itos(c);
+				AnaNumber AN(fitnm+"prevgain");
+				AN.s = s;
+				
+				AN.value = ((TProfile*)prevGain[s][d]->h[GV_OPEN])->GetBinContent(c);
+				myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
+				
+				AN.name = fitnm + "_mid";
+				for(int n=0; n<3; n++) {
+					AN.n = n;
+					AN.value = fCathCenter.GetParameter(n);
+					AN.err = fCathCenter.GetParameter(n);
+					myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 				}
-				myA->qOut.insert("cathnorm_fits",m);
+				
+				AN.name = fitnm + "_lo";
+				for(int n=0; n<3; n++) {
+					AN.n = n;
+					AN.value = fLowCX.GetParameter(n);
+					AN.err = fLowCX.GetParError(n);
+					myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
+				}
+				
+				AN.name = fitnm + "_hi";
+				for(int n=0; n<3; n++) {
+					AN.n = n;
+					AN.value = fHighCX.GetParameter(n);
+					AN.err = fHighCX.GetParError(n);
+					myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
+				}
 			}
 		}
 	}
@@ -176,11 +188,11 @@ void CathodeTweakPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 }
 
 void CathodeTweakPlugin::makePlots() {
-
-	PMTCalibrator PCal(16000);
-
-	for(Side s = EAST; s <= WEST; ++s) {
 	
+	PMTCalibrator PCal(16000);
+	
+	for(Side s = EAST; s <= WEST; ++s) {
+		
 		myA->defaultCanvas->SetRightMargin(0.14);
 		myA->defaultCanvas->SetLeftMargin(0.10);
 		
@@ -230,7 +242,7 @@ void CathodeTweakPlugin::makePlots() {
 			pRaw->Draw("HIST SAME");
 			PCal.drawWires(s, d, myA->defaultCanvas,1);
 			printCanvas(sideSubst("hPosRaw_%c",s)+(d==X_DIRECTION?"X":"Y"));
-		
+			
 			delete pPos;
 			delete pRaw;
 		}

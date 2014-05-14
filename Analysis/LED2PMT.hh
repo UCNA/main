@@ -1,5 +1,5 @@
 #ifndef LED2PMT_HH
-#define LED2PMT_HH 1
+#define LED2PMT_HH
 
 #include "Sim2PMT.hh"
 
@@ -25,7 +25,7 @@ public:
 	/// update event clock
 	virtual void updateClock() { runClock = BlindTime(0.01*currentEvent); }
 
-	double brightToEnergy[2];	//< conversion factor from LED brightness to equivalent energy on each side
+	double brightToEnergy[2];	///< conversion factor from LED brightness to equivalent energy on each side
 };
 
 #endif

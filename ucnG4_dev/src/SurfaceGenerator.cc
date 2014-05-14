@@ -1,7 +1,10 @@
-#include "SurfaceGenerator.hh"
-#include <Randomize.hh>
 #include <algorithm>
 #include <cmath>
+
+#include "SurfaceGenerator.hh"
+
+#include <Randomize.hh>
+#include <G4SystemOfUnits.hh>
 
 ConeFrustum::ConeFrustum(const G4ThreeVector& O, double R0, double R1, double DZ, bool outn):
 SurfaceSeg(O), outwardNormal(outn), r0(R0), r1(R1), dz(fabs(DZ)) {
@@ -67,12 +70,12 @@ bool ConeFrustum::_intersectsSurface(G4ThreeVector p0, G4ThreeVector d) const {
 
 //-----------------------------------------------------------------
 
-void SurfaceAssembly::addSegment(SurfaceSeg* s, double w) {
-	assert(s && s != this);
-	G4cout << "Adding subsurface " << cumweights.size() << ": Area " << s->getArea()/(cm*cm) << " cm^2 * " << w << G4endl;
-	subsegs.push_back(s);
+void SurfaceAssembly::addSegment(SurfaceSeg* sg, double w) {
+	assert(sg && sg != this);
+	G4cout << "Adding subsurface " << cumweights.size() << ": Area " << sg->getArea()/(cm*cm) << " cm^2 * " << w << G4endl;
+	subsegs.push_back(sg);
 	weights.push_back(w);
-	cumweights.push_back(cumweights.back()+s->getArea()*w);
+	cumweights.push_back(cumweights.back()+sg->getArea()*w);
 }
 	
 G4ThreeVector SurfaceAssembly::SurfaceAssembly::_getSurfRandom() {

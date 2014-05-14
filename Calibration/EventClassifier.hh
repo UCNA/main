@@ -1,5 +1,5 @@
 #ifndef EVENTCLASSIFIER_HH
-#define EVENTCLASSIFIER_HH 1
+#define EVENTCLASSIFIER_HH
 
 #include "Enums.hh"
 #include "Types.hh"
@@ -40,25 +40,25 @@ public:
 	
 			
 	// classification input variables
-	Int_t fPassedScint[BOTH];		//< whether passed scintillator 2-of-4 on each side
-	Int_t fPassedAnode[BOTH];		//< whether passed anode cut on each side
-	Int_t fPassedCath[BOTH];		//< whether passed cathode sum cut on each side
-	Int_t fPassedCathMax[BOTH];		//< whether passed cathode max cut on each side
-	Int_t fPassedCathMaxSum[BOTH];	//< whether passed cathode max sum on each side
+	Int_t fPassedScint[BOTH];		///< whether passed scintillator 2-of-4 on each side
+	Int_t fPassedAnode[BOTH];		///< whether passed anode cut on each side
+	Int_t fPassedCath[BOTH];		///< whether passed cathode sum cut on each side
+	Int_t fPassedCathMax[BOTH];		///< whether passed cathode max cut on each side
+	Int_t fPassedCathMaxSum[BOTH];	///< whether passed cathode max sum on each side
 	
-	Int_t fTaggedBack[BOTH];		//< whether event was tagged by the muon backing veto on each side
-	Int_t fTaggedDrift[BOTH];		//< whether event was tagged by muon veto drift tubes on each side
-	Int_t fTaggedTop[BOTH];			//< whether event was tagged by top veto on each side (only meaningful on East)
+	Int_t fTaggedBack[BOTH];		///< whether event was tagged by the muon backing veto on each side
+	Int_t fTaggedDrift[BOTH];		///< whether event was tagged by muon veto drift tubes on each side
+	Int_t fTaggedTop[BOTH];			///< whether event was tagged by top veto on each side (only meaningful on East)
 
-	Int_t fEvnbGood;				//< Event number header good
-	Int_t fBkhfGood;				//< Block header good
-	Int_t SIS00;					//< DAQ trigger bits
+	Int_t fEvnbGood;				///< Event number header good
+	Int_t fBkhfGood;				///< Block header good
+	Int_t SIS00;					///< DAQ trigger bits
 	
 	// classification output variables
-	Side fSide;						//< event primary scintillator side
-	EventType fType;				//< event backscatter type
-	PID fPID;						//< event particle ID
-	Float_t fProbIII;				//< event estimated probability of being a Type III backscatter
+	Side fSide;						///< event primary scintillator side
+	EventType fType;				///< event backscatter type
+	PID fPID;						///< event particle ID
+	Float_t fProbIII;				///< event estimated probability of being a Type III backscatter
 };
 
 #endif

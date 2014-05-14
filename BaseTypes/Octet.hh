@@ -1,5 +1,5 @@
 #ifndef OCTET_HH
-#define OCTET_HH 1
+#define OCTET_HH
 
 #include "QFile.hh"
 #include "strutils.hh"
@@ -16,26 +16,13 @@ RunType runTypeForOctet(OctetRole t);
 /// get name for octet segment
 std::string nameForOctet(OctetRole t);
 
-/// subdivision level for octet list
-enum Octet_Division_t {
-	DIV_OCTET	= 0,
-	DIV_HALFOCT	= 1,
-	DIV_PP		= 2,
-	DIV_TRIAD	= 3,
-	DIV_RUN		= 4
-};
-/// increment subdivision depth
-inline Octet_Division_t& operator++(Octet_Division_t& d) { return d = Octet_Division_t(d+1); }
-/// return next division depth
-inline Octet_Division_t nextDiv(Octet_Division_t d) { Octet_Division_t d2 = d; return ++d2; }
-
 /// class for octets and their subsets
 class Octet {
 public:
 	/// constructor
 	Octet(const Stringmap& m = Stringmap());
 	/// split into (completed) sub-groupings
-	std::vector<Octet> getSubdivs(Octet_Division_t divlvl = DIV_TRIAD, bool onlyComplete = false) const;
+	std::vector<Octet> getSubdivs(RunGrouping divlvl, bool onlyComplete = false) const;
 	/// add run to octet listing
 	void addRun(RunNum rn, OctetRole t);
 	/// get runs of given type
@@ -61,11 +48,11 @@ public:
 	/// get first run, for sorting Octets
 	RunNum getFirstRun() const;
 	
-	Octet_Division_t divlevel;	//< dividion level of octet
+	RunGrouping grouping;	///< dividion level of octet
 	
 protected:
 	
-	std::map< OctetRole,std::vector<RunNum> > runs;	//< list of octet runs
+	std::map< OctetRole,std::vector<RunNum> > runs;	///< list of octet runs
 };
 
 #endif

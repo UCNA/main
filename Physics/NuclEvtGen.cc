@@ -3,7 +3,6 @@
 #include "strutils.hh"
 #include "PathUtils.hh"
 #include <math.h>
-#include "SMExcept.hh"
 #include <cfloat>
 #include <stdlib.h>
 #include <algorithm>
@@ -247,6 +246,12 @@ BetaDecayTrans::~BetaDecayTrans() {
 	delete betaQuantiles;
 }
 
+void BetaDecayTrans::display(bool verbose) const {
+	printf("Beta(%.1f) ",from.E-to.E);
+	if(BSG.forbidden) printf("%u-forbidden F=%g GT=%g ", BSG.forbidden, BSG.M2_F, BSG.M2_GT);
+	TransitionBase::display(verbose);
+}
+
 void BetaDecayTrans::run(std::vector<NucDecayEvent>& v, double* rnd) {
 	NucDecayEvent evt;
 	evt.d = positron?D_POSITRON:D_ELECTRON;
@@ -260,7 +265,7 @@ double BetaDecayTrans::evalBeta(double* x, double*) { return BSG.decayProb(x[0])
 
 //-----------------------------------------
 
-void ECapture::run(std::vector<NucDecayEvent>&, double* rnd) {
+void ECapture::run(std::vector<NucDecayEvent>&, double*) {
 	isKCapt = gRandom->Uniform(0,1) < toAtom->IMissing;
 }
 

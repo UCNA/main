@@ -1,7 +1,7 @@
 /// \file SMExcept.hh \brief exception handling class
 #ifndef UCNAEXCEPTION_HH
 /// make sure this file is only included once
-#define UCNAEXCEPTION_HH 1
+#define UCNAEXCEPTION_HH
 
 #include <exception>
 #include "QFile.hh"

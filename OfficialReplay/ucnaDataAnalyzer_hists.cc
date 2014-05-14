@@ -217,7 +217,10 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
 			int nf = nFiring(s);
 			bool tfired = pmtFired(s,t);
-			if(nf-tfired<2 || SIS00!=1+s || !fPassedGlobal)
+			if(!(SIS00 == (SIS00 & 3))					// only 2-of-4 trigger sources (no LED, UCN Monitor, etc.)
+				|| (SIS00==1+s && nf-tfired<2)			// must not depend on this PMT if trigger only from this side
+				|| !passedMWPC(s)						// must pass MWPC cuts on this side
+				|| !fPassedGlobal || fPID!=PID_BETA )	// must pass "beta-like" wirechamber cuts and global timing cuts
 				continue;
 			hTrigEffic[s][t][0]->Fill(sevt[s].adc[t]);
 			if(tfired)
@@ -242,7 +245,9 @@ void ucnaDataAnalyzer11b::fillHistograms() {
 			hSideRate[s][0]->Fill(fTimeScaler[BOTH]);
 		}
 	}
-	
+}
+
+void ucnaDataAnalyzer11b::fillLookaheadHistograms() {
 	if(fPID==PID_BETA)
 		hClusterTiming[0]->Fill(log10(fWindow.val*1.e6));
 	if(fPID==PID_BETA && fType<=TYPE_III_EVENT) {

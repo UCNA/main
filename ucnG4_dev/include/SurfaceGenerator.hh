@@ -1,9 +1,10 @@
 #ifndef SURFACEGNERATOR_HH
-#define SURFACEGNERATOR_HH 1
+#define SURFACEGNERATOR_HH
 
-#include <G4ThreeVector.hh>
 #include <vector>
 #include <cmath>
+
+#include <G4ThreeVector.hh>
 
 /// base class for portion of a surface
 class SurfaceSeg {
@@ -22,7 +23,7 @@ public:
 	/// check whether a direction vector from a given point intersects this surface
 	bool intersectsSurface(G4ThreeVector p0, G4ThreeVector d) const { return _intersectsSurface(p0-o,d); }
 	
-	G4ThreeVector snorm;	//< surface normal for most recently generated point
+	G4ThreeVector snorm;	///< surface normal for most recently generated point
 	
 protected:
 	/// get random point in local coordinates
@@ -30,7 +31,7 @@ protected:
 	/// check whether a vector from a given point, in local coordinates, intersects this surface
 	virtual bool _intersectsSurface(G4ThreeVector p0, G4ThreeVector d) const = 0;
 		
-	G4ThreeVector o;	//< center positioning of surface
+	G4ThreeVector o;	///< center positioning of surface
 };
 
 /// conical frustum surface
@@ -61,7 +62,7 @@ public:
 	/// get surface area
 	virtual double getArea() const { return cumweights.back(); }
 	/// add sub-segment
-	void addSegment(SurfaceSeg* s, double w = 1.0);
+	void addSegment(SurfaceSeg* sg, double w = 1.0);
 	
 protected:
 	/// get random point in local coordinates
@@ -69,9 +70,9 @@ protected:
 	/// check whether a vector from a given point, in local coordinates, intersects this surface
 	virtual bool _intersectsSurface(G4ThreeVector p0, G4ThreeVector d) const;
 	
-	std::vector<SurfaceSeg*> subsegs;	//< sub-segments
-	std::vector<double> weights;		//< weights assigned to each subsegment
-	std::vector<double> cumweights;		//< cumulative weights with areas for each segment
+	std::vector<SurfaceSeg*> subsegs;	///< sub-segments
+	std::vector<double> weights;		///< weights assigned to each subsegment
+	std::vector<double> cumweights;		///< cumulative weights with areas for each segment
 };
 
 

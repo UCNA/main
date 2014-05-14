@@ -1,5 +1,5 @@
 #ifndef RUNINFO_HH
-#define RUNINFO_HH 1
+#define RUNINFO_HH
 
 #include <map>
 #include <vector>
@@ -24,23 +24,23 @@ public:
 	}
 	
 	
-	RunNum runNum;				//< run number
-	Int_t slowDaq;				//< SlowDAQ run number
-	std::string groupName;		//< name for this run's group
+	RunNum runNum;				///< run number
+	Int_t slowDaq;				///< SlowDAQ run number
+	std::string groupName;		///< name for this run's group
 	
-	RunType type;				//< what type of run this is
-	OctetRole octet;			//< what octet stage this run is
-	GVState gvState;			//< state of gate valve during run
-	AFPState afpState;			//< whether spin-flipper is on
-	RunGeometry runGeometry;	//< geometry configuration for this run
-	DataQuality runQuality;		//< quality of data for this run
-	std::string roleName;		//< name of this run's role
-	Float_t startTime;			//< absolute start time of run
-	BlindTime liveTime;			//< fiducial time for run
-	BlindTime wallTime;			//< wall clock time for run
+	RunType type;				///< what type of run this is
+	OctetRole octet;			///< what octet stage this run is
+	GVState gvState;			///< state of gate valve during run
+	AFPState afpState;			///< whether spin-flipper is on
+	RunGeometry runGeometry;	///< geometry configuration for this run
+	DataQuality runQuality;		///< quality of data for this run
+	std::string roleName;		///< name of this run's role
+	Float_t startTime;			///< absolute start time of run
+	BlindTime liveTime;			///< fiducial time for run
+	BlindTime wallTime;			///< wall clock time for run
 	
-	Float_t scsField;			//< field in SCS spectrometer
-	std::string comments;		//< run log comments about this run
+	Float_t scsField;			///< field in SCS spectrometer
+	std::string comments;		///< run log comments about this run
 	
 protected:
 	

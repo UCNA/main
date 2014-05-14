@@ -59,40 +59,48 @@ void MuonPlugin::calculateResults() {
 		fLandau.SetLineColor(2+2*s);
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			for(GVState gv = GV_CLOSED; gv <= GV_OPEN; ++gv) {
-				Stringmap m;
-				m.insert("side",sideSubst("%c",s));
-				m.insert("afp",afpWords(afp));
-				m.insert("gv",gvWords(gv));
+				
+				AnaNumber AN("");
+				AN.s = s;
 				
 				// Landau fit to backing muon spectrum peak
 				if(gv) {
 					qBackMuons[s][gv?false:true]->fgbg[afp]->h[gv]->Fit(&fLandau,"QR+");
-					m.insert("height",fLandau.GetParameter(0));
-					m.insert("d_height",fLandau.GetParError(0));
-					m.insert("mpv",fLandau.GetParameter(1));
-					m.insert("d_mpv",fLandau.GetParError(1));
-					m.insert("sigma",fLandau.GetParameter(2));
-					m.insert("d_sigma",fLandau.GetParError(2));
+					AN.name = "muback_landau_fit";
+					for(unsigned int n=0; n<3; n++) {
+						AN.n = n;
+						AN.value = fLandau.GetParameter(n);
+						AN.err = fLandau.GetParError(n);
+						myA->uploadAnaNumber(AN, gv, afp);
+					}
 				}
+				AN.n = 0;
 				
 				// muon rate passing energy and position cuts
 				TH1* h = qMuonSpectra[s][gv?false:true]->fgbg[afp]->h[gv];
 				float tm = myA->totalTime[afp][gv][s];
 				Double_t ierr;
-				m.insert("ecut_eMin",emin);
-				m.insert("ecut_eMax",emax);
-				m.insert("mu_rate",h->IntegralAndError(1,h->GetNbinsX(),ierr)/tm);
-				m.insert("d_mu_rate",ierr/tm);
-				m.insert("ecut_mu_rate",h->IntegralAndError(h->FindBin(emin),h->FindBin(emax),ierr)/tm);
-				m.insert("d_ecut_mu_rate",ierr/tm);
+				
+				AN.name = "mu_rate";
+				AN.value = h->IntegralAndError(1,h->GetNbinsX(),ierr)/tm;
+				AN.err = ierr/tm;
+				myA->uploadAnaNumber(AN, gv, afp);
+				
+				AN.name = "mu_rate_ecut";
+				AN.value = h->IntegralAndError(h->FindBin(emin),h->FindBin(emax),ierr)/tm;
+				AN.err = ierr/tm;
+				myA->uploadAnaNumber(AN, gv, afp);
 				
 				TH1* hb = qBackMuons[s][gv?false:true]->fgbg[afp]->h[gv];
-				m.insert("mu_back_rate",hb->IntegralAndError(1,h->GetNbinsX(),ierr)/tm);
-				m.insert("d_mu_back_rate",ierr/tm);
-				m.insert("ecut_mu_back_rate",hb->IntegralAndError(hb->FindBin(emin),hb->FindBin(emax),ierr)/tm);
-				m.insert("d_ecut_mu_back_rate",ierr/tm);
-				
-				myA->qOut.insert("muons_info",m);
+				AN.name = "muback_rate";
+				AN.value = hb->IntegralAndError(1,h->GetNbinsX(),ierr)/tm;
+				AN.err = ierr/tm;
+				myA->uploadAnaNumber(AN, gv, afp);
+			
+				AN.name = "muback_rate_ecut";
+				AN.value = hb->IntegralAndError(hb->FindBin(emin),hb->FindBin(emax),ierr)/tm;
+				AN.err = ierr/tm;
+				myA->uploadAnaNumber(AN, gv, afp);
 			}
 		}
 	}
@@ -109,7 +117,7 @@ void MuonPlugin::makePlots() {
 	drawQuadSides(qBackMuons[EAST][false], qBackMuons[WEST][false], true, "MuonSpectra");
 	
 	// positions
-	if(myA->depth <= 0) {
+	if(myA->grouping >= GROUP_OCTET) {
 		for(Side s = EAST; s <= WEST; ++s) {
 			pMuonPos[s]->h[GV_OPEN]->Draw("COL");
 			printCanvas(sideSubst("MuonSpectra/MuPos_%c",s));

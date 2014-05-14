@@ -1,5 +1,5 @@
 #ifndef ROLLINGWINDOW_HH
-#define ROLLINGWINDOW_HH 1
+#define ROLLINGWINDOW_HH
 
 #include <utility>
 #include <deque>
@@ -33,13 +33,13 @@ public:
 	/// clear all data
 	void clear() { sw = sww = 0; itms.clear(); }
 	
-	unsigned int nMax;	//< maximum number of items to track
-	double lMax;		//< maximum time span to track from leading object
+	unsigned int nMax;	///< maximum number of items to track
+	double lMax;		///< maximum time span to track from leading object
 	
 protected:
-	std::deque< std::pair<double,double> > itms;	//< items in window
-	double sw;										//< sum of weights
-	double sww;										//< sum of weights squared
+	std::deque< std::pair<double,double> > itms;	///< items in window
+	double sw;										///< sum of weights
+	double sww;										///< sum of weights squared
 };
 
 

@@ -10,7 +10,7 @@
 #include <string>
 <<<<<<< HEAD
 #include "Physics/BetaSpectrum.hh" 
-//#include "ucnG4_dev/include/bmPrimaryGeneratorAction.hh"
+//#include "ucnG4_dev/include/PrimaryGeneratorAction.hh"
 =======
 #include "BetaSpectrum.hh"
 >>>>>>> c40651173c2f4f0e350b4812aee2e1c2f305f846

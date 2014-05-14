@@ -1,5 +1,5 @@
 #ifndef PROCESSEDDATASCANNER_HH
-#define PROCESSEDDATASCANNER_HH 1
+#define PROCESSEDDATASCANNER_HH
 
 #include "Types.hh"
 #include "Enums.hh"
@@ -50,20 +50,20 @@ public:
 	/// Type II/III separation probability
 	virtual float getProbIII() const { return WirechamberCalibrator::sep23Prob(fSide,getEnergy(),mwpcEnergy[fSide]); }
 	
-	static bool redoPositions;		//< whether to re-calibrate positions
+	static bool redoPositions;		///< whether to re-calibrate positions
 
-	ScintEvent scints[BOTH];	//< readout point for scintillator data
-	Float_t led_pd[BOTH];		//< readout point for reference photodiode
-	wireHit wires[BOTH][2];		//< readout point for wirechamber data [side][plane]
-	float cathodes[BOTH][2][kMaxCathodes];	//< readout point for pedestal-subtracted cathode values, [side][plane][cathode]
-	MWPCevent mwpcs[BOTH];		//< readout point for mwpc data (anode & cathode sum)
-	Float_t mwpcEnergy[BOTH];	//< calibrated wirechamber energy deposition on each side
-	BlindTime runClock;			//< time of current event since run start
+	ScintEvent scints[BOTH];	///< readout point for scintillator data
+	Float_t led_pd[BOTH];		///< readout point for reference photodiode
+	wireHit wires[BOTH][2];		///< readout point for wirechamber data [side][plane]
+	float cathodes[BOTH][2][kMaxCathodes];	///< readout point for pedestal-subtracted cathode values, [side][plane][cathode]
+	MWPCevent mwpcs[BOTH];		///< readout point for mwpc data (anode & cathode sum)
+	Float_t mwpcEnergy[BOTH];	///< calibrated wirechamber energy deposition on each side
+	BlindTime runClock;			///< time of current event since run start
 		
-	double physicsWeight;		//< event spectrum re-weighting factor
+	double physicsWeight;		///< event spectrum re-weighting factor
 	
-	AnalysisChoice anChoice;	//< which analysis choice to use in identifying event types
-	float fiducialRadius;		//< radius for position cut
+	AnalysisChoice anChoice;	///< which analysis choice to use in identifying event types
+	float fiducialRadius;		///< radius for position cut
 };
 
 #endif
