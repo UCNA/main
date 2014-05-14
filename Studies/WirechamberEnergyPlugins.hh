@@ -23,8 +23,6 @@ public:
 	
 	fgbgPair* mwpcE[BOTH][TYPE_III_EVENT+1];	///< MWPC energy spectrum binned by event energy by [side][type]
 	fgbgPair* mwpcGaincorr;						///< average MWPC gain correction factor already use
-	double avgGain[BOTH];						///< average applied gain correction
-	double dAvgGain[BOTH];						///< spread in applied gain correction
 	fgbgPair* norm23[BOTH];						///< "normalized" Type II, III energy signals by [side]
 	
 	std::vector<TH1F*> hSlices[BOTH][TYPE_III_EVENT+1];	///< fit energy spectrum "slices"

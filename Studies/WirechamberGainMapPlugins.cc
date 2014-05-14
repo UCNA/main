@@ -74,12 +74,6 @@ void WirechamberGainMapPluginBase::genPosmap(const std::string& pmapNameBase) co
 			CDBout->addPosmapPoint(pmid,s,0,m,fLandau.GetParameter(1),sectGains[s]->h[GV_OPEN]->GetBinContent(m+1),x,y);
 		}
 	}
-	
-	// save posmap name/ID to output file
-	Stringmap pmsm;
-	pmsm.insert("pmid",pmid);
-	pmsm.insert("name",pmapname);
-	myA->qOut.insert(pmapNameBase+"_posmap",pmsm);
 }
 
 //------------------------------------
