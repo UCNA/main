@@ -96,6 +96,21 @@ enum GVState {
 	GV_OTHER	= 2		///< GV state unspecified
 };
 
+/// run grouping level
+enum RunGrouping {
+	GROUP_RUN		= 0,	///< single run
+	GROUP_FGBG		= 1,	///< foreground/background pair
+	GROUP_PPAIR		= 2,	///< AFP On/Off pulse pair
+	GROUP_QUARTET	= 3,	///< A or B pair of pulse pairs
+	GROUP_OCTET		= 4,	///< A->B or B->A octet
+	GROUP_RANGE		= 5		///< arbitrary run range
+};
+/// words for octet grouping
+std::string groupWords(RunGrouping g);
+/// return next lower division depth
+inline RunGrouping subdivide(RunGrouping g) { return RunGrouping(g-1); }
+
+
 /// iteration to next GV state
 inline GVState& operator++(GVState& a) { return a = GVState(a+1); }
 /// string for GV state

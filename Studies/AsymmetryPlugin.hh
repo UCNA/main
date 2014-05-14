@@ -19,14 +19,9 @@ public:
 	void calcSuperCombos();
 	/// output plot generation
 	virtual void makePlots();
-	/// upload results to analysis results DB
-	virtual void uploadAnaResults();
 	/// MC/data comparison
 	virtual void compareMCtoData(AnalyzerPlugin* AP);
-	
-	/// get base AnaResult to fill in
-	AnaResult getResultBase() const;
-	
+		
 	unsigned int nEnergyBins;		///< number of bins for energy histograms
 	double energyMax;				///< energy range for energy histograms
 	
@@ -43,7 +38,8 @@ public:
 	quadHists* qTotalSpectrum[BOTH];								///< total spectrum based on analysis choice
 	
 	AnalysisChoice anChoice;	///< asymmetry analysis choice
-
+	std::set<EventType> etypes;	///< event types used for analysis choice
+	
 protected:
 	
 	/// fit asymmetry over given range
@@ -52,11 +48,7 @@ protected:
 	void fitInstAsym(float fmin=200, float fmax=600, unsigned int color = 2);
 	/// various beta spectrum endpoint fits
 	void endpointFits();
-	
-	AnaResult ARtot;					///< temporary analysis result holder
-	std::vector<AnaResult> asymFits;	///< list of asymmetry fits available for upload
-	std::vector<AnaCutSpec> asymCuts;	///< list of cut specifications for asymmetry fits
-	
+		
 	static TF1 asymmetryFit;		///< fit function for asymmetry
 	static TF1 averagerFit;			///< pol0 line fit for averaging
 };

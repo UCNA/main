@@ -9,7 +9,8 @@ outputDir(dname), baseDir(bdir), doPlots(false), doCompare(false), hoursOld(0), 
 void OctetSimuCloneManager::scanOct(RunAccumulator& RA, const Octet& oct) {
 	if(!oct.getNRuns()) return;
 	RunAccumulator* octRA = (RunAccumulator*)RA.makeAnalyzer(oct.octName(),"");
-	processOctets(*octRA,oct.getSubdivs(nextDiv(oct.divlevel),false),hoursOld*3600,doPlots);
+	octRA->grouping = oct.divlevel;
+	processOctets(*octRA,oct.getSubdivs(subdivide(oct.divlevel),false),hoursOld*3600,doPlots);
 	delete octRA;
 }
 

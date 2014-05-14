@@ -71,7 +71,7 @@ void PositionsPlugin::calculateResults() {
 }
 
 void PositionsPlugin::makePlots() {
-	if(myA->depth > 0) return;
+	if(myA->grouping < GROUP_RANGE) return;
 	
 	myA->defaultCanvas->cd();
 	
@@ -109,7 +109,7 @@ void PositionsPlugin::makePlots() {
 }
 
 void PositionsPlugin::compareMCtoData(AnalyzerPlugin* AP) {
-	if(myA->depth > 0) return;
+	if(myA->grouping < GROUP_RANGE) return;
 	
 	// re-cast to correct type
 	PositionsPlugin& dat = *(PositionsPlugin*)AP;

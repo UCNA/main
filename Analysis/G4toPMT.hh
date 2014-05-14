@@ -19,10 +19,10 @@ protected:
 	virtual void setReadpoints();
 	
 	bool extended;			///< whether to read in additional variables
-	double eDepSD[N_SD];		///< energy deposition array
+	double eDepSD[N_SD];	///< energy deposition array
 	double thetaInSD[N_SD];	///< entrance angle array
-	double thetaOutSD[N_SD];	///< exit angle array
-	double keInSD[N_SD];		///< entrance energy array
+	double thetaOutSD[N_SD];///< exit angle array
+	double keInSD[N_SD];	///< entrance energy array
 	double keOutSD[N_SD];	///< exit energy array
 };
 

@@ -7,7 +7,7 @@
 #include "AsymmetryPlugin.hh"
 
 /// fit beyond-endpoint background subtraction
-void fitHighEnergyExcess(QFile& qOut, quadHists* qh, double e0, double e1);
+void fitHighEnergyExcess(RunAccumulator* RA, quadHists* qh, double e0, double e1);
 
 /// energy spectra and asymmetry analysis class
 class HighEnergyExcessPlugin: public OctetAnalyzerPlugin {

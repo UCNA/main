@@ -8,6 +8,7 @@
 #include "ProcessedDataScanner.hh"
 #include "G4toPMT.hh"
 #include "Octet.hh"
+#include "AnalysisDB.hh"
 #include <TRandom3.h>
 
 class AnalyzerPlugin;
@@ -83,8 +84,6 @@ public:
 	float getTotalCounts(AFPState afp, GVState gv) const { return totalCounts[afp][gv]; }
 	/// get time contributed from given rumber
 	float getRunTime(RunNum rn) const { return runTimes[rn]; }
-	/// save rates summary for core histograms to qOut
-	void makeRatesSummary();
 	/// write to QFile
 	virtual void write(std::string outName = "");
 	
@@ -107,7 +106,7 @@ public:
 	GVState currentGV;				///< current foreground/background status during data scanning
 	bool needsSubtraction;			///< whether background subtraction is pending
 	bool isSimulated;				///< flag for whether this is based on simulated data
-	int depth;						///< octet division depth
+	RunGrouping grouping;			///< octet grouping type
 	
 	TagCounter<RunNum> runCounts;	///< type-0 event counts by run, for re-simulation
 	
@@ -117,8 +116,6 @@ public:
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// calculate results from filled histograms
 	virtual void calculateResults();
-	/// upload results to analysis DB
-	virtual void uploadAnaResults();
 	/// make plots from each plugin
 	virtual void makePlots();
 	/// run calculations and plots, save output files
@@ -156,7 +153,19 @@ public:
 	
 	bool simPerfectAsym;	///< whether to simulate "perfect" asymmetry by re-using simulation events
 	
+	/// store AnalysisDB number for uploading
+	void uploadAnaNumber(AnaNumber& AN, GVState g = GV_OTHER, AFPState a = AFP_OTHER);
+	/// upload results to analysis DB
+	virtual void uploadAnaResults();
+	
+	static std::string AnaDB_xtag;	//< optional extra tag for AnalysisDB entries
+	
 protected:
+
+	/// get AnalysisDB run set ID matching this analyzer
+	unsigned int get_ADB_Runset_ID(GVState g = GV_OTHER, AFPState a = AFP_OTHER);
+	unsigned int AR_IDs[GV_OTHER+1][AFP_OTHER+1];				///< analysis DB ID numbers for various run sets
+	std::vector<AnaNumber> anaResults[GV_OTHER+1][AFP_OTHER+1];	///< analysis results in each GV/AFP category
 	
 	std::map<std::string,AnalyzerPlugin*> myPlugins;	///< analysis plugins
 	static TRandom3 rnd_source;							///< random number source
@@ -175,9 +184,9 @@ public:
 	/// create or load a FG/BG TH1F* set
 	fgbgPair* registerFGBGPair(const std::string& hname, const std::string& title,
 							   unsigned int nbins, float xmin, float xmax,
-							   AFPState a = AFP_OTHER, Side s = BOTH) { return myA->registerFGBGPair(hname,title,nbins,xmin,xmax,a,s); }
+							   AFPState a = AFP_OTHER, Side s = BOTH);
 	/// create or load a FG/BG,OFF/ON histogram set based on a template TH1
-	fgbgPair* registerFGBGPair(const TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH) { return myA->registerFGBGPair(hTemplate,a,s); }
+	fgbgPair* registerFGBGPair(const TH1& hTemplate, AFPState a = AFP_OTHER, Side s = BOTH);
 	/// save canvas image
 	void printCanvas(std::string fname, std::string suffix=".pdf") const { myA->printCanvas(fname,suffix); }
 	
@@ -193,19 +202,19 @@ public:
 	virtual void makePlots() {}
 	/// generate calculated hists
 	virtual void calculateResults() {}
-	/// upload results to analysis DB
-	virtual void uploadAnaResults() {}
 	/// virtual routine for MC/Data comparison plots/calculations
 	/// NOTE: this MUST NOT change the contents of saved histograms (calculated ones are OK)
 	virtual void compareMCtoData(AnalyzerPlugin*) {}
+
+protected:
+	std::vector<fgbgPair*> myHists;	///< histograms registered by this plugin
+	
+	/// upload summary of histogram rates to AnalysisDB
+	void makeRatesSummary();
 };
 
-/// process one pulse-pair worth of data
-unsigned int processPulsePair(RunAccumulator& RA, const Octet& PP);
-
 /// process a set of octets; return number of processed pulse-pairs
-unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& O, double replaceIfOlder = 0,
-						   bool doPlots = true, unsigned int oMin = 0, unsigned int oMax = 10000);
+unsigned int processOctets(RunAccumulator& RA, const std::vector<Octet>& O, double replaceIfOlder = 0, bool doPlots = true);
 /// re-process a set of octets using previously booked histograms; return number of processed pulse-pairs
 unsigned int recalcOctets(RunAccumulator& RA, const std::vector<Octet>& Octs, bool doPlots);
 

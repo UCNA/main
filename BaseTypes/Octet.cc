@@ -46,7 +46,7 @@ std::string nameForOctet(OctetRole t) {
 	return "N";
 }
 
-Octet::Octet(const Stringmap& m): divlevel(DIV_OCTET) {
+Octet::Octet(const Stringmap& m): divlevel(GROUP_OCTET) {
 	for(OctetRole t = OCTR_A1; t <= OCTR_B12; ++t) {
 		std::vector<std::string> rlisting = m.retrieve(nameForOctet(t));
 		for(std::vector<std::string>::iterator it = rlisting.begin(); it != rlisting.end(); it++) {
@@ -103,25 +103,30 @@ Stringmap Octet::toStringmap() const {
 	}
 	s.insert("name",octName());
 	s.insert("afp",afpWords(octAFPState()));
-	s.insert("divlevel",itos(divlevel));
+	s.insert("grouping",groupWords(divlevel));
 	return s;
 }
 
-std::vector<Octet> Octet::getSubdivs(Octet_Division_t divlvl, bool onlyComplete) const {
-	smassert(divlvl <= DIV_RUN);
+std::vector<Octet> Octet::getSubdivs(RunGrouping divlvl, bool onlyComplete) const {
 	std::vector<Octet> pps;
 	
-	if(divlvl == DIV_RUN) {
+	if(divlvl >= GROUP_RANGE) {
+		pps.push_back(*this);
+		pps.back().divlevel = GROUP_RANGE;
+		return pps;
+	}
+	
+	if(divlvl == GROUP_RUN) {
 		for(std::map< OctetRole,std::vector<RunNum> >::const_iterator it = runs.begin(); it != runs.end(); ++it) {
 			for(std::vector<RunNum>::const_iterator rit = it->second.begin(); rit != it->second.end(); ++rit) {
 				Octet pp;
 				pp.addRun(*rit,it->first);
-				pp.divlevel = divlvl;
+				pp.divlevel = GROUP_RUN;
 				pps.push_back(pp);
 			}
 		}
 	} else {
-		unsigned int ndivs = 1 << divlvl;
+		unsigned int ndivs = 1 << (GROUP_OCTET - divlvl);
 		for(unsigned int n=0; n<ndivs; n++) {
 			Octet pp;
 			pp.divlevel = divlvl;
@@ -162,8 +167,10 @@ bool operator<(const Octet& a, const Octet& b) {
 std::vector<Octet> Octet::loadOctets(const QFile& q) {
 	std::vector<Octet> os;
 	std::vector<Stringmap> osin = q.retrieve("Octet");
-	for(std::vector<Stringmap>::iterator it = osin.begin(); it != osin.end(); it++)
+	for(std::vector<Stringmap>::iterator it = osin.begin(); it != osin.end(); it++) {
 		os.push_back(Octet(*it));
+		os.back().divlevel = GROUP_OCTET;
+	}
 	std::sort(os.begin(),os.end());
 	return os;
 }
@@ -191,5 +198,5 @@ std::string Octet::octName() const {
 	if(!runs.size())
 		return "NullOct";
 	std::vector<RunNum> rns = getAllRuns();
-	return itos(rns[0])+"-"+itos(rns.back())+"_"+itos(divlevel);
+	return groupWords(divlevel)+"_"+itos(rns[0])+"-"+itos(rns.back());
 }

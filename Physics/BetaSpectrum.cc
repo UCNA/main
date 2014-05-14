@@ -345,6 +345,7 @@ double Langer_Cs137_C2T(double W, double W0) {
 }
 
 // "lambda_2" Coulomb correction used in Behrens_Cs137_C()... TODO: where did I get this??
+// ?? Behrens, Buhring, "Electron radial wave functions and nuclear beta decay", Clarendon Press, Oxford, 1982
 double Behrens_lambda_2(double W, double W0, double Z, double R) {
 	double p = sqrt(W*W-1);
 	double y = fs_alpha*Z*W/p;
@@ -358,6 +359,7 @@ double Behrens_lambda_2(double W, double W0, double Z, double R) {
 		   pow(2*p*R,a2Z2/2) * (pow(1-a2Z2/4,2)+y*y) * (1-a2Z2*C/2+a2Z2*y*y*sm/2) );
 }
 
+// Equation 4 from H. Berens and P. CHristmas, "The Beta Decay of 137Cs," Nucl. Phys. A 399, 1983, p.131--140
 double Behrens_Cs137_C(double W, double W0) {
 	double q2 = (W0-W)*(W0-W);
 	double p2 = W*W-1;

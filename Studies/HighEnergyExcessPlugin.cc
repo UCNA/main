@@ -2,7 +2,7 @@
 #include "GraphUtils.hh"
 #include "GraphicsUtils.hh"
 
-void fitHighEnergyExcess(QFile& qOut, quadHists* qh, double e0, double e1) {
+void fitHighEnergyExcess(RunAccumulator* RA, quadHists* qh, double e0, double e1) {
 	for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 		TH1* hEn = qh->fgbg[afp]->h[GV_OPEN];
 		TH1* hEnBG = qh->fgbg[afp]->h[GV_CLOSED];
@@ -15,19 +15,16 @@ void fitHighEnergyExcess(QFile& qOut, quadHists* qh, double e0, double e1) {
 		Double_t d_xs;
 		double xs = hEn->IntegralAndError(b0,b1,d_xs);
 		
-		Stringmap m;
-		m.insert("side",sideSubst("%c",qh->mySide));
-		m.insert("afp",afpWords(afp));
-		m.insert("name",qh->name);
-		m.insert("nBG",nBG);		// number of BG counts
-		m.insert("d_nBG",d_nBG);	// error on BG counts
-		m.insert("xs",xs);			// number of excess counts
-		m.insert("d_xs",d_xs);		// error on excess counts
-		m.insert("eMin",e0);		// lower energy cut
-		m.insert("eMax",e1);		// upper energy cut
-		m.insert("b0",itos(b0));
-		m.insert("b1",itos(b1));
-		qOut.insert("bg_subtr_xs",m);
+		AnaNumber AN("bg_xs_"+qh->name+"_"+itos(e0)+"-"+itos(e1));
+		AN.s = qh->mySide;
+		AN.value = xs;
+		AN.err = d_xs;
+		RA->uploadAnaNumber(AN, GV_CLOSED, afp);
+		
+		AN.name = "bg_cts_"+qh->name+"_"+itos(e0)+"-"+itos(e1);
+		AN.value = nBG;
+		AN.err = d_nBG;
+		RA->uploadAnaNumber(AN, GV_CLOSED, afp);
 	}
 }
 
@@ -59,17 +56,18 @@ void HighEnergyExcessPlugin::fillCoreHists(ProcessedDataScanner& PDS, double wei
 }
 
 void HighEnergyExcessPlugin::calculateResults() {
+	if(myA->grouping < GROUP_OCTET) return;
 	for(Side s = EAST; s <= WEST; ++s) {
-		fitHighEnergyExcess(myA->qOut,qExcessSpectra[s],1000,2200);
-		fitHighEnergyExcess(myA->qOut,qExcessSpectra[s],2200,7000);
-		fitHighEnergyExcess(myA->qOut,qExcessGamma[s],200,1000);
-		fitHighEnergyExcess(myA->qOut,qExcessGamma[s],1000,2200);
-		fitHighEnergyExcess(myA->qOut,qExcessGamma[s],2200,7000);
+		fitHighEnergyExcess(myA,qExcessSpectra[s],1000,2200);
+		fitHighEnergyExcess(myA,qExcessSpectra[s],2200,7000);
+		fitHighEnergyExcess(myA,qExcessGamma[s],200,1000);
+		fitHighEnergyExcess(myA,qExcessGamma[s],1000,2200);
+		fitHighEnergyExcess(myA,qExcessGamma[s],2200,7000);
 	}
 }
 
 void HighEnergyExcessPlugin::makePlots() {
-	if(myA->depth <= 0) {
+	if(myA->grouping == GROUP_RANGE) {
 		drawQuadSides(qExcessGamma[EAST],qExcessGamma[WEST],true,"Energy");
 		drawQuadSides(qExcessSpectra[EAST],qExcessSpectra[WEST],true,"Energy");
 		drawQuadSides(qExcessr2[EAST],qExcessr2[WEST],true,"Positions");
@@ -94,7 +92,7 @@ void HighEnergyExcessPlugin::makePlots() {
 }
 
 void HighEnergyExcessPlugin::compareMCtoData(AnalyzerPlugin* AP) {
-	if(myA->depth > 0) return;
+	if(myA->grouping < GROUP_RANGE) return;
 	
 	// re-cast to correct type
 	HighEnergyExcessPlugin& dat = *(HighEnergyExcessPlugin*)AP;
