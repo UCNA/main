@@ -37,7 +37,7 @@ private:
 	TrackerHitsCollection* trackerCollection;		///< hits objects
 };
 
-
+#include <G4UIdirectory.hh>
 #include <G4UImessenger.hh>
 #include <G4UIcmdWithADouble.hh>
 
