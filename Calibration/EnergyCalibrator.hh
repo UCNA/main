@@ -68,8 +68,6 @@ public:
 	float_err invertLinearity(Side s, unsigned int t, float_err l, float time) const;
 	/// linearity corrector derivative at given adc value
 	float dLinearity(Side s, unsigned int t, float adc, float time) const;	
-	/// get ref run t0 GMS factor
-	float getGMS0(Side s, unsigned int t) const { return gms0[s][t]; }
 	
 	/// whether this is a reference run
 	bool isRefRun() const { return rGMS == rn || !rGMS; }
@@ -89,8 +87,6 @@ protected:
 
 	float deltaL[2][nBetaTubes];		///< energy resolution for each tube delta(eta*E)/sqrt(eta*E)
 	float deltaADC[2][nBetaTubes];		///< energy resolution for each tube delta(ADC)/sqrt(ADC)
-	float gms0[2][nBetaTubes];			///< GMS factor at reference run t=0
-	float expected_adc[2][nBetaTubes];	///< expected ADC value for calibration peak
 	
 	TGraph* linearityFunctions[2][nBetaTubes];	///< linearity correction for each side, tube (including ref. pmt)
 	TGraph* linearityInverses[2][nBetaTubes];	///< inverse linearity correction for each side, tube

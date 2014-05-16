@@ -64,6 +64,8 @@ std::vector<float> tspectrumSearch(TH1* hin, TH1** hout, float sigma, float thre
 	return vx;
 }
 
+bool peakCenterSort(const SpectrumPeak& a, const SpectrumPeak& b) { return (a.center.x < b.center.x); }
+
 std::vector<SpectrumPeak> tspectrumPrefit(TH1* indat, float searchsigma, const std::vector<SpectrumPeak>& expectedPeaks,
 										  TH1*& htout, float pkMin, float pkMax) {
 	
@@ -91,6 +93,7 @@ std::vector<SpectrumPeak> tspectrumPrefit(TH1* indat, float searchsigma, const s
 		foundPeaks.pop_back();
 	unsigned int npks = foundPeaks.size();
 	
+	
 	// pre-fit the TSpectrum peak-by-peak to estimate MultiGaus parameters
 	std::vector<TF1> tspks;
 	for(unsigned int n=0; n<npks; n++) {
@@ -101,6 +104,9 @@ std::vector<SpectrumPeak> tspectrumPrefit(TH1* indat, float searchsigma, const s
 		htout->Fit(&tspks.back(),"QR+");
 		foundPeaks[n].fromGaussian(&tspks.back());
 	}
+	
+	// sort peaks in energy order
+	std::sort(foundPeaks.begin(),foundPeaks.end(),peakCenterSort);
 	
 	return foundPeaks;
 }

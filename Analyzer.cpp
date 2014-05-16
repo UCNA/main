@@ -118,6 +118,8 @@ void mi_delPosmap(StreamInteractor* S) {
 
 void mi_listPosmaps(StreamInteractor*) { CalDBSQL::getCDB()->listPosmaps(); }
 
+void mi_displayOctetList(StreamInteractor*) { displayOctetList(); }
+
 void mi_processOctet(StreamInteractor* S) {
 	int octn = S->popInt();
 	
@@ -295,6 +297,8 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	InputRequester showCal("Show run calibration",&mi_showCal);
 	showCal.addArg("Run");
 	
+	InputRequester showOcts("Show octet list",&mi_displayOctetList);
+	
 	InputRequester octetProcessor("Process Octet",&mi_processOctet);
 	octetProcessor.addArg("Octet number");
 
@@ -309,6 +313,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OptionsMenu PostRoutines("Postprocessing Routines");
 	PostRoutines.addChoice(&showCal,"cal");
 	PostRoutines.addChoice(&dumpCalInfo,"dcl");
+	PostRoutines.addChoice(&showOcts,"sho");
 	PostRoutines.addChoice(&octetProcessor,"oct");
 	PostRoutines.addChoice(&showGenerator,"evg");
 	PostRoutines.addChoice(&makeSimSpectrum,"mks");

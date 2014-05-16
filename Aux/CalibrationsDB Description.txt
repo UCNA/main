@@ -17,10 +17,6 @@ CREATE TABLE tube_calibration (
 	side ENUM('East','West'),	# tube side
 	quadrant INT UNSIGNED,		# tube quadrant (tube number) in {0,1,2,3}
 	linearity_graph INT UNSIGNED,	# graph ID for linearity correction
-	encal_xpos DOUBLE,			# x position of energy calibration source
-	encal_ypos DOUBLE,			# y position of energy calibration source
-	encal_adc DOUBLE,			# raw (pedestal-subtracted) ADC of energy calibration peak
-	encal_evis DOUBLE,			# visible energy of energy calibration peak
 	noisecal_adc DOUBLE,		# raw (pedestal-subtracted) ADC of noise calibration peak
 	noisecal_width DOUBLE,		# raw (pedestal-subtracted) ADC peak width of noise calibration peak
 	INDEX (ecal_id)

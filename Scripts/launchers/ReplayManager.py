@@ -26,7 +26,7 @@ def processOctets(sim,omin,omax):
 	if sim:
 		os.system("nice -n 5 parallel -P 3 < oct_replaylist.txt")
 	else:
-		os.system("nice -n 5 parallel -P 6 < oct_replaylist.txt")
+		os.system("nice -n 5 parallel -P 4 < oct_replaylist.txt")
 	os.system("rm oct_replaylist.txt")
 	if sim:
 		os.system("cd "+anaBinDir+"; ./UCNAnalyzer pr oct -1000 x x\n");

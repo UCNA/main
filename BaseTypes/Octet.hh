@@ -55,4 +55,7 @@ protected:
 	std::map< OctetRole,std::vector<RunNum> > runs;	///< list of octet runs
 };
 
+/// print active octet list
+void displayOctetList();
+
 #endif

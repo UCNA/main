@@ -12,24 +12,29 @@
 	old Xe 17224-17230
 	Ce,Sn,Bi 17233-17249
 >> October 26 Beta Decay 17274-17297
+
 ### PMT W2 repaired
 ### Bi pulser W1 fallen off; MWPC WX16 wire dead
 >> November 3 Sources Ce,Sn,Bi 17359-17387
 >> November 4-7 Beta Decay 17388-17509
 >> November 7 Calibrations Ce,Sn,Bi 17517-17527
 >> November 8 Xenon 17561-17734
+
 >> November 11-13 Beta Decay 17735-17862
 >> November 13 Sources Ce,Sn,Bi 17871-17941
 >> November 14 Long Source Runs 17942-17946
 >> November 15 Long Source Runs 17948-17955
 >> November 18 Sources with Cd,Cd113m,Ce,Bi 18020-18055
+
 ### all PMTs now working
 >> November 30 Xenon, tiny amount 18081-18090
 >> December 2 Bucking Coil Scans 18102-18116
 >> December 3-5 Beta Decay 18119-18340
 >> December 7 Source Calibrations with In114,Cd,Ce,Sn,Bi 18357-18386
+
 ### AFP quenched down; SCS re-ramped
 >> December 10 Xenon 18390-18413
+
 ### down for week due to AFP quench, fill valve failure
 >> December 17-20 Snow Days Beta 18432-18616
 >> December 20 Calibrations Ce,Sn,Bi,Cd113,In,Cd  18617-18640
@@ -41,13 +46,15 @@
 	Xe 18712-18744
 	Ce,Sn,Bi,Cd113,In,Cd 18745-18768
 >> January 13-16 Beta Decay 18801-18994
+
 >> January 18-19 Beta Decay 19023-19046
 >> January 19-20 Beta Decay 19050-19073
 >> January 20-23 Beta Decay 19076-19201
 >> January 23 Sources Cd113,In,Cd,Ce,Sn,Bi 19203-19239
+
 >> February 10 Sources Ce,Sn,Bi,Cd113,In,Cd 19347-19377
 >> February 11-13 Beta Decay 19380-19485
->> February 14 Sources 19505-19544
+>> February 14 Sources 19505-19544 Cd/In only
 >> February 16 Xenon and Betas
 	# 19583-19588 Xe runs too long for analyzer
 	Xe 19589-19606
@@ -58,6 +65,8 @@
 	Xe 19873-19898
 	Sn 19899-19960
 >> February 24 Tiny Beta 19961-19966 B1-B6
+
+
 
 ############### September 2012 #################
 

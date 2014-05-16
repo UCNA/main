@@ -36,11 +36,11 @@ class AnalyzerNumberPlotter:
 		self.simsrc = None # "MPM_Sim"
 		self.grouping = "octet"
 		self.ADBL = AnaDBLocator()
-		self.ptcolor = rgb.black
+		self.ptcolor = rgb.red
 		self.ptsymb = symbol.circle
 		self.gkey = graph.key.key(pos="tl")
 		self.LF = LinearFitter(terms=[polyterm(0)])
-		self.showStats = True
+		self.yscale = 1.0
 
 	def init_graph(self, gtitle):
 		self.g = graph.graphxy(width=35,height=12,
@@ -62,14 +62,15 @@ class AnalyzerNumberPlotter:
 	def plot_data_key(self, nm, conn, gnm=None):
 	
 		self.gather_points(self.datsrc, nm, conn)
-		self.gdat = [ [n, self.datpts[k].value, self.datpts[k].err] for (n,k) in enumerate(self.datkeys) ]
+		self.gdat = [ [n, self.datpts[k].value * self.yscale, self.datpts[k].err * self.yscale] for (n,k) in enumerate(self.datkeys) ]
 		
 		try:
 			self.LF.fit(self.gdat,cols=(0,1,2),errorbarWeights=True)
 			chi2 = self.LF.chisquared()
 			ndf = self.LF.nu()
-			if gnm and self.showStats:
-				gnm += " $= %.5f\\pm%.5f$, $\\chi^2/\\nu = %.1f/%i$"%(self.LF.coeffs[0],self.LF.rmsDeviation()/sqrt(self.LF.ydat.size),chi2,ndf)
+			statdat = {"mu":self.LF.coeffs[0], "rms":self.LF.rmsDeviation()/sqrt(self.LF.ydat.size), "chi2":chi2 , "ndf":ndf}
+			if gnm:
+				gnm = gnm%statdat
 			
 			self.g.plot(graph.data.function("y(x)=%g"%self.LF.coeffs[0], title=None), [ graph.style.line(lineattrs=[self.ptcolor,style.linestyle.dashed]),])
 		except:
@@ -89,7 +90,8 @@ def plot_endpoint_history(grouping = "octet"):
 	
 	for s in ["East","West"]:
 		ANP = AnalyzerNumberPlotter()
-		ANP.gkey = graph.key.key(pos="bl", columns=5)
+		ANP.gkey = graph.key.key(pos="tc", columns=5)
+		ANP.grouping = grouping
 		ANP.init_graph("Beta Endpoint [keV]")
 		
 		for t in range(5):
@@ -98,13 +100,14 @@ def plot_endpoint_history(grouping = "octet"):
 				ANP.ADBL.req["n"] = t
 				ANP.ADBL.req["side"] = s
 				ANP.ADBL.req["afp"] = afp
-				ANP.grouping = grouping
 				
 				ANP.ptcolor = tcols[t]
 				ANP.ptsymb = afpSymbs[afp]
-				ANP.showStats = False
 				
-				ANP.plot_data_key("kurie_150-700", conn, "t%i %s"%(t,afp))
+				ptitle = "PMT%i %s"%(t,afp)
+				if t==4:
+					ptitle = "Combined %s"%afp
+				ANP.plot_data_key("kurie_150-635", conn, ptitle)
 		
 		ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/Endpts_%s_%s.pdf"%(s,grouping))
 
@@ -116,8 +119,8 @@ def plot_murate_history(grouping = "octet"):
 	ANP = AnalyzerNumberPlotter()
 	ANP.grouping = grouping
 	ANP.gkey = graph.key.key(pos="tl", columns=2)
-	ANP.init_graph("tagged muon rate [Hz]")
-	
+	ANP.yscale = 1000
+	ANP.init_graph("tagged muon rate [mHz]")
 	
 	for s in ["East","West"]:
 		for afp in ["On","Off"]:
@@ -127,9 +130,8 @@ def plot_murate_history(grouping = "octet"):
 			
 			ANP.ptcolor = scols[s]
 			ANP.ptsymb = afpSymbs[afp]
-			ANP.showStats = False
 			
-			ANP.plot_data_key("mu_rate_ecut", conn, "%s %s"%(s,afp))
+			ANP.plot_data_key("mu_rate_ecut", conn, "%s %s: $%%(mu).1f \\pm %%(rms).1f$"%(s,afp))
 			
 	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/MuRate_%s.pdf"%(grouping))
 
@@ -141,7 +143,7 @@ def plot_raw_asym_history(grouping = "octet"):
 	ANP = AnalyzerNumberPlotter()
 	ANP.grouping = grouping
 	ANP.init_graph("raw counts asymmetry")
-	ANP.plot_data_key("raw_count_asym", conn, "$A_{raw}$")
+	ANP.plot_data_key("raw_count_asym", conn, "$A_{raw} = %(mu).5f\\pm%(rms).5f$, $\\chi^2/\\nu = %(chi2).1f/%(ndf)i$")
 		
 	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/AsymHistory_%s.pdf"%grouping)
 

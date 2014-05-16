@@ -28,7 +28,7 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0)  {
 	} else if(mySource.t == "Sn113") {
 		nBins = 150;
 		eMin = -50;
-		eMax = 600;
+		eMax = 1000;
 	} else if(mySource.t == "Ce139") {
 		nBins = 100;
 		eMin = -20;
@@ -193,8 +193,24 @@ void SourceHitsPlugin::calculateResults() {
 				m.insert("simulated",myA->isSimulated?"yes":"no");
 				m.insert("side",sideSubst("%c",mySource.mySide));
 				myA->warn(MODERATE_WARNING,"Missing_Peak",m);
-				printf("Cancelling fit.\n");
-				continue;
+				
+				if(expectedPeaks.size()==1 && mySource.t != "Cs137") {
+					printf("Defaulting to mean/RMS...\n");
+					tubePeaks[t] = expectedPeaks;
+					tubePeaks[t][0].energyCenter = hTubesR[t][tp]->GetMean();
+					tubePeaks[t][0].energyWidth = hTubesR[t][tp]->GetRMS();
+				}
+				//else if(myA->isSimulated) {
+				//	printf("Defaulting to expected peaks...\n");
+				//	tubePeaks[t] = expectedPeaks;
+				//	for(std::vector<SpectrumPeak>::iterator it = tubePeaks[t].begin(); it != tubePeaks[t].end(); it++) {
+				//		it->energyCenter = it->energy();
+				//		it->energyWidth = sqrt(10*it->energy());
+				//	}
+				else {
+					printf("Cancelling fit.\n");
+					continue;
+				}
 			}
 			
 			// display and upload peaks
@@ -445,7 +461,7 @@ void reSource(RunNum rn) {
 		printf("Loading source simulation data...\n");
 		std::string g4dat = "/data2/mmendenhall/G4Out/2010/FixGeom_";
 		if(src.t=="Bi207" || src.t=="Ce139" || src.t=="Sn113") g4dat = "/data2/mmendenhall/G4Out/2010/20120823_";
-		if(rn > 20200) g4dat = getEnvSafe("UCNA_CALSRC_SIMS");
+		if(rn > 16300) g4dat = getEnvSafe("UCNA_CALSRC_SIMS");
 		
 		if(src.t=="Ce139" || src.t=="Sn113" || src.t=="Bi207" ||
 		   src.t=="Cd109" || src.t=="In114E" || src.t=="In114W" || src.t=="Cs137") {
@@ -475,7 +491,7 @@ void reSource(RunNum rn) {
 		SourcedropPositioner SDP(src.x, src.y, src.t=="Ce139" ? 1.25 : src.t=="Cd109" ? 0.5 : 1.5 );
 		g2p->SP = &SDP;
 		
-		float nRealCounts = 50000;
+		float nRealCounts = 10000; //50000;
 		g2p->basePhysWeight = src.nCounts/nRealCounts;
 		
 		SHAsim.setCurrentState(g2p->getAFP(),GV_OPEN);
