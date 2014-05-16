@@ -147,7 +147,7 @@ class SourceDataCollector:
 		"""Collect source peak data for runs in list."""
 		
 		# load all lines
-		self.srcs = gather_sourcedat(conn,rlist)
+		self.srcs = gather_sourcedat(self.conn,rlist)
 		
 		self.alllines = []
 		for src in self.srcs:
@@ -640,18 +640,18 @@ cal_2010 = [
 			]
 			
 cal_2011 = [
-			(	17233,	17249,	17238,	16983,	17297,		678,	681,		55	),	# New Sn, Ce sources; Xenon, Betas, Dead PMT W2
-			(	17359,	17387,	17371,	17359,	17439,		1348,	1351,		55	),	# Beta Decay; PMT W0 missing pulser
-			(	17517,	17527,	17522,	17440,	17734,		1125,	1128,		55	),	# Calibrations for Xe; W0 pulser still dead
-			(	17871,	17922,	17892,	17735,	17955,		807,	810,		55	),	# Big Scan; W0 pulser still dead
-			#(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		55	),	# Old and new Cd Source; self-calibration; W0 pulser still dead
-			(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		55	),	# Beta decay, new In source, Xe; everything working now
-			(	18617,	18640,	18622,	18432,	18683,		1894,	1897,		55	),	# Beta decay; PMT W4 Bi pulser very low
-			(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# Start of 2012; PMT W4 pulser still low
-			(	19203,	19239,	19233,	19023,	19239,		2338,	2341,		59	),	# W4 Pulser now higher... drifty
-			(	19347,	19377,	19359,	19347,	19544,		2387,	2390,		61	),	# W4 Pulser now low...
+			(	17233,	17249,	17238,	16983,	17297,		678,	681,		55	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+			(	17359,	17387,	17371,	17359,	17439,		1348,	1351,		55	),	# 1 Beta Decay; PMT W0 missing pulser
+			(	17517,	17527,	17522,	17440,	17734,		1125,	1128,		55	),	# 2 Calibrations for Xe; W0 pulser still dead
+			(	17871,	17922,	17892,	17735,	17955,		807,	810,		55	),	# 3 Big Scan; W0 pulser still dead
+			(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		55	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
+			(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		55	),	# 5 Beta decay, new In source, Xe; everything working now
+			(	18617,	18640,	18622,	18432,	18683,		1894,	1897,		55	),	# 6 Beta decay; PMT W4 Bi pulser very low
+			(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# 7 Start of 2012; PMT W4 pulser still low
+			(	19203,	19239,	19233,	19023,	19239,		2338,	2341,		59	),	# 8 W4 Pulser now higher... drifty
+			(	19347,	19377,	19359,	19347,	19544,		2387,	2390,		61	),	# 9 W4 Pulser now low...
 			#(	19505,	19544	),														# Feb. 14, Cd/In only; not used for calibration
-			(	19823,	19863,	19858,	19583,	20000,		2710,	2713,		61)		# Feb. 16-24 Xe, Betas, long sources
+			(	19823,	19863,	19858,	19583,	20000,		2710,	2713,		61)		# 10 Feb. 16-24 Xe, Betas, long sources
 			]
 
 cal_2012 = [
@@ -676,15 +676,18 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	conn = open_connection() # connection to calibrations DB
-	replace = True 	# whether to replace previous calibration data
+	replace = False 	# whether to replace previous calibration data
 	makePlots = True
 	#delete_calibration(conn,8466); exit(0)
 
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2011[3:4]:
+	for c in cal_2011[10:11]:
 	
+		#print "./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])
+		#continue
+		
 		rlist = range(c[0],c[1]+1)
 		fCalSummary.write("\n--------- %i-%i ----------\n"%(rlist[0],rlist[-1]))
 		

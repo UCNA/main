@@ -229,6 +229,7 @@ unsigned int RunAccumulator::get_ADB_Runset_ID(GVState g, AFPState a) {
 		ADB->locateRunset(AR);
 		AR_IDs[g][a] = AR.rsid;
 	}
+	assert(AR_IDs[g][a]);
 	return AR_IDs[g][a];
 }
 

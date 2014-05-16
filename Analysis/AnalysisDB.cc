@@ -26,6 +26,7 @@ void AnalysisDB::locateRunset(AnaRunset& AR) {
 						+ " AND end_run = " + itos(AR.end_run) + " AND grouping = '" + groupWords(AR.grouping)
 						+ "' AND gate_valve = '" + gvWords(AR.gate_valve) + "' AND afp = '" + afpWords(AR.afp) + "'");
 	sprintf(query,"%s",qry.c_str());
+	printf("%s\n",query);
 	TSQLRow* r = getFirst();
 	if(r) {
 		AR.rsid = fieldAsInt(r,0);

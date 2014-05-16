@@ -58,6 +58,10 @@ class AnalyzerNumberPlotter:
 		self.datpts = dict([ ((p.start_run,p.end_run),p) for p in self.ADBL.find(conn) ])
 		self.datkeys = self.datpts.keys()
 		self.datkeys.sort()
+		
+		#if self.grouping == "octet":
+		#	for (n,k) in enumerate(self.datkeys):
+		#		print n,"\t",k
 
 	def plot_data_key(self, nm, conn, gnm=None):
 	
@@ -68,14 +72,20 @@ class AnalyzerNumberPlotter:
 			self.LF.fit(self.gdat,cols=(0,1,2),errorbarWeights=True)
 			chi2 = self.LF.chisquared()
 			ndf = self.LF.nu()
-			statdat = {"mu":self.LF.coeffs[0], "rms":self.LF.rmsDeviation()/sqrt(self.LF.ydat.size), "chi2":chi2 , "ndf":ndf}
+			statdat = {"mu":self.LF.coeffs[0], "rms":self.LF.rmsDeviation(), "uncert":self.LF.rmsDeviation()/sqrt(self.LF.ydat.size), "chi2":chi2 , "ndf":ndf}
+			if stats:
+				statdat["prob"] = stats.chisqprob(statdat["chi2"],statdat["ndf"])
+			else:
+				statdat["prob"] = 0
 			if gnm:
 				gnm = gnm%statdat
 			
 			self.g.plot(graph.data.function("y(x)=%g"%self.LF.coeffs[0], title=None), [ graph.style.line(lineattrs=[self.ptcolor,style.linestyle.dashed]),])
 		except:
 			pass
-			
+		
+		self.g.axes['x'].max = self.gdat[-1][0]
+					
 		self.g.plot(graph.data.points(self.gdat,x=1,y=2,dy=3,title=gnm), [ graph.style.errorbar(errorbarattrs=[self.ptcolor]),
 																		graph.style.symbol(self.ptsymb, size=0.15, symbolattrs = [self.ptcolor])])
 
@@ -131,7 +141,7 @@ def plot_murate_history(grouping = "octet"):
 			ANP.ptcolor = scols[s]
 			ANP.ptsymb = afpSymbs[afp]
 			
-			ANP.plot_data_key("mu_rate_ecut", conn, "%s %s: $%%(mu).1f \\pm %%(rms).1f$"%(s,afp))
+			ANP.plot_data_key("mu_rate_ecut", conn, "%s %s: $%%(mu).1f$, RMS %%(rms).1f"%(s,afp))
 			
 	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/MuRate_%s.pdf"%(grouping))
 
@@ -143,7 +153,7 @@ def plot_raw_asym_history(grouping = "octet"):
 	ANP = AnalyzerNumberPlotter()
 	ANP.grouping = grouping
 	ANP.init_graph("raw counts asymmetry")
-	ANP.plot_data_key("raw_count_asym", conn, "$A_{raw} = %(mu).5f\\pm%(rms).5f$, $\\chi^2/\\nu = %(chi2).1f/%(ndf)i$")
+	ANP.plot_data_key("raw_count_asym", conn, "$A_{raw} = %(mu).5f\\pm%(uncert).5f$, $\\chi^2/\\nu = %(chi2).1f/%(ndf)i$ $(p=%(prob).2f)$")
 		
 	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/AsymHistory_%s.pdf"%grouping)
 
@@ -619,7 +629,7 @@ def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
 
 if __name__=="__main__":
 		
-	for grouping in ["octet","quartet","ppair"]:
+	for grouping in ["ppair","octet","quartet"]:
 		plot_murate_history(grouping)
 		plot_raw_asym_history(grouping)
 		plot_endpoint_history(grouping)
