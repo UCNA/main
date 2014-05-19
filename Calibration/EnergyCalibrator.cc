@@ -108,11 +108,7 @@ scaleNoiseWithL(true), P(cdb->getPositioningCorrector(myRun)), GS(NULL), rn(myRu
 		
 		if(isRefRun()) {
 			for(unsigned int t=0; t<nBetaTubes; t++) {
-				if(linearityInverses[s][t]->GetN())
-					expected_adc[s][t] = linearityInverses[s][t]->Eval(CDB->getEcalEvis(myRun,s,t)*eta(s,t,CDB->getEcalX(myRun,s),CDB->getEcalY(myRun,s)));
-				gms0[s][t] = expected_adc[s][t]/CDB->getEcalADC(myRun,s,t);
-				if(!gms0[s][t]) gms0[s][t] = 1.0;
-				deltaL[s][t] = ( CDB->getNoiseWidth(myRun,s,t) * dLinearity(s,t,CDB->getNoiseADC(myRun,s,t),0.0) / 
+				deltaL[s][t] = ( CDB->getNoiseWidth(myRun,s,t) * dLinearity(s,t,CDB->getNoiseADC(myRun,s,t),0.0) /
 								sqrt(linearityCorrector(s,t,CDB->getNoiseADC(myRun,s,t),0.0)) );
 				deltaADC[s][t] = CDB->getNoiseWidth(myRun,s,t)/sqrt(CDB->getNoiseADC(myRun,s,t));
 			}
@@ -120,7 +116,6 @@ scaleNoiseWithL(true), P(cdb->getPositioningCorrector(myRun)), GS(NULL), rn(myRu
 			for(unsigned int t=0; t<nBetaTubes; t++) {
 				deltaL[s][t] = LCRef->getDeltaL(s,t);
 				deltaADC[s][t] = LCRef->getDeltaADC(s,t);
-				gms0[s][t] = LCRef->gmsFactor(s,t,0.0);
 			}
 		}
 	}
@@ -173,7 +168,7 @@ float_err LinearityCorrector::invertLinearity(Side s, unsigned int t, float_err 
 float LinearityCorrector::gmsFactor(Side s, unsigned int t, float time) const {
 	if(GS)
 		return GS->gmsFactor(s,t,time);
-	return gms0[s][t];
+	return 1.0;
 }
 LinearityCorrector* LinearityCorrector::getCachedRun(RunNum r,CalDB* cdb) {
 	std::map<RunNum,LinearityCorrector*>::iterator it = cachedRuns.find(r);

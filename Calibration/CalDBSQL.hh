@@ -26,14 +26,6 @@ public:
 	/// get noise estimate calibration point raw ADC value
 	virtual float getNoiseADC(RunNum rn, Side s, unsigned int t)  { return getTubecalData(rn,s,t,"noisecal_adc"); }
 	
-	/// get energy calibration point ADC value
-	virtual float getEcalADC(RunNum rn, Side s, unsigned int t)  { return getTubecalData(rn,s,t,"encal_adc"); }
-	/// get energy calibration point visible energy
-	virtual float getEcalEvis(RunNum rn, Side s, unsigned int t)  { return getTubecalData(rn,s,t,"encal_evis"); }
-	/// get energy calibration point x position
-	virtual float getEcalX(RunNum rn, Side s)  { return getTubecalData(rn,s,0,"encal_xpos"); }
-	/// get energy calibration point y position
-	virtual float getEcalY(RunNum rn, Side s) { return getTubecalData(rn,s,0,"encal_ypos"); }
 	/// get GMS Cal run number
 	virtual RunNum getGMSRun(RunNum rn) { return getCalSetInfo(rn,"gms_run"); }
 	/// get a run monitor graph

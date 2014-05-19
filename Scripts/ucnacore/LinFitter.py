@@ -100,6 +100,7 @@ class LinearFitter:
 		self.coeffs = [0.0 for t in terms]
 		for n in fixparams:
 			self.coeffs[n] = fixparams[n]
+		self.M = None
 
 	# make weights and covariance matrix for diagonal (uncorrelated) terms
 	def makeDiagWeights(self,wts):

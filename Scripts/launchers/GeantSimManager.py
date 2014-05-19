@@ -5,6 +5,7 @@ from math import *
 from optparse import OptionParser
 
 # killall -9 GeantSimManager.py; killall -9 parallel; killall -9 ucnG4_prod
+# nohup ./GeantSimManager.py --xesrcs --sim --ana < /dev/null > g4log.txt 2>&1 &
 # nohup ./GeantSimManager.py --calsrcs --sim --ana < /dev/null > g4log.txt 2>&1 &
 
 class GeantSimManager:
@@ -96,6 +97,10 @@ class GeantSimManager:
 			self.needsHolder = True
 			self.settings["evtsrc"] += "_o_n"
 		
+		# special settings for xenon source generators
+		if self.settings["evtsrc"][:2] == "Xe":
+			self.settings["evtsrc"] += "_g_n"
+			
 		# set location of source holder
 		if not self.settings["sourceholderpos"]:
 			if self.needsHolder:
@@ -221,8 +226,7 @@ if __name__ == "__main__":
 	
 	parser = OptionParser()
 	parser.add_option("-k", "--kill", dest="kill", action="store_true", default=False, help="kill running replays")
-	parser.add_option("--sevtgen", dest="sevtgen", action="store_true", default=False, help="run sealed source event generators")
-	parser.add_option("--xevtgen", dest="xevtgen", action="store_true", default=False, help="run xenon event generators")
+	parser.add_option("--evtgen", dest="evtgen", action="store_true", default=False, help="run event generators")
 	parser.add_option("--calsrcs", dest="calsrcs", action="store_true", default=False, help="simulate sealed calibration sources")
 	parser.add_option("--xesrcs", dest="xesrcs", action="store_true", default=False, help="simulate xenon sources")
 	parser.add_option("--sim", dest="sim", action="store_true", default=False, help="run initial Geant4 simulation")
@@ -240,11 +244,13 @@ if __name__ == "__main__":
 	# calibration sources.
 	# sources ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"] 1e6 each
 	######################
-	if options.sevtgen:
-		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114m","Cd113m"]:
-			os.system("rm -rf %s/%s_o_n"%(os.environ["G4EVTDIR"],g))
-			os.system("../../MC_EventGen run %s %s o n 10000 100 x"%(g,os.environ["G4EVTDIR"]))
 	if options.calsrcs:
+		
+		if options.evtgen:
+			for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114m","Cd113m"]:
+				os.system("rm -rf %s/%s_o_n"%(os.environ["G4EVTDIR"],g))
+				os.system("../../MC_EventGen run %s %s o n 10000 100 x"%(g,os.environ["G4EVTDIR"]))
+
 		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W"]: #,"Cd113m"]:
 			sourceSim = GeantSimManager("loQnch_bow", fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt", geometry="thinFoil")
 			sourceSim.settings["sourceScan"] = 80.
@@ -265,13 +271,16 @@ if __name__ == "__main__":
 	XeIsots =  [	"Xe135_3-2+","Xe133_3-2+",
 					"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
 					"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+" ]
-	if options.xevtgen:
-		assert False # TODO
-		exit(-1)
 	if options.xesrcs:
+		
+		if options.evtgen:
+			for g in XeIsots:
+				os.system("rm -rf %s/%s_g_n"%(os.environ["G4EVTDIR"],g))
+				os.system("../../MC_EventGen run %s %s g n 10000 300 x"%(g,os.environ["G4EVTDIR"]))
+
 		for g in XeIsots:
-			sourceSim = GeantSimManager("20131015",vacuum="1.e-3 torr")
-			sourceSim.set_generator(g)
+			sourceSim = GeantSimManager("thinFoil", geometry="thinFoil")
+			sourceSim.set_evtsrc(g)
 			if options.sim:
 				sourceSim.launch_sims(maxIn=300)
 			if options.ana:

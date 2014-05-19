@@ -96,7 +96,7 @@ void AsymmetryPlugin::fitInstAsym(float fmin, float fmax, unsigned int color) {
 
 void AsymmetryPlugin::endpointFits() {
 	const float fitStart = 150;
-	const float fitEnd = 700;
+	const float fitEnd = 635;
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp) {
 			for(unsigned int t=0; t<=nBetaTubes; t++) {

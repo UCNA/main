@@ -16,7 +16,6 @@ class runCal(KVMap):
 		self.eOrig = self.get_tubesparam("eOrig")
 		self.eFinal = self.get_tubesparam("eFinal")
 		self.gms = self.get_tubesparam("gms")
-		self.gms0 = self.get_tubesparam("gms0")
 
 	def get_tubesparam(self,pname):
 		return dict( [ ((s,t),self.getFirstF("%s%i_%s"%(s,t,pname))) for s in ['E','W'] for t in range(5) ] )
