@@ -1,5 +1,6 @@
 #include "Octet.hh"
 #include "SMExcept.hh"
+#include "PathUtils.hh"
 #include <climits>
 #include <utility>
 
@@ -199,4 +200,12 @@ std::string Octet::octName() const {
 		return "NullOct";
 	std::vector<RunNum> rns = getAllRuns();
 	return groupWords(grouping)+"_"+itos(rns[0])+"-"+itos(rns.back());
+}
+
+void displayOctetList() {
+	std::vector<Octet> octs = Octet::loadOctets(QFile(getEnvSafe("UCNA_OCTET_LIST")));
+	for(unsigned int i=0; i<octs.size(); i++) {
+		printf("[%u]\t",i);
+		printf("%s\n",octs[i].octName().c_str());
+	}
 }

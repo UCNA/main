@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # nohup ./ReplayManager.py --mwpccal_sim < /dev/null > scriptlog.txt 2>&1 &
 # nohup ./ReplayManager.py -s --rmin=21914 --rmax=21939 < /dev/null > scriptlog.txt 2>&1 &
+# nohup ./ReplayManager.py -o < /dev/null > scriptlog.txt 2>&1 &
 
 import os
 import time
@@ -15,7 +16,7 @@ anaBinDir = "../../"
 def processOctets(sim,omin,omax):
 	pcmd = "cd "+anaBinDir+"; ./UCNAnalyzer pr oct %i x x\n"
 	freplaylist = open("oct_replaylist.txt","w")
-	for r in range(60)[omin:omax+1]:
+	for r in range(100)[omin:omax+1]:
 		if sim:
 			freplaylist.write(pcmd%(-r-1));
 		else:
@@ -25,7 +26,7 @@ def processOctets(sim,omin,omax):
 	if sim:
 		os.system("nice -n 5 parallel -P 3 < oct_replaylist.txt")
 	else:
-		os.system("nice -n 5 parallel -P 6 < oct_replaylist.txt")
+		os.system("nice -n 5 parallel -P 4 < oct_replaylist.txt")
 	os.system("rm oct_replaylist.txt")
 	if sim:
 		os.system("cd "+anaBinDir+"; ./UCNAnalyzer pr oct -1000 x x\n");
@@ -40,7 +41,7 @@ def processSources(rmin,rmax):
 			freplaylist.write(pcmd%(r,r))
 		freplaylist.close()
 		os.system("cat source_replaylist.txt")
-		os.system("nice -n 10 parallel < source_replaylist.txt")
+		os.system("nice -n 10 parallel -P 5 < source_replaylist.txt")
 		os.system("rm source_replaylist.txt")
 
 def processXeMap(rmin,rmax,nr):

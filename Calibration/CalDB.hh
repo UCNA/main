@@ -60,14 +60,6 @@ public:
 	
 	/// get GMS Cal run number
 	virtual RunNum getGMSRun(RunNum rn) = 0;
-	/// get energy calibration point ADC value
-	virtual float getEcalADC(RunNum rn, Side s, unsigned int t) = 0;
-	/// get energy calibration point visible energy
-	virtual float getEcalEvis(RunNum rn, Side s, unsigned int t) = 0;
-	/// get energy calibration point x position
-	virtual float getEcalX(RunNum rn, Side s) = 0;
-	/// get energy calibration point y position
-	virtual float getEcalY(RunNum rn, Side s) = 0;
 	/// get GMS gain tweaking factors
 	virtual void getGainTweak(RunNum rn, Side s, unsigned int t, float& orig, float& final) = 0;
 

@@ -17,12 +17,18 @@ def calEnvelope(E,year=2010):
 	l = (E-limdat[year][i][0])/(limdat[year][i+1][0]-limdat[year][i][0])
 	return (1-l)*limdat[year][i][1]+l*limdat[year][i+1][1]
 
+def in_cal_list(rn,clist):
+	for c in clist:
+		if c[0] <= rn <= c[1]:
+			return True
+	return False;
+
 def calrun_ranges(year):
 	if year==2010:
 		return range(14000,14746+1)+range(15645,15939+1)
 		#rlist = range(13883,14746+1)+range(15645,15939+1)
 	if year==2011:
-		return range(17233,100000)
+		return [r for r in range(17233,20000) if in_cal_list(r,cal_2011) ]
 
 def plot_Cal_Uncertainty(g,title=None,st=[graph.style.line([style.linestyle.dotted])],year=2010):
 	"""Plot energy uncertainty envelope."""
@@ -34,15 +40,17 @@ def getSourceYearDat(year):
 	if year not in srcYearDat:
 		conn = open_connection()
 		rlist = calrun_ranges(year)
-		slines = gather_peakdat(conn,rlist)
-		srcYearDat[year] = sort_by_type(slines)
+		SDC= SourceDataCollector(conn)
+		SDC.gather_peakdat(rlist, "AND peak_num<100")
+		srcYearDat[year] = SDC;
 	return srcYearDat[year]
 
 # plot linearity calibration source errors
 def plotAllErrors(outpath,year,s="Both",t=4):
 	
 	# gather source data from calibration runs
-	srs = getSourceYearDat(year)
+	srs = sort_by_type( getSourceYearDat(year).slines )
+	
 	scols = rainbowDict(srs)
 	if "PUBLICATION_PLOTS" in os.environ:
 			for k in scols:
@@ -50,7 +58,7 @@ def plotAllErrors(outpath,year,s="Both",t=4):
 
 
 	yrange = 15
-	if t != 4:
+	if t != 4 or year > 2010:
 		yrange = 30
 		
 	g=graph.graphxy(width=30,height=10,
@@ -88,7 +96,7 @@ def plotAllErrors(outpath,year,s="Both",t=4):
 		g.plot(graph.data.points([[x0,-30],[x0,30]],x=1,y=2,title=None), [graph.style.line([scols[k],style.linestyle.dotted]),])
 		g.plot(graph.data.points([[x0,hErr.avg(),hErr.rms()]],x=1,y=2,dy=3,title=gtitle),
 			[
-				graph.style.errorbar(errorbarattrs=[style.linewidth.THick]),
+				graph.style.errorbar(errorbarattrs=[style.linewidth.THick,scols[k]]),
 				graph.style.symbol(peakSymbs.get(k,symbol.circle),size=0.3,symbolattrs=[scols[k],deco.filled([rgb.white]),style.linewidth.THick]),
 			])
 
@@ -147,15 +155,16 @@ if __name__=="__main__":
 	# set up output paths
 	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/"
 	os.system("mkdir -p %s"%outpath)
-		
-	plotAllWidths(outpath,2010)
-	#plotAllErrors(outpath,2010)
-	#exit(0)
 	
-	for s in ["East","West"]:
-		for t in range(5):
-			#plotAllErrors(outpath,2010,s,t)
-			plotAllWidths(outpath,2010,s,t)
+	if 0:
+		plotAllWidths(outpath,2010)
+		plotAllErrors(outpath,2010)
+		exit(0)
+		
+		for s in ["East","West"]:
+			for t in range(5):
+				#plotAllErrors(outpath,2010,s,t)
+				plotAllWidths(outpath,2010,s,t)
 
-	#plotAllErrors(outpath,2011)
+	plotAllErrors(outpath,2011)
 	

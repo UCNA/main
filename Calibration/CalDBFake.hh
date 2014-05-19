@@ -27,14 +27,6 @@ public:
 	/// get noise estimate calibration point raw ADC value
 	virtual float getNoiseADC(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("noiseADC",400); }
 	
-	/// get energy calibration point ADC value
-	virtual float getEcalADC(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("ecalADC",500); }
-	/// get energy calibration point visible energy
-	virtual float getEcalEvis(RunNum rn, Side s, unsigned int t)  { return calfile.getFirst(sideSubst("PMT_%c",s)+itos(t)).getDefault("ecalEvis",500); }
-	/// get energy calibration point x position
-	virtual float getEcalX(RunNum rn, Side s)  { return calfile.getFirst(sideSubst("PMT_%c",s)+"1").getDefault("ecalX",0); }
-	/// get energy calibration point y position
-	virtual float getEcalY(RunNum rn, Side s) { return calfile.getFirst(sideSubst("PMT_%c",s)+"1").getDefault("ecalY",0); }
 	/// get GMS Cal run number
 	virtual RunNum getGMSRun(RunNum rn) { return 0; } //(int)calfile.getFirst("PMT_E0").getDefault("gmsRun",0); }
 	/// get a run monitor graph

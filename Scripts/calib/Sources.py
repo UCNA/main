@@ -11,42 +11,87 @@ import os
 peakNames = { 8:"$^{207}$Bi 1", 9:"$^{207}$Bi 2", 19:"$^{207}$Bi $1+2$", 11:"$^{113}$Sn", 12:"Sr85", 13:"$^{109}$Cd", 14:"$^{114}$In", 15:"$^{139}$Ce", 20:"$^{137}$Cs" }
 peakSymbs = { 8:symbol.circle, 9:symbol.square, 11:symbol.triangle, 15:symbol.diamond }
 
+####################
+# CalDB operations
+####################
+
+def delete_calibration(conn,ecid):
+	"""Delete calibration info with given calibration ID."""
+	print "Deleting calibration",ecid
+	conn.execute("SELECT linearity_graph FROM tube_calibration WHERE ecal_id = %i"%ecid);
+	for f in conn.fetchall():
+		delete_graph(conn,f[0])
+	conn.execute("DELETE FROM tube_calibration WHERE ecal_id = %i"%ecid)
+	conn.execute("DELETE FROM energy_calibration WHERE ecal_id = %i"%ecid)
+
+def delete_ALL_calibrations(conn):
+	"""Clear all calibration data from DB"""
+	conn.execute("SELECT ecal_id FROM energy_calibration WHERE 1")
+	for f in conn.fetchall():
+		delete_calibration(conn,f[0])
+
+def makeCalset(conn,r0,r1,rgms,posmap,replace=False):
+	"""Set calibration definition for range of runs in calibration DB."""
+	
+	# check (and clear) existing calibration
+	conn.execute("SELECT ecal_id FROM energy_calibration WHERE start_run = %i AND end_run = %i"%(r0,r1))
+	res = conn.fetchall()
+	if res and not replace:
+		print "Calibration for",(r0,r1),"already loaded."
+		return 0
+	for r in res:
+		delete_calibration(conn,r[0])
+	
+	# generate new ecal_id
+	cmd = "INSERT INTO energy_calibration(start_run,end_run,gms_run,posmap_set_id) VALUES (%i,%i,%i,%i)"%(r0,r1,rgms,posmap)
+	print cmd
+	conn.execute(cmd)
+	conn.execute("SELECT LAST_INSERT_ID()")
+	ecid = int(conn.fetchone()[0])
+	print "Added new calibration set",ecid
+	return ecid
+
+####################
+# Source data collection
+####################
+
 class SourcePos:
 	"""Position of a source for a run"""
 	def __init__(self,sID):
 		self.sID = sID
 	def radius(self):
 		return sqrt(self.x**2+self.y**2)
-		
+
 class SourceLine:
 	"""Measured source spectrum line"""
 	def __init__(self):
 		pass
 
-class SourceRate(KVMap):
-	def __init__(self,m):
-		KVMap.__init__(self)
-		self.dat = m.dat
-		self.loadFloats(["counts","rate","type","type0frac","sID"])
-		self.loadStrings(["side","name","simulated"])
-				
 def get_run_sources(conn,rn):
-	"""Get all sources present in listed run number."""
-	conn.execute("SELECT source_id,side,x_pos,y_pos,x_width,y_width,counts,sourcetype FROM sources WHERE run_number = %i"%rn)
+		"""Get all sources present in listed run number."""
+		conn.execute("SELECT source_id,side,x_pos,y_pos,x_width,y_width,counts,sourcetype FROM sources WHERE run_number = %i"%rn)
+		srcs = []
+		for r in conn.fetchall():
+			src = SourcePos(r[0])
+			src.run = rn
+			src.side = r[1]
+			src.x = r[2]
+			src.y = r[3]
+			src.wx = r[4]
+			src.wy = r[5]
+			src.counts = r[6]
+			src.type = r[7]
+			srcs.append(src)
+		return srcs
+
+def gather_sourcedat(conn,rlist):
+	"""Gather sources for a list of run numbers"""
 	srcs = []
-	for r in conn.fetchall():
-		src = SourcePos(r[0])
-		src.run = rn
-		src.side = r[1]
-		src.x = r[2]
-		src.y = r[3]
-		src.wx = r[4]
-		src.wy = r[5]
-		src.counts = r[6]
-		src.type = r[7]
-		srcs.append(src)
+	for rn in rlist:
+		srcs += get_run_sources(conn,rn)
+	print "Located",len(srcs),"sources."
 	return srcs
-	
+
 def get_source_lines(conn,src,xquery=""):
 	"""Get source peaks measured for source."""
 	conn.execute("SELECT side,tube,peak_num,peak_data,adc,dadc,adcwidth,erecon,derecon,ereconwidth,dereconwidth,eta,gms,nPE FROM sourcepeaks WHERE source_id = %i %s"%(src.sID,xquery))
@@ -79,39 +124,6 @@ def get_source_lines(conn,src,xquery=""):
 		slines.append(sline)
 	return slines
 
-def gather_sourcedat(conn,rlist):
-	srcs = []
-	for rn in rlist:
-		srcs += get_run_sources(conn,rn)
-	print "Located",len(srcs),"sources."
-	return srcs
-	
-def gather_peakdat(conn,rlist,xquery=""):
-	"""Collect source peak data for runs in list."""
-	
-	# load all lines
-	srcs = gather_sourcedat(conn,rlist)
-	slines = []
-	for src in srcs:
-		slines += get_source_lines(conn,src,xquery)
-	slines = [l for l in slines if 10 < l.erecon < 2000 and 5 < l.enwidth < 1000]
-	
-	# connect data and simulations	
-	sims = dict([(l.uid,l) for l in slines if l.simulation])
-	for l in slines:
-		if l.uid in sims:
-			if 10 < sims[l.uid].erecon < 1500 and 5 < sims[l.uid].enwidth < 1000 :
-				l.sim = sims[l.uid]
-			else:
-				print "** Crazy simulation fit for",l.src.run,l.uid, sims[l.uid].erecon, sims[l.uid].derecon
-				sims.pop(l.uid)
-		else:
-			print "** Missing simulation for",l.src.run,l.uid
-	slines = [l for l in slines if l.uid in sims and not l.simulation]
-	
-	print "\twith",len(slines),"lines."
-	return slines
-	
 def sort_by_type(slines):
 	"""Sort out source peaks by peak type"""
 	pks = {}
@@ -119,94 +131,128 @@ def sort_by_type(slines):
 		pks.setdefault(l.type,[]).append(l)
 	return pks
 
-def delete_calibration(conn,ecid):
-	"""Delete calibration info with given calibration ID."""
-	print "Deleting calibration",ecid
-	conn.execute("SELECT linearity_graph FROM tube_calibration WHERE ecal_id = %i"%ecid);
-	for f in conn.fetchall():
-		delete_graph(conn,f[0])
-	conn.execute("DELETE FROM tube_calibration WHERE ecal_id = %i"%ecid)
-	conn.execute("DELETE FROM energy_calibration WHERE ecal_id = %i"%ecid)
+class SourceDataCollector:
 
-def delete_ALL_calibrations(conn):
-	"""Clear all calibration data from DB"""
-	conn.execute("SELECT ecal_id FROM energy_calibration WHERE 1")
-	for f in conn.fetchall():
-		delete_calibration(conn,f[0])
-			
-			
-class SourceDatDirectory:
-	"""Class for locating source cal output files"""
-	def __init__(self,bp="../../Plots/LivermoreSources/"):
-		self.basepath = bp
-		self.runpaths = {}
-		self.rundat = {}
-		self.sourcerates = {}
-		for d in os.listdir(self.basepath):
-			if not d.split("_")[0].isdigit():
-				continue
-			for d2 in os.listdir(self.basepath+'/'+d):
-				rn = d2.split("_")[0]
-				if rn.isdigit():
-					self.runpaths[int(rn)]=self.basepath+'/'+d+'/'+d2+'/'+d2+'.txt'
-		print "SourceDatDirectory loaded for",len(self.runpaths),"runs."
-	def getQFile(self,rn,obj=QFile):
-		if rn not in self.rundat:
-			assert rn in self.runpaths
-			self.rundat[rn] = obj(self.runpaths[rn])
-		return self.rundat[rn]
-	def getKey(self,rn,key):
-		if rn not in self.runpaths:
-			print "No data for",rn,"to get key",key
-			return []
-		return self.getQFile(rn).dat.get(key,[])
-	def getRunlist(self):
-		rlist = self.runpaths.keys()
-		rlist.sort()
-		return rlist
-	def getSourceRates(self,rn):
-		if rn not in self.sourcerates:
-			self.sourcerates[rn] = [SourceRate(r) for r in self.getKey(rn,"sourceRate")]
-			for rt in self.sourcerates[rn]:
-				rt.run = rn
-		return self.sourcerates[rn]
-			
-			
+	def __init__(self,conn):
+		self.conn = conn
+	
+	def gather_peakdat(self,rlist,xquery=""):
+		"""Collect source peak data for runs in list."""
+		
+		# load all lines
+		self.srcs = gather_sourcedat(self.conn,rlist)
+		
+		self.alllines = []
+		for src in self.srcs:
+			self.alllines += get_source_lines(self.conn, src, xquery)
 
+		# filter out blatantly crazy fits
+		self.slines = [l for l in self.alllines if 10 < l.erecon < 2000 and 5 < l.enwidth < 1000]
+		
+		# connect data and simulations	
+		sims = dict([(l.uid,l) for l in self.slines if l.simulation])
+		for l in self.slines:
+			if l.uid in sims:
+				l.sim = sims[l.uid]
+			else:
+				print "** Missing simulation for",l.src.run,l.uid
+		self.slines = [l for l in self.slines if l.uid in sims and not l.simulation]
+		
+		print "\twith",len(self.slines),"lines."
+		return self.slines
+
+	def getTubeLines(self,side,tube):
+		return [l for l in self.slines if l.side==side and l.tube==tube]
+
+	def getRunGMS(self,rn,s,t):
+		"""Infer GMS for run from any available lines"""
+		gmsi = [l.gms for l in self.alllines if l.src.run == rn and l.side==s and l.tube==t]
+		if not gmsi:
+			print "*** GMS data not found for",rn,s,t
+			return 1
+		gmsi.sort()
+		return gmsi[len(gmsi)/2]
+
+	def rebase_gms(self,rn):
+		"""Shift GMS relative to specified run"""
+		for s in ["East","West"]:
+			for t in range(4):
+				gms0 = self.getRunGMS(rn,s,t)
+				print "Resetting GMS base",s,t,gms0
+				for l in self.slines:
+					l.gms /= gms0
+				for l in self.alllines:
+					l.gms /= gms0
+
+
+####################
+# Linearity/calibration fitting
+####################
 		
 class LinearityCurve:
 	"""Linearity curve produced from a set of source peaks."""
-	def __init__(self,side,tube):
+	def __init__(self,side,tube,SDC):
 		self.side = side
 		self.tube = tube
+		self.SDC = SDC
+		
 		self.prefitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
+		self.cnvs = None
+		self.uselist = None
 		
 		fterms = [polyterm(i) for i in range(2)]
-		if not (tube in (2,3) and side=="West"):
-			fterms += [expterm(-0.03),expterm(-0.015)]
-		if (tube,side) == (2,"West"):
-			fterms.append(expterm(-0.03))
-		if (tube,side) == (1,"East"):
-			fterms = fterms[:-2] + [expterm(-0.02), expterm(-0.007)]
+		
+		if 0:
+			if not (tube in (2,3) and side=="West"):
+				fterms += [expterm(-0.03),expterm(-0.015)]
+			if (tube,side) == (2,"West"):
+				fterms.append(expterm(-0.03))
+			if (tube,side) == (1,"East"):
+				fterms = fterms[:-2] + [expterm(-0.02), expterm(-0.007)]
+
 		self.fitter = LinearFitter(terms=fterms)
 		
 		#self.fitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
 		self.axisType = graph.axis.log
 	
-		
+				
 	##
 	# Linearity plot & fit
 	##
-	def fitLinearity(self,slines):
+	def fitLinearity(self):
+	
+		self.slines = self.SDC.getTubeLines(self.side,self.tube)
+	
+		if self.uselist:
+			print "\nFallback straight-line fits to specified sources",self.uselist
+		
+			self.slines = [l for l in self.slines if l.src.sID in self.uselist]
+			self.fitter = LinearFitter(terms=[polyterm(1)])
+			combodat = [ (l.adc*l.gms, l.sim.erecon*l.eta, l.enwidth, l.sim.enwidth) for l in self.slines ]
+			
+			print combodat
+			
+			self.fitter = LinearFitter(terms=[polyterm(1)])
+			self.LFwid = LinearFitter(terms=[polyterm(1)])
+			self.datrange = (100,2000)
+			
+			if len(combodat):
+					self.fitter.fit(combodat, cols=(0,1))
+					self.LFwid.fit(combodat,cols=(2,3))
+			else:
+				print "*** NO DATA FOUND *** Fallback to terrible calibration..."
+				self.fitter.fit([(10,10),(100,100)])
+				self.LFwid.fit([(10,10),(100,100)])
+			
+			return
+	
 	
 		# estimated position map fractional error
 		etaErr = 0.014
 	
-		self.slines = [l for l in slines if l.side==self.side and l.tube==self.tube]
 		pks = sort_by_type(self.slines)
 		if not pks:
 			print "\n\n*********",self.side,self.tube,"NO DATA FOUND!! ************\n\n"
-			self.cnvs=None
 			return
 		cP = rainbowDict(pks.keys())
 		if "PUBLICATION_PLOTS" in os.environ:
@@ -262,7 +308,7 @@ class LinearityCurve:
 		##
 		if not combodat:
 			print "****** No data found!"
-			self.fitter = (lambda x: x)
+			self.cnvs=None
 			return
 		self.datrange = ( min([p[0] for p in combodat]), max([p[0] for p in combodat]) )
 		self.prefitter.fit([p for p in combodat if p[-1].type in  [8,9,11,15]],cols=(0,1))
@@ -299,9 +345,11 @@ class LinearityCurve:
 	##
 	# Reconstructed energy plot with residuals
 	##
-	def plot_erecon(self,slines):
+	def plot_erecon(self):
 	
-		self.slines = [l for l in slines if l.side==self.side and l.tube==self.tube]
+		if self.tube == 4:
+			self.slines = self.SDC.getTubeLines(self.side,self.tube)
+		
 		pks = sort_by_type(self.slines)
 		if not pks:
 			print "\n\n*********",self.side,self.tube,"NO DATA FOUND!! ************\n\n"
@@ -326,8 +374,8 @@ class LinearityCurve:
 			y=graph.axis.lin(title="\\% Error",min=-10,max=10))
 		setTexrunner(self.gRes)
 		
-		rmin = min([l.src.run for l in slines])
-		rmax = max([l.src.run for l in slines])
+		rmin = min([l.src.run for l in self.slines])
+		rmax = max([l.src.run for l in self.slines])
 		tckdist = [5,1]
 		if rmax-rmin > 100:
 			tckdist = [10,1]
@@ -400,7 +448,11 @@ class LinearityCurve:
 			if not abs(g[5]-self.LFwid(g[7]))/g[9] < 4:
 				print "--> Check width",g[-1].src.run,g[-1].uid
 
-		self.LFwid.fit([g for g in cselect if abs(g[5]-self.LFwid(g[7]))/g[9] < 4],cols=(7,5,9),errorbarWeights=True)
+		wdat = [g for g in cselect if abs(g[5]-self.LFwid(g[7]))/g[9] < 4]
+		if len(wdat)>2:
+			self.LFwid.fit(wdat,cols=(7,5,9),errorbarWeights=True)
+		else:
+			self.LFwid.fit([(10,10),(50,50),(100,100)])
 		print "Width Fit",s,t,":",self.LFwid.toLatex()
 		print "chi^2/nu =",self.LFwid.chisquared(),"/",self.LFwid.nu()
 		self.LFwid.displayCoeffErrCorr()
@@ -413,12 +465,14 @@ class LinearityCurve:
 				
 	def make_lcurve(self):
 		"""Construct linearity curve points for upload or plotting"""
-					
+								
 		# generate points with logarithmic spacing, upload as linearity curve
 		lg = LogLogger(terms=[(lambda x: x)])
 		lindat = [ (x,self.fitter(x)) for x in lg.unifPoints(10,4100,100) if self.datrange[0] < x < self.datrange[1] ]
 		
 		lindat = [ p for (n,p) in enumerate(lindat[:-1]) if 0 < p[1] < lindat[n+1][1] ]	# increasing only!
+		if len(lindat) < 2:
+			return [(0,0),(4000,4000)]
 		d0 = nderiv(self.fitter, lindat[0][0])
 		d1 = nderiv(self.fitter, lindat[-1][0])
 		lindat = [(10, lindat[0][1] - (lindat[0][0]-10)*d0)] + lindat + [(3999, lindat[-1][1] + (3999-lindat[-1][0])*d1)]
@@ -438,108 +492,45 @@ class LinearityCurve:
 		reflines = [l for l in self.slines if l.src.sID==refline_id]
 		refline = SourceLine()
 		widthscale = 1.0
-		if reflines:
+		if reflines and self.uselist:
 			refline = reflines[0]
-			# rescaled width to true nPE width based on simulation
-			simApparentnPE = (refline.sim.erecon/refline.sim.enwidth)**2
-			widthscale = sqrt(simApparentnPE/refline.sim.nPE)
-			print "MC width scale",widthscale
-			widthscale *= self.LFwid.coeffs[0]
-			print "Corrected for sources average",widthscale
-			widthscale *= self.LFwid(refline.sim.enwidth)/refline.enwidth
-			print "Corrected for reference source offset",widthscale
 		else:
-			print "\n\n******** Reference source",refline_id,"not found!!! Using defaults!\n"
-			raw_input("Press enter to acknowledge and continue...")
-			refline.adc=500
-			refline.adcwidth=200
-			refline.gms=1.0
-			refline.eta=1.0
-			refline.src=SourcePos(0)
-			refline.src.x=refline.src.y=0.0
+			if reflines:
+				refline = reflines[0]
+				# rescaled width to true nPE width based on simulation
+				simApparentnPE = (refline.sim.erecon/refline.sim.enwidth)**2
+				widthscale = sqrt(simApparentnPE/refline.sim.nPE)
+				print "MC width scale",widthscale
+				widthscale *= self.LFwid.coeffs[0]
+				print "Corrected for sources average",widthscale
+				widthscale *= self.LFwid(refline.sim.enwidth)/refline.enwidth
+				print "Corrected for reference source offset",widthscale
+			else:
+				print "\n\n******** Reference source",refline_id,"not found!!! Using defaults!\n"
+				raw_input("Press enter to acknowledge and continue...")
+				refline.adc=500
+				refline.adcwidth=200
+				
 		print t,"width",refline.adcwidth,"Corrected width by",widthscale
 		
 		# upload to DB
 		try:
-			refEnergy = self.fitter(refline.adc*refline.gms)/refline.eta # synthesize energy for reference source based on ADC->Evis*eta curve
-			print (ecid,self.side,self.tube,lgid,refline.src.x,refline.src.y,refline.adc*refline.gms,refEnergy,refline.adc,refline.adcwidth*widthscale)
+			caldat = (ecid, self.side, self.tube, lgid, refline.adc, refline.adcwidth*widthscale)
+			print caldat
 			conn.execute("""INSERT INTO tube_calibration
-							(ecal_id,side,quadrant,linearity_graph,encal_xpos,encal_ypos,encal_adc,encal_evis,noisecal_adc,noisecal_width)
-							VALUES (%i,'%s',%i,%i,%.2f,%.2f,%.1f,%.1f,%.1f,%.1f)"""
-							% (ecid,self.side,self.tube,lgid,refline.src.x,refline.src.y,refline.adc*refline.gms,refEnergy,refline.adc,refline.adcwidth*widthscale))	
+							(ecal_id, side, quadrant, linearity_graph, noisecal_adc,noisecal_width)
+							VALUES (%i,'%s',%i,%i, %.2f, %.2f)""" % caldat)
 		except:
 			print "Tube calibration upload failed!"
 			delete_graph(conn,lgid)
 			raw_input("Press enter to acknowledge and continue...")
-		
-def makeCalset(conn,r0,r1,rgms,posmap,replace=False):
-	"""Set calibration definition for range of runs in calibration DB."""
-	
-	# check (and clear) existing calibration
-	conn.execute("SELECT ecal_id FROM energy_calibration WHERE start_run = %i AND end_run = %i"%(r0,r1))
-	res = conn.fetchall()
-	if res and not replace:
-		print "Calibration for",(r0,r1),"already loaded."
-		return 0
-	for r in res:
-		delete_calibration(conn,r[0])
-	
-	# generate new ecal_id
-	cmd = "INSERT INTO energy_calibration(start_run,end_run,gms_run,posmap_set_id) VALUES (%i,%i,%i,%i)"%(r0,r1,rgms,posmap)
-	print cmd
-	conn.execute(cmd)
-	conn.execute("SELECT LAST_INSERT_ID()")
-	ecid = int(conn.fetchone()[0])
-	print "Added new calibration set",ecid
-	return ecid
-	
 
-def plotBackscatters(conn,rlist):
 
-	rlist.sort()
-	SDD = SourceDatDirectory()
-	slist = gather_sourcedat(conn,rlist)
-	srcs = sort_by_type(slist)
-	cP = rainbowDict(srcs.keys())
-	sdict = dict([(s.sID,s) for s in slist])
-	
-	# gather data by side, source type
-	typedat = {'E':{},'W':{}}
-	for rn in rlist:
-		for rt in SDD.getSourceRates(rn):
-			typedat[rt.side].setdefault(sdict[rt.sID].type,[]).append(rt)
-	
-	# set up graph		
-	tckdist = [5,1]
-	if rlist[-1]-rlist[0] > 100:
-		tckdist = [10,1]
-	runaxis = graph.axis.lin(title="Run Number",min=rlist[0]-5,max=rlist[-1]+1,
-						parter=graph.axis.parter.linear(tickdists=tckdist),
-						texter = graph.axis.texter.rational(),
-						painter=graph.axis.painter.regular(labeldist=0.1,labeldirection=graph.axis.painter.rotatetext(135)))
-	gRuns=graph.graphxy(width=40,height=20,
-		x2=runaxis,
-		y=graph.axis.lin(title="Backscatter Fraction",min=0,max=6.0),
-		key = graph.key.key(pos="tl"))
-	setTexrunner(gRuns)
-	
-	# plot
-	ssymbs = {'E':symbol.circle,'W':symbol.triangle}
-	ssymbs2 = {'E':symbol.plus,'W':symbol.cross}
-	tpattrs = {1:[deco.filled],2:[]}
-	tplines = {1:[],2:[style.linestyle.dashed,]}
-	for s in ['E','W']:
-		for tp in typedat[s]:
-			for evtp in [1,2]:
-				gdat = [(rt.run,100.0*rt.type0frac) for rt in typedat[s][tp] if rt.type==evtp and rt.simulated == 'no']
-				gRuns.plot(graph.data.points(gdat,x=1,y=2,title="%s %s type %i"%(tp,s,evtp)),
-							[graph.style.symbol(ssymbs[s],symbolattrs=[cP[tp]]+tpattrs[evtp]),])
-				gdat = [(rt.run,100.0*rt.type0frac) for rt in typedat[s][tp] if rt.type==evtp and rt.simulated == 'yes']
-				gRuns.plot(graph.data.points(gdat,x=1,y=2,title="%s %s type %i MC"%(tp,s,evtp)),
-							[graph.style.line(lineattrs=[cP[tp]]+tplines[evtp]),graph.style.symbol(ssymbs2[s],symbolattrs=[cP[tp]])])
-							
-	return gRuns
 
+####################
+# Other plots/analysis
+####################
+	
 
 def plotSourcePositions(conn,rlist):
 	"""Source positions in source scan"""
@@ -642,19 +633,18 @@ cal_2010 = [
 			]
 			
 cal_2011 = [
-			(	17233,	17249,	17238,	16983,	17279,		678,	681,		55	),	# New Sn, Ce sources; Xenon, Betas, Dead PMT W2
-			#(17368,17359,17509,x,x),		# Beta Decay; PMT W0 missing pulser
-			(	17517,	17527,	17522,	17517,	17734,		1125,	1128,		55	),	# Calibrations for Xe; W0 pulser still dead
-			#(	17871,	17922,	17876	),	# Big Scan; W0 pulser still dead
-			#(17903,17735,17956,x,x),		# Beta decay, long source runs
-			(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		55	),	# Old and new Cd Source; W0 pulser still dead
-			(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		55	),	# Beta decay, new In source, Xe; everything working now
-			(	18617,	18640,	18622,	18432,	18683,		1894,	1897,		55	),	# Beta decay; PMT W4 Bi pulser very low
-			(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# Start of 2012; PMT W4 pulser still low
-			(	19203,	19239,	19233,	19023,	19239,		2338,	2341,		59	),	# W4 Pulser now higher... drifty
-			(	19347,	19377,	19359,	19347,	19544,		2387,	2390,		61	),	# W4 Pulser now low...
-			(	19505,	19544),															# Cd/In only
-			(	19823,	19863,	19858,	19583,	100000,		2710,	2713,		61)		# 
+			(	17233,	17249,	17238,	16983,	17297,		678,	681,		55	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+			(	17359,	17387,	17371,	17359,	17439,		1348,	1351,		55	),	# 1 Beta Decay; PMT W0 missing pulser
+			(	17517,	17527,	17522,	17440,	17734,		1125,	1128,		55	),	# 2 Calibrations for Xe; W0 pulser still dead
+			(	17871,	17922,	17892,	17735,	17955,		807,	810,		55	),	# 3 Big Scan; W0 pulser still dead
+			(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		55	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
+			(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		55	),	# 5 Beta decay, new In source, Xe; everything working now
+			(	18617,	18640,	18622,	18432,	18683,		1894,	1897,		55	),	# 6 Beta decay; PMT W4 Bi pulser very low
+			(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# 7 Start of 2012; PMT W4 pulser still low
+			(	19203,	19239,	19233,	19023,	19239,		2338,	2341,		59	),	# 8 W4 Pulser now higher... drifty
+			(	19347,	19377,	19359,	19347,	19544,		2387,	2390,		61	),	# 9 W4 Pulser now low...
+			#(	19505,	19544	),														# Feb. 14, Cd/In only; not used for calibration
+			(	19823,	19863,	19858,	19583,	20000,		2710,	2713,		61)		# 10 Feb. 16-24 Xe, Betas, long sources
 			]
 
 cal_2012 = [
@@ -679,43 +669,52 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	conn = open_connection() # connection to calibrations DB
-	replace = True 	# whether to replace previous calibration data
+	replace = False 	# whether to replace previous calibration data
 	makePlots = True
-	
+	#delete_calibration(conn,8466); exit(0)
+
+
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2012[3:4]:
+	for c in cal_2011[10:11]:
 	
+		#print "./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])
+		#continue
+		
 		rlist = range(c[0],c[1]+1)
 		fCalSummary.write("\n--------- %i-%i ----------\n"%(rlist[0],rlist[-1]))
 		
+		# gather source data from calibration runs
+		SDC= SourceDataCollector(conn)
+		SDC.gather_peakdat(rlist, "AND peak_num<100")
+		if len(c) >= 3:
+			SDC.rebase_gms(c[2])
+		
 		#plotSourcePositions(conn,rlist)
-		backscatterEnergy(conn, rlist)
+		#backscatterEnergy(conn, rlist)
 		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
 		#continue
 		
-		# gather source data from calibration runs
-		slines = gather_peakdat(conn, rlist, "AND peak_num<100")
-		
 		# make new calibrations set
 		ecid = None
-		if True and len(c)>=8:
+		if len(c)>=8:
 			ecid = makeCalset(conn,c[3],c[4],c[2],c[7],replace)
 		
 		# fit linearity curves for each PMT
 		for (sn,s) in enumerate(["East","West"]):
 			for t in range(5):
-				LC = LinearityCurve(s,t)
+				LC = LinearityCurve(s,t,SDC)
+				#LC.uselist = [1348,1351]
 				if t<4:
-					LC.fitLinearity(slines)
-					fCalSummary.write("%s %i\t%s\n"%(s,t,LC.fitter.toLatex()))
+					LC.fitLinearity()
+					if LC.cnvs:
+						fCalSummary.write("%s %i\t%s\n"%(s,t,LC.fitter.toLatex()))
+					else:
+						fCalSummary.write("%s %i\t*** CAL MISSING ***\n"%(s,t))
 					if LC.cnvs and makePlots:
-						#try:
 						LC.cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
-						#except:
-						#	print "Warning: Linearity plots failure for",s,t,"!"
-				if makePlots:
-					LC.plot_erecon(slines)
+				if makePlots and not LC.uselist:
+					LC.plot_erecon()
 			
 				if ecid and t<4:
 					LC.dbUpload(conn,ecid,c[5+sn])
@@ -726,3 +725,6 @@ if __name__=="__main__":
 					LC.gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
 				except:
 					print "Plotting failure for",sn,s,t,"!"
+
+		print "source replay command:"
+		print "./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])

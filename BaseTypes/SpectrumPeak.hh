@@ -48,7 +48,7 @@ public:
 	/// constructor for given peak type
 	SpectrumPeak(PeakType t = UNKNOWN_PEAK, unsigned int sid = 0, Side s0 = NOSIDE):
 	center(0), width(0), energyCenter(0), energyWidth(0), nPE(0), eta(0), gms(0), h(0), integral(0),
-	type(t), sID(sid), s(s0), t(nBetaTubes+1), simulated(false) {};
+	type(t), sID(sid), s(s0), t(nBetaTubes+1), simulated(false) { };
 	
 	/// print to stdout
 	void print() const;
