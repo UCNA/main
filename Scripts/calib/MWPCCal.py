@@ -822,15 +822,15 @@ def MWPC_Cathode_CCloud_Scaling(conn,datfName,simfName,start_run=0,end_run=10000
 if __name__ == "__main__":
 
 	conn = open_connection()
-	conn = None
+	#conn = None
 	ppath = os.environ["UCNA_ANA_PLOTS"]
 	
 	#########
 	# transition from DB before mwpc calibrations
 	#########
-	#assign_MWPC_calib_from_anode_table(conn)
-	#set_default_cathode_scalefactors(conn)
-	#exit(0)
+	assign_MWPC_calib_from_anode_table(conn)
+	set_default_cathode_scalefactors(conn)
+	exit(0)
 	
 	gGC = graph.graphxy(width=25,height=10,
 					x=make_runaxis(21910,21940),
