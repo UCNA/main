@@ -164,7 +164,7 @@ CREATE TABLE run_monitors(
 	monitor_type ENUM('pedestal','GMS_peak','Chris_peak'),
 	center_graph_id INT UNSIGNED,
 	width_graph_id INT UNSIGNED,
-	INDEX (run_number), INDEX (sensors_sensor_id)
+	INDEX (run_number), INDEX (sensors_sensor_id), INDEX(center_graph_id), INDEX(width_graph_id)
 );
 
 # named sensors
@@ -265,3 +265,23 @@ GRANT SELECT ON * to ucn;
 GRANT SELECT, INSERT, DELETE, UPDATE ON * TO ucnwrite;
 FLUSH PRIVILEGES;
 
+#################################
+# Housekeeping
+
+# orphaned pedestal graphs
+
+CREATE TEMPORARY TABLE IF NOT EXISTS orphan_pedcenters (INDEX(graph_id)) AS (SELECT graph_id FROM graphs LEFT JOIN run_monitors ON graph_id=center_graph_id WHERE center_graph_id IS null AND text_description LIKE '%Pedestal Centers%');
+
+DELETE FROM graph_points WHERE graph_id IN (SELECT graph_id FROM orphan_pedcenters);
+
+DELETE FROM graphs WHERE graphs.graph_id IN (SELECT graph_id FROM orphan_pedcenters);
+
+CREATE TEMPORARY TABLE IF NOT EXISTS orphan_pedwidths (INDEX(graph_id)) AS (SELECT * FROM graphs LEFT JOIN run_monitors ON graph_id=width_graph_id WHERE width_graph_id IS null AND text_description LIKE '%Pedestal Widths%');
+
+DELETE FROM graph_points WHERE graph_id IN (SELECT graph_id FROM orphan_pedwidths);
+
+DELETE FROM graphs WHERE graph_id IN (SELECT graph_id FROM orphan_pedwidths);
+
+
+# orphaned posmap points
+DELETE FROM posmap_points WHERE posmap_set_id NOT IN (SELECT posmap_set_id FROM posmap_set);

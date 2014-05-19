@@ -67,13 +67,6 @@ class SourceLine:
 	def __init__(self):
 		pass
 
-class SourceRate(KVMap):
-	def __init__(self,m):
-		KVMap.__init__(self)
-		self.dat = m.dat
-		self.loadFloats(["counts","rate","type","type0frac","sID"])
-		self.loadStrings(["side","name","simulated"])
-
 def get_run_sources(conn,rn):
 		"""Get all sources present in listed run number."""
 		conn.execute("SELECT source_id,side,x_pos,y_pos,x_width,y_width,counts,sourcetype FROM sources WHERE run_number = %i"%rn)

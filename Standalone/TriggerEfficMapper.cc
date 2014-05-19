@@ -224,7 +224,7 @@ int main(int, char**) {
 				SLCO.gSep->GetXaxis()->SetTitle("trigger cut [ADC channels]");
 				SLCO.gSep->GetYaxis()->SetTitle("miscategorized events");
 				SLCO.gSep->Draw("AP");
-				OM.printCanvas(sideSubst("PMT_Sep_%c",s)+itos(t)"_"+itos(tf0));
+				OM.printCanvas(sideSubst("PMT_Sep_%c",s)+itos(t)+"_"+itos(tf0));
 				
 				// separated histograms plot
 				for(unsigned int i=0; i<2; i++) hTrig[i]->Reset();

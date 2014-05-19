@@ -108,20 +108,7 @@ void SourceHitsPlugin::calculateResults() {
 	
 	// normalize to rates
 	for(unsigned int t=0; t<=nBetaTubes; t++) {
-		double nType0 = hTubes[t][TYPE_0_EVENT]->h[GV_OPEN]->Integral();
 		for(unsigned int tp=TYPE_0_EVENT; tp<=TYPE_III_EVENT; tp++) {
-			if(t==nBetaTubes) {
-				Stringmap m;
-				m.insert("type",itos(tp));
-				m.insert("sID",mySource.sID);
-				m.insert("name",mySource.name());
-				m.insert("simulated",myA->isSimulated?"yes":"no");
-				m.insert("side",sideSubst("%c",mySource.mySide));
-				m.insert("counts",hTubes[t][tp]->h[GV_OPEN]->Integral());
-				m.insert("rate",runtime?hTubes[t][tp]->h[GV_OPEN]->Integral()/runtime:0);
-				m.insert("type0frac",hTubes[t][tp]->h[GV_OPEN]->Integral()/nType0);
-				myA->qOut.insert("sourceRate",m);
-			}
 			hTubesR[t][tp] = myA->rateHisto(hTubes[t][tp]);
 			if(tp != TYPE_0_EVENT) hTubesR[t][tp]->Scale(1000);
 			hTubesR[t][tp]->GetYaxis()->SetTitle(tp==TYPE_0_EVENT?"Event Rate [Hz/keV]":"Event Rate [mHz/keV]");
@@ -231,7 +218,6 @@ void SourceHitsPlugin::calculateResults() {
 				}
 				printf("-------- %c%i %s --------\n",sideNames(mySource.mySide),t,it->name().c_str());
 				it->toStringmap().display();
-				myA->qOut.insert("sourcePeak",it->toStringmap());
 				SourceDBSQL::getSourceDBSQL()->addPeak(*it);
 			}
 		}
