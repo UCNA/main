@@ -294,8 +294,8 @@ std::string simulate_one_xenon(RunNum r, OutputManager& OM1, XenonAnalyzer& XA, 
 			XAMi.push_back(new SimXenonAnalyzer(&OM1,singleName+"_"+isots[n],"",XA.myXeSpec->sects.n));
 			G4SegmentMultiplier GSM(SectorCutter(4,52.));
 			GSM.setCalibrator(PCal);
-			std::string simFile = "/data2/mmendenhall/G4Out/2010/20120917_"+isots[n]+"/analyzed_";
-			if(isots[n]=="Xe135_3-2+") simFile = "/home/mmendenhall/geant4/output/20131015_Xe135_3-2+/analyzed_";
+			std::string simFile =  getEnvSafe("G4WORKDIR")+"/output/2011-2012geo_"+isots[n]+"_g_n"+"/analyzed_";
+			//if(isots[n]=="Xe135_3-2+") simFile = "/home/mmendenhall/geant4/output/20131015_Xe135_3-2+/analyzed_";
 			unsigned int nTot = 54;
 			unsigned int stride = 23;
 			for(unsigned int i=0; i<stride; i++)

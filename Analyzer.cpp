@@ -125,8 +125,8 @@ void mi_processOctet(StreamInteractor* S) {
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 	
 	// simulations input setup
-	OSCM.simFile = "/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_";
-	//OSCM.simFile = getEnvSafe("G4OUTDIR")+"/20120824_MagF_neutronBetaUnpol/analyzed_";
+	//OSCM.simFile = "/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_";
+	OSCM.simFile = getEnvSafe("G4OUTDIR")+"/2011-2012geo_1mil_neutrons_unpol/analyzed_";
 	//std::string simFile="/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_";
 	//std::string simFile="/home/mmendenhall/geant4/output/thinFoil_neutronBetaUnpol/analyzed_";
 	//OSCM.simFile= getEnvSafe("G4OUTDIR")+"/endcap_180_150_neutronBetaUnpol/analyzed_";
@@ -193,7 +193,7 @@ void mi_anaOctRange(StreamInteractor* S) {
 void mi_evis2etrue(StreamInteractor*) {
 	OutputManager OM("Evis2ETrue",getEnvSafe("UCNA_ANA_PLOTS")+"/Evis2ETrue/20120810/");
 	G4toPMT g2p;
-	g2p.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
+	g2p.addFile(getEnvSafe(getEnvSafe("G4OUTDIR")+"/2011-2012geo_1mil_neutrons_unpol/analyzed_*.root"));
 	PMTCalibrator PCal(16000);
 	g2p.setCalibrator(PCal);
 	SimSpectrumInfo(g2p,OM);

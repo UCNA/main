@@ -2,3 +2,5 @@
 ucnG4_dev-build/
 UCNAnalyzer
 *~
+*.pyc
+xenon_replaylist.txt
