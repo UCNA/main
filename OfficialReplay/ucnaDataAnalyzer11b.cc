@@ -101,8 +101,10 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 			Blip b;
 			b.start = 0.5*(totalTime+prevTime);
 			cutBlips.push_back(b);
+			//printf("%i opening blip at %g\n",currentEvent,cutBlips.back().start[BOTH]);
 		} else {
 			cutBlips.back().end = 0.5*(totalTime+prevTime);
+			//printf("%i closing blip at %g\n",currentEvent,cutBlips.back().end[BOTH]);
 		}
 	}
 	
@@ -409,8 +411,10 @@ void ucnaDataAnalyzer11b::tallyRunTime() {
 		cutBlips.back().end = totalTime;
 	// sum up lost time	
 	BlindTime lostTime;
-	for(std::vector<Blip>::iterator it = cutBlips.begin(); it != cutBlips.end(); it++)
+	for(std::vector<Blip>::iterator it = cutBlips.begin(); it != cutBlips.end(); it++) {
+		assert(it->start[BOTH] <= it->end[BOTH]);
 		lostTime += it->length();
+	}
 	wallTime = totalTime[BOTH]; // now an informed guess :) 
 	totalTime -= lostTime;
 	printf("\nFiducial time tally:\n");

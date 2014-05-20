@@ -4,7 +4,7 @@ import time
 from math import *
 from optparse import OptionParser
 
-# killall -9 GeantSimManager.py; killall -9 parallel; killall -9 ucnG4_prod
+# nohup ./GeantSimManager.py --xesrcs --evtgen < /dev/null > g4log.txt 2>&1 &
 # nohup ./GeantSimManager.py --xesrcs --sim --ana < /dev/null > g4log.txt 2>&1 &
 # nohup ./GeantSimManager.py --calsrcs --sim --ana < /dev/null > g4log.txt 2>&1 &
 
@@ -183,7 +183,7 @@ class GeantSimManager:
 		print "Running simulation jobs..."
 		os.system("cat "+parallel_jobfile)
 		if nruns > 1:
-			os.system("nice -n 20 parallel < %s"%parallel_jobfile)
+			os.system("nice -n 20 parallel -P 6 < %s"%parallel_jobfile)
 		else:
 			os.system(onejob)
 		os.system("rm "+parallel_jobfile)
@@ -217,7 +217,7 @@ class GeantSimManager:
 		print "\n----- %s ------"%resim_jobfile
 		os.system("cat "+resim_jobfile)
 		print
-		os.system("nice -n 10 parallel < %s"%resim_jobfile)
+		os.system("nice -n 10 parallel -P 4 < %s"%resim_jobfile)
 		os.system("rm %s/outlist_*.txt"%self.g4_out_dir)
 		os.system("rm "+resim_jobfile)
 
@@ -252,10 +252,10 @@ if __name__ == "__main__":
 				os.system("../../MC_EventGen run %s %s o n 10000 100 x"%(g,os.environ["G4EVTDIR"]))
 
 		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W"]: #,"Cd113m"]:
-			sourceSim = GeantSimManager("loQnch_bow", fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt", geometry="thinFoil")
-			sourceSim.settings["sourceScan"] = 80.
-			sourceSim.settings["extra_post_cmds"] += "/SD/scint_SDE/kb 0.01\n"
-			sourceSim.settings["extra_post_cmds"] += "/SD/scint_SDW/kb 0.01\n"
+			sourceSim = GeantSimManager("thinfoil",
+										fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt", # sources simulatable with full field map
+										geometry="thinFoil")
+			sourceSim.settings["sourceScan"] = 80.	# move source holder across detector by 80mm
 			sourceSim.set_evtsrc(g)
 			if options.sim:
 				sourceSim.launch_sims(maxIn=100)
@@ -266,7 +266,7 @@ if __name__ == "__main__":
 
 
 	####################				
-	# Xenon; run 3M for most isotopes; do lots more for important Xe135_3-2+
+	# Xenon (Xe135_3-2+ is 915keV beta endpoint; simulate extra events)
 	####################
 	XeIsots =  [	"Xe135_3-2+","Xe133_3-2+",
 					"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
@@ -276,13 +276,16 @@ if __name__ == "__main__":
 		if options.evtgen:
 			for g in XeIsots:
 				os.system("rm -rf %s/%s_g_n"%(os.environ["G4EVTDIR"],g))
-				os.system("../../MC_EventGen run %s %s g n 10000 300 x"%(g,os.environ["G4EVTDIR"]))
+				os.system("../../MC_EventGen run %s %s g n 10000 1000 x"%(g,os.environ["G4EVTDIR"]))
 
 		for g in XeIsots:
-			sourceSim = GeantSimManager("thinFoil", geometry="thinFoil")
+			sourceSim = GeantSimManager("thinfoil", geometry="thinFoil")
 			sourceSim.set_evtsrc(g)
 			if options.sim:
-				sourceSim.launch_sims(maxIn=300)
+				maxIn = 100
+				if g=="Xe135_3-2+":
+					maxIn = 300
+				sourceSim.launch_sims(maxIn=maxIn)
 			if options.ana:
 				sourceSim.launch_postanalyzer()
 

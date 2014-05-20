@@ -92,7 +92,7 @@ void CathodeGainPlugin::calculateResults() {
 				
 				// write fits output
 				std::string fitnm = "cathnorm_fit_"+std::string(d==X_DIRECTION?"x":"y")+"_"+itos(c);
-				AnaNumber AN(fitnm+"prevgain");
+				AnaNumber AN(fitnm+"_prevgain");
 				AN.s = s;
 				
 				AN.value = ((TProfile*)prevGain[s][d]->h[GV_OPEN])->GetBinContent(c);

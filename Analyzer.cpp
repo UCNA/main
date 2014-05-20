@@ -42,9 +42,13 @@ std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
 }
 
 void mi_EndpointStudy(StreamInteractor* S) {
-	unsigned int nr = S->popInt();
+	int nr = S->popInt();
 	RunNum r1 = S->popInt();
 	RunNum r0 = S->popInt();
+	if(nr <= 0) {
+		printf("%i is not a good number of rings! Canceling!",nr);
+		return;
+	}
 	process_xenon(r0,r1,nr);
 }
 
@@ -53,6 +57,10 @@ void mi_EndpointStudySim(StreamInteractor* S) {
 	RunNum rsingle = S->popInt();
 	RunNum r1 = S->popInt();
 	RunNum r0 = S->popInt();
+	if(nRings <= 0) {
+		printf("%i is not a good number of rings! Canceling!",nRings);
+		return;
+	}
 	simulate_xenon(r0,r1,rsingle,nRings);
 }
 

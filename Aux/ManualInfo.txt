@@ -80,18 +80,25 @@ Cut_TDC_Scint_W_Selftrig:	start = 3050	end = 4080	runStart = 13911	runEnd = 1590
 Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 15901	runEnd = 16300
 
 ### 2011-12 ###
+
 Cut_TDC_Scint_E_Selftrig:	start = 2950	end = 4080	runStart = 16900	runEnd = 17250
 Cut_TDC_Scint_W_Selftrig:	start = 3100	end = 4080	runStart = 16900	runEnd = 17250
+
 Cut_TDC_Scint_E_Selftrig:	start = 2800	end = 4080	runStart = 17274	runEnd = 17297
 Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 17274	runEnd = 17297
-Cut_TDC_Scint_E_Selftrig:	start = 2950	end = 4080	runStart = 17350	runEnd = 17734
-Cut_TDC_Scint_W_Selftrig:	start = 3275	end = 4080	runStart = 17350	runEnd = 17734
-Cut_TDC_Scint_E_Selftrig:	start = 2800	end = 4080	runStart = 17735	runEnd = 18420
-Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 17735	runEnd = 18420
+
+Cut_TDC_Scint_E_Selftrig:	start = 2950	end = 4080	runStart = 17350	runEnd = 17527
+Cut_TDC_Scint_W_Selftrig:	start = 3275	end = 4080	runStart = 17350	runEnd = 17527
+
+Cut_TDC_Scint_E_Selftrig:	start = 2800	end = 4080	runStart = 17561	runEnd = 18420
+Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 17561	runEnd = 18420
+
 Cut_TDC_Scint_E_Selftrig:	start = 2950	end = 4080	runStart = 18430	runEnd = 18479
 Cut_TDC_Scint_W_Selftrig:	start = 3200	end = 4080	runStart = 18430	runEnd = 18479
+
 Cut_TDC_Scint_E_Selftrig:	start = 2900	end = 4080	runStart = 18480	runEnd = 19250
 Cut_TDC_Scint_W_Selftrig:	start = 3100	end = 4080	runStart = 18480	runEnd = 19250
+
 Cut_TDC_Scint_E_Selftrig:	start = 2750	end = 4080	runStart = 19300	runEnd = 19999
 Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 19300	runEnd = 19999
 

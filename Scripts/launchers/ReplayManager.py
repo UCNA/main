@@ -3,6 +3,8 @@
 # nohup ./ReplayManager.py -s --rmin=21914 --rmax=21939 < /dev/null > scriptlog.txt 2>&1 &
 # nohup ./ReplayManager.py -o < /dev/null > scriptlog.txt 2>&1 &
 
+# nohup ./ReplayManager.py -x --rmin=17561 --rmax=17734 < /dev/null > scriptlog.txt 2>&1 &
+
 import os
 import time
 from optparse import OptionParser
@@ -51,7 +53,7 @@ def processXeMap(rmin,rmax,nr):
 			freplaylist.write(pcmd%(r,r,nr))
 		freplaylist.close()
 		os.system("cat xenon_replaylist.txt")
-		os.system("nice -n 15 parallel -P 3 < xenon_replaylist.txt")
+		os.system("nice -n 15 parallel -P 4 < xenon_replaylist.txt")
 		os.system("rm xenon_replaylist.txt")
 		os.system(pcmd%(rmin,rmax,nr))
 
@@ -110,7 +112,7 @@ if __name__ == "__main__":
 	parser.add_option("--mwpccal_sim", dest="mwpccal_sim", action="store_true", default=False, help="MWPC calibration octet analysis, simulation")
 	parser.add_option("--rmin", type="int", dest="rmin", default=0)
 	parser.add_option("--rmax", type="int", dest="rmax", default=100000)
-	parser.add_option("--nrings", type="int", dest="nrings", default=11, help="number of rings for position map")
+	parser.add_option("--nrings", type="int", dest="nrings", default=12, help="number of rings for position map")
 	parser.add_option("--bops", dest="bops", action="store_true", default=False, help="beta octet positions")
 	
 	options, args = parser.parse_args()
