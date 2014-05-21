@@ -633,13 +633,13 @@ cal_2010 = [
 			]
 			
 cal_2011 = [
-			(	17233,	17249,	17238,	16983,	17297,		678,	681,		55	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
-			(	17359,	17387,	17371,	17359,	17439,		1348,	1351,		55	),	# 1 Beta Decay; PMT W0 missing pulser
-			(	17517,	17527,	17522,	17440,	17734,		1125,	1128,		55	),	# 2 Calibrations for Xe; W0 pulser still dead
-			(	17871,	17922,	17892,	17735,	17955,		807,	810,		55	),	# 3 Big Scan; W0 pulser still dead
-			(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		55	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
-			(	18357,	18386,	18362,	18081,	18413,		1469,	1472,		55	),	# 5 Beta decay, new In source, Xe; everything working now
-			(	18617,	18640,	18622,	18432,	18683,		1894,	1897,		55	),	# 6 Beta decay; PMT W4 Bi pulser very low
+			(	17233,	17249,	17238,	16983,	17297,		678,	681,		199	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+			(	17359,	17387,	17371,	17359,	17439,		1348,	1351,		199	),	# 1 Beta Decay; PMT W0 missing pulser
+			(	17517,	17527,	17522,	17440,	17734,		1125,	1128,		199	),	# 2 Calibrations for Xe; W0 pulser still dead
+			(	17871,	17922,	17892,	17735,	17955,		807,	810,		199	),	# 3 Big Scan; W0 pulser still dead
+			(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		199	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
+			(	18357,	18386,	18362,	18081,	18386,		1469,	1472,		199	),	# 5 Beta decay, new In source, Xe; everything working now
+			(	18617,	18640,	18622,	18390,	18683,		1894,	1897,		55	),	# 6 Beta decay; PMT W4 Bi pulser very low
 			(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# 7 Start of 2012; PMT W4 pulser still low
 			(	19203,	19239,	19233,	19023,	19239,		2338,	2341,		59	),	# 8 W4 Pulser now higher... drifty
 			(	19347,	19377,	19359,	19347,	19544,		2387,	2390,		61	),	# 9 W4 Pulser now low...
@@ -669,14 +669,14 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	conn = open_connection() # connection to calibrations DB
-	replace = False 	# whether to replace previous calibration data
+	replace = True 	# whether to replace previous calibration data
 	makePlots = True
 	#delete_calibration(conn,8466); exit(0)
 
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2011[10:11]:
+	for c in cal_2011:
 	
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])
 		#continue

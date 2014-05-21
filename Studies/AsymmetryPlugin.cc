@@ -67,13 +67,13 @@ void AsymmetryPlugin::fitAsym(float fmin, float fmax, unsigned int color, bool a
 	
 	AnaNumber AN("asym_"+ctos(choiceLetter(anChoice))+"_"+itos(fmin)+"-"+itos(fmax));
 	if(avg) AN.name += "_avg";
-	AN.value = fitter->GetParameter(0);
-	AN.err = fitter->GetParError(0);
+	AN.value = fitter->GetParameter(0);	// asymmetry fit value
+	AN.err = fitter->GetParError(0);	// asymmetry fit error
 	myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 
 	AN.name += "_chisq";
-	AN.value = fitter->GetChisquare();
-	AN.err = fitter->GetNDF();
+	AN.value = fitter->GetChisquare();	// asymmetry fit Chi^2
+	AN.err = fitter->GetNDF();			// asymmetry fit number of degrees of freedom
 	myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 }
 
@@ -83,13 +83,13 @@ void AsymmetryPlugin::fitInstAsym(float fmin, float fmax, unsigned int color) {
 	hInstAsym->Fit(&averagerFit,"Q+","",fmin,fmax);
 	
 	AnaNumber AN("instasym_"+ctos(choiceLetter(anChoice))+"_"+itos(fmin)+"-"+itos(fmax));
-	AN.value = averagerFit.GetParameter(0);
-	AN.err = averagerFit.GetParError(0);
+	AN.value = averagerFit.GetParameter(0);	// instrumental asymmetry average value
+	AN.err = averagerFit.GetParError(0);	// uncertainty on instrumental asymmetry average value
 	myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 	
 	AN.name += "_chisq";
-	AN.value = averagerFit.GetChisquare();
-	AN.err = averagerFit.GetNDF();
+	AN.value = averagerFit.GetChisquare();	// instrumental asymmetry fit Chi^2
+	AN.err = averagerFit.GetNDF();			// instrumental asymmetry fit ndf
 	myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 }
 
@@ -105,10 +105,10 @@ void AsymmetryPlugin::endpointFits() {
 											 
 				AnaNumber AN("kurie_"+itos(fitStart)+"-"+itos(fitEnd));
 				AN.etypes.insert(TYPE_0_EVENT);
-				AN.s = s;
-				AN.n = t;
-				AN.value = ep.x;
-				AN.err = ep.err;
+				AN.s = s;			// side
+				AN.n = t;			// PMT number (4 = combined energy)
+				AN.value = ep.x;	// Kurie endpoint
+				AN.err = ep.err;	// estimated endpoint uncertainty (may not be accurate)
 				myA->uploadAnaNumber(AN, GV_OPEN, afp);
 			}
 		}
@@ -197,9 +197,9 @@ void AsymmetryPlugin::calculateResults() {
 	double emin = 230;
 	double emax = 660;
 	
-	AnaNumber ANr("asym_energy_window");
-	ANr.value = emin;
-	ANr.err = emax;
+	AnaNumber ANr("asym_energy_window"); // energy window used for asymmetries/counts
+	ANr.value = emin;	// lower bound
+	ANr.err = emax;		// upper bound
 	myA->uploadAnaNumber(ANr, GV_OTHER, AFP_OTHER);
 	
 	// raw counts asymmetry
@@ -217,13 +217,13 @@ void AsymmetryPlugin::calculateResults() {
 	
 	double S = (cts[EAST][AFP_OFF]*cts[WEST][AFP_ON])/(cts[EAST][AFP_ON]*cts[WEST][AFP_OFF]);
 	AnaNumber ANa("raw_count_asym");
-	ANa.value = (1-sqrt(S))/(1+sqrt(S));
+	ANa.value = (1-sqrt(S))/(1+sqrt(S));	// asymmetry of raw counts in energy window
 	ANa.err = 0;
 	for(Side s = EAST; s <= WEST; ++s)
 		for(AFPState afp = AFP_OFF; afp <= AFP_ON; ++afp)
 			ANa.err += pow(cterr[s][afp]/cts[s][afp],2);
 	ANa.err = sqrt(ANa.err);
-	ANa.err *= sqrt(S)/pow(1+sqrt(S),2);
+	ANa.err *= sqrt(S)/pow(1+sqrt(S),2);	// uncertainty on asymmetry
 	myA->uploadAnaNumber(ANa, GV_OTHER, AFP_OTHER);
 	
 	// event count results
@@ -235,9 +235,9 @@ void AsymmetryPlugin::calculateResults() {
 					
 					if(myA->isSimulated && gv==GV_CLOSED) continue;
 					
-					ANc.s = s;
+					ANc.s = s;				// event count side
 					ANc.etypes.clear();
-					ANc.etypes.insert(tp);
+					ANc.etypes.insert(tp);	// event backscatter type
 					
 					TH1* h = (TH1F*)qEnergySpectra[s][nBetaTubes][tp]->fgbg[afp]->h[gv];
 					int b0 = h->FindBin(emin+0.5);
@@ -245,8 +245,8 @@ void AsymmetryPlugin::calculateResults() {
 					
 					Double_t ierr;
 					double gvscale = gv==GV_OPEN? 1.0 : myA->totalTime[afp][GV_OPEN][BOTH]/myA->totalTime[afp][GV_CLOSED][BOTH];
-					ANc.value = h->IntegralAndError(b0,b1,ierr)*gvscale;
-					ANc.err = ierr*gvscale;
+					ANc.value = h->IntegralAndError(b0,b1,ierr)*gvscale;	// number of events (time-scaled for background)
+					ANc.err = ierr*gvscale;									// uncertainty on event count
 					myA->uploadAnaNumber(ANc, gv, afp);
 				}
 			}

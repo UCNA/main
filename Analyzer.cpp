@@ -54,14 +54,16 @@ void mi_EndpointStudy(StreamInteractor* S) {
 
 void mi_EndpointStudySim(StreamInteractor* S) {
 	unsigned int nRings = S->popInt();
-	RunNum rsingle = S->popInt();
 	RunNum r1 = S->popInt();
 	RunNum r0 = S->popInt();
 	if(nRings <= 0) {
 		printf("%i is not a good number of rings! Canceling!",nRings);
 		return;
 	}
-	simulate_xenon(r0,r1,rsingle,nRings);
+	if(r0==r1)
+		simulate_one_xenon(r0, nRings, true);
+	else
+		combine_xenon_sims(r0, r1, nRings);
 }
 
 void mi_EndpointStudyReSim(StreamInteractor* S) {
@@ -76,7 +78,7 @@ void mi_PosmapPlot(StreamInteractor* S) {
 	if(CalDBSQL::getCDB()->isValid(13883)) {
 		OutputManager OM("Foo",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/Posmap_"+itos(pmid));
 		PosPlotter PP(&OM);
-		PP.etaPlot(CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),0.6,1.6);
+		PP.etaPlot(CalDBSQL::getCDB()->getPositioningCorrectorByID(pmid),0.,2.);
 	} else {
 		printf("Invalid CalDB!\n");
 	}
@@ -267,12 +269,11 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	pm_posmap.addArg("Start Run");
 	pm_posmap.addArg("End Run");
 	pm_posmap.addArg("n Rings","12");
-	InputRequester pm_posmap_sim("Simulate Position Map",&mi_EndpointStudySim);
+	InputRequester pm_posmap_sim("Simulate Xe Position Map",&mi_EndpointStudySim);
 	pm_posmap_sim.addArg("Start Run");
 	pm_posmap_sim.addArg("End Run");
-	pm_posmap_sim.addArg("Single Run","0");
 	pm_posmap_sim.addArg("n Rings","12");
-	InputRequester pm_posmap_resim("Reupload Position Map",&mi_EndpointStudyReSim);
+	InputRequester pm_posmap_resim("Compare data/sim to create map",&mi_EndpointStudyReSim);
 	pm_posmap_resim.addArg("Start Run");
 	pm_posmap_resim.addArg("End Run");
 	pm_posmap_resim.addArg("n Rings","12");
@@ -288,7 +289,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OptionsMenu PMapR("Position Map Routines");
 	PMapR.addChoice(&pm_posmap,"gen");
 	PMapR.addChoice(&pm_posmap_sim,"sim");
-	PMapR.addChoice(&pm_posmap_resim,"rup");
+	PMapR.addChoice(&pm_posmap_resim,"comp");
 	PMapR.addChoice(&posmapLister,"ls");
 	PMapR.addChoice(&posmapPlot,"plot");
 	PMapR.addChoice(&posmapDumper,"dump");

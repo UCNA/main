@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # nohup ./ReplayManager.py --mwpccal_sim < /dev/null > scriptlog.txt 2>&1 &
-# nohup ./ReplayManager.py -s --rmin=21914 --rmax=21939 < /dev/null > scriptlog.txt 2>&1 &
+# nohup ./ReplayManager.py -s --rmin=17871 --rmax=17922 < /dev/null > scriptlog.txt 2>&1 &
 # nohup ./ReplayManager.py -o < /dev/null > scriptlog.txt 2>&1 &
 
 # nohup ./ReplayManager.py -x --rmin=17561 --rmax=17734 < /dev/null > scriptlog.txt 2>&1 &
+# nohup ./ReplayManager.py -X --rmin=17561 --rmax=17734 < /dev/null > scriptlog.txt 2>&1 &
 
 import os
 import time
@@ -58,13 +59,13 @@ def processXeMap(rmin,rmax,nr):
 		os.system(pcmd%(rmin,rmax,nr))
 
 def processXeSim(rmin,rmax,nr):
-		pcmd = "cd "+anaBinDir+"; ./UCNAnalyzer pmap sim %i %i %i %i x x\n"
+		pcmd = "cd "+anaBinDir+"; ./UCNAnalyzer pmap sim %i %i %i x x\n"
 		freplaylist = open("xenon_simlist.txt","w")
 		for r in range(rmin,rmax+1):
-			freplaylist.write(pcmd%(rmin,rmax,r,nr))
+			freplaylist.write(pcmd%(r,r,nr))
 		freplaylist.close()
 		os.system("cat xenon_simlist.txt")
-		nproc = 6
+		nproc = 5
 		if nr > 15:
 			nproc = 3
 		os.system("nice -n 15 parallel -P %i < xenon_simlist.txt"%nproc)

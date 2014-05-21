@@ -95,30 +95,30 @@ void CathodeGainPlugin::calculateResults() {
 				AnaNumber AN(fitnm+"_prevgain");
 				AN.s = s;
 				
-				AN.value = ((TProfile*)prevGain[s][d]->h[GV_OPEN])->GetBinContent(c);
+				AN.value = ((TProfile*)prevGain[s][d]->h[GV_OPEN])->GetBinContent(c);	// gain factor used in this replay
 				myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 				
-				AN.name = fitnm + "_mid";
-				for(int n=0; n<3; n++) {
-					AN.n = n;
-					AN.value = fCathCenter.GetParameter(n);
-					AN.err = fCathCenter.GetParameter(n);
+				AN.name = fitnm + "_mid";						// fit to central peak of cathode charge distribution
+				for(int n=0; n<fCathCenter.GetNpar(); n++) {
+					AN.n = n;									// fit parameter number
+					AN.value = fCathCenter.GetParameter(n);		// n^th fit parameter
+					AN.err = fCathCenter.GetParError(n);		// n^th parameter uncertainty
 					myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 				}
 				
-				AN.name = fitnm + "_lo";
-				for(int n=0; n<3; n++) {
-					AN.n = n;
-					AN.value = fLowCX.GetParameter(n);
-					AN.err = fLowCX.GetParError(n);
+				AN.name = fitnm + "_lo";				// fit to low slope of cathode charge distribution
+				for(int n=0; n<fLowCX.GetNpar(); n++) {
+					AN.n = n;							// fit parameter number
+					AN.value = fLowCX.GetParameter(n);	// n^th fit parameter
+					AN.err = fLowCX.GetParError(n);		// n^th parameter uncertainty
 					myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 				}
 				
-				AN.name = fitnm + "_hi";
-				for(int n=0; n<3; n++) {
-					AN.n = n;
-					AN.value = fHighCX.GetParameter(n);
-					AN.err = fHighCX.GetParError(n);
+				AN.name = fitnm + "_hi";				// fit to high slope of cathode charge distribution
+				for(int n=0; n<fHighCX.GetNpar(); n++) {
+					AN.n = n;							// fit parameter number
+					AN.value = fHighCX.GetParameter(n);	// n^th fit parameter
+					AN.err = fHighCX.GetParError(n);	// n^th parameter uncertainty
 					myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 				}
 			}

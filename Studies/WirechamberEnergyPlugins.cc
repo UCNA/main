@@ -72,8 +72,8 @@ void MWPCGainPlugin::calculateResults() {
 		// average applied gain correction
 		AnaNumber AN("mwpc_avg_gaincorr");
 		AN.s = s;
-		AN.value = mwpcGaincorr->h[GV_OPEN]->GetBinContent(s+1);
-		AN.err = mwpcGaincorr->h[GV_OPEN]->GetBinError(s+1);
+		AN.value = mwpcGaincorr->h[GV_OPEN]->GetBinContent(s+1);	// average MWPC gain correction applied to run
+		AN.err = mwpcGaincorr->h[GV_OPEN]->GetBinError(s+1);		// RMS spread in average
 		myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 		
 		// fit each scintillator energy slice and record results
@@ -228,11 +228,11 @@ void MWPCGainPlugin::compareMCtoData(AnalyzerPlugin* AP) {
 			lineFit.SetLineWidth(1);
 			gGain[tp]->Fit(&lineFit,"RB");
 			
-			AnaNumber AN("mwpc_gain_fit");
+			AnaNumber AN("mwpc_gain_fit");		// 'a*x' fit observed vs expected MWPC energy (by scintillator energy bin)
 			AN.s = s;
-			AN.etypes.insert(tp);
-			AN.value = lineFit.GetParameter(1);
-			AN.err = lineFit.GetParError(1);
+			AN.etypes.insert(tp);				// event backscatter type being fit
+			AN.value = lineFit.GetParameter(1);	// fit parameter 'a'
+			AN.err = lineFit.GetParError(1);	// parameter uncertainty
 			myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 		}
 		

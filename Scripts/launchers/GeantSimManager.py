@@ -282,9 +282,7 @@ if __name__ == "__main__":
 			sourceSim = GeantSimManager("thinfoil", geometry="thinFoil")
 			sourceSim.set_evtsrc(g)
 			if options.sim:
-				maxIn = 100
-				if g=="Xe135_3-2+":
-					maxIn = 300
+				maxIn = {"Xe135_3-2+": 300}.get(g,100)
 				sourceSim.launch_sims(maxIn=maxIn)
 			if options.ana:
 				sourceSim.launch_postanalyzer()

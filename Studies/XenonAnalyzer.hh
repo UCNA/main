@@ -64,8 +64,13 @@ typedef XenonAnalyzer SimXenonAnalyzer;
 
 /// process xenon runs
 void process_xenon(RunNum r0, RunNum r1, unsigned int nrings);
-/// generate xenon simulation runs
-void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle=0, unsigned int nRings =12);
+
+/// simulate a single xenon run number
+std::string simulate_one_xenon(RunNum r, unsigned int nrings, bool forceResim=false);
+
+/// combine multiple xenon runs
+void combine_xenon_sims(RunNum r0, RunNum r1, unsigned int nRings);
+
 /// comparison between data, simulated Xenon to produce position map
 void xenon_posmap(RunNum r0, RunNum r1, unsigned int nRings);
 

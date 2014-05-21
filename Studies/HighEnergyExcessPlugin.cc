@@ -17,13 +17,13 @@ void fitHighEnergyExcess(RunAccumulator* RA, quadHists* qh, double e0, double e1
 		
 		AnaNumber AN("bg_xs_"+qh->name+"_"+itos(e0)+"-"+itos(e1));
 		AN.s = qh->mySide;
-		AN.value = xs;
-		AN.err = d_xs;
+		AN.value = xs;	// "excess" events after background subtraction in energy window
+		AN.err = d_xs;	// uncertainty on counts
 		RA->uploadAnaNumber(AN, GV_CLOSED, afp);
 		
 		AN.name = "bg_cts_"+qh->name+"_"+itos(e0)+"-"+itos(e1);
-		AN.value = nBG;
-		AN.err = d_nBG;
+		AN.value = nBG;	// number of background counts in window
+		AN.err = d_nBG;	// uncertainty on background counts
 		RA->uploadAnaNumber(AN, GV_CLOSED, afp);
 	}
 }
