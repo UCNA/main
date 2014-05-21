@@ -12,7 +12,7 @@ from ucnacore.EncalDB import *
 
 def replay_betas(rmin,rmax):	
 	
-	pcmd = "cd ../../OfficialReplay; ./ucnaDataAnalyzer11b %i cutbeam ledtree\n"
+	pcmd = "cd ../../OfficialReplay; ./ucnaDataAnalyzer11b %i cutbeam nodbout ledtree\n"
 	rlist = getRunType(open_connection(),"Asymmetry",rmin,rmax)
 	rlist.sort()
 	freplaylist = open("officialreplaylist.txt","w")
