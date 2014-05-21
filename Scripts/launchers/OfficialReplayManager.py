@@ -3,6 +3,8 @@
 # nohup ./OfficialReplayManager.py -s --rmin=17000 --rmax=20000 < /dev/null > officreplaylog.txt 2>&1 &
 # nohup ./OfficialReplayManager.py -r --rmin=17000 --rmax=20000 < /dev/null > officreplaylog.txt 2>&1 &
 
+# nohup ./OfficialReplayManager.py -x --rmin=17561 --rmax=17734 < /dev/null > officreplaylog.txt 2>&1 &
+
 import os
 import time
 from optparse import OptionParser
@@ -70,7 +72,7 @@ def replay_sources(rmin,rmax,doXe=False):
 	freplaylist.close()
 	print "------- Replay List -------"
 	os.system("cat officialreplaylist_sources.txt")
-	os.system("nice -n 10 parallel < officialreplaylist_sources.txt")
+	os.system("nice -n 10 parallel -P 4 < officialreplaylist_sources.txt")
 	os.system("rm officialreplaylist_sources.txt")
 	
 	
