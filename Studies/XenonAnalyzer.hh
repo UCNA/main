@@ -32,7 +32,7 @@ public:
 	/// overall spectrum info
 	virtual void calculateResults();
 	/// generate position map from data endpoints
-	void compareMCtoData(AnalyzerPlugin* AP);
+	void genComparisonPosmap(XenonSpectrumPlugin* AP);
 	/// fit endpoint in each sector
 	void fitSectors();
 	
@@ -47,33 +47,30 @@ protected:
 };
 
 /// analyzer for xenon data
-class XenonAnalyzer: public CathodeTuningAnalyzer {
+class XenonAnalyzer: public RunAccumulator {
 public:
 	/// constructor
-	XenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0, unsigned int nrA = 12);
+	XenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0);
 	/// create a new instance of this analyzer
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) {
-		return new XenonAnalyzer(this,nm,inflname,myXeSpec->sects.n,myAnode->sects.n); }
+		return new XenonAnalyzer(this,nm,inflname,myXeSpec->sects.n); }
 	
 	XenonSpectrumPlugin* myXeSpec;	///< position-binned Xenon spectrum analysis
-	AnodeGainMapPlugin* myAnode;	///< anode position gain
 	MWPCGainPlugin* myWG;			///< MWPC energy calibration
 };
 
-/// analyzer for simulated xenon data
-class SimXenonAnalyzer: public CathodeTuningAnalyzer {
-public:
-	/// constructor
-	SimXenonAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = "", unsigned int nrE = 0);
-	
-	XenonSpectrumPlugin* myXeSpec;	///< position-binned Xenon spectrum analysis
-	MWPCGainPlugin* myWG;			///< MWPC energy calibration
-};
+/// same XenonAnalyzer also for simulated data
+typedef XenonAnalyzer SimXenonAnalyzer;
 
 /// process xenon runs
 void process_xenon(RunNum r0, RunNum r1, unsigned int nrings);
-/// generate xenon simulation runs
-void simulate_xenon(RunNum r0, RunNum r1, RunNum rsingle=0, unsigned int nRings =12);
+
+/// simulate a single xenon run number
+std::string simulate_one_xenon(RunNum r, unsigned int nrings, bool forceResim=false);
+
+/// combine multiple xenon runs
+void combine_xenon_sims(RunNum r0, RunNum r1, unsigned int nRings);
+
 /// comparison between data, simulated Xenon to produce position map
 void xenon_posmap(RunNum r0, RunNum r1, unsigned int nRings);
 

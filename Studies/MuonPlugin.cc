@@ -66,11 +66,11 @@ void MuonPlugin::calculateResults() {
 				// Landau fit to backing muon spectrum peak
 				if(gv) {
 					qBackMuons[s][gv?false:true]->fgbg[afp]->h[gv]->Fit(&fLandau,"QR+");
-					AN.name = "muback_landau_fit";
-					for(unsigned int n=0; n<3; n++) {
-						AN.n = n;
-						AN.value = fLandau.GetParameter(n);
-						AN.err = fLandau.GetParError(n);
+					AN.name = "muback_landau_fit";			// Landau fit to shape of backing-tagged muon energy
+					for(int n=0; n<fLandau.GetNpar(); n++) {
+						AN.n = n;							// fit parameter number
+						AN.value = fLandau.GetParameter(n);	// n^th fit parameter value
+						AN.err = fLandau.GetParError(n);	// n^th fit parameter uncertainty
 						myA->uploadAnaNumber(AN, gv, afp);
 					}
 				}
@@ -82,24 +82,24 @@ void MuonPlugin::calculateResults() {
 				Double_t ierr;
 				
 				AN.name = "mu_rate";
-				AN.value = h->IntegralAndError(1,h->GetNbinsX(),ierr)/tm;
-				AN.err = ierr/tm;
+				AN.value = h->IntegralAndError(1,h->GetNbinsX(),ierr)/tm;	// muon rate, all energies and vetos
+				AN.err = ierr/tm;											// uncertainty on rate
 				myA->uploadAnaNumber(AN, gv, afp);
 				
 				AN.name = "mu_rate_ecut";
-				AN.value = h->IntegralAndError(h->FindBin(emin),h->FindBin(emax),ierr)/tm;
-				AN.err = ierr/tm;
+				AN.value = h->IntegralAndError(h->FindBin(emin),h->FindBin(emax),ierr)/tm; 	// muon rate, in energy cut
+				AN.err = ierr/tm;											// uncertainty on rate
 				myA->uploadAnaNumber(AN, gv, afp);
 				
-				TH1* hb = qBackMuons[s][gv?false:true]->fgbg[afp]->h[gv];
+				TH1* hb = qBackMuons[s][gv?false:true]->fgbg[afp]->h[gv];	// backing veto muon rate
 				AN.name = "muback_rate";
 				AN.value = hb->IntegralAndError(1,h->GetNbinsX(),ierr)/tm;
-				AN.err = ierr/tm;
+				AN.err = ierr/tm;											// uncertainty on rate
 				myA->uploadAnaNumber(AN, gv, afp);
 			
 				AN.name = "muback_rate_ecut";
-				AN.value = hb->IntegralAndError(hb->FindBin(emin),hb->FindBin(emax),ierr)/tm;
-				AN.err = ierr/tm;
+				AN.value = hb->IntegralAndError(hb->FindBin(emin),hb->FindBin(emax),ierr)/tm; // backing veto muon rate, in energy cut
+				AN.err = ierr/tm;											// uncertainty on rate
 				myA->uploadAnaNumber(AN, gv, afp);
 			}
 		}

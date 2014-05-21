@@ -411,6 +411,7 @@ void reSource(RunNum rn) {
 	
 	OutputManager OMdat("NameUnused", getEnvSafe("UCNA_ANA_PLOTS")+"/SourceFitsData/"+replace(RI.groupName,' ','_')+"/");
 	SourceHitsAnalyzer SHAdat(&OMdat,itos(rn)+"_"+RI.roleName);
+	SHAdat.grouping = GROUP_RUN;
 	SHAdat.PCal = &PCal;
 	
 	// set up analyzers for each expected source
@@ -436,6 +437,7 @@ void reSource(RunNum rn) {
 	SHAsim.isSimulated = true;
 	SHAsim.PCal = &PCal;
 	SHAsim.copyTimes(SHAdat);
+	SHAsim.grouping = GROUP_RUN;
 	for(std::vector<SourceHitsPlugin*>::iterator it = SHAdat.srcPlugins.begin(); it != SHAdat.srcPlugins.end(); it++) {
 		SHAsim.addSource((*it)->mySource);
 	}
@@ -492,9 +494,10 @@ void reSource(RunNum rn) {
 		//SHAsim.loadSimData(*g2p,nCounts);
 		delete g2p;
 	}
-	
+
 	SHAsim.makePlots();
 	SHAsim.compareMCtoData(SHAdat);
+	SHAsim.uploadAnaResults();
 	SHAsim.write();
 	SHAsim.setWriteRoot(true);
 }
