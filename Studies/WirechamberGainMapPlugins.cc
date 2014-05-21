@@ -3,7 +3,7 @@
 #include <time.h>
 #include <TProfile.h>
 
-WirechamberGainMapPluginBase::WirechamberGainMapPluginBase(RunAccumulator* RA, unsigned int nr, const std::string& nm): PositionBinnedPlugin(RA,nm,nr), myChgPrx(CHARGE_PROXY_NONE) {
+WirechamberGainMapPluginBase::WirechamberGainMapPluginBase(RunAccumulator* RA, unsigned int nr, const std::string& nm): PositionBinnedPlugin(RA,nm,nr,50), myChgPrx(CHARGE_PROXY_NONE) {
 	TH1F hTemplate(("hEw_"+nm).c_str(),"Wirechamber energy",50,0,5);
 	for(Side s = EAST; s <= WEST; ++s)
 		sectHists[s] = allocateSegmentHistograms(hTemplate,AFP_OTHER,s);

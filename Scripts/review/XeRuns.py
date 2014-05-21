@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append("..")
+
+from ucnacore.AnaDB import *
 from Asymmetries import *
 from pyx import *
 import sys
@@ -20,15 +24,6 @@ class XeFit(KVMap):
 		self.m = int(self.m)
 		self.loadStrings(["side"])
 
-class XeDecomp(KVMap):
-	def __init__(self,m=KVMap()):
-		self.dat = m.dat
-		self.nIsots = int(self.getFirstF("nTerms"))
-		self.names = self.getFirst("isots").split(",")
-		self.counts = [float(x) for x in self.getFirst("counts").split(",")]
-		self.terms = [float(x) for x in self.getFirst("terms").split(",")]
-		self.err = [float(x) for x in self.getFirst("errs").split(",")]
-							  
 class XeFile(QFile):
 	def __init__(self,fname):
 		QFile.__init__(self,fname)
@@ -44,106 +39,121 @@ class XeFile(QFile):
 			self.sectdat[(m.side,m.tube,m.m)] = m
 				
 		self.runcals = dict([(r.run,r) for r in [runCal(m) for m in self.dat.get("runcal",[])]])
-		scomps = self.dat.get("spectrumComp",[])
-		if scomps:
-			self.xecomp = XeDecomp(scomps[0])
 		self.runtimes = {}
 		for rt in self.dat.get("runTimes",[]):
 			for r in rt.dat:
 				self.runtimes[int(r)] = rt.getFirstF(r)
 							
-def XeGainTweak(rn,conn,nrings):
-	datpath = os.environ["UCNA_ANA_PLOTS"]+"/PositionMaps/SingleRuns/"
-	simpath = os.environ["UCNA_ANA_PLOTS"]+"/PositionMaps/SingleRunsSim/"
-	rname = "Xenon_%i_%i_50"%(rn,nrings)
+def XeGainTweak(rn,conn,aconn=open_anadb_connection()):
+	"""Add gain tweak to xenon runs to match data to MC endpoint"""
 	
-	xdat = XeFile(datpath+"/"+rname+"/"+rname+".txt")
-	xsim = XeFile(simpath+"/"+rname+"/"+rname+".txt")
+	ADBL = AnaDBLocator()
+	ADBL.req["name"] = "XeEndpt"
+	ADBL.req["grouping"] = "run"
+	ADBL.req["start_run"] = ADBL.req["end_run"] = "%i"%rn
+	
+	ddat = dict([ ((p.side,p.n),p) for p in ADBL.find(aconn) ])
+	
+	ADBL.req["name"] = "prevGainTweak"
+	dprev = dict([ ((p.side,p.n),p) for p in ADBL.find(aconn) ])
+	
+	ADBL.req["source"] = os.environ["UCNA_ANA_AUTHOR"]+"_Sim"
+	ADBL.req["name"] = "XeEndpt"
+	dsim = dict([ ((p.side,p.n),p) for p in ADBL.find(aconn) ])
 	
 	print "----------",rn,"----------"
 	for s in ["East","West"]:
 		for t in range(4):
-			ldat = xdat.tuben[(s[0],t)].xe_hi
-			lsim = xsim.tuben[(s[0],t)].xe_hi
-			oldtweak = xdat.runcals[rn].getGMSTweak(s[0],t)
-			if not lsim or not ldat or not abs((lsim-ldat)/lsim) < 0.10:
-				print "\t***** BAD FIT",s,t,ldat,"->",lsim
+		
+			if (s,t) not in ddat or (s,t) not in dprev:
+				print "Missing endpoint data",s,t
 				continue
-			print "\t",s,t,"%.2f -> %.2f\t\tErr = %+.2f%%\tOld = %+.2f%%"%(ldat,lsim,100.0*(lsim-ldat)/lsim,100.*(oldtweak-1))
+			if (s,t) not in dsim:
+				print "Missing endpoint sim",s,t
+				continue
+		
+			ldat = ddat[(s,t)].value
+			lsim = dsim[(s,t)].value
+			oldtweak = dprev[(s,t)].value
+			
+			print "\t",s,t,"%.2f -> %.2f\t\tErr = %+.2f%%\t(old: %+.2f%%)"%(ldat, lsim, 100.0*(lsim-ldat)/lsim, 100.*(oldtweak-1))
+
 			if(conn):
 				delete_gain_tweak(conn,rn,s,t)
-				upload_gain_tweak(conn,[rn],s,t,ldat/oldtweak,lsim)
+				upload_gain_tweak(conn, [rn], s, t, ldat / oldtweak, lsim)
 							
 							
-def XeTimeEvolution(rmin,rmax,nrings):
-	simpath = os.environ["UCNA_ANA_PLOTS"]+"/PositionMaps/SingleRunsSim/"
-	conn = open_connection()
-	isotdat = {}						
+def XeTimeEvolution(rmin,rmax):
+	"""Spectrum-fit isotope composition as a function of time for a series of Xe runs"""
+
+	aconn=open_anadb_connection()
+	conn=open_connection()
 	
-	# collect data
-	tmin = 1e100
-	for rn in range(rmin,rmax+1):
-		try:
-			rname = "Xenon_%i_%i_50"%(rn,nrings)
-			xsim = XeFile(simpath+"/"+rname+"/"+rname+".txt")
-			trange = (getRunStartTime(conn,rn),getRunEndTime(conn,rn))
-			rtime = xsim.runtimes[rn]
-			print rn,trange
-			if trange[0]<tmin:
-				tmin = trange[0]
-			for i in range(xsim.xecomp.nIsots):
-				dpt = [trange[0]+0.5*rtime,xsim.xecomp.counts[i]/rtime]
-				dpt.append(dpt[-1]*xsim.xecomp.err[i])
-				isotdat.setdefault(xsim.xecomp.names[i],[]).append(dpt)
-		except:
-			print "*** Fail on run",rn,"***"
-			#traceback.print_exc(file=sys.stdout)
-			#exit(1)
+	ADBL = AnaDBLocator()
+	ADBL.req["grouping"] = "run"
+	ADBL.req["source"] = os.environ["UCNA_ANA_AUTHOR"]+"_Sim"
+	ADBL.xcond = "start_run = end_run AND %i <= start_run AND end_run <= %i AND name LIKE 'XeComp_%%'"%(rmin,rmax)
 	
+	# xenon compositions
+	xecomps = ADBL.find(aconn)
+	
+	# run timing info
+	rtimes = dict([r,(getRunStartTime(conn,r),getRunEndTime(conn,r))] for r in range(rmin,rmax+1))
+	t0 = min([t[0] for t in rtimes.values()])
+	for x in xecomps:
+		x.t_mid = ((rtimes[x.start_run][0]+rtimes[x.start_run][1])*0.5-t0)/3600.
+		x.dt = rtimes[x.start_run][1]-rtimes[x.start_run][0]
+		x.rate = x.value / x.dt
+		x.drate = x.err / x.dt
+
 	# plot
 	gIA=graph.graphxy(width=20,height=12,
-					  x=graph.axis.lin(title="Time [h]",min=0,max=20),
-					  y=graph.axis.log(title="Decay rate [Hz]",min=5,max=2000),
+					  x=graph.axis.lin(title="Time [h]"),
+					  y=graph.axis.log(title="Decay rate [Hz]"),
 					  key = graph.key.key(pos="br",columns=2))
 	setTexrunner(gIA)
-	icols = rainbowDict(isotdat)
-	# black-and-white version
-	for k in isotdat:
-		icols[k] = rgb.black
 
-	ks = isotdat.keys()
-	ks.sort()
+	#ks = isotdat.keys()
+	#ks.sort()
 	ks    = ['Xe135_3-2+', 'Xe125_1-2+', 'Xe133_3-2+', 'Xe131_11-2-', 'Xe129_11-2-', 'Xe133_11-2-', 'Xe137_7-2-', 'Xe135_11-2-']
 	kshort = ['Xe137_7-2-', 'Xe135_11-2-']
 	ksymb = [symbol.circle, symbol.triangle, symbol.square, symbol.plus, symbol.cross, symbol.diamond, symbol.circle, symbol.triangle]
+	
+	icols = rainbowDict(ks)
+	# black-and-white version
+	#for k in isotdat:
+	#	icols[k] = rgb.black
+
 	for (n,k) in enumerate(ks):
-		if k not in isotdat:
+	
+		isotdat = [ (x.t_mid,x.rate,x.drate) for x in xecomps if x.name[7:]==k]
+		if len(isotdat) < 2:
 			continue
-		for d in isotdat[k]:
-			d[0] = (d[0]-tmin)/3600.
-		if k=='Xe137_7-2-':
-			isotdat[k] = [d for d in isotdat[k] if d[1]>200]
-		LF = LogYer(terms=[polyterm(0),polyterm(1)])
-		LF.fit([d for d in isotdat[k] if d[1]>5 and not (k not in kshort and d[0]<2) and not (k=='Xe125_1-2+' and d[0]>10)],cols=(0,1))
-		thalf = 0
-		if LF.coeffs[1]:
-			thalf = -log(2)/LF.coeffs[1]
+		
+		#LF = LogYer(terms=[polyterm(0),polyterm(1)])
+		#LF.fit([d for d in isotdat[k] if d[1]>5 and not (k not in kshort and d[0]<2) and not (k=='Xe125_1-2+' and d[0]>10)],cols=(0,1))
+		#thalf = 0
+		#if LF.coeffs[1]:
+		#	thalf = -log(2)/LF.coeffs[1]
+		
 		gtitle = k.replace("_"," ")
-		gtitle = "$^{"+gtitle[2:5]+"}$Xe"+gtitle[5:-1].replace("-","/")+"$^{"+gtitle[-1]+"}$: $T_{1/2}$ = "
-		if abs(thalf) < 1.0:
-			gtitle += "%.1f m"%(60*thalf)
-		elif abs(thalf) < 24:
-			gtitle += "%.1f h"%thalf
-		else:
-			gtitle += "%.1f d"%(thalf/24)
+		#gtitle = "$^{"+gtitle[2:5]+"}$Xe"+gtitle[5:-1].replace("-","/")+"$^{"+gtitle[-1]+"}$: $T_{1/2}$ = "
+		#if abs(thalf) < 1.0:
+		#	gtitle += "%.1f m"%(60*thalf)
+		#elif abs(thalf) < 24:
+		#	gtitle += "%.1f h"%thalf
+		#else:
+		#	gtitle += "%.1f d"%(thalf/24)
 
 		sfill = []
 		if k in kshort:
 			sfill = [deco.filled]
-		gIA.plot(graph.data.points(isotdat[k],x=1,y=2,dy=3,title=gtitle),
+
+		gIA.plot(graph.data.points(isotdat,x=1,y=2,dy=3,title=gtitle),
 					[graph.style.symbol(ksymb[n],size=0.2,symbolattrs=[icols[k],]+sfill),
 					graph.style.errorbar(errorbarattrs=[icols[k],])])
-		gIA.plot(graph.data.points(LF.fitcurve(0,30),x=1,y=2,title=None),[graph.style.line([icols[k]])])
+		#gIA.plot(graph.data.points(LF.fitcurve(0,30),x=1,y=2,title=None),[graph.style.line([icols[k]])])
+
 	gIA.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/test/XeDecomp/DecompHistory_%i-%i.pdf"%(rmin,rmax))
 
 
@@ -227,18 +237,18 @@ if __name__ == "__main__":
 	
 	#XeTimeEvolution(14283,14333,11)
 	#XeTimeEvolution(15992,16077,15)
+	#XeTimeEvolution(18081,18090)
 	#exit(0)
 	
 	#data_v_sim(14282,14347,12)
 	#exit(0)
 	
-	ep_v_eta("Xenon_19891-19898_12")
+	#ep_v_eta("Xenon_19891-19898_12")
 	#ep_v_eta("SimXe_14282-14347")
-	exit(0)
+	#exit(0)
 	
 	conn = open_connection()
-	conn = None
-	#for rn in range(14282,14347+1):
-	#for rn in range(15991,16077+1):
-	#	XeGainTweak(rn,conn,15)
+	conn = None	# to display changes without uploading
+	for rn in range(18081,18090+1):
+		XeGainTweak(rn,conn)
 

@@ -147,7 +147,7 @@ class SourceDataCollector:
 			self.alllines += get_source_lines(self.conn, src, xquery)
 
 		# filter out blatantly crazy fits
-		self.slines = [l for l in self.alllines if 10 < l.erecon < 2000 and 5 < l.enwidth < 1000]
+		self.slines = [l for l in self.alllines if 10 < l.erecon < 2000 and 5 < l.enwidth < 1000 and 0 < l.denwidth]
 		
 		# connect data and simulations	
 		sims = dict([(l.uid,l) for l in self.slines if l.simulation])
@@ -161,7 +161,9 @@ class SourceDataCollector:
 		print "\twith",len(self.slines),"lines."
 		return self.slines
 
-	def getTubeLines(self,side,tube):
+	def getTubeLines(self, side, tube, linelist = None):
+		if linelist is not None:
+			return [l for l in self.slines if l.side==side and l.tube==tube and l.type in linelist]
 		return [l for l in self.slines if l.side==side and l.tube==tube]
 
 	def getRunGMS(self,rn,s,t):
@@ -179,6 +181,8 @@ class SourceDataCollector:
 			for t in range(4):
 				gms0 = self.getRunGMS(rn,s,t)
 				print "Resetting GMS base",s,t,gms0
+				if not gms0:
+					continue
 				for l in self.slines:
 					l.gms /= gms0
 				for l in self.alllines:
@@ -222,7 +226,7 @@ class LinearityCurve:
 	def fitLinearity(self):
 	
 		self.slines = self.SDC.getTubeLines(self.side,self.tube)
-	
+			
 		if self.uselist:
 			print "\nFallback straight-line fits to specified sources",self.uselist
 		
@@ -638,7 +642,7 @@ cal_2011 = [
 			(	17517,	17527,	17522,	17440,	17734,		1125,	1128,		199	),	# 2 Calibrations for Xe; W0 pulser still dead
 			(	17871,	17922,	17892,	17735,	17955,		807,	810,		199	),	# 3 Big Scan; W0 pulser still dead
 			(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		199	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
-			(	18357,	18386,	18362,	18081,	18386,		1469,	1472,		199	),	# 5 Beta decay, new In source, Xe; everything working now
+			(	18357,	18386,	18362,	18081,	18386,		1469,	1472,		207	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
 			(	18617,	18640,	18622,	18390,	18683,		1894,	1897,		55	),	# 6 Beta decay; PMT W4 Bi pulser very low
 			(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# 7 Start of 2012; PMT W4 pulser still low
 			(	19203,	19239,	19233,	19023,	19239,		2338,	2341,		59	),	# 8 W4 Pulser now higher... drifty
@@ -671,12 +675,12 @@ if __name__=="__main__":
 	conn = open_connection() # connection to calibrations DB
 	replace = True 	# whether to replace previous calibration data
 	makePlots = True
-	#delete_calibration(conn,8466); exit(0)
+	#delete_calibration(conn,8552); exit(0)
 
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2011:
+	for c in cal_2011[5:6]:
 	
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])
 		#continue
@@ -690,7 +694,7 @@ if __name__=="__main__":
 		if len(c) >= 3:
 			SDC.rebase_gms(c[2])
 		
-		#plotSourcePositions(conn,rlist)
+		#plotSourcePositions(conn,rlist); continue
 		#backscatterEnergy(conn, rlist)
 		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
 		#continue

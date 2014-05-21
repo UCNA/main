@@ -78,6 +78,7 @@ def plotAllErrors(outpath,year,s="Both",t=4):
 	# plot
 	for k in srs:
 		gdat = [(l.sim.erecon+50,l.erecon-l.sim.erecon,l) for l in srs[k] if l.tube==t and l.src.radius()<50. and (s=="Both" or l.side==s)]
+		gdat = [p for p in gdat if abs(p[1])<yrange]
 		if not gdat:
 			continue
 		print k,peakNames[k]

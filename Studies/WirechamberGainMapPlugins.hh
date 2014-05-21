@@ -37,7 +37,7 @@ class WirechamberEdepMapPlugin: public WirechamberGainMapPluginBase {
 class WirechamberNullEdepMapPlugin: public PositionBinnedPlugin {
 public:
 	/// constructor
-	WirechamberNullEdepMapPlugin(RunAccumulator* RA, unsigned int nr): PositionBinnedPlugin(RA,"MWPC_SimEdepPos",nr) {}
+	WirechamberNullEdepMapPlugin(RunAccumulator* RA, unsigned int nr): PositionBinnedPlugin(RA,"MWPC_SimEdepPos",nr,50) {}
 	/// fill histograms
 	virtual void fillCoreHists(ProcessedDataScanner&, double) {}
 };

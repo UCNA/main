@@ -190,7 +190,7 @@ void mi_evis2etrue(StreamInteractor*) {
 	OM.write();
 }
 
-void mi_sourcelog(StreamInteractor*) { uploadRunSources("UCNA Run Log 2012.txt"); }
+void mi_sourcelog(StreamInteractor*) { uploadRunSources("UCNA Run Log.txt"); }
 
 void mi_radcor(StreamInteractor* S) {
 	float Ep = S->popFloat();

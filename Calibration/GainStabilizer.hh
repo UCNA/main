@@ -13,6 +13,8 @@ public:
 	virtual ~GainStabilizer() {}
 	/// compute gain stabilization factor for given side, PMT
 	virtual float gmsFactor(Side s, unsigned int t, float time) const;
+	/// get "manual" extra gain matching factor
+	virtual float getGainTweak(Side s, unsigned int t, float time) const;
 	/// print gain stabilization info
 	virtual void printSummary() { printf("Null Gain Stabilization\n"); }
 	/// get a summary of GMS calibration parameters
@@ -46,6 +48,8 @@ public:
 	TweakedGainStabilizer(GainStabilizer* BG);
 	/// compute gain stabilization factor for given side, PMT
 	virtual float gmsFactor(Side s, unsigned int t, float time) const;
+	/// get "manual" extra gain matching factor
+	virtual float getGainTweak(Side s, unsigned int t, float time) const;
 	/// print gain stabilization info
 	virtual void printSummary();
 	/// get a summary of GMS calibration parameters

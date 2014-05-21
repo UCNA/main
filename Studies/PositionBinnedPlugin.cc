@@ -1,10 +1,8 @@
 #include "PositionBinnedPlugin.hh"
 #include "SMExcept.hh"
 
-double PositionBinnedPlugin::fidRadius = 50.;
-
-PositionBinnedPlugin::PositionBinnedPlugin(RunAccumulator* RA, const std::string& nm, unsigned int nr):
-AnalyzerPlugin(RA,nm), sects(nr,PositionBinnedPlugin::fidRadius) {
+PositionBinnedPlugin::PositionBinnedPlugin(RunAccumulator* RA, const std::string& nm, unsigned int nr, double r):
+AnalyzerPlugin(RA,nm), sects(nr,r) {
 	
 	// load sector cutter
 	if(myA->fIn) {

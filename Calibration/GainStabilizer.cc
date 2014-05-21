@@ -2,6 +2,7 @@
 #include "EnergyCalibrator.hh"
 
 float GainStabilizer::gmsFactor(Side, unsigned int, float) const { return 1.0; }
+float GainStabilizer::getGainTweak(Side, unsigned int, float) const { return 1.0; }
 
 Stringmap GainStabilizer::gmsSummary() const {
 	Stringmap m;
@@ -34,7 +35,7 @@ GainStabilizer(myRun, cdb, myCorrecter) {
 
 float ChrisGainStabilizer::gmsFactor(Side s, unsigned int t, float time) const {
 	if(pulser0[s][t] && pulserPeak[s][t]
-	   && pulser0[s][t]>800 && pulserPeak[s][t]->Eval(time)>800)
+	   && pulser0[s][t]>1800 && pulserPeak[s][t]->Eval(time)>1800)
 		return pulser0[s][t]/pulserPeak[s][t]->Eval(time);
 	else
 		return 1.0;
@@ -86,10 +87,14 @@ TweakedGainStabilizer::TweakedGainStabilizer(GainStabilizer* BG): GainStabilizer
 		for(unsigned int t=0; t<=nBetaTubes; t++)
 			CDB->getGainTweak(rn,s,t,eOrig[s][t],eFinal[s][t]);
 }
+float TweakedGainStabilizer::getGainTweak(Side s, unsigned int t, float) const {
+	smassert(s<=WEST && t<=nBetaTubes);
+	if(t==nBetaTubes) return eFinal[s][t]/eOrig[s][t];
+	return LCor->invertLinearityStabilized(s,t,eFinal[s][t])/LCor->invertLinearityStabilized(s,t,eOrig[s][t]);
+}
 float TweakedGainStabilizer::gmsFactor(Side s, unsigned int t, float time) const {
 	smassert(s<=WEST && t<=nBetaTubes);
-	if(t==nBetaTubes) return baseGain->gmsFactor(s,t,time)*eFinal[s][t]/eOrig[s][t];
-	return baseGain->gmsFactor(s,t,time)*LCor->invertLinearityStabilized(s,t,eFinal[s][t])/LCor->invertLinearityStabilized(s,t,eOrig[s][t]);
+	return baseGain->gmsFactor(s,t,time) * getGainTweak(s,t,time);
 }
 Stringmap TweakedGainStabilizer::gmsSummary() const {
 	Stringmap m = baseGain->gmsSummary();
