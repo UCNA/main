@@ -441,6 +441,10 @@ def get_gain_tweak(conn,rn,s,t):
 def delete_gain_tweak(conn,rn,s,t):
 	conn.execute("DELETE FROM gain_tweak WHERE start_run <= %i AND %i <= end_run AND side = '%s' AND quadrant = %i"%(rn,rn,s,t))
 
+def delete_gain_tweak_range(conn,rn0,rn1):
+	for r in range(rn0,rn1+1):
+		conn.execute("DELETE FROM gain_tweak WHERE start_run <= %i AND %i <= end_run"%(r,r))
+
 def upload_gain_tweak(conn,rns,s,t,e0,e1):
 	cmd = "INSERT INTO gain_tweak(start_run,end_run,side,quadrant,e_orig,e_final) VALUES (%i,%i,'%s',%i,%f,%f)"%(rns[0],rns[-1],s,t,e0,e1)
 	print cmd

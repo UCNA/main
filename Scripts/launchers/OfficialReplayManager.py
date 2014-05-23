@@ -3,7 +3,7 @@
 # nohup ./OfficialReplayManager.py -s --rmin=17000 --rmax=20000 < /dev/null > officreplaylog.txt 2>&1 &
 # nohup ./OfficialReplayManager.py -r --rmin=17000 --rmax=20000 < /dev/null > officreplaylog.txt 2>&1 &
 
-# nohup ./OfficialReplayManager.py -x --rmin=18081 --rmax=18090 < /dev/null > officreplaylog.txt 2>&1 &
+# nohup ./OfficialReplayManager.py -x --rmin=19873 --rmax=19898 < /dev/null > officreplaylog.txt 2>&1 &
 
 import os
 import time

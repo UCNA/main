@@ -203,6 +203,7 @@ class LinearityCurve:
 		self.prefitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
 		self.cnvs = None
 		self.uselist = None
+		self.datrange = (100,2000)
 		
 		fterms = [polyterm(i) for i in range(2)]
 		
@@ -238,7 +239,6 @@ class LinearityCurve:
 			
 			self.fitter = LinearFitter(terms=[polyterm(1)])
 			self.LFwid = LinearFitter(terms=[polyterm(1)])
-			self.datrange = (100,2000)
 			
 			if len(combodat):
 					self.fitter.fit(combodat, cols=(0,1))
@@ -512,8 +512,8 @@ class LinearityCurve:
 			else:
 				print "\n\n******** Reference source",refline_id,"not found!!! Using defaults!\n"
 				raw_input("Press enter to acknowledge and continue...")
-				refline.adc=500
-				refline.adcwidth=200
+				refline.adc=300
+				refline.adcwidth=45
 				
 		print t,"width",refline.adcwidth,"Corrected width by",widthscale
 		
@@ -637,18 +637,18 @@ cal_2010 = [
 			]
 			
 cal_2011 = [
-			(	17233,	17249,	17238,	16983,	17297,		678,	681,		199	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
-			(	17359,	17387,	17371,	17359,	17439,		1348,	1351,		199	),	# 1 Beta Decay; PMT W0 missing pulser
-			(	17517,	17527,	17522,	17440,	17734,		1125,	1128,		199	),	# 2 Calibrations for Xe; W0 pulser still dead
-			(	17871,	17922,	17892,	17735,	17955,		807,	810,		199	),	# 3 Big Scan; W0 pulser still dead
-			(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		199	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
+			(	17233,	17249,	17238,	16983,	17297,		678,	681,		209	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+			(	17359,	17387,	17371,	17359,	17439,		1348,	1351,		209	),	# 1 Beta Decay; PMT W0 missing pulser
+			(	17517,	17527,	17522,	17440,	17734,		1125,	1128,		209	),	# 2 Calibrations for Xe; W0 pulser still dead
+			(	17871,	17922,	17892,	17735,	17955,		807,	810,		209	),	# 3 Big Scan; W0 pulser still dead
+			(	18020,	18055,	18039,	18020,	18055,		1018,	1021,		209	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
 			(	18357,	18386,	18362,	18081,	18386,		1469,	1472,		207	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
 			(	18617,	18640,	18622,	18390,	18683,		1894,	1897,		55	),	# 6 Beta decay; PMT W4 Bi pulser very low
 			(	18745,	18768,	18750,	18712,	18994,		2113,	2116,		59	),	# 7 Start of 2012; PMT W4 pulser still low
 			(	19203,	19239,	19233,	19023,	19239,		2338,	2341,		59	),	# 8 W4 Pulser now higher... drifty
-			(	19347,	19377,	19359,	19347,	19544,		2387,	2390,		61	),	# 9 W4 Pulser now low...
+			(	19347,	19377,	19359,	19347,	19544,		2387,	2390,		211	),	# 9 W4 Pulser now low...
 			#(	19505,	19544	),														# Feb. 14, Cd/In only; not used for calibration
-			(	19823,	19863,	19858,	19583,	20000,		2710,	2713,		61)		# 10 Feb. 16-24 Xe, Betas, long sources
+			(	19823,	19863,	19858,	19583,	20000,		2710,	2713,		211)	# 10 Feb. 16-24 Xe, Betas, long sources
 			]
 
 cal_2012 = [
@@ -680,7 +680,7 @@ if __name__=="__main__":
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2011[5:6]:
+	for c in cal_2011[-1:]:
 	
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])
 		#continue

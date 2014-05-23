@@ -15,7 +15,7 @@
 
 SourceHitsPlugin::SourceHitsPlugin(RunAccumulator* RA, const Source& s, PMTCalibrator* P):
 AnalyzerPlugin(RA,"src_"+s.name()), mySource(s), PCal(P), dbgplots(false),
-nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0)  {
+nBins(300), eMin(-100), eMax(2000), pkMin(0.0), pkMax(FLT_MAX), nSigma(2.0)  {
 	
 	// source-dependent ranges
 	double wRange = 10; // position plot +/-width
@@ -46,6 +46,8 @@ nBins(300), eMin(-100), eMax(2000), pkMin(0.0), nSigma(2.0)  {
 		eMax = 1200;
 		pkMin = 400;
 		nSigma = 1.0;
+	} else if(mySource.t == "In114E" || mySource.t == "In114W") {
+		pkMax = 300;
 	}
 	
 	
@@ -169,7 +171,7 @@ void SourceHitsPlugin::calculateResults() {
 			if(!(dbgplots || tp>TYPE_0_EVENT)) fitPlotName = "";
 			printf("Fitting %s for %i peaks in tube %i (sigma = %f)\n", mySource.name().c_str(), (int)expectedPeaks.size(), t, searchsigma);
 			double fitsigma = tp>TYPE_0_EVENT ? 1.3 : nSigma;
-			tubePeaks[t] = fancyMultiFit(hTubesR[t][tp], searchsigma, expectedPeaks, false, fitPlotName, fitsigma, pkMin);
+			tubePeaks[t] = fancyMultiFit(hTubesR[t][tp], searchsigma, expectedPeaks, false, fitPlotName, fitsigma, pkMin, pkMax);
 			
 			// exit if fit finds too few peaks
 			if(tubePeaks[t].size()<expectedPeaks.size()) {

@@ -25,6 +25,7 @@ public:
 	float eMin;				///< histogram lower energy
 	float eMax;				///< histogram upper energy
 	float pkMin;			///< minimum peak value (avoid Bi auger peak false alarms)
+	float pkMax;			///< maximum peak value
 	float nSigma;			///< number of sigma to fit peaks
 	
 	/// process a data point into position histograms

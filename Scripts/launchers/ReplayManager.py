@@ -3,8 +3,8 @@
 # nohup ./ReplayManager.py -s --rmin=18020 --rmax=18386 < /dev/null > scriptlog.txt 2>&1 &
 # nohup ./ReplayManager.py -o < /dev/null > scriptlog.txt 2>&1 &
 
-# nohup ./ReplayManager.py -x --rmin=18081 --rmax=18090 --nrings=8 < /dev/null > scriptlog.txt 2>&1 &
-# nohup ./ReplayManager.py -X --rmin=18081 --rmax=18090 --nrings=8 < /dev/null > scriptlog.txt 2>&1 &
+# nohup ./ReplayManager.py -x --rmin=19873 --rmax=19898 --nrings=12 < /dev/null > scriptlog.txt 2>&1 &
+# nohup ./ReplayManager.py -X --rmin=17561 --rmax=17650 --nrings=12 < /dev/null > scriptlog.txt 2>&1 &
 
 import os
 import time

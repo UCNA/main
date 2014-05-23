@@ -65,7 +65,7 @@ def XeGainTweak(rn,conn,aconn=open_anadb_connection()):
 	for s in ["East","West"]:
 		for t in range(4):
 		
-			if (s,t) not in ddat or (s,t) not in dprev:
+			if (s,t) not in ddat:
 				print "Missing endpoint data",s,t
 				continue
 			if (s,t) not in dsim:
@@ -74,8 +74,15 @@ def XeGainTweak(rn,conn,aconn=open_anadb_connection()):
 		
 			ldat = ddat[(s,t)].value
 			lsim = dsim[(s,t)].value
-			oldtweak = dprev[(s,t)].value
 			
+			oldtweak = 1.0
+			if (s,t) in dprev:
+				oldtweak = dprev[(s,t)].value
+			
+			if ldat < 300 or lsim < 300:
+				print "*** Crazy value! not uploading.",ldat,lsim
+				continue
+				
 			print "\t",s,t,"%.2f -> %.2f\t\tErr = %+.2f%%\t(old: %+.2f%%)"%(ldat, lsim, 100.0*(lsim-ldat)/lsim, 100.*(oldtweak-1))
 
 			if(conn):
@@ -83,7 +90,7 @@ def XeGainTweak(rn,conn,aconn=open_anadb_connection()):
 				upload_gain_tweak(conn, [rn], s, t, ldat / oldtweak, lsim)
 							
 							
-def XeTimeEvolution(rmin,rmax):
+def XeTimeEvolution(rmin, rmax, yrange=(20,1000), showFits=True):
 	"""Spectrum-fit isotope composition as a function of time for a series of Xe runs"""
 
 	aconn=open_anadb_connection()
@@ -98,23 +105,21 @@ def XeTimeEvolution(rmin,rmax):
 	xecomps = ADBL.find(aconn)
 	
 	# run timing info
-	rtimes = dict([r,(getRunStartTime(conn,r),getRunEndTime(conn,r))] for r in range(rmin,rmax+1))
-	t0 = min([t[0] for t in rtimes.values()])
+	rtimes = dict([r,(getRunStartTime(conn,r),getRunEndTime(conn,r),getRunLiveTime(conn,r))] for r in range(rmin,rmax+1))
+	t0 = min([t[0] for t in rtimes.values() if t[0]])
 	for x in xecomps:
 		x.t_mid = ((rtimes[x.start_run][0]+rtimes[x.start_run][1])*0.5-t0)/3600.
-		x.dt = rtimes[x.start_run][1]-rtimes[x.start_run][0]
+		x.dt = rtimes[x.start_run][2]
 		x.rate = x.value / x.dt
 		x.drate = x.err / x.dt
 
-	# plot
-	gIA=graph.graphxy(width=20,height=12,
-					  x=graph.axis.lin(title="Time [h]"),
-					  y=graph.axis.log(title="Decay rate [Hz]"),
+	# plot setup
+	gIA=graph.graphxy(width=25,height=16,
+					  x=graph.axis.lin(title="time [h]"),
+					  y=graph.axis.log(title="event rate [Hz]",min=yrange[0], max=yrange[1]),
 					  key = graph.key.key(pos="br",columns=2))
 	setTexrunner(gIA)
 
-	#ks = isotdat.keys()
-	#ks.sort()
 	ks    = ['Xe135_3-2+', 'Xe125_1-2+', 'Xe133_3-2+', 'Xe131_11-2-', 'Xe129_11-2-', 'Xe133_11-2-', 'Xe137_7-2-', 'Xe135_11-2-']
 	kshort = ['Xe137_7-2-', 'Xe135_11-2-']
 	ksymb = [symbol.circle, symbol.triangle, symbol.square, symbol.plus, symbol.cross, symbol.diamond, symbol.circle, symbol.triangle]
@@ -126,24 +131,30 @@ def XeTimeEvolution(rmin,rmax):
 
 	for (n,k) in enumerate(ks):
 	
-		isotdat = [ (x.t_mid,x.rate,x.drate) for x in xecomps if x.name[7:]==k]
-		if len(isotdat) < 2:
+		isotdat = [ (x.t_mid,x.rate,x.drate) for x in xecomps if x.name[7:]==k and x.dt and x.rate > 0.1 and x.t_mid < 100 ]
+		isotdat.sort()
+		if not isotdat:
 			continue
-		
-		#LF = LogYer(terms=[polyterm(0),polyterm(1)])
-		#LF.fit([d for d in isotdat[k] if d[1]>5 and not (k not in kshort and d[0]<2) and not (k=='Xe125_1-2+' and d[0]>10)],cols=(0,1))
-		#thalf = 0
-		#if LF.coeffs[1]:
-		#	thalf = -log(2)/LF.coeffs[1]
-		
+				
 		gtitle = k.replace("_"," ")
-		#gtitle = "$^{"+gtitle[2:5]+"}$Xe"+gtitle[5:-1].replace("-","/")+"$^{"+gtitle[-1]+"}$: $T_{1/2}$ = "
-		#if abs(thalf) < 1.0:
-		#	gtitle += "%.1f m"%(60*thalf)
-		#elif abs(thalf) < 24:
-		#	gtitle += "%.1f h"%thalf
-		#else:
-		#	gtitle += "%.1f d"%(thalf/24)
+		gtitle = "$^{"+gtitle[2:5]+"}$Xe"+gtitle[5:-1].replace("-","/")+"$^{"+gtitle[-1]+"}$"
+
+		LF = None
+		fdat = [d for d in isotdat[1:] if d[1]>1 and not (k not in kshort and d[0]<0.15) and not (k=='Xe125_1-2+' and d[0]>10)]
+		if showFits and len(fdat) > 2:
+			LF = LogYer(terms=[polyterm(0),polyterm(1)])
+			LF.fit(fdat,cols=(0,1))
+			thalf = 0
+			if LF.coeffs[1]:
+				thalf = -log(2)/LF.coeffs[1]
+
+			gtitle += ": $T_{1/2}$ = "
+			if abs(thalf) < 1.0:
+				gtitle += "%.1f m"%(60*thalf)
+			elif abs(thalf) < 24:
+				gtitle += "%.1f h"%thalf
+			else:
+				gtitle += "%.1f d"%(thalf/24)
 
 		sfill = []
 		if k in kshort:
@@ -152,7 +163,8 @@ def XeTimeEvolution(rmin,rmax):
 		gIA.plot(graph.data.points(isotdat,x=1,y=2,dy=3,title=gtitle),
 					[graph.style.symbol(ksymb[n],size=0.2,symbolattrs=[icols[k],]+sfill),
 					graph.style.errorbar(errorbarattrs=[icols[k],])])
-		#gIA.plot(graph.data.points(LF.fitcurve(0,30),x=1,y=2,title=None),[graph.style.line([icols[k]])])
+		if LF:
+			gIA.plot(graph.data.points(LF.fitcurve(isotdat[0][0],isotdat[-1][0]),x=1,y=2,title=None),[graph.style.line([icols[k]])])
 
 	gIA.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/test/XeDecomp/DecompHistory_%i-%i.pdf"%(rmin,rmax))
 
@@ -235,20 +247,25 @@ def data_v_sim(rmin,rmax,nrings):
 
 if __name__ == "__main__":
 	
-	#XeTimeEvolution(14283,14333,11)
-	#XeTimeEvolution(15992,16077,15)
-	#XeTimeEvolution(18081,18090)
-	#exit(0)
+	XeSets = [(17562,17650),	# subset of (17561,17734)
+			  (18081,18090),
+			  (18390,18413),
+			  (18712,18744),
+			  (19873,19898)]
 	
-	#data_v_sim(14282,14347,12)
-	#exit(0)
+	XeRange = XeSets[-1]
+	
+	#XeTimeEvolution(XeRange[0], XeRange[1], yrange = (1,1000)); exit(0)
+	
+	#data_v_sim(14282,14347,12); exit(0)
+	#delete_gain_tweak_range(conn,17651,17734); exit(0);
 	
 	#ep_v_eta("Xenon_19891-19898_12")
 	#ep_v_eta("SimXe_14282-14347")
 	#exit(0)
 	
 	conn = open_connection()
-	conn = None	# to display changes without uploading
-	for rn in range(18081,18090+1):
+	#conn = None	# to display changes without uploading
+	for rn in range(XeRange[0],XeRange[1]+1):
 		XeGainTweak(rn,conn)
 

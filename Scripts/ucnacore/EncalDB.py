@@ -87,12 +87,29 @@ def getRunType(conn,rtype="Asymmetry",rmin=0,rmax=1e6):
 # get start time for run
 def getRunStartTime(conn,rn):
 	conn.execute("SELECT UNIX_TIMESTAMP(start_time) FROM run WHERE run_number = %i"%rn)
-	return conn.fetchone()[0]
+	st = conn.fetchone()
+	if not st:
+		print "** unknown start time for",rn
+		return 0
+	return st[0]
 
 # get end time for run
 def getRunEndTime(conn,rn):
 	conn.execute("SELECT UNIX_TIMESTAMP(end_time) FROM run WHERE run_number = %i"%rn)
-	return conn.fetchone()[0]
+	st = conn.fetchone()
+	if not st:
+		print "** unknown end time for",rn
+		return 0
+	return st[0]
+
+# get live time from analyzer
+def getRunLiveTime(conn,rn):
+	conn.execute("SELECT live_time FROM analysis WHERE run_number = %i"%rn)
+	st = conn.fetchone()
+	if not st:
+		print "** unknown live time for",rn
+		return 0
+	return st[0]
 
 # get list of all GMS runs
 def getGMSruns(conn):

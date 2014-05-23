@@ -304,14 +304,18 @@ std::string simulate_one_xenon(RunNum r, unsigned int nRings, bool forceResim) {
 		isotsIn.push_back("Xe133_11-2-");
 		isotsIn.push_back("Xe135_3-2+");
 		
-		// runs promptly after activation with short-lived peak
-		if((14264 <= r && r <= 14273) || (15991 <= r && r <= 16010))
+		// runs promptly after activation with 15.3min HL bump
+		if(	(14264 <= r && r <= 14273)
+			|| (15991 <= r && r <= 16010)
+			|| (17561 <= r && r <= 17566)
+			|| (18081 <= r && r <= 18086)
+			|| (19873 <= r && r <= 19878) )
 			isotsIn.push_back("Xe135_11-2-");
 		
-		// shorter-lived high-energy beta spectrum component
-		int b1 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1075);
-		int b2 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1175);
-		if(XA.myXeSpec->energySpectrum->h[GV_OPEN]->Integral(b1,b2) > 100)
+		// 3.82min HL high-energy beta spectrum component
+		int b1 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1150);
+		int b2 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1250);
+		if(XA.myXeSpec->energySpectrum->h[GV_OPEN]->Integral(b1,b2) > 200)
 			isotsIn.push_back("Xe137_7-2-");
 		
 		
