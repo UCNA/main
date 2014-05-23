@@ -295,6 +295,7 @@ std::string simulate_one_xenon(RunNum r, unsigned int nRings, bool forceResim) {
 		// simulate for each isotope, in random order to minimize hitting the same file at once from parallel processes
 		std::vector<SimXenonAnalyzer*> XAMi;
 		std::vector<std::string> isotsIn;
+		std::vector<std::string> isotsSkip;
 		LinHistCombo LHC;
 		
 		isotsIn.push_back("Xe125_1-2+");
@@ -311,12 +312,16 @@ std::string simulate_one_xenon(RunNum r, unsigned int nRings, bool forceResim) {
 			|| (18081 <= r && r <= 18086)
 			|| (19873 <= r && r <= 19878) )
 			isotsIn.push_back("Xe135_11-2-");
+		else
+			isotsSkip.push_back("Xe135_11-2-");
 		
 		// 3.82min HL high-energy beta spectrum component
-		int b1 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1150);
-		int b2 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1250);
-		if(XA.myXeSpec->energySpectrum->h[GV_OPEN]->Integral(b1,b2) > 200)
+		int b1 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1200);
+		int b2 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1300);
+		if(XA.myXeSpec->energySpectrum->h[GV_OPEN]->Integral(b1,b2) > 1000)
 			isotsIn.push_back("Xe137_7-2-");
+		else
+			isotsSkip.push_back("Xe137_7-2-");
 		
 		
 		// randomize order of isotope simulation to pick different simulation files for each one
@@ -360,6 +365,15 @@ std::string simulate_one_xenon(RunNum r, unsigned int nRings, bool forceResim) {
 			XAM.uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 			
 			delete(XAMi[i]);
+		}
+		
+		// record isotopes skipped from analysis
+		for(std::vector<std::string>::iterator it = isotsSkip.begin(); it != isotsSkip.end(); it++) {
+			AnaNumber AN("XeSimCounts_"+(*it));
+			AN.value = AN.err = 0;
+			XAM.uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
+			AN.name = "XeComp_"+(*it);
+			XAM.uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 		}
 
 		XAM.qOut.insert("runcal",PCal.calSummary());
