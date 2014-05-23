@@ -3,45 +3,20 @@
 #include "OutputManager.hh"
 #include "PathUtils.hh"
 #include "GraphicsUtils.hh"
+#include "MC_Comparisons.hh"
 #include <TROOT.h>
 #include <TStyle.h>
 #include <TLegend.h>
 #include <iostream>
 
 void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax) {
-
+	
 	// put two simulations in a list for easy iteration
-	std::vector<Sim2PMT*> sps;
 	sps.push_back(&SP1);
 	sps.push_back(&SP2);
-	
-	// set up lists for histograms/data from each simulation
-	std::vector<TH1F*> hEvis[TYPE_II_EVENT+1];
-	std::vector<TH1F*> hEvisd[TYPE_II_EVENT+1];
-	std::vector<TH1F*> hEquench[TYPE_II_EVENT+1];
-	std::vector<TH1F*> hEMWPC[TYPE_II_EVENT+1];
-	std::vector<TH1F*> hEMWPCd[TYPE_II_EVENT+1];
-	std::vector<TH1F*> hEWires[TYPE_II_EVENT+1];
-	std::vector<TH1F*> hEFoils[TYPE_II_EVENT+1];
-	std::vector<TH1F*> hEMylarf[TYPE_II_EVENT+1];
-	std::vector<TH1F*> hEMylarb[TYPE_II_EVENT+1];
-	std::vector<TH1F*> hCTScint;
-	std::vector<TH1F*> hCTMWPC;
-	std::vector<TH1F*> hCTMWPCo;
-	std::vector<TH1F*> hCTFoil;
-	std::vector<TH1F*> hPScintX;
-	std::vector<TH1F*> hPMWPCX;
-	std::vector<TH1F*> hPScintY;
-        std::vector<TH1F*> hPMWPCY;
-	std::vector<double> t0norm;
-        std::vector<double> mwpcnorm;
-	std::vector<double> foilnorm;	
-	std::vector<double> mwpcoutnorm;
-        std::vector<double> scintnorm;
-
 	// process each simulation to fill histograms
 	for(unsigned int i=0; i<sps.size(); i++) {
-		Sim2PMT* SP = sps[i];
+		SP = sps[i];
 		// define histograms
 		for(EventType t=TYPE_0_EVENT; t <= TYPE_II_EVENT; ++t) {
 			hEvis[t].push_back(OM.registeredTH1F("hEvis_"+itos(t)+"_"+itos(i),
@@ -96,17 +71,17 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
 				hEMylarb[SP->fType].back()->Fill(SP->edepWinOut[EAST]+SP->edepWinOut[WEST],SP->physicsWeight);
 				hEFoils[SP->fType].back()->Fill(SP->edepFoils[EAST]+SP->edepFoils[WEST],SP->physicsWeight);
 				hEWires[SP->fType].back()->Fill(SP->edepWires[EAST]+SP->edepWires[WEST],SP->physicsWeight);
+				hPScintX.back()->Fill(SP->scintPos[EAST][X_DIRECTION],SP->physicsWeight);
+                       	 	hPMWPCX.back()->Fill(SP->mwpcPos[EAST][X_DIRECTION],SP->physicsWeight);
+                        	hPScintY.back()->Fill(SP->scintPos[EAST][Y_DIRECTION],SP->physicsWeight);
+                        	hPMWPCY.back()->Fill(SP->mwpcPos[EAST][Y_DIRECTION],SP->physicsWeight);
 			}
-			hPScintX.back()->Fill(SP->scintPos[WEST][X_DIRECTION],SP->physicsWeight);
-                        hPMWPCX.back()->Fill(SP->mwpcPos[WEST][X_DIRECTION],SP->physicsWeight);
-			hPScintY.back()->Fill(SP->scintPos[WEST][Y_DIRECTION],SP->physicsWeight);
-                        hPMWPCY.back()->Fill(SP->mwpcPos[WEST][Y_DIRECTION],SP->physicsWeight);
 			if(SP->fSide <= WEST) {
 				if(SP->cosThetaInScint[SP->fSide] != 0){
-				hCTScint.back()->Fill(SP->cosThetaInScint[SP->fSide],SP->physicsWeight);
+					hCTScint.back()->Fill(SP->cosThetaInScint[SP->fSide],SP->physicsWeight);
 				}
 				if(SP->cosThetaInWinOut[SP->fSide] != 0){
-				hCTMWPCo.back()->Fill(SP->cosThetaInWinOut[SP->fSide],SP->physicsWeight);
+					hCTMWPCo.back()->Fill(SP->cosThetaInWinOut[SP->fSide],SP->physicsWeight);
 				}
 				if(SP->cosThetaInFoils[SP->fSide] != 0){
 					hCTFoil.back()->Fill(SP->cosThetaInFoils[SP->fSide],SP->physicsWeight);
@@ -122,7 +97,7 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
 		scintnorm.push_back(hCTScint.back()->Integral());
 		mwpcoutnorm.push_back(hCTMWPCo.back()->Integral());
 		mwpcnorm.push_back(hCTMWPC.back()->Integral());
-		foilnorm.push_back(hCTFoil.back()->Integral());
+                foilnorm.push_back(hCTFoil.back()->Integral());
 	}
 	
 	/////////////
@@ -150,6 +125,7 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
 			m.insert("rms",hEvis[t][i]->GetRMS());
 			m.insert("counts",hEvis[t][i]->Integral());
 			m.insert("normcounts",hEvis[t][i]->Integral()*t0norm[i]);
+			gPad->SetLogy(1);
 			hEvis[t][i]->GetXaxis()->SetTitle("E (keV)");
 			hEvis[t][i]->SetLineColor(2+2*i);
 			hEvis[t][i]->Scale(t0norm[i]/hEvis[t][i]->GetBinWidth(1));
@@ -326,6 +302,7 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
                         m.insert("rms",hEWires[t][i]->GetRMS());
                         m.insert("counts",hEWires[t][i]->Integral());
                         m.insert("normcounts",hEWires[t][i]->Integral()*t0norm[i]);
+			gPad->SetLogy(1);
 			hEWires[t][i]->GetXaxis()->SetTitle("E (keV)");
                         hEWires[t][i]->SetLineColor(2+2*i);
                         hEWires[t][i]->Scale(t0norm[i]/hEWires[t][i]->GetBinWidth(1));
@@ -450,7 +427,7 @@ void mc_compare_plots(OutputManager& OM, Sim2PMT& SP1, Sim2PMT& SP2, double emax
         OM.printCanvas("Foils_Costheta");
 }
 
-int main(int, char**) {
+int main(int, char **) {
 
 	gROOT->SetStyle("Plain");
 	gStyle->SetPalette(1);
@@ -475,7 +452,7 @@ int main(int, char**) {
 		// load Geant4 simulation
 		G4toPMT g2p(true);
 		//std::string fname = getEnvSafe("G4OUTDIR")+"/IsotLine_eGunRandMomentum_"+itos(l)+".0keV/analyzed_*";
-		std::string fname = getEnvSafe("G4OUTDIR")+"/geant4_data_MB/Xe131_11-2-/analyzed_*";
+		std::string fname = getEnvSafe("G4OUTDIR")+"/geant4_data_MB/NEW_Xe131_11-2-/analyzed*";
                 mcdat.insert("MC_1",fname);
 		g2p.addFile(fname);
 		//if(!g2p.getnFiles()) continue;
@@ -484,7 +461,7 @@ int main(int, char**) {
 		// load Penelope simulation
                 PenelopeToPMT p2p;
                 //fname = "/home/ucna/penelope_output/iso_line_sources/event_"+itos(l/50-1)+" _*.root";
-                std::string fpname = getEnvSafe("PENOUTDIR")+"/Xen*";
+                std::string fpname = getEnvSafe("PENOUTDIR")+"/Xenon131_001*";
                 mcdat.insert("MC_2",fpname);
                 p2p.addFile(fpname);
                 //if(!p2p.getnFiles()) continue;
