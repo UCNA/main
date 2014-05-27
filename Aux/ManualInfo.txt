@@ -117,6 +117,8 @@ Cut_TDC_Scint_E_1:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
 Cut_TDC_Scint_E_2:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
 Cut_TDC_Scint_E_3:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
 
+PMT_Disable:	runStart = 16983	runEnd = 17297	side = West	tube = 1
+
 ### 2012-13 ###
 Cut_TDC_Scint_E_Selftrig:	start = 2750	end = 4080	runStart = 20000	runEnd = 20300
 Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 20000	runEnd = 20300

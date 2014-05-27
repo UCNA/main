@@ -69,6 +69,15 @@ double Stringmap::getDefault(const std::string& k, double d) const {
 	return d;
 }
 
+int Stringmap::getDefaultI(const std::string& k, int d) const {
+	std::string s = getDefault(k,"");
+	if(!s.size())
+		return d;
+	std::istringstream ss(s);
+	ss >> d;
+	return d;
+}
+
 std::vector<double> Stringmap::retrieveDouble(const std::string& k) const {
 	std::vector<std::string> vs = retrieve(k);
 	std::vector<double> v;

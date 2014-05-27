@@ -328,23 +328,29 @@ class LinearityCurve:
 			print "****** No data found!"
 			self.cnvs=None
 			return False
-		self.datrange = ( min([p[0] for p in combodat]), max([p[0] for p in combodat]) )
-		self.prefitter.fit([p for p in combodat if p[-1].type in  [8,9,11,15]],cols=(0,1))
-		trimcdat = []
-		for p in combodat:
-			if not (1/1.3 < p[1]/self.prefitter(p[0]) < 1.3 or abs(p[1]-self.prefitter(p[0])) < 25):
-				print "--> Check fit",p[-1].src.run,p[-1].uid
-			else:
-				trimcdat.append(p)
-		if not trimcdat:
-			print "********* DATA IFFY! *********",self.side,self.tube
-			trimcdat = combodat
-		self.fitter.fit(trimcdat,cols=(0,1,3),errorbarWeights=True)
-		print "Fit",s,t,":",self.fitter.toLatex()
-		#print "chi^2/nu =",self.fitter.chisquared(),"/",self.fitter.nu()
-		self.fitter.displayCoeffErrCorr()
-		print
-		self.gEvis.plot(graph.data.points(self.make_lcurve(),x=1,y=2,title=None), [graph.style.line(),])
+		try:
+			self.datrange = ( min([p[0] for p in combodat]), max([p[0] for p in combodat]) )
+			self.prefitter.fit([p for p in combodat if p[-1].type in  [8,9,11,15]],cols=(0,1))
+			trimcdat = []
+			for p in combodat:
+				if not (1/1.3 < p[1]/self.prefitter(p[0]) < 1.3 or abs(p[1]-self.prefitter(p[0])) < 25):
+					print "--> Check fit",p[-1].src.run,p[-1].uid
+				else:
+					trimcdat.append(p)
+			if not trimcdat:
+				print "********* DATA IFFY! *********",self.side,self.tube
+				trimcdat = combodat
+	
+			self.fitter.fit(trimcdat,cols=(0,1,3),errorbarWeights=True)
+			print "Fit",s,t,":",self.fitter.toLatex()
+			#print "chi^2/nu =",self.fitter.chisquared(),"/",self.fitter.nu()
+			self.fitter.displayCoeffErrCorr()
+			print
+			self.gEvis.plot(graph.data.points(self.make_lcurve(),x=1,y=2,title=None), [graph.style.line(),])
+		except:
+			print "**** Fit failure!"
+			self.fitter = None
+			return False
 			
 		##
 		# residuals plotting
@@ -368,11 +374,15 @@ class LinearityCurve:
 		# Fit/plot widths
 		######
 		
+		if not self.fitter:
+			print "Bad linearity fitter; exiting width calculation."
+			return False
+			
 		self.load_lines()
 		
-		maxWidth = 175
+		maxWidth = 200
 		if self.tube==4:
-			maxWidth = 80
+			maxWidth = 100
 		self.gWidth=graph.graphxy(width=15,height=15,
 				x=graph.axis.lin(title="Expected Width [keV]",min=0,max=maxWidth),
 				y=graph.axis.lin(title="Observed Width [keV]",min=0,max=maxWidth),
@@ -425,10 +435,16 @@ class LinearityCurve:
 		if self.tube < 4:
 			old_pE_per_keV = self.SDC.get_median_nPE_per_keVeta(self.side,self.tube)
 			pE_per_keV = old_pE_per_keV/self.LFwid.coeffs[0]**2
-			print "Updating from %.2f to %.2f pE per MeV"%(1000*old_pE_per_keV,1000*pE_per_keV)
+			print "Updating from %.2f to %.2f photoelectrons per MeV"%(1000*old_pE_per_keV,1000*pE_per_keV)
 			width_light = self.fitter(self.width_adc)
-			width_dlight = sqrt(width_light/pE_per_keV)
-			self.width_dadc = width_dlight/nderiv(self.fitter, self.width_adc)
+			try:
+				width_dlight = sqrt(width_light/pE_per_keV)
+				self.width_dadc = width_dlight/nderiv(self.fitter, self.width_adc)
+			except:
+				self.width_dadc = None
+			if not 30 < self.width_dadc < 90:
+				print "Crazy width result",self.width_dadc,"--- returning to default"
+				self.width_dadc = 45
 			print "Energy resolution +/-%.2f channels at %.2f channels."%(self.width_dadc,self.width_adc)
 		
 		return True
@@ -656,7 +672,7 @@ cal_2011 = [
 			(	18745,	18768,	18750,	18712,	18994,		59	),	# 7 Start of 2012; PMT W4 pulser still low
 			(	19203,	19239,	19233,	19023,	19239,		59	),	# 8 W4 Pulser now higher... drifty
 			(	19347,	19377,	19359,	19347,	19544,		213	),	# 9 W4 Pulser now low...
-			#(	19505,	19544	),									# Feb. 14, Cd/In only; not used for calibration
+			#(	19505,	19544	),									# Feb. 14, Cd2In only; not used for calibration
 			(	19823,	19863,	19858,	19583,	20000,		213)	# 10 Feb. 16-24 Xe, Betas, long sources
 			]
 
@@ -686,12 +702,14 @@ if __name__=="__main__":
 	conn = open_connection() # connection to calibrations DB
 	replace = True 		# whether to replace previous calibration data
 	makePlots = True
-	#delete_calibration(conn,8552); exit(0)
+	#delete_calibration(conn,9707); exit(0)
 
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2011[9:10]:
+	for c in cal_2011[:1]:
+		
+		#print "./ReplayManager.py -s --rmin=%i --rmax=%i"%(c[0],c[1]); continue
 		
 		rlist = range(c[0],c[1]+1)
 		fCalSummary.write("\n--------- %i-%i ----------\n"%(rlist[0],rlist[-1]))
@@ -748,4 +766,4 @@ if __name__=="__main__":
 				LC[k].dbUpload(conn,ecid)
 
 		print "\nsource replay command:"
-		print "./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])
+		print "nohup ./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])
