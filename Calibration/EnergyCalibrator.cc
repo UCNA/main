@@ -254,7 +254,7 @@ float PMTCalibrator::combinedResolution(Side s, float e0, float x, float y,float
 		de += 1.0/pow((double)energyResolution(s,t,e0,x,y,time),(double)2.0);
 	return sqrt(1.0/de);
 }
-float PMTCalibrator::nPE(Side s, unsigned int t, float e0, float x, float y,float time) const {
+float PMTCalibrator::nPE(Side s, unsigned int t, float e0, float x, float y, float time) const {
 	if(e0<=0)
 		return 0;
 	if(t==nBetaTubes) {

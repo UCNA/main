@@ -255,7 +255,7 @@ if __name__ == "__main__":
 	
 	XeRange = XeSets[-1]
 	
-	#XeTimeEvolution(XeRange[0], XeRange[1], yrange = (1,1000)); exit(0)
+	XeTimeEvolution(XeRange[0], XeRange[1], yrange = (0.5,1000)); exit(0)
 	
 	#data_v_sim(14282,14347,12); exit(0)
 	#delete_gain_tweak_range(conn,17651,17734); exit(0);
@@ -265,7 +265,7 @@ if __name__ == "__main__":
 	#exit(0)
 	
 	conn = open_connection()
-	#conn = None	# to display changes without uploading
+	conn = None	# to display changes without uploading
 	for rn in range(XeRange[0],XeRange[1]+1):
 		XeGainTweak(rn,conn)
 
