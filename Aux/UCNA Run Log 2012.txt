@@ -451,25 +451,25 @@
 
 # 20min cal runs
 
-@sources Ce
-*20818	SourcesCal		# 0.0in
-@sources E Ce Sn
-*20819	SourcesCal		# 0.5in
-@sources Ce Sn
-*20820	SourcesCal		# 1.0in
-@sources E Ce Sn Bi
-*20821	SourcesCal		# 1.5in
-@sources Ce Sn Bi
-*20822	SourcesCal		# 2.0in
-*20823	SourcesCal		# 2.5in
-*20824	SourcesCal		# 3.0in
-@sources E Sn Bi
-*20825	SourcesCal		# 3.5in
-@sources Sn Bi
-*20826	SourcesCal		# 4.0in
-*20827	SourcesCal		# 4.5in
 @sources Bi
-*20828	SourcesCal		# 5.0in
+*20818	SourcesCal
+@sources E Bi Ce
+*20819	SourcesCal
+@sources Bi Ce
+*20820	SourcesCal
+*20821	SourcesCal
+@sources Bi Ce Sn
+*20822	SourcesCal
+*20823	SourcesCal
+*20824	SourcesCal
+*20825	SourcesCal
+*20826	SourcesCal
+*20827	SourcesCal
+@sources Ce Sn
+*20828	SourcesCal
+@sources Sn
+*20829	SourcesCal
+*20830	SourcesCal
 @sources
 
 # long centered runs

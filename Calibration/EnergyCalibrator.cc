@@ -264,7 +264,8 @@ float PMTCalibrator::energyResolution(Side s, unsigned int t, float e0, float x,
 float PMTCalibrator::combinedResolution(Side s, float e0, float x, float y,float time) const {
 	float de = 0;
 	for(unsigned int t=0; t<nBetaTubes; t++)
-		de += 1.0/pow((double)energyResolution(s,t,e0,x,y,time),(double)2.0);
+		if(!disablePMT[s][t])
+			de += 1.0/pow((double)energyResolution(s,t,e0,x,y,time),(double)2.0);
 	return sqrt(1.0/de);
 }
 float PMTCalibrator::nPE(Side s, unsigned int t, float e0, float x, float y, float time) const {
@@ -273,7 +274,8 @@ float PMTCalibrator::nPE(Side s, unsigned int t, float e0, float x, float y, flo
 	if(t==nBetaTubes) {
 		float nsum = 0;
 		for(unsigned int i=0; i<nBetaTubes; i++)
-			nsum += nPE(s,i,e0,x,y,time);
+			if(!disablePMT[s][i])
+				nsum += nPE(s,i,e0,x,y,time);
 		return nsum;
 	}
 	return pow(double(e0/energyResolution(s,t,e0,x,y,time)),2.0);
@@ -283,7 +285,8 @@ float PMTCalibrator::pmtSumPE(Side s, float e0, float x, float y, float time) co
 		return 0;
 	float nsum = 0;
 	for(unsigned int i=0; i<nBetaTubes; i++)
-		nsum += 1.0/nPE(s,i,e0,x,y,time);
+		if(!disablePMT[s][i])
+			nsum += 1.0/nPE(s,i,e0,x,y,time);
 	return nBetaTubes*nBetaTubes/nsum;
 }
 

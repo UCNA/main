@@ -107,7 +107,7 @@ Src	19347-19377								Feb. 10		calibrates 19347-19544
 Src	19505-19544 (Cd/In only)				Feb. 14
 -------------------------
 Xe	19583-19588 runs too long for analyzer	Feb. 16
-Xe	19589-19606 strangeness in replay					[61] ??? replay data issues
+Xe	19589-19606											[61]
 [51]	octet_19616-19639					Feb. 16
 [52]	octet_19643-19669
 [53]	octet_19670-19694
@@ -125,57 +125,56 @@ Src	19899-19960 (long Sn runs)				Feb. 22
 ==========================
 ========================== Start 2012-2013
 
-[0]	octet_20121-20144						Sep. 9
-[1]	octet_20146-20169						Sep. 10
+-------------------------- (eLog 550) installed 130nm Be trap windows on Sep. 4.
+							"The foil installed on the west end had a 0.3 cm x 1.0 cm "hole"".
 
--------------------------- installed thin Be trap windows on Sep. 14
+[*]	octet_20121-20144						Sep. 9
+[*]	octet_20146-20169						Sep. 10
+[*]	octet_20216-20239						Sep. 15
+[*]	octet_20240-20264						Sep. 15
 
-[2]	octet_20216-20239						Sep. 15
-[3]	octet_20240-20264						Sep. 15
+-------------------------- installed 180nm Be window on East after previous broken during opening
 
-Src	20515-20527								Oct. 12
+Src	20515-20527								Oct. 12		calibrates 20121-20741
 Src	20528-20531 (long runs)
-[4]	octet_20542-20561
-[5]	octet_20573-20606
-[6]	octet_20607-20634
-[7]	octet_20635-20660
-[8]	octet_20661-20684
-[9]	octet_20718-20741						Oct. 16
+[0]	octet_20542-20561
+[1]	octet_20573-20606
+[2]	octet_20607-20634
+[3]	octet_20635-20660
+[4]	octet_20661-20684
+[5]	octet_20718-20741						Oct. 16
 
 --------------------------
 
-[10]	octet_20782-20805					Oct. 20
-Src	20818-20828 (Ce,Sn,Bi)					Oct. 20
+[6]	octet_20782-20805						Oct. 20
+Src	20818-20830 (Bi,Ce,Sn)					Oct. 20		calibrates 20782-20837
 Src	20831-20837 (long centered)
 
 --------------------------
 
 Src	20901-20911 (Ce,Sn,Bi)					Nov. 2 --- bad pedestals, probably useless
 Src	20913-20917 (long centered)
-[11]	octet_20975-20993					Nov. 4 --- abandoned after bad vacuum pressure
+[*]	octet_20975-20993						Nov. 4 --- abandoned after bad vacuum pressure
 
 --------------------------- isobutane in MWPCs
 
-Src	21087-21099 (Bi,Ce,Sn)					Nov. 16		calibrates 21087-21237
-[12]	octet_21100-21122
-[13]	octet_21140-21163
-[14]	octet_21164-21187
-[15]	octet_21190-21213
-[16]	octet_21214-21237					Nov. 19
-
---------------------------- still isobutane
-
+Src	21087-21099 (Bi,Ce,Sn)					Nov. 16
+[8]	octet_21100-21122
+[9]	octet_21140-21163
+[10]	octet_21164-21187
+[11]	octet_21190-21213
+[12]	octet_21214-21237					Nov. 19
 Src	21274-21298 (long centered Cd,Cs,In)	Nov. 20
-Src	21299-21328 (Cd,Cs,In,Sn,Ce,Bi)						calibrates 21274-21605
-[17]	octet_21333-21357
-[18]	octet_21363-21386
-[19]	octet_21391-21414
-[20]	octet_21433-21459
-[21]	octet_21477-21500
-[22]	octet_21501-21524
-[23]	octet_21536-21559
-[24]	octet_21571-21595
-Xe	21569-21605								Nov. 26		[] use for 20121-21605
+Src	21299-21328 (Cd,Cs,In,Sn,Ce,Bi)						calibrates 21087-21605
+[13]	octet_21333-21357
+[14]	octet_21363-21386
+[15]	octet_21391-21414
+[16]	octet_21433-21459
+[17]	octet_21477-21500
+[18]	octet_21501-21524
+[19]	octet_21536-21559
+[20]	octet_21571-21595
+Xe	21596-21605								Nov. 26		[] use for 20121-21623
 
 ========================= SCS quench!
 Xe	21607-21623 (SCS field off)
@@ -183,65 +182,67 @@ Xe	21607-21623 (SCS field off)
 Xe	21625-21628 (pumping out Xe, week later)
 
 Src	21679-21718								Dec. 7		calibrates 21625-21863
-[25]	octet_21719-21742
-[26]	octet_21743-21766
-[27]	octet_21768-21791
-[28]	octet_21792-21815
-[29]	octet_21816-21839
-[30]	octet_21840-21863					Dec. 10
+[21]	octet_21719-21742
+[22]	octet_21743-21766
+[23]	octet_21768-21791
+[24]	octet_21792-21815
+[25]	octet_21816-21839
+[26]	octet_21840-21863					Dec. 10
 
 --------------------------
 
-[31]	octet_21890-21913					Dec. 12
-Src	21914-21939								Dec. 12		calibrates 21890-22214
-[32]	octet_21942-21965					Dec. 12
+[27]	octet_21890-21913					Dec. 12
+Src	21914-21939								Dec. 12		calibrates 21890-22118
+[28]	octet_21942-21965					Dec. 12
 Xe	21966-22003								Dec. 13		[] use for 21607-22214
-[33]	octet_22023-22046					Dec. 14
-[34]	octet_22047-22070
-[35]	octet_22071-22097
-[36]	octet_22098-22118
-[37]	octet_22124-22148
-[38]	octet_22149-22160
-[39]	octet_22164-22188
-[40]	octet_22190-22214					Dec. 18
-Src	22215-22238								Dec. 18
+[29]	octet_22023-22046					Dec. 14
+[30]	octet_22047-22070
+[31]	octet_22071-22097
+[32]	octet_22098-22118
+---------------------------
+[33]	octet_22124-22148
+[34]	octet_22149-22160
+[35]	octet_22164-22188
+[36]	octet_22190-22214					Dec. 18
+Src	22215-22238								Dec. 18		calibrates 22124-22238
 
 =========================== holiday break
 
 Src	22294-22306								Jan. 11, 2013
-[41]	octet_22311-22334
-[42]	octet_22335-22360
-[43]	octet_22361-22388
-[44]	octet_22389-22412
-[45]	octet_22413-22436
-Src	22437-22462								Jan. 14
+[37]	octet_22311-22334
+[38]	octet_22335-22360
+[39]	octet_22361-22388
+[40]	octet_22389-22412
+[41]	octet_22413-22436
+Src	22437-22462								Jan. 14		calibrates 22294-22630
 
-[46]	octet_22511-22533					Jan. 17
-[47]	octet_22534-22557
-[48]	octet_22558-22581
-[49]	octet_22583-22606
-[50]	octet_22607-22630
-[51]	octet_22631-22654
-[52]	octet_22655-22682
-[53]	octet_22683-22706
-[54]	octet_22708-22731					Jan. 22
+[42]	octet_22511-22533					Jan. 17
+[43]	octet_22534-22557
+[44]	octet_22558-22581
+[45]	octet_22583-22606
+[46]	octet_22607-22630
+----------------------------
+[47]	octet_22631-22654
+[48]	octet_22655-22682
+[49]	octet_22683-22706
+[50]	octet_22708-22731					Jan. 22
 
-Src	22767-22793								Jan. 25		calibrates ???-23173
-[55]	octet_22794-22817
-[56]	octet_22821-22849
-[57]	octet_22850-22874
-[58]	octet_22875-22898
-[59]	octet_22899-22922
+Src	22767-22793								Jan. 25		calibrates 22631-23173
+[51]	octet_22794-22817
+[52]	octet_22821-22849
+[53]	octet_22850-22874
+[54]	octet_22875-22898
+[55]	octet_22899-22922
 Src	22924-22930 (long centered Sn)			Jan. 28
 
 Xe	22961-22979								Jan. 30		[] use for 22294-23173
 
-[60]	octet_22994-23017					Jan. 30
-[61]	octet_23018-23043			
-[62]	octet_23059-23088
-[63]	octet_23089-23112
-[64]	octet_23113-23137
-[65]	octet_23138-23161
-[66]	octet_23162-23173					Feb. 4
+[56]	octet_22994-23017					Jan. 30
+[57]	octet_23018-23043
+[58]	octet_23059-23088
+[59]	octet_23089-23112
+[60]	octet_23113-23137
+[61]	octet_23138-23161
+[62]	octet_23162-23173					Feb. 4
 
 =========================== End 2012-2013

@@ -8,7 +8,8 @@ from ucnacore.Histogram import *
 
 limdat = {2008:[(0,5.0),(250,5.0),(500,500*0.013),(900,900*0.025),(1000,1000*0.025),(1200,1200*0.025)],
 			2010:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)],
-			2011:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)] }
+			2011:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)],
+			2012:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)] }
 
 def calEnvelope(E,year=2010):	
 	i = 0
@@ -29,6 +30,8 @@ def calrun_ranges(year):
 		#rlist = range(13883,14746+1)+range(15645,15939+1)
 	if year==2011:
 		return [r for r in range(17233,20000) if in_cal_list(r,cal_2011) ]
+	if year==2012:
+		return [r for r in range(20000,22300) if in_cal_list(r,cal_2012) ]
 
 def plot_Cal_Uncertainty(g,title=None,st=[graph.style.line([style.linestyle.dotted])],year=2010):
 	"""Plot energy uncertainty envelope."""
@@ -167,5 +170,4 @@ if __name__=="__main__":
 				#plotAllErrors(outpath,2010,s,t)
 				plotAllWidths(outpath,2010,s,t)
 
-	plotAllErrors(outpath,2011)
-	
+	plotAllErrors(outpath,2012)

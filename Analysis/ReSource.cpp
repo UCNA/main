@@ -473,7 +473,7 @@ void reSource(RunNum rn) {
 		SourcedropPositioner SDP(src.x, src.y, src.t=="Ce139" ? 1.25 : src.t=="Cd109" ? 0.5 : 1.5 );
 		g2p->SP = &SDP;
 		
-		float nRealCounts = 10000; //50000;
+		float nRealCounts = ( src.t=="Cs137"? 50000 : src.t=="Bi207"? 20000 : 10000 );
 		g2p->basePhysWeight = src.nCounts/nRealCounts;
 		
 		SHAsim.setCurrentState(g2p->getAFP(),GV_OPEN);

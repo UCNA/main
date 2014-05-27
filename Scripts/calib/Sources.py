@@ -247,7 +247,7 @@ class LinearityCurve:
 	
 		self.load_lines()
 			
-		if self.uselist:
+		if self.uselist is not None:
 			print "\nFallback straight-line fits to specified sources",self.uselist
 		
 			self.slines = [l for l in self.slines if l.src.sID in self.uselist]
@@ -421,7 +421,7 @@ class LinearityCurve:
 		if len(wdat):
 			self.LFwid.fit(wdat,cols=(2,0,4),errorbarWeights=True)
 		else:
-			print "*** Insufficient width fit data!"
+			print "*** Insufficient width fit data! Keeping defaults."
 			return False
 		print "Width Fit",s,t,":",self.LFwid.toLatex()
 		#print "chi^2/nu =",self.LFwid.chisquared(),"/",self.LFwid.nu()
@@ -672,17 +672,21 @@ cal_2011 = [
 			(	18745,	18768,	18750,	18712,	18994,		59	),	# 7 Start of 2012; PMT W4 pulser still low
 			(	19203,	19239,	19233,	19023,	19239,		59	),	# 8 W4 Pulser now higher... drifty
 			(	19347,	19377,	19359,	19347,	19544,		213	),	# 9 W4 Pulser now low...
-			#(	19505,	19544	),									# Feb. 14, Cd2In only; not used for calibration
+			#(	19505,	19544	),									#   Feb. 14, Cd2In only; not used for calibration
 			(	19823,	19863,	19858,	19583,	20000,		213)	# 10 Feb. 16-24 Xe, Betas, long sources
 			]
 
 cal_2012 = [
-			(	21087,	21098,	21094,	21087,	100000,		61),	# Bi/Ce/Sn only
-			(	21299,	21328,	21314,	21274,	100000,		61),	# Thanksgiving; first Cs137
-			(	21679,	21718,	21687,	21679,	100000,		61),	# Dec. 6 weekend betas
-			(	21914,	21939,	21921,	21914,	100000,		61),	# Dec. 12
-			(	22215,	22238,	22222,	22004,	100000,		61),
-			(	22294,	22306),										# Jan. 11 Bi/Ce/Sn
+			(	20515,	20527,	20522,	20121,	20741,		61),	# 0 Oct. 12, Bi/Ce/Sn
+			(	20818,	20830,	20823,	20782,	20837,		61),	# 1 Oct. 20, Bi/Ce/Sn, calibrates 1 octet
+			#(	21087,	21099 ),									#   Nov. 16; Bi/Ce/Sn only
+			(	21299,	21328,	21314,	21087,	21623,		61),	# 2 Nov. 20, Thanksgiving; Cd, In, +first Cs137
+			(	21679,	21718,	21687,	21625,	21863,		61),	# 3 Dec. 6 weekend betas
+			(	21914,	21939,	21921,	21890,	22118,		61),	# 4 Dec. 12
+			(	22215,	22238,	22222,	22124,	22238,		61),	# 5 Dec. 18
+			#(	22294,	22306),										#   Jan. 11; Bi/Ce/Sn only
+			(	22437,	22462,	22442,	22294,	22630,		61),	# 6 Jan. 14
+			(	22767,	22793,	22772,	22631,	100000,		61)		# 7 Jan. 25
 			]
 
 
@@ -701,13 +705,13 @@ if __name__=="__main__":
 	
 	conn = open_connection() # connection to calibrations DB
 	replace = True 		# whether to replace previous calibration data
-	makePlots = True
-	#delete_calibration(conn,9707); exit(0)
+	makePlots = False
+	delete_calibration(conn,9443); exit(0)
 
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2011[:1]:
+	for c in cal_2012[7:]:
 		
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i"%(c[0],c[1]); continue
 		
@@ -732,23 +736,25 @@ if __name__=="__main__":
 			for t in range(5):
 				print "\n-----",s,t,rlist[0],"-----"
 				LC[(s,t)] = LinearityCurve(s,t,SDC)
+				# LC[(s,t)].uselist = []	# set this for "emergency" defaults calibration, hopefully good enough to bootstrap to real calibration
 				if t<4:
 					if LC[(s,t)].fitLinearity():
 						fCalSummary.write("%s %i\t%s\n"%(s,t,LC[(s,t)].fitter.toLatex()))
-						if makePlots and not LC[(s,t)].uselist:
+						if makePlots and LC[(s,t)].uselist is None:
 							LC[(s,t)].cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
 					else:
 						fCalSummary.write("%s %i\t*** CAL MISSING ***\n"%(s,t))
 						calib_OK = False
 				
 				if LC[(s,t)].fitWidths():
-					if makePlots and not LC[(s,t)].uselist:
+					if makePlots and LC[(s,t)].uselist is None:
 						LC[(s,t)].gWidth.writetofile(outpath+"/Widths/Widths_%i_%s%i.pdf"%(rlist[0],s[0],t))
 				else:
-					calib_OK = False
+					pass
+					#calib_OK = False
 					
 				# reconstructed energy and widths plots
-				if makePlots and not LC[(s,t)].uselist:
+				if makePlots and LC[(s,t)].uselist is None:
 					LC[(s,t)].plot_erecon()
 					try:
 						LC[(s,t)].cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
