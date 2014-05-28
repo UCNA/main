@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # nohup ./ReplayManager.py --mwpccal_sim < /dev/null > scriptlog.txt 2>&1 &
-# nohup ./ReplayManager.py -s --rmin=20818 --rmax=20828 < /dev/null > scriptlog.txt 2>&1 &
-# nohup ./ReplayManager.py -o < /dev/null > scriptlog.txt 2>&1 &
+# nohup ./ReplayManager.py -s --rmin=21087 --rmax=21099 < /dev/null > scriptlog.txt 2>&1 &
+# nohup ./ReplayManager.py -o --rmin=46 < /dev/null > scriptlog.txt 2>&1 &
 
 # nohup ./ReplayManager.py -x --rmin=19873 --rmax=19898 --nrings=12 < /dev/null > scriptlog.txt 2>&1 &
 # nohup ./ReplayManager.py -X --rmin=17561 --rmax=17650 --nrings=12 < /dev/null > scriptlog.txt 2>&1 &

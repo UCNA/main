@@ -118,8 +118,10 @@ Cut_TDC_Scint_E_2:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
 Cut_TDC_Scint_E_3:	start = 5	end = 4000	runStart = 19347	runEnd = 19377
 
 PMT_Disable:	runStart = 16983	runEnd = 17297	side = West	tube = 1
+Pulser_Disable:	runStart = 18801	runEnd = 18994	side = West	tube = 3
 
 ### 2012-13 ###
+
 Cut_TDC_Scint_E_Selftrig:	start = 2750	end = 4080	runStart = 20000	runEnd = 20300
 Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 20000	runEnd = 20300
 Cut_TDC_Scint_E_Selftrig:	start = 2850	end = 4080	runStart = 20450	runEnd = 20850
@@ -127,4 +129,4 @@ Cut_TDC_Scint_W_Selftrig:	start = 3050	end = 4080	runStart = 20450	runEnd = 2085
 Cut_TDC_Scint_E_Selftrig:	start = 2800	end = 4080	runStart = 20900	runEnd = 23200
 Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 20900	runEnd = 23200
 
-### 2013-14 ###
+

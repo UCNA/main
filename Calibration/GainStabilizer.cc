@@ -1,5 +1,6 @@
 #include "GainStabilizer.hh"
 #include "EnergyCalibrator.hh"
+#include "ManualInfo.hh"
 
 float GainStabilizer::gmsFactor(Side, unsigned int, float) const { return 1.0; }
 float GainStabilizer::getGainTweak(Side, unsigned int, float) const { return 1.0; }
@@ -31,11 +32,21 @@ GainStabilizer(myRun, cdb, myCorrecter) {
 				printf("*** Missing Chris Pulser data to calibrate %i%c%i! ***\n",rn,sideNames(s),t);
 		}
 	}
+	
+	std::vector<Stringmap> dsbls = ManualInfo::MI.getInRange("Pulser_Disable",rn);
+	for(auto it = dsbls.begin(); it != dsbls.end(); it++) {
+		unsigned int t = it->getDefaultI("tube",nBetaTubes);
+		Side s = strToSide(it->getDefault("side","None"));
+		if(t<nBetaTubes and s<=WEST) {
+			printf("** Disabling GMS Pulser %s %i.\n",sideWords(s),t);
+			pulser0[s][t] = 0;
+		}
+	}
 }
 
 float ChrisGainStabilizer::gmsFactor(Side s, unsigned int t, float time) const {
 	if(pulser0[s][t] && pulserPeak[s][t]
-	   && pulser0[s][t]>1800 && pulserPeak[s][t]->Eval(time)>1800)
+	   && pulser0[s][t]>800 && pulserPeak[s][t]->Eval(time)>800)
 		return pulser0[s][t]/pulserPeak[s][t]->Eval(time);
 	else
 		return 1.0;

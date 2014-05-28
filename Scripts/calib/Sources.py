@@ -604,6 +604,8 @@ def plotSourcePositions(conn,rlist):
 				if not sc.side == s:
 					continue
 				x,y = gSourcepos.pos(sc.x,sc.y)
+				if not (0.6 < sc.wx < 6 and 0.6 < sc.wy < 6):
+					print "Strange size",sc.wx,sc.wy,sc.sID
 				gSourcepos.stroke(path.circle(x, y, 0.5*gscale*(sc.wx+sc.wy)) ,sstyle.get(styp,[]))
 				
 		gSourcepos.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Sources/Positions/Pos_%i_%s.pdf"%(rlist[0],s))
@@ -679,14 +681,14 @@ cal_2011 = [
 cal_2012 = [
 			(	20515,	20527,	20522,	20121,	20741,		61),	# 0 Oct. 12, Bi/Ce/Sn
 			(	20818,	20830,	20823,	20782,	20837,		61),	# 1 Oct. 20, Bi/Ce/Sn, calibrates 1 octet
-			#(	21087,	21099 ),									#   Nov. 16; Bi/Ce/Sn only
-			(	21299,	21328,	21314,	21087,	21623,		61),	# 2 Nov. 20, Thanksgiving; Cd, In, +first Cs137
-			(	21679,	21718,	21687,	21625,	21863,		61),	# 3 Dec. 6 weekend betas
-			(	21914,	21939,	21921,	21890,	22118,		61),	# 4 Dec. 12
-			(	22215,	22238,	22222,	22124,	22238,		61),	# 5 Dec. 18
+			(	21087,	21099,	21092,	21087,	21237,		61),	# 2 Nov. 16; Bi/Ce/Sn
+			(	21299,	21328,	21314,	21274,	21623,		61),	# 3 Nov. 20, Thanksgiving; Cd, In, +first Cs137
+			(	21679,	21718,	21687,	21625,	21863,		61),	# 4 Dec. 6 weekend betas
+			(	21914,	21939,	21921,	21890,	22118,		61),	# 5 Dec. 12
+			(	22215,	22238,	22222,	22124,	22238,		61),	# 6 Dec. 18
 			#(	22294,	22306),										#   Jan. 11; Bi/Ce/Sn only
-			(	22437,	22462,	22442,	22294,	22630,		61),	# 6 Jan. 14
-			(	22767,	22793,	22772,	22631,	100000,		61)		# 7 Jan. 25
+			(	22437,	22462,	22442,	22294,	22630,		61),	# 7 Jan. 14
+			(	22767,	22793,	22772,	22631,	100000,		61)		# 8 Jan. 25
 			]
 
 
@@ -704,19 +706,25 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	conn = open_connection() # connection to calibrations DB
-	replace = True 		# whether to replace previous calibration data
-	makePlots = False
-	delete_calibration(conn,9443); exit(0)
+	replace = True		# whether to replace previous calibration data
+	makePlots = True	# whether to output linearity/width/Erecon plots
+	#delete_calibration(conn,9752); exit(0)
 
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2012[7:]:
+	for c in cal_2012[2:3]:
 		
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i"%(c[0],c[1]); continue
 		
 		rlist = range(c[0],c[1]+1)
-		fCalSummary.write("\n--------- %i-%i ----------\n"%(rlist[0],rlist[-1]))
+		calname = "\n--------- %i-%i ----------\n"%(rlist[0],rlist[-1])
+		fCalSummary.write(calname)
+		print calname
+		
+		#plotSourcePositions(conn,rlist); continue
+		#backscatterEnergy(conn, rlist); continue
+		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0])); continue
 		
 		# gather source data from calibration runs
 		SDC= SourceDataCollector(conn)
@@ -724,10 +732,7 @@ if __name__=="__main__":
 		if len(c) >= 3:
 			SDC.rebase_gms(c[2])
 		
-		#plotSourcePositions(conn,rlist); continue
-		#backscatterEnergy(conn, rlist)
-		#plotBackscatters(conn,rlist).writetofile(outpath+"/Backscatter/Backscatter_%i.pdf"%(rlist[0]))
-		#continue
+
 				
 		# fit linearity curves for each PMT
 		calib_OK = True

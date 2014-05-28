@@ -66,7 +66,7 @@ class AnalyzerNumberPlotter:
 	def plot_data_key(self, nm, conn, gnm=None):
 	
 		self.gather_points(self.datsrc, nm, conn)
-		self.gdat = [ [n, self.datpts[k].value * self.yscale, self.datpts[k].err * self.yscale] for (n,k) in enumerate(self.datkeys) ]
+		self.gdat = [ [n, self.datpts[k].value * self.yscale, self.datpts[k].err * self.yscale] for (n,k) in enumerate(self.datkeys) if self.datpts[k].value is not None]
 		
 		try:
 			self.LF.fit(self.gdat,cols=(0,1,2),errorbarWeights=True)
@@ -79,11 +79,11 @@ class AnalyzerNumberPlotter:
 				statdat["prob"] = 0
 			if gnm:
 				gnm = gnm%statdat
-			
+			print gnm
 			self.g.plot(graph.data.function("y(x)=%g"%self.LF.coeffs[0], title=None), [ graph.style.line(lineattrs=[self.ptcolor,style.linestyle.dashed]),])
 		except:
-			pass
-		
+			gnm = None
+			
 		self.g.axes['x'].max = self.gdat[-1][0]
 					
 		self.g.plot(graph.data.points(self.gdat,x=1,y=2,dy=3,title=gnm), [ graph.style.errorbar(errorbarattrs=[self.ptcolor]),
@@ -92,7 +92,7 @@ class AnalyzerNumberPlotter:
 
 #########################
 
-def plot_endpoint_history(grouping = "octet"):
+def plot_endpoint_history(grouping = "octet", rmin=None, rmax=None):
 	
 	conn = open_anadb_connection()
 	
@@ -100,6 +100,8 @@ def plot_endpoint_history(grouping = "octet"):
 	
 	for s in ["East","West"]:
 		ANP = AnalyzerNumberPlotter()
+		ANP.ADBL.rmin = rmin
+		ANP.ADBL.rmax = rmax
 		ANP.gkey = graph.key.key(pos="tc", columns=5)
 		ANP.grouping = grouping
 		ANP.init_graph("Beta Endpoint [keV]")
@@ -119,17 +121,19 @@ def plot_endpoint_history(grouping = "octet"):
 					ptitle = "Combined %s"%afp
 				ANP.plot_data_key("kurie_150-635", conn, ptitle)
 		
-		ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/Endpts_%s_%s.pdf"%(s,grouping))
+		ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2012/Endpts_%s_%s.pdf"%(s,grouping))
 
 #########################
 
-def plot_murate_history(grouping = "octet"):
+def plot_murate_history(grouping = "octet", rmin=None, rmax=None):
 
 	conn = open_anadb_connection()
 	ANP = AnalyzerNumberPlotter()
 	ANP.grouping = grouping
 	ANP.gkey = graph.key.key(pos="tl", columns=2)
 	ANP.yscale = 1000
+	ANP.ADBL.rmin = rmin
+	ANP.ADBL.rmax = rmax
 	ANP.init_graph("tagged muon rate [mHz]")
 	
 	for s in ["East","West"]:
@@ -143,19 +147,21 @@ def plot_murate_history(grouping = "octet"):
 			
 			ANP.plot_data_key("mu_rate_ecut", conn, "%s %s: $%%(mu).1f$, RMS %%(rms).1f"%(s,afp))
 			
-	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/MuRate_%s.pdf"%(grouping))
+	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2012/MuRate_%s.pdf"%(grouping))
 
 #########################
 
-def plot_raw_asym_history(grouping = "octet"):
+def plot_raw_asym_history(grouping = "octet", rmin=None, rmax=None):
 
 	conn = open_anadb_connection()
 	ANP = AnalyzerNumberPlotter()
 	ANP.grouping = grouping
+	ANP.ADBL.rmin = rmin
+	ANP.ADBL.rmax = rmax
 	ANP.init_graph("raw counts asymmetry")
 	ANP.plot_data_key("raw_count_asym", conn, "$A_{raw} = %(mu).5f\\pm%(uncert).5f$, $\\chi^2/\\nu = %(chi2).1f/%(ndf)i$ $(p=%(prob).2f)$")
 		
-	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2011/AsymHistory_%s.pdf"%grouping)
+	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2012/AsymHistory_%s.pdf"%grouping)
 
 
 
@@ -634,9 +640,9 @@ def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
 if __name__=="__main__":
 		
 	for grouping in ["ppair","octet","quartet"]:
-		plot_murate_history(grouping)
-		plot_raw_asym_history(grouping)
-		plot_endpoint_history(grouping)
+		plot_murate_history(grouping, 20000, 100000)
+		plot_raw_asym_history(grouping, 20000, 100000)
+		plot_endpoint_history(grouping, 20000, 100000)
 	exit(0)
 	
 
