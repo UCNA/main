@@ -525,8 +525,9 @@ int main(int argc, char** argv) {
 		std::string inDir = getEnvSafe("UCNADATADIR");
 		if(!fileExists(inDir+"/full"+itos(r)+".root") && r > 16300)
 			inDir = "/data/ucnadata/2011/rootfiles/";
-		
+		printf("Output and input directory set to %s\n",&inDir[0]);
 		ucnaDataAnalyzer11b A(r,outDir,CalDBSQL::getCDB(true));
+		printf("Analyzer initialized\n");
 		A.setIgnoreBeamOut(!cutBeam);
 		A.analyzeLED = ledtree;
 		A.needsPeds = forceped;

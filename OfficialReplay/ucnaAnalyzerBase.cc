@@ -3,7 +3,7 @@
 ucnaAnalyzerBase::ucnaAnalyzerBase(RunNum R, const std::string& bp, const std::string& nm, CalDB* CDB):
 TChainScanner("h1"), OutputManager(nm+"_"+itos(R), bp+"/hists/"), rn(R), PCal(R,CDB),
 fAbsTimeEnd(0), totalTime(0), deltaT(0), ignore_beam_out(false) {
-
+  printf("I'm in here!\n");
 	// beta scintillator TDC timing cuts
 	for(Side s = EAST; s <= WEST; ++s) {
 		loadRangeCut(rn,fScint_tdc[s][nBetaTubes], sideSubst("Cut_TDC_Scint_%c_Selftrig",s));

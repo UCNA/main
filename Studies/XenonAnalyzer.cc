@@ -312,7 +312,7 @@ std::string simulate_one_xenon(RunNum r, unsigned int nRings, bool forceResim) {
 			G4toPMT G2P;
 			G2P.runCathodeSim();
 			G2P.setCalibrator(PCal);
-			std::string simFile = getEnvSafe("UCNA_CALSRC_SIMS")+isots[n]+"/analyzed_*";
+			std::string simFile = getEnvSafe("UCNA_CALSRC_SIMS")+"/"+isots[n]+"/analyzed_*";
 			G2P.addFile(simFile);
 			
 			unsigned int nToSimI = nToSim*(isots[n]=="Xe135_3-2+"? 1.0 : isots[n]=="Xe133_3-2+"?  0.05 : 0.25);
