@@ -1,0 +1,251 @@
+2011-2013 Beta decay octets [enumerated] and calibration runs, and recommended calibration period assignment scheme.
+
+"----" delimits source calibration ranges
+"====" delimits position map ranges
+
+========================= PMT W2 dead
+
+Xe	16983-17078								Oct. 19
+[0]	octet_17125-17148						Oct. 23
+[1]	octet_17149-17174
+[2]	octet_17175-17198
+[3]	octet_17199-17222						Oct. 24
+Xe	17224-17230 (old)
+Src	17233-17249								Oct. 24		calibrates 16983-17297
+[4]	octet_17274-17297						Oct. 26
+
+------------------------- PMT W2 repaired; W0 Bi pulser dead; WX16 dead
+
+Src	17359-17387 (Ce,Sn,Bi) 					Nov. 3		calibrates 17359-17439
+[5]	octet_17388-17411						Nov. 4
+[6]	octet_17415-17438
+-------------------------
+[7]	octet_17440-17468
+[8]	octet_17473-17497
+[9]	octet_17498-17509						Nov. 7
+Src	17517-17527 (Ce,Sn,Bi)					Nov. 7		calibrates 17440-17734
+Xe	17561-17734								Nov. 8		[209] use for 16983-18055 (fitting 17562-17650)
+-------------------------
+[10]	octet_17735-17758					Nov. 11
+[11]	octet_17763-17786
+[12]	octet_17787-17810
+[13]	octet_17814-17838
+[14]	octet_17839-17862					Nov. 13
+Src	17871-17941 (Ce,Sn,Bi)					Nov. 13		calibrates 17735-17955
+Src	17942-17946 (long runs)					Nov. 14
+Src	17948-17955 (long runs)					Nov. 15
+-------------------------
+Src	18020-18055 (long with Cd,Cd113m,Ce)	Nov. 18		calibrates itself; no Sn
+
+
+========================= PMTs fixed --- changes position response
+
+
+Xe	18081-18090 (smallish dataset)			Nov. 30		[207] use for 18081-18386
+[15]	octet_18119-18142					Dec. 3
+[16]	octet_18143-18166
+[17]	octet_18167-18193
+[18]	octet_18195-18220
+[19]	octet_18221-18244
+[20]	octet_18245-18268
+[21]	octet_18269-18292
+[22]	octet_18293-18316
+[23]	octet_18317-18340					Dec. 5
+Src	18357-18386								Dec. 7		calibrates 18081-18386
+
+
+========================= AFP quench; re-ramping
+
+
+Xe	18390-18413								Dec. 10		[55] use for 18390-18683 (check earlier group)
+
+......................... Week downtime for AFP, fill valve issues
+
+[24]	octet_18432-18455					Dec. 17
+[25]	octet_18457-18482
+[26]	octet_18483-18506
+[27]	octet_18507-18533
+[28]	octet_18534-18557
+[29]	octet_18561-18592
+[30]	octet_18593-18616					Dec. 20
+Src	18617-18640								Dec. 20		calibrates 18390-18683
+[31]	octet_18658-18683					Dec. 21
+
+
+========================= holidays break
+
+
+Xe	18712-18744								Jan. 11		[59] use for 18712-19239
+Src	18745-18768								Jan. 11		calibrates 18712-18994
+[32]	octet_18801-18824					Jan. 13
+[33]	octet_18825-18848
+[34]	octet_18849-18872
+[35]	octet_18874-18897
+[36]	octet_18898-18921
+[37]	octet_18922-18945
+[38]	octet_18946-18970
+[39]	octet_18971-18994					Jan. 16
+-------------------------
+[40]	octet_19023-19046					Jan. 18
+[41]	octet_19050-19073
+[42]	octet_19076-19102
+[43]	octet_19103-19126
+[44]	octet_19127-19150
+[45]	octet_19151-19176
+[46]	octet_19177-19201					Jan. 23
+Src	19203-19239								Jan. 23		calibrates 19023-19239
+
+
+========================= 2 Week pause
+
+
+Src	19347-19377								Feb. 10		calibrates 19347-19544
+[47]	octet_19380-19404					Feb. 11
+[48]	octet_19405-19429
+[49]	octet_19430-19457
+[50]	octet_19462-19485					Feb. 13
+Src	19505-19544 (Cd/In only)				Feb. 14
+-------------------------
+Xe	19583-19588 runs too long for analyzer	Feb. 16
+Xe	19589-19606											[61]
+[51]	octet_19616-19639					Feb. 16
+[52]	octet_19643-19669
+[53]	octet_19670-19694
+[54]	octet_19695-19718
+[55]	octet_19719-19743
+[56]	octet_19744-19768
+[57]	octet_19769-19795
+[58]	octet_19796-19820					Feb. 21
+Src	19823-19863								Feb. 21		calibrates 19583-20000
+Xe	19873-19898								Feb. 22		[213] use for 19347-20000
+Src	19899-19960 (long Sn runs)				Feb. 22
+[59]	octet_19961-19966					Feb. 24
+
+========================== End 2011-2012
+==========================
+========================== Start 2012-2013
+
+-------------------------- (eLog 550) installed 130nm Be trap windows on Sep. 4.
+							"The foil installed on the west end had a 0.3 cm x 1.0 cm "hole"".
+
+[*]	octet_20121-20144						Sep. 9
+[*]	octet_20146-20169						Sep. 10
+[*]	octet_20216-20239						Sep. 15
+[*]	octet_20240-20264						Sep. 15
+
+-------------------------- installed 180nm Be window on East after previous broken during opening
+
+Src	20515-20527								Oct. 12		calibrates 20121-20741
+Src	20528-20531 (long runs)
+[0]	octet_20542-20561
+[1]	octet_20573-20606
+[2]	octet_20607-20634
+[3]	octet_20635-20660
+[4]	octet_20661-20684
+[5]	octet_20718-20741						Oct. 16
+
+--------------------------
+
+[6]	octet_20782-20805						Oct. 20
+Src	20818-20830 (Bi,Ce,Sn)					Oct. 20		calibrates 20782-20837
+Src	20831-20837 (long centered)
+
+--------------------------
+
+Src	20901-20911 (Ce,Sn,Bi)					Nov. 2 --- bad pedestals, probably useless
+Src	20913-20917 (long centered)
+[*]	octet_20975-20993						Nov. 4 --- abandoned after bad vacuum pressure
+
+--------------------------- isobutane in MWPCs
+
+Src	21087-21099 (Bi,Ce,Sn)					Nov. 16		calibrates 21087-21237
+[7]	octet_21100-21122
+[8]	octet_21140-21163
+[9]	octet_21164-21187
+[10]	octet_21190-21213
+[11]	octet_21214-21237					Nov. 19
+
+-------------------------- still isobutane; changed W2 PMT gain
+
+Src	21274-21298 (long centered Cd,Cs,In)	Nov. 20
+Src	21299-21328 (Cd,Cs,In,Sn,Ce,Bi)						calibrates 21274-21605
+[12]	octet_21333-21357
+[13]	octet_21363-21386
+[14]	octet_21391-21414
+[15]	octet_21433-21459
+[16]	octet_21477-21500
+[17]	octet_21501-21524
+[18]	octet_21536-21559
+[19]	octet_21571-21595
+Xe	21596-21605								Nov. 26		[] use for 20121-21623
+
+========================= SCS quench!
+Xe	21607-21623 (SCS field off)
+
+Xe	21625-21628 (pumping out Xe, week later)
+
+Src	21679-21718								Dec. 7		calibrates 21625-21863
+[20]	octet_21719-21742
+[21]	octet_21743-21766
+[22]	octet_21768-21791
+[23]	octet_21792-21815
+[24]	octet_21816-21839
+[25]	octet_21840-21863					Dec. 10
+
+--------------------------
+
+[26]	octet_21890-21913					Dec. 12
+Src	21914-21939								Dec. 12		calibrates 21890-22118
+[27]	octet_21942-21965					Dec. 12
+Xe	21966-22003								Dec. 13		[] use for 21607-22214
+[28]	octet_22023-22046					Dec. 14
+[29]	octet_22047-22070
+[30]	octet_22071-22097
+[31]	octet_22098-22118
+---------------------------
+[32]	octet_22124-22148
+[33]	octet_22149-22160
+[34]	octet_22164-22188
+[35]	octet_22190-22214					Dec. 18
+Src	22215-22238								Dec. 18		calibrates 22124-22238
+
+=========================== holiday break
+
+Src	22294-22306								Jan. 11, 2013
+[36]	octet_22311-22334
+[37]	octet_22335-22360
+[38]	octet_22361-22388
+[39]	octet_22389-22412
+[40]	octet_22413-22436
+Src	22437-22462								Jan. 14		calibrates 22294-22630
+
+[41]	octet_22511-22533					Jan. 17
+[42]	octet_22534-22557
+[43]	octet_22558-22581
+[44]	octet_22583-22606
+[45]	octet_22607-22630
+----------------------------
+[46]	octet_22631-22654
+[47]	octet_22655-22682
+[48]	octet_22683-22706
+[49]	octet_22708-22731					Jan. 22
+
+Src	22767-22793								Jan. 25		calibrates 22631-23173
+[50]	octet_22794-22817
+[51]	octet_22821-22849
+[52]	octet_22850-22874
+[53]	octet_22875-22898
+[54]	octet_22899-22922
+Src	22924-22930 (long centered Sn)			Jan. 28
+
+Xe	22961-22979								Jan. 30		[] use for 22294-23173
+
+[55]	octet_22994-23017					Jan. 30
+[56]	octet_23018-23043
+[57]	octet_23059-23088
+[58]	octet_23089-23112
+[59]	octet_23113-23137
+[60]	octet_23138-23161
+[61]	octet_23162-23173					Feb. 4
+
+=========================== End 2012-2013

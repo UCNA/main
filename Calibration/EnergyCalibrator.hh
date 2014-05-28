@@ -145,6 +145,7 @@ protected:
 	
 	float clipThreshold[2][nBetaTubes];		///< threshold to de-weight ADC in tube combination due to "clipping"
 	EfficCurve* pmtEffic[2][nBetaTubes];	///< efficiency curves for each PMT
+	bool disablePMT[2][nBetaTubes];			///< flags to disable summing PMT into combined result
 };
 
 #endif

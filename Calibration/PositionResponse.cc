@@ -116,8 +116,8 @@ void PositioningCorrector::loadData(const QFile& qin) {
 		std::string ss = it->getDefault("side","N");
 		smassert(ss=="E" || ss=="W");
 		Side s = ss=="E"?EAST:WEST;
-		unsigned int t = (unsigned int)it->getDefault("tube",nBetaTubes);
-		unsigned int n = (unsigned int)it->getDefault("sector",S.nSectors());
+		unsigned int t = (unsigned int)it->getDefaultI("tube",nBetaTubes);
+		unsigned int n = (unsigned int)it->getDefaultI("sector",S.nSectors());
 		float z = it->getDefault("light",1.0);
 		float z0 = it->getDefault("energy",1.0);
 		smassert(t<nBetaTubes && n<S.nSectors());

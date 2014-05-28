@@ -3524,6 +3524,7 @@
 *18020	SourcesCal	# 2.5in
 @sources Ce
 *18021	SourcesCal	# 0.0in
+@sources E Ce Cd113m
 *18022	SourcesCal	# 0.5in
 @sources Ce Cd113m
 *18023	SourcesCal	# 1.0in
@@ -3535,7 +3536,8 @@
 *18028	SourcesCal	# 3.5in
 @sources Cd113m Bi
 *18029	SourcesCal	# 4.0in
-*18030	SourcesCal	# 4.5in
+@sources
+*18030	SourcesCal	# 4.5in --- source rod is being pulled in during run! Really, Cd113m & Bi
 *18031	SourcesCal	# 4.5in --- source rod is being pulled in ~0.5in during run
 @sources Bi
 *18032	SourcesCal	# 5.0in

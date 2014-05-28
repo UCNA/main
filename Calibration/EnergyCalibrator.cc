@@ -3,6 +3,7 @@
 #include "GraphUtils.hh"
 #include "SQL_Utils.hh"
 #include "SMExcept.hh"
+#include "ManualInfo.hh"
 #include <utility>
 #include <TRandom3.h>
 
@@ -199,6 +200,7 @@ PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) 
 	GS = new TweakedGainStabilizer(new ChrisGainStabilizer(myRun,CDB,this));
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++) {
+			disablePMT[s][t] = false;
 			pmtEffic[s][t] = CDB->getTrigeff(myRun,s,t);
 			clipThreshold[s][t] = 4000;
 			if(checkPedestals(sensorNames[s][t]))
@@ -207,6 +209,17 @@ PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) 
 				clipThreshold[s][t] -= 500;
 		}
 	}
+	
+	std::vector<Stringmap> dsbls = ManualInfo::MI.getInRange("PMT_Disable",rn);
+	for(auto it = dsbls.begin(); it != dsbls.end(); it++) {
+		unsigned int t = it->getDefaultI("tube",nBetaTubes);
+		Side s = strToSide(it->getDefault("side","None"));
+		if(t<nBetaTubes and s<=WEST) {
+			printf("** Disabling PMT %s %i.\n",sideWords(s),t);
+			disablePMT[s][t] = true;
+		}
+	}
+	
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(AxisDirection d = X_DIRECTION; d <= Y_DIRECTION; ++d) {
 			for(std::vector<std::string>::const_iterator it = cathNames[s][d].begin(); it != cathNames[s][d].end(); it++) {
@@ -251,16 +264,18 @@ float PMTCalibrator::energyResolution(Side s, unsigned int t, float e0, float x,
 float PMTCalibrator::combinedResolution(Side s, float e0, float x, float y,float time) const {
 	float de = 0;
 	for(unsigned int t=0; t<nBetaTubes; t++)
-		de += 1.0/pow((double)energyResolution(s,t,e0,x,y,time),(double)2.0);
+		if(!disablePMT[s][t])
+			de += 1.0/pow((double)energyResolution(s,t,e0,x,y,time),(double)2.0);
 	return sqrt(1.0/de);
 }
-float PMTCalibrator::nPE(Side s, unsigned int t, float e0, float x, float y,float time) const {
+float PMTCalibrator::nPE(Side s, unsigned int t, float e0, float x, float y, float time) const {
 	if(e0<=0)
 		return 0;
 	if(t==nBetaTubes) {
 		float nsum = 0;
 		for(unsigned int i=0; i<nBetaTubes; i++)
-			nsum += nPE(s,i,e0,x,y,time);
+			if(!disablePMT[s][i])
+				nsum += nPE(s,i,e0,x,y,time);
 		return nsum;
 	}
 	return pow(double(e0/energyResolution(s,t,e0,x,y,time)),2.0);
@@ -270,7 +285,8 @@ float PMTCalibrator::pmtSumPE(Side s, float e0, float x, float y, float time) co
 		return 0;
 	float nsum = 0;
 	for(unsigned int i=0; i<nBetaTubes; i++)
-		nsum += 1.0/nPE(s,i,e0,x,y,time);
+		if(!disablePMT[s][i])
+			nsum += 1.0/nPE(s,i,e0,x,y,time);
 	return nBetaTubes*nBetaTubes/nsum;
 }
 
@@ -331,6 +347,7 @@ void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, f
 			weight[t] = 0;
 		
 		evt.nPE[t] = E0*weight[t];
+		evt.tuben[t].x = E0;
 		
 		// de-weight for clipping, unless all PMTs clipped
 		if(nclipped<nBetaTubes) {
@@ -340,9 +357,12 @@ void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, f
 				weight[t] = 0;
 		}
 		
-		evt.energy.x += E0*weight[t];
-		evt.energy.err += weight[t];
-		evt.tuben[t].x = E0;
+		// sum into combined energy
+		if(!disablePMT[s][t]) {
+			evt.energy.x += E0*weight[t];
+			evt.energy.err += weight[t];
+		}
+		
 	}
 	evt.energy.x /= evt.energy.err;
 	evt.energy.err = sqrt(evt.energy.x/evt.energy.err);

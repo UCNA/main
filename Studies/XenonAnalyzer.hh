@@ -40,6 +40,8 @@ public:
 	std::vector<fgbgPair*> sectEnergy[2][nBetaTubes+1];	///< visible light histograms by position, PMT
 	std::vector<SectorDat> sectDat[2][nBetaTubes+1];	///< processed data for each sector
 	
+	static double fidRadius;							///< xenon mapping fiducial radius, [mm]
+	
 protected:
 	
 	/// fit a xenon spectrum

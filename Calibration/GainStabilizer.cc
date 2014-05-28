@@ -1,7 +1,9 @@
 #include "GainStabilizer.hh"
 #include "EnergyCalibrator.hh"
+#include "ManualInfo.hh"
 
 float GainStabilizer::gmsFactor(Side, unsigned int, float) const { return 1.0; }
+float GainStabilizer::getGainTweak(Side, unsigned int, float) const { return 1.0; }
 
 Stringmap GainStabilizer::gmsSummary() const {
 	Stringmap m;
@@ -28,6 +30,16 @@ GainStabilizer(myRun, cdb, myCorrecter) {
 			}
 			if(!pulser0[s][t] || !pulserPeak[s][t])
 				printf("*** Missing Chris Pulser data to calibrate %i%c%i! ***\n",rn,sideNames(s),t);
+		}
+	}
+	
+	std::vector<Stringmap> dsbls = ManualInfo::MI.getInRange("Pulser_Disable",rn);
+	for(auto it = dsbls.begin(); it != dsbls.end(); it++) {
+		unsigned int t = it->getDefaultI("tube",nBetaTubes);
+		Side s = strToSide(it->getDefault("side","None"));
+		if(t<nBetaTubes and s<=WEST) {
+			printf("** Disabling GMS Pulser %s %i.\n",sideWords(s),t);
+			pulser0[s][t] = 0;
 		}
 	}
 }
@@ -86,10 +98,14 @@ TweakedGainStabilizer::TweakedGainStabilizer(GainStabilizer* BG): GainStabilizer
 		for(unsigned int t=0; t<=nBetaTubes; t++)
 			CDB->getGainTweak(rn,s,t,eOrig[s][t],eFinal[s][t]);
 }
+float TweakedGainStabilizer::getGainTweak(Side s, unsigned int t, float) const {
+	smassert(s<=WEST && t<=nBetaTubes);
+	if(t==nBetaTubes) return eFinal[s][t]/eOrig[s][t];
+	return LCor->invertLinearityStabilized(s,t,eFinal[s][t])/LCor->invertLinearityStabilized(s,t,eOrig[s][t]);
+}
 float TweakedGainStabilizer::gmsFactor(Side s, unsigned int t, float time) const {
 	smassert(s<=WEST && t<=nBetaTubes);
-	if(t==nBetaTubes) return baseGain->gmsFactor(s,t,time)*eFinal[s][t]/eOrig[s][t];
-	return baseGain->gmsFactor(s,t,time)*LCor->invertLinearityStabilized(s,t,eFinal[s][t])/LCor->invertLinearityStabilized(s,t,eOrig[s][t]);
+	return baseGain->gmsFactor(s,t,time) * getGainTweak(s,t,time);
 }
 Stringmap TweakedGainStabilizer::gmsSummary() const {
 	Stringmap m = baseGain->gmsSummary();

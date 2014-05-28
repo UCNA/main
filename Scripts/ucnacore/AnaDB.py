@@ -1,4 +1,5 @@
 from EncalDB import *
+from os import *
 import string
 
 # SELECT DISTINCT name FROM analysis_numbers;
@@ -75,13 +76,19 @@ class AnaDBLocator:
 	
 	def __init__(self):
 		self.fields = analysis_numbers_table_fields[2:] + analysis_runset_table_fields[1:]
-		self.req = {"source":"MPM_data"}
+		self.req = {"source":os.environ["UCNA_ANA_AUTHOR"]+"_Data"}
 		self.xcond = None
+		self.rmin = None
+		self.rmax = None
 		
 	def find(self,conn):
 		cmd = "SELECT "+string.join(self.fields,",")+" FROM analysis_numbers,analysis_runset WHERE analysis_runset.analysis_runset_id = analysis_numbers.analysis_runset_id"
 		for k in self.req:
 			cmd += " AND %s='%s'"%(k,str(self.req[k]))
+		if self.rmin is not None:
+			cmd += " AND start_run >= %i"%self.rmin
+		if self.rmax is not None:
+			cmd += " AND end_run <= %i"%self.rmax
 		if self.xcond:
 			cmd += " AND " + self.xcond
 		print cmd

@@ -1,11 +1,20 @@
 # Environment variables needed by UCNA analysis code
 
+# Geant4 simulation environment variables
+source <path to your geant install>/geant4/env.sh
+export G4WORKDIR=<working directory where simulation output will be sent>
+export G4OUTDIR=${G4WORKDIR}/output/
+export G4BINDIR=<directory where UCNA Geant simulation compiled binaries are found>
+export G4EVTDIR=<directory for event generator files>
+
 # directories for input/output
 export UCNA_AUX=<path to Aux directory>
 export UCNA_OCTET_LIST=${UCNA_AUX}/OctetList_2010.txt # or appropriate other octet listing
+export UCNA_RUN_LOG="${UCNA_AUX}/UCNA Run Log.txt"
 export UCNADATADIR=<path to directory containing full_*.root raw data files>
 export UCNAOUTPUTDIR=<path to directory where OfficialReplay .root file output will be placed>
 export UCNA_ANA_PLOTS=<path to directory where .pdf analysis plots will be placed>
+export UCNA_CALSRC_SIMS=${G4OUTDIR}/thinfoil_	# prefix for sealed source / xenon simulations directories to use
 
 # MySQL Calibration/Analysis DB login info
 export UCNADBADDRESS=<address of server hosting Calibration DB>
@@ -16,14 +25,8 @@ export UCNADBUSER=ucnwrite
 export UCNADBPASS=<password for read/write 'ucnwrite' DB user>
 export UCNADBUSER_READONLY=ucn
 export UCNADBPASS_READONLY=<password for read-only 'ucn' user>
-# for writing results to the Analysis DB (modify table analysis_results as needed to add to "author" enum)
-#export UCNA_ANA_AUTHOR=<"author" enum entry>
+# "author name" (or initials) for writing results to the Analysis DB
+export UCNA_ANA_AUTHOR=<author>
 
 #Uncomment to compile code with *blinding disabled* (East/West clock calls return same result):
 #export UNBLINDED=1
-
-# Geant4 simulation environment variables
-source <path to your geant install>/geant4/env.sh
-export G4WORKDIR=<working directory where simulation output will be sent>
-export G4OUTDIR=${G4WORKDIR}/output/
-export G4BINDIR=<directory where UCNA Geant simulation compiled binaries are found>
