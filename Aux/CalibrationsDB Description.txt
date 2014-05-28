@@ -1,5 +1,24 @@
 # Calibrations DB tables description
 
+# run numbers / times table
+CREATE TABLE run (
+	  run_number int(10) unsigned NOT NULL DEFAULT '0',		# run number
+	  slow_run_number INT UNSIGNED,							# corresponding slow-DAQ run number
+	  start_time DATETIME,									# run start time
+	  end_time DATETIME,									# run end time
+	  geometry enum('A','B','C','D','Other'),				# detector geometry during run
+	  run_type enum('Asymmetry','LEDCalib','SourceCalib','Depol','Other','Xenon'),				# run classification
+	  asym_oct enum('A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','A11','A12',
+	  				'B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','Other'),	# octet role
+	  gate_valve enum('Open','Closed','Other'),				# gate valve state
+	  flipper enum('On','Off','On2Off','Off2On','Other'),	# flipper state
+	  scs_field DOUBLE,										# SCS ramp state
+	  data_quality INT,										# flags for data issues
+	  comments TEXT,										# run log comments
+	  title varchar(512),									# run type text description
+	  PRIMARY KEY (`run_number`)
+);
+
 # energy calibration ranges
 CREATE TABLE energy_calibration (
 	ecal_id SERIAL,				# unique ID number for this calibration
