@@ -84,6 +84,8 @@ void ucnaDataAnalyzer11b::calibrateTimes() {
 	if(currentEvent==0) {
 		prevPassedCuts = prevPassedGVRate = true;
 		nLiveTrigs = 0;
+		prevTime = 0;
+		cutBlips.clear();
 	}
 	
 	// ucn monitor rate cuts

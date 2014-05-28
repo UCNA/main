@@ -129,14 +129,28 @@ MultiGaus multiPeakFitter(TH1* indat, const std::vector<SpectrumPeak>& expectedP
 std::vector<SpectrumPeak> fancyMultiFit(TH1* indat, float searchsigma, const std::vector<SpectrumPeak>& expectedPeaks,
 										bool bgsubtract, const std::string& drawName, float nSigma, float pkMin, float pkMax) {
 	
-	// use TSpectrum peak fitting to find initial guesses for peak locations
-	TH1* htout;
-	std::vector<SpectrumPeak> foundPeaks = tspectrumPrefit(indat, searchsigma, expectedPeaks, htout, pkMin, pkMax);
+	std::vector<SpectrumPeak> foundPeaks;
+	TH1* htout = NULL;
 	
-	if(bgsubtract) {
-		TH1F* bgspec = (TH1F*)TSpectrum().Background(indat);
-		indat->Add(bgspec,-1.0);
-		delete(bgspec);
+	if(!expectedPeaks.size()) return foundPeaks;
+	
+	if(expectedPeaks.size() > 1) {
+		// use TSpectrum peak fitting to find initial guesses for peak locations
+		foundPeaks = tspectrumPrefit(indat, searchsigma, expectedPeaks, htout, pkMin, pkMax);
+		
+		if(bgsubtract) {
+			TH1F* bgspec = (TH1F*)TSpectrum().Background(indat);
+			indat->Add(bgspec,-1.0);
+			delete(bgspec);
+		}
+	} else {
+		// approximate individual peak by mean and RMS in specified range
+		indat->GetXaxis()->SetRangeUser(pkMin,pkMax);
+		foundPeaks = expectedPeaks;
+		foundPeaks[0].h = indat->GetMaximum();
+		foundPeaks[0].center = indat->GetMean();
+		foundPeaks[0].width = indat->GetRMS();
+		indat->GetXaxis()->SetRange(0,0);
 	}
 	
 	Size_t npks = foundPeaks.size();
@@ -156,7 +170,7 @@ std::vector<SpectrumPeak> fancyMultiFit(TH1* indat, float searchsigma, const std
 		if(drawName.size()) {
 			makePath(drawName,true);
 			indat->Draw();
-			//htout->Draw("Same");
+			//if(htout) htout->Draw("Same");
 			for(unsigned int p=0; p<npks; p++) {
 				drawVLine(foundPeaks[p].energyCenter.x, gPad, 1);
 				drawVLine(foundPeaks[p].energyCenter.x-foundPeaks[p].energyWidth.x, gPad, 1, 2);
@@ -168,7 +182,7 @@ std::vector<SpectrumPeak> fancyMultiFit(TH1* indat, float searchsigma, const std
 		// remove fit from histogram associated functions
 		indat->GetListOfFunctions()->Remove(indat->GetListOfFunctions()->FindObject(mg.getFitter()->GetName()));
 		
-		delete(htout);
+		if(htout) delete(htout);
 		return foundPeaks; 
 	} else {
 		// draw histograms

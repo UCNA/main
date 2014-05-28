@@ -34,6 +34,8 @@ public:
 	
 	/// get first key value (double) or default
 	double getDefault(const std::string& str, double d) const;
+	/// get first key value (int) or default
+	int getDefaultI(const std::string& str, int d) const;
 	/// retrieve key values as doubles
 	std::vector<double> retrieveDouble(const std::string& str) const;
 	/// remove a key

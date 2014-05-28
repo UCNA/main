@@ -34,7 +34,9 @@ Stringmap sd2sm(const SectorDat& sd) {
 
 //-----------------------------------------------------------
 
-XenonSpectrumPlugin::XenonSpectrumPlugin(RunAccumulator* RA, unsigned int nr): PositionBinnedPlugin(RA,"Xe",nr) {
+double XenonSpectrumPlugin::fidRadius = 52.;
+
+XenonSpectrumPlugin::XenonSpectrumPlugin(RunAccumulator* RA, unsigned int nr): PositionBinnedPlugin(RA,"Xe",nr,fidRadius) {
 	// set up histograms
 	energySpectrum = registerFGBGPair("hXeSpec", "Xenon energy spectrum", 200, 0, 2000);
 	for(Side s = EAST; s <= WEST; ++s) {
@@ -148,6 +150,14 @@ void XenonSpectrumPlugin::calculateResults() {
 			AN.value = sectDat[s][t][m].low_peak.x;	// Xenon low-energy peak fit center
 			AN.err = sectDat[s][t][m].low_peak.err;	// parameter uncertainty
 			myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
+			
+			if(!myA->isSimulated) {
+				AN.name = "prevGainTweak";
+				PMTCalibrator PCal(myA->runCounts.counts.begin()->first);
+				AN.value = PCal.GS->getGainTweak(s,t,0);
+				AN.err = 0;
+				myA->uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
+			}
 		}
 	}
 }
@@ -170,6 +180,12 @@ void XenonSpectrumPlugin::genComparisonPosmap(XenonSpectrumPlugin* XA) {
 		sects.sectorCenter(m,x,y);
 		for(Side s=EAST; s<=WEST; ++s) {
 			for(unsigned int t=0; t<nBetaTubes; t++) {
+				if(!(XA->sectDat[s][t][m].xe_ep.x / sectDat[s][t][m].xe_ep.x > 0.3)) {
+					// emergency "hole" fix
+					printf("*** WARNING: patching dubious value %g => %g at %i,%i\n",
+						   XA->sectDat[s][t][m].xe_ep.x, sectDat[s][t][m].xe_ep.x, t, m);
+					XA->sectDat[s][t][m].xe_ep.x = 0.3 * sectDat[s][t][m].xe_ep.x;
+				}
 				CDBout->addPosmapPoint(pmid_ep,s,t,m,
 									   XA->sectDat[s][t][m].xe_ep.x*XA->sectDat[s][t][m].eta,
 									   sectDat[s][t][m].xe_ep.x,x,y);
@@ -199,7 +215,7 @@ void process_xenon(RunNum r0, RunNum r1, unsigned int nrings) {
 	OutputManager OM1("NameUnused",getEnvSafe("UCNA_ANA_PLOTS")+"/PositionMaps/SingleRuns/");
 	std::vector<RunNum> rlist = CalDBSQL::getCDB()->findRuns("run_type = 'Xenon'",r0,r1);
 	for(std::vector<RunNum>::iterator rit = rlist.begin(); rit != rlist.end(); rit++) {
-		std::string singleName = "Xenon_"+itos(*rit)+"_"+itos(nrings)+"_"+dtos(PositionBinnedPlugin::fidRadius);
+		std::string singleName = "Xenon_"+itos(*rit)+"_"+itos(nrings)+"_"+dtos(XenonSpectrumPlugin::fidRadius);
 		std::string prevFile = OM1.basePath+"/"+singleName+"/"+singleName;
 		snames.push_back(singleName);
 		if(r0==r1 || !fileExists(prevFile+".root")) {
@@ -260,7 +276,7 @@ std::string simulate_one_xenon(RunNum r, unsigned int nRings, bool forceResim) {
 	OutputManager OM1("NameUnused",basePath+"/SingleRunsSim/");
 	
 	// naming convention for files associated with this run
-	std::string singleName = "Xenon_"+itos(r)+"_"+itos(nRings)+"_"+dtos(PositionBinnedPlugin::fidRadius);
+	std::string singleName = "Xenon_"+itos(r)+"_"+itos(nRings)+"_"+dtos(XenonSpectrumPlugin::fidRadius);
 
 	if(forceResim || !fileExists(OM1.basePath+"/"+singleName+"/"+singleName+".root")) {
 		// processed data to re-simulate
@@ -279,6 +295,7 @@ std::string simulate_one_xenon(RunNum r, unsigned int nRings, bool forceResim) {
 		// simulate for each isotope, in random order to minimize hitting the same file at once from parallel processes
 		std::vector<SimXenonAnalyzer*> XAMi;
 		std::vector<std::string> isotsIn;
+		std::vector<std::string> isotsSkip;
 		LinHistCombo LHC;
 		
 		isotsIn.push_back("Xe125_1-2+");
@@ -288,15 +305,23 @@ std::string simulate_one_xenon(RunNum r, unsigned int nRings, bool forceResim) {
 		isotsIn.push_back("Xe133_11-2-");
 		isotsIn.push_back("Xe135_3-2+");
 		
-		// runs promptly after activation with short-lived peak
-		if((14264 <= r && r <= 14273) || (15991 <= r && r <= 16010))
+		// runs promptly after activation with 15.3min HL bump
+		if(	(14264 <= r && r <= 14273)
+			|| (15991 <= r && r <= 16010)
+			|| (17561 <= r && r <= 17566)
+			|| (18081 <= r && r <= 18086)
+			|| (19873 <= r && r <= 19878) )
 			isotsIn.push_back("Xe135_11-2-");
+		else
+			isotsSkip.push_back("Xe135_11-2-");
 		
-		// shorter-lived high-energy beta spectrum component
-		int b1 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1075);
-		int b2 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1175);
-		if(XA.myXeSpec->energySpectrum->h[GV_OPEN]->Integral(b1,b2) > 100)
+		// 3.82min HL high-energy beta spectrum component
+		int b1 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1200);
+		int b2 = XA.myXeSpec->energySpectrum->h[GV_OPEN]->FindBin(1300);
+		if(XA.myXeSpec->energySpectrum->h[GV_OPEN]->Integral(b1,b2) > 1000)
 			isotsIn.push_back("Xe137_7-2-");
+		else
+			isotsSkip.push_back("Xe137_7-2-");
 		
 		
 		// randomize order of isotope simulation to pick different simulation files for each one
@@ -340,6 +365,15 @@ std::string simulate_one_xenon(RunNum r, unsigned int nRings, bool forceResim) {
 			XAM.uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 			
 			delete(XAMi[i]);
+		}
+		
+		// record isotopes skipped from analysis
+		for(std::vector<std::string>::iterator it = isotsSkip.begin(); it != isotsSkip.end(); it++) {
+			AnaNumber AN("XeSimCounts_"+(*it));
+			AN.value = AN.err = 0;
+			XAM.uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
+			AN.name = "XeComp_"+(*it);
+			XAM.uploadAnaNumber(AN, GV_OPEN, AFP_OTHER);
 		}
 
 		XAM.qOut.insert("runcal",PCal.calSummary());

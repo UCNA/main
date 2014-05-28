@@ -2,7 +2,6 @@
 
 import os
 import time
-#from ucnacore.EncalDB import *
 from EncalDB import *
 
 class RunInfo:
@@ -264,10 +263,10 @@ if __name__=="__main__":
 		fillRunGroups(os.environ["UCNA_AUX"]+"/UCNA Run Log.txt")
 
 	if 1:
-		#al = load_runlog("/data/ucnadata/midfiles/runlog.txt")
-		ml = load_mylog("../../Aux/UCNA Run Log 2012.txt")
-		#runs = merge_runlogs(ml,al)
+		al = load_runlog("/data/ucnadata/midfiles/runlog.txt")
+		ml = load_mylog(os.environ["UCNA_AUX"]+"/UCNA Run Log 2012.txt")
+		runs = merge_runlogs(ml,al)
 		#clearRunsDB(20000,23200)
-		fillRunsDB(ml)
+		fillRunsDB(runs)
 		fillRunGroups(os.environ["UCNA_AUX"]+"/UCNA Run Log 2012.txt")
 

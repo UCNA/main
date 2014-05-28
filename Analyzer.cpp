@@ -133,7 +133,12 @@ void mi_displayOctetList(StreamInteractor*) { displayOctetList(); }
 void mi_processOctet(StreamInteractor* S) {
 	int octn = S->popInt();
 	
-	OctetSimuCloneManager OSCM("Asym_2011");
+	std::string octlist = getEnvSafe("UCNA_OCTET_LIST");
+	char yrdigit = octlist[octlist.size()-5];
+	std::string replaydirname = "Asym_2011";
+	if(yrdigit == '3') replaydirname = "Asym_2012";
+		
+	OctetSimuCloneManager OSCM(replaydirname);
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 	
 	// simulations input setup
@@ -191,7 +196,7 @@ void mi_evis2etrue(StreamInteractor*) {
 	OM.write();
 }
 
-void mi_sourcelog(StreamInteractor*) { uploadRunSources("UCNA Run Log 2012.txt"); }
+void mi_sourcelog(StreamInteractor*) { uploadRunSources(getEnvSafe("UCNA_RUN_LOG")); }
 
 void mi_radcor(StreamInteractor* S) {
 	float Ep = S->popFloat();
