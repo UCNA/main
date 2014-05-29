@@ -72,7 +72,7 @@ class AnalyzerNumberPlotter:
 			self.LF.fit(self.gdat,cols=(0,1,2),errorbarWeights=True)
 			chi2 = self.LF.chisquared()
 			ndf = self.LF.nu()
-			statdat = {"mu":self.LF.coeffs[0], "rms":self.LF.rmsDeviation(), "uncert":self.LF.rmsDeviation()/sqrt(self.LF.ydat.size), "chi2":chi2 , "ndf":ndf}
+			statdat = {"mu":self.LF.coeffs[0], "rms":self.LF.rmsDeviation(), "uncert":self.LF.coeffErr(0), "chi2":chi2 , "ndf":ndf}
 			if stats:
 				statdat["prob"] = stats.chisqprob(statdat["chi2"],statdat["ndf"])
 			else:
@@ -638,11 +638,12 @@ def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
 
 
 if __name__=="__main__":
-		
+	
+	rrange = (20000,100000)
 	for grouping in ["ppair","octet","quartet"]:
-		plot_murate_history(grouping, 20000, 100000)
-		plot_raw_asym_history(grouping, 20000, 100000)
-		plot_endpoint_history(grouping, 20000, 100000)
+		plot_murate_history(grouping, rrange[0], rrange[1])
+		plot_raw_asym_history(grouping, rrange[0], rrange[1])
+		plot_endpoint_history(grouping, rrange[0], rrange[1])
 	exit(0)
 	
 
