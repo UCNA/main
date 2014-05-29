@@ -268,5 +268,5 @@ if __name__=="__main__":
 		runs = merge_runlogs(ml,al)
 		#clearRunsDB(20000,23200)
 		fillRunsDB(runs)
-		fillRunGroups(os.environ["UCNA_AUX"]+"/UCNA Run Log 2012.txt")
+		#fillRunGroups(os.environ["UCNA_AUX"]+"/UCNA Run Log 2012.txt")
 

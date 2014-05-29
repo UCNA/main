@@ -165,7 +165,7 @@ Src	21087-21099 (Bi,Ce,Sn)					Nov. 16		calibrates 21087-21237
 [10]	octet_21190-21213
 [11]	octet_21214-21237					Nov. 19
 
--------------------------- still isobutane; changed W2 PMT gain
+-------------------------- still isobutane; changed PMT gains
 
 Src	21274-21298 (long centered Cd,Cs,In)	Nov. 20
 Src	21299-21328 (Cd,Cs,In,Sn,Ce,Bi)						calibrates 21274-21605
@@ -240,7 +240,7 @@ Src	22924-22930 (long centered Sn)			Jan. 28
 
 Xe	22961-22979								Jan. 30		[] use for 22294-23173
 
-[55]	octet_22994-23017					Jan. 30
+[55]	octet_22994-23016					Jan. 30
 [56]	octet_23018-23043
 [57]	octet_23059-23088
 [58]	octet_23089-23112

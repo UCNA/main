@@ -713,7 +713,7 @@ if __name__=="__main__":
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2012[2:3]:
+	for c in cal_2012[1:2]:
 		
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i"%(c[0],c[1]); continue
 		

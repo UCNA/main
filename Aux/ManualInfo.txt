@@ -129,4 +129,7 @@ Cut_TDC_Scint_W_Selftrig:	start = 3050	end = 4080	runStart = 20450	runEnd = 2085
 Cut_TDC_Scint_E_Selftrig:	start = 2800	end = 4080	runStart = 20900	runEnd = 23200
 Cut_TDC_Scint_W_Selftrig:	start = 3000	end = 4080	runStart = 20900	runEnd = 23200
 
+Pulser_Disable:	runStart = 20000	runEnd = 23173	side = West	tube = 3
+
+22311_timecut:		start = 0	end = 100	reason = clean_trap
 
