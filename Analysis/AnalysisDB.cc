@@ -25,9 +25,8 @@ void AnalysisDB::locateRunset(AnaRunset& AR) {
 	std::string qry =  ( "SELECT analysis_runset_id FROM analysis_runset WHERE start_run = " + itos(AR.start_run)
 						+ " AND end_run = " + itos(AR.end_run) + " AND grouping = '" + groupWords(AR.grouping)
 						+ "' AND gate_valve = '" + gvWords(AR.gate_valve) + "' AND afp = '" + afpWords(AR.afp) + "'");
-	sprintf(query,"%s",qry.c_str());
-	printf("%s\n",query);
-	TSQLRow* r = getFirst();
+	printf("%s\n",qry.c_str());
+	TSQLRow* r = getFirst(qry.c_str());
 	if(r) {
 		AR.rsid = fieldAsInt(r,0);
 		delete(r);
@@ -36,10 +35,8 @@ void AnalysisDB::locateRunset(AnaRunset& AR) {
 	qry = ( "INSERT INTO analysis_runset(start_run,end_run,grouping,gate_valve,afp) VALUES ("
 		   + itos(AR.start_run) + "," + itos(AR.end_run) + ",'" + groupWords(AR.grouping) + "','"
 		   + gvWords(AR.gate_valve) + "','" + afpWords(AR.afp) +"')");
-	sprintf(query,"%s",qry.c_str());
-	Query();
-	sprintf(query,"SELECT LAST_INSERT_ID()");
-	r = getFirst();
+	execute(qry.c_str());
+	r = getFirst("SELECT LAST_INSERT_ID()");
 	if(!r) {
 		SMExcept e("MissingRunset");
 		throw(e);
@@ -52,8 +49,7 @@ std::vector<AnaNumber> AnalysisDB::findMatching(const AnaNumber& AN) {
 	std::string qry = ( "SELECT analysis_number_id,date,value,err FROM analysis_numbers WHERE analysis_runset_id = "
 					   + itos(AN.rsid) + " AND source = '" + AN.source + "' AND name = '" + AN.name + "' AND side = " + dbSideName(AN.s)
 					   + " AND event_type = '" + typeSetString(AN.etypes) + "' AND n = " + itos(AN.n) + " ORDER BY date DESC");
-	sprintf(query,"%s",qry.c_str());
-	Query();
+	Query(qry.c_str());
 	std::vector<AnaNumber> v;
 	while(TSQLRow* r = res->Next()) {
 		v.push_back(AN);
@@ -76,8 +72,7 @@ void AnalysisDB::uploadAnaNumber(AnaNumber& AN, bool replace) {
 			std::string qry = ("UPDATE analysis_numbers SET date=FROM_UNIXTIME(" + itos((unsigned int)AN.date)
 							   +"), value=" + dtos(AN.value,"NULL") +", err= " + dtos(AN.err,"NULL")
 							   + " WHERE analysis_number_id = " + itos(AN.anid));
-			sprintf(query,"%s",qry.c_str());
-			Query();
+			Query(qry.c_str());
 			return;
 		}
 	}
@@ -86,10 +81,8 @@ void AnalysisDB::uploadAnaNumber(AnaNumber& AN, bool replace) {
 					   + itos(AN.rsid) + ",'" + AN.source + "','" + AN.name + "',FROM_UNIXTIME(" + itos((unsigned int)AN.date)
 					   + ")," + dbSideName(AN.s) + ",'" + typeSetString(AN.etypes) + "'," + itos(AN.n)
 					   + "," + dtos(AN.value,"NULL") + "," + dtos(AN.err,"NULL") +")");
-	sprintf(query,"%s",qry.c_str());
-	Query();
-	sprintf(query,"SELECT LAST_INSERT_ID()");
-	TSQLRow* r = getFirst();
+	execute(qry.c_str());
+	TSQLRow* r = getFirst("SELECT LAST_INSERT_ID()");
 	if(!r) {
 		SMExcept e("MissingAnaNumber");
 		throw(e);
