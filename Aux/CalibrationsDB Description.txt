@@ -8,8 +8,7 @@ CREATE TABLE run (
 	  end_time DATETIME,									# run end time
 	  geometry enum('A','B','C','D','Other'),				# detector geometry during run
 	  run_type enum('Asymmetry','LEDCalib','SourceCalib','Depol','Other','Xenon'),				# run classification
-	  asym_oct enum('A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','A11','A12',
-	  				'B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','Other'),	# octet role
+	  asym_oct enum('A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','A11','A12','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','Other'),	# octet role
 	  gate_valve enum('Open','Closed','Other'),				# gate valve state
 	  flipper enum('On','Off','On2Off','Off2On','Other'),	# flipper state
 	  scs_field DOUBLE,										# SCS ramp state
@@ -80,7 +79,7 @@ CREATE TABLE posmap_points (
 	side ENUM('East','West'),	# tube side
 	quadrant INT UNSIGNED,		# tube quadrant
 	pixel_id INT UNSIGNED,		# pixel number of this point
-	signal DOUBLE,				# observed (light) signal at this location
+	`signal` DOUBLE,			# observed (light) signal at this location
 	center_x DOUBLE,			# x coordinate of pixel center
 	center_y DOUBLE,			# y coordinate of pixel center
 	norm DOUBLE,				# normalization for energy resolution smearing
@@ -189,7 +188,7 @@ CREATE TABLE run_monitors(
 # named sensors
 CREATE TABLE sensors (
 	sensor_id SERIAL,
-	sensor_name text,
+	sensor_name VARCHAR(128),
 	INDEX(sensor_id), INDEX(sensor_name)
 );
 
