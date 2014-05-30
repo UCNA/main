@@ -1,7 +1,8 @@
-#!/sw/bin/python2.6
+
 import os
 import MySQLdb
 import getpass
+from string import join
 
 # open connection to calibration DB
 def open_connection(db=None,usr=None,pw=None,host=None):
@@ -54,9 +55,9 @@ def upload_graph(conn,gdescrip,gdata):
 	gid=newgraph(conn,gdescrip)
 	print "Loading new graph id",gid
 	if len(gdata[0]) >= 4:
-		conn.executemany("INSERT INTO graph_points (graph_id, x_value, x_error, y_value, y_error) VALUES (%s,%s,%s,%s,%s)",[(gid,d[0],d[1],d[2],d[3]) for d in gdata])
+		conn.execute("INSERT INTO graph_points (graph_id, x_value, x_error, y_value, y_error) VALUES " + join(["(%i,%f,%f,%f,%f)"%(gid,d[0],d[1],d[2],d[3]) for d in gdata],','))
 	elif len(gdata[0]) >= 2:
-		conn.executemany("INSERT INTO graph_points (graph_id, x_value, y_value) VALUES (%s,%s,%s)",[(gid,d[0],d[1]) for d in gdata])
+		conn.execute("INSERT INTO graph_points (graph_id, x_value, y_value) VALUES " + join(["(%i,%f,%f)"%(gid,d[0],d[1]) for d in gdata],','))
 	else:
 		print "Bad dimensions for data array!"
 		exit(-1)
@@ -226,9 +227,8 @@ def newPosmap(conn,pinfo):
 # upload posmap points
 def uploadPosmap(conn,pmap):
 	print "Uploading points for",pmap.info
-	cmd = "INSERT INTO posmap_points (posmap_set_id, side, quadrant, pixel_id, center_x, center_y, `signal`, norm) VALUES (%i,'%s',%i,"%(pmap.info.posmap_set_id,pmap.side,pmap.quadrant)
-	for p in pmap.get_pts_sorted():
-		pcmd = cmd+"%i,%g,%g,%g,%g)"%(p.n,p.x,p.y,p.sig,p.norm)
-		print pcmd
-		conn.execute(pcmd)
+	cmd = "INSERT INTO posmap_points (posmap_set_id, side, quadrant, pixel_id, center_x, center_y, `signal`, norm) VALUES "
+	cmd += join(["\n\t(%i,'%s',%i,%i,%g,%g,%g,%g)"%(pmap.info.posmap_set_id,pmap.side,pmap.quadrant, p.n,p.x,p.y,p.sig,p.norm) for p in pmap.get_pts_sorted()],',')
+	print cmd
+	conn.execute(cmd)
 		
