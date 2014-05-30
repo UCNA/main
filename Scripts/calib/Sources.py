@@ -714,13 +714,13 @@ if __name__=="__main__":
 	
 	conn = open_connection() # connection to calibrations DB
 	replace = True		# whether to replace previous calibration data
-	makePlots = True	# whether to output linearity/width/Erecon plots
+	makePlots = False	# whether to output linearity/width/Erecon plots
 	#delete_calibration(conn,9752); exit(0)
 
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2012:
+	for c in cal_2011:
 		
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i"%(c[0],c[1]); continue
 		
@@ -739,7 +739,6 @@ if __name__=="__main__":
 		if len(c) >= 3:
 			SDC.rebase_gms(c[2])
 		
-
 				
 		# fit linearity curves for each PMT
 		calib_OK = True
@@ -780,8 +779,11 @@ if __name__=="__main__":
 		if calib_OK and len(c) >= 6:
 			print "\n --- Uploading calibrations... ---"
 			ecid = makeCalset(conn,c[3],c[4],c[2],c[5],replace)
-			for k in LC.keys():
-				LC[k].dbUpload(conn,ecid)
+			klist = LC.keys()
+			klist.sort()
+			for k in klist:
+				if k[1] < 4:
+					LC[k].dbUpload(conn,ecid)
 
 		print "\nsource replay command:"
 		print "nohup ./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])
