@@ -85,7 +85,7 @@ class DBTransferManager:
 		self.transfer_lines("graph_points","graph_id = %i"%gid, {"graph_id":iid})
 		return iid
 
-	def transfer_posmap(self,pmid):
+	def _transfer_posmap(self,pmid):
 		iid = self.transfer_lines("posmap_set", "posmap_set_id = %i"%pmid)
 		if not iid:
 			print "No such position map!"
@@ -93,11 +93,26 @@ class DBTransferManager:
 		self.transfer_lines("posmap_points", "posmap_set_id = %i"%pmid, {"posmap_set_id":iid})
 		return iid
 
-	def transfer_energy_calibration(self,ecid,pmid):
+	def transfer_posmap(self,pmid):
+		self.connIn.execute("SELECT posmap_set_id,descrip FROM posmap_set WHERE posmap_set_id = %i"%pmid)
+		pm_orig = self.connIn.fetchone()
+		self.connOut.execute("SELECT posmap_set_id FROM posmap_set WHERE descrip = '%s'"%pm_orig[1])
+		pm_new = self.connOut.fetchall()
+		if not pm_new:
+			pm_new = [[self._transfer_posmap(pm_orig[0])]]
+		else:
+			print "Posmap",pm_orig,"already transfered."
+		return pm_new[0][0]
+
+	def transfer_energy_calibration(self,ecid):
+		self.connIn.execute("SELECT posmap_set_id FROM energy_calibration WHERE ecal_id = %i"%ecid)
+		pmid = self.transfer_posmap(self.connIn.fetchone()[0])
 		iid = self.transfer_lines("energy_calibration", "ecal_id = %i"%ecid, {"posmap_set_id":pmid})
 		self.transfer_lines("tube_calibration", "ecal_id = %i"%ecid, {"ecal_id":iid}, subgraphs=["linearity_graph"])
 
-	def transfer_mwpc_ecal(self,ecid,pmid):
+	def transfer_mwpc_ecal(self,ecid):
+		self.connIn.execute("SELECT gain_posmap_id FROM mwpc_ecal WHERE mwpc_ecal_id = %i"%ecid)
+		pmid = self.transfer_posmap(self.connIn.fetchone()[0])
 		return self.transfer_lines("mwpc_ecal", "mwpc_ecal_id = %i"%ecid, {"gain_posmap_id":pmid})
 
 	def transfer_evis_conversion(self,evcid):
@@ -140,17 +155,15 @@ if __name__ == "__main__":
 	connOut = open_connection(db="cal_starter_DB")
 	dbtm = DBTransferManager(connIn, connOut)
 	
-	#delete_all_entries(connOut); exit(0)
+	# delete_all_entries(connOut); exit(0)
 	
 	if 1:
-		pmid = dbtm.transfer_posmap(213)
-		dbtm.transfer_energy_calibration(9726,pmid)
+		dbtm.transfer_energy_calibration(9787)
 		if connOut is not None:
 			connOut.execute("UPDATE energy_calibration SET start_run=13000, end_run=100000")
 		
-		pmid = dbtm.transfer_posmap(181)
-		dbtm.transfer_mwpc_ecal(939,pmid)
-		dbtm.transfer_mwpc_ecal(940,pmid)
+		dbtm.transfer_mwpc_ecal(939)
+		dbtm.transfer_mwpc_ecal(940)
 		
 		for i in range(79,87):
 			dbtm.transfer_evis_conversion(i)
