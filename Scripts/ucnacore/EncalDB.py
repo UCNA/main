@@ -103,6 +103,11 @@ def getRunEndTime(conn,rn):
 		return 0
 	return st[0]
 
+# get table of all run start/end times
+def getRunTimeTable(conn):
+	conn.execute("SELECT run_number,UNIX_TIMESTAMP(start_time),UNIX_TIMESTAMP(end_time) FROM run")
+	return dict([(r[0],(r[1],r[2])) for r in conn.fetchall()])
+
 # get live time from analyzer
 def getRunLiveTime(conn,rn):
 	conn.execute("SELECT live_time FROM analysis WHERE run_number = %i"%rn)
