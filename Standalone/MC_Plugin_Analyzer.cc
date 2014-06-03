@@ -7,6 +7,9 @@
 #include "PositionsPlugin.hh"
 #include "PathUtils.hh"
 #include "BetaDecayAnalyzer.hh"
+#include "GraphicsUtils.hh"
+
+#include <TGraphAsymmErrors.h>
 
 class PosOffsetAnalyzer: public RunAccumulator {
 public:
@@ -15,6 +18,69 @@ public:
 	}
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new PosOffsetAnalyzer(this,nm,inflname); }
 };
+
+/// plugin with extra plots for simulated runs
+class MC_Effic_Plugin: public AnalyzerPlugin {
+public:
+	/// constructor
+	MC_Effic_Plugin(RunAccumulator* RA): AnalyzerPlugin(RA,"MC_Effic"), gEffic(NULL)  {
+		for(unsigned int i=0; i<2; i++) {
+			energyEffic[i] = registerFGBGPair("hEnergyEffic_"+itos(i), "Event Counts", 80, 0, 800, AFP_OTHER, BOTH);
+			energyEffic[i]->setAxisTitle(X_DIRECTION,"energy [keV]");
+			energyEffic[i]->setAxisTitle(Y_DIRECTION,"number of events");
+		}
+	}
+	
+	/// fill from scan data point
+	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight) {
+		Sim2PMT& S2P = dynamic_cast<Sim2PMT&>(PDS);
+		if(S2P.primRadius() > 45) return;
+		energyEffic[false]->h[currentGV]->Fill(S2P.ePrim, weight);
+		if(S2P.fPID == PID_BETA) energyEffic[true]->h[currentGV]->Fill(S2P.ePrim, weight);
+	}
+	
+	/// make combined eloss table
+	virtual void calculateResults() {
+		gEffic = new TGraphAsymmErrors(energyEffic[true]->h[GV_OPEN]->GetNbinsX());
+		gEffic->BayesDivide(energyEffic[true]->h[GV_OPEN], energyEffic[false]->h[GV_OPEN], "w");
+	}
+	/// plot results
+	virtual void makePlots() {
+		
+		myA->defaultCanvas->SetCanvasSize(300,200);
+		myA->defaultCanvas->SetLeftMargin(0.14);
+		myA->defaultCanvas->SetRightMargin(0.04);
+		
+		gEffic->SetMinimum(0.95);
+		gEffic->SetMaximum(1.0);
+		gEffic->Draw("AP");
+		gEffic->SetTitle("Simulated detector efficiency");
+		gEffic->GetXaxis()->SetTitle("beta energy [keV]");
+		gEffic->GetXaxis()->SetLimits(0,782);
+		gEffic->GetYaxis()->SetTitle("detected event fraction");
+		gEffic->GetYaxis()->SetTitleOffset(1.8);
+		
+		gEffic->SetMarkerStyle(33);
+		gEffic->SetMarkerSize(0.5);
+		gEffic->Draw("AP");
+		printCanvas("SimDetEffic");
+		
+		drawHistoPair(energyEffic[true]->h[GV_OPEN],energyEffic[false]->h[GV_OPEN]);
+		printCanvas("SimDetEvts");
+	}
+	
+	fgbgPair* energyEffic[2];		///< detector efficiency as function of primary energy
+	TGraphAsymmErrors* gEffic;		///< extracted efficiency curve
+};
+
+class MC_Effic_Analyzer: public RunAccumulator {
+public:
+	MC_Effic_Analyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName = ""): RunAccumulator(pnt,nm,inflName) {
+		addPlugin(new MC_Effic_Plugin(this));
+	}
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname) { return new MC_Effic_Analyzer(this,nm,inflname); }
+};
+
 
 
 int main(int argc, char *argv[]) {
@@ -37,12 +103,13 @@ int main(int argc, char *argv[]) {
 	std::string anm(argv[1]);
 	if(anm=="beta") RA = new SimBetaDecayAnalyzer(&OM,nm);
 	else if(anm=="posoff") RA = new PosOffsetAnalyzer(&OM,nm);
+	else if(anm=="effic") RA = new  MC_Effic_Analyzer(&OM,nm);
 	
 	if(!RA) {
 		printf("Unknown analyzer selection '%s'!\n", argv[1]);
 		return -1;
 	}
-
+	
 	if(!fileExists(slist)) {
 		// combine prior simulations
 		RA->mergeDir();
@@ -62,10 +129,10 @@ int main(int argc, char *argv[]) {
 		file.close();
 		PMTCalibrator PCal(16000);
 		g2p.setCalibrator(PCal);
-
+		
 		// process data and exit
 		RA->loadSimData(g2p);
-		RA->makeOutput(false);
+		RA->makeOutput(true);
 	}
 	delete RA;
 	return 0;
