@@ -110,7 +110,7 @@ void UCNA_MC_Analyzer::processTrack() {
 	
 	// select appropriate event to fill
 	ucnaDAQEvt* DE = &DE0;
-	if(triggerTimes.size()>2) {
+	if(triggerTimes.size()>2 && !saveAllEvents) {
 		// determine nearest trigger
 		double t = trackinfo->hitTime * 1e-9;
 		std::vector<double>::iterator it = std::lower_bound(triggerTimes.begin(), triggerTimes.end(), t); // first element >= t
@@ -130,7 +130,7 @@ void UCNA_MC_Analyzer::processTrack() {
 			if(!(t0-1e-6 < t && t < t0 + 6e-6)) DE = &DE0;
 		}
 	}
-	if(!saveAllEvents && DE==&DE0) return;
+	if(DE==&DE0 && !saveAllEvents) return;
 	
 	// total deposited energy in all sensitive volumes
 	DE->EdepAll += trackinfo->Edep;
@@ -263,10 +263,9 @@ void UCNA_MC_Analyzer::writeEvent() {
 	if(saveAllEvents) {
 		DE0.calcPositions();
 		anaTree->Fill();
-	}
-	for(unsigned int i=0; i<subEvts.size(); i++) {
-		DE0 = subEvts[i];
-		if(saveAllEvents || DE0.Edep[EAST]+DE0.Edep[WEST] > 0) {
+	} else {
+		for(unsigned int i=0; i<subEvts.size(); i++) {
+			DE0 = subEvts[i];
 			DE0.calcPositions();
 			DE0.subEvt = i+1;
 			anaTree->Fill();
