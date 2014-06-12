@@ -31,7 +31,7 @@ def addQuad(a,b):
 
 class AnalyzerNumberPlotter:
 
-	def __init__(self):
+	def __init__(self, rrange=None):
 		self.datsrc = "MPM_Data"
 		self.simsrc = None # "MPM_Sim"
 		self.grouping = "octet"
@@ -41,6 +41,9 @@ class AnalyzerNumberPlotter:
 		self.gkey = graph.key.key(pos="tl")
 		self.LF = LinearFitter(terms=[polyterm(0)])
 		self.yscale = 1.0
+		if rrange:
+			self.ADBL.rmin = rrange[0]
+			self.ADBL.rmax = rrange[1]
 
 	def init_graph(self, gtitle):
 		self.g = graph.graphxy(width=35,height=12,
@@ -49,15 +52,22 @@ class AnalyzerNumberPlotter:
 				key = self.gkey)
 		setTexrunner(self.g)
 
-	def gather_points(self,src,nm,conn):
+	def gather_points(self,nm,conn,rtimeconn=None):
 		
 		self.ADBL.req["grouping"] = self.grouping
-		self.ADBL.req["source"] = src
+		self.ADBL.req["source"] = self.datsrc
 		self.ADBL.req["name"] = nm
 
-		self.datpts = dict([ ((p.start_run,p.end_run),p) for p in self.ADBL.find(conn) ])
+		self.datpts = dict([ ((p.start_run,p.end_run,n),p) for (n,p) in enumerate(self.ADBL.find(conn)) ])
 		self.datkeys = self.datpts.keys()
 		self.datkeys.sort()
+		
+		if rtimeconn:
+			rtimes = getRunTimeTable(rtimeconn)
+			for k in self.datkeys:
+				self.datpts[k].start_time = rtimes[k[0]][0]
+				self.datpts[k].end_time = rtimes[k[1]][1]
+				self.datpts[k].mid_time = 0.5*(self.datpts[k].start_time + self.datpts[k].end_time)
 		
 		#if self.grouping == "octet":
 		#	for (n,k) in enumerate(self.datkeys):
@@ -65,7 +75,7 @@ class AnalyzerNumberPlotter:
 
 	def plot_data_key(self, nm, conn, gnm=None):
 	
-		self.gather_points(self.datsrc, nm, conn)
+		self.gather_points(nm, conn)
 		self.gdat = [ [n, self.datpts[k].value * self.yscale, self.datpts[k].err * self.yscale] for (n,k) in enumerate(self.datkeys) if self.datpts[k].value is not None]
 		
 		try:
@@ -92,18 +102,14 @@ class AnalyzerNumberPlotter:
 
 #########################
 
-def plot_endpoint_history(grouping = "octet", rmin=None, rmax=None):
+def plot_endpoint_history(ANP):
 	
 	conn = open_anadb_connection()
 	
 	tcols = rainbow(5)
 	
 	for s in ["East","West"]:
-		ANP = AnalyzerNumberPlotter()
-		ANP.ADBL.rmin = rmin
-		ANP.ADBL.rmax = rmax
 		ANP.gkey = graph.key.key(pos="tc", columns=5)
-		ANP.grouping = grouping
 		ANP.init_graph("Beta Endpoint [keV]")
 		
 		for t in range(5):
@@ -121,19 +127,15 @@ def plot_endpoint_history(grouping = "octet", rmin=None, rmax=None):
 					ptitle = "Combined %s"%afp
 				ANP.plot_data_key("kurie_150-635", conn, ptitle)
 		
-		ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2012/Endpts_%s_%s.pdf"%(s,grouping))
+		ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2012/Endpts_%s_%s.pdf"%(s,ANP.grouping))
 
 #########################
 
-def plot_murate_history(grouping = "octet", rmin=None, rmax=None):
+def plot_murate_history(ANP):
 
 	conn = open_anadb_connection()
-	ANP = AnalyzerNumberPlotter()
-	ANP.grouping = grouping
 	ANP.gkey = graph.key.key(pos="tl", columns=2)
 	ANP.yscale = 1000
-	ANP.ADBL.rmin = rmin
-	ANP.ADBL.rmax = rmax
 	ANP.init_graph("tagged muon rate [mHz]")
 	
 	for s in ["East","West"]:
@@ -147,22 +149,55 @@ def plot_murate_history(grouping = "octet", rmin=None, rmax=None):
 			
 			ANP.plot_data_key("mu_rate_ecut", conn, "%s %s: $%%(mu).1f$, RMS %%(rms).1f"%(s,afp))
 			
-	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2012/MuRate_%s.pdf"%(grouping))
+	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2012/MuRate_%s.pdf"%ANP.grouping)
 
 #########################
 
-def plot_raw_asym_history(grouping = "octet", rmin=None, rmax=None):
+def plot_raw_asym_history(ANP):
 
 	conn = open_anadb_connection()
-	ANP = AnalyzerNumberPlotter()
-	ANP.grouping = grouping
-	ANP.ADBL.rmin = rmin
-	ANP.ADBL.rmax = rmax
 	ANP.init_graph("raw counts asymmetry")
 	ANP.plot_data_key("raw_count_asym", conn, "$A_{raw} = %(mu).5f\\pm%(uncert).5f$, $\\chi^2/\\nu = %(chi2).1f/%(ndf)i$ $(p=%(prob).2f)$")
 		
-	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2012/AsymHistory_%s.pdf"%grouping)
+	ANP.g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2012/AsymHistory_%s.pdf"%ANP.grouping)
 
+#########################
+
+def plot_cumulative_counts(ANP):
+
+	aconn = open_anadb_connection()
+	conn = open_connection()
+	
+	timeticks = (2*7*86400, 1*86400)
+	#timeticks = (4*7*86400, 7*86400)
+	myparter = graph.axis.parter.linear(tickdists=timeticks)
+	mytexter = timetexter()
+	mytexter.dateformat=r"$%m/%d$"
+
+	g=graph.graphxy(width=20,height=10,
+				x=graph.axis.lin(title = "date (2010)", parter=myparter,texter=mytexter, min=1286420416.0, max=1291672320.0),
+				y=graph.axis.lin(title = "cumulative counts ($\\times 10^6$)", min=0),
+				key = graph.key.key(pos="tl"))
+	setTexrunner(g)
+
+	lsty = {"On":[style.linestyle.dashed]}
+	
+	for afp in ["Off","On"]:
+		ANP.ADBL.req["afp"] = afp
+		ANP.gather_points("total_evt_counts",aconn,conn)
+		gdat = [[ANP.datpts[k].mid_time, ANP.datpts[k].value/1e6] for k in ANP.datkeys]
+		gdat.sort()
+		for n in range(1,len(gdat)):
+			if gdat[n][1]:
+				gdat[n][1] += gdat[n-1][1]
+			else:
+				gdat[n][1] = gdat[n-1][1]
+		#gdat = [gdat[n] for n in range(1,len(gdat)) if gdat[n][0] != gdat[n-1][0] ]
+		print gdat[0][0]-86400, gdat[-1][0]+86400
+			
+		g.plot(graph.data.points(gdat,x=1,y=2,title = "Spin flipper %s ($%.1f \cdot 10^6$ counts)"%(afp,gdat[-1][1])), [graph.style.line([style.linewidth.Thick]+lsty.get(afp,[]))])
+	
+	g.writetofile(os.environ["UCNA_ANA_PLOTS"]+"/Asym_2010/CumEventCounts.pdf")
 
 
 #########################
@@ -639,11 +674,31 @@ def backscatterFracTable(simV = "OctetAsym_Offic_SimMagF"):
 
 if __name__=="__main__":
 	
+	
+	
+	if 1:
+		rrange = (0,16300)
+		#rrange = (16500,20000)
+		ANP = AnalyzerNumberPlotter(rrange)
+		ANP.grouping = "ppair"
+		plot_cumulative_counts(ANP)
+		exit(0)
+	
 	rrange = (20000,100000)
 	for grouping in ["ppair","octet","quartet"]:
-		plot_murate_history(grouping, rrange[0], rrange[1])
-		plot_raw_asym_history(grouping, rrange[0], rrange[1])
-		plot_endpoint_history(grouping, rrange[0], rrange[1])
+		
+		ANP = AnalyzerNumberPlotter(rrange)
+		ANP.grouping = grouping
+		plot_murate_history(ANP)
+		
+		ANP = AnalyzerNumberPlotter(rrange)
+		ANP.grouping = grouping
+		plot_raw_asym_history(ANP)
+		
+		ANP = AnalyzerNumberPlotter(rrange)
+		ANP.grouping = grouping
+		plot_endpoint_history(ANP)
+
 	exit(0)
 	
 

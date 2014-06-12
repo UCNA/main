@@ -92,14 +92,20 @@ def gather_sourcedat(conn,rlist):
 	print "Located",len(srcs),"sources."
 	return srcs
 
-def get_source_lines(conn,src,xquery=""):
-	"""Get source peaks measured for source."""
-	#                    0    1    2        3         4   5    6        7      8       9           10           11  12  13
-	conn.execute("SELECT side,tube,peak_num,peak_data,adc,dadc,adcwidth,erecon,derecon,ereconwidth,dereconwidth,eta,gms,nPE FROM sourcepeaks WHERE source_id = %i %s"%(src.sID,xquery))
+def get_source_lines(conn, srclist, xquery=""):
+	"""Get source peaks measured for sources in list."""
+	
+	sdict = dict([(s.sID,s) for s in srclist])
+	
+	#             0    1    2        3         4   5    6        7      8       9           10           11  12  13  14
+	cmd = "SELECT side,tube,peak_num,peak_data,adc,dadc,adcwidth,erecon,derecon,ereconwidth,dereconwidth,eta,gms,nPE,source_id FROM sourcepeaks WHERE source_id IN ("
+	cmd += join(["%i"%s for s in sdict.keys()],',') + ") %s"%xquery
+	conn.execute(cmd)
+	
 	slines = []
 	for r in conn.fetchall():
 		sline = SourceLine()
-		sline.src = src
+		sline.src = sdict[r[14]]
 		sline.side = r[0]
 		sline.tube = r[1]
 		sline.type = r[2]
@@ -124,6 +130,7 @@ def get_source_lines(conn,src,xquery=""):
 
 		sline.uid = (sline.src.sID,sline.side,sline.tube,sline.type)
 		slines.append(sline)
+
 	return slines
 
 def sort_by_type(slines):
@@ -143,10 +150,7 @@ class SourceDataCollector:
 		
 		# load all lines
 		self.srcs = gather_sourcedat(self.conn,rlist)
-		
-		self.alllines = []
-		for src in self.srcs:
-			self.alllines += get_source_lines(self.conn, src, xquery)
+		self.alllines = get_source_lines(self.conn, self.srcs, xquery)
 
 		# filter out blatantly crazy fits
 		self.slines = [l for l in self.alllines if 10 < l.erecon < 2000 and 5 < l.enwidth < 1000 and 0 < l.denwidth]
@@ -613,8 +617,11 @@ def plotSourcePositions(conn,rlist):
 def backscatterEnergy(conn, rlist):
 
 	rlist.sort()
-	slines = gather_peakdat(conn, rlist, "AND peak_num > 100 AND tube=4")
-	slines0 = gather_peakdat(conn, rlist, "AND peak_num < 100 AND tube=4")
+	SDC = SourceDataCollector(conn)
+	SDC.gather_peakdat(rlist, "AND peak_num > 100 AND tube=4")
+	slines = SDC.slines
+	SDC.gather_peakdat(rlist, "AND peak_num < 100 AND tube=4")
+	slines0 = SDC.slines
 	
 	# connect Type I to Type 0 lines
 	tp0s = dict([(l.uid,l) for l in slines0])
@@ -707,13 +714,13 @@ if __name__=="__main__":
 	
 	conn = open_connection() # connection to calibrations DB
 	replace = True		# whether to replace previous calibration data
-	makePlots = True	# whether to output linearity/width/Erecon plots
+	makePlots = False	# whether to output linearity/width/Erecon plots
 	#delete_calibration(conn,9752); exit(0)
 
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	
-	for c in cal_2012[1:2]:
+	for c in cal_2011:
 		
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i"%(c[0],c[1]); continue
 		
@@ -732,7 +739,6 @@ if __name__=="__main__":
 		if len(c) >= 3:
 			SDC.rebase_gms(c[2])
 		
-
 				
 		# fit linearity curves for each PMT
 		calib_OK = True
@@ -773,8 +779,11 @@ if __name__=="__main__":
 		if calib_OK and len(c) >= 6:
 			print "\n --- Uploading calibrations... ---"
 			ecid = makeCalset(conn,c[3],c[4],c[2],c[5],replace)
-			for k in LC.keys():
-				LC[k].dbUpload(conn,ecid)
+			klist = LC.keys()
+			klist.sort()
+			for k in klist:
+				if k[1] < 4:
+					LC[k].dbUpload(conn,ecid)
 
 		print "\nsource replay command:"
 		print "nohup ./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])

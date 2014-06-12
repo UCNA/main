@@ -395,8 +395,7 @@ std::vector<RunNum> CalDBSQL::findRuns(const std::string& whereConditions, RunNu
 	std::string qrstr = "SELECT run_number FROM run WHERE run_number >= "+itos(r0)+" AND run_number <= "+itos(r1);
 	if(whereConditions.size()) qrstr += " AND " + whereConditions;
 	qrstr += " ORDER BY run_number ASC";
-	sprintf(query,"%s",qrstr.c_str());
-	Query();
+	Query(qrstr.c_str());
 	std::vector<RunNum> v;
 	if(!res)
 		return v;
@@ -634,14 +633,21 @@ unsigned int CalDBSQL::uploadGraph(const std::string& description, std::vector<d
 	if(!(x.size()==y.size()||!x.size()))
 		throw(SMExcept("dimensionMismatch"));
 	unsigned int gid = newGraph(description);
-	for(unsigned int i=0; i<y.size(); i++) {
-		double pdx = dx.size()>i?dx[i]:0;
-		double pdy = dy.size()>i?dy[i]:0;
-		double xi = x.size()==y.size()?x[i]:i;
-		sprintf(query,"INSERT INTO graph_points (graph_id, x_value, y_value, x_error, y_error) VALUES (%i,%f,%f,%f,%f)",gid,xi,y[i],pdx,pdy);
-		execute();
+	if(!y.size()) {
+		printf("Uploaded graph '%s' to %i with no points.\n",description.c_str(),gid);
+	} else {
+		std::string q = "INSERT INTO graph_points (graph_id, x_value, y_value, x_error, y_error) VALUES ";
+		for(unsigned int i=0; i<y.size(); i++) {
+			double pdx = dx.size()>i?dx[i]:0;
+			double pdy = dy.size()>i?dy[i]:0;
+			double xi = x.size()==y.size()?x[i]:i;
+			if(i) q += ", ";
+			sprintf(query,"(%i,%f,%f,%f,%f)",gid,xi,y[i],pdx,pdy);
+			q += query;
+		}
+		execute(q.c_str());
+		printf("Uploaded graph '%s' to %i (%i points)\n",description.c_str(),gid,(int)y.size());
 	}
-	printf("Uploaded graph '%s' to %i (%i points)\n",description.c_str(),gid,(int)y.size());
 	return gid;
 }
 

@@ -56,7 +56,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 	// fit pedestals, save results
 	for(Side s = EAST; s <= WEST; ++s) {
 		for(unsigned int t=0; t<nBetaTubes; t++)
-			monitorPedestal(pmtPeds[s][t],pmtTimes[s],PCal.sensorNames[s][t],50);
+			monitorPedestal(pmtPeds[s][t],pmtTimes[s],PCal.sensorNames[s][t],50,true);
 		for(AxisDirection p = X_DIRECTION; p <= Y_DIRECTION; ++p)
 			for(unsigned int c=0; c<cathNames[s][p].size(); c++)
 				monitorPedestal(cathPeds[s][p][c],mwpcTimes[s],cathNames[s][p][c],150);
@@ -68,7 +68,7 @@ void ucnaDataAnalyzer11b::pedestalPrePass() {
 }
 
 void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const std::vector<float>& vtime,
-										  const std::string& mon_name, double graphWidth, float tmin, unsigned int cmin, bool isPed) {
+										  const std::string& mon_name, double graphWidth, bool printPlot, float tmin, unsigned int cmin, bool isPed) {
 	
 	printf("Monitoring data '%s'\n",mon_name.c_str());
 	// collect data
@@ -146,24 +146,27 @@ void ucnaDataAnalyzer11b::monitorPedestal(const std::vector<float>& vdata, const
 		tg->SetPoint(1,p->GetBinCenter(1)+10.0,centers[0]);
 		tgw->SetPoint(1,p->GetBinCenter(1)+10.0,sigmas[0]);
 	}
-	printf("\tMaking plots...\n");
-	if(isPed) {
-		drawSimulHistos(hToPlot);
-		for(unsigned int i=0; i<ndivs; i++) {
-			drawVLine(centers[i],defaultCanvas,2);
-			drawVLine(centers[i]+sigmas[i],defaultCanvas,4);
-			drawVLine(centers[i]-sigmas[i],defaultCanvas,4);		
+	
+	if(printPlot) {
+		printf("\tMaking plots...\n");
+		if(isPed) {
+			drawSimulHistos(hToPlot);
+			for(unsigned int i=0; i<ndivs; i++) {
+				drawVLine(centers[i],defaultCanvas,2);
+				drawVLine(centers[i]+sigmas[i],defaultCanvas,4);
+				drawVLine(centers[i]-sigmas[i],defaultCanvas,4);		
+			}
+			printCanvas("Pedestals/"+mon_name);
+		} else {
+			tg->Draw("AP");
+			tg->SetTitle(mon_name.c_str());
+			tg->GetXaxis()->SetTitle("Time [s]");
+			tg->GetYaxis()->SetTitle("Value");
+			tg->Draw("ALP");
+			tgw->SetLineColor(2);
+			tgw->Draw("LP");
+			printCanvas("Pedestals/"+mon_name);
 		}
-		printCanvas("Pedestals/"+mon_name);
-	} else {
-		tg->Draw("AP");
-		tg->SetTitle(mon_name.c_str());
-		tg->GetXaxis()->SetTitle("Time [s]");
-		tg->GetYaxis()->SetTitle("Value");
-		tg->Draw("ALP");
-		tgw->SetLineColor(2);
-		tgw->Draw("LP");
-		printCanvas("Pedestals/"+mon_name);
 	}
 	
 	// load pedestals graph into memory

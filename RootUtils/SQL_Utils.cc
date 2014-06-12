@@ -32,28 +32,37 @@ SQLHelper::SQLHelper(const std::string& dbnm,
 	throw(e);
 }
 
-void SQLHelper::execute() {
+void SQLHelper::execute(const char* q) {
 	if(res) delete(res);
 	res = NULL;
-	if(!db->Exec(query)) {
+	if(!q) q=query;
+	if(!db->Exec(q)) {
 		SMExcept e("DBExecFail");
-		e.insert("query",query);
+		e.insert("query",q);
 		throw(e);
 	}
 }
 
-void SQLHelper::Query() { 
+void SQLHelper::Query(const char* q) {
 	if(!db) {
 		res = NULL;
 	} else {
 		if(res) delete(res);
-		res = db->Query(query);
+		if(!q) q=query;
+		res = db->Query(q);
 		if(db->GetErrorCode()) {
 			SMExcept e("DBQueryFail");
-			e.insert("query",query);
+			e.insert("query",q);
 			throw(e);
 		}
 	}
+}
+
+TSQLRow* SQLHelper::getFirst(const char* q) {
+	Query(q);
+	if(!res)
+		return NULL;
+	return res->Next();
 }
 
 std::string SQLHelper::fieldAsString(TSQLRow* row, unsigned int fieldnum, const std::string& dflt) {
@@ -100,13 +109,6 @@ void SQLHelper::printResult() {
 			printf("%s:\t%s\n",res->GetFieldName(i),fieldAsString(row,i,"NULL").c_str());
 		delete(row);
 	}		
-}
-
-TSQLRow* SQLHelper::getFirst() {
-	Query();
-	if(!res)
-		return NULL;
-	return res->Next();
 }
 
 std::string sm2insert(const Stringmap& m) {

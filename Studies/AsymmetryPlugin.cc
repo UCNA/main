@@ -194,8 +194,8 @@ void AsymmetryPlugin::calculateResults() {
 	// counts and counts asymmetries
 	//------------------------------
 	
-	double emin = 230;
-	double emax = 660;
+	double emin = 220;
+	double emax = 670;
 	
 	AnaNumber ANr("asym_energy_window"); // energy window used for asymmetries/counts
 	ANr.value = emin;	// lower bound
@@ -246,6 +246,11 @@ void AsymmetryPlugin::calculateResults() {
 					Double_t ierr;
 					double gvscale = gv==GV_OPEN? 1.0 : myA->totalTime[afp][GV_OPEN][BOTH]/myA->totalTime[afp][GV_CLOSED][BOTH];
 					ANc.value = h->IntegralAndError(b0,b1,ierr)*gvscale;	// number of events (time-scaled for background)
+					ANc.err = ierr*gvscale;									// uncertainty on event count
+					myA->uploadAnaNumber(ANc, gv, afp);
+					
+					ANc.name = "total_evt_counts";
+					ANc.value = h->IntegralAndError(-1,-1,ierr)*gvscale;	// number of events (time-scaled for background)
 					ANc.err = ierr*gvscale;									// uncertainty on event count
 					myA->uploadAnaNumber(ANc, gv, afp);
 				}
