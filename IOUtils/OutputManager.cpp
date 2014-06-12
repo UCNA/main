@@ -1,6 +1,7 @@
 #include "OutputManager.hh"
 #include "PathUtils.hh"
 #include <TH1.h>
+#include <iostream>
 
 bool OutputManager::squelchAllPrinting = false;
 
@@ -16,6 +17,7 @@ parent(NULL), writeRootOnDestruct(false) {
 	
 	basePath = plotPath = dataPath = rootPath = bp;
 	setName(nm);
+	printf("made through OutputManager initialization");
 }
 
 OutputManager::OutputManager(std::string nm, OutputManager* pnt):

@@ -36,7 +36,7 @@ class GeantSimManager:
 		
 		self.settings["vis_cmd"] = ""
 		
-		self.g4_out_dir_base = None
+		self.g4_out_dir_base = "/extern/mabrow05/ucna/geant4work/SrcSims"
 		
 		self.anagroup = 10 # number of files to group together for final analyzer result
 				
@@ -115,7 +115,8 @@ class GeantSimManager:
 		self.g4_bindir = os.environ["G4BINDIR"]
 		self.g4_evtsdir = os.environ["G4EVTDIR"]+"/"+self.settings["evtsrc"]
 		
-		self.type_dir = self.settings["simName"]+"_"+self.settings["evtsrc_name"]
+		#self.type_dir = self.settings["simName"]+"_"+self.settings["evtsrc_name"]
+		self.type_dir = self.settings["evtsrc_name"]
 		if "gunenergy" in self.settings:
 			self.type_dir += "_%.1fkeV"%self.settings["gunenergy"]
 		
@@ -375,13 +376,16 @@ if False:
 	####################
 	if 1:
 		start = time.time()
-		for g in [ "Xe135_3-2+" ]:
-			sourceSim = GeantSimManager("time_test_MPM7",geometry="2012/2013", vacuum="1.e-3 torr")
+		for g in [ "Xe135_3-2+","Xe133_3-2+",
+				"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
+				"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+" ]:
+			sourceSim = GeantSimManager("reanalyze",geometry="2011/2012", vacuum="1.e-3 torr")
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 			sourceSim.settings["ana_args"] += " saveall"
+			sourceSim.settings["ana_args"] += " cathodes"
 			sourceSim.settings["physlist"]="livermore"
-			sourceSim.set_evtsrc(g+"_g_n")
-			sourceSim.launch_sims(maxIn=50000000, hours_old=0)
+			sourceSim.set_evtsrc(g)
+			#sourceSim.launch_sims(maxIn=50000000, hours_old=0)
 			sourceSim.launch_postanalyzer()
 		Time = time.time()-start
 		print time.time()-start

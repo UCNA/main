@@ -36,7 +36,7 @@ class GeantSimManager:
 		
 		self.settings["vis_cmd"] = ""
 		
-		self.g4_out_dir_base = None
+		self.g4_out_dir_base = None #"/extern/mabrow05/ucna/geant4work/SrcSims"
 		
 		self.anagroup = 10 # number of files to group together for final analyzer result
 				
@@ -115,7 +115,8 @@ class GeantSimManager:
 		self.g4_bindir = os.environ["G4BINDIR"]
 		self.g4_evtsdir = os.environ["G4EVTDIR"]+"/"+self.settings["evtsrc"]
 		
-		self.type_dir = self.settings["simName"]+"_"+self.settings["evtsrc_name"]
+		self.type_dir = self.settings["simName"]+"_"+self.settings["evtsrc"]
+		#self.type_dir = self.settings["evtsrc_name"]
 		if "gunenergy" in self.settings:
 			self.type_dir += "_%.1fkeV"%self.settings["gunenergy"]
 		
@@ -179,7 +180,7 @@ class GeantSimManager:
 			# generate macro file
 			open(os.path.expanduser("%s/geantgen_%i.mac"%(self.g4_macro_dir,self.settings["run_num"])),"w").write(open("GeantGenMacroTemplate.mac","r").read()%self.settings)
 			# single job execution command, appended to batch job file
-			onejob = ucnG4_prod + " %s/geantgen_%i.mac > log.txt"%(self.g4_macro_dir,self.settings["run_num"])
+			onejob = ucnG4_prod + " %s/geantgen_%i.mac"%(self.g4_macro_dir,self.settings["run_num"])
 			jobsout.write(onejob+" > %s 2>&1\n"%self.settings["joblog"])
 		
 		jobsout.close()
@@ -304,7 +305,7 @@ if True:
 	####################
 	
 	# unpolarized beta baseline: 5e7 in 520 clusters
-	if 1:
+	if 0:
 		start = time.time()
 		betaSim = GeantSimManager("2012-2013geo_test", geometry="2012/2013")
 		betaSim.settings["physlist"]="livermore"
@@ -378,15 +379,16 @@ if True:
 	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
 	# 3M for most; do lots more for important Xe135_3-2+
 	####################
-	if 0:
+	if 1:
 		start = time.time()
 		for g in [ "Xe135_3-2+" ]:
-			sourceSim = GeantSimManager("time_test_MPM7",geometry="2012/2013", vacuum="1.e-3 torr")
+			sourceSim = GeantSimManager("2011-2012geo",geometry="2011/2012", vacuum="1.e-3 torr")
 			sourceSim.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
 			sourceSim.settings["ana_args"] += " saveall"
+			#sourceSim.settings["ana_args"] += " cathodes"
 			sourceSim.settings["physlist"]="livermore"
-			sourceSim.set_evtsrc(g+"_g_n")
-			sourceSim.launch_sims(maxIn=50000000, hours_old=0)
+			sourceSim.set_evtsrc(g)
+			#sourceSim.launch_sims(maxIn=1, hours_old=0)
 			sourceSim.launch_postanalyzer()
 		Time = time.time()-start
 		print time.time()-start
