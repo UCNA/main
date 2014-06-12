@@ -33,13 +33,13 @@ public:
 	
 	bool isNullResult;	///< whether field query returned NULL
 	
-	char query[9182];			///< buffer space for SQL query strings
+	char query[9182];	///< buffer space for SQL query strings
 	/// execute a non-info-returning query
-	void execute();
+	void execute(const char* q = NULL);
 	
 protected:
 	/// use current query string, return first row
-	TSQLRow* getFirst();
+	TSQLRow* getFirst(const char* q = NULL);
 	/// get field as string (with default for NULL)
 	std::string fieldAsString(TSQLRow* row, unsigned int fieldnum=0, const std::string& dflt = "");	
 	/// get field as integer (with default for NULL)
@@ -55,7 +55,7 @@ protected:
 	bool checkTable(const std::string& tname) { return db && db->HasTable(tname.c_str()); }
 	
 	/// execute an info-returning query
-	void Query();
+	void Query(const char* q = NULL);
 
 protected:	
 	TSQLServer* db;				///< DB server connection

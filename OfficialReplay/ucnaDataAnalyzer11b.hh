@@ -82,7 +82,8 @@ protected:
 	void pedestalPrePass();
 	/// fit pedestals
 	void monitorPedestal(const std::vector<float>& vdata, const std::vector<float>& vtime,
-						 const std::string& mon_name, double graphWidth, float tmin=60., unsigned int cmin=3000, bool isPed=true);
+						 const std::string& mon_name, double graphWidth,
+						 bool printPlot = false, float tmin=60., unsigned int cmin=3000, bool isPed=true);
 	
 	/*--- event processing loop ---*/
 	/// process current event raw->phys
