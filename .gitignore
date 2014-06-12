@@ -1,3 +1,9 @@
 *.o
 ucnG4_dev-build/
 *~
+*.pyc
+Scripts/launchers/log.txt
+UCNAnalyzer
+libUCNA.a
+*#
+OfficialReplay/ucnaDataAnalyzer11b
