@@ -26,7 +26,7 @@ class GeantSimManager:
 		if fmap:
 			self.settings["fieldmapcmd"] = "/field/mapfile "+fmap
 		#self.settings["ana_args"] = "undead cathodes"
-		self.settings["ana_args"] = "cathodes"
+		self.settings["ana_args"] = "cathodes saveall"
 		
 		self.settings["extra_cmds"] = ""
 		self.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
@@ -36,7 +36,7 @@ class GeantSimManager:
 		
 		self.settings["vis_cmd"] = ""
 		
-		self.g4_out_dir_base = "/extern/mabrow05/ucna/geant4work/SrcSims"
+		self.g4_out_dir_base = None
 		
 		self.anagroup = 10 # number of files to group together for final analyzer result
 				
@@ -115,8 +115,8 @@ class GeantSimManager:
 		self.g4_bindir = os.environ["G4BINDIR"]
 		self.g4_evtsdir = os.environ["G4EVTDIR"]+"/"+self.settings["evtsrc"]
 		
-		#self.type_dir = self.settings["simName"]+"_"+self.settings["evtsrc_name"]
-		self.type_dir = self.settings["evtsrc_name"]
+		self.type_dir = self.settings["simName"]+"_"+self.settings["evtsrc_name"]
+		#self.type_dir = self.settings["evtsrc_name"]
 		if "gunenergy" in self.settings:
 			self.type_dir += "_%.1fkeV"%self.settings["gunenergy"]
 		
@@ -188,7 +188,7 @@ class GeantSimManager:
 		print "Running simulation jobs..."
 		os.system("cat "+parallel_jobfile)
 		if nruns > 1:
-			os.system("nice -n 20 parallel -P 6 < %s"%parallel_jobfile)
+			os.system("nice -n 20 parallel -P 8 < %s"%parallel_jobfile)
 		else:
 			os.system(onejob)
 		os.system("rm "+parallel_jobfile)
@@ -222,7 +222,7 @@ class GeantSimManager:
 		print "\n----- %s ------"%resim_jobfile
 		os.system("cat "+resim_jobfile)
 		print
-		os.system("nice -n 10 parallel -P 4 < %s"%resim_jobfile)
+		os.system("nice -n 10 parallel -P 8 < %s"%resim_jobfile)
 		os.system("rm %s/outlist_*.txt"%self.g4_out_dir)
 		os.system("rm "+resim_jobfile)
 
@@ -284,7 +284,7 @@ if __name__ == "__main__":
 				os.system("../../MC_EventGen run %s %s g n 10000 1000 x"%(g,os.environ["G4EVTDIR"]))
 
 		for g in XeIsots:
-			sourceSim = GeantSimManager("thinfoil", geometry="thinFoil")
+			sourceSim = GeantSimManager("NEW_2011-2012", geometry="2011/2012")
 			sourceSim.set_evtsrc(g)
 			if options.sim:
 				maxIn = {"Xe135_3-2+": 300}.get(g,100)
