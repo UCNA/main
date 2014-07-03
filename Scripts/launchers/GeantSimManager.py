@@ -25,8 +25,8 @@ class GeantSimManager:
 		self.settings["fieldmapcmd"] = "#/field/mapfile UNUSED"
 		if fmap:
 			self.settings["fieldmapcmd"] = "/field/mapfile "+fmap
-		#self.settings["ana_args"] = "undead cathodes"
-		self.settings["ana_args"] = "cathodes saveall"
+		self.settings["ana_args"] = "undead cathodes"
+		#self.settings["ana_args"] = "cathodes saveall"
 		
 		self.settings["extra_cmds"] = ""
 		self.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
@@ -257,9 +257,8 @@ if __name__ == "__main__":
 				os.system("../../MC_EventGen run %s %s o n 10000 100 x"%(g,os.environ["G4EVTDIR"]))
 
 		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W"]: #,"Cd113m"]:
-			sourceSim = GeantSimManager("thinfoil",
-										fmap="/home/mmendenhall/UCNA/Aux/Fieldmap_20101028_b.txt", # sources simulatable with full field map
-										geometry="thinFoil")
+			sourceSim = GeantSimManager("2011-2012",
+										geometry="2011/2012")
 			sourceSim.settings["sourceScan"] = 80.	# move source holder across detector by 80mm
 			sourceSim.set_evtsrc(g)
 			if options.sim:
@@ -274,8 +273,9 @@ if __name__ == "__main__":
 	# Xenon (Xe135_3-2+ is 915keV beta endpoint; simulate extra events)
 	####################
 	XeIsots =  [	"Xe135_3-2+","Xe133_3-2+",
-					"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
-					"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+" ]
+			#		"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
+			#		"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"
+			                                                                      ]
 	if options.xesrcs:
 		
 		if options.evtgen:

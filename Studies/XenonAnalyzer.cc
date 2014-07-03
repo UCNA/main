@@ -305,12 +305,18 @@ std::string simulate_one_xenon(RunNum r, unsigned int nRings, bool forceResim) {
 		isotsIn.push_back("Xe133_11-2-");
 		isotsIn.push_back("Xe135_3-2+");
 		
+		//isotsSkip.push_back("Xe125_1-2+");
+		//isotsSkip.push_back("Xe129_11-2-");
+		//isotsSkip.push_back("Xe131_11-2-");
+		//isotsSkip.push_back("Xe133_3-2+");
+		//isotsSkip.push_back("Xe133_11-2-");
+		
 		// runs promptly after activation with 15.3min HL bump
-		if(	(14264 <= r && r <= 14273)
+		if(	((14264 <= r && r <= 14273)
 			|| (15991 <= r && r <= 16010)
 			|| (17561 <= r && r <= 17566)
 			|| (18081 <= r && r <= 18086)
-			|| (19873 <= r && r <= 19878) )
+				  || (19873 <= r && r <= 19878)) )
 			isotsIn.push_back("Xe135_11-2-");
 		else
 			isotsSkip.push_back("Xe135_11-2-");
