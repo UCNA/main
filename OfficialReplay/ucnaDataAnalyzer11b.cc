@@ -301,7 +301,7 @@ bool ucnaDataAnalyzer11b::processEvent() {
 	for(Side s = EAST; s <= WEST; ++s)
 		PCal.pedSubtract(s, sevt[s].adc, fTimeScaler[BOTH]);
 	fillEarlyHistograms();
-	
+
 	// LED tree events
 	if(isLED() && TLED) {
 		reconstructPosition();
@@ -317,6 +317,7 @@ bool ucnaDataAnalyzer11b::processEvent() {
 		classifyEvent();
 		reconstructTrueEnergy();
 		fillHistograms();
+		if (fPID==PID_BETA) fillRawPMTHistograms();
 	}
 	
 	// load data for next point for Delt0 window look-ahead capability; overwrites r_* variables after this point

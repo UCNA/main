@@ -1,0 +1,3 @@
+// Quick script to fit bi calibration source peak to a gaussian
+
+int main (int argc, char **argv)

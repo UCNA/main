@@ -3,7 +3,7 @@
 float_err kuriePlotter(TH1* spectrum, float endpoint, TGraphErrors** tgout, float targetEP, float fitStart, float fitEnd) {
 	
 	smassert(spectrum);
-	printf("Endpoint %.3f (%i points)\n",endpoint,spectrum->GetNbinsX());
+	//	printf("Endpoint %.3f (%i points)\n",endpoint,spectrum->GetNbinsX());
 	fflush(stdout);
 	
 	// set up parameters
@@ -130,10 +130,17 @@ float_err kurieIterator(TH1* spectrum, float iguess, TGraphErrors** tgout, float
 		printf("\n********** Warning: FAILED CONVERGENCE **************\n\n");
 	if(newGuess.x) {
 		float_err finalAnswer = 0.5*(newGuess+kuriePlotter(spectrum,newGuess.x,tgout,targetEP,fitStart,fitEnd));
-		printf("----------------> %.3f +/- %.3f\n",finalAnswer.x,finalAnswer.err);
+		//		printf("----------------> %.3f +/- %.3f\n",finalAnswer.x,finalAnswer.err);
+
+		// SS 07/08/2014
+		//		TCanvas * c1 = new TCanvas("c1");
+		//TGraphErrors tgmine = **tgout;
+		//tgmine.Draw("A*");
+		///c1->SaveAs("hi.png");
+		////
 		return finalAnswer;
 	}
-	
+
 	return float_err(0,0);		
 }
 

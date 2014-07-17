@@ -1,0 +1,122 @@
+#!/bin/bash
+
+
+CMD_LOG_FILE=command-list-file.log
+CLUSTER_LIST_FILE=cluster-list
+IMAGES_DIR=/data4/saslutsky/PulserComp/images_06_09_2014
+OUTPUT_NAME=allruns
+
+
+# remove old command list and start a new one
+touch $CMD_LOG_FILE
+#rm $CMD_LOG_FILE
+
+
+# check that we have a filename argument
+if [ $# -ne 1 ]
+then
+	echo "Usage: `basename $0` <runlog filename>"
+	echo "Runlog file line entries should be in the format:"
+	echo "*<run number> <run type>"
+	echo "for example:"
+	echo "*23139 A2"
+	exit 1
+fi
+
+
+# let make an empty directory in which to store our results
+if [ -f $IMAGES_DIR ]
+then
+	rm $IMAGES_DIR/*.gif
+	rm $IMAGES_DIR/*.pdf
+else
+	mkdir $IMAGES_DIR
+fi
+
+
+# define our run types
+beta_types=("A2" "A5" "A7" "A10" "B2" "B5" "B7" "B10")
+#beta_types=("A1" "A2" "A3" "A4" "A5" "A6" "A7" "A8" "A9" "A10" "A11" "A12" "B1" "B2" "B3" "B4" "B5" "B6" "B7" "B8" "B9" "B10" "B11" "B12" "SourcesCal" "Xe")
+
+
+# test: can be removed
+#while read line
+#do
+#	for run_type in "${beta_types[@]}"
+#	do
+#		if [[ $line =~ '*'.*$run_type.* ]]
+#		then
+#			echo $line
+#		fi
+#	done 
+#done < $1
+
+
+# read lines from first input argument
+while read line
+do
+	for run_type in "${beta_types[@]}"
+	do
+		if [[ $line =~ '*'.*$run_type.* ]]
+		then
+		    	echo $line
+			# turn on extended globbing
+			shopt -s extglob
+
+			# parse the run log file 
+			staredline=${line%%$run_type}
+			staredline=${staredline%%*([[:space:]])}
+			run_number=${staredline:1}
+			run_filename=$UCNADATADIR/full$run_number.root
+
+			# test if the file is actually there
+			if [[ -r $run_filename ]]
+			then
+				echo "Analyzing run $run_number ($run_type) in file $run_filename..."
+				echo "./pd_led_pmt_analysis $run_number" >> $CMD_LOG_FILE
+			else
+				echo "Skipping run $run_number. Can't find $run_filename..."
+			fi
+		fi
+	done
+done < $1
+
+
+# run with parallel if possible
+if [[ -x `which parallel` ]]
+then
+	# test to see if there is a file that tells us where other computers are
+	if [ -f $CLUSTER_LIST_FILE ]
+	then
+		echo "Found cluster file."
+		nice -n10 parallel --sshloginfile $CLUSTER_LIST_FILE < $CMD_LOG_FILE
+	else
+		echo "Could not find cluster file. Running on local machine only."
+		echo "See parallel documentation on how to set up other computers with parallel."
+		nice -n10 parallel < $CMD_LOG_FILE
+	fi
+else
+	echo "Can't find the program parallel. You probably have to install it."
+	exit 1
+fi
+
+
+
+# merge all the generated gifs into one pdf so they can be viewed quickly
+if [[ -x `which convert` ]]
+then
+    echo "Converting gifs to pdfs."
+    for f in $IMAGES_DIR/*.gif
+    do
+#	convert ./"$f" ./"${f%.gif}.pdf"
+	convert "$f" "${f%.gif}.pdf"
+    done
+    echo "Composing into one big pdf."
+    gs -q -sPAPERSIZE=letter -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$IMAGES_DIR/$OUTPUT_NAME.pdf `ls $IMAGES_DIR/*.pdf`
+else
+    echo "Can't find the program convert. You probably have to install it."
+    exit 1
+fi
+
+
+echo "Done!"

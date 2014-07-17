@@ -1,0 +1,16 @@
+Trying to pick out runs where analysis ID is same in both 
+
+mysql> SELECT start_run, n, value, err FROM analysis_runset, analysis_numbers WHERE analysis_runset.analysis_runset_id = analysis_numbers.analysis_runset_id AND analysis_numbers.name = "kurie_150-635" AND start_run =23113 AND end_run =23113;
+
+SELECT analysis_runset.analysis_runset_id, gate_valve, afp, start_run, side, n, value, err FROM analysis_runset, analysis_numbers WHERE analysis_runset.analysis_runset_id = analysis_numbers.analysis_runset_id AND analysis_numbers.name = "kurie_150-635" AND start_run =23113;
+
+ SELECT analysis_runset.analysis_runset_id, gate_valve, afp, start_run, side, n, value, err FROM analysis_runset, analysis_numbers WHERE analysis_runset.analysis_runset_id = analysis_numbers.analysis_runset_id AND analysis_numbers.name = "kurie_150-635" AND grouping='run'; 
+
+All runs in “Kurie Plot” DB are grouped by octects, etc.  
+SELECT start_run, end_run, grouping from analysis_runset, analysis_numbers WHERE analysis_runset.analysis_runset_id  = analysis_numbers.analysis_runset_id AND name = 'kurie_150-635';
+
+Gate valve is always open for octets
+ SELECT analysis_runset.analysis_runset_id, afp, start_run, side, n, value, err FROM analysis_runset, analysis_numbers WHERE analysis_runset.analysis_runset_id = analysis_numbers.analysis_runset_id AND analysis_numbers.name = "kurie_150-635" AND grouping='octet';
+
+Create a query and dump to tmp file
+SELECT analysis_runset.analysis_runset_id, afp, start_run, side, n, value, err FROM analysis_runset, analysis_numbers WHERE analysis_runset.analysis_runset_id = analysis_numbers.analysis_runset_id AND analysis_numbers.name = "kurie_150-635" AND grouping='octet' INTO OUTFILE '/tmp/testmysql.txt' FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n';

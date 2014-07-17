@@ -1,0 +1,69 @@
+{
+  TFile f("/data4/saslutsky/OfficialReplayData_06_2014/hists/spec_21805.root");
+  TCanvas * rawcan = new TCanvas();
+  hRawPMTSpectrum_E0->Draw();
+  int NB = hRawPMTSpectrum_E0->GetNbinsX();
+
+  TF1 * fKurie = new TF1("fKurie", "[1]*(([0]*x + 511)*sqrt([0]*[0]*x*x + 2*x*[0]*511)*(782-[0]*x)*(782-[0]*x))", 0, 4000);
+  
+  const int NIter = 20;
+  TVector * scale = new TVector(NIter);
+  TVector * endpoint = new TVector(NIter);
+  TH1F * hDivided[NIter]; 
+
+  TCanvas * histcan = new TCanvas();
+  histcan->Divide(4,5);
+  
+  for (int N = 1; N < NIter; N++){
+    //  for (int N = 1; N < 2; N++){
+    hDivided[N] = (TH1F*)hRawPMTSpectrum_E0->Clone(Form("hDivided_%i", N));
+					   
+    double scale_N = N*0.2;
+    fKurie->SetParameters(scale_N, 1.2e-12);
+    scale(N) = scale_N;
+    
+    double rawcontent = 0;
+    double bincenter = 0;
+    double divcontent = 0;
+    double mincontent = 1.0e8;
+    double minbin = 0;
+    bool passedMin = 0;
+    for (int i = 0; i < NB; i++){
+      rawcontent = hRawPMTSpectrum_E0->GetBinContent(i);
+      bincenter  = hRawPMTSpectrum_E0->GetBinCenter(i);
+      if (fKurie(bincenter) == 0){
+	hDivided[N]->SetBinContent(i, 0);
+	continue;
+      }
+      
+      divcontent = sqrt(rawcontent/fKurie(bincenter));
+      hDivided[N]->SetBinContent(i, divcontent);
+      
+      if (bincenter > 30){ (stay away from pedestal rise)
+	if (divcontent < mincontent){
+	  if (passedMin == 0){
+	    mincontent = divcontent;
+	    minbin = bincenter;
+	  }
+	}
+	if (divcontent > mincontent){
+	  passedMin = 1;
+	}
+      
+    }
+    rawcan->cd();
+    //    hDivided[N]->Draw("same");
+
+    double fit_min = 20;   
+    double fit_max = minbin-40; // stay away from upturn
+    TF1 * fitpol = new TF1("fitpol", "pol1", fit_min, fit_max);
+    histcan->cd(N);
+    hDivided[N]->Fit("fitpol","R", "", fit_min, fit_max);
+    double endpoint_N = (-1)*fitpol->GetParameter(0)/fitpol->GetParameter(1);
+    endpoint(N) = endpoint_N;
+  }
+  TCanvas * graphcan = new TCanvas();
+  graphcan->cd();
+  TGraph graphie = TGraph(*scale, *endpoint);
+  graphie.Draw("A*");
+}
