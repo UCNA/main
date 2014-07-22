@@ -26,7 +26,7 @@ class GeantSimManager:
 		if fmap:
 			self.settings["fieldmapcmd"] = "/field/mapfile "+fmap
 		#self.settings["ana_args"] = "undead cathodes"
-		self.settings["ana_args"] = "cathodes saveall"
+		self.settings["ana_args"] = "cathodes"
 		
 		self.settings["extra_cmds"] = ""
 		self.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
@@ -38,7 +38,7 @@ class GeantSimManager:
 		
 		self.g4_out_dir_base = None
 		
-		self.anagroup = 10 # number of files to group together for final analyzer result
+		self.anagroup = 4 # number of files to group together for final analyzer result
 				
 	def enable_vis(self):
 		
@@ -259,7 +259,7 @@ if __name__ == "__main__":
 				os.system("rm -rf %s/%s_o_n"%(os.environ["G4EVTDIR"],g))
 				os.system("../../MC_EventGen run %s %s o n 10000 100 x"%(g,os.environ["G4EVTDIR"]))
 
-		for g in ["Cd113m"]: #["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"]:
+		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W","Cd113m"]:
 			sourceSim = GeantSimManager("NEW_2011-2012",
 										fmap=os.environ["UCNA_AUX"]+"/Fieldmap_20101028_b.txt", # sources simulatable with full field map
 										geometry="2011/2012")
@@ -402,7 +402,7 @@ if False:
 		siDet = GeantSimManager("SiDet",geometry="siDet")
 		siDet.set_generator("Cs137")
 		siDet.settings["extra_cmds"] += "/sourceholder/windowthickness 1.5 mm\n"
-		siDet.launch_sims(nEvents=1e6,nClusters=6,hours_old=0)
+		siDet.launch_sims(nEvents=2e6,nClusters=6,hours_old=0)
 		siDet.launch_postanalyzer()
 
 	# Alpha particles through foil
@@ -413,7 +413,7 @@ if False:
 			siDet.settings["extra_cmds"] += "/sourceholder/windowthickness %i um\n"%th
 			siDet.settings["particle"] = "alpha"
 			siDet.settings["gunenergy"] = 5485.56
-			siDet.launch_sims(nEvents=1e4,nClusters=1,hours_old=0)
+			siDet.launch_sims(nEvents=2e4,nClusters=1,hours_old=0)
 			siDet.launch_postanalyzer()
 
 
@@ -428,7 +428,7 @@ if False:
 			iline.settings["gunenergy"] = l
 			iline.settings["ana_args"] += " saveall"
 			iline.settings["sourceholderpos"] = "0 0 0 m"
-			iline.launch_sims(nEvents=1e6,nClusters=36,hours_old=0)
+			iline.launch_sims(nEvents=2e6,nClusters=36,hours_old=0)
 			iline.launch_postanalyzer()
 
 
