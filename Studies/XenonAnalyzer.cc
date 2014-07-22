@@ -102,7 +102,7 @@ void XenonSpectrumPlugin::fitSpectrum(TH1* hSpec,SectorDat& sd) {
 	} else {
 		sd.low_peak = sd.low_peak_width = 0;
 	}
-	
+	epGuess = 915.;
 	//----------------------
 	// 915keV endpoint fit
 	//----------------------

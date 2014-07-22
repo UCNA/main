@@ -192,7 +192,7 @@ class GeantSimManager:
 		os.system("cat "+parallel_jobfile)
 		print "N Runs is ", nruns
 		if nruns > 1:
-			os.system("nice -n 20 parallel -P 8 < %s"%parallel_jobfile)
+			os.system("nice -n 20 parallel -P 3 < %s"%parallel_jobfile)
 
 		else:
 			os.system(onejob)
@@ -211,7 +211,7 @@ class GeantSimManager:
 		if self.settings["geometry"]=="siDet":
 			self.settings["analyzer"]="SiDet_Analyzer"
 		while anafiles:
-			outlist_name = self.g4_out_dir+"outlist_%i.txt"%nanalyzed
+			outlist_name = self.g4_out_dir+"/outlist_%i.txt"%nanalyzed
 			fout = open(outlist_name,"w")
 			for f in anafiles[:self.anagroup]:
 				fout.write(f[1]+"\n")
@@ -227,7 +227,7 @@ class GeantSimManager:
 		print "\n----- %s ------"%resim_jobfile
 		os.system("cat "+resim_jobfile)
 		print
-		os.system("nice -n 10 parallel -P 8 < %s"%resim_jobfile)
+		os.system("nice -n 10 parallel -P 3 < %s"%resim_jobfile)
 		os.system("rm %s/outlist_*.txt"%self.g4_out_dir)
 		os.system("rm "+resim_jobfile)
 
@@ -280,8 +280,8 @@ if __name__ == "__main__":
 	# Xenon (Xe135_3-2+ is 915keV beta endpoint; simulate extra events)
 	####################
 	XeIsots =  [	"Xe135_3-2+","Xe133_3-2+",
-			#		"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
-			#		"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"
+					"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
+					"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"
 			                                                                      ]
 	if options.xesrcs:
 		
@@ -291,7 +291,7 @@ if __name__ == "__main__":
 				os.system("../../MC_EventGen run %s %s g n 10000 1000 x"%(g,os.environ["G4EVTDIR"]))
 
 		for g in XeIsots:
-			sourceSim = GeantSimManager("NEW_2011-2012", geometry="2011/2012")
+			sourceSim = GeantSimManager("NEW_2012-2013", geometry="2012/2013")
 			sourceSim.set_evtsrc(g)
 			if options.sim:
 				maxIn = {"Xe135_3-2+": 300}.get(g,100)
