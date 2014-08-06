@@ -298,13 +298,13 @@ class LinearityCurve:
 		self.gResid=graph.graphxy(width=10,height=2,
 				x=self.axisType(title="PMT ADC",min=xrange[0],max=xrange[1]),
 				y=graph.axis.lin(title="\\% Resid",min=-10,max=10))
-		setTexrunner(self.gResid)
+		#setTexrunner(self.gResid)
 
 		self.gEvis=graph.graphxy(width=10,height=10,ypos=self.gResid.height+0.5,
 				x=graph.axis.linkedaxis(self.gResid.axes["x"]),
 				y=self.axisType(title="Expected Light $\\eta\\cdot E_{\\rm vis}$",min=yrange[0],max=yrange[1]),
 				key = graph.key.key(pos="tl"))
-		setTexrunner(self.gEvis)
+		#setTexrunner(self.gEvis)
 		
 		self.cnvs = canvas.canvas()
 		self.cnvs.insert(self.gResid)
@@ -391,7 +391,7 @@ class LinearityCurve:
 				x=graph.axis.lin(title="Expected Width [keV]",min=0,max=maxWidth),
 				y=graph.axis.lin(title="Observed Width [keV]",min=0,max=maxWidth),
 				key = graph.key.key(pos="tl"))
-		setTexrunner(self.gWidth)
+		#setTexrunner(self.gWidth)
 		
 		csize = 0.20
 		if self.tube == 4:
@@ -479,7 +479,7 @@ class LinearityCurve:
 		self.gRes=graph.graphxy(width=15,height=3,xpos=rwidth+0.5,
 			x=graph.axis.lin(title="Expected Visible Energy",min=0,max=1200),
 			y=graph.axis.lin(title="\\% Error",min=-10,max=10))
-		setTexrunner(self.gRes)
+		#setTexrunner(self.gRes)
 		
 		rmin = min([l.src.run for l in self.slines])
 		rmax = max([l.src.run for l in self.slines])
@@ -495,13 +495,13 @@ class LinearityCurve:
 				x2=runaxis,
 				y=graph.axis.lin(title="Observed Visible Energy",min=0,max=1200),
 				key = graph.key.key(pos="tl"))
-		setTexrunner(self.gRuns)
+		#setTexrunner(self.gRuns)
 					
 		self.gEn=graph.graphxy(width=15,height=15,ypos=self.gRes.height+0.5,xpos=rwidth+0.5,
 				x=graph.axis.linkedaxis(self.gRes.axes["x"]),
 				y=graph.axis.linkedaxis(self.gRuns.axes["y"]),
 				key = graph.key.key(pos="tl"))
-		setTexrunner(self.gEn)
+		#setTexrunner(self.gEn)
 		
 		self.cnvs = canvas.canvas()
 		self.cnvs.insert(self.gRes)
@@ -518,7 +518,8 @@ class LinearityCurve:
 				continue
 			self.gEn.plot(graph.data.points(gdat,x=2,y=3,title=peakNames.get(k,k)), [graph.style.symbol(peakSymbs.get(k,symbol.circle),size=csize,symbolattrs=[self.cP[k]]),])
 			self.gRes.plot(graph.data.points(gdat,x=2,y=4,title=None), [graph.style.symbol(peakSymbs.get(k,symbol.circle),size=csize,symbolattrs=[self.cP[k]]),])
-			self.gRuns.plot(graph.data.points(gdat,x=1,y=3,size=5,title=None), [ varCircle(symbolattrs=[self.cP[k]]),])
+			#self.gRuns.plot(graph.data.points(gdat,x=1,y=3,size=5,title=None), [ varCircle(symbolattrs=[self.cP[k]]),])
+			self.gRuns.plot(graph.data.points(gdat,x=1,y=3,title=None), [graph.style.symbol(peakSymbs.get(k,symbol.circle),size=csize,symbolattrs=[self.cP[k]]),])
 			self.gRuns.plot(graph.data.points(gdat,x=1,y=2,title=None), [ graph.style.line([style.linestyle.dashed,self.cP[k]]),])
 
 		self.gEn.plot(graph.data.function("y(x)=x",title=None), [graph.style.line(lineattrs=[]),])
@@ -590,7 +591,7 @@ def plotSourcePositions(conn,rlist):
 			x=graph.axis.lin(title="x position [mm]",min=-60,max=60),
 			y=graph.axis.lin(title="y position [mm]",min=-60,max=60),
 			key = graph.key.key(pos="tc", columns=3))
-		setTexrunner(gSourcepos)
+		#setTexrunner(gSourcepos)
 		
 		gSourcepos.dolayout()
 		
@@ -635,7 +636,7 @@ def backscatterEnergy(conn, rlist):
 			x=graph.axis.lin(title="expected Type 0 - Type I difference [keV]", min=0, max=60),
 			y=graph.axis.lin(title="observed Type 0 - Type I difference [keV]", min=0, max=60),
 			key = graph.key.key(pos="br"))
-	setTexrunner(gB)
+	#setTexrunner(gB)
 
 	cP = rainbowDict(pks.keys(), 0.6)
 	
@@ -671,17 +672,17 @@ cal_2010 = [
 			]
 			
 cal_2011 = [
-			(	17233,	17249,	17238,	16983,	17297,		209	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+#			(	17233,	17249,	17238,	16983,	17297,		209	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
 			(	17359,	17387,	17371,	17359,	17439,		209	),	# 1 Beta Decay; PMT W0 missing pulser
 			(	17517,	17527,	17522,	17440,	17734,		209	),	# 2 Calibrations for Xe; W0 pulser still dead
-			(	17871,	17922,	17892,	17735,	17955,		209	),	# 3 Big Scan; W0 pulser still dead
+			(	17871,	17941,	17892,	17735,	17955,		209	),	# 3 Big Scan; W0 pulser still dead; originally to 17922
 			(	18020,	18055,	18039,	18020,	18055,		209	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
 			(	18357,	18386,	18362,	18081,	18386,		207	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
 			(	18617,	18640,	18622,	18390,	18683,		55	),	# 6 Beta decay; PMT W4 Bi pulser very low
 			(	18745,	18768,	18750,	18712,	18994,		59	),	# 7 Start of 2012; PMT W4 pulser still low
 			(	19203,	19239,	19233,	19023,	19239,		59	),	# 8 W4 Pulser now higher... drifty
 			(	19347,	19377,	19359,	19347,	19544,		213	),	# 9 W4 Pulser now low...
-			#(	19505,	19544	),									#   Feb. 14, Cd2In only; not used for calibration
+			#(	19505,	19544, 19539	),					# Feb. 14, Cd2In only; not used for calibration
 			(	19823,	19863,	19858,	19583,	20000,		213)	# 10 Feb. 16-24 Xe, Betas, long sources
 			]
 
@@ -713,8 +714,8 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	conn = open_connection() # connection to calibrations DB
-	replace = True		# whether to replace previous calibration data
-	makePlots = False	# whether to output linearity/width/Erecon plots
+	replace = False		# whether to replace previous calibration data
+	makePlots = True	# whether to output linearity/width/Erecon plots
 	#delete_calibration(conn,9752); exit(0)
 
 
