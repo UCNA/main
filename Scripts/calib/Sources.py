@@ -672,18 +672,18 @@ cal_2010 = [
 			]
 			
 cal_2011 = [
-#			(	17233,	17249,	17238,	16983,	17297,		209	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
-			(	17359,	17387,	17371,	17359,	17439,		209	),	# 1 Beta Decay; PMT W0 missing pulser
-			(	17517,	17527,	17522,	17440,	17734,		209	),	# 2 Calibrations for Xe; W0 pulser still dead
-			(	17871,	17941,	17892,	17735,	17955,		209	),	# 3 Big Scan; W0 pulser still dead; originally to 17922
-			(	18020,	18055,	18039,	18020,	18055,		209	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
-			(	18357,	18386,	18362,	18081,	18386,		207	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
-			(	18617,	18640,	18622,	18390,	18683,		55	),	# 6 Beta decay; PMT W4 Bi pulser very low
-			(	18745,	18768,	18750,	18712,	18994,		59	),	# 7 Start of 2012; PMT W4 pulser still low
-			(	19203,	19239,	19233,	19023,	19239,		59	),	# 8 W4 Pulser now higher... drifty
-			(	19347,	19377,	19359,	19347,	19544,		213	),	# 9 W4 Pulser now low...
+#			(	17233,	17249,	17238,	16983,	17297,		233	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+			(	17359,	17387,	17371,	17359,	17439,		233	),	# 1 Beta Decay; PMT W0 missing pulser
+			(	17517,	17527,	17522,	17440,	17734,		233	),	# 2 Calibrations for Xe; W0 pulser still dead
+			(	17871,	17941,	17892,	17735,	17955,		233	),	# 3 Big Scan; W0 pulser still dead; originally to 17922
+			(	18020,	18055,	18039,	18020,	18055,		233	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
+			(	18357,	18386,	18362,	18081,	18386,		223	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
+			(	18617,	18640,	18622,	18390,	18683,		225	),	# 6 Beta decay; PMT W4 Bi pulser very low
+			(	18745,	18768,	18750,	18712,	18994,		227	),	# 7 Start of 2012; PMT W4 pulser still low
+			(	19203,	19239,	19233,	19023,	19239,		227	),	# 8 W4 Pulser now higher... drifty
+			(	19347,	19377,	19359,	19347,	19544,		229	),	# 9 W4 Pulser now low...
 			#(	19505,	19544, 19539	),					# Feb. 14, Cd2In only; not used for calibration
-			(	19823,	19863,	19858,	19583,	20000,		213)	# 10 Feb. 16-24 Xe, Betas, long sources
+			(	19823,	19863,	19858,	19583,	20000,		229)	# 10 Feb. 16-24 Xe, Betas, long sources
 			]
 
 cal_2012 = [
