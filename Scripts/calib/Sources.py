@@ -323,7 +323,7 @@ class LinearityCurve:
 			self.gEvis.plot(graph.data.points(gdat,x=1,y=2,dy=4,title=peakNames.get(k,k)),
 				[graph.style.symbol(peakSymbs.get(k,symbol.circle),size=0.2,symbolattrs=[self.cP[k],]),graph.style.errorbar(errorbarattrs=[self.cP[k],])])
 		
-		self.gEvis.text(7.5,3.5,"%s %i"%(self.side,self.tube+1))
+		#self.gEvis.text(7.5,3.5,"%s %i"%(self.side,self.tube+1))
 		
 		##
 		# Fit data
@@ -355,6 +355,24 @@ class LinearityCurve:
 			print "**** Fit failure!"
 			self.fitter = None
 			return False
+		refvolt = []
+                sourcedev = []
+		ilruns = []
+                for k in self.pks:
+                        gdat = [ (l.adc*l.gms, self.fitter(l.adc*l.gms), l.sim.erecon*l.eta, l.sim.erecon*l.eta*etaErr,l.src.run) for l in self.pks[k] if l.adc > 0]
+                        gdat = [ (x,100.0*(y-yexp)/yexp,100*dy/yexp,y-yexp,rnow) for (x,yexp,y,dy,rnow) in gdat ]
+                        gdat = [ g for g in gdat if xrange[0] < g[0] < xrange[1] and -100 < g[1] < 100 ]
+                        refvolt.append(max(abs(g[0]) for g in gdat))
+                        sourcedev.append(max(abs(g[3]) for g in gdat))
+			ilruns.append(min(g[4] for g in gdat))
+                        if not gdat:
+                                continue
+                delv = max(sourcedev)
+                vmax = max(refvolt)
+		minilrun = min(ilruns)
+                intlin = delv/vmax
+		print "IL is ", intlin, " for run number ", minilrun
+		self.gEvis.text(5.0,3.5,"%s %i MaxDev = %.3f"%(self.side,self.tube+1,intlin))
 			
 		##
 		# residuals plotting
