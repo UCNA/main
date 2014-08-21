@@ -197,8 +197,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 		dets[EAST].mwpc.activeRegion.anode_R=dets[WEST].mwpc.activeRegion.anode_R=5*um;
 		dets[EAST].mwpc.activeRegion.cathode_R=dets[WEST].mwpc.activeRegion.cathode_R=39.1*um;
 	} else if(sGeometry=="2012/2013") {
-		trap.fWindowThick[EAST]=0.130*um;
-                trap.fWindowThick[WEST]=0.180*um;
+		trap.fWindowThick[EAST]=0.180*um;
+                trap.fWindowThick[WEST]=0.130*um;
 		trap.fWindowMat=SixFSixF;
 		trap.fIRcollimator=2.25*inch;
 		trap.fColThickness=0.75*inch; 
