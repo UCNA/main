@@ -216,6 +216,7 @@ class LinearityCurve:
 		self.cnvs = None
 		self.uselist = None
 		self.slines = None
+		self.intlin = None
 		self.datrange = (100,2000)
 		self.width_adc = 300
 		self.width_dadc = 45
@@ -357,22 +358,19 @@ class LinearityCurve:
 			return False
 		refvolt = []
                 sourcedev = []
-		ilruns = []
                 for k in self.pks:
-                        gdat = [ (l.adc*l.gms, self.fitter(l.adc*l.gms), l.sim.erecon*l.eta, l.sim.erecon*l.eta*etaErr,l.src.run) for l in self.pks[k] if l.adc > 0]
-                        gdat = [ (x,100.0*(y-yexp)/yexp,100*dy/yexp,y-yexp,rnow) for (x,yexp,y,dy,rnow) in gdat ]
+                        gdat = [ (l.adc*l.gms, self.fitter(l.adc*l.gms), l.sim.erecon*l.eta, l.sim.erecon*l.eta*etaErr) for l in self.pks[k] if l.adc > 0]
+                        gdat = [ (x,100.0*(y-yexp)/yexp,100*dy/yexp,y-yexp) for (x,yexp,y,dy) in gdat ]
                         gdat = [ g for g in gdat if xrange[0] < g[0] < xrange[1] and -100 < g[1] < 100 ]
                         refvolt.append(max(abs(g[0]) for g in gdat))
                         sourcedev.append(max(abs(g[3]) for g in gdat))
-			ilruns.append(min(g[4] for g in gdat))
                         if not gdat:
                                 continue
                 delv = max(sourcedev)
                 vmax = max(refvolt)
-		minilrun = min(ilruns)
-                intlin = delv/vmax
-		print "IL is ", intlin, " for run number ", minilrun
-		self.gEvis.text(5.0,3.5,"%s %i MaxDev = %.3f"%(self.side,self.tube+1,intlin))
+                self.intlin = 100*delv/3000 # using estimated vmax for whole experiment
+		#self.intlin = 100*delv/vmax # using vmax calculated for run group 
+		self.gEvis.text(5.0,3.5,"%s %i INL = %.3f"%(self.side,self.tube+1,self.intlin))
 			
 		##
 		# residuals plotting
@@ -388,8 +386,7 @@ class LinearityCurve:
 		self.gResid.plot(graph.data.function("y(x)=0.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
 		
 		return True
-		
-		
+
 	def fitWidths(self):
 		
 		######
@@ -738,7 +735,8 @@ if __name__=="__main__":
 
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
-	
+	allintl = [[[] for i in range(4)]for j in range(2)]
+	allruns = []
 	for c in cal_2011:
 		
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i"%(c[0],c[1]); continue
@@ -762,6 +760,7 @@ if __name__=="__main__":
 		# fit linearity curves for each PMT
 		calib_OK = True
 		LC = {}
+		k = 0
 		for s in ["East","West"]:
 			for t in range(5):
 				print "\n-----",s,t,rlist[0],"-----"
@@ -769,6 +768,7 @@ if __name__=="__main__":
 				# LC[(s,t)].uselist = []	# set this for "emergency" defaults calibration, hopefully good enough to bootstrap to real calibration
 				if t<4:
 					if LC[(s,t)].fitLinearity():
+						allintl[k][t].append(LC[(s,t)].intlin)
 						fCalSummary.write("%s %i\t%s\n"%(s,t,LC[(s,t)].fitter.toLatex()))
 						if makePlots and LC[(s,t)].uselist is None:
 							LC[(s,t)].cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
@@ -790,8 +790,8 @@ if __name__=="__main__":
 						LC[(s,t)].cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
 					except:
 						print "Plotting failure for",s,t,"!"
-
-
+			k += 1
+		allruns.append(rlist[0])
 		# make new calibrations set; upload to DB
 		if not calib_OK:
 			print "\n*** Calibration curve generation failure; DB not updated!"
@@ -806,3 +806,22 @@ if __name__=="__main__":
 
 		print "\nsource replay command:"
 		print "nohup ./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])
+	gheight = 3
+	goff = 0
+	cIntLin = canvas.canvas()	
+	
+	for i in range(2): 
+		if (i==0): compass = 'East'
+		else: compass = 'West'
+		for t in range(4):
+			gIntLin=graph.graphxy(width=15,height=gheight,ypos=goff,
+                                x=graph.axis.lin(title="Run Number",min=17000,max=20000),
+                                y=graph.axis.lin(title="INL(\\%)",min=0,max=8))
+			cIntLin.insert(gIntLin)
+			gIntLin.plot(graph.data.values(x=allruns,y=allintl[i][t]),
+                                [graph.style.symbol(symbol.circle,size=0.15,symbolattrs=[rgb.red,deco.filled])])
+			gIntLin.plot(graph.data.function("y(x)=5.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
+			gIntLin.text(0.7,goff+2.2,"%s %i"%(compass,t))
+			goff += gheight+1.4
+		goff += 0.5
+	cIntLin.writetofile(outpath+"/Linearity/integrallin.pdf")
