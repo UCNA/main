@@ -25,15 +25,9 @@ class GeantSimManager:
 		self.settings["fieldmapcmd"] = "#/field/mapfile UNUSED"
 		if fmap:
 			self.settings["fieldmapcmd"] = "/field/mapfile "+fmap
-<<<<<<< HEAD
 
-		self.settings["ana_args"] = "undead cathodes"
-		#self.settings["ana_args"] = "cathodes saveall"
-
-=======
 		#self.settings["ana_args"] = "undead cathodes"
 		self.settings["ana_args"] = "cathodes"
->>>>>>> master
 		
 		self.settings["extra_cmds"] = ""
 		self.settings["extra_cmds"] += "/detector/MWPCBowing 5 mm\n"
@@ -197,7 +191,7 @@ class GeantSimManager:
 		os.system("cat "+parallel_jobfile)
 		print "N Runs is ", nruns
 		if nruns > 1:
-			os.system("nice -n 20 parallel -P 3 < %s"%parallel_jobfile)
+			os.system("nice -n 20 parallel -P 6 < %s"%parallel_jobfile)
 
 		else:
 			os.system(onejob)
@@ -232,7 +226,7 @@ class GeantSimManager:
 		print "\n----- %s ------"%resim_jobfile
 		os.system("cat "+resim_jobfile)
 		print
-		os.system("nice -n 10 parallel -P 3 < %s"%resim_jobfile)
+		os.system("nice -n 10 parallel -P 6 < %s"%resim_jobfile)
 		os.system("rm %s/outlist_*.txt"%self.g4_out_dir)
 		os.system("rm "+resim_jobfile)
 
@@ -244,8 +238,10 @@ if __name__ == "__main__":
 	parser.add_option("--evtgen", dest="evtgen", action="store_true", default=False, help="run event generators")
 	parser.add_option("--calsrcs", dest="calsrcs", action="store_true", default=False, help="simulate sealed calibration sources")
 	parser.add_option("--xesrcs", dest="xesrcs", action="store_true", default=False, help="simulate xenon sources")
+	parser.add_option("--neutrons", dest="neutrons", action="store_true", default=False, help="run sim for neutrons")
 	parser.add_option("--sim", dest="sim", action="store_true", default=False, help="run initial Geant4 simulation")
 	parser.add_option("--ana", dest="ana", action="store_true", default=False, help="run post-analyzer")
+	
 	options, args = parser.parse_args()
 	
 	if options.kill:
@@ -304,8 +300,20 @@ if __name__ == "__main__":
 			if options.ana:
 				sourceSim.launch_postanalyzer()
 
-
-
+######################## Neutrons 2011-2013 ###############################
+	if options.neutrons:
+		
+		betaSim = GeantSimManager("Neutrons_2012-2013", geometry="2012/2013")
+	#betaSim.set_generator("neutronBetaUnpol")
+	       	betaSim.set_evtsrc("n1_100mil")
+		if options.sim:
+			betaSim.set_detector_offsets()
+			#betaSim.g4_out_dir_base = os.environ["G4OUTDIR"]
+			betaSim.launch_sims(maxIn=3014)
+			
+		if options.ana:
+			betaSim.launch_postanalyzer()
+	
 
 
 if False:
