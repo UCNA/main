@@ -24,7 +24,7 @@ def replay_betas(rmin,rmax):
 	freplaylist.close()
 	print "------- Replay List -------"
 	os.system("cat officialreplaylist.txt")
-	os.system("nice -n 10 parallel < officialreplaylist.txt")
+	os.system("nice -n 10 parallel -P 2 < officialreplaylist.txt")
 	os.system("rm officialreplaylist.txt")
 
 

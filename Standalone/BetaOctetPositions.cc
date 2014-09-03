@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 	OutputManager OM("ThisNameIsNotUsedAnywhere",getEnvSafe("UCNA_ANA_PLOTS"));
 	
 	// simulations input setup
-	OSCM.simFile="/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_";
+	OSCM.simFile="/extern/mabrow05/ucna/geant4work/output/Neutrons_2011-2012_n1_100mil/analyzed_";
 	OSCM.simFactor = 1.0;
 	OSCM.nTot = 312;
 	OSCM.stride = 73;

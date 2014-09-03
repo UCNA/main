@@ -226,7 +226,7 @@ class GeantSimManager:
 		print "\n----- %s ------"%resim_jobfile
 		os.system("cat "+resim_jobfile)
 		print
-		os.system("nice -n 10 parallel -P 6 < %s"%resim_jobfile)
+		os.system("nice -n 10 parallel -P 3 < %s"%resim_jobfile)
 		os.system("rm %s/outlist_*.txt"%self.g4_out_dir)
 		os.system("rm "+resim_jobfile)
 
@@ -280,7 +280,7 @@ if __name__ == "__main__":
 	####################				
 	# Xenon (Xe135_3-2+ is 915keV beta endpoint; simulate extra events)
 	####################
-	XeIsots =  [	"Xe135_3-2+","Xe133_3-2+",
+	XeIsots =  [	#"Xe135_3-2+","Xe133_3-2+",
 					"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",
 					"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"
 			                                                                      ]
@@ -292,7 +292,7 @@ if __name__ == "__main__":
 				os.system("../../MC_EventGen run %s %s g n 10000 1000 x"%(g,os.environ["G4EVTDIR"]))
 
 		for g in XeIsots:
-			sourceSim = GeantSimManager("NEW_2012-2013", geometry="2012/2013")
+			sourceSim = GeantSimManager("CORRECT_2012-2013", geometry="2012/2013")
 			sourceSim.set_evtsrc(g)
 			if options.sim:
 				maxIn = {"Xe135_3-2+": 300}.get(g,100)
@@ -303,7 +303,7 @@ if __name__ == "__main__":
 ######################## Neutrons 2011-2013 ###############################
 	if options.neutrons:
 		
-		betaSim = GeantSimManager("Neutrons_2012-2013", geometry="2012/2013")
+		betaSim = GeantSimManager("CORRECT_Neutrons_2012-2013", geometry="2012/2013")
 	#betaSim.set_generator("neutronBetaUnpol")
 	       	betaSim.set_evtsrc("n1_100mil")
 		if options.sim:

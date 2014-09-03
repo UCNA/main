@@ -203,7 +203,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 		trap.fIRcollimator=2.25*inch;
 		trap.fColThickness=0.75*inch; 
 		trap.fColLength=0.25*inch;
-		dets[EAST].mwpc.activeRegion.anode_R=dets[WEST].mwpc.activeRegion.anode_R=5*um;
+		dets[EAST].mwpc.activeRegion.anode_R=dets[WEST].mwpc.activeRegion.anode_R=5.*um;
 		dets[EAST].mwpc.activeRegion.cathode_R=dets[WEST].mwpc.activeRegion.cathode_R=39.1*um;
 	} else {
 		SMExcept e("UnknownGeometry");

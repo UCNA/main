@@ -55,7 +55,7 @@ analysis_numbers_table_fields = [
 
 
 def open_anadb_connection():
-	return open_connection(usr="ucn",db="analysis_results",pw=os.environ["UCNADBPASS"][:-2])
+	return open_connection(usr="ucn",db="analysis_results",pw=os.environ["UCNADBPASS"])
 
 class anaDbResult:
 	"""AnalysisDB entry"""
