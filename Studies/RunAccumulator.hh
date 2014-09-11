@@ -157,7 +157,7 @@ public:
 	void uploadAnaNumber(AnaNumber& AN, GVState g = GV_OTHER, AFPState a = AFP_OTHER);
 	/// upload results to analysis DB
 	virtual void uploadAnaResults();
-	
+	std::map<std::string,AnalyzerPlugin*> myPlugins;
 	static std::string AnaDB_xtag;	//< optional extra tag for AnalysisDB entries
 	
 protected:
@@ -167,7 +167,7 @@ protected:
 	unsigned int AR_IDs[GV_OTHER+1][AFP_OTHER+1];				///< analysis DB ID numbers for various run sets
 	std::vector<AnaNumber> anaResults[GV_OTHER+1][AFP_OTHER+1];	///< analysis results in each GV/AFP category
 	
-	std::map<std::string,AnalyzerPlugin*> myPlugins;	///< analysis plugins
+  //std::map<std::string,AnalyzerPlugin*> myPlugins;	///< analysis plugins
 	static TRandom3 rnd_source;							///< random number source
 	
 	/// get matching RunAccumulator with "master" histograms for estimating error bars on low-counts bins

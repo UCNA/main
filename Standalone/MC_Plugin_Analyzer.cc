@@ -84,9 +84,9 @@ public:
 
 
 int main(int argc, char *argv[]) {
-	if(argc != 3) {
+	if(argc != 4) {
 		assert(argc);
-		printf("Use: %s [analyzer name] [analysis directory]\n", argv[0]);
+		printf("Use: %s [analyzer name] [analysis directory] [run to compare]\n", argv[0]);
 		return 0;
 	}
 	
@@ -97,6 +97,7 @@ int main(int argc, char *argv[]) {
 	std::string pth = "/"+join(v,"/");
 	OutputManager OM("NameUnused",pth);
 	std::string slist = std::string(argv[2])+"/simlist.txt";
+	int run = atoi(argv[3]);
 	
 	// set up analyzer
 	RunAccumulator* RA = NULL;
@@ -127,12 +128,17 @@ int main(int argc, char *argv[]) {
 				g2p.addFile(fname);
 		}
 		file.close();
-		PMTCalibrator PCal(16000);
+		PMTCalibrator PCal(run);
+		std::cout << "Here I am\n";
 		g2p.setCalibrator(PCal);
-		
+		std::cout << "Here I am now\n";
+
+		RunInfo RI = CalDBSQL::getCDB()->getRunInfo(run);
+		g2p.setAFP(RI.afpState);
 		// process data and exit
 		RA->loadSimData(g2p);
-		RA->makeOutput(true);
+		
+		//RA->makeOutput(true);
 	}
 	delete RA;
 	return 0;

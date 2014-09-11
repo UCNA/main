@@ -95,8 +95,8 @@ standalone: $(StandaloneObjs)
 
 
 ucnG4:
-	mkdir -p g4build/
-	cd g4build; cmake -DGeant4_DIR=~/geant4.10/lib/ ../ucnG4_dev/; make -j6
+	mkdir -p ucnG4_dev-build/
+	cd g4build; cmake -DGeant4_DIR=/home/geant4/lib/ ../ucnG4_dev/; make 
 
 #
 # documentation via Doxygen

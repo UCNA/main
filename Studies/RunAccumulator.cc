@@ -411,6 +411,7 @@ void RunAccumulator::write(std::string outName) {
 	
 	// base class write
 	SegmentSaver::write(outName);
+	
 }
 
 void RunAccumulator::loadProcessedData(AFPState afp, GVState gv, ProcessedDataScanner& PDS) {
@@ -457,7 +458,9 @@ void RunAccumulator::loadSimPoint(Sim2PMT& simData) {
 }
 
 void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
+  //printf("Got here!\n");
 	isSimulated = true;
+	
 	setCurrentState(simData.getAFP(),GV_OPEN);
 	printf("Loading %i events of simulated data (AFP=%i)...\n",nToSim,currentAFP);
 	simData.resetSimCounters();
@@ -475,6 +478,7 @@ void RunAccumulator::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool cou
 		}
 		if(!nToSim && !np) break;
 	}
+	
 	printf("\n--Scan complete.--\n");
 }
 
@@ -530,6 +534,7 @@ void RunAccumulator::makeOutput(bool doPlots) {
 	uploadAnaResults();
 	if(doPlots)
 		makePlots();
+	//getPlugin("mySimAsym")->printSimTree();
 	write();
 	setWriteRoot(true);
 }

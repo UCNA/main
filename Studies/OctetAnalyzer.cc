@@ -9,7 +9,9 @@
 
 void quadHists::setFillPoint(AFPState afp, GVState gv) {
 	smassert(gv==GV_CLOSED || gv==GV_OPEN);
+	//printf("I passed GV\n");
 	smassert(afp==AFP_OFF||afp==AFP_ON);
+	//printf("I passed AFP\n");
 	fillPoint = fgbg[afp]->h[gv];
 	smassert(fillPoint);
 }
@@ -117,8 +119,10 @@ const quadHists* OctetAnalyzer::getCoreHist(const std::string& qname) const {
 	return it->second;
 }
 
-void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
-	setFillPoints(simData.getAFP(),GV_OPEN);
+void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {printf("I'm in loadSimData\n");
+  //simData.setAFP(AFP_OFF);
+        setFillPoints(simData.getAFP(),GV_OPEN);
+  //setFillPoints(AFP_OFF,GV_OPEN);
 	RunAccumulator::loadSimData(simData,nToSim,countAll);
 }
 
