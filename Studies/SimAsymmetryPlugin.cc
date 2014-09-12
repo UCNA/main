@@ -67,13 +67,15 @@ SimAsymmetryPlugin::SimAsymmetryPlugin(OctetAnalyzer* OA): OctetAnalyzerPlugin(O
 			qWrongSide[s][t]->setRangeUser(0,800);
 		}
 	}
+
 	
 	myA->ignoreMissingHistos = false;
 }
 
 
+
 void SimAsymmetryPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
-        smassert(PDS.isSimulated());
+	smassert(PDS.isSimulated());
 	Sim2PMT& S2P = (Sim2PMT&)PDS;
 	Side s = S2P.fSide;
 	if(!(s==EAST || s==WEST)) return;
@@ -87,6 +89,24 @@ void SimAsymmetryPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 		if( (S2P.fType == TYPE_II_EVENT?otherSide(s):s) != S2P.primSide)
 			qWrongSide[s][S2P.fType]->fillPoint->Fill(S2P.getErecon(),weight);
 	}
+}
+
+void SimAsymmetryPlugin::makePlots() {
+	drawQuad(qMissedSpectrum,"Energy/");
+	for(EventType t=TYPE_0_EVENT; t<=TYPE_III_EVENT; ++t) {
+		drawQuadSides(qBCT[EAST][t],qBCT[WEST][t],false,"BetaCosTheta/");
+		drawQuadSides(qBeta[EAST][t],qBeta[WEST][t],false,"BetaCosTheta/");
+		drawQuadSides(qCosth[EAST][t],qCosth[WEST][t],false,"BetaCosTheta/");
+		drawQuadSides(qAsymAcc[EAST][t],qAsymAcc[WEST][t],false,"BetaCosTheta/");
+	}
+	for(EventType t=TYPE_0_EVENT; t<=TYPE_III_EVENT; ++t)
+		drawQuadSides(qWrongSide[EAST][t],qWrongSide[WEST][t],false,"WrongSide/");
+}
+
+void combineHists(TH1* h1, TH1* h2) {
+	h1->Add(h2);
+	h2->Scale(0.);
+	h2->Add(h1);
 }
 
 void unmix(TH1* hE, TH1* hW, TH1* pEx, TH1* pWx) {
