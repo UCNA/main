@@ -30,16 +30,5 @@ public:
 	quadHists* qWrongSide[2][TYPE_III_EVENT+1];	///< Energy spectra of events ID'd on wrong side by [side][type]
 	quadHists* qMissedSpectrum;					///< energy spectrum of missed events
 
-
-  void makeSimTree();
-  void fillSimTree(ProcessedDataScanner& PDS, double weight);
-  //void printSimTree() { SimOut->Print(); }
-  //Tree to hold simulated data which looks like real analyzed data
-  TFile *SimFile;
-  TTree *SimOut;
-  TBranch *MWPCE, *MWPCW, *Erecon, *Type, *MWPCPosE, *MWPCPosW, *Event;
-  Float_t mwpce, mwpcw, erecon;
-  Float_t mwpcposE[2], mwpcposW[2];
-  Int_t type;
 };
 #endif
