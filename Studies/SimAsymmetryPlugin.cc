@@ -73,8 +73,7 @@ SimAsymmetryPlugin::SimAsymmetryPlugin(OctetAnalyzer* OA): OctetAnalyzerPlugin(O
 
 
 void SimAsymmetryPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
-	smassert(PDS.isSimulated());
-	//fillSimTree(PDS,weight);
+        smassert(PDS.isSimulated());
 	Sim2PMT& S2P = (Sim2PMT&)PDS;
 	Side s = S2P.fSide;
 	if(!(s==EAST || s==WEST)) return;

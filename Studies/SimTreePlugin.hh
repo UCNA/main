@@ -18,6 +18,7 @@ public:
   void makeSimTree();
 	/// fill from scan data point
 	void fillSimTree(ProcessedDataScanner& PDS, double weight);
+        virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight);
 	/// output plot generation
 	//virtual void makePlots();
 	
