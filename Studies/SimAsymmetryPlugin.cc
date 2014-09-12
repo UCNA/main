@@ -90,6 +90,16 @@ void SimAsymmetryPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight)
 	}
 }
 
+void unmix(TH1* hE, TH1* hW, TH1* pEx, TH1* pWx) {
+	for(int b=0; b<=hE->GetNbinsX()+1; b++) {
+		double xE = pEx->GetBinContent(b);
+		double xW = pWx->GetBinContent(b);
+		double nE = hE->GetBinContent(b);
+		double nW = hW->GetBinContent(b);
+		hE->SetBinContent(b,(nE-nW*xW)*(1+xE)/(1-xE*xW));
+		hW->SetBinContent(b,(nW-nE*xE)*(1+xW)/(1-xE*xW));
+	}
+}
 
 std::vector<TH1*> SimAsymmetryPlugin::calculateCorrectionsOld(AsymmetryPlugin& Asim) {
 	// apply backscatter reweightings... ???
