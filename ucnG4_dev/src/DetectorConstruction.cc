@@ -205,7 +205,19 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 		trap.fColLength=0.25*inch;
 		dets[EAST].mwpc.activeRegion.anode_R=dets[WEST].mwpc.activeRegion.anode_R=5.*um;
 		dets[EAST].mwpc.activeRegion.cathode_R=dets[WEST].mwpc.activeRegion.cathode_R=39.1*um;
-	} else {
+	}
+	else if(sGeometry=="2012/2013_isobutane") {
+		trap.fWindowThick[EAST]=0.180*um;
+                trap.fWindowThick[WEST]=0.130*um;
+		trap.fWindowMat=SixFSixF;
+		trap.fIRcollimator=2.25*inch;
+		trap.fColThickness=0.75*inch; 
+		trap.fColLength=0.25*inch;
+		dets[EAST].mwpc.activeRegion.anode_R=dets[WEST].mwpc.activeRegion.anode_R=5.*um;
+		dets[EAST].mwpc.activeRegion.cathode_R=dets[WEST].mwpc.activeRegion.cathode_R=39.1*um;
+		dets[EAST].mwpc.fMWPCGas=dets[WEST].mwpc.fMWPCGas=WCButane;
+	}
+	else {
 		SMExcept e("UnknownGeometry");
 		e.insert("name",sGeometry);
 		throw(e);
