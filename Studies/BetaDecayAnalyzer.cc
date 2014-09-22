@@ -25,3 +25,15 @@ SegmentSaver* SimBetaDecayAnalyzer::makeAnalyzer(const std::string& nm, const st
 	else
 		return new BetaDecayAnalyzer(this,nm,inflname);
 }
+
+SimTreeBetaDecayAnalyzer::SimTreeBetaDecayAnalyzer(OutputManager* pnt, const std::string& nm, const std::string& inflName):
+OctetAnalyzer(pnt,nm,inflName) {
+	addPlugin(mySimTree = new SimTreePlugin(this));
+}
+
+SegmentSaver* SimTreeBetaDecayAnalyzer::makeAnalyzer(const std::string& nm, const std::string& inflname) {
+	if(isSimulated)
+		return new SimTreeBetaDecayAnalyzer(this,nm,inflname);
+	else
+		return new BetaDecayAnalyzer(this,nm,inflname);
+}

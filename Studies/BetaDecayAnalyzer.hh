@@ -6,6 +6,7 @@
 #include "CathodeTuningAnalyzer.hh"
 #include "AsymmetryPlugin.hh"
 #include "SimAsymmetryPlugin.hh"
+#include "SimTreePlugin.hh"
 #include "HighEnergyExcessPlugin.hh"
 
 /// analyzer for beta decay data
@@ -36,6 +37,16 @@ public:
 	AsymmetryPlugin* myAsym;		///< asymmetry plugin
 
 	SimAsymmetryPlugin* mySimAsym;	///< simulated asymmetry plugin
+};
+
+class SimTreeBetaDecayAnalyzer: public OctetAnalyzer {
+public:
+	/// constructor
+	SimTreeBetaDecayAnalyzer(OutputManager* pnt, const std::string& nm = "BetaDecayAnalyzer", const std::string& inflName = "");
+        /// create a new instance of this object (cloning self settings) for given directory
+	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname);
+
+	SimTreePlugin* mySimTree;	///< simulated tree plugin
 };
 
 #endif

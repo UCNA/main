@@ -3,9 +3,7 @@
 
 #include "OctetAnalyzer.hh"
 #include "AsymmetryPlugin.hh"
-#include <TFile.h>
-#include <TTree.h>
-#include <TBranch.h>
+
 
 /// plugin with extra plots for simulated runs
 class SimAsymmetryPlugin: public OctetAnalyzerPlugin {

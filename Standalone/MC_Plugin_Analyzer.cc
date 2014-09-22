@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
 	// set up analyzer
 	RunAccumulator* RA = NULL;
 	std::string anm(argv[1]);
-	if(anm=="beta") RA = new SimBetaDecayAnalyzer(&OM,nm);
+	if(anm=="beta") RA = new SimTreeBetaDecayAnalyzer(&OM,nm);
 	else if(anm=="posoff") RA = new PosOffsetAnalyzer(&OM,nm);
 	else if(anm=="effic") RA = new  MC_Effic_Analyzer(&OM,nm);
 	
