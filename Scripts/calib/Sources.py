@@ -235,6 +235,7 @@ class LinearityCurve:
 		
 		#self.fitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
 		self.axisType = graph.axis.log
+		#self.axisType = graph.axis.lin   ## SS was here.
 	
 	def load_lines(self):
 		if self.slines is None:
@@ -714,7 +715,17 @@ cal_2012 = [
 			(	22767,	22793,	22772,	22631,	100000,		61)		# 8 Jan. 25
 			]
 
+cal_test = [
+			(	22767,	22793,	22772,	22631,	100000,		61)		# 8 Jan. 25
+			]
 
+cal_test2 = [
+	                (	22437,	22462,	22442,	22294,	22630,		61),	# 7 Jan. 14
+			]
+
+cal_test3 = [
+	                (	21299,	21328,	21314,	21274,	21623,		61),	# 3 Nov. 20, Thanksgiving; Cd, In, +first Cs137
+			]
 # some useful DB commands:
 # UPDATE energy_calibration SET posmap_set_id=213 WHERE posmap_set_id = 211;
 
@@ -737,8 +748,8 @@ if __name__=="__main__":
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	allintl = [[[] for i in range(4)]for j in range(2)]
 	allruns = []
-	for c in cal_2011:
-		
+	cal_used = cal_test3
+	for c in cal_used:
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i"%(c[0],c[1]); continue
 		
 		rlist = range(c[0],c[1]+1)
@@ -815,9 +826,14 @@ if __name__=="__main__":
 		else: compass = 'West'
 		for t in range(4):
 			gIntLin=graph.graphxy(width=15,height=gheight,ypos=goff,
-                                x=graph.axis.lin(title="Run Number",min=17000,max=20000),
+#                                x=graph.axis.lin(title="Run Number",min=17000,max=20000),
+                                x=graph.axis.lin(title="Run Number",min=(cal_used[0][0]-100),max=(cal_used[-1][1]+100)),
                                 y=graph.axis.lin(title="INL(\\%)",min=0,max=8))
+
+			print "Plotting integrallin " + str(t) + " for side " + compass
 			cIntLin.insert(gIntLin)
+			print allruns
+			print allintl[i][t]
 			gIntLin.plot(graph.data.values(x=allruns,y=allintl[i][t]),
                                 [graph.style.symbol(symbol.circle,size=0.15,symbolattrs=[rgb.red,deco.filled])])
 			gIntLin.plot(graph.data.function("y(x)=5.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
@@ -825,3 +841,4 @@ if __name__=="__main__":
 			goff += gheight+1.4
 		goff += 0.5
 	cIntLin.writetofile(outpath+"/Linearity/integrallin.pdf")
+
