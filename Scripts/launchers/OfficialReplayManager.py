@@ -72,7 +72,7 @@ def replay_sources(rmin,rmax,doXe=False):
 	freplaylist.close()
 	print "------- Replay List -------"
 	os.system("cat officialreplaylist_sources.txt")
-	os.system("nice -n 10 parallel -P 4 < officialreplaylist_sources.txt")
+	os.system("nice -n 10 parallel -P 6 < officialreplaylist_sources.txt")
 	os.system("rm officialreplaylist_sources.txt")
 	
 	

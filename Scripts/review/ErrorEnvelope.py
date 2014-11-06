@@ -13,10 +13,13 @@ limdat = {2008:[(0,5.0),(250,5.0),(500,500*0.013),(900,900*0.025),(1000,1000*0.0
 	                2011:[(0,2.5),(200,200*0.0125),(500,500*0.0250),(1000,500*0.0250)],
 			2012:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)] }
 
-badruns = {2011:[(17361,17363),(17520,17520),(17874,17874),(17891,17891),(18037,18037),(18620,18620),(19357,19357),(17233,17249)],#,(19823,19863),(18617,19863)],
-	   2012:[] }
-
-gausUnc = {2011:[(4.089,5.516),(-1.851,4.756),(-1.026,3.253),(-0.284,1.182),(-1.639,1.921),(-2.298,1.861)],
+badruns = {2011:[(17361,17363),(17520,17520),(17874,17874),(17891,17891),(18037,18037),(18620,18620),(19357,19357),(17233,17249),(19823,19863)],#,(18617,19863)],
+	   2012:[(20818,20818),(20829,20829),(21094,21094),(21322,21322),(22451,22451),(22782,22782)] }
+# Uncertainties for linear fit
+#gausUnc = {2011:[(4.089,5.516),(-1.851,4.756),(-1.026,3.253),(-0.284,1.182),(-1.639,1.921),(-2.298,1.861)],
+#	   2012:[]}
+ # Uncertainties for quadratic fits
+gausUnc = {2011:[(-2.575,7.265),(-2.187,6.367),(-0.8229,5.208),(-0.9457,1.419),(-2.894,2.386),(-1.276,3.772)],
 	   2012:[]}
 
 def calEnvelope(E,year=2011):	
@@ -62,7 +65,7 @@ def getSourceYearDat(year):
 	return srcYearDat[year]
 
 # plot linearity calibration source errors
-def plotAllErrors(outpath,year,s="Both",t=4):
+def plotAllErrors(outpath,year,s="Both",t=4,gaussFiles=False,gaussUnc=False):
 	
 	# gather source data from calibration runs
 	srs = sort_by_type( getSourceYearDat(year).slines )
@@ -98,7 +101,8 @@ def plotAllErrors(outpath,year,s="Both",t=4):
 		gdat = [p for p in gdat if abs(p[1])<yrange]
 		if not gdat:
 			continue
-		ofile = open("%s.txt"%peakNames[k][8:],'w')
+		if gaussFiles:
+			ofile = open("%s/%s_%i.txt"%(os.environ["UCNA_ANA_PLOTS"],peakNames[k][8:],year),'w')
 		print k,peakNames[k]
 		for l in gdat:
 			if abs(l[-1].erecon-l[-1].sim.erecon) > 15:
@@ -109,15 +113,25 @@ def plotAllErrors(outpath,year,s="Both",t=4):
 		hErr = histogram(int(100/(5*(x0+200)/1000)),-yrange-1,yrange+1)
 		for l in gdat:
 			hErr.fill(l[1],6)
-			ofile.write('%f\n'%l[1])
-		ofile.close
-		#gtitle = "%s: $%.1f\\pm%.1f$keV"%(peakNames.get(k,k),hErr.avg(),hErr.rms())
-		gtitle = "%s: $%.1f\\pm%.1f$keV"%(peakNames.get(k,k),gausUnc[year][gausInc][0],gausUnc[year][gausInc][1])
+			if gaussFiles:	
+				ofile.write('%f\n'%l[1])
+		if gaussFiles:	
+			ofile.close
+		if not gaussUnc:
+			gtitle = "%s: $%.1f\\pm%.1f$keV"%(peakNames.get(k,k),hErr.avg(),hErr.rms())
+		else:
+			gtitle = "%s: $%.1f\\pm%.1f$keV"%(peakNames.get(k,k),gausUnc[year][gausInc][0],gausUnc[year][gausInc][1])
 		#g.plot(graph.data.points(gdat,x=1,y=2,title=gtitle), [graph.style.symbol(peakSymbs.get(k,symbol.circle),size=0.2,symbolattrs=[scols[k]]),])
 		g.plot(graph.data.points(hErr.lineData(yoff=x0),x=2,y=1,title=None), [graph.style.line([scols[k],style.linewidth.THick]),])
 		g.plot(graph.data.points([[x0,-30],[x0,30]],x=1,y=2,title=None), [graph.style.line([scols[k],style.linestyle.dotted]),])
-		#g.plot(graph.data.points([[x0,hErr.avg(),hErr.rms()]],x=1,y=2,dy=3,title=gtitle),
-		g.plot(graph.data.points([[x0,gausUnc[year][gausInc][0],gausUnc[year][gausInc][1]]],x=1,y=2,dy=3,title=gtitle),
+		if not gaussUnc:
+			g.plot(graph.data.points([[x0,hErr.avg(),hErr.rms()]],x=1,y=2,dy=3,title=gtitle),
+			[
+				graph.style.errorbar(errorbarattrs=[style.linewidth.THick,scols[k]]),
+				graph.style.symbol(peakSymbs.get(k,symbol.circle),size=0.3,symbolattrs=[scols[k],deco.filled([rgb.white]),style.linewidth.THick]),
+			])
+		else:
+			g.plot(graph.data.points([[x0,gausUnc[year][gausInc][0],gausUnc[year][gausInc][1]]],x=1,y=2,dy=3,title=gtitle),
 			[
 				graph.style.errorbar(errorbarattrs=[style.linewidth.THick,scols[k]]),
 				graph.style.symbol(peakSymbs.get(k,symbol.circle),size=0.3,symbolattrs=[scols[k],deco.filled([rgb.white]),style.linewidth.THick]),
@@ -189,8 +203,9 @@ if __name__=="__main__":
 				#plotAllErrors(outpath,2010,s,t)
 				plotAllWidths(outpath,2010,s,t)
 
-	#plotAllWidths(outpath,2011)
-	plotAllErrors(outpath,2011)
+	plotAllErrors(outpath,2011,gaussFiles=True,gaussUnc=True)
+	#for s in ["East","West"]:
+		#plotAllErrors(outpath,2011,s)
 	#for s in ["East","West"]:
 	#		for t in range(5):
 	#			plotAllErrors(outpath,2011,s,t)

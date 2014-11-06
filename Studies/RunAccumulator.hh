@@ -197,6 +197,8 @@ public:
 	
 	/// virtual routine for filling core histograms from data point
 	virtual void fillCoreHists(ProcessedDataScanner& PDS, double weight) = 0;
+        /// Virtual routine for making simulation tree file
+        virtual void makeSimTree(int rn) {};
 	
 	/// generate output plots
 	virtual void makePlots() {}

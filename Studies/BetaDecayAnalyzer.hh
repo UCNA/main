@@ -42,7 +42,7 @@ public:
 class SimTreeBetaDecayAnalyzer: public OctetAnalyzer {
 public:
 	/// constructor
-	SimTreeBetaDecayAnalyzer(OutputManager* pnt, const std::string& nm = "BetaDecayAnalyzer", const std::string& inflName = "");
+        SimTreeBetaDecayAnalyzer(OutputManager* pnt, const std::string& nm = "BetaDecayAnalyzer", const std::string& inflName = "");
         /// create a new instance of this object (cloning self settings) for given directory
 	virtual SegmentSaver* makeAnalyzer(const std::string& nm, const std::string& inflname);
 

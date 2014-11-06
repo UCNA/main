@@ -1,5 +1,6 @@
 #include <cassert>
 #include <fstream>
+#include <map>
 
 #include "OutputManager.hh"
 #include "RunAccumulator.hh"
@@ -89,7 +90,7 @@ int main(int argc, char *argv[]) {
 		printf("Use: %s [analyzer name] [analysis directory] [run to compare]\n", argv[0]);
 		return 0;
 	}
-	
+	int nevents = 1e6;
 	// set up output paths
 	auto v = split(argv[2],"/");
 	std::string nm = v.back();
@@ -117,7 +118,7 @@ int main(int argc, char *argv[]) {
 		RA->makeOutput(true);
 	} else {
 		// set up input simulations
-		G4toPMT g2p;
+	        G4toPMT g2p(true); // true here tells it to load the extended variables like energy deposition in diff parts of spec
 		ifstream file;
 		file.open(slist);
 		std::string fname;
@@ -135,8 +136,15 @@ int main(int argc, char *argv[]) {
 
 		RunInfo RI = CalDBSQL::getCDB()->getRunInfo(run);
 		g2p.setAFP(RI.afpState);
+		for(std::map<std::string,AnalyzerPlugin*>::iterator it = RA->myPlugins.begin(); it != RA->myPlugins.end(); it++)
+		  {
+		    std::cout << it->first << std::endl;
+		  }
+		//std::cout << RA->myPlugins;//
+		std::string simTreeName = "simasymmetry";
+		RA->getPlugin(simTreeName)->makeSimTree(run);
 		// process data and exit
-		RA->loadSimData(g2p);
+		RA->loadSimData(g2p,nevents,true);
 		
 		//RA->makeOutput(true);
 	}

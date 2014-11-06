@@ -673,30 +673,30 @@ cal_2010 = [
 			
 cal_2011 = [
 #			(	17233,	17249,	17238,	16983,	17297,		209	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
-			(	17359,	17387,	17371,	17359,	17439,		209	),	# 1 Beta Decay; PMT W0 missing pulser
-			(	17517,	17527,	17522,	17440,	17734,		209	),	# 2 Calibrations for Xe; W0 pulser still dead
-			(	17871,	17941,	17892,	17735,	17955,		209	),	# 3 Big Scan; W0 pulser still dead; originally to 17922
-			(	18020,	18055,	18039,	18020,	18055,		209	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
-			(	18357,	18386,	18362,	18081,	18386,		207	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
-			(	18617,	18640,	18622,	18390,	18683,		55	),	# 6 Beta decay; PMT W4 Bi pulser very low
-			(	18745,	18768,	18750,	18712,	18994,		59	),	# 7 Start of 2012; PMT W4 pulser still low
-			(	19203,	19239,	19233,	19023,	19239,		59	),	# 8 W4 Pulser now higher... drifty
-			(	19347,	19377,	19359,	19347,	19544,		213	),	# 9 W4 Pulser now low...
+			(	17359,	17387,	17371,	17359,	17439,		275	),	# 1 Beta Decay; PMT W0 missing pulser
+			(	17517,	17527,	17522,	17440,	17734,		275	),	# 2 Calibrations for Xe; W0 pulser still dead
+			(	17871,	17941,	17892,	17735,	17955,		275	),	# 3 Big Scan; W0 pulser still dead; originally to 17922
+			(	18020,	18055,	18039,	18020,	18055,		275	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
+			(	18357,	18386,	18362,	18081,	18386,		277	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
+			(	18617,	18640,	18622,	18390,	18683,		279	),	# 6 Beta decay; PMT W4 Bi pulser very low
+			(	18745,	18768,	18750,	18712,	18994,		281	),	# 7 Start of 2012; PMT W4 pulser still low
+			(	19203,	19239,	19233,	19023,	19239,		281	),	# 8 W4 Pulser now higher... drifty
+			(	19347,	19377,	19359,	19347,	19544,		283	),	# 9 W4 Pulser now low...
 			#(	19505,	19544, 19539	),					# Feb. 14, Cd2In only; not used for calibration
-			(	19823,	19863,	19858,	19583,	20000,		213)	# 10 Feb. 16-24 Xe, Betas, long sources
+			(	19823,	19863,	19858,	19583,	20000,		283)	# 10 Feb. 16-24 Xe, Betas, long sources
 			]
 
 cal_2012 = [
-			(	20515,	20527,	20522,	20121,	20741,		61),	# 0 Oct. 12, Bi/Ce/Sn
-			(	20818,	20830,	20823,	20782,	20837,		61),	# 1 Oct. 20, Bi/Ce/Sn, calibrates 1 octet
-			(	21087,	21099,	21092,	21087,	21237,		61),	# 2 Nov. 16; Bi/Ce/Sn
-			(	21299,	21328,	21314,	21274,	21623,		61),	# 3 Nov. 20, Thanksgiving; Cd, In, +first Cs137
-			(	21679,	21718,	21687,	21625,	21863,		61),	# 4 Dec. 6 weekend betas
-			(	21914,	21939,	21921,	21890,	22118,		61),	# 5 Dec. 12
-			(	22215,	22238,	22222,	22124,	22238,		61),	# 6 Dec. 18
+			(	20515,	20527,	20522,	20121,	20741,		269),	# 0 Oct. 12, Bi/Ce/Sn
+			(	20818,	20830,	20823,	20782,	20837,		269),	# 1 Oct. 20, Bi/Ce/Sn, calibrates 1 octet
+			(	21087,	21099,	21092,	21087,	21237,		269),	# 2 Nov. 16; Bi/Ce/Sn
+			(	21299,	21328,	21314,	21274,	21623,		269),	# 3 Nov. 20, Thanksgiving; Cd, In, +first Cs137
+			(	21679,	21718,	21687,	21625,	21863,		271),	# 4 Dec. 6 weekend betas
+			(	21914,	21939,	21921,	21890,	22118,		271),	# 5 Dec. 12
+			(	22215,	22238,	22222,	22124,	22238,		271),	# 6 Dec. 18
 			#(	22294,	22306),										#   Jan. 11; Bi/Ce/Sn only
-			(	22437,	22462,	22442,	22294,	22630,		61),	# 7 Jan. 14
-			(	22767,	22793,	22772,	22631,	100000,		61)		# 8 Jan. 25
+			(	22437,	22462,	22442,	22294,	22630,		273),	# 7 Jan. 14
+			(	22767,	22793,	22772,	22631,	100000,		273)		# 8 Jan. 25
 			]
 
 

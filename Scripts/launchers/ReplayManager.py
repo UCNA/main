@@ -44,7 +44,7 @@ def processSources(rmin,rmax):
 			freplaylist.write(pcmd%(r,r))
 		freplaylist.close()
 		os.system("cat source_replaylist.txt")
-		os.system("nice -n 10 parallel -P 6 < source_replaylist.txt")
+		os.system("nice -n 10 parallel -P 7 < source_replaylist.txt")
 		os.system("rm source_replaylist.txt")
 
 def processXeMap(rmin,rmax,nr):
@@ -54,7 +54,7 @@ def processXeMap(rmin,rmax,nr):
 			freplaylist.write(pcmd%(r,r,nr))
 		freplaylist.close()
 		os.system("cat xenon_replaylist.txt")
-		os.system("nice -n 15 parallel -P 2 < xenon_replaylist.txt")
+		os.system("nice -n 15 parallel -P 7 < xenon_replaylist.txt")
 		os.system("rm xenon_replaylist.txt")
 		os.system(pcmd%(rmin,rmax,nr))
 
@@ -65,9 +65,9 @@ def processXeSim(rmin,rmax,nr):
 			freplaylist.write(pcmd%(r,r,nr))
 		freplaylist.close()
 		os.system("cat xenon_simlist.txt")
-		nproc = 2
+		nproc = 7
 		if nr > 15:
-			nproc = 3
+			nproc = 4
 		os.system("nice -n 15 parallel -P %i < xenon_simlist.txt"%nproc)
 		os.system("rm xenon_simlist.txt")
 		#os.system(pcmd%(rmin,rmax,nr))
