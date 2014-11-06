@@ -70,7 +70,7 @@ def processXeSim(rmin,rmax,nr):
 			nproc = 3
 		os.system("nice -n 15 parallel -P %i < xenon_simlist.txt"%nproc)
 		os.system("rm xenon_simlist.txt")
-		os.system(pcmd%(rmin,rmax,0,nr))
+		#os.system(pcmd%(rmin,rmax,0,nr))
 
 def betaOctetPositions(dosim):
 	pcmd = "cd "+anaBinDir+"; ./BetaOctetPositions %i\n"
