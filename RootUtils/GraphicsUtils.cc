@@ -2,7 +2,7 @@
 #include "strutils.hh"
 #include "SMExcept.hh"
 #include <algorithm>
-#include <TStyle.h>
+
 #include <TEllipse.h>
 #include <TPad.h>
 #include <TH1F.h>
@@ -10,7 +10,7 @@
 #include <TLine.h>
 #include <TLatex.h>
 #include <TBox.h>
-
+#include <TStyle.h>
 #include <TColor.h>
 
 bool compareHistosByMax(TH1* i, TH1* j) {

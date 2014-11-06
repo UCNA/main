@@ -119,10 +119,8 @@ const quadHists* OctetAnalyzer::getCoreHist(const std::string& qname) const {
 	return it->second;
 }
 
-void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {printf("I'm in loadSimData\n");
-  //simData.setAFP(AFP_OFF);
+void OctetAnalyzer::loadSimData(Sim2PMT& simData, unsigned int nToSim, bool countAll) {
         setFillPoints(simData.getAFP(),GV_OPEN);
-  //setFillPoints(AFP_OFF,GV_OPEN);
 	RunAccumulator::loadSimData(simData,nToSim,countAll);
 }
 
