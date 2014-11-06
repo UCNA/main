@@ -216,6 +216,7 @@ class LinearityCurve:
 		self.cnvs = None
 		self.uselist = None
 		self.slines = None
+		self.intlin = None
 		self.datrange = (100,2000)
 		self.width_adc = 300
 		self.width_dadc = 45
@@ -323,7 +324,7 @@ class LinearityCurve:
 			self.gEvis.plot(graph.data.points(gdat,x=1,y=2,dy=4,title=peakNames.get(k,k)),
 				[graph.style.symbol(peakSymbs.get(k,symbol.circle),size=0.2,symbolattrs=[self.cP[k],]),graph.style.errorbar(errorbarattrs=[self.cP[k],])])
 		
-		self.gEvis.text(7.5,3.5,"%s %i"%(self.side,self.tube+1))
+		#self.gEvis.text(7.5,3.5,"%s %i"%(self.side,self.tube+1))
 		
 		##
 		# Fit data
@@ -355,6 +356,21 @@ class LinearityCurve:
 			print "**** Fit failure!"
 			self.fitter = None
 			return False
+		refvolt = []
+                sourcedev = []
+                for k in self.pks:
+                        gdat = [ (l.adc*l.gms, self.fitter(l.adc*l.gms), l.sim.erecon*l.eta, l.sim.erecon*l.eta*etaErr) for l in self.pks[k] if l.adc > 0]
+                        gdat = [ (x,100.0*(y-yexp)/yexp,100*dy/yexp,y-yexp) for (x,yexp,y,dy) in gdat ]
+                        gdat = [ g for g in gdat if xrange[0] < g[0] < xrange[1] and -100 < g[1] < 100 ]
+                        refvolt.append(max(abs(g[0]) for g in gdat))
+                        sourcedev.append(max(abs(g[3]) for g in gdat))
+                        if not gdat:
+                                continue
+                delv = max(sourcedev)
+                vmax = max(refvolt)
+                self.intlin = 100*delv/3000 # using estimated vmax for whole experiment
+		#self.intlin = 100*delv/vmax # using vmax calculated for run group 
+		self.gEvis.text(5.0,3.5,"%s %i INL = %.3f"%(self.side,self.tube+1,self.intlin))
 			
 		##
 		# residuals plotting
@@ -370,8 +386,7 @@ class LinearityCurve:
 		self.gResid.plot(graph.data.function("y(x)=0.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
 		
 		return True
-		
-		
+
 	def fitWidths(self):
 		
 		######
@@ -672,18 +687,18 @@ cal_2010 = [
 			]
 			
 cal_2011 = [
-#			(	17233,	17249,	17238,	16983,	17297,		209	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
-			(	17359,	17387,	17371,	17359,	17439,		209	),	# 1 Beta Decay; PMT W0 missing pulser
-			(	17517,	17527,	17522,	17440,	17734,		209	),	# 2 Calibrations for Xe; W0 pulser still dead
-			(	17871,	17941,	17892,	17735,	17955,		209	),	# 3 Big Scan; W0 pulser still dead; originally to 17922
-			(	18020,	18055,	18039,	18020,	18055,		209	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
-			(	18357,	18386,	18362,	18081,	18386,		207	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
-			(	18617,	18640,	18622,	18390,	18683,		55	),	# 6 Beta decay; PMT W4 Bi pulser very low
-			(	18745,	18768,	18750,	18712,	18994,		59	),	# 7 Start of 2012; PMT W4 pulser still low
-			(	19203,	19239,	19233,	19023,	19239,		59	),	# 8 W4 Pulser now higher... drifty
-			(	19347,	19377,	19359,	19347,	19544,		213	),	# 9 W4 Pulser now low...
+#			(	17233,	17249,	17238,	16983,	17297,		233	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+			(	17359,	17387,	17371,	17359,	17439,		233	),	# 1 Beta Decay; PMT W0 missing pulser
+			(	17517,	17527,	17522,	17440,	17734,		233	),	# 2 Calibrations for Xe; W0 pulser still dead
+			(	17871,	17941,	17892,	17735,	17955,		233	),	# 3 Big Scan; W0 pulser still dead; originally to 17922
+			(	18020,	18055,	18039,	18020,	18055,		233	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
+			(	18357,	18386,	18362,	18081,	18386,		223	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
+			(	18617,	18640,	18622,	18390,	18683,		225	),	# 6 Beta decay; PMT W4 Bi pulser very low
+			(	18745,	18768,	18750,	18712,	18994,		227	),	# 7 Start of 2012; PMT W4 pulser still low
+			(	19203,	19239,	19233,	19023,	19239,		227	),	# 8 W4 Pulser now higher... drifty
+			(	19347,	19377,	19359,	19347,	19544,		229	),	# 9 W4 Pulser now low...
 			#(	19505,	19544, 19539	),					# Feb. 14, Cd2In only; not used for calibration
-			(	19823,	19863,	19858,	19583,	20000,		213)	# 10 Feb. 16-24 Xe, Betas, long sources
+			(	19823,	19863,	19858,	19583,	20000,		229)	# 10 Feb. 16-24 Xe, Betas, long sources
 			]
 
 cal_2012 = [
@@ -720,7 +735,8 @@ if __name__=="__main__":
 
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
-	
+	allintl = [[[] for i in range(4)]for j in range(2)]
+	allruns = []
 	for c in cal_2011:
 		
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i"%(c[0],c[1]); continue
@@ -744,6 +760,7 @@ if __name__=="__main__":
 		# fit linearity curves for each PMT
 		calib_OK = True
 		LC = {}
+		k = 0
 		for s in ["East","West"]:
 			for t in range(5):
 				print "\n-----",s,t,rlist[0],"-----"
@@ -751,6 +768,7 @@ if __name__=="__main__":
 				# LC[(s,t)].uselist = []	# set this for "emergency" defaults calibration, hopefully good enough to bootstrap to real calibration
 				if t<4:
 					if LC[(s,t)].fitLinearity():
+						allintl[k][t].append(LC[(s,t)].intlin)
 						fCalSummary.write("%s %i\t%s\n"%(s,t,LC[(s,t)].fitter.toLatex()))
 						if makePlots and LC[(s,t)].uselist is None:
 							LC[(s,t)].cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
@@ -772,8 +790,8 @@ if __name__=="__main__":
 						LC[(s,t)].cnvs.writetofile(outpath+"/Erecon/Erecon_v_Etrue_%i_%s%i.pdf"%(rlist[0],s[0],t))
 					except:
 						print "Plotting failure for",s,t,"!"
-
-
+			k += 1
+		allruns.append(rlist[0])
 		# make new calibrations set; upload to DB
 		if not calib_OK:
 			print "\n*** Calibration curve generation failure; DB not updated!"
@@ -788,3 +806,22 @@ if __name__=="__main__":
 
 		print "\nsource replay command:"
 		print "nohup ./ReplayManager.py -s --rmin=%i --rmax=%i < /dev/null > scriptlog.txt 2>&1 &\n"%(c[0],c[1])
+	gheight = 3
+	goff = 0
+	cIntLin = canvas.canvas()	
+	
+	for i in range(2): 
+		if (i==0): compass = 'East'
+		else: compass = 'West'
+		for t in range(4):
+			gIntLin=graph.graphxy(width=15,height=gheight,ypos=goff,
+                                x=graph.axis.lin(title="Run Number",min=17000,max=20000),
+                                y=graph.axis.lin(title="INL(\\%)",min=0,max=8))
+			cIntLin.insert(gIntLin)
+			gIntLin.plot(graph.data.values(x=allruns,y=allintl[i][t]),
+                                [graph.style.symbol(symbol.circle,size=0.15,symbolattrs=[rgb.red,deco.filled])])
+			gIntLin.plot(graph.data.function("y(x)=5.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
+			gIntLin.text(0.7,goff+2.2,"%s %i"%(compass,t))
+			goff += gheight+1.4
+		goff += 0.5
+	cIntLin.writetofile(outpath+"/Linearity/integrallin.pdf")
