@@ -85,9 +85,9 @@ public:
 
 
 int main(int argc, char *argv[]) {
-	if(argc != 4) {
+	if(argc != 5) {
 		assert(argc);
-		printf("Use: %s [analyzer name] [analysis directory] [run to compare]\n", argv[0]);
+		printf("Use: %s [analyzer name] [analysis directory] [run to compare] [fiducialRadius]\n", argv[0]);
 		return 0;
 	}
 	int nevents = 1e6;
@@ -99,6 +99,7 @@ int main(int argc, char *argv[]) {
 	OutputManager OM("NameUnused",pth);
 	std::string slist = std::string(argv[2])+"/simlist.txt";
 	int run = atoi(argv[3]);
+	float fiducialRad = atof(argv[4]);
 	
 	// set up analyzer
 	RunAccumulator* RA = NULL;
@@ -119,6 +120,7 @@ int main(int argc, char *argv[]) {
 	} else {
 		// set up input simulations
 	        G4toPMT g2p(true); // true here tells it to load the extended variables like energy deposition in diff parts of spec
+		g2p.fiducialRadius = fiducialRad;
 		ifstream file;
 		file.open(slist);
 		std::string fname;

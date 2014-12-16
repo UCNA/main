@@ -191,7 +191,7 @@ class GeantSimManager:
 		os.system("cat "+parallel_jobfile)
 		print "N Runs is ", nruns
 		if nruns > 1:
-			os.system("nice -n 20 parallel -P 5 < %s"%parallel_jobfile)
+			os.system("nice -n 20 parallel -P 6 < %s"%parallel_jobfile)
 
 		else:
 			os.system(onejob)
@@ -226,7 +226,7 @@ class GeantSimManager:
 		print "\n----- %s ------"%resim_jobfile
 		os.system("cat "+resim_jobfile)
 		print
-		os.system("nice -n 10 parallel -P 4 < %s"%resim_jobfile)
+		os.system("nice -n 10 parallel -P 6 < %s"%resim_jobfile)
 		os.system("rm %s/outlist_*.txt"%self.g4_out_dir)
 		os.system("rm "+resim_jobfile)
 
@@ -303,11 +303,12 @@ if __name__ == "__main__":
 ######################## Neutrons 2011-2013 ###############################
 	if options.neutrons:
 		
-		betaSim = GeantSimManager("CORRECT_Neutrons_2012-2013", geometry="2012/2013")
+		betaSim = GeantSimManager("SAVEALL_Neutrons_2011-2012", geometry="2011/2012")
 	#betaSim.set_generator("neutronBetaUnpol")
 	       	betaSim.set_evtsrc("n1_100mil")
 		if options.sim:
 			betaSim.set_detector_offsets()
+			betaSim.settings["ana_args"] += " saveall"
 			#betaSim.g4_out_dir_base = os.environ["G4OUTDIR"]
 			betaSim.launch_sims(maxIn=3014)
 			

@@ -44,7 +44,7 @@ def processSources(rmin,rmax):
 			freplaylist.write(pcmd%(r,r))
 		freplaylist.close()
 		os.system("cat source_replaylist.txt")
-		os.system("nice -n 10 parallel -P 7 < source_replaylist.txt")
+		os.system("nice -n 10 parallel -P 8 < source_replaylist.txt")
 		os.system("rm source_replaylist.txt")
 
 def processXeMap(rmin,rmax,nr):

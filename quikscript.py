@@ -28,7 +28,7 @@ if 1:
 #Replaying Xenon runs and extracting section-by-section spectra for individual runs
 # runs 21596 and beyond are from 2012/2013 and should be replayed again once new sims have been run
 # make sure you change the environment path of the srcsims and source the .bashrc file
-    if 0:
+    if 1:
         if year==2011:
             runlow = [17570, 18081, 18390, 18712, 19589, 19873]
             runhigh = [17600, 18090, 18413, 18744, 19606, 19898]
@@ -45,7 +45,7 @@ if 1:
 
 # Merging the individual runs into one file. Range may not match that above
 # based on looking at Erecon 
-    if 0:
+    if 1:
         if year==2011:
             runlow = [17570, 18082, 18391, 18712, 19873]
             runhigh = [17590, 18090, 18413, 18744, 19898]
@@ -59,7 +59,7 @@ if 1:
                 os.system(pcmd1%(runlow[i], runhigh[i]))
 
 # determine isotopic composition via simulation
-    if 0:
+    if 1:
         redoRuns=[]
         failedRuns=[]
         path=' '
@@ -109,7 +109,7 @@ if 1:
 
 
 #Merge simulated runs. These ranges should match that of the data which was merged
-    if 0:
+    if 1:
         if year==2011:
             runlow = [17570, 18082, 18391, 18712, 19873]
             runhigh = [17590, 18090, 18413, 18744, 19898]
@@ -131,13 +131,13 @@ if 1:
             runlow=[21596, 21966, 22962]           
             runhigh = [21605, 22003, 22979]
         
-        pmap = [295,297,299,301,303]
+        pmap = [275,277,279,281,283]
         pcmd1 = "./UCNAnalyzer pmap comp %i %i 12 x x"
         pcmd2 = "./UCNAnalyzer pmap plot %i x x"
     
         for i in range(0, len(runlow), 1):
             os.system(pcmd1%(runlow[i], runhigh[i]))
-            #os.system(pcmd2%(pmap[i]))
+            os.system(pcmd2%(pmap[i]))
 
 
  

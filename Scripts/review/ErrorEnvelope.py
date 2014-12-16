@@ -9,11 +9,11 @@ from ucnacore.Histogram import *
 
 limdat = {2008:[(0,5.0),(250,5.0),(500,500*0.013),(900,900*0.025),(1000,1000*0.025),(1200,1200*0.025)],
 			2010:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)],
-			#2011:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)],
-	                2011:[(0,2.5),(200,200*0.0125),(500,500*0.0250),(1000,500*0.0250)],
+			2011:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)],
+	                #2011:[(0,2.5),(200,200*0.0125),(500,500*0.0250),(1000,500*0.0250)],
 			2012:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)] }
 
-badruns = {2011:[(17361,17363),(17520,17520),(17874,17874),(17891,17891),(18037,18037),(18620,18620),(19357,19357),(17233,17249),(19823,19863)],#,(18617,19863)],
+badruns = {2011:[(17361,17361),(17376,17376),(17520,17520),(17874,17874),(17891,17891),(18037,18037),(18620,18620),(19357,19357),(17233,17249),(19823,19863)],#,(18617,19863)],
 	   2012:[(20818,20818),(20829,20829),(21094,21094),(21322,21322),(22451,22451),(22782,22782)] }
 # Uncertainties for linear fit
 #gausUnc = {2011:[(4.089,5.516),(-1.851,4.756),(-1.026,3.253),(-0.284,1.182),(-1.639,1.921),(-2.298,1.861)],
@@ -190,7 +190,7 @@ def plotAllWidths(outpath,year,s="Both",t=4):
 if __name__=="__main__":
 
 	# set up output paths
-	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/"
+	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/FitTypeStudy/"
 	os.system("mkdir -p %s"%outpath)
 	
 	if 0:
@@ -200,13 +200,13 @@ if __name__=="__main__":
 		
 		for s in ["East","West"]:
 			for t in range(5):
-				#plotAllErrors(outpath,2010,s,t)
-				plotAllWidths(outpath,2010,s,t)
+				plotAllErrors(outpath,2010,s,t)
+				#plotAllWidths(outpath,2010,s,t)
 
-	plotAllErrors(outpath,2011,gaussFiles=True,gaussUnc=True)
+	plotAllErrors(outpath,2011,gaussFiles=False,gaussUnc=False)
 	#for s in ["East","West"]:
-		#plotAllErrors(outpath,2011,s)
-	#for s in ["East","West"]:
-	#		for t in range(5):
-	#			plotAllErrors(outpath,2011,s,t)
+	#	plotAllErrors(outpath,2011,s,gaussFiles=False,gaussUnc=False)
+	for s in ["East","West"]:
+			for t in range(5):
+				plotAllErrors(outpath,2011,s,t,gaussFiles=False,gaussUnc=False)
 				#plotAllWidths(outpath,2010,s,t)

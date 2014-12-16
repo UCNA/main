@@ -35,7 +35,7 @@ void SimTreePlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight) {
 	        SCD.mwpcEnergyE = S2P.mwpcEnergy[EAST];
 		SCD.mwpcEnergyW = S2P.mwpcEnergy[WEST];
 		SCD.Erecon = S2P.getErecon();
-		SCD.type = S2P.fType==TYPE_0_EVENT?0:(S2P.fType==TYPE_I_EVENT?1:(S2P.fType==TYPE_II_EVENT?2:(S2P.fType==TYPE_III_EVENT?3:4)));
+		SCD.type =S2P.physicsWeight*S2P.fType==TYPE_0_EVENT?0:(S2P.fType==TYPE_I_EVENT?1:(S2P.fType==TYPE_II_EVENT?2:(S2P.fType==TYPE_III_EVENT?3:4)));
 		SCD.side = s;
 		SCD.PID = S2P.fPID;
 		SCD.physicsWeight = S2P.physicsWeight;
