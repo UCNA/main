@@ -19,8 +19,7 @@ fi
 read -p "What is your svn username? " username
 export UCNA_USER=$username
 
-# export UCNA_SVN=cuore-svn.roma1.infn.it/cuoremc/trunk
-export UCNA_GIT=git@github.com:hickerson/cuore.git
+export UCNA_GIT=git@github.com:ucna/ucna
 export UCNA_PATCH=${UCNA_BASE}/patch
 export UCNA_SRC=${UCNA_BASE}/sources
 export UCNA_BIN=${UCNA_BASE}/bin
