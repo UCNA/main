@@ -3,30 +3,30 @@
 
 
 #
-# CUORE base code svn and git repository
+# UCNA base code svn and git repository
 #
-if [ -z "${CUOREBASE}" ]
+if [ -z "${UCNA_BASE}" ]
 then
-  export CUOREBASE=$(pwd)
+  export UCNA_BASE=$(pwd)
 fi
 
 #while true; do
-#  Select "Install in ${CUOREBASE}? (" yn
+#  Select "Install in ${UCNA_BASE}? (" yn
 #  case $yn in
 #  	[Yy]* ) break;;
 #	[Nn]*
 
 read -p "What is your svn username? " username
-export CUOREUSER=$username
+export UCNA_USER=$username
 
-export CUORESVN=cuore-svn.roma1.infn.it/cuoremc/trunk
-export CUOREGIT=git@github.com:hickerson/cuore.git
-export CUOREPATCH=${CUOREBASE}/patch
-export CUORESRC=${CUOREBASE}/sources
-export CUOREBIN=${CUOREBASE}/bin
-export CUOREBUILD=${CUOREBASE}/build
-export PATH=${PATH}:${CUOREBIN}
-export CUOREEXE="qshields g2tas g2root MCuoreZ"
+# export UCNA_SVN=cuore-svn.roma1.infn.it/cuoremc/trunk
+export UCNA_GIT=git@github.com:hickerson/cuore.git
+export UCNA_PATCH=${UCNA_BASE}/patch
+export UCNA_SRC=${UCNA_BASE}/sources
+export UCNA_BIN=${UCNA_BASE}/bin
+export UCNA_BUILD=${UCNA_BASE}/build
+export PATH=${PATH}:${UCNA_BIN}
+export UCNA_EXE="qshields g2tas g2root MCuoreZ"
 
 
 
@@ -95,7 +95,7 @@ fi
 
 
 # Export path for vrmlviewer (the bin directory)
-#export PATH=${PATH}:${CUOREBASE}/bin/vrmlviewer
+#export PATH=${PATH}:${UCNA_BASE}/bin/vrmlviewer
 
 
 
