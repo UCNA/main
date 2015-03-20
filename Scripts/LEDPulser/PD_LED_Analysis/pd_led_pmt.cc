@@ -50,7 +50,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_03_18_2015_nonlinearitycomps_betafixed/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_03_19_2015_relativelinearity/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -65,9 +65,10 @@ FOLLOWING DOESN'T WORK:
 #define RANGE_MIN 5.0
 #define MOVEDUPGRAPH false
 #define KEVSCALED false
-#define RANGE_MAX_OVERRIDE false
-#define RANGE_MAX_VALUE 50.0
+#define RANGE_MAX_OVERRIDE true
+#define RANGE_MAX_VALUE 100.0
 #define FIXBETAENDPOINT true
+#define RELATIVEBETAPLOTS true  // supersedes FIXBETAENDPOINT (and everything else)
 
 TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
 {
@@ -337,8 +338,10 @@ int main (int argc, char **argv)
 			100, 200, 300);
   
   // prepare a file to store linearity fit parameters
-  double * fitpars = 0; 
-  double * fitparerrors = 0;
+  //  double * fitpars = 0; 
+  //  double * fitparerrors = 0;
+  double ** fitpars = new double*[2];
+  double ** fitparerrors = new double*[2];
   double fitchisq = 0;
   int Npar;
 
@@ -799,7 +802,6 @@ int main (int argc, char **argv)
 #else	    
 	    graph[led][i]->Fit(fit, "R");  
 #endif
-
 	    //Testing
 	    /*if (led>0)  {
 	      PMT_keV_graph[0][i]->Draw("AP");
@@ -811,8 +813,11 @@ int main (int argc, char **argv)
 	    std::cout << "A fit for run " << run << " finished." << std::endl;
 	    
 	    //Write fit parameters to file - include channel and led info
-	    fitpars = fit->GetParameters();
-	    fitparerrors = fit->GetParErrors();
+	    //	    fitpars = fit->GetParameters();
+	    //fitparerrors = fit->GetParErrors();
+	    fitpars[led] = fit->GetParameters();
+	    fitparerrors[led] = fit->GetParErrors();
+	    
 	    fitchisq = fit->GetChisquare()/fit->GetNDF(); // use reduced chi-squared
 	    
 	    Npar = fit->GetNpar();
@@ -822,9 +827,12 @@ int main (int argc, char **argv)
 	    out_fit_string += wavelength[led];    out_fit_string += "\t"; 
 	    cout << out_fit_string << endl;
 	    for (int k = 0; k < Npar; k++){
-	      out_fit_string += fitpars[k];       out_fit_string += "\t";
-	      out_fit_string += fitparerrors[k];  out_fit_string += "\t";
-	      cout << fitpars[k] << " +/- " << fitparerrors[k] << endl;
+	      //	      out_fit_string += fitpars[k];       out_fit_string += "\t";
+	      out_fit_string += fitpars[led][k];       out_fit_string += "\t";
+	      //	      out_fit_string += fitparerrors[k];  out_fit_string += "\t";
+	      out_fit_string += fitparerrors[led][k];  out_fit_string += "\t";
+	      //	      cout << fitpars[k] << " +/- " << fitparerrors[k] << endl;
+	      cout << fitpars[led][k] << " +/- " << fitparerrors[led][k] << endl;
 	    }
 	    out_fit_string += fitchisq;           out_fit_string += "\t";
 	    out_fit_string += fit->GetNDF();      out_fit_string += "\t";
@@ -846,6 +854,26 @@ int main (int argc, char **argv)
 	    // } // Don't do constrained fit
 	    
 	}
+
+#if RELATIVEBETAPLOTS
+      TF1 * relativefit = new TF1("relative", 
+				  "[4] * ([0] + [1]*(x-[3]) + [2]*(x-[3])**2)",
+				  range_min[UP], range_max[UP]);
+      relativefit->FixParameter(0, fitpars[0][0]); // use 405 fitpars for 465 LED
+      relativefit->FixParameter(1, fitpars[0][1]);
+      relativefit->FixParameter(2, fitpars[0][2]);
+      relativefit->FixParameter(3, fitpars[0][3]);
+      relativefit->SetParameter(4, 0.3);
+      graph[UP][i]->Fit(relativefit, "R");
+      
+      // Testing
+      /*TCanvas *ppp = new TCanvas();
+      graph[DOWN][i]->Draw("A*");
+      graph[UP][i]->Draw("same*");
+      app.Run();
+      return 0;
+      }*/
+#endif	
 
 #if MOVEDUPGRAPH      
       // Rescale 465 to 405 slope
