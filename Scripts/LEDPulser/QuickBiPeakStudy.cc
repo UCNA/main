@@ -75,7 +75,7 @@ vector<double> fit_bi_peaks(char* filename){
   for (int i = 0; i < nTubes; i++){
     TH1F * htemp  = (TH1F*)MyFile->Get( Form("h190%i", i) );
     c1->cd(i+1);
-    //    double mean_i = gaus_fit_routine(htemp);
+    //    double mean_i = gaus_fit_orutine(htemp);
     TF1* fitfunc = gaus_fit_routine(htemp);
     mean_vector.push_back(fitfunc->GetParameter(1));
     mean_errs_vector.push_back(fitfunc->GetParError(1) );

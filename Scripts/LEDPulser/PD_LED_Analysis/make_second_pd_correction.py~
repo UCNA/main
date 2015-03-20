@@ -1,7 +1,0 @@
-# make_second_pd_correction.py
-# Simon Slutsky
-# 1/24/2013
-#
-# Auxilliary for led_bi_compare.py
-# Make a corretion for the residual PD dependence
-# left over after correcting for PD signal 

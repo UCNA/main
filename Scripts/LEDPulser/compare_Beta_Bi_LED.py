@@ -78,9 +78,10 @@ def makeTripleComparePlot2(tubeIn, zoombool = 0, make_PD_LED_corr = 1):
     bi_runlist, bi_data = getBiData(tubeIn)
     LED_runlist, LED_data = getLEDData(tubeIn, make_PD_LED_corr)
 
-    print "Plotting Bi"
-    plt.errorbar(bi_runlist, bi_data, color = 'k',
-                 linestyle='None', marker='o', markersize=markSize, label = "Bi")
+    if tubeIn < 7:  # Tube 7 has screwy Bi pulser data 
+        print "Plotting Bi"
+        plt.errorbar(bi_runlist, bi_data, color = 'k',
+                     linestyle='None', marker='o', markersize=markSize, label = "Bi")
 
     print "Plotting Beta"
     plt.errorbar(beta_runlist, beta_data, color = 'b', 
@@ -100,7 +101,7 @@ def makeTripleComparePlot2(tubeIn, zoombool = 0, make_PD_LED_corr = 1):
     
     return fig
 
-def makeTripleCompareDiffs(tubeIn, zoombool = 0, make_PD_LED_corr = 1):
+def makeTripleCompareDiffs(tubeIn, zoombool = 0, make_PD_LED_corr = 1, div = 0):
     fig = plt.figure(figsize = (14, 12))
     markSize = 5
     filename = "/home/saslutsky/UCNA/UCNAReplay_052214/UCNA/Scripts/LEDPulser/BetaSpectrumFitting/BetaKurieEndpoints_clean.txt"
@@ -121,16 +122,32 @@ def makeTripleCompareDiffs(tubeIn, zoombool = 0, make_PD_LED_corr = 1):
     beta_bi_diff  = [beta - bi + offset for beta, bi in zip(beta_data, bi_data)]
     led_bi_diff   = [led  - bi - offset for led,  bi in zip(LED_data, bi_data)]
     
+    if div:
+        beta_led_diff = [(beta / LED) for beta, LED in zip(beta_data, LED_data)]
+        beta_bi_diff  = [(beta / bi) + offset for beta, bi in zip(beta_data, bi_data)]
+       # led_bi_diff   = [(led  / bi) - offset for led,  bi in zip(LED_data, bi_data)]
+
     # plots of diff vs runlist
     print "Plotting Beta-LED diff"
-    plt.errorbar(overlap_runlist, beta_led_diff, color = 'k', 
-                 linestyle = 'None', marker = 'o', markersize = markSize, label = "Beta minus LED")
-    print "Plotting Beta-Bi diff"
-    plt.errorbar(overlap_runlist, beta_bi_diff, color = 'b', 
-                 linestyle = 'None', marker = 'o', markersize = markSize, label = "Beta minus Bi + " + str(offset) )
-    print "Plotting LED-Bi diff"
-    plt.errorbar(overlap_runlist, led_bi_diff, color = 'r', 
-                 linestyle = 'None', marker = 'o', markersize = markSize, label = "LED  minus Bi - " + str(offset) )
+   
+    if div: 
+        plt.errorbar(overlap_runlist, beta_data, color = 'b', 
+                     linestyle = 'None', marker = 'o', markersize = markSize, label = "Beta")
+        plt.errorbar(overlap_runlist, beta_led_diff, color = 'k', 
+                     linestyle = 'None', marker = 'o', markersize = markSize, label = "Beta/LED")
+        
+    if div == 0:
+        plt.errorbar(overlap_runlist, beta_led_diff, color = 'k', 
+                     linestyle = 'None', marker = 'o', markersize = markSize, label = "Beta minus LED")
+        
+        if tubeIn < 7:  # Tube 7 has screwy Bi pulser data 
+            print "Plotting Beta-Bi diff"
+            plt.errorbar(overlap_runlist, beta_bi_diff, color = 'b', 
+                         linestyle = 'None', marker = 'o', markersize = markSize, label = "Beta minus Bi + " + str(offset) )
+
+            print "Plotting LED-Bi diff"
+            plt.errorbar(overlap_runlist, led_bi_diff, color = 'r', 
+                         linestyle = 'None', marker = 'o', markersize = markSize, label = "LED  minus Bi - " + str(offset) )
 
     plt.legend( loc = 2, title = ("W" if tubeIn/4 else "E") + str(tubeIn%4) )
 
@@ -141,6 +158,38 @@ def makeTripleCompareDiffs(tubeIn, zoombool = 0, make_PD_LED_corr = 1):
 #    return beta_led_diff, beta_bi_diff
     return fig
 
+def makeLEDCorrection(tubeIn, zoombool = 0, make_PD_LED_corr = 1, return_correction_only = 0):
+    fig = plt.figure(figsize = (14, 12))
+    markSize = 5
+    filename = "/home/saslutsky/UCNA/UCNAReplay_052214/UCNA/Scripts/LEDPulser/BetaSpectrumFitting/BetaKurieEndpoints_clean.txt"
+    
+    beta_runlist, beta_data = getBetaData(tubeIn, filename)
+    LED_runlist, LED_data = getLEDData(tubeIn, make_PD_LED_corr)
+    overlap_runlist = find_array_overlap(beta_runlist, LED_runlist)
+
+    beta_data = sync_arrays(overlap_runlist, beta_runlist, beta_data)
+    LED_data  = sync_arrays(overlap_runlist, LED_runlist, LED_data)
+
+    if return_correction_only:
+        return LED_data
+
+    offset = 0.25
+    beta_led_div = [beta/LED + offset for beta, LED in zip(beta_data, LED_data)]
+
+    # plots
+    print "Plotting Beta and LED-Corrected Beta"
+    plt.errorbar(overlap_runlist, beta_data, color = 'k', 
+                 linestyle = 'None', marker = 'o', markersize = markSize, label = "Uncorrected Beta")
+    plt.errorbar(overlap_runlist, beta_led_div, color = 'b', 
+                     linestyle = 'None', marker = 'o', markersize = markSize, label = "Corrected Beta: Beta/(LED/PD) (with offset " + str(offset) + ")" )
+
+    plt.legend( loc = 2, title = ("W" if tubeIn/4 else "E") + str(tubeIn%4) )
+    ax = plt.gca()
+    if zoombool:
+        ax.set_ylim(0.5, 1.5)
+        
+    return fig
+    
 def sync_arrays(overlap_runlist, runlist, datalist):  #remove data from list to match a given runlist
     if len(runlist) != len(datalist):
         print "Bad input"
@@ -200,15 +249,18 @@ def makeAllTriplePlots(savebool = 0):
 
     return 0
 
-def makeAllTriplePlotsDiffs(savebool = 0):
+def makeAllTriplePlotsDiffs(savebool = 0, div = 0):
     outputfile = PdfPages("./Figures/TripleCompareDiffs_Kurie.pdf")
     outputfilezoom = PdfPages("./Figures/TripleCompareDiffs_zoom_Kurie.pdf")
+    if div:
+        outputfile = PdfPages("./Figures/TripleCompareDivs_Kurie.pdf")
+        outputfilezoom = PdfPages("./Figures/TripleCompareDivs_zoom_Kurie.pdf")
     for i in range(0, 8):
         print "--------------------------"
         print "Making Plot " + str(i)
         print "--------------------------"
-        fig = makeTripleCompareDiffs(i, 0)
-        figzoom = makeTripleCompareDiffs(i, 1)
+        fig = makeTripleCompareDiffs(i, 0, 1, div)
+        #figzoom = makeTripleCompareDiffs(i, 1, 1, div)
         if savebool:
             outputfile.savefig(fig)
             outputfilezoom.savefig(figzoom)

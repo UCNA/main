@@ -13,7 +13,8 @@ from math import sqrt
 #from ROOT import TCanvas
 
 def read_PD_LED_response():
-    imagedir = '/data4/saslutsky/PulserComp/images'
+#    imagedir = '/data4/saslutsky/PulserComp/imagesLEDDebug'
+    imagedir = '/data4/saslutsky/PulserComp/images_06_09_2014'
     filename = 'GainResults.txt'
     path = imagedir + "/" +filename
     
@@ -57,7 +58,7 @@ if __name__ == "__main__":
     
     plt.rc('axes', color_cycle=['r', 'g', 'b', 'y'])
 
-    ax0.set_title("A")
+    ax0.set_titl(egre"A")
     ax1.set_title("Mean Response")
     ax2.set_title("Relative Gain")    
     ax3.set_title("Sigma")

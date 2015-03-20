@@ -3,7 +3,7 @@
 
 CMD_LOG_FILE=command-list-file.log
 CLUSTER_LIST_FILE=cluster-list
-IMAGES_DIR=/data4/saslutsky/PulserComp/images_06_09_2014
+IMAGES_DIR=/data4/saslutsky/PulserComp/images_01_23_2015_widerrange/
 OUTPUT_NAME=allruns
 
 
@@ -35,9 +35,9 @@ fi
 
 
 # define our run types
-beta_types=("A2" "A5" "A7" "A10" "B2" "B5" "B7" "B10")
-#beta_types=("A1" "A2" "A3" "A4" "A5" "A6" "A7" "A8" "A9" "A10" "A11" "A12" "B1" "B2" "B3" "B4" "B5" "B6" "B7" "B8" "B9" "B10" "B11" "B12" "SourcesCal" "Xe")
-
+#beta_types=("A2" "A5" "A7" "A10" "B2" "B5" "B7" "B10")
+beta_types=("A1" "A2" "A3" "A4" "A5" "A6" "A7" "A8" "A9" "A10" "A11" "A12" "B1" "B2" "B3" "B4" "B5" "B6" "B7" "B8" "B9" "B10" "B11" "B12" "SourcesCal" "Xe")
+#beta_types=("SourcesCal")
 
 # test: can be removed
 while read line
@@ -49,7 +49,7 @@ do
 			echo $line
 		fi
 	done 
-done < $1
+done < "$1"
 
 # read lines from first input argument
 while read line
@@ -65,7 +65,7 @@ do
 			# parse the run log file 
 			staredline=${line%%$run_type}
 			staredline=${staredline%%*([[:space:]])}
-			run_number=${staredline:1}
+			run_number=${staredline:1:5}
 			run_filename=$UCNADATADIR/full$run_number.root
 
 			# test if the file is actually there
@@ -78,7 +78,7 @@ do
 			fi
 		fi
 	done
-done < $1
+done < "$1"
 
 
 # run with parallel if possible
