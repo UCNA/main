@@ -13,7 +13,7 @@ SimTreePlugin::SimTreePlugin(OctetAnalyzer* OA): OctetAnalyzerPlugin(OA,"simasym
 }
 void SimTreePlugin::makeSimTree(int rn) {
         char temp[200];
-        sprintf(temp,"/extern/mabrow05/ucna/SimAnalysisOutput/hists/%i_sim.root",rn);
+        sprintf(temp,"/extern/mabrow05/ucna/SimAnalysisOutput/reverseCalData/%i_sim.root",rn);
         SimFile = new TFile(temp,"RECREATE"); 
 	//SimFile = new TFile("/home/mabrow05/SimAnalysisOutput/SimAnalyzedDataStruct.root","RECREATE"); 
         SimOut = new TTree("SimOut","SimAnalysis");

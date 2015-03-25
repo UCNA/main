@@ -729,7 +729,7 @@ if __name__=="__main__":
 	os.system("mkdir -p %s/Backscatter"%outpath)
 	
 	conn = open_connection() # connection to calibrations DB
-	replace = False		# whether to replace previous calibration data
+	replace = True		# whether to replace previous calibration data
 	makePlots = True	# whether to output linearity/width/Erecon plots
 	#delete_calibration(conn,9752); exit(0)
 
@@ -810,18 +810,19 @@ if __name__=="__main__":
 	goff = 0
 	cIntLin = canvas.canvas()	
 	
-	for i in range(2): 
-		if (i==0): compass = 'East'
-		else: compass = 'West'
-		for t in range(4):
-			gIntLin=graph.graphxy(width=15,height=gheight,ypos=goff,
-                                x=graph.axis.lin(title="Run Number",min=17000,max=20000),
-                                y=graph.axis.lin(title="INL(\\%)",min=0,max=8))
-			cIntLin.insert(gIntLin)
-			gIntLin.plot(graph.data.values(x=allruns,y=allintl[i][t]),
-                                [graph.style.symbol(symbol.circle,size=0.15,symbolattrs=[rgb.red,deco.filled])])
-			gIntLin.plot(graph.data.function("y(x)=5.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
-			gIntLin.text(0.7,goff+2.2,"%s %i"%(compass,t))
-			goff += gheight+1.4
-		goff += 0.5
-	cIntLin.writetofile(outpath+"/Linearity/integrallin.pdf")
+	if 0:
+		for i in range(2): 
+			if (i==0): compass = 'East'
+			else: compass = 'West'
+			for t in range(4):
+				gIntLin=graph.graphxy(width=15,height=gheight,ypos=goff,
+						      x=graph.axis.lin(title="Run Number",min=17000,max=20000),
+						      y=graph.axis.lin(title="INL(\\%)",min=0,max=8))
+				cIntLin.insert(gIntLin)
+				gIntLin.plot(graph.data.values(x=allruns,y=allintl[i][t]),
+					     [graph.style.symbol(symbol.circle,size=0.15,symbolattrs=[rgb.red,deco.filled])])
+				gIntLin.plot(graph.data.function("y(x)=5.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
+				gIntLin.text(0.7,goff+2.2,"%s %i"%(compass,t))
+				goff += gheight+1.4
+			goff += 0.5
+		cIntLin.writetofile(outpath+"/Linearity/integrallin.pdf")

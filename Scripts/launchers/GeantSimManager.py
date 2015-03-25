@@ -145,7 +145,7 @@ class GeantSimManager:
 		inflist.sort()
 		inflist = inflist[:maxIn]
 		nruns = len(inflist)
-		
+		print nruns
 		oldtime = time.time() - hours_old*3600
 		
 		# main simulations
@@ -168,7 +168,7 @@ class GeantSimManager:
 
 			self.settings["joblog"] = "%s/gen_macro_%i.txt"%(self.g4_log_dir,self.settings["run_num"])
 			g4_sub_file = "%s/geantjob_%i.sub"%(self.g4_macro_dir,self.settings["run_num"])
-			
+			print rn
 			# source position scan
 			if self.settings["sourceScan"]:
 				xpos = (((rn*self.anagroup + rn/(nruns/self.anagroup))%nruns)/float(nruns-1)-0.5)*self.settings["sourceScan"]
@@ -264,13 +264,13 @@ if __name__ == "__main__":
 				os.system("rm -rf %s/%s_o_n"%(os.environ["G4EVTDIR"],g))
 				os.system("../../MC_EventGen run %s %s o n 10000 100 x"%(g,os.environ["G4EVTDIR"]))
 
-		for g in ["Bi207","Sn113","Ce139","Cd109","Cs137","In114E","In114W"]: #,"Cd113m"]:
-			sourceSim = GeantSimManager("2011-2012",
-										geometry="2011/2012")
+		for g in ["Bi207"]:#,"Sn113","Ce139","Cd109","Cs137","In114E","In114W"]: #,"Cd113m"]:
+			sourceSim = GeantSimManager("2012-2013_TEST_isobutane",
+										geometry="2012/2013_isobutane")
 			sourceSim.settings["sourceScan"] = 80.	# move source holder across detector by 80mm
 			sourceSim.set_evtsrc(g)
 			if options.sim:
-				sourceSim.launch_sims(maxIn=100000)
+				sourceSim.launch_sims(maxIn=4)
 			if options.ana:
 				sourceSim.launch_postanalyzer()
 
@@ -395,7 +395,7 @@ if False:
 	#			"Xe135_11-2-","Xe137_7-2-","Xe127_1-2+","Xe125_1-2+"	]
 	# 3M for most; do lots more for important Xe135_3-2+
 	####################
-	if 1:
+	if 0:
 		start = time.time()
 		for g in [ "Xe135_3-2+","Xe133_3-2+",
 				"Xe129_11-2-","Xe131_11-2-","Xe133_11-2-",

@@ -131,13 +131,13 @@ if 1:
             runlow=[21596, 21966, 22962]           
             runhigh = [21605, 22003, 22979]
         
-        pmap = [275,277,279,281,283]
+        #pmap = [275,277,279,281,283]
         pcmd1 = "./UCNAnalyzer pmap comp %i %i 12 x x"
         pcmd2 = "./UCNAnalyzer pmap plot %i x x"
     
         for i in range(0, len(runlow), 1):
             os.system(pcmd1%(runlow[i], runhigh[i]))
-            os.system(pcmd2%(pmap[i]))
+            #os.system(pcmd2%(pmap[i]))
 
 
  

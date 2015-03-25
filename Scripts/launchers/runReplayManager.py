@@ -16,3 +16,6 @@ runs2012 = [(20515,20527),(20818,20830),(21087,21099),(21299,21328),(21679,21718
 for i in range(0,len(runs2011),1):
     os.system("./ReplayManager.py -s --rmin=%i --rmax=%i"%(runs2011[i][0],runs2011[i][1]))
 
+#for i in range(0,len(runs2012),1):
+ #   os.system("./ReplayManager.py -s --rmin=%i --rmax=%i"%(runs2012[i][0],runs2012[i][1]))
+
