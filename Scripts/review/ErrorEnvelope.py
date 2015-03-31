@@ -109,7 +109,7 @@ def plotAllErrors(outpath,year,s="Both",t=4,gaussFiles=False,gaussUnc=False):
 	# plot
 	for k in srs:
 		
-		gdat = [(l.sim.erecon+50,l.erecon-l.sim.erecon,l) for l in srs[k] if l.tube==t and l.src.radius()>45. and l.src.radius()<50. and (s=="Both" or l.side==s) and l.src.run not in In114List and l.src.type not in RmSrcTypeList]
+		gdat = [(l.sim.erecon+50,l.erecon-l.sim.erecon,l) for l in srs[k] if l.tube==t and l.src.radius()>0. and l.src.radius()<50. and (s=="Both" or l.side==s) and l.src.run not in In114List and l.src.type not in RmSrcTypeList]
 		gdat = [p for p in gdat if abs(p[1])<yrange]
 		if not gdat:
 			continue
@@ -216,10 +216,11 @@ if __name__=="__main__":
 				plotAllErrors(outpath,2010,s,t)
 				#plotAllWidths(outpath,2010,s,t)
 
-	plotAllErrors(outpath,2012,gaussFiles=False,gaussUnc=False)
-	for s in ["East","West"]:
-		plotAllErrors(outpath,2012,s,gaussFiles=False,gaussUnc=False)
+	plotAllErrors(outpath,2011,gaussFiles=False,gaussUnc=False)
+	#for s in ["East","West"]:
+		#plotAllErrors(outpath,2012,s,gaussFiles=False,gaussUnc=False)
 	#for s in ["East","West"]:
 	#		for t in range(5):
 	#			plotAllErrors(outpath,2012,s,t,gaussFiles=False,gaussUnc=False)
 				#plotAllWidths(outpath,2010,s,t)
+		

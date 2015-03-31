@@ -1,12 +1,13 @@
+#!/usr/bin/python
+
 import os
 import sys
-sys.path.append("~/MBpython")
 import MButils
 
 #taking care of bad runs when run through simulated Xe to fit for isotope composition
 if 0:
     runs = [19890]
-    pcmd = "./UCNAnalyzer pmap sim %i %i 12 x x"
+    pcmd = "cd ../../; ./UCNAnalyzer pmap sim %i %i 12 x x"
     for run in runs:
         print "Running " + pcmd%(run, run)
         os.system(pcmd%(run, run))
@@ -35,8 +36,8 @@ if 1:
         else:
             runlow=[21596, 21966, 22961]           
             runhigh = [21605, 22003, 22979]
-        #pcmd1 = "cd Scripts/launchers; ./OfficialReplayManager.py -x --rmin=%i --rmax=%i"
-        pcmd2 = "cd Scripts/launchers; ./ReplayManager.py -x --rmin=%i --rmax=%i"
+        #pcmd1 = "./OfficialReplayManager.py -x --rmin=%i --rmax=%i"
+        pcmd2 = "./ReplayManager.py -x --rmin=%i --rmax=%i"
     
         for i in range(0, len(runlow), 1):
             #os.system(pcmd1%(runlow[i], runhigh[i]))
@@ -53,7 +54,7 @@ if 1:
             runlow=[21596, 21966, 22962]           
             runhigh = [21605, 22003, 22979]
                                         
-        pcmd1 = "./UCNAnalyzer pmap gen %i %i 12 x x"
+        pcmd1 = "cd ../../; ./UCNAnalyzer pmap gen %i %i 12 x x"
     
         for i in range(0, len(runlow), 1):
                 os.system(pcmd1%(runlow[i], runhigh[i]))
@@ -74,7 +75,7 @@ if 1:
             runlow=[21596, 21966, 22961]           
             runhigh = [21605, 22003, 22979]
         
-        pcmd1 = "cd Scripts/launchers; ./ReplayManager.py -X --rmin=%i --rmax=%i"
+        pcmd1 = "./ReplayManager.py -X --rmin=%i --rmax=%i"
 
         for i in range(0, len(runlow), 1):
             if rerunAllSimMatching:
@@ -85,7 +86,7 @@ if 1:
                     redoRuns.append(run)
 
         print redoRuns
-        pcmd = "./UCNAnalyzer pmap sim %i %i 12 x x"
+        pcmd = "cd ../../; ./UCNAnalyzer pmap sim %i %i 12 x x"
         for redo in redoRuns:
             print "Running " + pcmd%(redo, redo)
             os.system(pcmd%(redo, redo))
@@ -117,7 +118,7 @@ if 1:
             runlow=[21596, 21966, 22962]           
             runhigh = [21605, 22003, 22979]
         
-        pcmd1 = "./UCNAnalyzer pmap sim %i %i 12 x x"
+        pcmd1 = "cd ../../; ./UCNAnalyzer pmap sim %i %i 12 x x"
     
         for i in range(0, len(runlow), 1):
             os.system(pcmd1%(runlow[i], runhigh[i]))
@@ -132,8 +133,8 @@ if 1:
             runhigh = [21605, 22003, 22979]
         
         #pmap = [275,277,279,281,283]
-        pcmd1 = "./UCNAnalyzer pmap comp %i %i 12 x x"
-        pcmd2 = "./UCNAnalyzer pmap plot %i x x"
+        pcmd1 = "cd ../../; ./UCNAnalyzer pmap comp %i %i 12 x x"
+        pcmd2 = "cd ../../; ./UCNAnalyzer pmap plot %i x x"
     
         for i in range(0, len(runlow), 1):
             os.system(pcmd1%(runlow[i], runhigh[i]))
