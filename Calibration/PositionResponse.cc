@@ -12,7 +12,7 @@ Stringmap SCtoSM(const SectorCutter& SC) {
 PositioningInterpolator::PositioningInterpolator(const PosmapInfo& PMI,
 	Interpolator* (*phiInterp)(DataSequence*, double, double),
 	Interpolator* (*rInterp)(DataSequence*, double, double)):
-S(PMI.nRings,PMI.radius), sRadial(BC_DERIVCLAMP_ZERO), L((*rInterp)(&sRadial, PMI.radius*(1.0+1.0/(2*PMI.nRings-1.0)), 0)) {
+pmi(PMI), S(PMI.nRings,PMI.radius), sRadial(BC_DERIVCLAMP_ZERO), L((*rInterp)(&sRadial, PMI.radius*(1.0+1.0/(2*PMI.nRings-1.0)), 0)) {
 	
 	smassert(PMI.signal.size() == S.nSectors());
 	smassert(PMI.norm.size() == S.nSectors());
@@ -41,6 +41,11 @@ PositioningInterpolator::~PositioningInterpolator() {
 double PositioningInterpolator::eval(double x, double y) {
 	double xp[2] = {sqrt(x*x+y*y),atan2(y,x)};
 	return L->eval(xp);
+}
+
+double PositioningInterpolator::evalNoInterp(double x, double y) {
+        unsigned int sect = S.sector((float)x,(float)y);
+	return pmi.signal[sect]/pmi.signal[0];
 }
 
 
@@ -146,4 +151,12 @@ double PositioningCorrector::eval(Side s, unsigned int t, double x, double y, bo
 	if(normalize)
 		return tubes[s][t]->eval(x,y)/neta[s][t];
 	return tubes[s][t]->eval(x,y);
+}
+
+double PositioningCorrector::evalNoInterp(Side s, unsigned int t, double x, double y, bool normalize) const {
+	if(s>WEST || t>=tubes[s].size() || !tubes[s][t])
+		return 0;
+	if(normalize)
+	  return tubes[s][t]->evalNoInterp(x,y); //Normalized this in line 48...
+	return tubes[s][t]->evalNoInterp(x,y);   //This is also normalized then
 }

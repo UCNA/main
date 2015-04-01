@@ -78,7 +78,7 @@ void XenonSpectrumPlugin::fillCoreHists(ProcessedDataScanner& PDS, double weight
 	unsigned int m = sects.sector(PDS.wires[s][X_DIRECTION].center,PDS.wires[s][Y_DIRECTION].center);
 	if(m>=sects.nSectors()) return;
 	for(unsigned int t=0; t<nBetaTubes; t++) {
-		sectEnergy[s][t][m]->h[currentGV]->Fill(PDS.scints[s].tuben[t].x,weight);
+		sectEnergy[s][t][m]->h[currentGV]->Fill(PDS.scints[s].tubenNoInterp[t].x,weight);
 		sectEnergy[s][t][sects.nSectors()]->h[currentGV]->Fill(PDS.scints[s].tuben[t].x,weight);
 	}
 	sectEnergy[s][nBetaTubes][m]->h[currentGV]->Fill(PDS.scints[s].energy.x,weight);
