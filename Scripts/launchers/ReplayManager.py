@@ -56,7 +56,7 @@ def processXeMap(rmin,rmax,nr):
 		os.system("cat xenon_replaylist.txt")
 		os.system("nice -n 15 parallel -P 7 < xenon_replaylist.txt")
 		os.system("rm xenon_replaylist.txt")
-		os.system(pcmd%(rmin,rmax,nr))
+		#os.system(pcmd%(rmin,rmax,nr))
 
 def processXeSim(rmin,rmax,nr):
 		pcmd = "cd "+anaBinDir+"; ./UCNAnalyzer pmap sim %i %i %i x x\n"
@@ -70,7 +70,7 @@ def processXeSim(rmin,rmax,nr):
 			nproc = 4
 		os.system("nice -n 15 parallel -P %i < xenon_simlist.txt"%nproc)
 		os.system("rm xenon_simlist.txt")
-		os.system(pcmd%(rmin,rmax,nr))
+		#os.system(pcmd%(rmin,rmax,nr))
 
 def betaOctetPositions(dosim):
 	pcmd = "cd "+anaBinDir+"; ./BetaOctetPositions %i\n"
