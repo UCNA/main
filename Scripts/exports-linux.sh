@@ -16,8 +16,8 @@ fi
 #  	[Yy]* ) break;;
 #	[Nn]*
 
-read -p "What is your svn username? " username
-export UCNA_USER=$username
+#read -p "What is your svn username? " username
+#export UCNA_USER=$username
 
 export UCNA_GIT=git@github.com:ucna/ucna
 export UCNA_PATCH=${UCNA_BASE}/patch

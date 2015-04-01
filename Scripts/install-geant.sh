@@ -3,7 +3,7 @@
 ##
 #
 # Adapted into a sh script by Kevin Peter Hickerson
-# From CUORE MC group install instructions
+# From UCNA_ MC group install instructions
 #
 # Aug 20, 2013
 #
@@ -47,8 +47,8 @@ fi
 
 echo "Looks like we have everything we need."
 
-echo "CUORE svn repository: ${CUORESVN}"
-echo "CUORE git repository: ${CUOREGIT}"
+echo "UCNA_ svn repository: ${UCNA_SVN}"
+echo "UCNA_ git repository: ${UCNA_GIT}"
 echo "Geant4 source url: ${G4URL}"
 echo "Geant4 version: ${G4NAME}"
 echo "System: ${G4SYSTEM}"
@@ -57,7 +57,7 @@ echo "Compiler: ${G4CC}"
 echo "Cores: ${G4NPROC}"
 
 
-echo "About to install CUORE Geant4.${G4VERSION}.${G4RELEASE} software in ${G4SRC}"
+echo "About to install UCNA_ Geant4.${G4VERSION}.${G4RELEASE} software in ${G4SRC}"
 echo "Creating install directories..."
 mkdir -vp ${G4SRC}
 mkdir -vp ${G4PATH}
@@ -69,7 +69,7 @@ mkdir -vp ${G4PACKAGES}
 
 #cd ${G4SRC}/v${G4RELEASE}
 
-# if the installation is done in private location/PC $CUORE_BASE_DIR must be substituted with /localdir/ in geant4.9.6-exports.sh and in all the following steps in this procedure
+# if the installation is done in private location/PC $UCNA__BASE_DIR must be substituted with /localdir/ in geant4.9.6-exports.sh and in all the following steps in this procedure
 # Check RELEASE definition in geant4.9.6-exports.sh
 
 
@@ -142,46 +142,12 @@ mv ${G4PACKAGES}/${G4NAME} ${G4VDIR}/
 #
 # Patch all of geant4 with ${G4NAME}.diff
 #
-cp ${CUOREPATCH}/${G4NAME}.diff ${G4VDIR}
+cp ${UCNA_PATCH}/${G4NAME}.diff ${G4VDIR}
 cd ${G4VDIR}
 patch -p0 <${G4NAME}.diff
 rm ${G4VDIR}/${G4NAME}.diff
 
 
-#find source -name include -exec cp -r {}  .  \;
-#edit cmake/Templates/geant4-config.in: add -lG4esources
-# patch...
-#edit cmake/Templates/Geant4Config.cmake.in: add G4esources${_geant4_lib_use_suffix} to 'kernel libraries'
-# patch...
-# patch CMakeLists.txt ${CUOREPATCH}/sources/CMakeLists.txt.diff
-#cd ../../source
-
-
-#
-# Retrieve and install esources
-#
-if [ $G4VERSION -ge 10 ]; then
-    echo "Skipping esources patch for this version of Geant4.$G4VERSION"
-else
-    echo "Retrieving esources from svn repository..."
-    exit -1
-    cd ${G4PATH}/source
-    #echo "svn co svn+ssh://$CUOREUSER@$CUORESVN/esources"
-    svn co svn+ssh://$CUOREUSER@$CUORESVN/esources
-    cp $CUOREPATCH/sources.cmake $G4PATH/source/esources/	
-    # patch to update esources to include more files in newer geant4
-fi
-
-
-
-#vi CMakeLists.txt 
-#add line: add_subdirectory(esources)
-# patch CMakeLists.txt $PATCH_DIR/G4.$G4VERSION.$G4RELEASE-CMakeLists-sources-patch.diff
-#cd ../../
-#mv geant4.9.6.b01  $G4SRC/v9.6
-#cd $G4SRC/v$VERSION
-#mkdir geant4.$VERSION.$RELEASE-build
-#cd geant4.9.6.b01-build
 
 if [ -d $G4BUILD ]; then
 	echo "Removed old build directory."
@@ -257,14 +223,14 @@ export GEANT4_USE_NETWORKDAWN=1
 #yum install gtkglext-devel
 #cd $G4SRC/applications
 ## download view3dscene from http://castle-engine.sourceforge.net/view3dscene.php
-#cp $G4SRC/applications/view3dscene/view3dscene $CUORE_BASE_PATH/bin
+#cp $G4SRC/applications/view3dscene/view3dscene $UCNA_BASE_PATH/bin
 
 
 #
 # Applications
 #
 # For FARM installations:
-#cd $CUOREBASE
+#cd $UCNA_BASE
 #cp geant4/v9.5/G4.9.5exports bin/setup-g4-9.5.sh
 #cd $G4SRC/applications/APPLICATION_NAME 
 #cd $G4SRC/applications/APPLICATION_NAME 
@@ -290,28 +256,28 @@ export GEANT4_USE_NETWORKDAWN=1
 
 #cd $G4SRC/applications
 # download view3dscene from http://castle-engine.sourceforge.net/view3dscene.php
-#cp $G4SRC/applications/view3dscene/view3dscene $CUORE_BASE_DIR/bin
+#cp $G4SRC/applications/view3dscene/view3dscene $UCNA_BASE_DIR/bin
 
 
 #
-# CUORE geometry codes
+# UCNA_ geometry codes
 #
-mkdir -vp ${CUORESRC}
-mkdir -vp ${CUOREBIN}
+mkdir -vp ${UCNA_SRC}
+mkdir -vp ${UCNA_BIN}
 for PROGRAM in qshields g2tas #mcuoricino
 do
-	cd ${CUORESRC}
-	svn co ${CUORESVN}/$PROGRAM
+	cd ${UCNA_SRC}
+	svn co ${UCNA_SVN}/$PROGRAM
 done
 
 for PROGRAM in qshields #mcuoricino
 do
-	mkdir -vp ${CUOREBUILD}/$PROGRAM-build
-	cd ${CUOREBUILD}/$PROGRAM-build
-	cmake -DGeant4_DIR=${G4BUILD} ${CUORESRC}/$PROGRAM
+	mkdir -vp ${UCNA_BUILD}/$PROGRAM-build
+	cd ${UCNA_BUILD}/$PROGRAM-build
+	cmake -DGeant4_DIR=${G4BUILD} ${UCNA_SRC}/$PROGRAM
 	make -j"$(nproc)"
-	install $PROGRAM ${CUOREBIN}/
-	rm -rf ${CUOREBUILD}/${PROGRAM}-build
+	install $PROGRAM ${UCNA_BIN}/
+	rm -rf ${UCNA_BUILD}/${PROGRAM}-build
 done
 
 
@@ -321,8 +287,8 @@ exit 0
 #
 # g2tas
 #
-# edit Makefile.gcc and change BINDIR to $CUOREBIN
+# edit Makefile.gcc and change BINDIR to $UCNA_BIN
 # check the definition of the dirs containing lib files and eventually change them
-cd ${CUOREBUILD}/g2tas
+cd ${UCNA_BUILD}/g2tas
 make -f  Makefile.gcc
 #make -f  Makefile.gcc install
