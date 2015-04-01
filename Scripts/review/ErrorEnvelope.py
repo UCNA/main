@@ -19,7 +19,7 @@ badruns = {2011:[(17359,17360),(17361,17361),(17376,17376),(17520,17520),(17874,
 #badruns = {2011:[(17233,17249)],2012:[]}
 badIn114Runs = {2011:[],#[(19823,19863)],
 		2012:[]}
-RmSrcTypeList = []#["Cd109","Cd113m","In114","In114E","In114W","Cs137"]
+RmSrcTypeList = ["Cd109","Cd113m","In114","In114E","In114W","Cs137"]
 
 # Uncertainties for linear fit
 #gausUnc = {2011:[(4.089,5.516),(-1.851,4.756),(-1.026,3.253),(-0.284,1.182),(-1.639,1.921),(-2.298,1.861)],
@@ -109,7 +109,8 @@ def plotAllErrors(outpath,year,s="Both",t=4,gaussFiles=False,gaussUnc=False):
 	# plot
 	for k in srs:
 		
-		gdat = [(l.sim.erecon+50,l.erecon-l.sim.erecon,l) for l in srs[k] if l.tube==t and l.src.radius()>0. and l.src.radius()<50. and (s=="Both" or l.side==s) and l.src.run not in In114List and l.src.type not in RmSrcTypeList]
+		gdat = [(l.sim.erecon+50,l.erecon-l.sim.erecon,l) for l in srs[k] if l.tube==t and l.src.radius()>0. and l.src.radius()<45. and (s=="Both" or l.side==s) and l.src.run not in In114List and l.src.type not in RmSrcTypeList]
+
 		gdat = [p for p in gdat if abs(p[1])<yrange]
 		if not gdat:
 			continue
@@ -202,8 +203,8 @@ def plotAllWidths(outpath,year,s="Both",t=4):
 if __name__=="__main__":
 
 	# set up output paths
-	#outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/FitTypeStudy/"
-	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/MBTest/"
+	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/FitTypeStudy/"
+	#outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/MBTest/"
 	os.system("mkdir -p %s"%outpath)
 	
 	if 0:
