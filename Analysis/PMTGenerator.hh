@@ -2,6 +2,7 @@
 #define SIMCALIBRATIONS_HH
 
 #include "EnergyCalibrator.hh"
+#include "PMTCalibrator.hh"
 #include "Types.hh"
 #include "EfficCurve.hh"
 #include "SMExcept.hh"

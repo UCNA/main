@@ -5,9 +5,6 @@
 #include "SMExcept.hh"
 #include "ManualInfo.hh"
 #include <utility>
-#include <TRandom3.h>
-
-TRandom3 pcal_random_src;
 
 PedestalCorrector::~PedestalCorrector() {
 	for(std::map<std::string,TGraph*>::iterator it = pedestals.begin(); it != pedestals.end(); it++)
@@ -190,6 +187,7 @@ std::map<RunNum,LinearityCorrector*> LinearityCorrector::cachedRuns = std::map<R
 
 
 
+/* Moved to own file ....
 PMTCalibrator::PMTCalibrator(RunNum rn, CalDB* cdb): LinearityCorrector(rn,cdb),
 PedestalCorrector(rn,cdb), EvisConverter(rn,cdb), WirechamberCalibrator(rn,cdb) {
 	if(myRun < 5000) {
@@ -456,3 +454,4 @@ Stringmap PMTCalibrator::calSummary() const {
 	
 	return m;
 }	
+*/

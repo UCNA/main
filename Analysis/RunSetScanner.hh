@@ -4,6 +4,7 @@
 #include "Enums.hh"
 #include "TChainScanner.hh"
 #include "EnergyCalibrator.hh"
+#include "PMTCalibrator.hh"
 
 #include "QFile.hh"
 #include "CalDBSQL.hh"
