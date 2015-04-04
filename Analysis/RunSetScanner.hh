@@ -5,6 +5,7 @@
 #include "TChainScanner.hh"
 #include "EnergyCalibrator.hh"
 #include "PMTCalibrator.hh"
+#include "WirechamberCalibrator.hh"
 
 #include "QFile.hh"
 #include "CalDBSQL.hh"
@@ -36,7 +37,8 @@ public:
 	/// check whether this is simulated data
 	virtual bool isSimulated() const { return false; }
 	
-	PMTCalibrator* ActiveCal;	///< PMTCalibrator currently active for loaded run
+	PMTCalibrator*          PMTActiveCal;	///< PMTCalibrator currently active for loaded run
+	WirechamberCalibrator*  WCActiveCal;	///< WireChanberCalibrator currently active for loaded run
 	
 	/// print info about this scanner
 	virtual void display();

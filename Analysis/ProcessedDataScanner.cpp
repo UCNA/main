@@ -32,9 +32,9 @@ Stringmap ProcessedDataScanner::evtInfo() {
 }
 
 float ProcessedDataScanner::probTrig(Side s, unsigned int t) {
-	smassert(ActiveCal);
+	smassert(PMTActiveCal);
 	smassert(s<=WEST && t<=nBetaTubes);
-	return ActiveCal->trigEff(s, t, scints[s].adc[0]);
+	return PMTActiveCal->trigEff(s, t, scints[s].adc[0]);
 }
 
 void ProcessedDataScanner::recalibrateEnergy() {
