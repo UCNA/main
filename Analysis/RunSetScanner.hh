@@ -37,8 +37,7 @@ public:
 	/// check whether this is simulated data
 	virtual bool isSimulated() const { return false; }
 	
-	PMTCalibrator*          PMTActiveCal;	///< PMTCalibrator currently active for loaded run
-	WirechamberCalibrator*  WCActiveCal;	///< WireChanberCalibrator currently active for loaded run
+	PMTCalibrator* ActiveCal;	    ///< PMTCalibrator currently active for loaded run
 	
 	/// print info about this scanner
 	virtual void display();
