@@ -203,8 +203,8 @@ def plotAllWidths(outpath,year,s="Both",t=4):
 if __name__=="__main__":
 
 	# set up output paths
-	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/FitTypeStudy/"
-	#outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/MBTest/"
+	#outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/FitTypeStudy/"
+	outpath = os.environ["UCNA_ANA_PLOTS"]+"/Sources/ErrorEnvelope/MBTest/"
 	os.system("mkdir -p %s"%outpath)
 	
 	if 0:
