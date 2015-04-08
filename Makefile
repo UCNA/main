@@ -64,7 +64,7 @@ Analysis = RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT
 Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o OctetSimuCloneManager.o \
 	MuonPlugin.o PositionsPlugin.o WirechamberEnergyPlugins.o BGDecayPlugin.o HighEnergyExcessPlugin.o \
 	AsymmetryPlugin.o SimAsymmetryPlugin.o BetaDecayAnalyzer.o \
-	CathodeTuningAnalyzer.o PositionBinnedPlugin.o WirechamberGainMapPlugins.o XenonAnalyzer.o \
+	CathodeTuningAnalyzer.o PositionBasisPlugin.o PositionBinnedPlugin.o WirechamberGainMapPlugins.o XenonAnalyzer.o \
 	PlotMakers.o AsymmetryCorrections.o FierzFitter.o GravitySpectrometerPlugin.o SimEdepPlugin.o
 
 objects = $(IOUtils) $(ROOTUtils) $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
