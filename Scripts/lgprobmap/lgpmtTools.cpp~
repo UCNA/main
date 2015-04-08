@@ -1,0 +1,30 @@
+
+
+
+
+
+
+
+
+
+
+
+//This gives a probability to a pmt given the offset and coupling coefficients, and pmt number.
+double PMTprob(double xpos,double ypos, double offsetx,double offsety, double lga, double lgb, double lgc,int pmtnum){
+	const double pi = 3.1415926535897;  //pi
+	double xp, yp, r, theta, pmtprob;
+	
+	r=sqrt(pow(xpos-offsetx,2)+pow(ypos-offsety,2));  //r and theta in terms of scintillator center. 
+	theta=-atan2(xpos-offsetx,ypos-offsety);
+	
+	if (pmtnum>0 && pmtnum<5){
+	xp=r*sin(theta-3*pi/12-(pmtnum-1)*pi/2); ///rotate to correct orientation of LG's w.r.t. wirechamber. 
+	yp=r*cos(theta-3*pi/12-(pmtnum-1)*pi/2); 
+	}	
+	else {cout<<"enter a valid pmt# (they are 1,2,3 or 4)\n";}
+
+	pmtprob=lga*lightguideprob(xp,yp,1)+lgb*lightguideprob(xp,yp,0)+lgc*lightguideprob(xp,yp,2); 
+	
+	return pmtprob;
+}
+
