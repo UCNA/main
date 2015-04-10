@@ -3,7 +3,7 @@
 
 CMD_LOG_FILE=command-list-file.log
 CLUSTER_LIST_FILE=cluster-list
-IMAGES_DIR=/data4/saslutsky/PulserComp/images_01_23_2015_widerrange/
+IMAGES_DIR=/data4/saslutsky/PulserComp/images_04_09_2015_21927_21939/
 OUTPUT_NAME=allruns
 
 

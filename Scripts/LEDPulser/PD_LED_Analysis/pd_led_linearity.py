@@ -141,7 +141,7 @@ def print_segment_averages_by_run(dataset, tube, parmlist):
     
 
 if __name__ == "__main__":
-    constrainbool = 0
+    constrainbool = 1
 #    constrainbool = int(sys.argv[1])
     savebool = int(sys.argv[1])
     plotbool = int(sys.argv[2])
@@ -151,16 +151,17 @@ if __name__ == "__main__":
     rcParams['figure.figsize'] = 10, 10     #Set default fig size
 
 #    imagedir = '/data4/saslutsky/PulserComp/images_10_02_2014'
-#    imagedir = '/data4/saslutsky/PulserComp/images_10_22_2014_allruns/'
+    imagedir = '/data4/saslutsky/PulserComp/images_10_22_2014_allruns/'
 #    imagedir = '/data4/saslutsky/PulserComp/images_11_24_2014_10rangemin/'
 #    imagedir = '/data4/saslutsky/PulserComp/images_12_15_2014_fixBeta'
 #    imagedir = '/data4/saslutsky/PulserComp/images_01_14_2015_scaleE'
-    imagedir = '/data4/saslutsky/PulserComp/images_01_23_2015_widerrange'
-
+#    imagedir = '/data4/saslutsky/PulserComp/images_01_23_2015_widerrange'
+#    imagedir = '/data4/saslutsky/PulserComp/images_04_08_2015_21596_21605'
+        
 #    if ~constrainbool:
     filename = 'FitResults.txt'
-    if constrainbool:
-        filename = 'FitResults_PE_PMT.txt'
+#    if constrainbool:
+#        filename = 'FitResults_PE_PMT.txt'
 #        filename = 'FitResults_constrained.txt'
         
     path = imagedir + "/" +filename
@@ -181,7 +182,7 @@ if __name__ == "__main__":
                              delimiter = "\t", 
                              names = ['Run','Channel', 'Wavelength','p0',
                                       'p0Err','p1','p1Err','p2','p2Err',
-                                      'p3', 'p3Err', 'Chi2'])
+                                      'p3', 'p3Err', 'Chi2', ])
     fitpars = ['p0', 'p1', 'p2']
     if constrainbool:
         fitpars = ['p0', 'p1', 'p2', 'p3']

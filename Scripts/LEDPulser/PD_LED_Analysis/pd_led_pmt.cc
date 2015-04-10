@@ -50,7 +50,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_03_19_2015_relativelinearity/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_09_2015_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -65,10 +65,10 @@ FOLLOWING DOESN'T WORK:
 #define RANGE_MIN 5.0
 #define MOVEDUPGRAPH false
 #define KEVSCALED false
-#define RANGE_MAX_OVERRIDE true
-#define RANGE_MAX_VALUE 100.0
+#define RANGE_MAX_OVERRIDE false
+#define RANGE_MAX_VALUE 100.0 // only if RANGE_MAX_OVERRIDE = true
 #define FIXBETAENDPOINT true
-#define RELATIVEBETAPLOTS true  // supersedes FIXBETAENDPOINT (and everything else)
+#define RELATIVEBETAPLOTS false  // supersedes FIXBETAENDPOINT (and everything else)
 
 TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
 {
@@ -666,6 +666,9 @@ int main (int argc, char **argv)
 #if RANGE_MAX_OVERRIDE
 	  range_max[led] = RANGE_MAX_VALUE;
 #endif
+#if RELATIVEBETAPLOTS
+	  range_min[1] = range_min[0]; // fix range_min to be same for both LED when comparing
+#endif
 	  printf("found range (%f,%f)\n", range_min[led], range_max[led]); 
 	      
 	  // Use best value from ADC max to create a scaling factor 
@@ -792,7 +795,8 @@ int main (int argc, char **argv)
 #if FIXBETAENDPOINT 
 	    cout << "Fixing x-offset to be apprx Beta endpoint " << best_beta_endpt_PD << endl;
 	    if (led) fit->SetParameters(750., 5., -0.0005); 
-	    else fit->SetParameters(3000.0, 10., -0.1);
+	    //else fit->SetParameters(3000.0, 10., -0.1);
+	    else  fit->SetParameters(600, 10, -0.0005); 
 	    fit->FixParameter(3, best_beta_endpt_PD);  // fix x-offset to be the calculated PD value for beta endpoint 
 #endif
 	    // }
