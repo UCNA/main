@@ -9,7 +9,7 @@
 #include "EventClassifier.hh"
 
 #include "QFile.hh"
-#include "PMTGenerator.hh"
+//#include "PMTGenerator.hh"
 #include "CalDBSQL.hh"
 #include "TagCounter.hh"
 

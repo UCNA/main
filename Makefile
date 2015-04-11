@@ -54,18 +54,18 @@ ROOTUtils = GraphicsUtils.o GraphUtils.o EnumerationFitter.o LinHistCombo.o Mult
 
 Utils = TagCounter.o SectorCutter.o Enums.o Types.o FloatErr.o Octet.o SpectrumPeak.o Source.o RollingWindow.o
 
-Calibration = PositionResponse.o PMTGenerator.o CathSegCalibrator.o WirechamberCalibrator.o \
-		EnergyCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o EventClassifier.o
-
+Calibration = PositionResponse.o PMTGenerator.o \
+		CathSegCalibrator.o WirechamberCalibrator.o \
+		EnergyCalibrator.o PMTCalibrator.o CalDBSQL.o SourceDBSQL.o GainStabilizer.o EvisConverter.o EventClassifier.o
+	
 Analysis = RunSetScanner.o ProcessedDataScanner.o PostOfficialAnalyzer.o Sim2PMT.o G4toPMT.o \
 		PenelopeToPMT.o LED2PMT.o TH1toPMT.o KurieFitter.o ReSource.o EfficCurve.o AnalysisDB.o
 
 Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o OctetSimuCloneManager.o \
 	MuonPlugin.o PositionsPlugin.o WirechamberEnergyPlugins.o BGDecayPlugin.o HighEnergyExcessPlugin.o \
 	AsymmetryPlugin.o SimAsymmetryPlugin.o BetaDecayAnalyzer.o \
-	CathodeTuningAnalyzer.o PositionBinnedPlugin.o WirechamberGainMapPlugins.o XenonAnalyzer.o \
-	PlotMakers.o AsymmetryCorrections.o FierzFitter.o GravitySpectrometerPlugin.o SimEdepPlugin.o \
-	KurieStudy.o
+	CathodeTuningAnalyzer.o PositionBasisPlugin.o PositionBinnedPlugin.o WirechamberGainMapPlugins.o XenonAnalyzer.o \
+	PlotMakers.o AsymmetryCorrections.o FierzFitter.o GravitySpectrometerPlugin.o SimEdepPlugin.o
 
 objects = $(IOUtils) $(ROOTUtils) $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
 
@@ -82,7 +82,7 @@ libUCNA.a: $(objects)
 # generic rule for everything else .cc linked against libUCNA
 % : %.cc libUCNA.a
 	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
-
+	
 
 ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm CombinedAbFit \
 	FPNCalc  MWPC_Efficiency_Sim FierzOctetAnalyzer OctetAnalyzerExample
@@ -122,4 +122,4 @@ clean:
 	-rm -rf *.dSYM
 	-rm -rf latex/
 	-rm -rf html/
-
+	

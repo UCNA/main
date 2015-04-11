@@ -46,6 +46,27 @@ def getConversionFactor(filename, run, tube, wave=405):
     convfactor = _cutdata[val]
     return convfactor
 
+def findGainFactor(run, tube):
+    BetaEndpoint = 782.
+    # Beta endpoint in ADC counts by tube and run segment
+    # run < 20500
+    BetaADC_below_20500 = [500., 500., 850., 500., 700., 550., 700., 1050.]
+    # 20500 < run < 21250
+    BetaADC_20500_21250 = [550., 400., 850., 500., 450., 600., 500., 1050.]
+    # run > 21250
+    BetaADC_21250_above = [650., 650., 1200., 550., 750., 700., 900., 1000.]
+
+    gainfactor = 0
+    if run < 20501:
+        gainfactor = BetaADC_below_20500[tube]/BetaEndpoint
+    if run > 20500 and run < 21251:
+        gainfactor = BetaADC_20500_21250[tube]/BetaEndpoint   
+    if run > 21250:
+        gainfactor = BetaADC_21250_above[tube]/BetaEndpoint
+    print "Gain factor = " + str(gainfactor)
+    
+    return gainfactor
+
 def makeLEDLinCorrByRun(value, run, tube, wave, parm_filename):
     print "making correction for run, tube:"
     print str(run) + ", " + str(tube)
@@ -75,10 +96,69 @@ def makeLEDLinCorrByRun(value, run, tube, wave, parm_filename):
         _data_err  = _data_cut[p+'Err'] 
         linearityparms.append( float(_data_parm) )
         linearityerrs.append( float(_data_err) )
+    print linearityparms
 
-        
+    gainfactor = findGainFactor(run, tube)
 #    new_value = value - correctionFunctionQuadratic(value, linearityparms)
-    new_value = value - correctionFunctionQuadratic2(value, linearityparms)
+    new_value = value - correctionFunctionQuadratic2(value, linearityparms, gainfactor)
+ 
+    return new_value
+
+def find_segment_average(data, parameter, tube, wave=405, start_run=0, end_run=99999):
+    print '--------'
+    print parameter
+    print '--------'
+
+    cutTube = data['tube'] == tube
+    cutWave = data['wave'] == wave
+    cutCondition = cutTube & cutWave
+    _data_cut = data[cutCondition] 
+    _dcp = _data_cut[parameter]
+    _dcp = [dcpi for dcpi in _dcp if abs(dcpi) < 1e4] # 1e4 should be larger than any parm val
+    
+    if len(_dcp) == 0:
+        print "Averaging zero terms in find_segment_average"
+        return 0
+
+    avg = sum(_dcp)/float(len(_dcp))
+#    print "Average = " + str(avg)
+    return avg
+
+# add run_segment functionality soon 01/16/2015 SS
+def makeLEDLinCorrByAvg(value, run, tube, wave, parm_filename, start_run=0, end_run = 99999):
+    print "making correction by segment average for run, tube:"
+    print str(run) + ", " + str(tube)
+ 
+    data = readFitResultsTxt(parm_filename)    
+    
+    if run < min(data['run']) or run > max(data['run']):
+        print "Run out of range"
+        return -1
+
+    cutTube = data['tube'] == tube
+    cutRun = data['run'] == run
+    cutWave = data['wave'] == wave
+    cutCondition = cutTube & cutRun  & cutWave
+
+    _data_cut = data[cutCondition] 
+    
+    if len(_data_cut) == 0:
+        print "No data found, exiting" 
+        return -1
+
+    linearityparms = list()
+    linearityerrs = list()
+    parms = ['p0', 'p1', 'p2']
+    for p in parms:
+        _data_parm = find_segment_average(data, p, tube,wave)
+        _data_err  = _data_cut[p+'Err'] 
+        linearityparms.append( float(_data_parm) )
+        linearityerrs.append( float(_data_err) )
+    print linearityparms
+ 
+    gainfactor = findGainFactor(run, tube)
+#    new_value = value - correctionFunctionQuadratic(value, linearityparms)
+    new_value = value - correctionFunctionQuadratic2(value, linearityparms, gainfactor)
  
     return new_value
 
@@ -143,11 +223,11 @@ def correctionFunctionQuadratic(PMTval, parms):
 
     return correction
 
-def correctionFunctionQuadratic2(PMTval, parms, fitorigin = 782):  # 782 keV = beta endpt
+def correctionFunctionQuadratic2(PMTval, parms, gainfactor =1, fitorigin = 782):  # 782 keV = beta endpt
     # 'parms' takes array of 3 parameters, [p0, p1, p2], where PMT = p0 + p1*(PD-fitorigin) + p2*(PD-fitorigin)^2
     # will take PMT' = PMT -  p2*(PMT-fitorigin)^2, ideally eliminating the quadratic behavior, assuming PD ~ PMT
     p2 = parms[2]
-    correction = p2*(PMTval - fitorigin)**2
+    correction = p2*(PMTval/gainfactor - fitorigin)**2
 
     return correction
 
@@ -166,4 +246,6 @@ if __name__ == "__main__":
 #    print makeLEDLinCorrByRun(value, 22767, 0, 405, "/data4/saslutsky/PulserComp/images_11_24_2014_10rangemin/FitResults.txt")
 
 
-    print makeLEDLinCorrByRun(value, 21274, 2, 405, "/data4/saslutsky/PulserComp/images_01_14_2015_scaleE/FitResults.txt")
+#    print makeLEDLinCorrByRun(value, 21274, 2, 405, "/data4/saslutsky/PulserComp/images_01_14_2015_scaleE/FitResults.txt")
+
+    print makeLEDLinCorrByAvg(value, 21274, 2, 405, "/data4/saslutsky/PulserComp/images_01_14_2015_scaleE/FitResults.txt")

@@ -95,6 +95,7 @@ protected:
 	static LinearityCorrector* getCachedRun(RunNum r,CalDB* cdb);	///< retrieve a cached corrector, creating if necessary
 };
 
+/*
 /// Energy reconstruction class
 class PMTCalibrator: public LinearityCorrector, public PedestalCorrector, public EvisConverter, public WirechamberCalibrator {
 public:
@@ -147,5 +148,6 @@ protected:
 	EfficCurve* pmtEffic[2][nBetaTubes];	///< efficiency curves for each PMT
 	bool disablePMT[2][nBetaTubes];			///< flags to disable summing PMT into combined result
 };
+*/
 
 #endif

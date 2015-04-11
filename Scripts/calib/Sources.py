@@ -30,7 +30,7 @@ def delete_ALL_calibrations(conn):
 	for f in conn.fetchall():
 		delete_calibration(conn,f[0])
 
-def makeCalset(conn,r0,r1,rgms,posmap,replace=False):
+def makeCalset(conn,r0,r1,rgms,posmap,replace):
 	"""Set calibration definition for range of runs in calibration DB."""
 	
 	# check (and clear) existing calibration
@@ -72,16 +72,19 @@ def get_run_sources(conn,rn):
 		conn.execute("SELECT source_id,side,x_pos,y_pos,x_width,y_width,counts,sourcetype FROM sources WHERE run_number = %i"%rn)
 		srcs = []
 		for r in conn.fetchall():
-			src = SourcePos(r[0])
-			src.run = rn
-			src.side = r[1]
-			src.x = r[2]
-			src.y = r[3]
-			src.wx = r[4]
-			src.wy = r[5]
-			src.counts = r[6]
-			src.type = r[7]
-			srcs.append(src)
+			#if(rn > 18386 or rn < 18370):
+			#	if (rn!=17359 and rn!=17360 and rn!=17361 and rn!=17376 and rn!=17520 and rn!=17874 and rn!=18037 and rn!=18620 and rn!=19357): #for 2011/2012
+			if (rn!=20818 and rn!=20829 and rn!=20901 and rn!=20902 and rn!=20903 and rn!=20904 and rn!=20905 and rn!=20906 and rn!=20910 and rn!=20916 and rn!=20917 and rn!=21094 and rn!=21322 and rn!=21699 and rn!=21700 and rn!=21705 and rn!=21709 and rn!=22231 and rn!=22234 and rn!=22235 and rn!=22453 and rn!=22451 and rn!=22782): #for 2012/2013
+					src = SourcePos(r[0])
+					src.run = rn
+					src.side = r[1]
+					src.x = r[2]
+					src.y = r[3]
+					src.wx = r[4]
+					src.wy = r[5]
+					src.counts = r[6]
+					src.type = r[7]
+					srcs.append(src)
 		return srcs
 
 def gather_sourcedat(conn,rlist):
@@ -96,14 +99,15 @@ def get_source_lines(conn, srclist, xquery=""):
 	"""Get source peaks measured for sources in list."""
 	
 	sdict = dict([(s.sID,s) for s in srclist])
-	
+        	
 	#             0    1    2        3         4   5    6        7      8       9           10           11  12  13  14
 	cmd = "SELECT side,tube,peak_num,peak_data,adc,dadc,adcwidth,erecon,derecon,ereconwidth,dereconwidth,eta,gms,nPE,source_id FROM sourcepeaks WHERE source_id IN ("
 	cmd += join(["%i"%s for s in sdict.keys()],',') + ") %s"%xquery
 	conn.execute(cmd)
-	
 	slines = []
 	for r in conn.fetchall():
+		#               if (r[2]!=14):  #take out In114
+                #if (r[2]!=20):  #take out Cs137
 		sline = SourceLine()
 		sline.src = sdict[r[14]]
 		sline.side = r[0]
@@ -133,6 +137,89 @@ def get_source_lines(conn, srclist, xquery=""):
 
 	return slines
 
+def get_source_exception(conn, srclist, xquery=""):
+        """Get source peaks measured for sources in list."""
+
+        sdict = dict([(s.sID,s) for s in srclist])
+
+        #             0    1    2        3         4   5    6        7      8       9           10           11  12  13  14
+        cmd = "SELECT side,tube,peak_num,peak_data,adc,dadc,adcwidth,erecon,derecon,ereconwidth,dereconwidth,eta,gms,nPE,source_id FROM sourcepeaks WHERE source_id IN ("
+        cmd += join(["%i"%s for s in sdict.keys()],',') + ") %s"%xquery
+        conn.execute(cmd)
+        slines = []
+        for r in conn.fetchall():
+                #if (r[2]!=14):  #take out In114
+                if (r[2]!=20):  #take out Cs137
+                	sline = SourceLine()
+                	sline.src = sdict[r[14]]
+                	sline.side = r[0]
+                	sline.tube = r[1]
+                	sline.type = r[2]
+                	sline.simulation = (r[3]=='simulation')
+                	sline.adc = r[4]
+                	sline.dadc = r[5]
+                	sline.adcwidth = r[6]
+                	sline.erecon = r[7]
+                	sline.derecon = r[8]
+                	sline.enwidth = r[9]
+                	sline.denwidth = r[10]
+                	sline.eta = r[11]
+                	sline.gms = r[12]
+                	sline.nPE = r[13]
+                	sline.nPE_per_keVeta = sline.nPE/(sline.erecon*sline.eta)
+
+                	# unscramble occaisionally swapped points
+                	if sline.type == 109 and sline.erecon > 1000:
+                        	sline.type = 119
+                	elif sline.type == 119 and sline.erecon < 1000:
+                        	sline.type = 109
+
+                	sline.uid = (sline.src.sID,sline.side,sline.tube,sline.type)
+                	slines.append(sline)
+
+        return slines
+
+def get_source_old(conn, srclist, xquery=""):
+        """Get source peaks measured for sources in list."""
+
+        sdict = dict([(s.sID,s) for s in srclist])
+
+        #             0    1    2        3         4   5    6        7      8       9           10           11  12  13  14
+        cmd = "SELECT side,tube,peak_num,peak_data,adc,dadc,adcwidth,erecon,derecon,ereconwidth,dereconwidth,eta,gms,nPE,source_id FROM sourcepeaks WHERE source_id IN ("
+        cmd += join(["%i"%s for s in sdict.keys()],',') + ") %s"%xquery
+        conn.execute(cmd)
+        slines = []
+        for r in conn.fetchall():
+                if (r[2]!=13 and r[2]!=14 and r[2]!=20):  #keep only 139Ce, 113Sn, and 207Bi
+                        sline = SourceLine()
+                        sline.src = sdict[r[14]]
+                        sline.side = r[0]
+                        sline.tube = r[1]
+                        sline.type = r[2]
+                        sline.simulation = (r[3]=='simulation')
+                        sline.adc = r[4]
+                        sline.dadc = r[5]
+                        sline.adcwidth = r[6]
+                        sline.erecon = r[7]
+                        sline.derecon = r[8]
+                        sline.enwidth = r[9]
+                        sline.denwidth = r[10]
+                        sline.eta = r[11]
+                        sline.gms = r[12]
+                        sline.nPE = r[13]
+                        sline.nPE_per_keVeta = sline.nPE/(sline.erecon*sline.eta)
+
+                        # unscramble occaisionally swapped points
+                        if sline.type == 109 and sline.erecon > 1000:
+                                sline.type = 119
+                        elif sline.type == 119 and sline.erecon < 1000:
+                                sline.type = 109
+
+                        sline.uid = (sline.src.sID,sline.side,sline.tube,sline.type)
+                        slines.append(sline)
+
+        return slines
+
 def sort_by_type(slines):
 	"""Sort out source peaks by peak type"""
 	pks = {}
@@ -150,7 +237,15 @@ class SourceDataCollector:
 		
 		# load all lines
 		self.srcs = gather_sourcedat(self.conn,rlist)
-		self.alllines = get_source_lines(self.conn, self.srcs, xquery)
+		self.alllines = get_source_old(self.conn, self.srcs, xquery)
+		#for r in rlist:
+		#	if ((r > 21299 and r < 21328)or(r > 21914 and r < 21939)):
+		#		self.srcs = gather_sourcedat(self.conn,rlist)
+		#		self.alllines = get_source_exception(self.conn, self.srcs, xquery)
+		#for r in rlist:
+                #       if (r > 19822 and r < 19864):
+                #               self.srcs = gather_sourcedat(self.conn,rlist)
+                #               self.alllines = get_source_exception(self.conn, self.srcs, xquery)		
 
 		# filter out blatantly crazy fits
 		self.slines = [l for l in self.alllines if 10 < l.erecon < 2000 and 5 < l.enwidth < 1000 and 0 < l.denwidth]
@@ -217,6 +312,7 @@ class LinearityCurve:
 		self.uselist = None
 		self.slines = None
 		self.intlin = None
+		self.chisq = None
 		self.datrange = (100,2000)
 		self.width_adc = 300
 		self.width_dadc = 45
@@ -235,7 +331,6 @@ class LinearityCurve:
 		
 		#self.fitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
 		self.axisType = graph.axis.log
-		#self.axisType = graph.axis.lin   ## SS was here.
 	
 	def load_lines(self):
 		if self.slines is None:
@@ -257,13 +352,13 @@ class LinearityCurve:
 			print "\nFallback straight-line fits to specified sources",self.uselist
 		
 			self.slines = [l for l in self.slines if l.src.sID in self.uselist]
-			self.fitter = LinearFitter(terms=[polyterm(1)])
+			self.fitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
 			combodat = [ (l.adc*l.gms, l.sim.erecon*l.eta, l.enwidth, l.sim.enwidth) for l in self.slines ]
 			
 			print combodat
 			
-			self.fitter = LinearFitter(terms=[polyterm(1)])
-			self.LFwid = LinearFitter(terms=[polyterm(1)])
+			self.fitter = LinearFitter(terms=[polyterm(i) for i in range(2)])
+			self.LFwid = LinearFitter(terms=[polyterm(i) for i in range(2)])
 			
 			if len(combodat):
 					self.fitter.fit(combodat, cols=(0,1))
@@ -283,6 +378,8 @@ class LinearityCurve:
 			print "\n\n*********",self.side,self.tube,"NO DATA FOUND!! ************\n\n"
 			return False
 		adcmax = max([l.adc for l in self.slines])
+		adcmin = min([l.adc for l in self.slines])
+		#print 'Min, Max is:', adcmin, adcmax
 
 		##
 		# Set up plots
@@ -336,6 +433,8 @@ class LinearityCurve:
 			return False
 		try:
 			self.datrange = ( min([p[0] for p in combodat]), max([p[0] for p in combodat]) )
+			
+			#print 'Min, Max is:', self.datrange[0], self.datrange[1]
 			self.prefitter.fit([p for p in combodat if p[-1].type in  [8,9,11,15]],cols=(0,1))
 			trimcdat = []
 			for p in combodat:
@@ -359,27 +458,35 @@ class LinearityCurve:
 			return False
 		refvolt = []
                 sourcedev = []
+		chisqi = []
                 for k in self.pks:
                         gdat = [ (l.adc*l.gms, self.fitter(l.adc*l.gms), l.sim.erecon*l.eta, l.sim.erecon*l.eta*etaErr) for l in self.pks[k] if l.adc > 0]
-                        gdat = [ (x,100.0*(y-yexp)/yexp,100*dy/yexp,y-yexp) for (x,yexp,y,dy) in gdat ]
-                        gdat = [ g for g in gdat if xrange[0] < g[0] < xrange[1] and -100 < g[1] < 100 ]
+			gdat = [ (x,100.0*(y-yexp)/yexp,100*dy/yexp,y-yexp,(y-yexp)*(y-yexp)/(dy*dy)) for (x,yexp,y,dy) in gdat ]
+			gdat = [ g for g in gdat if self.datrange[0] < g[0] < self.datrange[1] and -100 < g[1] < 100 ]
                         refvolt.append(max(abs(g[0]) for g in gdat))
                         sourcedev.append(max(abs(g[3]) for g in gdat))
+			for g in gdat:
+				chisqi.append(g[4])
                         if not gdat:
                                 continue
                 delv = max(sourcedev)
                 vmax = max(refvolt)
+		ndf = len(chisqi)
+		chisquared = sum(chisqi)/(ndf - 1)
+		if chisquared > 20:
+			print 'HELLO chisquared is: ', chisquared
                 self.intlin = 100*delv/3000 # using estimated vmax for whole experiment
 		#self.intlin = 100*delv/vmax # using vmax calculated for run group 
-		self.gEvis.text(5.0,3.5,"%s %i INL = %.3f"%(self.side,self.tube+1,self.intlin))
+		self.chisq = chisquared
+		self.gEvis.text(5.0,3.5,"%s %i ChiSq/(NDF-1) = %.3f"%(self.side,self.tube+1,self.chisq))
 			
 		##
 		# residuals plotting
 		##
 		for k in self.pks:
 			gdat = [ (l.adc*l.gms, self.fitter(l.adc*l.gms), l.sim.erecon*l.eta, l.sim.erecon*l.eta*etaErr) for l in self.pks[k] if l.adc > 0]
-			gdat = [ (x,100.0*(y-yexp)/yexp,100*dy/yexp) for (x,yexp,y,dy) in gdat ]
-			gdat = [ g for g in gdat if xrange[0] < g[0] < xrange[1] and -100 < g[1] < 100 ]
+			gdat = [ (x,100.0*(y-yexp)/yexp,100*dy/yexp,y-yexp) for (x,yexp,y,dy) in gdat ]
+			gdat = [ g for g in gdat if self.datrange[0] < g[0] < self.datrange[1] and -100 < g[1] < 100 ]
 			if not gdat:
 				continue
 			self.gResid.plot(graph.data.points(gdat,x=1,y=2,dy=3,title=None),
@@ -684,48 +791,38 @@ cal_2010 = [
 			(	14516,	14530,	14524,	14513,	14667,		161 ),	# 63 3 Oct. 22-24 weekend
 			(	14736,	14746,	14743,	14688,	14994,		161 ),	# 63 4 Oct. 27-29 weekend; Nov. 12-14, including isobutane running and tilted sources
 			(	15645,	15662,	15653,	15084,	15915,		164 ),	# 65/151 5 Nov. 22-29 Thanksgiving Week
-			(	15916,	15939,	15931,	15916,	100000,		164 )	# 65 6 Post-Thanksgiving
+			(	15916,	15939,	15931,	15916,	16400,		164 )	# 65 6 Post-Thanksgiving
 			]
 			
 cal_2011 = [
-#			(	17233,	17249,	17238,	16983,	17297,		233	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
-			(	17359,	17387,	17371,	17359,	17439,		233	),	# 1 Beta Decay; PMT W0 missing pulser
-			(	17517,	17527,	17522,	17440,	17734,		233	),	# 2 Calibrations for Xe; W0 pulser still dead
-			(	17871,	17941,	17892,	17735,	17955,		233	),	# 3 Big Scan; W0 pulser still dead; originally to 17922
-			(	18020,	18055,	18039,	18020,	18055,		233	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
-			(	18357,	18386,	18362,	18081,	18386,		223	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
-			(	18617,	18640,	18622,	18390,	18683,		225	),	# 6 Beta decay; PMT W4 Bi pulser very low
-			(	18745,	18768,	18750,	18712,	18994,		227	),	# 7 Start of 2012; PMT W4 pulser still low
-			(	19203,	19239,	19233,	19023,	19239,		227	),	# 8 W4 Pulser now higher... drifty
-			(	19347,	19377,	19359,	19347,	19544,		229	),	# 9 W4 Pulser now low...
+#			(	17233,	17249,	17238,	16983,	17297,		259	),	# 0 New Sn, Ce sources; Xenon, Betas, Dead PMT W2
+			(	17359,	17387,	17371,	17359,	17439,		259	),	# 1 Beta Decay; PMT W0 missing pulser
+			(	17517,	17527,	17522,	17440,	17734,		259	),	# 2 Calibrations for Xe; W0 pulser still dead
+			(	17871,	17941,	17892,	17735,	17955,		259	),	# 3 Big Scan; W0 pulser still dead; originally to 17922
+			(	18020,	18055,	18039,	18020,	18055,		259	),	# 4 Old and new Cd Source; self-calibration; W0 pulser still dead
+			(	18357,	18386,	18362,	18081,	18386,		261	),	# 5 Beta decay, new In source, Xe; PMT W4 pulser low & drifty
+			(	18617,	18640,	18622,	18390,	18683,		263	),	# 6 Beta decay; PMT W4 Bi pulser very low
+			(	18745,	18768,	18750,	18712,	18994,		265	),	# 7 Start of 2012; PMT W4 pulser still low
+			(	19203,	19239,	19233,	19023,	19239,		265	),	# 8 W4 Pulser now higher... drifty
+			(	19347,	19377,	19359,	19347,	19544,		267	),	# 9 W4 Pulser now low...
 			#(	19505,	19544, 19539	),					# Feb. 14, Cd2In only; not used for calibration
-			(	19823,	19863,	19858,	19583,	20000,		229)	# 10 Feb. 16-24 Xe, Betas, long sources
+			(	19823,	19863,	19858,	19583,	20000,		267)	# 10 Feb. 16-24 Xe, Betas, long sources
 			]
 
 cal_2012 = [
-			(	20515,	20527,	20522,	20121,	20741,		61),	# 0 Oct. 12, Bi/Ce/Sn
-			(	20818,	20830,	20823,	20782,	20837,		61),	# 1 Oct. 20, Bi/Ce/Sn, calibrates 1 octet
-			(	21087,	21099,	21092,	21087,	21237,		61),	# 2 Nov. 16; Bi/Ce/Sn
-			(	21299,	21328,	21314,	21274,	21623,		61),	# 3 Nov. 20, Thanksgiving; Cd, In, +first Cs137
-			(	21679,	21718,	21687,	21625,	21863,		61),	# 4 Dec. 6 weekend betas
-			(	21914,	21939,	21921,	21890,	22118,		61),	# 5 Dec. 12
-			(	22215,	22238,	22222,	22124,	22238,		61),	# 6 Dec. 18
+			(	20515,	20527,	20522,	20121,	20741,		269),	# 0 Oct. 12, Bi/Ce/Sn
+			(	20818,	20830,	20823,	20782,	20837,		269),	# 1 Oct. 20, Bi/Ce/Sn, calibrates 1 octet
+			(	21087,	21099,	21092,	21087,	21237,		269),	# 2 Nov. 16; Bi/Ce/Sn
+			(	21299,	21328,	21314,	21274,	21623,		269),	# 3 Nov. 20, Thanksgiving; Cd, In, +first Cs137
+			(	21679,	21718,	21687,	21625,	21863,		271),	# 4 Dec. 6 weekend betas
+			(	21914,	21939,	21921,	21890,	22118,		271),	# 5 Dec. 12
+			(	22215,	22238,	22222,	22124,	22238,		271),	# 6 Dec. 18
 			#(	22294,	22306),										#   Jan. 11; Bi/Ce/Sn only
-			(	22437,	22462,	22442,	22294,	22630,		61),	# 7 Jan. 14
-			(	22767,	22793,	22772,	22631,	100000,		61)		# 8 Jan. 25
+			(	22437,	22462,	22442,	22294,	22630,		273),	# 7 Jan. 14
+			(	22767,	22793,	22772,	22631,	100000,		273)		# 8 Jan. 25
 			]
 
-cal_test = [
-			(	22767,	22793,	22772,	22631,	100000,		61)		# 8 Jan. 25
-			]
 
-cal_test2 = [
-	                (	22437,	22462,	22442,	22294,	22630,		61),	# 7 Jan. 14
-			]
-
-cal_test3 = [
-	                (	21299,	21328,	21314,	21274,	21623,		61),	# 3 Nov. 20, Thanksgiving; Cd, In, +first Cs137
-			]
 # some useful DB commands:
 # UPDATE energy_calibration SET posmap_set_id=213 WHERE posmap_set_id = 211;
 
@@ -747,9 +844,10 @@ if __name__=="__main__":
 
 	fCalSummary = open(os.environ["UCNA_ANA_PLOTS"]+"/Sources/CalSummary.txt","w")
 	allintl = [[[] for i in range(4)]for j in range(2)]
+	allchisq = [[[] for i in range(4)]for j in range(2)]
 	allruns = []
-	cal_used = cal_test3
-	for c in cal_used:
+	for c in cal_2012:
+		
 		#print "./ReplayManager.py -s --rmin=%i --rmax=%i"%(c[0],c[1]); continue
 		
 		rlist = range(c[0],c[1]+1)
@@ -780,6 +878,7 @@ if __name__=="__main__":
 				if t<4:
 					if LC[(s,t)].fitLinearity():
 						allintl[k][t].append(LC[(s,t)].intlin)
+						allchisq[k][t].append(LC[(s,t)].chisq)
 						fCalSummary.write("%s %i\t%s\n"%(s,t,LC[(s,t)].fitter.toLatex()))
 						if makePlots and LC[(s,t)].uselist is None:
 							LC[(s,t)].cnvs.writetofile(outpath+"/Linearity/ADC_v_Light_%i_%s%i.pdf"%(rlist[0],s[0],t))
@@ -826,19 +925,34 @@ if __name__=="__main__":
 		else: compass = 'West'
 		for t in range(4):
 			gIntLin=graph.graphxy(width=15,height=gheight,ypos=goff,
-#                                x=graph.axis.lin(title="Run Number",min=17000,max=20000),
-                                x=graph.axis.lin(title="Run Number",min=(cal_used[0][0]-100),max=(cal_used[-1][1]+100)),
-                                y=graph.axis.lin(title="INL(\\%)",min=0,max=8))
-
-			print "Plotting integrallin " + str(t) + " for side " + compass
+                                x=graph.axis.lin(title="Run Number",min=20200,max=23200),
+                                y=graph.axis.lin(title="INL(\\%)",min=0,max=3))
 			cIntLin.insert(gIntLin)
-			print allruns
-			print allintl[i][t]
 			gIntLin.plot(graph.data.values(x=allruns,y=allintl[i][t]),
-                                [graph.style.symbol(symbol.circle,size=0.15,symbolattrs=[rgb.red,deco.filled])])
-			gIntLin.plot(graph.data.function("y(x)=5.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
+                                [graph.style.symbol(symbol.circle,size=0.15,symbolattrs=[color.gradient.Rainbow,deco.filled])])
+			#gIntLin.plot(graph.data.function("y(x)=5.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
 			gIntLin.text(0.7,goff+2.2,"%s %i"%(compass,t))
 			goff += gheight+1.4
 		goff += 0.5
-	cIntLin.writetofile(outpath+"/Linearity/integrallin.pdf")
+	cIntLin.writetofile(outpath+"/Linearity/intlin_20122013_lin_study.pdf")
 
+	gheight = 3
+        goff = 0
+        cIntChiSq = canvas.canvas()
+
+        for i in range(2):
+                if (i==0): compass = 'East'
+                else: compass = 'West'
+                for t in range(4):
+                        gIntChiSq=graph.graphxy(width=15,height=gheight,ypos=goff,
+                                x=graph.axis.lin(title="Run Number",min=20200,max=23200),
+                                y=graph.axis.lin(title="ChiSq/(NDF-1)",min=0,max=25),
+				key = graph.key.key(pos="tr"))
+                        cIntChiSq.insert(gIntChiSq)
+                        gIntChiSq.plot(graph.data.values(x=allruns,y=allchisq[i][t],title="linA"),
+                                [graph.style.symbol(symbol.square,size=0.15,symbolattrs=[rgb.red,deco.filled])])
+			#gIntLin.plot(graph.data.function("y(x)=5.0",title=None), [graph.style.line(lineattrs=[style.linestyle.dashed])])
+                        gIntChiSq.text(0.7,goff+2.2,"%s %i"%(compass,t))
+                        goff += gheight+1.4
+                goff += 0.5
+        cIntChiSq.writetofile(outpath+"/Linearity/chisq_20122013_all.pdf")

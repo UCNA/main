@@ -283,8 +283,8 @@ def plotAverageLEDLinParms():
 if __name__== "__main__":
 #    filename = "/data4/saslutsky/PulserComp/images_10_22_2014_allruns/FitResults"
 #    filename = "/data4/saslutsky/PulserComp/images_11_24_2014_10rangemin/FitResults"
-#    filename = "/data4/saslutsky/PulserComp/images_12_15_2014_fixBeta/FitResults"
-    filename = "/data4/saslutsky/PulserComp/images_01_14_2015_scaleE/FitResults"
+    filename = "/data4/saslutsky/PulserComp/images_12_15_2014_fixBeta/FitResults"
+#    filename = "/data4/saslutsky/PulserComp/images_01_14_2015_scaleE/FitResults"
     try: 
         if sys.argv[1] == 'pe':
             filename += "_PE_PMT.txt"
