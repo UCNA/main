@@ -1,8 +1,0 @@
-#ifndef LGPMTTOOLS_H
-#define LGPMTTOOLS_H
-
-double lightguideprob(double xpos, double ypos,int lgnum);
-
-double PMTprob(double xpos,double ypos, double LGFitParam[], int pmtnum);
-
-#endif
