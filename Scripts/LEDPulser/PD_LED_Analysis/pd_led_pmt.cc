@@ -50,7 +50,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_09_2015_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_13_2015_21274_21328/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -796,7 +796,8 @@ int main (int argc, char **argv)
 	    cout << "Fixing x-offset to be apprx Beta endpoint " << best_beta_endpt_PD << endl;
 	    if (led) fit->SetParameters(750., 5., -0.0005); 
 	    //else fit->SetParameters(3000.0, 10., -0.1);
-	    else  fit->SetParameters(600, 10, -0.0005); 
+	    //	    else  fit->SetParameters(600, 10, -0.0005); 
+	    else  fit->SetParameters(800, 20, -0.0005); 
 	    fit->FixParameter(3, best_beta_endpt_PD);  // fix x-offset to be the calculated PD value for beta endpoint 
 #endif
 	    // }

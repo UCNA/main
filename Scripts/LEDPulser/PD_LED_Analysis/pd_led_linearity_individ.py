@@ -5,6 +5,7 @@
 # Plot fitted linearity constants output from pd_led_pmt_batch file 
 # Useful syntax: carp = data[data['Channel'] == 4]
 
+# usage: python pd_led_linearity_individ.py <show> <save>
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,8 +13,12 @@ from matplotlib.backends.backend_pdf import PdfPages
 from pylab import *
 from math import sqrt
 #from ROOT import TCanvas
+import sys
 
 if __name__ == "__main__":
+    
+    showbool = int(sys.argv[1]) # boolean to control plotting
+    savebool = int(sys.argv[2]) # boolean to control saving
 
 #    plt.ion() #turn on interactive mode
     
@@ -27,7 +32,8 @@ if __name__ == "__main__":
 #                         names = ['Run','Channel', 'Wavelength','p0',
 #                                  'p0Err','p1','p1Err','p2','p2Err', 'Chi2')]\
 
-    basedir = "/data4/saslutsky/PulserComp/images_04_09_2015_21927_21939/"
+#    basedir = "/data4/saslutsky/PulserComp/images_04_09_2015_21927_21939/"
+    basedir = "/data4/saslutsky/PulserComp/images_04_13_2015_21274_21328/"
     outputfile = PdfPages(basedir + "FitResultsIndividual.pdf")
 #    outputfile = PdfPages('imagesPowerMod/ParmPlotsIndividual.pdf')
 #    data = np.genfromtxt("/data4/saslutsky/PulserComp/images_04_09_2015_21927_21939/FitResults.txt", 
@@ -44,7 +50,7 @@ if __name__ == "__main__":
 #    cut2 = (data['Run']!=21601)
 #    cut3 = (data['Run']!=21602)
  #   cutsAll = cut1 & cut2 & cut3
-    cutruns = [21599, 21601, 21602, 21933]
+    cutruns = [21599, 21601, 21602, 21933, 21295, 21298,21312, 21318, 21288]
     cutsAll = True
     for i in cutruns:
         _cut = (data['Run']!=i)
@@ -164,11 +170,13 @@ if __name__ == "__main__":
 #        axes[i][8].set_xlabel('Run Number')
  
 #    for f in range (0, 16):
-    for f in range (0, 8):
-        outputfile.savefig(figures[f])
- 
+    if savebool: 
+        for f in range (0, 8):
+            outputfile.savefig(figures[f])
+    
     outputfile.close()
-    plt.show(block=True)     #block=True keeps the plot window open when in interactive mode 
+    if showbool:
+        plt.show(block=True)     #block=True keeps the plot window open when in interactive mode 
 
 # too hard to do it manually
 
