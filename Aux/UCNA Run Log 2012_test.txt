@@ -1,0 +1,233 @@
+#####################
+# UCNA Run Data Log #
+#####################
+#
+#	--- file format description ---
+#
+#	Run lines start with a '*', of the form:
+#		*[Run Number] [Run Type]
+#
+#	Data run types (may be optionally followed by a slow daq run number):
+#
+#		BgOff/BgOn	background with flipper off/on
+#		BetaOff/BetaOn	beta decay with flipper off/on
+#		A1...A12,B1...B12	data octet segments
+#
+#	Calibration run types:		
+#		SourcesCal		Source calibration
+#		Xe			Acrivated Xenon calibration
+#		Other			Miscellaneous run (see comments)
+#		
+#
+#	Lines starting with an '@' specify properties of all the following runs
+#	(until over-written by another '@' line):
+#		@cycle	<Name>		start a contiguous group of runs to be analyzed togetherl resets @cal to 0
+#		@sources <Sources>	sources in holder, Left to Right in wirechamber Y position (from Sn Bi Sr85 Sr90 Cd In)
+#	All other lines (those not starting with a '*' or an '@') are comments.
+#
+
+##########################
+#                        #
+#   A1   Background Off  #
+#   A2   Beta Off        #
+#   A3   Depol Off->On   #
+#   A4   Background On   #
+#   A5   Beta On         #
+#   A6   Depol On->Off   #
+#   A7   Beta On         #
+#   A8   Depol On->Off   #
+#   A9   Background On   #
+#   A10  Beta Off        #
+#   A11  Depol Off->On   #
+#   A12  Background Off  #
+#                        #
+#   B1   Background On   #
+#   B2   Beta On         #
+#   B3   Depol On->Off   #
+#   B4   Background Off  #
+#   B5   Beta Off        #
+#   B6   Depol Off->On   #
+#   B7   Beta Off        #
+#   B8   Depol Off->On   #
+#   B9   Background Off  #
+#   B10  Beta On         #
+#   B11  Depol On->Off   #
+#   B12  Background On   #
+#                        #
+##########################
+
+########
+# 2012 #
+########
+
+#######################
+@cycle September 9-10 First beta runs
+#######################
+
+### A->B ###
+
+*20121	A1
+*20122	A2
+*20123	A3
+*20124	A4
+*20125	A5
+*20126	A6
+*20127	A7
+*20128	A8
+*20129	A9
+*20130	A10
+*20131	A11
+*20132	A12
+
+*20133	B1
+*20134	B2
+*20135	B3
+*20136	B4
+*20137	B5
+*20138	B6
+*20139	B7
+*20140	B8
+*20141	B9
+*20142	B10
+*20143	B11
+*20144	B12
+
+# melt & refreeze
+
+### B->A ###
+
+*20146	B1
+*20147	B2
+*20148	B3
+*20149	B4
+*20150	B5
+*20151	B6
+*20152	B7
+*20153	B8
+*20154	B9
+*20155	B10
+*20156	B11
+*20157	B12
+
+*20158	A1
+*20159	A2
+*20160	A3
+*20161	A4
+*20162	A5
+*20163	A6
+*20164	A7
+*20165	A8
+*20166	A9
+*20167	A10
+*20168	A11
+*20169	A12
+
+
+#######################
+@cycle September 15 thin windows beta
+#######################
+# thin Be trap windows have been installed on 9/14
+
+### B->A ###
+### borked octetoid --- something wrong ###
+#20203	B1
+#20204	B2
+#20205	B3
+#20206	B4
+
+### B->A ###
+#
+#20209	B1
+#20210	B2
+#20211	B3
+#20212	B4
+#20213	B5
+#20214	B6
+#20215	B7			# aborted to check flipper tune
+
+### B->A ###
+
+*20216	B1
+*20217	B2
+*20218	B3
+*20219	B4
+*20220	B5
+*20221	B6
+*20222	B7
+*20223	B8
+*20224	B9
+*20225	B10
+*20226	B11
+*20227	B12
+
+*20228	A1
+*20229	A2
+*20230	A3
+*20231	A4
+*20232	A5
+*20233	A6
+*20234	A7
+*20235	A8
+*20236	A9
+*20237	A10
+*20238	A11
+*20239	A12
+
+### A->B ###
+
+*20240	A1
+*20241	A2
+*20242	A3
+*20243	A4
+*20244	A5
+*20245	A6
+*20246	A7
+*20247	A8
+*20248	A9
+*20249	A10
+*20250	A11
+*20251	A12
+
+*20253	B1
+*20254	B2
+*20255	B3
+*20256	B4
+*20257	B5
+*20258	B6
+*20259	B7
+*20260	B8
+*20261	B9
+*20262	B10
+*20263	B11
+*20264	B12
+
+### 9/16: depol runs
+### 9/18: source production tests
+
+#######################
+@cycle October 12-16 Source Calibrations, Betas
+#######################
+
+@sources Bi
+*20515	SourcesCal		# 0.0in
+@sources E Bi Ce
+*20516	SourcesCal		# 0.5in
+@sources Bi Ce
+*20517	SourcesCal		# 1.0in
+@sources E Bi Ce Sn
+*20519	SourcesCal		# 1.5in
+@sources Bi Ce Sn
+*20520	SourcesCal		# 2.0in
+*20522	SourcesCal		# 2.5in
+*20523	SourcesCal		# 3.0in
+@sources E Ce Sn
+*20524	SourcesCal		# 3.5in
+@sources Ce Sn
+*20525	SourcesCal		# 4.0in
+*20526	SourcesCal		# 4.5in
+@sources Sn
+*20527	SourcesCal		# 5.0in
+@sources
+
+
+
