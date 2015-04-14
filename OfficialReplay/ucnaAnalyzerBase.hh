@@ -8,6 +8,7 @@
 #include "EnergyCalibrator.hh"
 #include "CalDBSQL.hh"
 #include "ManualInfo.hh"
+#include "PMTCalibrator.hh"
 
 const size_t kNumModules = 5;	///< number of DAQ modules for internal event header checks
 const size_t kNumUCNMons = 4;	///< number of UCN monitors
