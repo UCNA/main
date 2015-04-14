@@ -102,13 +102,12 @@ def createtimelist(conn):
 
     return midlist, runlist, startlist, endlist
 
-if __name__ == "__main__":
-    
-    conn = open_connection()
+def PlotRuns(conn):
     midlist, runlist, startlist, endlist = createtimelist(conn)
 
     fig, ax1 = plt.subplots()
-    ax1.xaxis.set_major_formatter(dates.DateFormatter("%m/%d/%y %H:%M:%S"))
+#    ax1.xaxis.set_major_formatter(dates.DateFormatter("%m/%d/%y %H:%M:%S"))
+    ax1.xaxis.set_major_formatter(dates.DateFormatter("%m/%d/%y"))
     ax1.plot_date(midlist, runlist) 
     
     # plot run duration using error-bar style lines
@@ -129,6 +128,12 @@ if __name__ == "__main__":
     ax1.set_ylabel("Run Number")
                                   
     plt.show()
+
+if __name__ == "__main__":
+    
+    conn = open_connection()
+    PlotRuns(conn)
+    
     
     
     
