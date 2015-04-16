@@ -131,8 +131,8 @@ int main()
 	LGFitParamW[4+i*15]=1;
 	}
 
-//pass the name and location of the file you want to work and the name and location of the probablilty you want to save, with the intention the new TTree file is added to the anaTree as a friend when calibration of the sources is done. 	
-  LGProbError("$UCNAOUTPUTDIR/hists/spec_22770.root","pmtprob_1.root",LGFitParamE,LGFitParamW);
+//pass the name and location of the file you want to work and the name and location of the probablilty you want to save, with the intention the new TTree file is added to phys Tree as a friend when calibration of the sources is done. 	
+  LGProbError("$UCNAOUTPUTDIR/hists/spec_22770.root","$UCNAOUTPUTDIR/hists/pmtprob_22770.root",LGFitParamE,LGFitParamW);
 
   return 0;
 }

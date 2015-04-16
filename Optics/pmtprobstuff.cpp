@@ -61,21 +61,38 @@ double PMTerror(double xerr, double yerr,double xpos,double ypos, double LGFitPa
 	
 	//random number class
 	
-	TRandom3 * Randal = new TRandom3(0);
+	TRandom3 * alThor = new TRandom3(0);
        
 	// generate a gaussian distributed number with mu=xpos,ypos,  sigma=xerr,yerr (default values)
-	double xrand; 
-	double yrand; 
-	double PMTtot[1000];
+
+	double PMTtot[10];  //ten points enough??? NO!!!
 	
-	for(int i = 0; i<1000; ++i){
-	xrand=Randal->Gaus(xpos,xerr);
-	yrand=Randal->Gaus(ypos,yerr);
-	//cout<<yerr<<"  "<<xerr<<"\n";
-	PMTtot[i]=PMTprob(xrand,yrand,LGFitParam,pmtnum);	
+	for(int i = 0; i<10; ++i){
+	
+	
+	PMTtot[i]=PMTprob(alThor->Gaus(xpos,xerr),alThor->Gaus(ypos,yerr),LGFitParam,pmtnum);	
 	}
 
-	return (TMath::RMS(&PMTtot[0],&PMTtot[999]));
+	return (TMath::RMS(&PMTtot[0],&PMTtot[9]));
+}
+
+double LGerror(double xerr, double yerr,double xpos,double ypos,int lgnum){
+	
+	//random number class
+	
+	TRandom3 * alThor = new TRandom3(0);
+       
+	// generate a gaussian distributed number with mu=xpos,ypos,  sigma=xerr,yerr (default values)
+
+	double PMTtot[10];  //ten points enough??? NO!!!
+	
+	for(int i = 0; i<10; ++i){
+	
+	
+	PMTtot[i]=lightguideprob(alThor->Gaus(xpos,xerr),alThor->Gaus(ypos,yerr),lgnum);	
+	}
+
+	return (TMath::RMS(&PMTtot[0],&PMTtot[9]));
 }
 
 
