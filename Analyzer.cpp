@@ -17,6 +17,7 @@
 #include "NuclEvtGen.hh"
 #include "AsymmetryCorrections.hh"
 #include "OctetSimuCloneManager.hh"
+#include "KurieStudy.hh"
 
 std::vector<RunNum> selectRuns(RunNum r0, RunNum r1, std::string typeSelect) {
 	if(typeSelect=="ref") {
@@ -204,6 +205,10 @@ void mi_radcor(StreamInteractor* S) {
 	makeCorrectionsFile(A,Z,Ep);
 }
 
+void mi_kurie(StreamInteractor* S) {
+        std::string rn = S->popString();
+        makeKurieFitsforRun(rn);
+}
 void mi_showGenerator(StreamInteractor* S) {
 	std::string sName = S->popString();
 	OutputManager OMTest("test",getEnvSafe("UCNA_ANA_PLOTS")+"/test/EventGenerators/"+sName+"/");
@@ -345,6 +350,8 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	radcor.addArg("A","1");
 	radcor.addArg("Z","1");
 	radcor.addArg("Endpoint",dtos(neutronBetaEp));
+	InputRequester kurie("Make Kurie Plot", &mi_kurie);
+	kurie.addArg("Run Number", "23171");
 	
 	// main menu
 	OptionsMenu OM("Analyzer Main Menu");
@@ -354,6 +361,7 @@ void Analyzer(std::deque<std::string> args=std::deque<std::string>()) {
 	OM.addChoice(&uploadSources,"us");
 	OM.addChoice(&evis2etrue,"ev");
 	OM.addChoice(&radcor,"rc");
+	OM.addChoice(&kurie, "k");
 	OM.addChoice(&exitMenu,"x");
 	OM.addSynonym("x","exit");
 	OM.addSynonym("x","quit");

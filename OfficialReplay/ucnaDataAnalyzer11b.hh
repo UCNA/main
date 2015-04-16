@@ -123,6 +123,8 @@ protected:
 	void setupHistograms();
 	/// fill summary histograms with few calibration dependencies
 	void fillEarlyHistograms();
+        /// fill histograms with raw PMT spectra (after pedestal subtraction)
+        void fillRawPMTHistograms();
 	/// fill summary histograms from event data
 	void fillHistograms();
 	/// fill histograms requiring look-ahead capability to next event
@@ -164,6 +166,7 @@ protected:
 	TH2F* hHitPos[BOTH];							///< hit position on each side, 2D
 	TH1F* hTrigEffic[BOTH][nBetaTubes][2];			///< trigger efficiency for [side][tube][all/trig]
 	std::vector<TH1*> hBiPulser[BOTH][nBetaTubes];	///< Bi puser for [side][tube]
+        TH1F* hRawPMT[BOTH][nBetaTubes];    ///< Raw PMT spectrum for [side][tube]
 	TH1F* hClusterTiming[2];						///< event cluster timing for [all/beta]
 };
 

@@ -1,0 +1,147 @@
+#####################
+# UCNA Run Data Log #
+#####################
+#
+#	--- file format description ---
+#
+#	Run lines start with a '*', of the form:
+#		*[Run Number] [Run Type]
+#
+#	Data run types (may be optionally followed by a slow daq run number):
+#
+#		BgOff/BgOn	background with flipper off/on
+#		BetaOff/BetaOn	beta decay with flipper off/on
+#		A1...A12,B1...B12	data octet segments
+#
+#	Calibration run types:		
+#		SourcesCal		Source calibration
+#		Xe			Acrivated Xenon calibration
+#		Other			Miscellaneous run (see comments)
+#		
+#
+#	Lines starting with an '@' specify properties of all the following runs
+#	(until over-written by another '@' line):
+#		@cycle	<Name>		start a contiguous group of runs to be analyzed togetherl resets @cal to 0
+#		@sources <Sources>	sources in holder, Left to Right in wirechamber Y position (from Sn Bi Sr85 Sr90 Cd In)
+#	All other lines (those not starting with a '*' or an '@') are comments.
+#
+# 10/01/2014, SS:  Lines marked ! have bad LED scans
+
+
+##########################
+#                        #
+#   A1   Background Off  #
+#   A2   Beta Off        #
+#   A3   Depol Off->On   #
+#   A4   Background On   #
+#   A5   Beta On         #
+#   A6   Depol On->Off   #
+#   A7   Beta On         #
+#   A8   Depol On->Off   #
+#   A9   Background On   #
+#   A10  Beta Off        #
+#   A11  Depol Off->On   #
+#   A12  Background Off  #
+#                        #
+#   B1   Background On   #
+#   B2   Beta On         #
+#   B3   Depol On->Off   #
+#   B4   Background Off  #
+#   B5   Beta Off        #
+#   B6   Depol Off->On   #
+#   B7   Beta Off        #
+#   B8   Depol Off->On   #
+#   B9   Background Off  #
+#   B10  Beta On         #
+#   B11  Depol On->Off   #
+#   B12  Background On   #
+#                        #
+##########################
+
+#######################
+@cycle November 20-26 Thanksgiving
+#######################
+# running with isobutane in the wirechambers
+
+# long centered Cd Cs In runs
+@sources Cd Cs InW
+*21274	SourcesCal
+*21275	SourcesCal
+*21276	SourcesCal
+*21277	SourcesCal
+*21278	SourcesCal
+*21279	SourcesCal
+*21280	SourcesCal
+*21281	SourcesCal
+*21282	SourcesCal
+*21283	SourcesCal
+*21284	SourcesCal
+*21285	SourcesCal
+*21286	SourcesCal
+*21287	SourcesCal
+*21288	SourcesCal
+*21289	SourcesCal
+*21290	SourcesCal
+*21291	SourcesCal
+*21292	SourcesCal
+*21293	SourcesCal
+*21294	SourcesCal
+!21295	SourcesCal
+*21296	SourcesCal
+*21297	SourcesCal
+!21298	SourcesCal
+
+@sources Cd
+*21299	SourcesCal			# 0.0in out West
+@sources E Cd Cs
+*21300	SourcesCal			# 0.5in out East
+@sources Cd Cs
+*21301	SourcesCal			# 1.0in out West
+@sources E Cd Cs InE
+*21302	SourcesCal			# 1.5in out East
+@sources Cd Cs InW
+*21303	SourcesCal			# 2.0in out West
+@sources Cd Cs InE
+*21304	SourcesCal			# 2.5in out East
+@sources Cd Cs InW
+*21305	SourcesCal			# 3.0in out West
+@sources Cd Cs InE
+*21306	SourcesCal			# 3.5in out East
+@sources Cs InW
+*21307	SourcesCal			# 4.0in out West
+@sources Cs InE
+*21308	SourcesCal			# 4.5in out East
+@sources InW
+*21309	SourcesCal			# 5.0in out West
+@sources InE
+*21310	SourcesCal			# 5.5in out East
+
+@sources Sn
+*21311	SourcesCal			# 0.0in out West
+@sources E Sn Ce
+!21312	SourcesCal			# 0.5in out West
+@sources Sn Ce
+*21313	SourcesCal			# 1.0in out West
+@sources E Sn Ce Bi
+*21314	SourcesCal			# 1.5in out West
+@sources Sn Ce Bi
+*21315	SourcesCal			# 2.0in out West
+*21316	SourcesCal			# 2.5in out East
+*21317	SourcesCal			# 3.0in out West
+!21318	SourcesCal			# 3.5in out East
+@sources Ce Bi
+*21319	SourcesCal			# 4.0in out West
+*21320	SourcesCal			# 4.5in out East
+@sources Bi
+*21321	SourcesCal			# 5.0in out West
+*21322	SourcesCal			# 5.5in out East
+
+# alternating sides
+@sources Sn Ce Bi
+*21323	SourcesCal			# 2.5in out West
+*21324	SourcesCal			# 2.5in out East
+*21325	SourcesCal			# 2.5in out West
+*21326	SourcesCal			# 2.5in out East
+*21327	SourcesCal			# 2.5in out West
+*21328	SourcesCal			# 2.5in out East
+

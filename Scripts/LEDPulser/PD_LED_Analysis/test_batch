@@ -1,0 +1,9 @@
+#!/bin/bash
+	
+IMAGES_DIR=/data4/saslutsky/PulserComp/imagesLEDDebug
+
+
+for f in $IMAGES_DIR/*.gif
+do 
+   echo "${f%.gif}.pdf"
+done

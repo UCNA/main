@@ -1,0 +1,2733 @@
+#####################
+# UCNA Run Data Log #
+#####################
+#
+#	--- file format description ---
+#
+#	Run lines start with a '*', of the form:
+#		*[Run Number] [Run Type]
+#
+#	Data run types (may be optionally followed by a slow daq run number):
+#
+#		BgOff/BgOn	background with flipper off/on
+#		BetaOff/BetaOn	beta decay with flipper off/on
+#		A1...A12,B1...B12	data octet segments
+#
+#	Calibration run types:		
+#		SourcesCal		Source calibration
+#		Xe			Acrivated Xenon calibration
+#		Other			Miscellaneous run (see comments)
+#		
+#
+#	Lines starting with an '@' specify properties of all the following runs
+#	(until over-written by another '@' line):
+#		@cycle	<Name>		start a contiguous group of runs to be analyzed togetherl resets @cal to 0
+#		@sources <Sources>	sources in holder, Left to Right in wirechamber Y position (from Sn Bi Sr85 Sr90 Cd In)
+#	All other lines (those not starting with a '*' or an '@') are comments.
+#
+# 10/01/2014, SS:  Lines marked ! have bad LED scans
+
+
+##########################
+#                        #
+#   A1   Background Off  #
+#   A2   Beta Off        #
+#   A3   Depol Off->On   #
+#   A4   Background On   #
+#   A5   Beta On         #
+#   A6   Depol On->Off   #
+#   A7   Beta On         #
+#   A8   Depol On->Off   #
+#   A9   Background On   #
+#   A10  Beta Off        #
+#   A11  Depol Off->On   #
+#   A12  Background Off  #
+#                        #
+#   B1   Background On   #
+#   B2   Beta On         #
+#   B3   Depol On->Off   #
+#   B4   Background Off  #
+#   B5   Beta Off        #
+#   B6   Depol Off->On   #
+#   B7   Beta Off        #
+#   B8   Depol Off->On   #
+#   B9   Background Off  #
+#   B10  Beta On         #
+#   B11  Depol On->Off   #
+#   B12  Background On   #
+#                        #
+##########################
+
+########
+# 2012 #
+########
+
+#######################
+@cycle September 9-10 First beta runs
+#######################
+
+### A->B ###
+
+*20121	A1
+*20122	A2
+*20123	A3
+*20124	A4
+*20125	A5
+*20126	A6
+*20127	A7
+*20128	A8
+*20129	A9
+*20130	A10
+*20131	A11
+*20132	A12
+
+*20133	B1
+*20134	B2
+*20135	B3
+*20136	B4
+*20137	B5
+*20138	B6
+*20139	B7
+*20140	B8
+*20141	B9
+*20142	B10
+*20143	B11
+*20144	B12
+
+# melt & refreeze
+
+### B->A ###
+
+*20146	B1
+*20147	B2
+*20148	B3
+*20149	B4
+*20150	B5
+*20151	B6
+*20152	B7
+*20153	B8
+*20154	B9
+*20155	B10
+*20156	B11
+*20157	B12
+
+*20158	A1
+*20159	A2
+*20160	A3
+*20161	A4
+*20162	A5
+*20163	A6
+*20164	A7
+*20165	A8
+*20166	A9
+*20167	A10
+*20168	A11
+*20169	A12
+
+
+#######################
+@cycle September 15 thin windows beta
+#######################
+# thin Be trap windows have been installed on 9/14
+
+### B->A ###
+### borked octetoid --- something wrong ###
+#20203	B1
+#20204	B2
+#20205	B3
+#20206	B4
+
+### B->A ###
+#
+#20209	B1
+#20210	B2
+#20211	B3
+#20212	B4
+#20213	B5
+#20214	B6
+#20215	B7			# aborted to check flipper tune
+
+### B->A ###
+
+*20216	B1
+*20217	B2
+*20218	B3
+*20219	B4
+*20220	B5
+*20221	B6
+*20222	B7
+*20223	B8
+*20224	B9
+*20225	B10
+*20226	B11
+*20227	B12
+
+*20228	A1
+*20229	A2
+*20230	A3
+*20231	A4
+*20232	A5
+*20233	A6
+*20234	A7
+*20235	A8
+*20236	A9
+*20237	A10
+*20238	A11
+*20239	A12
+
+### A->B ###
+
+*20240	A1
+*20241	A2
+*20242	A3
+*20243	A4
+*20244	A5
+*20245	A6
+*20246	A7
+*20247	A8
+*20248	A9
+*20249	A10
+*20250	A11
+*20251	A12
+
+*20253	B1
+*20254	B2
+*20255	B3
+*20256	B4
+*20257	B5
+*20258	B6
+*20259	B7
+*20260	B8
+*20261	B9
+*20262	B10
+*20263	B11
+*20264	B12
+
+### 9/16: depol runs
+### 9/18: source production tests
+
+#######################
+@cycle October 12-16 Source Calibrations, Betas
+#######################
+
+@sources Bi
+!20515	SourcesCal		# 0.0in
+@sources E Bi Ce
+!20516	SourcesCal		# 0.5in
+@sources Bi Ce
+!20517	SourcesCal		# 1.0in
+@sources E Bi Ce Sn
+!20519	SourcesCal		# 1.5in
+@sources Bi Ce Sn
+!20520	SourcesCal		# 2.0in
+!20522	SourcesCal		# 2.5in
+!20523	SourcesCal		# 3.0in
+@sources E Ce Sn
+!20524	SourcesCal		# 3.5in
+@sources Ce Sn
+!20525	SourcesCal		# 4.0in
+!20526	SourcesCal		# 4.5in
+@sources Sn
+!20527	SourcesCal		# 5.0in
+@sources
+
+# long runs; DAQ fail partway through
+
+@sources Ce Sn Bi
+!20528	SourcesCal		# 2.5in
+!20529	SourcesCal		# 2.5in
+!20530	SourcesCal		# 2.5in
+!20531	SourcesCal		# 2.5in
+@sources
+
+### A->B ###
+
+*20542	A1
+*20543	A2
+*20544	A3
+*20545	A4
+*20546	A5
+*20547	A6
+*20548	A7
+*20549	A8
+*20550	A9
+*20551	A10
+*20552	A11
+*20553	A12
+
+*20554	B1
+*20555	B2
+*20556	B3
+*20557	B4
+*20558	B5
+*20559	B6
+*20560	B7
+*20561	B8
+#20562	B9
+#20563	B10		# W 2-fold triggers stopped; bad run; jiggled wires...
+#20564	B11
+
+### B->A ###
+
+*20573	B1
+*20574	B2
+*20575	B3
+*20576	B4
+*20577	B5
+*20578	B6
+*20579	B7
+*20580	B8
+*20581	B9
+# ... a few bad runs ... fixed and restarted running
+*20592	B10
+*20593	B11
+*20594	B12
+
+*20595	A1
+*20596	A2
+*20597	A3
+*20598	A4
+*20599	A5
+*20600	A6
+*20601	A7
+*20602	A8
+*20603	A9
+*20604	A10
+*20605	A11
+*20606	A12
+
+### A->B ###
+
+*20607	A1
+*20608	A2
+*20609	A3
+# run cycle program problem...
+*20614	A4
+*20615	A5
+*20616	A6
+*20617	A7
+*20618	A8
+*20619	A9
+*20620	A10
+*20621	A11
+*20622	A12
+
+*20623	B1
+*20624	B2
+*20625	B3
+*20626	B4
+*20627	B5
+*20628	B6
+*20629	B7
+*20630	B8
+*20631	B9
+*20632	B10
+*20633	B11
+*20634	B12
+
+### A->B ###
+
+*20635	A1
+*20636	A2
+*20637	A3
+*20638	A4
+*20639	A5
+*20640	A6
+*20641	A7
+*20642	A8
+*20643	A9
+# beam out
+*20646	A10
+*20647	A11
+*20648	A12
+
+*20649	B1
+*20650	B2
+*20651	B3
+*20652	B4
+*20653	B5
+*20654	B6
+*20655	B7
+*20656	B8
+*20657	B9
+*20658	B10
+*20659	B11
+*20660	B12
+
+### A->B ###
+
+*20661	A1
+*20662	A2
+*20663	A3
+*20664	A4
+*20665	A5
+*20666	A6
+*20667	A7
+*20668	A8
+*20669	A9
+*20670	A10
+*20671	A11
+*20672	A12
+
+*20673	B1
+*20674	B2
+*20675	B3
+*20676	B4
+*20677	B5
+*20678	B6
+*20679	B7
+*20680	B8
+*20681	B9
+*20682	B10
+*20683	B11
+*20684	B12
+
+# depol runs
+
+### A->B ###
+
+*20718	A1
+*20719	A2
+*20720	A3
+*20721	A4
+*20722	A5
+*20723	A6
+*20724	A7
+*20725	A8
+*20726	A9
+*20727	A10
+*20728	A11
+*20729	A12
+
+*20730	B1
+*20731	B2
+*20732	B3
+*20733	B4
+*20734	B5
+*20735	B6
+*20736	B7
+*20737	B8
+*20738	B9
+*20739	B10
+*20740	B11
+*20741	B12
+
+# depol runs
+
+#######################
+@cycle October 20 Betas
+#######################
+# unattended running
+
+### A->B ###
+
+*20782	A1
+*20783	A2
+*20784	A3
+*20785	A4
+*20786	A5
+*20787	A6
+*20788	A7
+*20789	A8
+*20790	A9
+*20791	A10
+*20792	A11
+*20793	A12
+
+*20794	B1
+*20795	B2
+*20796	B3
+*20797	B4
+*20798	B5
+*20799	B6
+*20800	B7
+*20801	B8
+*20802	B9
+*20803	B10
+*20804	B11
+*20805	B12
+
+#######################
+@cycle October 20 Calibrations
+#######################
+
+# 20min cal runs
+
+@sources Bi
+!20818	SourcesCal
+@sources E Bi Ce
+!20819	SourcesCal
+@sources Bi Ce
+!20820	SourcesCal
+!20821	SourcesCal
+@sources Bi Ce Sn
+!20822	SourcesCal
+!20823	SourcesCal
+!20824	SourcesCal
+!20825	SourcesCal
+!20826	SourcesCal
+!20827	SourcesCal
+@sources Ce Sn
+!20828	SourcesCal
+@sources Sn
+!20829	SourcesCal
+!20830	SourcesCal
+@sources
+
+# long centered runs
+@sources Ce Sn Bi
+!20831	SourcesCal		# 2.5in
+!20832	SourcesCal		# 2.5in
+!20833	SourcesCal		# 2.5in
+!20834	SourcesCal		# 2.5in
+!20835	SourcesCal		# 2.5in
+!20836	SourcesCal		# 2.5in
+!20837	SourcesCal		# 2.5in
+@sources
+
+### B->A ###
+# unattended octet, all messed up.
+#20876	B1
+#20877	B2
+#20878	B3
+#20879	B4
+#20880	B5
+#20881	B6
+#20882	B7
+#20883	B8
+#20884	B9
+#20885	B10
+#20886	B11
+#20887	B12
+
+#######################
+@cycle November 2 Calibrations, Beta
+#######################
+# ugly PMT pedestals; probably not a useful calibration; failed to get beta data.
+
+@sources Ce
+!20901	SourcesCal		# 0.0in
+@sources E Ce Sn
+!20902	SourcesCal		# 0.5in
+@sources Ce Sn
+!20903	SourcesCal		# 1.0in
+@sources E Ce Sn Bi
+!20904	SourcesCal		# 1.5in
+@sources Ce Sn Bi
+!20905	SourcesCal		# 2.0in
+!20906	SourcesCal		# 2.5in
+!20907	SourcesCal		# 3.0in
+@sources E Sn Bi
+!20908	SourcesCal		# 3.5in
+@sources Sn Bi
+!20909	SourcesCal		# 4.0in
+!20910	SourcesCal		# 4.5in
+@sources Bi
+!20911	SourcesCal		# 5.0in
+@sources
+
+# long centered runs
+@sources Ce Sn Bi
+!20913	SourcesCal		# 2.5in
+!20914	SourcesCal		# 2.5in
+!20915	SourcesCal		# 2.5in
+!20916	SourcesCal		# 2.5in
+!20917	SourcesCal		# 2.5in
+@sources
+
+### A->B ###
+
+20920	A1
+20921	A2
+20922	A3
+20923	A4
+20924	A5
+
+# DAQ fail!
+
+#######################
+@cycle November 4 Beta
+#######################
+
+### A->B ###
+
+*20975	A1
+*20976	A2
+*20977	A3
+*20978	A4
+*20979	A5
+*20980	A6
+*20981	A7
+*20982	A8
+*20983	A9
+*20984	A10
+*20985	A11
+*20986	A12
+
+*20987	B1
+*20988	B2
+*20989	B3
+*20990	B4
+*20991	B5
+*20992	B6
+*20993	B7
+
+# running aborted due to pressure in vacuum
+
+#######################
+@cycle November 16-19 Calibrations, Beta
+#######################
+# running with isobutane in the wirechambers
+
+@sources Bi
+*21087	SourcesCal		# 0.0in
+@sources E Bi Ce
+*21088	SourcesCal		# 0.5in
+@sources Bi Ce
+*21089	SourcesCal		# 1.0in
+@sources E Bi Ce Sn
+*21090	SourcesCal		# 1.5in
+@sources Bi Ce Sn
+*21091	SourcesCal		# 2.0in
+*21092	SourcesCal		# 2.5in
+*21093	SourcesCal		# 3.0in
+*21094	SourcesCal		# 3.5in
+@sources Ce Sn
+*21095	SourcesCal		# 4.0in
+*21096	SourcesCal		# 4.5in
+@sources Bi
+*21097	SourcesCal		# 5.0in
+*21098	SourcesCal		# 5.5in
+@sources
+*21099	SourcesCal		# 6.0in
+
+### B->A ###
+
+*21100	B1
+*21101	B2
+*21102	B3
+*21103	B4
+*21104	B5
+*21105	B6
+*21106	B7
+*21107	B8
+*21108	B9
+*21109	B10
+*21110	B11
+*21111	B12
+
+*21112	A1
+*21113	A2
+*21114	A3
+*21115	A4
+*21116	A5
+*21118	A6
+*21119	A7
+*21121	A8
+*21122	A9
+
+############### E trigger rate drops out; DAQ problem.
+#21123	A10
+#21124	A11
+#21125	A12
+
+# melt & refreeze
+
+### B-> ###
+# still E trigger rate dropout; DAQ problem.
+#21126	B1
+#21127	B2
+#21128	B3
+#21129	B4
+#21130	B5
+#21131	B6
+#21132	B7
+#21133	B8
+#21134	B9
+#21135	B10
+#21136	B11
+#21137	B12
+
+### A->B ###
+
+*21140	A1
+*21141	A2
+*21142	A3
+*21143	A4
+*21144	A5
+*21145	A6
+*21146	A7
+*21147	A8
+*21148	A9
+*21149	A10
+*21150	A11
+*21151	A12
+
+*21152	B1
+*21153	B2
+*21154	B3
+*21155	B4
+*21156	B5
+*21157	B6
+*21158	B7
+*21159	B8
+*21160	B9
+*21161	B10
+*21162	B11
+*21163	B12
+
+### A->B ###
+
+*21164	A1
+*21165	A2
+*21166	A3
+*21167	A4
+*21168	A5
+*21169	A6
+*21170	A7
+*21171	A8
+*21172	A9
+*21173	A10
+*21174	A11
+#21175	A12	# beam out --- no H-GX
+
+#21176	B1		# beam out --- no H-GX
+*21177	B2		# no H-GX for first 20 mins
+*21178	B3
+*21179	B4
+*21180	B5
+*21181	B6
+*21182	B7
+*21183	B8
+*21184	B9
+*21185	B10
+*21186	B11
+*21187	B12
+
+### A->B ###
+
+*21190	A1
+*21191	A2
+*21192	A3
+*21193	A4
+*21194	A5
+*21195	A6
+*21196	A7
+*21197	A8
+*21198	A9
+*21199	A10
+*21200	A11
+*21201	A12
+
+*21202	B1
+*21203	B2
+*21204	B3
+*21205	B4
+*21206	B5
+*21207	B6
+*21208	B7
+*21209	B8
+*21210	B9
+*21211	B10
+*21212	B11
+*21213	B12
+
+### B->A ###
+
+*21214	B1
+*21215	B2
+*21216	B3
+*21217	B4
+*21218	B5
+*21219	B6
+*21220	B7
+*21221	B8
+*21222	B9
+*21223	B10
+*21224	B11
+*21225	B12
+
+*21226	A1
+*21227	A2
+*21228	A3
+*21229	A4
+*21230	A5
+*21231	A6
+*21232	A7
+*21233	A8
+*21234	A9
+*21235	A10
+*21236	A11
+*21237	A12
+
+
+#######################
+@cycle November 20-26 Thanksgiving
+#######################
+# running with isobutane in the wirechambers
+
+# long centered Cd Cs In runs
+@sources Cd Cs InW
+*21274	SourcesCal
+*21275	SourcesCal
+*21276	SourcesCal
+*21277	SourcesCal
+*21278	SourcesCal
+*21279	SourcesCal
+*21280	SourcesCal
+*21281	SourcesCal
+*21282	SourcesCal
+*21283	SourcesCal
+*21284	SourcesCal
+*21285	SourcesCal
+*21286	SourcesCal
+*21287	SourcesCal
+*21288	SourcesCal
+*21289	SourcesCal
+*21290	SourcesCal
+*21291	SourcesCal
+*21292	SourcesCal
+*21293	SourcesCal
+*21294	SourcesCal
+!21295	SourcesCal
+*21296	SourcesCal
+*21297	SourcesCal
+!21298	SourcesCal
+
+@sources Cd
+*21299	SourcesCal			# 0.0in out West
+@sources E Cd Cs
+*21300	SourcesCal			# 0.5in out East
+@sources Cd Cs
+*21301	SourcesCal			# 1.0in out West
+@sources E Cd Cs InE
+*21302	SourcesCal			# 1.5in out East
+@sources Cd Cs InW
+*21303	SourcesCal			# 2.0in out West
+@sources Cd Cs InE
+*21304	SourcesCal			# 2.5in out East
+@sources Cd Cs InW
+*21305	SourcesCal			# 3.0in out West
+@sources Cd Cs InE
+*21306	SourcesCal			# 3.5in out East
+@sources Cs InW
+*21307	SourcesCal			# 4.0in out West
+@sources Cs InE
+*21308	SourcesCal			# 4.5in out East
+@sources InW
+*21309	SourcesCal			# 5.0in out West
+@sources InE
+*21310	SourcesCal			# 5.5in out East
+
+@sources Sn
+*21311	SourcesCal			# 0.0in out West
+@sources E Sn Ce
+!21312	SourcesCal			# 0.5in out West
+@sources Sn Ce
+*21313	SourcesCal			# 1.0in out West
+@sources E Sn Ce Bi
+*21314	SourcesCal			# 1.5in out West
+@sources Sn Ce Bi
+*21315	SourcesCal			# 2.0in out West
+*21316	SourcesCal			# 2.5in out East
+*21317	SourcesCal			# 3.0in out West
+!21318	SourcesCal			# 3.5in out East
+@sources Ce Bi
+*21319	SourcesCal			# 4.0in out West
+*21320	SourcesCal			# 4.5in out East
+@sources Bi
+*21321	SourcesCal			# 5.0in out West
+*21322	SourcesCal			# 5.5in out East
+
+# alternating sides
+@sources Sn Ce Bi
+*21323	SourcesCal			# 2.5in out West
+*21324	SourcesCal			# 2.5in out East
+*21325	SourcesCal			# 2.5in out West
+*21326	SourcesCal			# 2.5in out East
+*21327	SourcesCal			# 2.5in out West
+*21328	SourcesCal			# 2.5in out East
+
+@sources
+
+### B->A ###
+
+*21333	B1
+*21334	B2
+*21335	B3
+*21336	B4
+*21337	B5
+*21338	B6
+*21339	B7
+*21340	B8
+*21341	B9
+*21342	B10
+*21343	B11
+*21344	B12
+
+*21345	A1
+*21346	A2
+*21347	A3
+*21348	A4
+*21349	A5
+*21351	A6
+*21352	A7
+*21353	A8
+*21354	A9
+*21355	A10
+*21356	A11
+*21357	A12
+
+# melt & refreezes
+
+### A->B ###
+
+*21363	A1
+*21364	A2
+*21365	A3
+*21366	A4
+*21367	A5
+*21368	A6
+*21369	A7
+*21370	A8
+*21371	A9
+*21372	A10
+*21373	A11
+*21374	A12
+
+*21375	B1
+*21376	B2
+*21377	B3
+*21378	B4
+*21379	B5
+*21380	B6
+*21381	B7
+*21382	B8
+*21383	B9
+*21384	B10
+*21385	B11
+*21386	B12
+
+# melt & refreeze
+
+### A->B ###
+
+*21391	A1
+*21392	A2
+*21393	A3
+*21394	A4
+*21395	A5
+*21396	A6
+*21397	A7
+*21398	A8
+*21399	A9
+*21400	A10
+*21401	A11
+*21402	A12
+
+*21403	B1
+*21404	B2
+*21405	B3
+*21406	B4
+*21407	B5
+*21408	B6
+*21409	B7
+*21410	B8
+*21411	B9
+*21412	B10
+*21413	B11
+*21414	B12
+
+# melt & refreeze
+# beam outage
+
+### A->B ###
+
+*21433	A1
+*21434	A2
+*21435	A3
+# E MWPC tripping; reduced to 2600V
+*21439	A4
+*21440	A5
+*21441	A6
+*21442	A7
+*21443	A8
+*21444	A9
+*21445	A10
+*21446	A11
+*21447	A12
+
+*21448	B1
+*21449	B2
+*21450	B3
+*21451	B4
+*21452	B5
+*21453	B6
+*21454	B7
+*21455	B8
+*21456	B9
+*21457	B10
+*21458	B11
+*21459	B12
+
+# depol runs
+
+### A->B ###
+
+*21477	A1
+*21478	A2
+*21479	A3
+*21480	A4
+*21481	A5
+*21482	A6
+*21483	A7
+*21484	A8
+*21485	A9
+*21486	A10
+*21487	A11
+*21488	A12
+
+*21489	B1
+*21490	B2
+*21491	B3
+*21492	B4
+*21493	B5
+*21494	B6
+*21495	B7
+*21496	B8
+*21497	B9
+*21498	B10
+*21499	B11
+*21500	B12
+
+### B->A ###
+
+*21501	B1
+*21502	B2
+*21503	B3
+*21504	B4
+*21505	B5
+*21506	B6
+*21507	B7
+*21508	B8
+*21509	B9
+*21510	B10
+*21511	B11
+*21512	B12
+
+*21513	A1
+*21514	A2
+*21515	A3
+*21516	A4
+*21517	A5
+*21518	A6
+*21519	A7
+*21520	A8
+*21521	A9
+*21522	A10
+*21523	A11
+*21524	A12
+
+# depol
+
+### A->B ###
+
+*21536	A1
+*21537	A2
+*21538	A3
+*21539	A4
+*21540	A5
+*21541	A6
+*21542	A7
+*21543	A8
+*21544	A9
+*21545	A10
+*21546	A11
+*21547	A12
+
+*21548	B1
+*21549	B2
+*21550	B3
+*21551	B4
+*21552	B5
+*21553	B6
+*21554	B7
+*21555	B8
+*21556	B9
+*21557	B10
+*21558	B11
+*21559	B12
+
+# depol
+
+### A->B ###
+
+*21571	A1
+*21572	A2
+*21573	A3
+*21574	A4
+*21576	A5
+*21577	A6
+*21578	A7
+*21579	A8
+*21580	A9
+*21581	A10
+*21582	A11
+*21583	A12
+
+*21584	B1
+*21585	B2
+*21586	B3
+*21587	B4
+*21588	B5
+*21589	B6
+*21590	B7
+*21591	B8
+*21592	B9
+*21593	B10
+*21594	B11
+*21595	B12
+
+# Xenon
+
+*21596	Xe
+*21597	Xe
+*21598	Xe
+*21599	Xe
+*21600	Xe
+*21601	Xe
+*21602	Xe
+*21603	Xe
+*21604	Xe
+*21605	Xe
+
+# field off after SCS quench: Xe 21607...21623
+# pumping out Xe a week later: 21625...21628
+
+
+#######################
+@cycle December 7-10 Calibration & Betas
+#######################
+
+@sources Bi
+*21679	SourcesCal			# 0.0in out West
+@sources E Bi Ce
+*21680	SourcesCal			# 0.5in out West
+@sources Bi Ce
+*21681	SourcesCal			# 1.0in out West
+@sources E Bi Ce Sn
+*21682	SourcesCal			# 1.5in out West
+@sources Bi Ce Sn
+*21683	SourcesCal			# 2.0in out West
+*21684	SourcesCal			# 2.5in out West
+*21685	SourcesCal			# 3.0in out West
+@sources E Ce Sn
+!21686	SourcesCal			# 3.5in out West
+@sources Ce Sn
+*21687	SourcesCal			# 4.0in out West
+*21688	SourcesCal			# 4.5in out West
+@sources Sn
+*21689	SourcesCal			# 5.0in out West
+!21690	SourcesCal			# 5.5in out West
+@sources
+*21691	SourcesCal			# 6.0in out West
+*21692	SourcesCal			# all the way out background
+
+@sources Cd
+*21693	SourcesCal			# 0.0in out West
+!21694	SourcesCal			# 0.0in out East
+@sources E Cd Cs
+*21695	SourcesCal			# 0.5in out East
+*21696	SourcesCal			# 0.5in out West
+@sources Cd Cs
+*21697	SourcesCal			# 1.0in out West
+*21698	SourcesCal			# 1.0in out East
+@sources E Cd Cs InE
+*21699	SourcesCal			# 1.5in out East
+@sources E Cd Cs InW
+*21700	SourcesCal			# 1.5in out West
+@sources Cd Cs InW
+*21701	SourcesCal			# 2.0in out West
+@sources Cd Cs InE
+*21702	SourcesCal			# 2.0in out East
+!21703	SourcesCal			# 2.5in out East
+@sources Cd Cs InW
+*21704	SourcesCal			# 2.5in out West
+*21705	SourcesCal			# 3.0in out West
+@sources Cd Cs InE
+*21706	SourcesCal			# 3.0in out East
+!21707	SourcesCal			# 3.5in out East
+@sources Cd Cs InW
+!21708	SourcesCal			# 3.5in out West
+@sources Cs InW
+*21709	SourcesCal			# 4.0in out West
+@sources Cs InE
+*21710	SourcesCal			# 4.0in out East
+*21711	SourcesCal			# 4.5in out East
+@sources Cs InW
+*21712	SourcesCal			# 4.5in out West
+@sources InW
+*21713	SourcesCal			# 5.0in out West
+@sources InE
+*21714	SourcesCal			# 5.0in out East
+*21715	SourcesCal			# 5.5in out East
+@sources InW
+*21716	SourcesCal			# 5.5in out West
+@sources
+*21717	SourcesCal			# 6.0in out West
+*21718	SourcesCal			# 6.0in out East
+
+
+### B->A ###
+
+*21719	B1
+*21720	B2
+*21721	B3
+*21722	B4
+*21723	B5
+
+# 4.5hr beam outage
+
+*21724	B6
+*21725	B7
+*21726	B8
+*21727	B9
+*21728	B10
+*21729	B11
+*21730	B12
+
+*21731	A1
+*21732	A2
+*21733	A3
+*21734	A4
+*21735	A5
+*21736	A6
+*21737	A7
+*21738	A8
+*21739	A9
+*21740	A10
+*21741	A11
+*21742	A12
+
+
+### B->A ###
+
+*21743	B1
+*21744	B2
+*21745	B3
+*21746	B4
+*21747	B5
+*21748	B6
+*21749	B7
+*21750	B8
+*21751	B9
+*21752	B10
+*21753	B11
+*21754	B12
+
+*21755	A1
+*21756	A2
+*21757	A3
+*21758	A4
+*21759	A5
+*21760	A6
+*21761	A7
+*21762	A8
+*21763	A9
+*21764	A10
+*21765	A11
+*21766	A12
+
+
+### A->B ###
+
+*21768	A1
+*21769	A2
+*21770	A3
+*21771	A4
+*21772	A5
+*21773	A6
+*21774	A7
+*21775	A8
+*21776	A9
+*21777	A10
+*21778	A11
+*21779	A12
+
+*21780	B1
+*21781	B2
+*21782	B3
+*21783	B4
+*21784	B5
+*21785	B6
+*21786	B7
+*21787	B8
+*21788	B9
+*21789	B10
+*21790	B11
+*21791	B12
+
+
+### B->A ###
+
+*21792	B1
+*21793	B2
+*21794	B3
+*21795	B4
+*21796	B5
+*21797	B6
+*21798	B7
+*21799	B8
+*21800	B9
+*21801	B10
+*21802	B11
+*21803	B12
+
+*21804	A1
+*21805	A2
+*21806	A3
+*21807	A4
+*21808	A5
+*21809	A6
+*21810	A7
+*21811	A8
+*21812	A9
+*21813	A10
+*21814	A11
+*21815	A12
+
+
+### A->B ###
+
+*21816	A1
+*21817	A2
+*21818	A3
+*21819	A4
+*21820	A5
+*21821	A6
+*21822	A7
+*21823	A8
+*21824	A9
+*21825	A10
+*21826	A11
+*21827	A12
+
+*21828	B1
+*21829	B2
+*21830	B3
+*21831	B4
+*21832	B5
+*21833	B6
+*21834	B7
+
+# 1hr beam out
+
+*21835	B8
+*21836	B9
+*21837	B10
+*21838	B11
+*21839	B12
+
+
+### B->A ###
+
+*21840	B1
+*21841	B2
+*21842	B3
+*21843	B4
+*21844	B5
+*21845	B6
+*21846	B7
+*21847	B8
+*21848	B9
+*21849	B10
+*21850	B11
+*21851	B12
+
+*21852	A1
+*21853	A2
+*21854	A3
+*21855	A4
+*21856	A5
+*21857	A6
+*21858	A7
+*21859	A8
+*21860	A9
+*21861	A10
+*21862	A11
+*21863	A12
+
+
+#######################
+@cycle December 12 Sources
+#######################
+
+### A->B ###
+
+*21890	A1
+*21891	A2
+*21892	A3
+*21893	A4
+*21894	A5
+*21895	A6
+*21896	A7
+*21897	A8
+*21898	A9
+*21899	A10
+*21900	A11
+*21901	A12
+
+*21902	B1
+*21903	B2
+*21904	B3
+*21905	B4
+*21906	B5
+*21907	B6
+*21908	B7
+*21909	B8
+*21910	B9
+*21911	B10
+*21912	B11
+*21913	B12
+
+
+@sources Bi
+*21914	SourcesCal			# 0.0in out West
+@sources E Bi Ce
+*21915	SourcesCal			# 0.5in out West
+@sources Bi Ce
+*21916	SourcesCal			# 1.0in out West
+@sources E Bi Ce Sn
+*21917	SourcesCal			# 1.5in out West
+@sources Bi Ce Sn
+*21918	SourcesCal			# 2.0in out West
+*21919	SourcesCal			# 2.5in out West
+*21920	SourcesCal			# 3.0in out West
+@sources E Ce Sn
+*21921	SourcesCal			# 3.5in out West
+@sources Ce Sn
+*21922	SourcesCal			# 4.0in out West
+*21923	SourcesCal			# 4.5in out West
+@sources Sn
+*21924	SourcesCal			# 5.0in out West
+*21925	SourcesCal			# 5.5in out West
+@sources
+*21926	SourcesCal			# 6.0in out West
+
+@sources Cd
+*21927	SourcesCal			# 0.0in out West
+@sources E Cd Cs
+*21928	SourcesCal			# 0.5in out East
+@sources Cd Cs
+*21929	SourcesCal			# 1.0in out West
+@sources E Cd Cs InE
+*21930	SourcesCal			# 1.5in out East
+@sources Cd Cs InW
+*21931	SourcesCal			# 2.0in out West
+@sources Cd Cs InE
+*21932	SourcesCal			# 2.5in out East
+@sources Cd Cs InW
+!21933	SourcesCal			# 3.0in out West
+@sources Cd Cs InE
+*21934	SourcesCal			# 3.5in out East
+@sources Cs InW
+*21935	SourcesCal			# 4.0in out West
+@sources Cs InE
+*21936	SourcesCal			# 4.5in out East
+@sources InW
+*21937	SourcesCal			# 5.0in out West
+@sources InE
+*21938	SourcesCal			# 5.5in out East
+@sources
+*21939	SourcesCal			# 6.0in out West
+
+*21940	BgOff				# long background
+
+
+### B->A ###
+
+*21942	B1
+*21943	B2
+*21944	B3
+*21945	B4
+*21946	B5
+*21947	B6
+*21948	B7
+*21949	B8
+*21950	B9
+*21951	B10
+*21952	B11
+*21953	B12
+
+*21954	A1
+*21955	A2
+*21956	A3
+*21957	A4
+*21958	A5
+*21959	A6
+*21960	A7
+*21961	A8
+*21962	A9
+*21963	A10
+*21964	A11
+*21965	A12
+
+
+
+#######################
+@cycle Dec. 13 Daytime Xe
+#######################
+
+*21966	Xe
+*21967	Xe
+*21968	Xe
+*21969	Xe
+*21970	Xe
+*21971	Xe
+*21972	Xe
+*21973	Xe
+*21974	Xe
+*21975	Xe
+*21976	Xe
+*21977	Xe
+*21978	Xe
+*21979	Xe
+*21980	Xe
+*21981	Xe
+*21982	Xe
+*21983	Xe
+*21984	Xe
+*21985	Xe
+*21986	Xe
+*21987	Xe
+*21988	Xe
+*21989	Xe
+*21990	Xe
+*21991	Xe
+*21992	Xe
+*21993	Xe
+*21994	Xe
+*21995	Xe
+*21996	Xe
+*21997	Xe
+*21998	Xe
+*21999	Xe
+*22000	Xe
+*22001	Xe
+*22002	Xe
+*22003	Xe
+
+
+#######################
+@cycle December 14-18 Year End Betas
+#######################
+
+### B->A ###
+
+*22023	B1
+*22024	B2
+*22025	B3
+*22026	B4
+*22027	B5
+*22028	B6
+*22029	B7
+*22030	B8
+*22031	B9
+*22032	B10
+*22033	B11
+*22034	B12
+
+*22035	A1
+*22036	A2
+*22037	A3
+*22038	A4
+*22039	A5
+*22040	A6
+*22041	A7
+*22042	A8
+*22043	A9
+*22044	A10
+*22045	A11
+*22046	A12
+
+
+### A->B ###
+
+*22047	A1
+*22048	A2
+*22049	A3
+*22050	A4
+*22051	A5
+*22052	A6
+*22053	A7
+*22054	A8
+*22055	A9
+*22056	A10
+*22057	A11
+*22058	A12
+
+*22059	B1
+*22060	B2
+*22061	B3
+*22062	B4
+*22063	B5
+*22064	B6
+*22065	B7
+*22066	B8
+*22067	B9
+*22068	B10
+*22069	B11
+*22070	B12
+
+
+### B->A ###
+
+*22071	B1
+*22072	B2
+*22073	B3
+*22074	B4
+*22075	B5
+*22076	B6
+*22077	B7
+*22078	B8
+*22079	B9
+
+# 6hr beam out
+
+*22083	B10
+*22084	B11
+*22085	B12
+
+*22086	A1
+*22087	A2
+*22088	A3
+*22089	A4
+*22090	A5
+*22091	A6
+*22092	A7
+*22093	A8
+*22094	A9
+*22095	A10
+*22096	A11
+*22097	A12
+
+
+### A->B ###
+
+*22098	A1
+*22099	A2
+*22100	A3
+*22101	A4
+*22102	A5
+*22103	A6
+*22104	A7
+*22105	A8
+*22106	A9
+*22107	A10
+*22108	A11
+*22109	A12
+
+*22110	B1
+*22111	B2
+*22112	B3
+*22113	B4
+*22114	B5
+*22115	B6
+*22116	B7
+*22117	B8
+*22118	B9
+
+## flipper broken?? ##
+#22120	B10
+#22121	B11
+#22122	B12
+
+
+### B->A ###
+
+*22124	B1
+*22125	B2
+*22126	B3
+*22127	B4
+*22128	B5
+*22129	B6
+*22130	B7
+*22131	B8
+*22132	B9
+*22133	B10
+*22134	B11
+*22135	B12
+
+*22136	A1
+*22137	A2
+*22138	A3
+*22139	A4
+*22140	A5
+*22141	A6
+*22142	A7
+*22143	A8
+*22144	A9
+*22146	A10
+*22147	A11
+*22148	A12
+
+
+### B ###
+
+*22149	B1
+*22150	B2
+*22151	B3
+*22152	B4
+*22153	B5
+*22154	B6
+*22155	B7
+*22156	B8
+*22157	B9
+*22158	B10
+*22159	B11
+*22160	B12
+
+# melt & refreeze
+
+### B->A ###
+
+*22164	B1
+*22165	B2
+*22166	B3
+*22167	B4
+*22168	B5
+*22169	B6
+*22170	B7
+*22171	B8
+*22172	B9
+*22174	B10
+*22175	B11
+*22176	B12
+
+*22177	A1
+*22178	A2
+*22179	A3
+*22180	A4
+*22181	A5
+*22182	A6
+*22183	A7
+*22184	A8
+*22185	A9
+*22186	A10
+*22187	A11
+*22188	A12
+
+
+### B->A ###
+
+*22190	B1
+*22191	B2
+*22192	B3
+*22193	B4
+*22194	B5
+*22195	B6
+*22196	B7
+*22197	B8
+*22198	B9
+*22199	B10
+*22200	B10
+*22201	B11
+*22202	B12
+
+*22203	A1
+*22204	A2
+*22205	A3
+*22206	A4
+*22207	A5
+*22208	A6
+*22209	A7
+*22210	A8
+*22211	A9
+*22212	A10
+*22213	A11
+*22214	A12
+
+
+
+@sources Bi
+*22215	SourcesCal			# 0.0in out West
+@sources E Bi Ce
+*22216	SourcesCal			# 0.5in out West
+@sources Bi Ce
+*22217	SourcesCal			# 1.0in out West
+@sources E Bi Ce Sn
+*22218	SourcesCal			# 1.5in out West
+@sources Bi Ce Sn
+*22219	SourcesCal			# 2.0in out West
+*22220	SourcesCal			# 2.5in out West
+*22221	SourcesCal			# 3.0in out West
+@sources E Ce Sn
+!22222	SourcesCal			# 3.5in out West
+@sources Ce Sn
+*22223	SourcesCal			# 4.0in out West
+*22224	SourcesCal			# 4.5in out West
+@sources Sn
+*22225	SourcesCal			# 5.0in out West
+*22226	SourcesCal			# 5.5in out West
+@sources
+*22227	SourcesCal			# 6.0in out West
+
+@sources Cd
+*22228	SourcesCal			# 0.0in out East
+@sources E Cd Cs
+*22229	SourcesCal			# 0.5in out West
+@sources Cd Cs
+*22230	SourcesCal			# 1.0in out East
+@sources E Cd Cs InW
+*22231	SourcesCal			# 1.5in out West
+@sources Cd Cs InE
+*22232	SourcesCal			# 2.0in out East
+@sources Cd Cs InW
+*22233	SourcesCal			# 2.5in out West
+@sources Cd Cs InE
+*22234	SourcesCal			# 3.0in out East
+@sources Cd Cs InW
+*22235	SourcesCal			# 3.5in out West
+@sources Cs InE
+*22236	SourcesCal			# 4.0in out East
+@sources Cs InW
+*22237	SourcesCal			# 4.5in out West
+@sources InE
+*22238	SourcesCal			# 5.0in out East
+@sources
+
+
+
+
+
+###
+### 2013
+###
+
+
+#######################
+@cycle January 11-14 Betas
+#######################
+
+@sources Bi
+*22294	SourcesCal			# 0.0in out West
+@sources E Bi Ce
+*22295	SourcesCal			# 0.5in out West
+@sources Bi Ce
+*22296	SourcesCal			# 1.0in out West
+@sources E Bi Ce Sn
+*22297	SourcesCal			# 1.5in out West
+@sources Bi Ce Sn
+*22298	SourcesCal			# 2.0in out West
+*22299	SourcesCal			# 2.5in out West
+*22300	SourcesCal			# 3.0in out West
+@sources E Ce Sn
+!22301	SourcesCal			# 3.5in out West
+@sources Ce Sn
+!22302	SourcesCal			# 4.0in out West
+*22303	SourcesCal			# 4.5in out West
+@sources Sn
+*22304	SourcesCal			# 5.0in out West
+*22305	SourcesCal			# 5.5in out West
+@sources
+*22306	SourcesCal			# 6.0in out West
+
+
+### B->A ###
+
+*22311	B1
+*22312	B2
+*22313	B3
+*22314	B4
+*22315	B5
+*22316	B6
+*22317	B7
+*22318	B8
+*22319	B9
+*22320	B10
+*22321	B11
+*22322	B12
+
+*22323	A1
+*22324	A2
+*22325	A3
+*22326	A4
+*22327	A5
+*22328	A6
+*22329	A7
+*22330	A8
+*22331	A9
+*22332	A10
+*22333	A11
+*22334	A12
+
+
+### B->A ###
+
+*22335	B1
+*22336	B2
+*22337	B3
+*22338	B4
+*22339	B5
+*22340	B6
+*22341	B7
+
+# 4hr beam out
+
+*22344	B8
+*22345	B9
+*22346	B10
+*22347	B11
+*22348	B12
+
+*22349	A1
+*22350	A2
+*22351	A3
+*22352	A4
+*22353	A5
+*22354	A6
+*22355	A7
+*22356	A8
+*22357	A9
+*22358	A10
+*22359	A11
+*22360	A12
+
+
+### B->A ###
+
+*22361	B1
+*22362	B2
+*22363	B3
+*22364	B4
+*22365	B5
+*22366	B6
+*22367	B7
+*22368	B8
+*22369	B9
+*22370	B10
+*22371	B11
+*22372	B12
+
+*22373	A1
+*22374	A2
+*22375	A3
+*22376	A4
+*22377	A5
+*22378	A6
+
+# 2hr bad connection at chopper
+
+*22383	A7
+*22384	A8
+*22385	A9
+*22386	A10
+*22387	A11
+*22388	A12
+
+
+### B->A ###
+
+*22389	B1
+*22390	B2
+*22391	B3
+*22392	B4
+*22393	B5
+*22394	B6
+*22395	B7
+*22396	B8
+*22397	B9
+*22398	B10
+*22399	B11
+*22400	B12
+
+*22401	A1
+*22402	A2
+*22403	A3
+*22404	A4
+*22405	A5
+*22406	A6
+*22407	A7
+*22408	A8
+*22409	A9
+*22410	A10
+*22411	A11
+*22412	A12
+
+
+### A->B ###
+
+*22413	A1
+*22414	A2
+*22415	A3
+*22416	A4
+*22417	A5
+*22418	A6
+*22419	A7
+*22420	A8
+*22421	A9
+*22422	A10
+*22423	A11
+*22424	A12
+
+*22425	B1
+*22426	B2
+*22427	B3
+*22428	B4
+*22429	B5
+*22430	B6
+*22431	B7
+*22432	B8
+*22433	B9
+*22434	B10
+*22435	B11
+*22436	B12
+
+
+@sources Bi
+*22437	SourcesCal			# 0.0in out East
+@sources E Bi Ce
+*22438	SourcesCal			# 0.5in out East
+@sources Bi Ce
+*22439	SourcesCal			# 1.0in out East
+@sources E Bi Ce Sn
+*22440	SourcesCal			# 1.5in out East
+@sources Bi Ce Sn
+*22441	SourcesCal			# 2.0in out East
+*22442	SourcesCal			# 2.5in out East
+*22443	SourcesCal			# 3.0in out East
+@sources E Ce Sn
+*22444	SourcesCal			# 3.5in out East
+@sources Ce Sn
+*22445	SourcesCal			# 4.0in out East
+*22446	SourcesCal			# 4.5in out East
+@sources Sn
+*22447	SourcesCal			# 5.0in out East
+!22448	SourcesCal			# 5.5in out East
+@sources
+*22449	SourcesCal			# 6.0in out East
+
+@sources Cd
+!22450	SourcesCal			# 0.0in out West
+@sources E Cd Cs
+*22451	SourcesCal			# 0.5in out East
+@sources Cd Cs
+*22452	SourcesCal			# 1.0in out West
+@sources E Cd Cs InE
+!22453	SourcesCal			# 1.5in out East
+@sources Cd Cs InW
+!22454	SourcesCal			# 2.0in out West
+@sources Cd Cs InE
+!22455	SourcesCal			# 2.5in out East
+@sources Cd Cs InW
+!22456	SourcesCal			# 3.0in out West
+@sources Cd Cs InE
+!22457	SourcesCal			# 3.5in out East
+@sources Cs InW
+!22458	SourcesCal			# 4.0in out West
+@sources Cs InE
+!22459	SourcesCal			# 4.5in out East
+@sources InW
+!22460	SourcesCal			# 5.0in out West
+@sources InE
+!22461	SourcesCal			# 5.5in out East
+@sources
+!22462	SourcesCal			# 6.0in out West
+
+
+#######################
+@cycle January 17-22 MLK Betas
+#######################
+
+### B->A ###
+
+*22511	B1
+*22512	B2
+*22513	B3
+*22514	B4
+*22515	B5
+*22516	B6
+*22517	B7
+*22518	B8
+*22519	B9
+#22520	B10		# Over-written!
+*22520	B11
+*22521	B12
+
+*22522	A1
+*22523	A2
+*22524	A3
+*22525	A4
+*22526	A5
+*22527	A6
+*22528	A7
+*22529	A8
+*22530	A9
+*22531	A10
+*22532	A11
+*22533	A12
+
+
+### A->B ###
+
+*22534	A1
+*22535	A2
+*22536	A3
+*22537	A4
+*22538	A5
+*22539	A6
+*22540	A7
+*22541	A8
+*22542	A9
+*22543	A10
+*22544	A11
+*22545	A12
+
+*22546	B1
+*22547	B2
+*22548	B3
+*22549	B4
+*22550	B5
+*22551	B6
+*22552	B7
+*22553	B8
+*22554	B9
+*22555	B10
+*22556	B11
+*22557	B12
+
+# 31 hour beam outage
+
+### B->A ###
+
+*22558	B1
+*22559	B2
+*22560	B3
+*22561	B4
+*22562	B5
+*22563	B6
+*22564	B7
+*22565	B8
+*22566	B9
+*22567	B10
+*22568	B11
+*22569	B12
+
+*22570	A1
+*22571	A2
+*22572	A3
+*22573	A4
+*22574	A5
+*22575	A6
+*22576	A7
+*22577	A8
+*22578	A9
+*22579	A10
+*22580	A11
+*22581	A12
+
+# melt & refreeze
+
+### B->A ###
+
+*22583	B1
+*22584	B2
+*22585	B3
+*22586	B4
+*22587	B5
+*22588	B6
+*22589	B7
+*22590	B8
+*22591	B9
+*22592	B10
+*22593	B11
+*22594	B12
+
+*22595	A1
+*22596	A2
+*22597	A3
+*22598	A4
+*22599	A5
+*22600	A6
+*22601	A7
+*22602	A8
+*22603	A9
+*22604	A10
+*22605	A11
+*22606	A12
+
+
+### A->B ###
+
+*22607	A1
+*22608	A2
+*22609	A3
+*22610	A4
+*22611	A5
+*22612	A6
+*22613	A7
+*22614	A8
+*22615	A9
+*22616	A10
+*22617	A11
+*22618	A12
+
+*22619	B1
+*22620	B2
+*22621	B3
+*22622	B4
+*22623	B5
+*22624	B6
+*22625	B7
+*22626	B8
+*22627	B9
+*22628	B10
+*22629	B11
+*22630	B12
+
+
+### A->B ###
+
+*22631	A1
+*22632	A2
+*22633	A3
+*22634	A4
+*22635	A5
+*22636	A6
+*22637	A7
+*22638	A8
+*22639	A9
+*22640	A10
+*22641	A11
+*22642	A12
+
+*22643	B1
+*22644	B2
+*22645	B3
+*22646	B4
+*22647	B5
+*22648	B6
+*22649	B7
+*22650	B8
+*22651	B9
+*22652	B10
+*22653	B11
+*22654	B12
+
+
+### B->A ###
+
+*22655	B1
+*22656	B2
+# DAQ problems, 2 hours
+*22673	B3
+*22674	B4
+*22675	B5
+*22676	B6
+*22677	B7
+*22678	B8
+*22679	B9
+*22680	B10
+*22681	B11
+*22682	B12
+
+# Melt & Refreeze
+
+### B->A ###
+
+*22683	B1
+*22684	B2
+*22685	B3
+*22686	B4
+*22687	B5
+*22688	B6
+*22689	B7
+*22690	B8
+*22691	B9
+*22692	B10
+*22693	B11
+*22694	B12
+
+*22695	A1
+*22696	A2
+*22697	A3
+*22698	A4
+*22699	A5
+*22700	A6
+*22701	A7
+*22702	A8
+*22703	A9
+*22704	A10
+*22705	A11
+*22706	A12
+
+# Melt & Refreeze
+
+### B->A ###
+
+*22708	B1
+*22709	B2
+*22710	B3
+*22711	B4
+*22712	B5
+*22713	B6
+*22714	B7
+*22715	B8
+*22716	B9
+*22717	B10
+*22718	B11
+*22719	B12
+
+*22720	A1
+*22721	A2
+*22722	A3
+*22723	A4
+*22724	A5
+*22725	A6
+*22726	A7
+*22727	A8
+*22728	A9
+*22729	A10
+*22730	A11
+*22731	A12
+
+
+#######################
+@cycle January 25-28 Betas
+#######################
+
+@sources Bi
+*22767	SourcesCal			# 0.0in out West
+@sources E Bi Ce
+*22768	SourcesCal			# 0.5in out West
+@sources Bi Ce
+*22769	SourcesCal			# 1.0in out West
+@sources E Bi Ce Sn
+*22770	SourcesCal			# 1.5in out West
+@sources Bi Ce Sn
+*22771	SourcesCal			# 2.0in out West
+*22772	SourcesCal			# 2.5in out West
+*22773	SourcesCal			# 3.0in out West
+@sources E Ce Sn
+*22774	SourcesCal			# 3.5in out West
+@sources Ce Sn
+*22776	SourcesCal			# 4.0in out West
+*22777	SourcesCal			# 4.5in out West
+@sources Sn
+!22778	SourcesCal			# 5.0in out West
+*22779	SourcesCal			# 5.5in out West
+@sources
+*22780	SourcesCal			# 6.0in out West
+
+@sources Cd
+*22781	SourcesCal			# 0.0in out East
+@sources E Cd Cs
+*22782	SourcesCal			# 0.5in out West
+@sources Cd Cs
+*22783	SourcesCal			# 1.0in out East
+@sources E Cd Cs InW
+*22784	SourcesCal			# 1.5in out West
+@sources Cd Cs InE
+*22785	SourcesCal			# 2.0in out East
+@sources Cd Cs InW
+*22786	SourcesCal			# 2.5in out West
+@sources Cd Cs InE
+*22787	SourcesCal			# 3.0in out East
+@sources Cd Cs InW
+*22788	SourcesCal			# 3.5in out West
+@sources Cs InE
+*22789	SourcesCal			# 4.0in out East
+@sources Cs InW
+*22790	SourcesCal			# 4.5in out West
+@sources InE
+*22791	SourcesCal			# 5.0in out East
+@sources
+*22792	SourcesCal			# 5.5in out West
+*22793	SourcesCal			# 6.0in out East
+
+
+### A->B ###
+
+*22794	A1
+*22795	A2
+*22796	A3
+*22797	A4
+*22798	A5
+*22799	A6
+*22800	A7
+*22801	A8
+*22802	A9
+*22803	A10
+*22804	A11
+*22805	A12
+
+*22806	B1
+*22807	B2
+*22808	B3
+*22809	B4
+*22810	B5
+*22811	B6
+*22812	B7
+*22813	B8
+*22814	B9
+*22815	B10
+*22816	B11
+*22817	B12
+
+
+### B->A ###
+
+*22821	B1
+*22822	B2
+*22823	B2
+*22824	B3
+*22825	B4
+*22826	B5
+*22829	B6
+*22830	B7
+*22831	B8
+*22832	B9
+*22833	B10
+*22834	B11
+*22835	B12
+
+*22836	A1
+*22837	A2
+*22838	A3
+*22839	A4
+*22840	A5
+*22841	A6
+# 7 hour beam out; melt & refreeze
+*22844	A7
+*22845	A8
+*22846	A9
+*22847	A10
+*22848	A11
+*22849	A12
+
+
+### A->B ###
+
+*22850	A1
+*22851	A2
+*22852	A3
+*22853	A4
+*22854	A5
+*22855	A6
+*22856	A7
+*22857	A8
+*22858	A9
+*22859	A10
+*22860	A11
+*22861	A12
+
+*22862	B1
+*22863	B2	# beam out at end of run
+# proceeding at reduced rate after tune lurch
+*22864	B3
+*22865	B4
+*22866	B5
+*22867	B6
+*22868	B7
+*22869	B8
+*22870	B9
+*22871	B10
+*22873	B11
+*22874	B12
+
+
+### B->A ###
+
+*22875	B1
+*22876	B2
+*22877	B3
+*22878	B4
+*22879	B5
+*22880	B6
+*22881	B7
+*22882	B8
+*22883	B9
+*22884	B10
+*22885	B11
+*22886	B12
+
+*22887	A1
+*22888	A2
+*22889	A3
+*22890	A4
+*22891	A5
+*22892	A6
+*22893	A7
+*22894	A8
+*22895	A9
+*22896	A10
+*22897	A11
+*22898	A12
+
+
+### B->A ###
+
+*22899	B1
+*22900	B2
+*22901	B3
+*22902	B4
+*22903	B5
+*22904	B6
+*22905	B7
+*22906	B8
+*22907	B9
+*22908	B10
+*22909	B11
+*22910	B12
+
+*22911	A1
+*22912	A2
+*22913	A3
+*22914	A4
+*22915	A5
+*22916	A6
+*22917	A7
+*22918	A8
+*22919	A9
+*22920	A10
+*22921	A11
+*22922	A12
+
+
+# long Sn centered runs
+
+@sources Sn
+*22924	SourcesCal
+*22925	SourcesCal
+*22926	SourcesCal
+*22927	SourcesCal
+*22928	SourcesCal
+*22929	SourcesCal
+*22930	SourcesCal
+@sources
+
+
+#######################
+@cycle January 30 Xenon
+#######################
+
+*22961	Xe
+*22962	Xe
+*22963	Xe
+*22964	Xe
+*22965	Xe
+*22966	Xe
+*22967	Xe
+*22968	Xe
+*22969	Xe
+*22970	Xe
+*22971	Xe
+*22972	Xe
+*22973	Xe
+*22974	Xe
+*22975	Xe
+*22976	Xe
+*22977	Xe
+*22978	Xe
+*22979	Xe
+
+
+#######################
+@cycle January 30 and Feb 1 Betas
+#######################
+
+### B->A ###
+
+*22994	B1
+*22995	B2
+*22996	B3
+*22997	B4
+*22998	B5
+*22999	B6
+*23000	B7
+*23001	B8
+*23002	B9
+*23003	B10
+*23004	B11
+*23005	B12
+
+*23006	A1
+*23007	A2
+*23008	A3
+*23009	A4
+*23010	A5
+*23011	A6
+*23012	A7
+*23013	A8
+*23014	A9
+*23015	A10
+*23016	A11
+#23017	A12				# only 35s long... replace by A1 (23006)
+
+### A->B ###
+
+*23018	A1
+*23019	A2
+*23020	A3
+#23021	A4				# missing to beam cuts; replace by A9=23028
+*23024	A5
+*23025	A6
+*23026	A7
+*23027	A8
+*23028	A9
+*23029	A10
+*23030	A11
+*23031	A12
+
+*23032	B1
+*23033	B2
+*23034	B3
+*23035	B4
+*23036	B5
+*23037	B6
+*23038	B7
+*23039	B8
+*23040	B9
+*23041	B10
+*23042	B11
+*23043	B12
+
+
+#######################
+@cycle February 2-4 Weekend Betas
+#######################
+
+### B->A ###
+
+*23059	B1
+*23060	B2
+*23061	B3
+*23062	B4
+*23063	B5
+*23064	B6
+*23065	B7
+*23066	B8
+*23067	B9
+*23068	B10
+*23069	B11
+*23070	B12
+
+*23071	A1
+*23072	A2
+*23073	A2
+*23074	A3
+*23075	A4
+*23076	A5
+*23077	A6
+*23078	A7
+*23081	A8
+*23082	A9
+*23086	A10
+*23087	A11
+*23088	A12
+
+
+### B->A ###
+
+*23089	B1
+*23090	B2
+*23091	B3
+*23092	B4
+*23093	B5
+*23094	B6
+*23095	B7
+*23096	B8
+*23097	B9
+*23098	B10
+*23099	B11
+*23100	B12
+
+*23101	A1
+*23102	A2
+*23103	A3
+*23104	A4
+*23105	A5
+*23106	A6
+*23107	A7
+*23108	A8
+*23109	A9
+*23110	A10
+*23111	A11
+*23112	A12
+
+
+### B->A ###
+
+*23113	B1
+*23114	B2
+*23115	B3
+*23116	B4
+*23117	B5
+*23118	B6
+*23119	B7
+*23120	B8
+*23121	B9
+*23122	B10
+*23123	B11
+*23124	B12
+
+*23125	A1
+*23126	A2
+*23127	A3
+*23128	A4
+*23129	A5
+*23130	A6
+*23131	A7
+*23133	A8
+*23134	A9
+*23135	A10
+*23136	A11
+*23137	A12
+
+
+### B->A ###
+
+*23138	B1
+*23139	B2
+*23140	B3
+*23141	B4
+*23142	B5
+*23143	B6
+*23144	B7
+*23145	B8
+*23146	B9
+*23147	B10
+*23148	B11
+*23149	B12
+
+*23150	A1
+*23151	A2
+*23152	A3
+*23153	A4
+*23154	A5
+*23155	A6
+*23156	A7
+*23157	A8
+*23158	A9
+*23159	A10
+*23160	A11
+*23161	A12
+
+
+### B ###
+
+*23162	B1
+*23163	B2
+*23164	B3
+*23165	B4
+*23166	B5
+*23167	B6
+*23168	B7
+*23169	B8
+*23170	B9
+*23171	B10
+*23172	B11
+*23173	B12
+
+
+
