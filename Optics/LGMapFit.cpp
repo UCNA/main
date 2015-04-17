@@ -44,17 +44,17 @@ vector<double> LG01prob;vector<double> LG02prob;vector<double> LG03prob;vector<d
 vector<double> LG01error;vector<double> LG02error;vector<double> LG03error;vector<double> LG04error;vector<double> LG05error;
 vector<double> LG06error;vector<double> LG07error;vector<double> LG08error;vector<double> LG09error;vector<double> LG10error;vector<double> LG11error;vector<double> LG12error;
 
- 
 
 
-void Set_LGMap (TTree* pmtTree,int east,int pmt) {
 
-  Double_t lgEprob[12];
-  Double_t lgWprob[12];
-  Double_t lgEerr[12];
-  Double_t lgWerr[12];
-  Double_t scintE[4];
-  Double_t scintW[4];
+void SetLGMap (TTree * pmtTree,int east,int pmt) {
+
+  double lgEprob[12];
+  double lgWprob[12];
+  double lgEerr[12];
+  double lgWerr[12];
+  double scintE[4];
+  double scintW[4];
  pmtTree->SetBranchAddress("LGEprob",&lgEprob);
  pmtTree->SetBranchAddress("LGWprob",&lgWprob);
  pmtTree->SetBranchAddress("LGEerror",&lgEerr);
@@ -62,17 +62,15 @@ void Set_LGMap (TTree* pmtTree,int east,int pmt) {
  pmtTree->SetBranchAddress("ScintE",&scintE);
  pmtTree->SetBranchAddress("ScintW",&scintW);
  int linum=pmtTree->GetEntries();
-
+ //PMTadc=vector<double>();
 //define vector lengths
-     PMTadc[linum]=LG01prob[linum]=LG02prob[linum]=LG03prob[linum]=LG04prob[linum]=LG05prob[linum]=LG06prob[linum]=LG07prob[linum]=LG08prob[linum]=LG09prob[linum]=LG10prob[linum]=LG11prob[linum]=LG12prob[linum]=0;
-     LG01error[linum]=LG02error[linum]=LG03error[linum]=LG04error[linum]=LG05error[linum]=LG06error[linum]=LG07error[linum]=LG08error[linum]=LG09error[linum]=LG10error[linum]=LG11error[linum]=LG12error[linum]=0;
-
+     PMTadc.reserve(linum);LG01prob.reserve(linum); LG02prob.reserve(linum); LG03prob.reserve(linum); LG04prob.reserve(linum); LG05prob.reserve(linum); LG06prob.reserve(linum); LG07prob.reserve(linum); LG08prob.reserve(linum); LG09prob.reserve(linum); LG10prob.reserve(linum); LG11prob.reserve(linum); LG12prob.reserve(linum);LG01error.reserve(linum); LG02error.reserve(linum); LG03error.reserve(linum); LG04error.reserve(linum); LG05error.reserve(linum); LG06error.reserve(linum); LG07error.reserve(linum); LG08error.reserve(linum); LG09error.reserve(linum); LG10error.reserve(linum); LG11error.reserve(linum); LG12error.reserve(linum);
 
   if (east = 0) {
    for( int i =0; i<linum; i++){
-       pmtTree->GetEntry(i);
+   /*    pmtTree->GetEntry(i);
        PMTadc[i]=scintW[pmt];
-       LG01prob[i]=lgWprob[0];	     //why no std::maxtrix<double>? why c++ WHY?!?!!
+      LG01prob[i]=lgWprob[0];	     //why no std::maxtrix<double>? why c++ WHY?!?!!
        LG02prob[i]=lgWprob[1];	     //preprocessor loop?
        LG03prob[i]=lgWprob[2];	
        LG04prob[i]=lgWprob[3];	
@@ -93,14 +91,14 @@ void Set_LGMap (TTree* pmtTree,int east,int pmt) {
        LG08error[i]=lgWerr[8];	
        LG09error[i]=lgWerr[9];	
        LG10error[i]=lgWerr[10];	
-       LG11error[i]=lgWerr[11];	
+       LG11error[i]=lgWerr[11];	*/
       }
 
 }
 
     if (east = 1) {
       for( int i =0; i<linum; i++){
-       pmtTree->GetEntry(i);
+       pmtTree->GetEntry(i); 
        PMTadc[i]=scintE[pmt];       
        LG01prob[i]=lgEprob[0];	     //why no std::maxtrix<double>? why c++ EHY?!?!!
        LG02prob[i]=lgEprob[1];	
@@ -155,9 +153,14 @@ double ChiSquaredBrah(const double *LGFitParam){
 
 
 
-double PMTMapFit(TTree * pmtTree, TTree * fitTree){
+void PMTMapFit(TTree * pmtTree, TTree * fitTree){
    
   int linum=pmtTree->GetEntries();
+	cout<<linum<<"\n";
+  int pmtnum=0; //0-3 
+  int east = 0;
+   
+  SetLGMap(pmtTree,east,pmtnum);
 
 
    const double pi = 3.1415926535897;  //strawberry
@@ -191,26 +194,26 @@ double PMTMapFit(TTree * pmtTree, TTree * fitTree){
  fitTree->GetEntry(0);
 
     //create minimizer   Minuit 2 with migrad
- ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
+ ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer("Minuit", "Migrad");
 
    min->SetMaxFunctionCalls(100); // for Minuit/Minuit2 
-   min->SetMaxIterations(1000);  // for GSL 
+  // min->SetMaxIterations(1000);  // for GSL 
    min->SetTolerance(0.001);
    min->SetPrintLevel(1);
 	
 
   
-  int pmtnum=0; //0-3 
-  int east = 0; // bool(int) for east. 	east is 1, west is 0. 
+  
   ////import pmtTree, 
-  Set_LGMap (pmtTree,east,pmtnum);
+  SetLGMap (pmtTree,east,pmtnum);
  	unsigned int dimnum=12;
+
   ROOT::Math::Functor f(&ChiSquaredBrah,dimnum);
 
   //step size (should be automatic in a good minimizer)
 
   double step[12]={0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01};  
-  
+ 
   min->SetFunction(f);
   min->SetVariable(0,"lg0",fp1W[0],step[0]);
   min->SetVariable(1,"lg1",fp1W[1],step[1]);
@@ -226,8 +229,8 @@ double PMTMapFit(TTree * pmtTree, TTree * fitTree){
   min->SetVariable(11,"lg11",fp1W[11],step[11]);
 
 
-  const double *xs = min->X();
-   std::cout << "Minimum: f(" << xs[0] << "," << xs[1] << "...): " << min->MinValue()  << std::endl;
+  //const double *xs = min->X();
+  //std::cout << "Minimum: f(" << xs[0] << "," << xs[1] << "...): " << min->MinValue()  << std::endl;
 
 }
 
@@ -238,7 +241,11 @@ int main()
    TFile *myFile = TFile::Open("$UCNAOUTPUTDIR/hists/pmtprob_22770.root");
    TTree *pmtTree = (TTree*)myFile->Get("pmtTree");
    TTree *fitTree = (TTree*)myFile->Get("fitTree");
+ 
+
    PMTMapFit(pmtTree,fitTree);
+  
+
 }
 
 
