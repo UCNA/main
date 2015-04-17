@@ -8,12 +8,28 @@
 #include <cmath> 
 #include "TFile.h"
 #include "TH1F.h"
-#include "TTreeReader.h"
-#include "TTreeReaderValue.h"
+#include "TTree.h"
+//#include "TTreeReader.h"
+//#include "TTreeReaderValue.h"
 #include "TMath.h"
 #include "TRandom3.h"
-#include "/home/cmswank/Documents/ucna/main/Scripts/lgprobmap/pmtprobstuff.h"
-#include "/home/cmswank/Documents/ucna/main/Scripts/lgprobmap/lgpmtTools.h"
+//#include "/home/cmswank/Documents/ucna/main/Scripts/lgprobmap/pmtprobstuff.h"
+//#include "/home/cmswank/Documents/ucna/main/Scripts/lgprobmap/lgpmtTools.h"
+#include "pmtprobstuff.h"
+#include "lgpmtTools.h"
+#include "TLatex.h"
+#include "TFormula.h"
+#include "TAxis.h"
+#include "TPave.h"
+#include "TPaveStats.h"
+#include "TBox.h"
+#include "TText.h"
+#include "TH2.h"
+#include "TF1.h"
+#include "TH2F.h"
+#include "TPaveText.h"
+
+
 
 using namespace std;
 
@@ -25,81 +41,65 @@ void LGProbError(string infile, string outfile, double LGFitParamE[],double LGFi
 
 //open mpm's analyzed root file, then load a tree
    TFile *myFile2 = TFile::Open(infile.c_str());
-   TTree *anaTree = (TTree*)myFile2->Get("anaTree");
+   TTree *phys = (TTree*)myFile2->Get("phys");
+  
 //create new file for the map to go into 
    TFile myFile(outfile.c_str(),"recreate");
    TTree *pmtTree=new TTree("pmtTree","pmt probabiliity for each event");
-
+ 
 	//add 	 Branch
    TBranch *PMTmap = pmtTree->Branch("PMTmap",&pmtprob,"PMTmap[8]/D");
    TBranch *PMTerr = pmtTree->Branch("PMTerr",&pmterr,"PMTerr[8]/D");
-
-	//define position array
-   Double_t PosErr[6];
-   Double_t hitpos[6];
+  
+	//define position array (center is [0] width is [1])
+   Float_t xEpos[10];
+   Float_t yEpos[10];
+   Float_t xWpos[10];
+   Float_t yWpos[10];
+ 
     ////get number of entries. 
-   Int_t linum=(Int_t)anaTree->GetEntries();
+   Int_t linum=(Int_t)phys->GetEntries();
+		
 	//set position branch addres to position array   
-	anaTree->SetBranchAddress("MWPCPos",&hitpos);
-	anaTree->SetBranchAddress("MWPCPosSigma",&PosErr);
+	phys->SetBranchAddress("xEmpm",&xEpos);
+	phys->SetBranchAddress("yEmpm",&yEpos);
+	phys->SetBranchAddress("xWmpm",&xWpos);
+	phys->SetBranchAddress("yWmpm",&yWpos);
+
 	
-  	double xpos,ypos,xerr,yerr;
+  	
 	//double tlgp[linum];  
-	int both = 0;	
+
     	int ii = 0;
-        int west = 0;
+    
     	while (ii<linum)
     	{   
-	anaTree->GetEntry(ii);	
+	phys->GetEntry(ii);	
 	///what if its both?? Not ignoring for now. 
 	    
-	    //west side or east side?
-	    if (hitpos[0]!=0 && hitpos[3]!=0){
-		//this happens a lot.  cout<<"Both PMT triggered something weird happened";
-		both=1;
-		}
-	    if (hitpos[3]!=0){  
-	    west = 1; //west side
-     	    xpos = 10*hitpos[3];  //change units from cm to mm (10*hitpos). 
-  	    ypos = 10*hitpos[4];
-	    xerr = 10*PosErr[3];
-	    yerr = 10*PosErr[4];
-	    	
-	    }	
-   	    if (hitpos[0]!=0)
-            {
-	    west=0;//east side
-	    xpos = 10*hitpos[0];
-  	    ypos = 10*hitpos[1];
-	    xerr = 10*PosErr[0];
-	    yerr = 10*PosErr[1];	
-             }
-	for (int i=0; i<8;++i) {pmtprob[i]=0;pmterr[i]=0;}        //clear pmtprob (stupid way)
+	       //clear pmtprob (stupid way)
+	for (int i=0; i<8;++i) {pmtprob[i]=0;pmterr[i]=0;}    
 
 	///get PMTmap value. uses function PMTprob... 
-	if(west==1 || both==1){	
-	        for (int i=0; i<4; ++i) {
-		  pmtprob[4+i]=PMTprob(xpos,ypos,LGFitParamW,i+1);
-		pmterr[4+i]=PMTerror(xerr,yerr,xpos,ypos,LGFitParamW,i+1);
+		for (int i=0; i<4; ++i){ //east side 		
+		pmtprob[i]=PMTprob(xEpos[0],yEpos[0],LGFitParamE,i+1);
+		pmterr[i]=PMTerror(xEpos[1],yEpos[1],xEpos[0],yEpos[0],LGFitParamE,i+1);
 		}
-	   }
-         if(west==0 || both==1){ 
-		for (int i=0; i<4; ++i){ 		
-		pmtprob[i]=PMTprob(xpos,ypos,LGFitParamE,i+1);
-		pmterr[i]=PMTerror(xerr,yerr,xpos,ypos,LGFitParamE,i+1);
+	    		
+	        for (int i=0; i<4; ++i) { //west side
+		  pmtprob[4+i]=PMTprob(xWpos[0],yWpos[0],LGFitParamW,i+1);
+      		pmterr[4+i]=PMTerror(xWpos[1],yWpos[1],xWpos[0],yWpos[0],LGFitParamW,i+1);
 		}
-	    }
-	    both=0;
 		
-		///////
+		/*
 		///PMT Total  Probablility check!  Uncomment the non-comment lines to check.
-		//tlgp[ii]=PMTprob(xpos[ii],ypos[ii],LGFitParam,1)+PMTprob(xpos[ii],ypos[ii],LGFitParam,,2)+PMTprob(xpos[ii],ypos[ii],0,0,1,1,1,3)+PMTprob(xpos[ii],ypos[ii],0,0,1,1,1,4); 
-		//if (tlgp[ii]>1.005)
-		//{      //all errors tend to be less than 1% e.g. prob=1.00X where X is < 5.
+		tlgp[ii]=PMTprob(xpos[ii],ypos[ii],LGFitParam,1)+PMTprob(xpos[ii],ypos[ii],LGFitParam,,2)+PMTprob(xpos[ii],ypos[ii],0,0,1,1,1,3)+PMTprob(xpos[ii],ypos[ii],0,0,1,1,1,4); 
+		if (tlgp[ii]>1.005)
+		{      //all errors tend to be less than 1% e.g. prob=1.00X where X is < 5.
 			// still its pretty big, thats what we get for using atan2?...
-		  //cout<<"Warning, Probabililty>1, something isn't right here.\n";				
-		//}
-		/////
+		  cout<<"Warning, Probabililty>1, something isn't right here.\n";				
+		}
+		*/
 		pmtTree->Fill(); //fill the branch  (How does it know what entry I'm on? Magic!?!?)
 		++ii;	 
 	
@@ -131,8 +131,8 @@ int main()
 	LGFitParamW[4+i*15]=1;
 	}
 
-//pass the name and location of the file you want to work and the name and location of the probablilty you want to save, with the intention the new TTree file is added to the anaTree as a friend when calibration of the sources is done. 	
-  LGProbError("/home/cmswank/G4Work/output/thinfoil_Xe135_3-2+/analyzed_1.root","pmtprob_1.root",LGFitParamE,LGFitParamW);
+//pass the name and location of the file you want to work and the name and location of the probablilty you want to save, with the intention the new TTree file is added to phys Tree as a friend when calibration of the sources is done. 	
+  LGProbError("$UCNAOUTPUTDIR/hists/spec_22770.root","$UCNAOUTPUTDIR/hists/pmtprob_22770.root",LGFitParamE,LGFitParamW);
 
   return 0;
 }
