@@ -92,11 +92,12 @@ vector<float> gPMT[NUM_CHANNELS];
 vector<float> gPD[NUM_CHANNELS];
 vector<float> gPMTerr[NUM_CHANNELS];
 vector<float> gPDerr[NUM_CHANNELS];
+ // need a fixed parameter for origin of PD or fits won't make sense; value is arbitrary "average by eye" of PMT beta endpoints in PD value
+//float gPDoff = 30.0;
+float gPDoff = 0.0;
 
 // need global array of beta-endpoints so we can include these in fits
 vector<float> BetaEP[2]; // one vector for each wavelength
- // need a fixed parameter for origin of PD or fits won't make sense; value is arbitrary "average by eye" of PMT beta endpoints in PD value
-float PDoff = 30.0;
 
 // temp arrays to hold data until cuts can be made
 vector<float> _gPMT[NUM_CHANNELS];
@@ -105,6 +106,7 @@ vector<float> _gPMTerr[NUM_CHANNELS];
 vector<float> _gPDerr[NUM_CHANNELS];
 
 Double_t func(float gPD, Double_t *par, Int_t i, Int_t led);
+Double_t PDfunc(float gPD, Double_t *par);
 
 // calculate chi^2 
 void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
@@ -118,7 +120,7 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
   for (int i = 0; i < NUM_CHANNELS; i++){
     Double_t _chisq_temp = 0;
     for (int k=0; k<gPD[i].size(); k++){
-    //    for (int k=0; k<pulser_steps; k++){
+      //    for (int k=0; k<pulser_steps; k++){
       //for (int k=0; k<10; k++){  // arbitrary cut off - need to fix for proper range
       // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
       if (gPMTerr[i][k] < 0.000000001) continue;
@@ -138,16 +140,21 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
 // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, BetaEP[led][i] = beta endpoint in PD units for tube and LED 
 Double_t func(float gPD, Double_t *par, Int_t i, Int_t led)
 {
-  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i])) + par[2+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]))*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]));
-  //  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i])) + par[2+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]))*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]));
-  //  Double_t value = par[0+3*i] + par[1+3*i]*gPD + par[2+3*i]*gPD*gPD;
-  //  cout << value << endl;
+  Double_t PDval = PDfunc(gPD, par);
+  Double_t value = par[0+3*i] + par[1+3*i]*(PDval - BetaEP[led][i]) + par[2+3*i]*(PDval - BetaEP[led][i])*(PDval - BetaEP[led][i]);
   return value;
 }
 
+  //  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i])) + par[2+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]))*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]));
+  //  Double_t value = par[0+3*i] + par[1+3*i]*gPD + par[2+3*i]*gPD*gPD;
+
 Double_t PDfunc(float gPD, Double_t *par)
 {
-  
+  // a quadratic function of PD
+  //  Double_t PDvalue = gPD;
+  Double_t PDvalue = par[24] + par[25]*(gPD - gPDoff) + par[26]*(gPD - gPDoff)*(gPD - gPDoff);
+  return PDvalue;
+} 
 
 
 TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
@@ -1172,26 +1179,26 @@ int main (int argc, char **argv)
   gMinuit->mnexcm("SET ERR", arglist ,1,ierflg);
   
   // Set starting values and step sizes for parameters
-  static Double_t vstart[nvars] = {60., 10., -0.01,
-				   60., 10., -0.01,
-				   60., 10., -0.01,
-				   60., 10., -0.01,
-				   60., 10., -0.01,
-				   60., 10., -0.01,
-				   60., 10., -0.01,
-				   60., 10., -0.01,
-				   60., 1., 0.0001};//,
+  static Double_t vstart[nvars] = {1000., 10., -0.01,
+				   1000., 10., -0.01,
+				   1000., 10., -0.01,
+				   1000., 10., -0.01,
+				   1000., 10., -0.01,
+				   1000., 10., -0.01,
+				   1000., 10., -0.01,
+				   1000., 10., -0.01,
+				   0., 1., 0.};//,
 				   //				   best_beta_endpt_PD};
   
-  static Double_t step[nvars] = {10 , 1  , 0.0001,
-				 10, 1, 0.001,
-				 10 ,1 , 0.0001,
-				 10 ,1 , 0.0001,
-				 10 ,1 , 0.0001,
-				 10 ,1 , 0.0001,
-				 10 ,1 , 0.0001,
-				 10 ,1 , 0.0001, 
-				 10 ,1  , 0.0001};//, 0};
+  static Double_t step[nvars] = {10 , 1  , 0.01,
+				 10, 1, 0.01,
+				 10 ,1 , 0.01,
+				 10 ,1 , 0.01,
+				 10 ,1 , 0.01,
+				 10 ,1 , 0.01,
+				 10 ,1 , 0.01,
+				 10 ,1 , 0.01, 
+				 1. ,1.  , 0.0001};//, 0};
 
   //  gMinuit->FixParameter(27);
 
