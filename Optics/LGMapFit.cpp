@@ -227,10 +227,11 @@ void PMTMapFit(TTree * pmtTree, TTree * fitTree){
   min->SetVariable(9,"lg9",fp1W[9],step[9]);
   min->SetVariable(10,"lg10",fp1W[10],step[10]);
   min->SetVariable(11,"lg11",fp1W[11],step[11]);
+ 
+  min->Minimize();
 
-
-  //const double *xs = min->X();
-  //std::cout << "Minimum: f(" << xs[0] << "," << xs[1] << "...): " << min->MinValue()  << std::endl;
+  const double *xs = min->X();
+  std::cout << "Minimum: f(" << xs[0] << "," << xs[1] << "...): " << min->MinValue()  << std::endl;
 
 }
 
