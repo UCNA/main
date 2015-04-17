@@ -1228,8 +1228,35 @@ int main (int argc, char **argv)
   gMinuit->mnstat(amin,edm,errdef,nvpar,nparx,icstat);
   gMinuit->mnprin(3,amin);
   
-  return 0;
+  //Define functions from fitted parms.
+
+  double PD_parms[3], PD_errs[3];
+  gMinuit->GetParameter(24, PD_parms[0], PD_errs[0]);
+  gMinuit->GetParameter(25, PD_parms[1], PD_errs[1]);
+  gMinuit->GetParameter(26, PD_parms[2], PD_errs[2]);
+
+  TF1 fittedFunctions[NUM_CHANNELS]; // add second LED later
+  int led = 0;
+  for (int i = 0; i < NUM_CHANNELS; i++){
+      double p_val[3], p_err[3];
+      
+      fittedFunctions[i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6])) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]))*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]))", 0, 200);
+
+      for (int j = 0; j < 3; j++){
+	gMinuit->GetParameter(3*i + j, p_val[j], p_err[j]);
+	fittedFunctions[i].SetParameter(j, p_val[j]);
+	fittedFunctions[i].SetParameter(j+3, PD_parms[j]);
+      }
+      fittedFunctions[i].SetParameter(6, BetaEP[led][i]);
+  }
+
+  //Testing
+  /*  TCanvas * c1 = new TCanvas;
+  fittedFunctions[0].Draw();
+  c1->SaveAs("test.gif");
   
+  return 0;
+  */
   /*#if USE_ROOT_APPLICATION
   // run the root application
   app.Run();
