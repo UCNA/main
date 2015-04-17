@@ -25,6 +25,17 @@
 #include <TList.h>
 using namespace std;
 
+// Fitter includes
+/*#include "Fit/Fitter.h"
+#include "Fit/BinData.h"
+#include "Fit/Chi2FCN.h"
+#include "TList.h"
+#include "Math/WrappedMultiTF1.h"
+#include "HFitInterface.h"
+*/
+
+#include <TMinuit.h>
+
 /**
  *
  * Authors: Kevin Peter Hickerson
@@ -34,10 +45,12 @@ using namespace std;
  * Modified: July 16, 2011
  * Modified: Feb 25, 2013
  * Modified: Sep 30, 2013 (SS)
+ * Branched from pd_led_pmt.cc Apr 14, 2015 (SS)
+ *    Will implement a combined fit to 405 and 465 graphs
  *
  * Build instructions:
 USE THIS:
- *  g++ `root-config --cflags` pd_led_pmt.cc `root-config --libs` -o pd_led_pmt_analysis
+ *  g++ `root-config --cflags` pd_led_pmt_combinedfit.cc `root-config --libs` -lMinuit -o pd_led_pmt_combinedfit_analysis
 FOLLOWING DOESN'T WORK:
  *  g++ `root-config --cflags` `root-config --libs` pd_led_pmt.cc -o pd_led_pmt_analysis
  *
@@ -50,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_09_2015_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_15_2015_21297_21939_4thorder/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -69,6 +82,65 @@ FOLLOWING DOESN'T WORK:
 #define RANGE_MAX_VALUE 100.0 // only if RANGE_MAX_OVERRIDE = true
 #define FIXBETAENDPOINT true
 #define RELATIVEBETAPLOTS false  // supersedes FIXBETAENDPOINT (and everything else)
+
+
+
+const int pulser_steps = 64;
+
+//Declare data-arrays globally for fits
+vector<float> gPMT[NUM_CHANNELS];
+vector<float> gPD[NUM_CHANNELS];
+vector<float> gPMTerr[NUM_CHANNELS];
+vector<float> gPDerr[NUM_CHANNELS];
+
+// need global array of beta-endpoints
+vector<float> bestBetaEndpts[2]; // one vector for each wavelength
+
+// temp arrays to hold data until cuts can be made
+vector<float> _gPMT[NUM_CHANNELS];
+vector<float> _gPD[NUM_CHANNELS];
+vector<float> _gPMTerr[NUM_CHANNELS];
+vector<float> _gPDerr[NUM_CHANNELS];
+
+Double_t func(float gPD, Double_t *par, Int_t i);
+
+// calculate chi^2 
+void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
+{
+  Double_t PMT_term = 0;
+  Double_t PD_term = 0;
+  Double_t delta = 0;
+  Double_t chisq = 0;
+  
+  for (int i = 0; i < NUM_CHANNELS; i++){
+    Double_t _chisq_temp = 0;
+    for (int k=0; k<gPD[i].size(); k++){
+    //    for (int k=0; k<pulser_steps; k++){
+      //for (int k=0; k<10; k++){  // arbitrary cut off - need to fix for proper range
+      // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
+      if (gPMTerr[i][k] < 0.000000001) continue;
+      //      cout << gPMT[i][k] << " " << gPD[i][k] << " " << gPMTerr[i][k] << endl;
+      delta = (gPMT[i][k] - func(gPD[i][k], par, i))/gPMTerr[i][k];
+      //     cout << "DELTAAAA " << delta << " " << k <<  endl;
+      _chisq_temp += delta*delta;
+    }
+    chisq += _chisq_temp;
+    //    cout << chisq << endl;
+    
+  }
+  
+  f = chisq;
+}
+
+// par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, par[27] --> fixed beta-endpoint in PD
+Double_t func(float gPD, Double_t *par, Int_t i)
+{
+  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-par[27]) + par[26]*(gPD-par[27])*(gPD-par[27])) + par[2+3*i]*(par[24] + par[25]*(gPD-par[27]) + par[26]*(gPD-par[27])*(gPD-par[27]))*(par[24] + par[25]*(gPD-par[27]) + par[26]*(gPD-par[27])*(gPD-par[27]));
+  //  Double_t value = par[0+3*i] + par[1+3*i]*gPD + par[2+3*i]*gPD*gPD;
+  //  cout << value << endl;
+  return value;
+}
+
 
 TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
 {
@@ -134,7 +206,6 @@ int main (int argc, char **argv)
   // constants (maybe should be set by options too?)
   //enum {DOWN, UP, GAIN, TIME, TIMEUP, TIMEDOWN, TIMEGAIN};
   enum {DOWN, UP, GAIN, TIME};
-  const int pulser_steps = 64;
   const int max_cycles = 100; // more than an hour
   int n = max_cycles * pulser_steps * 100;  // this can be updated later to be more accurate
   //	const float max_pdc_channel = 400;
@@ -291,7 +362,6 @@ int main (int argc, char **argv)
   TGraphErrors* graph[2][8];
   TGraphErrors* graph_465_moved_up[8];
   TGraphErrors* PMT_keV_graph[2][8];
-  TGraphErrors* errgraph[2][8];
   TGraphErrors* constrained_graph[2][8];
   TCanvas* canvas[8];
   TGraph* g[8];
@@ -580,7 +650,6 @@ int main (int argc, char **argv)
       for (int led = 0; led < 2; led++)
 	{
 	  graph[led][i] = new TGraphErrors(pulser_steps);
-	  errgraph[led][i] = new TGraphErrors(pulser_steps);
 	  for (int pulse = 0; pulse < pulser_steps; pulse++)
 	    {
 	      float d = num_pulses[led][pulse];
@@ -593,16 +662,21 @@ int main (int argc, char **argv)
 		  float sx = sqrt((x2_avg - x_avg*x_avg)/(d-1));
 		  float sy = sqrt((y2_avg - y_avg*y_avg)/(d-1));
 		  //		  cout << "sx " << x2_avg << ", " << x_avg*x_avg << ", " << sx << endl;
+		  //cout << sy << endl;
 		  graph[led][i]->SetPoint(pulse, x_avg, y_avg);
 		  graph[led][i]->SetPointError(pulse, sx, sy);
-		  errgraph[led][i]->SetPoint(pulse, x_avg, sy);
+		  // pipe values out to global so fit function can access
+		  if (!led){ 		  // just do 405 nm for now, fix later
+		    _gPD[i].push_back(x_avg);
+		    _gPMT[i].push_back(y_avg);
+		    _gPDerr[i].push_back(sx);
+		    _gPMTerr[i].push_back(sy);
+		  }
 		}
 	    }
 	}
-
 #endif
-
-            
+                  
       //Use approx Maximum beta-endpoints over each run interval to 
       // determine the best run range. Beta endpoint = 782 keV, Cd-109 = 63 keV, Bi-207 = 1047 keV	  
       float best_beta_endpt;
@@ -710,31 +784,29 @@ int main (int argc, char **argv)
 #endif
 	  cout << range_min[led] << " HIH" << range_max[led] << endl;
 
-	  /*  // testing 
-	  if (led > 0){
-	    PMT_keV_graph[led][i]->Draw("AP");
-	    graph[led][i]->Draw("same");
-	    app.Run();
-	    return 0;
-	    } */
-	  
-	  // fit a curve
-	  TString fit_string;
-	  /*#if POLYFIT
-#if ORDER
-	  printf("Fitting LED linearity...\n");	
-	  fit_string = "[0] + [1]*x";
-	  for (int k = 1; k < ORDER; k++)
-	    {
-	      fit_string += " + [";
-	      fit_string += k+1;
-	      fit_string += "]*x**";
-	      fit_string += k+1;
+
+	  // cull global vectors to match ranges
+	  if (!led){
+	    for (int s=0; s < _gPD[i].size(); s++){
+	      if (_gPD[i][s] > range_min[led] && _gPD[i][s] < range_max[led]){
+		gPD[i].push_back(_gPD[i][s]);
+		gPMT[i].push_back(_gPMT[i][s]);
+		gPDerr[i].push_back(_gPDerr[i][s]);
+		gPMTerr[i].push_back(_gPMTerr[i][s]);
+		/*	cout << gPD[i].back() << " " <<
+		  gPDerr[i].back() << " " <<
+		  gPMT[i].back() << " " <<
+		  gPMTerr[i].back() << endl;*/
+	      }
 	    }
-#endif
-#endif
-	  */
+	    
+	  }
+	  //	  return 0;
 	  
+	  // Do fits
+
+	  TString fit_string;
+ 	  
 #if OFFSETPOLYFIT
 	  //	  for (int constrainfit = 0; constrainfit < 2; constrainfit++){
 	    // PREFIT to get approximate gain
@@ -771,6 +843,7 @@ int main (int argc, char **argv)
 #endif
 #if FIXBETAENDPOINT 
 	    fit_string = "[0] + [1]*(x-[3]) + [2]*(x-[3])**2";
+	    //	    fit_string = "[0] + [1]*([4] + [5]*(x-[3]) + [6]*(x-[3])**2) + [2]*([4] + [5]*(x-[3]) + [6]*(x-[3])**2)**2";
 #endif
 	    cout << "Fit String: " <<  fit_string << endl;
 	    // Carry out the fit
@@ -782,8 +855,8 @@ int main (int argc, char **argv)
 	    //Replaced with Energy Scaled graph 1/13/2015 
 	    //	    if (led) fit->SetParameters(10, 0.5, -0.05); 
 	    //	    else fit->SetParameters(10, 10.0, -0.05);
-	    if (led) fit->SetParameters(750, 0.75, -0.0005); 
-	    else fit->SetParameters(0.0, 0.75, -0.0005);
+	    if (led) fit->SetParameters(750, 0.75, -0.0005, 10, 0.1, 0.0); 
+	    else fit->SetParameters(0.0, 0.75, -0.0005, 10, 0.1, 0.0);
    
 	    float best_beta_endpt_PD = range_max[led]/beta_Bi_ratio;
 #if RANGE_MAX_OVERRIDE // need actual bi peak position if range_max gets altered
@@ -1073,10 +1146,90 @@ int main (int argc, char **argv)
 
     }  // end loop over channels
   
+  const int nvars = 27;
+  //const int nvars = 28; 
+
+  // Do Minuit stuff 
+  TMinuit *gMinuit = new TMinuit(nvars);  //initialize TMinuit with a maximum of 27 params
+  gMinuit->SetPrintLevel(1); // 0 = normal, 1 = verbose
+  gMinuit->SetFCN(fcn);
+
+  Double_t arglist[10];
+  Int_t ierflg = 0;
+  
+  arglist[0] = 1;
+  gMinuit->mnexcm("SET ERR", arglist ,1,ierflg);
+  
+  // Set starting values and step sizes for parameters
+  static Double_t vstart[nvars] = {60., 10., 0.0001,
+				   60., 10., 0.001,
+				   60., 10., 0.0001,
+				   60., 10., 0.0001,
+				   60., 10., 0.0001,
+				   60., 10., 0.0001,
+				   60., 10., 0.0001,
+				   60., 10., 0.0001,
+				   60., 1., 0.0001};//,
+				   //				   best_beta_endpt_PD};
+  
+  static Double_t step[nvars] = {10 , 1  , 0.0001,
+				 10, 1, 0.001,
+				 10 ,1 , 0.0001,
+				 10 ,1 , 0.0001,
+				 10 ,1 , 0.0001,
+				 10 ,1 , 0.0001,
+				 10 ,1 , 0.0001,
+				 10 ,1 , 0.0001, 
+				 10 ,1  , 0.0001};//, 0};
+
+  //  gMinuit->FixParameter(27);
+
+  gMinuit->mnparm(0, "t0p0", vstart[0], step[0], 0,0,ierflg);
+  gMinuit->mnparm(1, "t0p1", vstart[1], step[1], 0,0,ierflg);
+  gMinuit->mnparm(2, "t0p2", vstart[2], step[2], 0,0,ierflg);
+  gMinuit->mnparm(3, "t1p0", vstart[3], step[3], 0,0,ierflg);
+  gMinuit->mnparm(4, "t1p1", vstart[4], step[4], 0,0,ierflg);
+  gMinuit->mnparm(5, "t1p2", vstart[5], step[5], 0,0,ierflg);
+  gMinuit->mnparm(6, "t2p0", vstart[6], step[6], 0,0,ierflg);
+  gMinuit->mnparm(7, "t2p1", vstart[7], step[7], 0,0,ierflg);
+  gMinuit->mnparm(8, "t2p2", vstart[8], step[8], 0,0,ierflg);
+  gMinuit->mnparm(9, "t3p0", vstart[9], step[9], 0,0,ierflg);
+  gMinuit->mnparm(10, "t3p1", vstart[10], step[10], 0,0,ierflg);
+  gMinuit->mnparm(11, "t3p2", vstart[11], step[11], 0,0,ierflg);
+  gMinuit->mnparm(12, "t4p0", vstart[12], step[12], 0,0,ierflg);
+  gMinuit->mnparm(13, "t4p1", vstart[13], step[13], 0,0,ierflg);
+  gMinuit->mnparm(14, "t4p2", vstart[14], step[14], 0,0,ierflg);
+  gMinuit->mnparm(15, "t5p0", vstart[15], step[15], 0,0,ierflg);
+  gMinuit->mnparm(16, "t5p1", vstart[16], step[16], 0,0,ierflg);
+  gMinuit->mnparm(17, "t5p2", vstart[17], step[17], 0,0,ierflg);
+  gMinuit->mnparm(18, "t6p0", vstart[18], step[18], 0,0,ierflg);
+  gMinuit->mnparm(19, "t6p1", vstart[19], step[19], 0,0,ierflg);
+  gMinuit->mnparm(20, "t6p2", vstart[20], step[20], 0,0,ierflg);
+  gMinuit->mnparm(21, "t7p0", vstart[21], step[21], 0,0,ierflg);
+  gMinuit->mnparm(22, "t7p1", vstart[22], step[22], 0,0,ierflg);
+  gMinuit->mnparm(23, "t7p2", vstart[23], step[23], 0,0,ierflg);
+  gMinuit->mnparm(24, "PDp0", vstart[24], step[24], 0,0,ierflg);
+  gMinuit->mnparm(25, "PDp1", vstart[25], step[25], 0,0,ierflg);
+  gMinuit->mnparm(26, "PDp2", vstart[26], step[26], 0,0,ierflg);
+  //  gMinuit->mnparm(27, "PD_Beta", vstart[27], step[27], vstart[27], vstart[27], ierflg);
+   
+  // Now ready for minimization step
+  arglist[0] = 500;
+  arglist[1] = 1.;
+  gMinuit->mnexcm("MIGRAD", arglist ,2,ierflg);
+  
+  // Print results
+  Double_t amin,edm,errdef;
+  Int_t nvpar,nparx,icstat;
+  gMinuit->mnstat(amin,edm,errdef,nvpar,nparx,icstat);
+  gMinuit->mnprin(3,amin);
+  
+  return 0;
+  
   /*#if USE_ROOT_APPLICATION
   // run the root application
   app.Run();
-#endif
+  #endif
   return 0;
   */
 
@@ -1183,7 +1336,7 @@ int main (int argc, char **argv)
   time_his2D[DOWN]->Draw("samescat");
   time_his2D[GAIN]->SetMarkerColor(3);
   time_his2D[GAIN]->Draw("samescat");
-  
+    
 #if OUTPUT_IMAGE
   TString cut_pd_time_filename = "cut_pd_time_";
   cut_pd_time_filename = OUTPUT_IMAGE_DIR + cut_pd_time_filename;
