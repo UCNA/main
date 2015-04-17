@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_15_2015_21297_21939_4thorder/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_16_2015_8waysimulfit/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -95,6 +95,8 @@ vector<float> gPDerr[NUM_CHANNELS];
 
 // need global array of beta-endpoints so we can include these in fits
 vector<float> BetaEP[2]; // one vector for each wavelength
+ // need a fixed parameter for origin of PD or fits won't make sense; value is arbitrary "average by eye" of PMT beta endpoints in PD value
+float PDoff = 30.0;
 
 // temp arrays to hold data until cuts can be made
 vector<float> _gPMT[NUM_CHANNELS];
@@ -137,10 +139,15 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
 Double_t func(float gPD, Double_t *par, Int_t i, Int_t led)
 {
   Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i])) + par[2+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]))*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]));
+  //  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i])) + par[2+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]))*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]));
   //  Double_t value = par[0+3*i] + par[1+3*i]*gPD + par[2+3*i]*gPD*gPD;
   //  cout << value << endl;
   return value;
 }
+
+Double_t PDfunc(float gPD, Double_t *par)
+{
+  
 
 
 TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
@@ -1165,14 +1172,14 @@ int main (int argc, char **argv)
   gMinuit->mnexcm("SET ERR", arglist ,1,ierflg);
   
   // Set starting values and step sizes for parameters
-  static Double_t vstart[nvars] = {60., 10., 0.0001,
-				   60., 10., 0.001,
-				   60., 10., 0.0001,
-				   60., 10., 0.0001,
-				   60., 10., 0.0001,
-				   60., 10., 0.0001,
-				   60., 10., 0.0001,
-				   60., 10., 0.0001,
+  static Double_t vstart[nvars] = {60., 10., -0.01,
+				   60., 10., -0.01,
+				   60., 10., -0.01,
+				   60., 10., -0.01,
+				   60., 10., -0.01,
+				   60., 10., -0.01,
+				   60., 10., -0.01,
+				   60., 10., -0.01,
 				   60., 1., 0.0001};//,
 				   //				   best_beta_endpt_PD};
   
@@ -1416,6 +1423,10 @@ int main (int argc, char **argv)
 	graph[DOWN][i]->SetTitle(title);
 	graph[DOWN][i]->GetXaxis()->SetTitle("PD");
 	graph[DOWN][i]->GetYaxis()->SetTitle("PMT (ADC)");
+	
+	fittedFunctions[i].SetLineColor(1);
+	fittedFunctions[i].Draw("same");
+
 	ew_canvas->Update();
 	TPaveStats * st = (TPaveStats*)graph[DOWN][i]->GetListOfFunctions()->FindObject("stats");
 	if (st==NULL) cout << "Null TPaveStats - oops?" << endl;
