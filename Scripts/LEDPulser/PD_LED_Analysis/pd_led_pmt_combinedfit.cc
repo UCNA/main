@@ -93,8 +93,8 @@ vector<float> gPD[NUM_CHANNELS];
 vector<float> gPMTerr[NUM_CHANNELS];
 vector<float> gPDerr[NUM_CHANNELS];
 
-// need global array of beta-endpoints
-vector<float> bestBetaEndpts[2]; // one vector for each wavelength
+// need global array of beta-endpoints so we can include these in fits
+vector<float> BetaEP[2]; // one vector for each wavelength
 
 // temp arrays to hold data until cuts can be made
 vector<float> _gPMT[NUM_CHANNELS];
@@ -102,7 +102,7 @@ vector<float> _gPD[NUM_CHANNELS];
 vector<float> _gPMTerr[NUM_CHANNELS];
 vector<float> _gPDerr[NUM_CHANNELS];
 
-Double_t func(float gPD, Double_t *par, Int_t i);
+Double_t func(float gPD, Double_t *par, Int_t i, Int_t led);
 
 // calculate chi^2 
 void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
@@ -112,6 +112,7 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
   Double_t delta = 0;
   Double_t chisq = 0;
   
+  int led = 0; // replace later with loop over LEDs
   for (int i = 0; i < NUM_CHANNELS; i++){
     Double_t _chisq_temp = 0;
     for (int k=0; k<gPD[i].size(); k++){
@@ -120,7 +121,7 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
       // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
       if (gPMTerr[i][k] < 0.000000001) continue;
       //      cout << gPMT[i][k] << " " << gPD[i][k] << " " << gPMTerr[i][k] << endl;
-      delta = (gPMT[i][k] - func(gPD[i][k], par, i))/gPMTerr[i][k];
+      delta = (gPMT[i][k] - func(gPD[i][k], par, i, led))/gPMTerr[i][k];
       //     cout << "DELTAAAA " << delta << " " << k <<  endl;
       _chisq_temp += delta*delta;
     }
@@ -132,10 +133,10 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
   f = chisq;
 }
 
-// par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, par[27] --> fixed beta-endpoint in PD
-Double_t func(float gPD, Double_t *par, Int_t i)
+// par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, BetaEP[led][i] = beta endpoint in PD units for tube and LED 
+Double_t func(float gPD, Double_t *par, Int_t i, Int_t led)
 {
-  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-par[27]) + par[26]*(gPD-par[27])*(gPD-par[27])) + par[2+3*i]*(par[24] + par[25]*(gPD-par[27]) + par[26]*(gPD-par[27])*(gPD-par[27]))*(par[24] + par[25]*(gPD-par[27]) + par[26]*(gPD-par[27])*(gPD-par[27]));
+  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i])) + par[2+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]))*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]));
   //  Double_t value = par[0+3*i] + par[1+3*i]*gPD + par[2+3*i]*gPD*gPD;
   //  cout << value << endl;
   return value;
@@ -874,6 +875,9 @@ int main (int argc, char **argv)
 	    fit->FixParameter(3, best_beta_endpt_PD);  // fix x-offset to be the calculated PD value for beta endpoint 
 #endif
 	    // }
+
+	    BetaEP[led].push_back(best_beta_endpt_PD); // push beta endpoints to global array for fit use
+	        
 #if DO_LED_FIT
 #if KEVSCALED 
 	    PMT_keV_graph[led][i]->Fit(fit, "R");
