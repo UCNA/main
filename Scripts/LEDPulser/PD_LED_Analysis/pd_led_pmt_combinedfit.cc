@@ -1515,8 +1515,10 @@ int main (int argc, char **argv)
 	ew_canvas->Update();
 	TPaveStats * st = (TPaveStats*)graph[DOWN][i]->GetListOfFunctions()->FindObject("stats");
 	if (st==NULL) cout << "Null TPaveStats - oops?" << endl;
-	st->SetX1NDC(0.1);
-	st->SetX2NDC(0.5);
+	else {
+	  st->SetX1NDC(0.1);
+	  st->SetX2NDC(0.5);
+	}
 
 #if MOVEDUPGRAPH
 	graph_465_moved_up[i]->SetMarkerColor(4);
