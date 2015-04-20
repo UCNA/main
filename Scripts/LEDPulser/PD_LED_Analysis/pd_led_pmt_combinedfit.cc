@@ -1498,6 +1498,7 @@ int main (int argc, char **argv)
 	//pd_pmt_his2D[DOWN][i]->SetTitle(title);
 	//pd_pmt_his2D[DOWN][i]->Draw("colz");
 	//graph[DOWN][i]->Draw("SameP");
+	graph[DOWN][i]->SetMarkerColor(6);
 	graph[DOWN][i]->Draw("AP");
 	graph[DOWN][i]->SetName("GraphDOWN");
 	graph[UP][i]->SetMarkerColor(4);
