@@ -72,7 +72,7 @@ if __name__ == "__main__":
 #        sys.exit()
    
         _chan = ""
-        marks = 4
+        marks = 8
         if i < 4:
             _chan = "E" 
             _chan = _chan + str(i)
@@ -83,16 +83,22 @@ if __name__ == "__main__":
         #    print "_________________" + str(j) + "    " + str(i)
 #            print data_cut_405[i]
             axes[j].errorbar(data_cut_405[j]['Run'], 
-                                data_cut_405[j]['ParVal'], 
-                                yerr=data_cut_405[j]['ParErr'], 
-                                linestyle='None', marker='o',
-                                markersize=marks, label=_chan)
-            axes[j].errorbar(data_cut_465[j]['Run'],
-                                data_cut_465[j]['ParVal'], 
-                                yerr=data_cut_465[j]['ParErr'],
-                                linestyle='None', marker='o', 
-                                markersize=marks, label=_chan)
-
+                             data_cut_405[j]['ParVal'], 
+                             yerr=data_cut_405[j]['ParErr'], 
+                             linestyle='None', marker='^',
+                             markersize=marks, label=_chan, color = 'Black')
+            for tl in axes[j].get_yticklabels():
+                tl.set_color('Black')
+     
+            twinax = axes[j].twinx()
+            twinax.errorbar(data_cut_465[j]['Run'],
+                            data_cut_465[j]['ParVal'], 
+                            yerr=data_cut_465[j]['ParErr'],
+                            linestyle='None', marker='v', 
+                            markersize=marks, label=_chan, color = 'Blue')
+            for tl in twinax.get_yticklabels():
+                tl.set_color('Blue')
+                
             axes[j].set_ylabel("p" + str(j))
 
       #  axes[i][3].plot(data_cut_405[i]['Run'], data_cut_405[i]['Chi2'], 
