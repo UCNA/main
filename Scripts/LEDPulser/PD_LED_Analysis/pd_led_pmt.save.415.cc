@@ -48,7 +48,7 @@ FOLLOWING DOESN'T WORK:
 
 #define NUM_CHANNELS 8
 #define LED_TYPE DOWN
-#define USE_ROOT_APPLICATION false
+#define USE_ROOT_APPLICATION true
 #define OUTPUT_IMAGE true
 #define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_21_2015_testpedestal_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
@@ -70,7 +70,8 @@ FOLLOWING DOESN'T WORK:
 #define FIXBETAENDPOINT false
 #define RELATIVEBETAPLOTS false  // supersedes FIXBETAENDPOINT (and everything else)
 
-TH1F* FitGaussian(const char *name, TTree *tree, TCut* cut, TF1* pedestalfit)
+//TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
+TH1F* FitGaussian(const char *name, TTree *tree, TCut* cut)
 {
   char gaussian_name[1024];
   sprintf(gaussian_name, "pedestal_histogram_%s", name);
@@ -84,7 +85,7 @@ TH1F* FitGaussian(const char *name, TTree *tree, TCut* cut, TF1* pedestalfit)
   if (not gaussian_histogram->Fit(fit, "RN"))
     {
       printf("Gaussian fit success: mu = %g, sigma = %g\n", fit->GetParameter(1), fit->GetParameter(2));
-      *pedestalfit = *fit;
+      //      return fit;
       return gaussian_histogram;
     } 
   else 
@@ -308,22 +309,23 @@ int main (int argc, char **argv)
   
   // find PD pedestal
   h1.SetBranchStatus("Pdc36", 1);
-  TF1 pd_pedestal_fit;
-  TH1F *pd_pedestal_hist = FitGaussian("Pdc36", &h1, pedestal_cut, &pd_pedestal_fit);
+  //TF1 *pd_pedestal_fit = FitGaussian("Pdc36", &h1, pedestal_cut);
+  TH1F *pd_pedestal_hist = FitGaussian("Pdc36", &h1, pedestal_cut);
+  TF1 * pd_pedestal_fit = pd_pedestal_hist->GetFunction("gauss_fit");
   float pd_pedestal = 0;
-  if (&pd_pedestal_fit)
-    pd_pedestal = pd_pedestal_fit.GetParameter(1);
+  if (pd_pedestal_fit)
+    pd_pedestal = pd_pedestal_fit->GetParameter(1);
   else
     printf("couldn't fit pedestal to Pdc36\n");
   printf("PD pedestal = %f\n", pd_pedestal);
   
-  /* #if USE_ROOT_APPLICATION
+#if USE_ROOT_APPLICATION
   // run the root application
   pd_pedestal_hist->Draw();
-  pd_pedestal_fit.Draw("same");
+  //  pd_pedestal_fit->Draw("same");
   app.Run();
 #endif
-return 0; // testing */
+  return 0;
   
   // Making our histograms for the time sequence
   TString time_title = "PD time sequence for run ";
@@ -422,21 +424,12 @@ return 0; // testing */
       
       
       // Find PMT Qadc Pedestal
-      TF1 pmt_pedestal_fit;
-      TH1F *pmt_pedestal_hist = FitGaussian(Qadc[i], &h1, pedestal_cut, &pmt_pedestal_fit); 
+      //      TF1 *pmt_pedestal_fit = FitGaussian(Qadc[i], &h1, pedestal_cut);
+      TH1F *pmt_pedestal_hist = FitGaussian(Qadc[i], &h1, pedestal_cut);
+      TF1 * pmt_pedestal_fit = pmt_pedestal_hist->GetFunction("gauss_fit");
       float pmt_pedestal = 0;
-      if (&pmt_pedestal_fit)
-	pmt_pedestal = pmt_pedestal_fit.GetParameter(1); cout << "PMT Pedestal " << i << " = " << pmt_pedestal << endl;
-      
-      
-      /*  // testing
-#if USE_ROOT_APPLICATION
-      // run the root application
-      pmt_pedestal_hist->Draw();
-      pmt_pedestal_fit.Draw("same");
-      app.Run();
-#endif
-return 0; */
+      if (pmt_pedestal_fit)
+	pmt_pedestal = pmt_pedestal_fit->GetParameter(1);
       
       
       // Define PMT:PD scan histograms
