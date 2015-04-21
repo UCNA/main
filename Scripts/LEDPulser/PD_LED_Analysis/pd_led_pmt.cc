@@ -50,7 +50,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_09_2015_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_21_2015_testpedestal_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -67,7 +67,7 @@ FOLLOWING DOESN'T WORK:
 #define KEVSCALED false
 #define RANGE_MAX_OVERRIDE false
 #define RANGE_MAX_VALUE 100.0 // only if RANGE_MAX_OVERRIDE = true
-#define FIXBETAENDPOINT true
+#define FIXBETAENDPOINT false
 #define RELATIVEBETAPLOTS false  // supersedes FIXBETAENDPOINT (and everything else)
 
 TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
@@ -762,7 +762,8 @@ int main (int argc, char **argv)
 
 	    */
 	    
-	    fit_string = "[0] + [1]*x + [2]*(x)**2";
+	    //	    fit_string = "[0] + [1]*x + [2]*(x)**2";
+	    fit_string = "[0]*x + [1]*(x)**2";
 
 #endif
 
@@ -771,6 +772,7 @@ int main (int argc, char **argv)
 #endif
 #if FIXBETAENDPOINT 
 	    fit_string = "[0] + [1]*(x-[3]) + [2]*(x-[3])**2";
+	    //	    fit_string = "[0]*(x-[2]) + [1]*(x-[2])**2";
 #endif
 	    cout << "Fit String: " <<  fit_string << endl;
 	    // Carry out the fit
@@ -782,9 +784,13 @@ int main (int argc, char **argv)
 	    //Replaced with Energy Scaled graph 1/13/2015 
 	    //	    if (led) fit->SetParameters(10, 0.5, -0.05); 
 	    //	    else fit->SetParameters(10, 10.0, -0.05);
-	    if (led) fit->SetParameters(750, 0.75, -0.0005); 
-	    else fit->SetParameters(0.0, 0.75, -0.0005);
-   
+
+	    //if (led) fit->SetParameters(750, 0.75, -0.0005); 
+	    //else fit->SetParameters(0.0, 0.75, -0.0005); 
+
+	    if (led) fit->SetParameters(5, -0.01); // fix pedestal = 0 // 4/21/2015 SS
+	    else fit->SetParameters(20, -0.01); 
+
 	    float best_beta_endpt_PD = range_max[led]/beta_Bi_ratio;
 #if RANGE_MAX_OVERRIDE // need actual bi peak position if range_max gets altered
 	    best_beta_endpt_PD = bi_peak_pd/beta_Bi_ratio;
@@ -794,11 +800,17 @@ int main (int argc, char **argv)
 	    //	    cout << "Fixing x-offset to be apprx Beta endpoint " << PD_Bept << endl;
 #if FIXBETAENDPOINT 
 	    cout << "Fixing x-offset to be apprx Beta endpoint " << best_beta_endpt_PD << endl;
-	    if (led) fit->SetParameters(750., 5., -0.0005); 
 	    //else fit->SetParameters(3000.0, 10., -0.1);
 	    //	    else  fit->SetParameters(600, 10, -0.0005); 
-	    else  fit->SetParameters(800, 20, -0.0005); 
+
+	    //	    if (led) fit->SetParameters(750., 5., -0.0005);  // with offset
+	    //	    else  fit->SetParameters(800, 20, -0.0005); 
+
+	    if (led) fit->SetParameters(BETAADCCOUNTS, 5., -0.0005); // fix offset
+	    else  fit->SetParameters(BETAADCCOUNTS, 20, -0.0005); 
+
 	    fit->FixParameter(3, best_beta_endpt_PD);  // fix x-offset to be the calculated PD value for beta endpoint 
+	    fit->FixParameter(0, BETAADCCOUNTS);   // 4/21/15 equivalent to fixing pedestal=0
 #endif
 	    // }
 #if DO_LED_FIT
