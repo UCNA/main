@@ -280,9 +280,9 @@ int main (int argc, char **argv)
   
   // Define cuts
   TCut *led_cut = new TCut("(int(Sis00) & 128) > 0");  // 129 if east-PMTs on, 161 if GMS-ref also on
-  TCut *pedestal_cut = new TCut("!(int(Sis00) & 1)");  
-  
-  
+  //  TCut *pedestal_cut = new TCut("!(int(Sis00) & 1)");  
+  TCut *pedestal_cut = new TCut("!(int(Sis00) & 1) && !(int(Sis00) & 2) && !(int(Sis00 & 32)) && !(int(Sis00) & 64)");  
+    
   // The histograms and canvases we will use 
   TH2F* time_his2D[4];
   TH1F* pmt_gain_his1D[8];
@@ -317,7 +317,7 @@ int main (int argc, char **argv)
     printf("couldn't fit pedestal to Pdc36\n");
   printf("PD pedestal = %f\n", pd_pedestal);
   
-  /* #if USE_ROOT_APPLICATION
+  /*#if USE_ROOT_APPLICATION
   // run the root application
   pd_pedestal_hist->Draw();
   pd_pedestal_fit.Draw("same");
@@ -429,7 +429,7 @@ return 0; // testing */
 	pmt_pedestal = pmt_pedestal_fit.GetParameter(1); cout << "PMT Pedestal " << i << " = " << pmt_pedestal << endl;
       
       
-      /*  // testing
+      /*      // testing
 #if USE_ROOT_APPLICATION
       // run the root application
       pmt_pedestal_hist->Draw();
