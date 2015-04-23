@@ -51,7 +51,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_21_2015_testpedestal_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_22_2015_fixorigin/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -68,9 +68,9 @@ FOLLOWING DOESN'T WORK:
 #define KEVSCALED false
 #define RANGE_MAX_OVERRIDE false
 #define RANGE_MAX_VALUE 100.0 // only if RANGE_MAX_OVERRIDE = true
-#define FIXBETAENDPOINT false
+#define FIXBETAENDPOINT true
 #define RELATIVEBETAPLOTS false  // supersedes FIXBETAENDPOINT (and everything else)
-#define SAVESUBCYCLES true // Saves each histogram for each LED subcycle. Very slow, leave false unless needed.
+#define SAVESUBCYCLES false // Saves each histogram for each LED subcycle. Very slow, leave false unless needed.
 
 TH1F* FitGaussian(const char *name, TTree *tree, TCut* cut, TF1* pedestalfit)
 {
@@ -284,7 +284,7 @@ int main (int argc, char **argv)
   // Define cuts
   TCut *led_cut = new TCut("(int(Sis00) & 128) > 0");  // 129 if east-PMTs on, 161 if GMS-ref also on
   TCut *pedestal_cut = new TCut("!(int(Sis00) & 1)");  
-  //TCut *pedestal_cut = new TCut("!(int(Sis00) & 1) && !(int(Sis00) & 2) && !(int(Sis00 & 32)) && !(int(Sis00) & 64)");  // This cut is slightly nicer but has only 10% of the events of the looser cut.
+  //TCut *pedestal_cut = new TCut("!(int(Sis00) & 1) && !(int(Sis00) & 2) && !(int(Sis00 & 32)) && !(int(Sis00) & 64)");  // This cut is slightly nicer but has 10% of the events of the looser cut.
     
   // The histograms and canvases we will use 
   TH2F* time_his2D[4];
