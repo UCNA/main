@@ -141,9 +141,9 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
 
 // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, gPDBetaEP[led][i] = beta endpoint in PD units for tube and LED 
 Double_t fPMT(float PMTval, Double_t *par, Int_t i, Int_t led)
-{
+{  // quadratic function divided through by linear term. then par[1+3*i] is reciprocal of linear term.
   Double_t PMTvaloff = PMTval - gPMTBetaEP[i];
-  Double_t value = (PMTvaloff) + par[1+3*i]*par[2+3*i]*(PMTvaloff)*(PMTvaloff);
+  Double_t value = par[1+3*i]*par[0+3*i] + (PMTvaloff) + par[1+3*i]*par[2+3*i]*(PMTvaloff)*(PMTvaloff); 
   return value;
 }
 
@@ -153,24 +153,25 @@ Double_t fPD(float PDval, Double_t *par, Int_t i, Int_t led)
   Double_t value = par[1+3*i]*( par[24] + par[25]*(PDvaloff) + par[26]*(PDvaloff)*(PDvaloff) );
   return value;
 }
-
+/*
 Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
 {
   Double_t PDval = PDfunc(gPDval, par, led);
   Double_t value = par[0+3*i] + par[1+3*i]*(PDval - gPDBetaEP[led][i]) + par[2+3*i]*(PDval - gPDBetaEP[led][i])*(PDval - gPDBetaEP[led][i]);
   return value;
-}
+  }*/
 
   //  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i])) + par[2+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]))*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]));
   //  Double_t value = par[0+3*i] + par[1+3*i]*gPD + par[2+3*i]*gPD*gPD;
 
+ /*
 Double_t PDfunc(float gPDval, Double_t *par, Int_t led)
 {
   // a quadratic function of PD
   //  Double_t PDvalue = gPD;
   Double_t PDvalue = par[24] + par[25]*(gPDval - gPDoff[led]) + par[26]*(gPDval - gPDoff[led])*(gPDval - gPDoff[led]); // shouldn't this use gPDBetaEP also?
   return PDvalue;
-} 
+  } */
 
 
 TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
@@ -1287,10 +1288,13 @@ int main (int argc, char **argv)
     gMinuit->mnparm(21, "t7p0", vstart[21], step[21], 0,0,ierflg);
     gMinuit->mnparm(22, "t7p1", vstart[22], step[22], 0,0,ierflg);
     gMinuit->mnparm(23, "t7p2", vstart[23], step[23], 0,0,ierflg);
-    gMinuit->mnparm(24, "PDp0", vstart[24], step[24], 0,0,ierflg);
+    //    gMinuit->mnparm(24, "PDp0", vstart[24], step[24], 0,0,ierflg);
+    gMinuit->mnparm(24, "PDp0", 0, step[24], 0,0,ierflg);
     gMinuit->mnparm(25, "PDp1", vstart[25], step[25], 0,0,ierflg);
     gMinuit->mnparm(26, "PDp2", vstart[26], step[26], 0,0,ierflg);
     //  gMinuit->mnparm(27, "PD_Beta", vstart[27], step[27], vstart[27], vstart[27], ierflg);
+    
+    gMinuit->FixParameter(24);   // fixing PD pedestal = 0
     
     // Now ready for minimization step
     arglist[0] = 10000;
