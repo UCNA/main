@@ -109,8 +109,10 @@ vector<float> _gPD[2][NUM_CHANNELS];
 vector<float> _gPMTerr[2][NUM_CHANNELS];
 vector<float> _gPDerr[2][NUM_CHANNELS];
 
-Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led);
-Double_t PDfunc(float gPDval, Double_t *par, Int_t led);
+//Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led);
+//Double_t PDfunc(float gPDval, Double_t *par, Int_t led);
+Double_t fPMT(float PMTval, Double_t *par, Int_t i, Int_t led);
+Double_t fPD(float PMTval, Double_t *par, Int_t i, Int_t led);
 
 // calculate chi^2 
 void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
