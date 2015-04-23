@@ -98,7 +98,8 @@ float gPDoff[2] = {0.0, 100.0};
 //float gPDoff = 0.0;
 
 // need global array of beta-endpoints so we can include these in fits
-vector<float> BetaEP[2]; // one vector for each wavelength
+vector<float> gPDBetaEP[2]; // one vector for each wavelength 
+vector<float> gPMTBetaEP;  // tube property, same for both wavelengths
 // for some reason need a global to indicate which LED we're using in the fit
 float gLED = 0;
 
@@ -126,9 +127,8 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
     for (int k=0; k<gPD[led][i].size(); k++){
       // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
       if (gPMTerr[led][i][k] < 0.000000001) continue;
-      //      cout << gPMT[led][i][k] << " " << gPD[led][i][k] << " " << gPMTerr[led][i][k] << endl;
-      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
-      //     cout << "DELTAAAA " << delta << " " << k <<  endl;
+      // delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k]; // function 1
+      delta = (fPMT(gPMT[led][i][k], par, i, led) - fPD(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k]; // function 2
       _chisq_temp += delta*delta;
     }
     chisq += _chisq_temp;
@@ -139,11 +139,25 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
   f = chisq;
 }
 
-// par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, BetaEP[led][i] = beta endpoint in PD units for tube and LED 
+// par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, gPDBetaEP[led][i] = beta endpoint in PD units for tube and LED 
+Double_t fPMT(float PMTval, Double_t *par, Int_t i, Int_t led)
+{
+  Double_t PMTvaloff = PMTval - gPMTBetaEP[i];
+  Double_t value = (PMTvaloff) + par[1+3*i]*par[2+3*i]*(PMTvaloff)*(PMTvaloff);
+  return value;
+}
+
+Double_t fPD(float PDval, Double_t *par, Int_t i, Int_t led)
+{ // scale factor relative to PMT comes in
+  Double_t PDvaloff = PDval - gPDBetaEP[led][i];
+  Double_t value = par[1+3*i]*( par[24] + par[25]*(PDvaloff) + par[26]*(PDvaloff)*(PDvaloff) );
+  return value;
+}
+
 Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
 {
   Double_t PDval = PDfunc(gPDval, par, led);
-  Double_t value = par[0+3*i] + par[1+3*i]*(PDval - BetaEP[led][i]) + par[2+3*i]*(PDval - BetaEP[led][i])*(PDval - BetaEP[led][i]);
+  Double_t value = par[0+3*i] + par[1+3*i]*(PDval - gPDBetaEP[led][i]) + par[2+3*i]*(PDval - gPDBetaEP[led][i])*(PDval - gPDBetaEP[led][i]);
   return value;
 }
 
@@ -154,7 +168,7 @@ Double_t PDfunc(float gPDval, Double_t *par, Int_t led)
 {
   // a quadratic function of PD
   //  Double_t PDvalue = gPD;
-  Double_t PDvalue = par[24] + par[25]*(gPDval - gPDoff[led]) + par[26]*(gPDval - gPDoff[led])*(gPDval - gPDoff[led]);
+  Double_t PDvalue = par[24] + par[25]*(gPDval - gPDoff[led]) + par[26]*(gPDval - gPDoff[led])*(gPDval - gPDoff[led]); // shouldn't this use gPDBetaEP also?
   return PDvalue;
 } 
 
@@ -711,6 +725,8 @@ int main (int argc, char **argv)
       else if (run > 20500 && run < 21250) best_beta_endpt = BetaADC_20500_21250[i];
       else if (run > 21250) best_beta_endpt = BetaADC_21250_above[i];
       else cout << "RUN NOT IN RANGE" << endl;
+      gPMTBetaEP.push_back(best_beta_endpt);
+
       ADC_min = best_beta_endpt*beta_Cd_ratio;
       ADC_max = best_beta_endpt*beta_Bi_ratio;
       cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
@@ -896,7 +912,7 @@ int main (int argc, char **argv)
 #endif
 	    // }
 
-	    BetaEP[led].push_back(best_beta_endpt_PD); // push beta endpoints to global array for fit use
+	    gPDBetaEP[led].push_back(best_beta_endpt_PD); // push beta endpoints to global array for fit use
 	        
 #if DO_LED_FIT
 #if KEVSCALED 
@@ -1327,7 +1343,7 @@ int main (int argc, char **argv)
       // in principle, this function is 
       // PMT = [0] + [1]*(L-BetaEndpt) + [2]*(L-BetaEndpt)^2, where
       // L = [3] + [4]*(PD-PD_offset) + [5]*(PD-PD_offset)^2
-      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7]) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])", 0, BetaEP[led][i]*beta_Bi_ratio);
+      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7]) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])", 0, gPDBetaEP[led][i]*beta_Bi_ratio);
       
       for (int j = 0; j < 3; j++){
 	gMinuit->GetParameter(3*i + j, p_val[j], p_err[j]);
@@ -1335,7 +1351,7 @@ int main (int argc, char **argv)
 	fittedFunctions[led][i].SetParameter(j+3, PD_parms[j]);
       }
       fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
-      fittedFunctions[led][i].SetParameter(7, BetaEP[led][i]);
+      fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
     }
     
   }
