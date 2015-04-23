@@ -83,7 +83,7 @@ FOLLOWING DOESN'T WORK:
 #define FIXBETAENDPOINT true
 #define RELATIVEBETAPLOTS false  // supersedes FIXBETAENDPOINT (and everything else)
 #define COMBINEDLED 1 // replace later with a loop
-
+#define FITFROMORIGIN true // set global BetaEPs to be 0
 
 const int pulser_steps = 64;
 
@@ -728,7 +728,12 @@ int main (int argc, char **argv)
       else if (run > 20500 && run < 21250) best_beta_endpt = BetaADC_20500_21250[i];
       else if (run > 21250) best_beta_endpt = BetaADC_21250_above[i];
       else cout << "RUN NOT IN RANGE" << endl;
+
+#if FITFROMORIGIN
+      gPMTBetaEP.push_back(0);
+#else
       gPMTBetaEP.push_back(best_beta_endpt);
+#endif
 
       ADC_min = best_beta_endpt*beta_Cd_ratio;
       ADC_max = best_beta_endpt*beta_Bi_ratio;
@@ -915,7 +920,11 @@ int main (int argc, char **argv)
 #endif
 	    // }
 
-	    gPDBetaEP[led].push_back(best_beta_endpt_PD); // push beta endpoints to global array for fit use
+#if FITFROMORIGIN
+	    gPDBetaEP[led].push_back(0);
+#else
+	    gPDBetaEP[led].push_back(best_beta_endpt_PD); // push beta endpoints to global array for fit use	    
+#endif
 	        
 #if DO_LED_FIT
 #if KEVSCALED 
@@ -1250,6 +1259,7 @@ int main (int argc, char **argv)
   
   double PD_parms[3], PD_errs[3];
   TF1 fittedFunctions[2][NUM_CHANNELS]; // separate functions for each LED
+  TF1 luminosityFunctions[2][2][NUM_CHANNELS]; // plot light as fitted for PMT and LED separately
   //  TF1 LEDFreeFuncs[2][NUM_CHANNELS]; // not as interesting 
 
   for (int led = 0; led < 2; led++){
@@ -1349,16 +1359,36 @@ int main (int argc, char **argv)
       // in principle, this function is 
       // PMT = [0] + [1]*(L-BetaEndpt) + [2]*(L-BetaEndpt)^2, where
       // L = [3] + [4]*(PD-PD_offset) + [5]*(PD-PD_offset)^2
-      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7]) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])", 0, gPDBetaEP[led][i]*beta_Bi_ratio);
+      //      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7]) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])", 0, gPDBetaEP[led][i]*beta_Bi_ratio);
+      
+      fittedFunctions[led][i] = 
+	TF1(Form("f_%i", i),
+	    //	    "[7] + ( 1.0/([1]*[2]) ) * ( -1.0 - sqrt( 1.0 + 4*[0]*[1]*[1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6])) ))", 
+	    "( 1.0/([1]*[2]) ) * ( -1.0 - sqrt( 1.0 + 4*[0]*[1]*[1]*([3] + [4]*(x) + [5]*(x)*(x)) ))", 
+	    //	    0, gPDBetaEP[led][i]*beta_Bi_ratio);
+	    0, 300);
+
+      // PMT
+      luminosityFunctions[led][0][i] = 
+	TF1(Form("LFT_%i", i), "[0] + [1]*(x-[3]) + [2]*(x-[3])*(x-[3])", 0, gPMTBetaEP[i]*beta_Bi_ratio);
+      // PD
+      luminosityFunctions[led][1][i] = 
+	TF1(Form("LFD_%i", i), "[0] + [1]*(x-[3]) + [2]*(x-[3])*(x-[3])", 0, gPDBetaEP[led][i]*beta_Bi_ratio);
       
       for (int j = 0; j < 3; j++){
 	gMinuit->GetParameter(3*i + j, p_val[j], p_err[j]);
 	fittedFunctions[led][i].SetParameter(j, p_val[j]);
 	fittedFunctions[led][i].SetParameter(j+3, PD_parms[j]);
+	luminosityFunctions[led][0][i].SetParameter(j, p_val[j]);
+	luminosityFunctions[led][1][i].SetParameter(j, PD_parms[j]);
       }
-      fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
-      fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
-    }
+      //      fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
+      //      fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
+      fittedFunctions[led][i].SetParameter(6, gPDBetaEP[led][i]);
+      fittedFunctions[led][i].SetParameter(7, gPMTBetaEP[i]);
+      //  luminosityFunctions[led][0][i].SetParameter(3, gPMTBetaEP[i]);
+      //luminosityFunctions[led][1][i].SetParameter(3, gPDBetaEP[led][i]); 
+   }
     
   }
   //Testing
@@ -1530,10 +1560,20 @@ int main (int argc, char **argv)
 	graph[DOWN][i]->GetXaxis()->SetTitle("PD");
 	graph[DOWN][i]->GetYaxis()->SetTitle("PMT (ADC)");
 	
-	for (int led = 0; led < 2; led++){
-	  fittedFunctions[led][i].SetLineColor(8);
-	  fittedFunctions[led][i].Draw("same");
-	}
+	/*	for (int led = 0; led < 2; led++){
+	  fittedFunctions[led][i].SetLineColor(1+3*led);
+	  //fittedFunctions[led][i].Draw("same");
+	  fittedFunctions[led][i].Draw();
+	  //luminosityFunctions[led][0][i].SetLineColor(1);
+	  //luminosityFunctions[led][1][i].SetLineColor(4);
+	  //luminosityFunctions[led][0][i].Draw("same");
+	  //luminosityFunctions[led][1][i].Draw("same");
+	  }*/
+	
+	fittedFunctions[0][i].SetLineColor(1);
+	fittedFunctions[1][i].SetLineColor(4);
+	fittedFunctions[0][i].Draw();
+	//fittedFunctions[1][i].Draw("Same");
 
 	ew_canvas->Update();
 	TPaveStats * st = (TPaveStats*)graph[DOWN][i]->GetListOfFunctions()->FindObject("stats");
