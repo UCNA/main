@@ -133,7 +133,8 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   
   //  int led = COMBINEDLED; // replace later with loop over LEDs
   //int led = gLED; // no longer needed now that we're looping
-  for (int i = 0; i < NUM_CHANNELS; i++){
+  //  for (int i = 0; i < NUM_CHANNELS; i++){
+  for (int i = 0; i < 1; i++){
     Double_t _chisq_temp = 0;
     for (int k=0; k<gPD[led][i].size(); k++){
       // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
@@ -143,6 +144,7 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     }
     chisq += _chisq_temp;
   }
+  cout << "Chi^2 = " << chisq << endl;
   return chisq;
 }
 
@@ -1195,7 +1197,7 @@ int main (int argc, char **argv)
   
   // Set starting values and step sizes for parameters
   //led = 0
-  static Double_t vstart[nvars] = {1000., 10., -0.01,
+  /*  static Double_t vstart[nvars] = {1000., 10., -0.01,
 				   1000., 10., -0.01,
 				   1000., 10., -0.01,
 				   1000., 10., -0.01,
@@ -1215,7 +1217,30 @@ int main (int argc, char **argv)
 				 10 ,1 , 0.01,
 				 10 ,1 , 0.01, 
 				 1. ,1.  , 0.0001, 
-				 1.};
+				 1.};*/
+
+  static Double_t vstart[nvars] = {100., 1., -0.01,
+				   100., 1., -0.01,
+				   100., 1., -0.01,
+				   100., 1., -0.01,
+				   100., 1., -0.01,
+				   100., 1., -0.01,
+				   100., 1., -0.01,
+				   100., 1., -0.01,
+				   100., 1., 0., 
+				   3};
+  
+  static Double_t step[nvars] = {1 , 0.1  , 0.1,
+				 1, 0.1, 0.1,
+				 1 ,0.1 , 0.1,
+				 1 ,0.1 , 0.1,
+				 1 ,0.1 , 0.1,
+				 1 ,0.1 , 0.1,
+				 1 ,0.1 , 0.1,
+				 1 ,0.1 , 0.1, 
+				 1. ,0.1 , 0.1, 
+				 0.1};
+
   //led = 1 
   static Double_t vstart_465[nvars] = {1000., 0.5, -0.001,
 				       1000., 0.5, -0.001,
@@ -1347,6 +1372,7 @@ int main (int argc, char **argv)
 	gMinuit->GetParameter(3*i + j, p_val[j], p_err[j]);
 	fittedFunctions[led][i].SetParameter(j, p_val[j]);
 	fittedFunctions[led][i].SetParameter(j+3, PD_parms[j]);
+	fittedFunctions[led][i].SetParameter(0, p_val[j]-200);
       }
       //fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
       //fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
