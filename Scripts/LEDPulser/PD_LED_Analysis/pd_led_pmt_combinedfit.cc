@@ -83,7 +83,7 @@ FOLLOWING DOESN'T WORK:
 #define FIXBETAENDPOINT true
 #define RELATIVEBETAPLOTS false  // supersedes FIXBETAENDPOINT (and everything else)
 #define COMBINEDLED 1 // replace later with a loop
-
+#define USEBETAOFFSETS false
 
 const int pulser_steps = 64;
 
@@ -133,8 +133,8 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   
   //  int led = COMBINEDLED; // replace later with loop over LEDs
   //int led = gLED; // no longer needed now that we're looping
-  //  for (int i = 0; i < NUM_CHANNELS; i++){
-  for (int i = 0; i < 1; i++){
+  for (int i = 0; i < NUM_CHANNELS; i++){
+    // for (int i = 0; i < 1; i++){
     Double_t _chisq_temp = 0;
     for (int k=0; k<gPD[led][i].size(); k++){
       // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
@@ -729,7 +729,11 @@ int main (int argc, char **argv)
       cout << ADC_min << "=ADC_min " << ADC_max << "=ADC_max" << endl;
       cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
+#if USEBETAOFFSETS
       gPMTBetaEP.push_back(best_beta_endpt);
+#else
+      gPMTBetaEP.push_back(0);
+#endif
 
       // find the best range for the fit
       float range_max[2], range_min[2];
@@ -908,7 +912,13 @@ int main (int argc, char **argv)
 	    fit->FixParameter(3, best_beta_endpt_PD);  // fix x-offset to be the calculated PD value for beta endpoint 
 #endif
 	    // }
+
+#if USEBETAOFFSETS
 	    gPDBetaEP[led].push_back(best_beta_endpt_PD); // push beta endpoints to global array for fit use	    
+#else
+	    gPDBetaEP[led].push_back(0);
+#endif
+
 #if DO_LED_FIT
 #if KEVSCALED 
 	    PMT_keV_graph[led][i]->Fit(fit, "R");
@@ -1364,15 +1374,15 @@ int main (int argc, char **argv)
       // in principle, this function is 
       // PMT = [0] + [1]*(L-BetaEndpt) + [2]*(L-BetaEndpt)^2, where
       // L = [3] + [4]*(PD-PD_offset) + [5]*(PD-PD_offset)^2
-      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7]) + [2]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])", 0, gPDBetaEP[led][i]*beta_Bi_ratio);
-
+      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7]) + [2]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])", 0, 
+				    //gPDBetaEP[led][i]*beta_Bi_ratio);
+				    50 + 250*led);
       double p_val[3], p_err[3];
       double PDratio, PDratioErr;
       for (int j = 0; j < 3; j++){
 	gMinuit->GetParameter(3*i + j, p_val[j], p_err[j]);
 	fittedFunctions[led][i].SetParameter(j, p_val[j]);
 	fittedFunctions[led][i].SetParameter(j+3, PD_parms[j]);
-	fittedFunctions[led][i].SetParameter(0, p_val[j]-200);
       }
       //fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
       //fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
