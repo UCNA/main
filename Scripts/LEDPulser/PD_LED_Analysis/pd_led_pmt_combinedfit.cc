@@ -144,9 +144,12 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     }
     chisq += _chisq_temp;
   }
-  cout << "Chi^2 = " << chisq << endl;
+  //  cout << "Chi^2 = " << chisq << endl;
   return chisq;
 }
+
+//Double_t PDerrfcn(Double_t * par, Int_t i, Int_t led){
+  
 
 // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, gPDBetaEP[led][i] = beta endpoint in PD units for tube
 Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
@@ -1229,7 +1232,7 @@ int main (int argc, char **argv)
 				 1. ,1.  , 0.0001, 
 				 1.};*/
 
-  static Double_t vstart[nvars] = {100., 1., -0.01,
+  /*static Double_t vstart[nvars] = {100., 1., -0.01,
 				   100., 1., -0.01,
 				   100., 1., -0.01,
 				   100., 1., -0.01,
@@ -1249,7 +1252,30 @@ int main (int argc, char **argv)
 				 1 ,0.1 , 0.1,
 				 1 ,0.1 , 0.1, 
 				 1. ,0.1 , 0.1, 
+				 0.1};*/
+
+  static Double_t vstart[nvars] = {10., 3., -0.0001,
+				   10., 3., -0.0001,
+				   10., 3., -0.0001,
+				   10., 3., -0.0001,
+				   10., 10., -0.0001,
+				   10., 10., -0.0001,
+				   10., 10., -0.0001,
+				   10., 10., -0.0001,
+				   10., 3., 0., 
+				   3};
+ 
+  static Double_t step[nvars] = {1 , 0.1  , 0.00001,
+				 1, 0.1, 0.00001,
+				 1 ,0.1 , 0.00001,
+				 1 ,0.1 , 0.00001,
+				 1 ,0.1 , 0.00001,
+				 1 ,0.1 , 0.00001,
+				 1 ,0.1 , 0.00001,
+				 1 ,0.1 , 0.00001, 
+				 1. ,0.1 , 0.00001, 
 				 0.1};
+
 
   //led = 1 
   static Double_t vstart_465[nvars] = {1000., 0.5, -0.001,
