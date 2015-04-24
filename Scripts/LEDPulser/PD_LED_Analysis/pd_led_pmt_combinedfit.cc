@@ -163,8 +163,8 @@ Double_t PDfunc(float gPDval, Double_t *par, Int_t led, Int_t i)
   //  Double_t PDvalue = gPD;
   //  Double_t PDvalue = par[24] + par[25]*(gPDval - gPDoff[led]) + par[26]*(gPDval - gPDoff[led])*(gPDval - gPDoff[led]);
   Double_t PDvalue = par[24] + par[25]*(gPDval - gPDBetaEP[led][i]) + par[26]*(gPDval - gPDBetaEP[led][i])*(gPDval - gPDBetaEP[led][i]);
-  if (led == 1) PDvalue *= par[27]; // scaling factor between two LED wavelengths
-
+  if (led == 0) PDvalue *= par[27]; // scaling factor between two LED wavelengths
+  //  if (led == 0) PDvalue *= 3; // scaling factor between two LED wavelengtsh
   return PDvalue;
 } 
 
@@ -1215,7 +1215,7 @@ int main (int argc, char **argv)
 				 10 ,1 , 0.01,
 				 10 ,1 , 0.01, 
 				 1. ,1.  , 0.0001, 
-				 0.1};
+				 1.};
   //led = 1 
   static Double_t vstart_465[nvars] = {1000., 0.5, -0.001,
 				       1000., 0.5, -0.001,
@@ -1237,7 +1237,7 @@ int main (int argc, char **argv)
 				     10 ,0.1 , 0.001,
 				     10 ,0.1 , 0.001, 
 				     1. ,0.1  , 0.0001, 
-				     0.1};
+				     1.};
   //  int led = COMBINEDLED;  
 
   double PD_parms[3], PD_errs[3];
@@ -1290,7 +1290,7 @@ int main (int argc, char **argv)
     //  gMinuit->mnparm(27, "PD_Beta", vstart[27], step[27], vstart[27], vstart[27], ierflg);
     
     // Now ready for minimization step
-    arglist[0] = 10000;
+    arglist[0] = 30000;
     arglist[1] = 0.1;
     gMinuit->mnexcm("MIGRAD", arglist ,2,ierflg);
     
@@ -1332,7 +1332,6 @@ int main (int argc, char **argv)
     //TF1 LEDFreeFuncs[NUM_CHANNELS];
     //  int led = 0; // defined a page above
     for (int i = 0; i < NUM_CHANNELS; i++){
-      double p_val[3], p_err[3];
       
       //      fittedFunctions[i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6])) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]))*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]))", 0, 200);
       //      fittedFunctions[i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6])) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]))*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]))", 0, BetaEP[led][i]*beta_Bi_ratio);
@@ -1340,8 +1339,10 @@ int main (int argc, char **argv)
       // in principle, this function is 
       // PMT = [0] + [1]*(L-BetaEndpt) + [2]*(L-BetaEndpt)^2, where
       // L = [3] + [4]*(PD-PD_offset) + [5]*(PD-PD_offset)^2
-      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7]) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])", 0, gPDBetaEP[led][i]*beta_Bi_ratio);
-      
+      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7]) + [2]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])", 0, gPDBetaEP[led][i]*beta_Bi_ratio);
+
+      double p_val[3], p_err[3];
+      double PDratio, PDratioErr;
       for (int j = 0; j < 3; j++){
 	gMinuit->GetParameter(3*i + j, p_val[j], p_err[j]);
 	fittedFunctions[led][i].SetParameter(j, p_val[j]);
@@ -1351,6 +1352,10 @@ int main (int argc, char **argv)
       //fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
       fittedFunctions[led][i].SetParameter(6, gPDBetaEP[led][i]);
       fittedFunctions[led][i].SetParameter(7, gPMTBetaEP[i]);
+      
+      gMinuit->GetParameter(27, PDratio, PDratioErr);
+      if (led == 0) fittedFunctions[led][i].SetParameter(8, PDratio);
+      if (led == 1) fittedFunctions[led][i].SetParameter(8, 1);
     }
     
   }
