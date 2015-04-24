@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_23_2015_8waysimulfit_v1_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_24_2015_16waysimulfit_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -163,6 +163,8 @@ Double_t PDfunc(float gPDval, Double_t *par, Int_t led, Int_t i)
   //  Double_t PDvalue = gPD;
   //  Double_t PDvalue = par[24] + par[25]*(gPDval - gPDoff[led]) + par[26]*(gPDval - gPDoff[led])*(gPDval - gPDoff[led]);
   Double_t PDvalue = par[24] + par[25]*(gPDval - gPDBetaEP[led][i]) + par[26]*(gPDval - gPDBetaEP[led][i])*(gPDval - gPDBetaEP[led][i]);
+  if (led == 1) PDvalue *= par[27]; // scaling factor between two LED wavelengths
+
   return PDvalue;
 } 
 
@@ -1177,11 +1179,11 @@ int main (int argc, char **argv)
 
     }  // end loop over channels
   
-  const int nvars = 27;
-  //const int nvars = 28; 
+  //  const int nvars = 27;
+  const int nvars = 28; 
 
   // Do Minuit stuff 
-  TMinuit *gMinuit = new TMinuit(nvars);  //initialize TMinuit with a maximum of 27 params
+  TMinuit *gMinuit = new TMinuit(nvars);  //initialize TMinuit with a maximum of nvars params
   gMinuit->SetPrintLevel(0); // 0 = normal, 1 = verbose
   gMinuit->SetFCN(fcn);
 
@@ -1201,8 +1203,8 @@ int main (int argc, char **argv)
 				   1000., 10., -0.01,
 				   1000., 10., -0.01,
 				   1000., 10., -0.01,
-				   0., 1., 0.};//,
-				   //				   best_beta_endpt_PD};
+				   0., 1., 0., 
+				   3};
   
   static Double_t step[nvars] = {10 , 1  , 0.01,
 				 10, 1, 0.01,
@@ -1212,7 +1214,8 @@ int main (int argc, char **argv)
 				 10 ,1 , 0.01,
 				 10 ,1 , 0.01,
 				 10 ,1 , 0.01, 
-				 1. ,1.  , 0.0001};//, 0};
+				 1. ,1.  , 0.0001, 
+				 0.1};
   //led = 1 
   static Double_t vstart_465[nvars] = {1000., 0.5, -0.001,
 				       1000., 0.5, -0.001,
@@ -1222,8 +1225,8 @@ int main (int argc, char **argv)
 				       1000., 0.5, -0.001,
 				       1000., 0.5, -0.001,
 				       1000., 0.5, -0.001,
-				       0., 1., 0.};//,
-  //				   best_beta_endpt_PD};
+				       0., 1., 0., 
+				       3};
   
   static Double_t step_465[nvars] = {10 , 0.1  , 0.001,
 				     10, 0.1, 0.001,
@@ -1233,9 +1236,10 @@ int main (int argc, char **argv)
 				     10 ,0.1 , 0.001,
 				     10 ,0.1 , 0.001,
 				     10 ,0.1 , 0.001, 
-				     1. ,0.1  , 0.0001};//, 0};
-  //  int led = COMBINEDLED;
-  
+				     1. ,0.1  , 0.0001, 
+				     0.1};
+  //  int led = COMBINEDLED;  
+
   double PD_parms[3], PD_errs[3];
   TF1 fittedFunctions[2][NUM_CHANNELS]; // separate functions for each LED
   //  TF1 LEDFreeFuncs[2][NUM_CHANNELS]; // not as interesting 
@@ -1281,6 +1285,8 @@ int main (int argc, char **argv)
     gMinuit->mnparm(24, "PDp0", vstart[24], step[24], 0,0,ierflg);
     gMinuit->mnparm(25, "PDp1", vstart[25], step[25], 0,0,ierflg);
     gMinuit->mnparm(26, "PDp2", vstart[26], step[26], 0,0,ierflg);
+    gMinuit->mnparm(27, "PDratio", vstart[27], step[27], 0, 0, ierflg);
+    
     //  gMinuit->mnparm(27, "PD_Beta", vstart[27], step[27], vstart[27], vstart[27], ierflg);
     
     // Now ready for minimization step
