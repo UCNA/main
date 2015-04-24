@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_20_2015_8waysimulfit_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_23_2015_8waysimulfit_v1_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -98,9 +98,10 @@ float gPDoff[2] = {0.0, 100.0};
 //float gPDoff = 0.0;
 
 // need global array of beta-endpoints so we can include these in fits
-vector<float> BetaEP[2]; // one vector for each wavelength
+vector<float> gPDBetaEP[2]; // one vector for each wavelength 
+vector<float> gPMTBetaEP;  // tube property, same for both wavelengths
 // for some reason need a global to indicate which LED we're using in the fit
-float gLED = 0;
+//float gLED = 0;
 
 // temp arrays to hold data until cuts can be made
 vector<float> _gPMT[2][NUM_CHANNELS];
@@ -109,10 +110,21 @@ vector<float> _gPMTerr[2][NUM_CHANNELS];
 vector<float> _gPDerr[2][NUM_CHANNELS];
 
 Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led);
-Double_t PDfunc(float gPDval, Double_t *par, Int_t led);
+Double_t PDfunc(float gPDval, Double_t *par, Int_t led, Int_t i);
+Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t led, Int_t iflag);
 
 // calculate chi^2 
 void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
+{ 
+  Double_t value = 0;
+  for (int ded = 0; ded < 2; ded++){   // sum chi^2 for each led 
+    value += subfcn(npar, gin, f, par, ded, iflag);
+  }
+
+  f = value;
+}  
+
+Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t led, Int_t iflag)
 {
   Double_t PMT_term = 0;
   Double_t PD_term = 0;
@@ -120,41 +132,37 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
   Double_t chisq = 0;
   
   //  int led = COMBINEDLED; // replace later with loop over LEDs
-  int led = gLED; // simpler than re-writing everything in terms of gLED
+  //int led = gLED; // no longer needed now that we're looping
   for (int i = 0; i < NUM_CHANNELS; i++){
     Double_t _chisq_temp = 0;
     for (int k=0; k<gPD[led][i].size(); k++){
       // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
       if (gPMTerr[led][i][k] < 0.000000001) continue;
-      //      cout << gPMT[led][i][k] << " " << gPD[led][i][k] << " " << gPMTerr[led][i][k] << endl;
       delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
-      //     cout << "DELTAAAA " << delta << " " << k <<  endl;
       _chisq_temp += delta*delta;
     }
     chisq += _chisq_temp;
-    //    cout << chisq << endl;
-    
   }
-  
-  f = chisq;
+  return chisq;
 }
 
-// par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, BetaEP[led][i] = beta endpoint in PD units for tube and LED 
+// par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, gPDBetaEP[led][i] = beta endpoint in PD units for tube
 Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
 {
-  Double_t PDval = PDfunc(gPDval, par, led);
-  Double_t value = par[0+3*i] + par[1+3*i]*(PDval - BetaEP[led][i]) + par[2+3*i]*(PDval - BetaEP[led][i])*(PDval - BetaEP[led][i]);
+  Double_t PDval = PDfunc(gPDval, par, led, i);
+  Double_t value = par[0+3*i] + par[1+3*i]*(PDval - gPMTBetaEP[i]) + par[2+3*i]*(PDval - gPMTBetaEP[i])*(PDval - gPMTBetaEP[i]); // Use PMTEP since PDval is approx linear with PMT response (??)
   return value;
 }
 
   //  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i])) + par[2+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]))*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]));
   //  Double_t value = par[0+3*i] + par[1+3*i]*gPD + par[2+3*i]*gPD*gPD;
 
-Double_t PDfunc(float gPDval, Double_t *par, Int_t led)
+Double_t PDfunc(float gPDval, Double_t *par, Int_t led, Int_t i)
 {
   // a quadratic function of PD
   //  Double_t PDvalue = gPD;
-  Double_t PDvalue = par[24] + par[25]*(gPDval - gPDoff[led]) + par[26]*(gPDval - gPDoff[led])*(gPDval - gPDoff[led]);
+  //  Double_t PDvalue = par[24] + par[25]*(gPDval - gPDoff[led]) + par[26]*(gPDval - gPDoff[led])*(gPDval - gPDoff[led]);
+  Double_t PDvalue = par[24] + par[25]*(gPDval - gPDBetaEP[led][i]) + par[26]*(gPDval - gPDBetaEP[led][i])*(gPDval - gPDBetaEP[led][i]);
   return PDvalue;
 } 
 
@@ -717,6 +725,7 @@ int main (int argc, char **argv)
       cout << ADC_min << "=ADC_min " << ADC_max << "=ADC_max" << endl;
       cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
+      gPMTBetaEP.push_back(best_beta_endpt);
 
       // find the best range for the fit
       float range_max[2], range_min[2];
@@ -895,9 +904,7 @@ int main (int argc, char **argv)
 	    fit->FixParameter(3, best_beta_endpt_PD);  // fix x-offset to be the calculated PD value for beta endpoint 
 #endif
 	    // }
-
-	    BetaEP[led].push_back(best_beta_endpt_PD); // push beta endpoints to global array for fit use
-	        
+	    gPDBetaEP[led].push_back(best_beta_endpt_PD); // push beta endpoints to global array for fit use	    
 #if DO_LED_FIT
 #if KEVSCALED 
 	    PMT_keV_graph[led][i]->Fit(fit, "R");
@@ -1234,16 +1241,16 @@ int main (int argc, char **argv)
   //  TF1 LEDFreeFuncs[2][NUM_CHANNELS]; // not as interesting 
 
   for (int led = 0; led < 2; led++){
-    cout << "----------------------------------------------------" << endl;
-    cout << "-------  MINUIT FOR LED " << led << "  -------------------------" << endl;
-    cout << "----------------------------------------------------" << endl;
+    //  cout << "----------------------------------------------------" << endl;
+  //  cout << "-------  MINUIT FOR LED " << led << "  -------------------------" << endl;
+  //  cout << "----------------------------------------------------" << endl;
 
-    gLED = led; // fill the global parameter telling us which LED we're on
+    //    gLED = led; // fill the global parameter telling us which LED we're on
 
-    if (led) { // use correct initial parameters.
-      memcpy(vstart, vstart_465, sizeof(vstart));
-      memcpy(step, step_465, sizeof(step));
-    }   
+  //    if (led) { // use correct initial parameters.
+  //    memcpy(vstart, vstart_465, sizeof(vstart));
+  //   memcpy(step, step_465, sizeof(step));
+  //  }   
     
     //  gMinuit->FixParameter(27);
     
@@ -1327,15 +1334,17 @@ int main (int argc, char **argv)
       // in principle, this function is 
       // PMT = [0] + [1]*(L-BetaEndpt) + [2]*(L-BetaEndpt)^2, where
       // L = [3] + [4]*(PD-PD_offset) + [5]*(PD-PD_offset)^2
-      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7]) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])", 0, BetaEP[led][i]*beta_Bi_ratio);
+      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7]) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]) - [7])", 0, gPDBetaEP[led][i]*beta_Bi_ratio);
       
       for (int j = 0; j < 3; j++){
 	gMinuit->GetParameter(3*i + j, p_val[j], p_err[j]);
 	fittedFunctions[led][i].SetParameter(j, p_val[j]);
 	fittedFunctions[led][i].SetParameter(j+3, PD_parms[j]);
       }
-      fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
-      fittedFunctions[led][i].SetParameter(7, BetaEP[led][i]);
+      //fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
+      //fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
+      fittedFunctions[led][i].SetParameter(6, gPDBetaEP[led][i]);
+      fittedFunctions[led][i].SetParameter(7, gPMTBetaEP[i]);
     }
     
   }
