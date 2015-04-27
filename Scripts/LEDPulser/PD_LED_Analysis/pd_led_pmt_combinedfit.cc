@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_24_2015_16waysimulfit_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_27_2015_16waysimulfit_extended_range_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -251,13 +251,17 @@ int main (int argc, char **argv)
   const float avg_period = 60.03e6; // us
   const float max_period = avg_period + window; // us
   const float min_period = avg_period - window; // us
-	
-	
+  
+  
   // some strings we will use
   TString wavelength[2] = { "405", "465" };
   TString detector[8] = { "E1", "E2", "E3", "E4", "W1", "W2", "W3", "W4" };
   TString Qadc[8] = { "Qadc0", "Qadc1", "Qadc2", "Qadc3", "Qadc4", "Qadc5", "Qadc6", "Qadc7"};
 
+
+  vector <float> best_beta_endpt;
+  vector <float> best_beta_endpt_PD[2]; // one for each led
+  float extended_range_max[2][NUM_CHANNELS];
 
   // run this as a ROOT application
 #if USE_ROOT_APPLICATION
@@ -716,30 +720,33 @@ int main (int argc, char **argv)
                   
       //Use approx Maximum beta-endpoints over each run interval to 
       // determine the best run range. Beta endpoint = 782 keV, Cd-109 = 63 keV, Bi-207 = 1047 keV	  
-      float best_beta_endpt;
+      //      float best_beta_endpt; // make a vector to store for later loops
       float ADC_max, ADC_min;
       float nPE_max, nPE_min;
       double slope_DOWN; double slope_UP;
       float pd_to_keV_factor[2];
 
-      if (run < 20500) best_beta_endpt = BetaADC_below_20500[i];
+      /*      if (run < 20500) best_beta_endpt = BetaADC_below_20500[i];
       else if (run > 20500 && run < 21250) best_beta_endpt = BetaADC_20500_21250[i];
-      else if (run > 21250) best_beta_endpt = BetaADC_21250_above[i];
+      else if (run > 21250) best_beta_endpt = BetaADC_21250_above[i];*/
+      if (run < 20500) best_beta_endpt.push_back(BetaADC_below_20500[i]);
+      else if (run > 20500 && run < 21250) best_beta_endpt.push_back(BetaADC_20500_21250[i]);
+      else if (run > 21250) best_beta_endpt.push_back(BetaADC_21250_above[i]);
       else cout << "RUN NOT IN RANGE" << endl;
-      ADC_min = best_beta_endpt*beta_Cd_ratio;
-      ADC_max = best_beta_endpt*beta_Bi_ratio;
+      ADC_min = best_beta_endpt[i]*beta_Cd_ratio;
+      ADC_max = best_beta_endpt[i]*beta_Bi_ratio;
       cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
       cout << ADC_min << "=ADC_min " << ADC_max << "=ADC_max" << endl;
       cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
 #if USEBETAOFFSETS
-      gPMTBetaEP.push_back(best_beta_endpt);
+      gPMTBetaEP.push_back(best_beta_endpt[i]);
 #else
       gPMTBetaEP.push_back(0);
 #endif
 
       // find the best range for the fit
-      float range_max[2], range_min[2];
+      float range_max[2], range_min[2];// extended_range_max[2]; needs wider scope
       
       /*		float prefit_range_max[2], prefit_range_min[2];
 			prefit_range_min[0] = 25; prefit_range_min[1] = 50;
@@ -778,6 +785,8 @@ int main (int argc, char **argv)
 	  // Fudge factor to slightly extend range for better fits
 	  //	  range_min[led] = range_min[led]*0.9; 
 	  range_max[led] = range_max[led]*1.05;
+	  if (led == 0) extended_range_max[led][i] = range_max[led]*2;
+	  else extended_range_max[led][i] = range_max[led];
 	  double bi_peak_pd = range_max[led];
 #if RANGE_MAX_OVERRIDE
 	  range_max[led] = RANGE_MAX_VALUE;
@@ -828,7 +837,8 @@ int main (int argc, char **argv)
 
 	  // cull global vectors to match ranges
 	  for (int s=0; s < _gPD[led][i].size(); s++){
-	    if (_gPD[led][i][s] > range_min[led] && _gPD[led][i][s] < range_max[led]){
+	    //	    if (_gPD[led][i][s] > range_min[led] && _gPD[led][i][s] < range_max[led]){
+	    if (_gPD[led][i][s] > range_min[led] && _gPD[led][i][s] < extended_range_max[led][i]){
 	      gPD[led][i].push_back(_gPD[led][i][s]);
 	      gPMT[led][i].push_back(_gPMT[led][i][s]);
 	      gPDerr[led][i].push_back(_gPDerr[led][i][s]);
@@ -853,6 +863,7 @@ int main (int argc, char **argv)
 	    // PREFIT to get approximate gain
 	    TString prefit_string = "[0] + [1]*x + [2]*x*x";
 	    //			  TF1 *prefit = new TF1("prefit", prefit_string, prefit_range_min[led], prefit_range_max[led]);
+	    //	    TF1 *prefit = new TF1("prefit", prefit_string, range_min[led], range_max[led]);
 	    TF1 *prefit = new TF1("prefit", prefit_string, range_min[led], range_max[led]);
 	    //	    graph[led][i]->Fit(prefit, "R");  // save time, don't do fit
 	    float prefitoffset = prefit->GetParameter(0);
@@ -890,6 +901,7 @@ int main (int argc, char **argv)
 	    // Carry out the fit
 	    
 	    cout << "Carrying out fit " << i << " for LED " << led << endl;
+	    //TF1 * fit = new TF1("fit", fit_string, range_min[led], range_max[led]);
 	    TF1 * fit = new TF1("fit", fit_string, range_min[led], range_max[led]);
 	    // initialize fit function
 	    
@@ -899,25 +911,26 @@ int main (int argc, char **argv)
 	    if (led) fit->SetParameters(750, 0.75, -0.0005, 10, 0.1, 0.0); 
 	    else fit->SetParameters(0.0, 0.75, -0.0005, 10, 0.1, 0.0);
    
-	    float best_beta_endpt_PD = range_max[led]/beta_Bi_ratio;
+	    //	    float best_beta_endpt_PD = range_max[led]/beta_Bi_ratio; // make common to all loops
+	    best_beta_endpt_PD[led].push_back(range_max[led]/beta_Bi_ratio);
 #if RANGE_MAX_OVERRIDE // need actual bi peak position if range_max gets altered
-	    best_beta_endpt_PD = bi_peak_pd/beta_Bi_ratio;
+	    best_beta_endpt_PD[led][i] = bi_peak_pd/beta_Bi_ratio;
 #endif
 
 	    //	    if (constrainfit){  // don't bother with this fit.
 	    //	    cout << "Fixing x-offset to be apprx Beta endpoint " << PD_Bept << endl;
 #if FIXBETAENDPOINT 
-	    cout << "Fixing x-offset to be apprx Beta endpoint " << best_beta_endpt_PD << endl;
+	    cout << "Fixing x-offset to be apprx Beta endpoint " << best_beta_endpt_PD[led][i] << endl;
 	    if (led) fit->SetParameters(750., 5., -0.0005); 
 	    //else fit->SetParameters(3000.0, 10., -0.1);
 	    //	    else  fit->SetParameters(600, 10, -0.0005); 
 	    else  fit->SetParameters(800, 20, -0.0005); 
-	    fit->FixParameter(3, best_beta_endpt_PD);  // fix x-offset to be the calculated PD value for beta endpoint 
+	    fit->FixParameter(3, best_beta_endpt_PD[led][i]);  // fix x-offset to be the calculated PD value for beta endpoint 
 #endif
 	    // }
 
 #if USEBETAOFFSETS
-	    gPDBetaEP[led].push_back(best_beta_endpt_PD); // push beta endpoints to global array for fit use	    
+	    gPDBetaEP[led].push_back(best_beta_endpt_PD[led][i]); // push beta endpoints to global array for fit use	    
 #else
 	    gPDBetaEP[led].push_back(0);
 #endif
@@ -963,7 +976,8 @@ int main (int argc, char **argv)
 	    out_fit_string += fitchisq;           out_fit_string += "\t";
 	    out_fit_string += fit->GetNDF();      out_fit_string += "\t";
 	    out_fit_string += range_min[led];     out_fit_string += "\t";
-	    out_fit_string += range_max[led];     out_fit_string += "\t";
+	    //	    out_fit_string += range_max[led];     out_fit_string += "\t";
+	    out_fit_string += extended_range_max[led][i];     out_fit_string += "\t";
 	    out_fit_string += "\n";
 	    //if (!constrainfit){
 	    fitfile << out_fit_string;
@@ -1400,9 +1414,11 @@ int main (int argc, char **argv)
       // in principle, this function is 
       // PMT = [0] + [1]*(L-BetaEndpt) + [2]*(L-BetaEndpt)^2, where
       // L = [3] + [4]*(PD-PD_offset) + [5]*(PD-PD_offset)^2
-      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7]) + [2]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])", 0, 
+      fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7]) + [2]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])", RANGE_MIN, 
 				    //gPDBetaEP[led][i]*beta_Bi_ratio);
-				    50 + 250*led);
+				    //			    50 + 250*led);
+				    //				    best_beta_endpt_PD[led][i]*beta_Bi_ratio);
+				    extended_range_max[led][i]);
       double p_val[3], p_err[3];
       double PDratio, PDratioErr;
       for (int j = 0; j < 3; j++){
@@ -1415,10 +1431,15 @@ int main (int argc, char **argv)
       fittedFunctions[led][i].SetParameter(6, gPDBetaEP[led][i]);
       fittedFunctions[led][i].SetParameter(7, gPMTBetaEP[i]);
       
+
       gMinuit->GetParameter(27, PDratio, PDratioErr);
       if (led == 0) fittedFunctions[led][i].SetParameter(8, PDratio);
       if (led == 1) fittedFunctions[led][i].SetParameter(8, 1);
-    }
+   
+      for (int p = 0; p < 9; p++){
+	cout << led << " " << i << " " << p << " " << fittedFunctions[led][i].GetParameter(p) << endl;
+      }
+ }
     
   }
   //Testing
@@ -1580,20 +1601,46 @@ int main (int argc, char **argv)
 	//pd_pmt_his2D[DOWN][i]->SetTitle(title);
 	//pd_pmt_his2D[DOWN][i]->Draw("colz");
 	//graph[DOWN][i]->Draw("SameP");
+	gStyle->SetOptFit(0);
+	gStyle->SetOptStat(0);
 	graph[DOWN][i]->SetMarkerColor(6);
-	graph[DOWN][i]->Draw("AP");
+	graph[UP][i]->Draw("AP");
+	graph[UP][i]->SetName("GraphUP");
+	//	graph[DOWN][i]->Draw("AP");
+	graph[DOWN][i]->Draw("sameP");
 	graph[DOWN][i]->SetName("GraphDOWN");
 	graph[UP][i]->SetMarkerColor(4);
-	graph[UP][i]->Draw("SameP");
-	graph[UP][i]->SetName("GraphUP");
-	graph[DOWN][i]->SetTitle(title);
+	//graph[UP][i]->Draw("SameP");
+	//	graph[UP][i]->SetName("GraphUP");
+	/*	graph[DOWN][i]->SetTitle(title);
 	graph[DOWN][i]->GetXaxis()->SetTitle("PD");
-	graph[DOWN][i]->GetYaxis()->SetTitle("PMT (ADC)");
-	
+	graph[DOWN][i]->GetYaxis()->SetTitle("PMT (ADC)");*/
+	graph[UP][i]->SetTitle(title);
+	graph[UP][i]->GetXaxis()->SetTitle("PD");
+	graph[UP][i]->GetYaxis()->SetTitle("PMT (ADC)");
+	graph[UP][i]->GetYaxis()->SetRangeUser(-50, 4000);
+
 	for (int led = 0; led < 2; led++){
 	  fittedFunctions[led][i].SetLineColor(8);
 	  fittedFunctions[led][i].Draw("same");
 	}
+
+	TPad *subpad = new TPad("subpad","",0.37,0.58,0.7,0.89);
+	subpad->Draw();
+	subpad->cd();
+	TGraph * newgraphUP = (TGraph*)graph[UP][i]->Clone("newUP");
+	TGraph * newgraphDOWN = (TGraph*)graph[DOWN][i]->Clone("newDOWN");
+	newgraphUP->Draw("AP");
+	newgraphDOWN->Draw("sameP");
+	newgraphUP->SetTitle("");
+	newgraphUP->GetXaxis()->SetTitle("");
+	newgraphUP->GetYaxis()->SetRangeUser(-50, 1250);
+	newgraphUP->GetXaxis()->SetRangeUser(-10, 125);
+
+	for (int led = 0; led < 2; led++){
+	  fittedFunctions[led][i].SetLineColor(8);
+	  fittedFunctions[led][i].Draw("same");
+	}	// redraw on inset
 
 	ew_canvas->Update();
 	TPaveStats * st = (TPaveStats*)graph[DOWN][i]->GetListOfFunctions()->FindObject("stats");
