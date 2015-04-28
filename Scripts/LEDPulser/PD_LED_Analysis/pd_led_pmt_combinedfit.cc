@@ -786,7 +786,7 @@ int main (int argc, char **argv)
 	  //	  range_min[led] = range_min[led]*0.9; 
 	  range_max[led] = range_max[led]*1.05;
 	  if (led == 0) extended_range_max[led][i] = range_max[led]*2;
-	  else extended_range_max[led][i] = range_max[led];
+	  else extended_range_max[led][i] = extended_range_max[0][i]; //see if lowering 465 helps
 	  double bi_peak_pd = range_max[led];
 #if RANGE_MAX_OVERRIDE
 	  range_max[led] = RANGE_MAX_VALUE;
@@ -843,14 +843,14 @@ int main (int argc, char **argv)
 	      gPMT[led][i].push_back(_gPMT[led][i][s]);
 	      gPDerr[led][i].push_back(_gPDerr[led][i][s]);
 	      gPMTerr[led][i].push_back(_gPMTerr[led][i][s]);
-	      /*  if (led){
-		  cout << gPD[led][i].back() << " " <<
-		  gPDerr[led][i].back() << " " <<
-		  gPMT[led][i].back() << " " <<
-		  gPMTerr[led][i].back() << endl;
-		  }*/
+	      /*if (led){
+	      cout << " WORD " <<  gPD[led][i].back() << " " <<
+		gPDerr[led][i].back() << " " <<
+		gPMT[led][i].back() << " " <<
+		gPMTerr[led][i].back() << endl;
+	      //  }*/
 	    }
-	  }
+	  }  
 	  
 	  //	  if (led) return 0;
 	  
@@ -1419,6 +1419,7 @@ int main (int argc, char **argv)
 				    //			    50 + 250*led);
 				    //				    best_beta_endpt_PD[led][i]*beta_Bi_ratio);
 				    extended_range_max[led][i]);
+				    //				    700);
       double p_val[3], p_err[3];
       double PDratio, PDratioErr;
       for (int j = 0; j < 3; j++){
@@ -1436,12 +1437,12 @@ int main (int argc, char **argv)
       if (led == 0) fittedFunctions[led][i].SetParameter(8, PDratio);
       if (led == 1) fittedFunctions[led][i].SetParameter(8, 1);
    
-      for (int p = 0; p < 9; p++){
-	cout << led << " " << i << " " << p << " " << fittedFunctions[led][i].GetParameter(p) << endl;
-      }
- }
-    
+      /*     for (int p = 0; p < 9; p++){
+	     cout << led << " " << i << " " << p << " " << fittedFunctions[led][i].GetParameter(p) << endl;
+    } */
   }
+  
+}
   //Testing
   /*  TCanvas * c1 = new TCanvas;
   fittedFunctions[0].Draw();
