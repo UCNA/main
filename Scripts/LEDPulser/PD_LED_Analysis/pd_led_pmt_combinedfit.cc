@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_04_28_2015_16wayssimulfit_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_04_29_2015_16way_linearPMT_fit_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -112,6 +112,8 @@ vector<float> _gPDerr[2][NUM_CHANNELS];
 Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led);
 Double_t PDfunc(float gPDval, Double_t *par, Int_t led, Int_t i);
 Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t led, Int_t iflag);
+Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k);
+Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k);
 
 // calculate chi^2 
 void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
@@ -139,8 +141,10 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     for (int k=0; k<gPD[led][i].size(); k++){
       // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
       if (gPMTerr[led][i][k] < 0.000000001) continue;
-      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
+      //delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
+      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
       _chisq_temp += delta*delta;
+      _chisq_temp /= combiErr(par, led, i, k); // already squared
     }
     chisq += _chisq_temp;
   }
@@ -148,16 +152,38 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   return chisq;
 }
 
-//Double_t PDerrfcn(Double_t * par, Int_t i, Int_t led){
-  
+Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k){
+  Double_t combinederr, PDerr, PMTerr;
+  PMTerr = gPMTerr[led][i][k];
+  PDerr = PDInterperr(par, i, led, k);
+  combinederr = PMTerr*PMTerr + PDerr*PDerr;
+  return combinederr;
+}
 
-// par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, gPDBetaEP[led][i] = beta endpoint in PD units for tube
+// from TGraph doc page: total error term when x and y both have errors is = 
+// #frac{(y-f1(x))^{2}}{ey^{2}+(#frac{1}{2}(exl+exh)f1'(x))^{2}}
+
+// works for a quadratic PD with linear PMT
+Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k){ 
+  Double_t pde = gPDerr[led][i][k];
+  Double_t deriv = (1./par[1+3*i]) * (par[18]*par[16] + 2*par[17]*gPD[led][i][k]);
+  return pde*deriv;
+}  
+
+// par[0] - par[15] --> PMTs offset, lin;  par[16]-par[18] --> PD lin, quad, scale
+Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
+{
+  Double_t value = (1./par[1+3*i]) * ( -par[0+3*i] + par[18]*(par[16]*gPDval + par[17]*gPDval*gPDval) );
+  return value;
+}
+
+/* // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, gPDBetaEP[led][i] = beta endpoint in PD units for tube 
 Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
 {
   Double_t PDval = PDfunc(gPDval, par, led, i);
   Double_t value = par[0+3*i] + par[1+3*i]*(PDval - gPMTBetaEP[i]) + par[2+3*i]*(PDval - gPMTBetaEP[i])*(PDval - gPMTBetaEP[i]); // Use PMTEP since PDval is approx linear with PMT response (??)
   return value;
-}
+  }*/
 
   //  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i])) + par[2+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]))*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]));
   //  Double_t value = par[0+3*i] + par[1+3*i]*gPD + par[2+3*i]*gPD*gPD;
