@@ -1443,41 +1443,30 @@ int main (int argc, char **argv)
     //Define functions from fitted parms.
     
     //    double PD_parms[3], PD_errs[3];
-    gMinuit->GetParameter(24, PD_parms[0], PD_errs[0]);
-    gMinuit->GetParameter(25, PD_parms[1], PD_errs[1]);
-    gMinuit->GetParameter(26, PD_parms[2], PD_errs[2]);
+    gMinuit->GetParameter(nvars-3, PD_parms[0], PD_errs[0]);
+    gMinuit->GetParameter(nvars-2, PD_parms[1], PD_errs[1]);
+    gMinuit->GetParameter(nvars-1, PD_parms[2], PD_errs[2]);
     
     for (int led = 0; led < 2; led++){
 
       for (int i = 0; i < NUM_CHANNELS; i++){
 	
-	//      fittedFunctions[i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6])) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]))*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]))", 0, 200);
-	//      fittedFunctions[i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6])) + [2]*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]))*([3] + [4]*(x-[6]) + [5]*(x-[6])*(x-[6]))", 0, BetaEP[led][i]*beta_Bi_ratio);
+	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(1./[1]) * ([0] + [4]*([2]*x + [3]*x*x) )", 
+				      RANGE_MIN, extended_range_max[led][i]); 
 	
-	// in principle, this function is 
-	// PMT = [0] + [1]*(L-BetaEndpt) + [2]*(L-BetaEndpt)^2, where
-	// L = [3] + [4]*(PD-PD_offset) + [5]*(PD-PD_offset)^2
-	fittedFunctions[led][i] = TF1(Form("f_%i", i), "[0] + [1]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7]) + [2]*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])*([3] + [4]*(x*[8]-[6]) + [5]*(x*[8]-[6])*(x*[8]-[6]) - [7])", RANGE_MIN, 
-				      //gPDBetaEP[led][i]*beta_Bi_ratio);
-				      //			    50 + 250*led);
-				      //				    best_beta_endpt_PD[led][i]*beta_Bi_ratio);
-				      //			    700);
-				      extended_range_max[led][i]);
-	double p_val[3], p_err[3];
+	double p_val[2], p_err[2];
 	double PDratio, PDratioErr;
-	for (int j = 0; j < 3; j++){
-	  gMinuit->GetParameter(3*i + j, p_val[j], p_err[j]);
+	for (int j = 0; j < 2; j++){
+	  gMinuit->GetParameter(2*i + j, p_val[j], p_err[j]);
 	  fittedFunctions[led][i].SetParameter(j, p_val[j]);
-	  fittedFunctions[led][i].SetParameter(j+3, PD_parms[j]);
+	  fittedFunctions[led][i].SetParameter(j+2, PD_parms[j]);
 	}
 	//fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
 	//fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
-	fittedFunctions[led][i].SetParameter(6, gPDBetaEP[led][i]);
-	fittedFunctions[led][i].SetParameter(7, gPMTBetaEP[i]);
+	//	fittedFunctions[led][i].SetParameter(6, gPDBetaEP[led][i]);
+	//fittedFunctions[led][i].SetParameter(7, gPMTBetaEP[i]);
 	
-	
-	gMinuit->GetParameter(27, PDratio, PDratioErr);
-	if (led == 0) fittedFunctions[led][i].SetParameter(8, PDratio);
+	if (led == 0) fittedFunctions[led][i].SetParameter(8, PD_parms[2]);
 	if (led == 1) fittedFunctions[led][i].SetParameter(8, 1);
 	
 	/*     for (int p = 0; p < 9; p++){
