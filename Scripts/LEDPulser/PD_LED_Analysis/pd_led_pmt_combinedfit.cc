@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_04_29_2015_16way_linearPMT_fit_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_04_30_2015_16way_linearPMT_fit_longer_range_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -84,6 +84,7 @@ FOLLOWING DOESN'T WORK:
 #define RELATIVEBETAPLOTS false  // supersedes FIXBETAENDPOINT (and everything else)
 #define COMBINEDLED 1 // replace later with a loop
 #define USEBETAOFFSETS false
+#define RANGE_EXTENSION 3.0
 
 const int pulser_steps = 64;
 
@@ -141,10 +142,12 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     for (int k=0; k<gPD[led][i].size(); k++){
       // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
       if (gPMTerr[led][i][k] < 0.000000001) continue;
-      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
-      _chisq_temp = delta*delta;
-      //delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
-      //_chisq_temp += delta*delta/combiErr(par, led, i, k); // err already squared;
+      if (gPDerr[led][i][k] < 0.000000001) continue;
+      //      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
+      //_chisq_temp = delta*delta;
+      // include PD errors:
+      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
+      _chisq_temp += delta*delta/combiErr(par, i, led, k); // err already squared;
       //      if (combiErr(par, led, i, k) < 0.0000000001){
       //	cout << "Error <= 0:  " << combiErr(par, led, i, k) << endl;
       //	continue;}
@@ -169,6 +172,8 @@ Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k){
 // works for a quadratic PD with linear PMT
 Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k){ 
   Double_t pde = gPDerr[led][i][k];
+  //  cout << "led: " << led << endl;
+  if (pde == 0) cout << "0000000 " << led << " " << i << " " << k << endl;
   Double_t scale = 0;
   if (led == 0) scale = par[18];
   if (led == 1) scale = 1.0;
@@ -822,7 +827,7 @@ int main (int argc, char **argv)
 	  range_max[led] = range_max[led]*1.05;
 	  //	  if (led == 0) extended_range_max[led][i] = range_max[led]*2;
 	  //	  else extended_range_max[led][i] = extended_range_max[0][i]; //see if lowering 465 helps
-	  extended_range_max[led][i] = range_max[led];
+	  extended_range_max[led][i] = RANGE_EXTENSION*range_max[led];
 #if RANGE_MAX_OVERRIDE
 	  range_max[led] = RANGE_MAX_VALUE;
 #endif
