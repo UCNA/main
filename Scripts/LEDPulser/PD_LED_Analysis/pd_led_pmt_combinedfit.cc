@@ -141,10 +141,13 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     for (int k=0; k<gPD[led][i].size(); k++){
       // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
       if (gPMTerr[led][i][k] < 0.000000001) continue;
-      //delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
-      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
-      _chisq_temp += delta*delta;
-      _chisq_temp /= combiErr(par, led, i, k); // already squared
+      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
+      _chisq_temp = delta*delta;
+      //delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
+      //_chisq_temp += delta*delta/combiErr(par, led, i, k); // err already squared;
+      //      if (combiErr(par, led, i, k) < 0.0000000001){
+      //	cout << "Error <= 0:  " << combiErr(par, led, i, k) << endl;
+      //	continue;}
     }
     chisq += _chisq_temp;
   }
@@ -166,14 +169,20 @@ Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k){
 // works for a quadratic PD with linear PMT
 Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k){ 
   Double_t pde = gPDerr[led][i][k];
-  Double_t deriv = (1./par[1+3*i]) * (par[18]*par[16] + 2*par[17]*gPD[led][i][k]);
+  Double_t scale = 0;
+  if (led == 0) scale = par[18];
+  if (led == 1) scale = 1.0;
+  Double_t deriv = (1./par[1+2*i]) * scale*(par[16] + 2*par[17]*gPD[led][i][k]);
   return pde*deriv;
 }  
 
 // par[0] - par[15] --> PMTs offset, lin;  par[16]-par[18] --> PD lin, quad, scale
 Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
 {
-  Double_t value = (1./par[1+3*i]) * ( -par[0+3*i] + par[18]*(par[16]*gPDval + par[17]*gPDval*gPDval) );
+  Double_t scale = 0;
+  if (led == 0) scale = par[18];
+  if (led == 1) scale = 1.0;
+  Double_t value = (1./par[1+2*i]) * ( -par[0+2*i] + scale*(par[16]*gPDval + par[17]*gPDval*gPDval) );
   return value;
 }
 
@@ -1317,10 +1326,10 @@ int main (int argc, char **argv)
 				 1. ,0.1 , 0.00001, 
 				 0.1};*/
 
-  static Double_t vstart[nvars] = {10., 3.,      10., 3.,
-				   10., 3.,      10., 3.,
-				   10., 3.,      10., 3.,
-				   10., 3.,      10., 3.,
+  static Double_t vstart[nvars] = {10., 1.,      10., 1.,
+				   10., 1.,      10., 1.,
+				   10., 1.,      10., 1.,
+				   10., 1.,      10., 1.,
 				   3., -0.001, 5.};
  
   static Double_t step[nvars] = {1., 0.1,        1., 0.1, 
@@ -1404,10 +1413,11 @@ int main (int argc, char **argv)
    
     for (int pp = 0; pp < nvars-3; pp++){
       gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], 0, 0, ierflg);
+      //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], -100., 1000., ierflg);
     }
-    gMinuit->mnparm(nvars-3, "PDp1", vstart[nvars-3], step[nvars-3], 0,0,ierflg);
-    gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], 0,0,ierflg);
-    gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);*/
+    gMinuit->mnparm(nvars-3, "PDp1", vstart[nvars-3], step[nvars-3], 0.,10.,ierflg);
+    gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], -1.,1.,ierflg);
+    gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0., 10., ierflg);
  
     // Now ready for minimization step
     arglist[0] = 30000;
@@ -1419,18 +1429,19 @@ int main (int argc, char **argv)
     Int_t nvpar,nparx,icstat;
     gMinuit->mnstat(amin,edm,errdef,nvpar,nparx,icstat);
     gMinuit->mnprin(3,amin);
-  
+    
     // write to file
     double pp, pperr; 
     TString comb_fit_string = "";
     //    for (int i = 0; i < NUM_CHANNELS + 1; i++){
     // for (int j = 0; j < 3; j++){
-       //int p = 3*i + j;
     for (int p = 0; p < nvars; p++){
+      //	int p = 2*i + j;
       gMinuit->GetParameter(p, pp, pperr);
       comb_fit_string += run;                comb_fit_string += "\t"; 
+      int i = p/2; 
       comb_fit_string += i;                  comb_fit_string += "\t"; 
-      comb_fit_string += led;                comb_fit_string += "\t"; 
+      //	comb_fit_string += led;                comb_fit_string += "\t"; 
       comb_fit_string += gMinuit->fCpnam[p]; comb_fit_string += "\t";
       comb_fit_string += pp;                 comb_fit_string += "\t";
       comb_fit_string += pperr;              comb_fit_string += "\t";
@@ -1438,51 +1449,57 @@ int main (int argc, char **argv)
       //	comb_fit_string += pe_fit->GetNDF();      comb_fit_string += "\t";
       comb_fit_string += "\n";
     }
+    comb_fit_string += run;                  comb_fit_string += "\t"; 
+    comb_fit_string += amin;                 comb_fit_string +="\t";
+    comb_fit_string += nvpar;                comb_fit_string +="\t";
+    comb_fit_string += icstat;               comb_fit_string +="\n";
     combfitfile << comb_fit_string;
-
+	
     //Define functions from fitted parms.
-    
+      
     //    double PD_parms[3], PD_errs[3];
     gMinuit->GetParameter(nvars-3, PD_parms[0], PD_errs[0]);
     gMinuit->GetParameter(nvars-2, PD_parms[1], PD_errs[1]);
     gMinuit->GetParameter(nvars-1, PD_parms[2], PD_errs[2]);
     
+      
+    double p_val[2], p_err[2];
+    double PDratio, PDratioErr;
     for (int led = 0; led < 2; led++){
-
       for (int i = 0; i < NUM_CHANNELS; i++){
-	
-	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(1./[1]) * ([0] + [4]*([2]*x + [3]*x*x) )", 
+	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(1./[1]) * (-[0] + [4]*([2]*x + [3]*x*x) )", 
 				      RANGE_MIN, extended_range_max[led][i]); 
-	
-	double p_val[2], p_err[2];
-	double PDratio, PDratioErr;
-	for (int j = 0; j < 2; j++){
+     	for (int j = 0; j < 2; j++){
 	  gMinuit->GetParameter(2*i + j, p_val[j], p_err[j]);
 	  fittedFunctions[led][i].SetParameter(j, p_val[j]);
 	  fittedFunctions[led][i].SetParameter(j+2, PD_parms[j]);
+	  if (led == 0) fittedFunctions[led][i].SetParameter(4, PD_parms[2]);
+	  if (led == 1) fittedFunctions[led][i].SetParameter(4, 1.0);
 	}
-	//fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
-	//fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
-	//	fittedFunctions[led][i].SetParameter(6, gPDBetaEP[led][i]);
-	//fittedFunctions[led][i].SetParameter(7, gPMTBetaEP[i]);
-	
-	if (led == 0) fittedFunctions[led][i].SetParameter(8, PD_parms[2]);
-	if (led == 1) fittedFunctions[led][i].SetParameter(8, 1);
-	
-	/*     for (int p = 0; p < 9; p++){
-	       cout << led << " " << i << " " << p << " " << fittedFunctions[led][i].GetParameter(p) << endl;
-	       } */
       }
-  
     }
+    //fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
+    //fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
+    //	fittedFunctions[led][i].SetParameter(6, gPDBetaEP[led][i]);
+    //fittedFunctions[led][i].SetParameter(7, gPMTBetaEP[i]);
+    
+    // if (led == 0) fittedFunctions[led][i].SetParameter(8, PD_parms[2]);
+    //if (led == 1) fittedFunctions[led][i].SetParameter(8, 1);
+      
+      /*     for (int p = 0; p < 9; p++){
+	     cout << led << " " << i << " " << p << " " << fittedFunctions[led][i].GetParameter(p) << endl;
+	     } */
+
+
+
     //Testing
-  /*  TCanvas * c1 = new TCanvas;
-  fittedFunctions[0].Draw();
-  c1->SaveAs("test.gif");
-  
-  return 0;
-  */
-  /*#if USE_ROOT_APPLICATION
+    /*  TCanvas * c1 = new TCanvas;
+	fittedFunctions[0].Draw();
+	c1->SaveAs("test.gif");
+	
+	return 0;
+    */
+    /*#if USE_ROOT_APPLICATION
   // run the root application
   app.Run();
   #endif
@@ -1667,8 +1684,8 @@ int main (int argc, char **argv)
 	newgraphDOWN->Draw("sameP");
 	newgraphUP->SetTitle("");
 	newgraphUP->GetXaxis()->SetTitle("");
-	newgraphUP->GetYaxis()->SetRangeUser(-50, 1250);
-	newgraphUP->GetXaxis()->SetRangeUser(-10, 125);
+	newgraphUP->GetYaxis()->SetRangeUser(-50, 750);
+	newgraphUP->GetXaxis()->SetRangeUser(-10, 50);
 
 	for (int led = 0; led < 2; led++){
 	  fittedFunctions[led][i].SetLineColor(8);
