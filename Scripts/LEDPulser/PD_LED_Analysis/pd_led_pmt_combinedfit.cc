@@ -301,7 +301,8 @@ int main (int argc, char **argv)
 
   vector <float> best_beta_endpt;
   vector <float> best_beta_endpt_PD[2]; // one for each led
-  float extended_range_max[2][NUM_CHANNELS];
+  //  float extended_range_max[2][NUM_CHANNELS]; // deprecated
+  float range_max[2][NUM_CHANNELS], range_min[2][NUM_CHANNELS];
 
   // run this as a ROOT application
 #if USE_ROOT_APPLICATION
@@ -786,7 +787,7 @@ int main (int argc, char **argv)
 #endif
 
       // find the best range for the fit
-      float range_max[2], range_min[2];// extended_range_max[2]; needs wider scope
+      //      float range_max[2], range_min[2];// extended_range_max[2]; needs wider scope
       
       /*		float prefit_range_max[2], prefit_range_min[2];
 			prefit_range_min[0] = 25; prefit_range_min[1] = 50;
@@ -803,7 +804,7 @@ int main (int argc, char **argv)
 	  // Find range in PD counts corresponding to ADC range
 	  printf("Finding range... ");
 	  float _max = 0, _min = 0;
-	  range_max[led] = 0; range_min[led] = 0;
+	  range_max[led][i] = 0; range_min[led][i] = 0;
 	  for (int k = 0; k < pulser_steps; k++)
 	    {
 	      double x,y;
@@ -818,30 +819,32 @@ int main (int argc, char **argv)
 	      if (y < ADC_max){_max = x;}
 	      if (y > ADC_max){break;}
 
-	      range_max[led] = _max;
-	      range_min[led] = _min;
+	      range_max[led][i] = _max;
+	      range_min[led][i] = _min;
 	    }
-	  if (range_min[led] < RANGE_MIN ) range_min[led] =RANGE_MIN;  // avoid bad clump of below-threshold LED shots
+	  if (range_min[led][i] < RANGE_MIN ) range_min[led][i] =RANGE_MIN;  // avoid bad clump of below-threshold LED shots
 	  // Fudge factor to slightly extend range for better fits
 	  //	  range_min[led] = range_min[led]*0.9; 
-	  range_max[led] = range_max[led]*1.05;
+	  range_max[led][i] = range_max[led][i]*1.05;
 	  //	  if (led == 0) extended_range_max[led][i] = range_max[led]*2;
 	  //	  else extended_range_max[led][i] = extended_range_max[0][i]; //see if lowering 465 helps
-	  extended_range_max[led][i] = RANGE_EXTENSION*range_max[led];
+	  //	  extended_range_max[led][i] = RANGE_EXTENSION*range_max[led];
+	  range_max[led][i] = RANGE_EXTENSION*range_max[led][i];
+	  
 #if RANGE_MAX_OVERRIDE
-	  range_max[led] = RANGE_MAX_VALUE;
+	  range_max[led][i] = RANGE_MAX_VALUE;
 #endif
 #if RELATIVEBETAPLOTS
-	  range_min[1] = range_min[0]; // fix range_min to be same for both LED when comparing
+	  range_min[1][i] = range_min[0][i]; // fix range_min to be same for both LED when comparing
 #endif
-	  printf("found range (%f,%f)\n", range_min[led], range_max[led]); 
+	  printf("found range (%f,%f)\n", range_min[led][i], range_max[led][i]); 
 	      
 	  // Use best value from ADC max to create a scaling factor 
 	  // and make a plot of PMT counts vs "keV", where "keV" is 
 	  // estimated based on Beta endpoint in PMT counts
 	  // Write this factor to file for later use
 
-	  pd_to_keV_factor[led] = beta_Bi_ratio*BETAADCCOUNTS/range_max[led]; 
+	  pd_to_keV_factor[led] = beta_Bi_ratio*BETAADCCOUNTS/range_max[led][i]; 
 	  
 	  TString out_factor_string = "";
 	  out_factor_string += run;                out_factor_string += "\t"; 
@@ -868,16 +871,16 @@ int main (int argc, char **argv)
 	    }
 
 	  // convert range from PD to keV // Replaced with Energy Scaled graph 1/13/2015 
-	  cout << range_min[led] << " HIH " << range_max[led] << endl;
+	  cout << range_min[led][i] << " HIH " << range_max[led][i] << endl;
 #if KEVSCALED
-	  range_min[led] = range_min[led]*pd_to_keV_factor[led];
-	  range_max[led] = range_max[led]*pd_to_keV_factor[led];
+	  range_min[led][i] = range_min[led][i]*pd_to_keV_factor[led][i];
+	  range_max[led][i] = range_max[led][i]*pd_to_keV_factor[led][i];
 #endif
-	  cout << range_min[led] << " HIH" << range_max[led] << endl;
+	  cout << range_min[led][i] << " HIH" << range_max[led][i] << endl;
 
 	  // cull global vectors to match ranges
 	  for (int s=0; s < _gPD[led][i].size(); s++){
-	    if (_gPD[led][i][s] > range_min[led] && _gPD[led][i][s] < range_max[led]){
+	    if (_gPD[led][i][s] > range_min[led][i] && _gPD[led][i][s] < range_max[led][i]){
 	    //	    if (_gPD[led][i][s] > range_min[led] && _gPD[led][i][s] < extended_range_max[led][i]){
 	      gPD[led][i].push_back(_gPD[led][i][s]);
 	      gPMT[led][i].push_back(_gPMT[led][i][s]);
@@ -904,7 +907,7 @@ int main (int argc, char **argv)
 	    TString prefit_string = "[0] + [1]*x + [2]*x*x";
 	    //			  TF1 *prefit = new TF1("prefit", prefit_string, prefit_range_min[led], prefit_range_max[led]);
 	    //	    TF1 *prefit = new TF1("prefit", prefit_string, range_min[led], range_max[led]);
-	    TF1 *prefit = new TF1("prefit", prefit_string, range_min[led], range_max[led]);
+	    TF1 *prefit = new TF1("prefit", prefit_string, range_min[led][i], range_max[led][i]);
 	    //	    graph[led][i]->Fit(prefit, "R");  // save time, don't do fit
 	    float prefitoffset = prefit->GetParameter(0);
 	    float prefitgain = prefit->GetParameter(1);
@@ -942,7 +945,7 @@ int main (int argc, char **argv)
 	    
 	    cout << "Carrying out fit " << i << " for LED " << led << endl;
 	    //TF1 * fit = new TF1("fit", fit_string, range_min[led], range_max[led]);
-	    TF1 * fit = new TF1("fit", fit_string, range_min[led], range_max[led]);
+	    TF1 * fit = new TF1("fit", fit_string, range_min[led][i], range_max[led][i]);
 	    // initialize fit function
 	    
 	    //Replaced with Energy Scaled graph 1/13/2015 
@@ -952,9 +955,10 @@ int main (int argc, char **argv)
 	    else fit->SetParameters(0.0, 0.75, -0.0005, 10, 0.1, 0.0);
    
 	    //	    float best_beta_endpt_PD = range_max[led]/beta_Bi_ratio; // make common to all loops
-	    best_beta_endpt_PD[led].push_back(range_max[led]/beta_Bi_ratio);
+	    best_beta_endpt_PD[led].push_back(range_max[led][i]/beta_Bi_ratio);
 #if RANGE_MAX_OVERRIDE // need actual bi peak position if range_max gets altered
-	    best_beta_endpt_PD[led][i] = bi_peak_pd/beta_Bi_ratio;
+	    // not using beta offsets for fits at the moment 4/30/15 SS
+	    // best_beta_endpt_PD[led][i] = bi_peak_pd/beta_Bi_ratio;
 #endif
 
 	    //	    if (constrainfit){  // don't bother with this fit.
@@ -1015,8 +1019,8 @@ int main (int argc, char **argv)
 	    }
 	    out_fit_string += fitchisq;           out_fit_string += "\t";
 	    out_fit_string += fit->GetNDF();      out_fit_string += "\t";
-	    out_fit_string += range_min[led];     out_fit_string += "\t";
-	    out_fit_string += range_max[led];     out_fit_string += "\t";
+	    out_fit_string += range_min[led][i];  out_fit_string += "\t";
+	    out_fit_string += range_max[led][i];  out_fit_string += "\t";
 	    //	    out_fit_string += extended_range_max[led][i];     out_fit_string += "\t";
 	    out_fit_string += "\n";
 	    //if (!constrainfit){
@@ -1038,7 +1042,7 @@ int main (int argc, char **argv)
 #if RELATIVEBETAPLOTS
       TF1 * relativefit = new TF1("relative", 
 				  "[4] * ([0] + [1]*(x-[3]) + [2]*(x-[3])**2)",
-				  range_min[UP], range_max[UP]);
+				  range_min[UP][i], range_max[UP][i]);
       relativefit->FixParameter(0, fitpars[0][0]); // use 405 fitpars for 465 LED
       relativefit->FixParameter(1, fitpars[0][1]);
       relativefit->FixParameter(2, fitpars[0][2]);
@@ -1203,7 +1207,7 @@ int main (int argc, char **argv)
       g_PE_PMT[i]->Draw("AP");
 
 #if DO_LED_FIT
-      TF1 *pd_fit = new TF1("polyfit", "[0]*x", range_min[LED_TYPE], range_max[LED_TYPE]);
+      TF1 *pd_fit = new TF1("polyfit", "[0]*x", range_min[LED_TYPE][i], range_max[LED_TYPE][i]);
       if (g[i]->Fit(pd_fit, "R"))
 	continue;
       printf("done.\n");
@@ -1455,6 +1459,8 @@ int main (int argc, char **argv)
       comb_fit_string += "\n";
     }
     comb_fit_string += run;                  comb_fit_string += "\t"; 
+    comb_fit_string += "10";                 comb_fit_string += "\t"; 
+    comb_fit_string += "Chisq/NDF";          comb_fit_string += "\t"; 
     comb_fit_string += amin;                 comb_fit_string +="\t";
     comb_fit_string += nvpar;                comb_fit_string +="\t";
     comb_fit_string += icstat;               comb_fit_string +="\n";
@@ -1473,7 +1479,9 @@ int main (int argc, char **argv)
     for (int led = 0; led < 2; led++){
       for (int i = 0; i < NUM_CHANNELS; i++){
 	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(1./[1]) * (-[0] + [4]*([2]*x + [3]*x*x) )", 
-				      RANGE_MIN, extended_range_max[led][i]); 
+				      RANGE_MIN, range_max[led][i]); 
+	//			      RANGE_MIN, extended_range_max[led][i]); // deprecated
+
      	for (int j = 0; j < 2; j++){
 	  gMinuit->GetParameter(2*i + j, p_val[j], p_err[j]);
 	  fittedFunctions[led][i].SetParameter(j, p_val[j]);
