@@ -1456,6 +1456,10 @@ int main (int argc, char **argv)
       comb_fit_string += pperr;              comb_fit_string += "\t";
       //	comb_fit_string += pefitchisq;         comb_fit_string += "\t";
       //	comb_fit_string += pe_fit->GetNDF();      comb_fit_string += "\t";
+      comb_fit_string += range_min[0][i];  comb_fit_string += "\t";
+      comb_fit_string += range_max[0][i];  comb_fit_string += "\t";
+      comb_fit_string += range_min[1][i];  comb_fit_string += "\t";
+      comb_fit_string += range_max[1][i];  comb_fit_string += "\t";
       comb_fit_string += "\n";
     }
     comb_fit_string += run;                  comb_fit_string += "\t"; 
