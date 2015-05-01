@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_04_30_2015_16way_linearPMT_fit_longer_range_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_01_2015_16way_linearPMT_fit_longer_range_21274_21328/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -1462,11 +1462,19 @@ int main (int argc, char **argv)
       comb_fit_string += range_max[1][i];  comb_fit_string += "\t";
       comb_fit_string += "\n";
     }
+    // find number of points used in fit
+    Double_t NFit = 0;
+    for (int led = 0; led < 2; led++){
+      for (int i = 0; i < NUM_CHANNELS; i++){
+	NFit += gPD[led][i].size();
+      }
+    }
     comb_fit_string += run;                  comb_fit_string += "\t"; 
     comb_fit_string += "10";                 comb_fit_string += "\t"; 
-    comb_fit_string += "Chisq/NDF";          comb_fit_string += "\t"; 
+    comb_fit_string += "Chisq/nvars";        comb_fit_string += "\t"; 
     comb_fit_string += amin;                 comb_fit_string +="\t";
     comb_fit_string += nvpar;                comb_fit_string +="\t";
+    comb_fit_string += NFit;                 comb_fit_string +="\t";
     comb_fit_string += icstat;               comb_fit_string +="\n";
     combfitfile << comb_fit_string;
 	
