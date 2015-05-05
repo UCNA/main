@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_01_2015_16way_linearPMT_fit_longer_range_21274_21328/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_04_2015_16way_linearPMT_fit_longer_range_raw_output_21274_21328/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -503,7 +503,7 @@ int main (int argc, char **argv)
   //	#endif
   fitfilename = OUTPUT_IMAGE_DIR + fitfilename;
   constrainfitfilename = OUTPUT_IMAGE_DIR + constrainfitfilename;
-  
+
   ofstream fitfile;
   fitfile.open(fitfilename, std::ofstream::out | std::ofstream::app);
   //  ofstream constrainfitfile;
@@ -534,7 +534,12 @@ int main (int argc, char **argv)
   convfactorfilename = OUTPUT_IMAGE_DIR + convfactorfilename;
   ofstream convfactorfile;
   convfactorfile.open(convfactorfilename, std::ofstream::out | std::ofstream::app);
-    
+
+  TString rawfilename = "RawGraphData.txt";
+  rawfilename = OUTPUT_IMAGE_DIR + rawfilename;
+  ofstream rawfile;
+  rawfile.open(rawfilename, std::ofstream::out | std::ofstream::app);
+      
   float gain_sum = 0;
   float gain2_sum = 0;
   int gain_cnt = 0;
@@ -880,6 +885,17 @@ int main (int argc, char **argv)
 
 	  // cull global vectors to match ranges
 	  for (int s=0; s < _gPD[led][i].size(); s++){
+	    // write all the data to file
+	    TString out_raw_string = "";
+	    out_raw_string += run;                   out_raw_string += "\t"; 
+	    out_raw_string += i;                     out_raw_string += "\t"; 
+	    out_raw_string += led;                   out_raw_string += "\t"; 
+	    out_raw_string += _gPD[led][i][s];       out_raw_string += "\t"; 
+	    out_raw_string += _gPDerr[led][i][s];    out_raw_string += "\t"; 
+	    out_raw_string += _gPMT[led][i][s];      out_raw_string += "\t"; 
+	    out_raw_string += _gPMTerr[led][i][s];   out_raw_string += "\t"; 
+	    out_raw_string += "\n";
+	    rawfile << out_raw_string;
 	    if (_gPD[led][i][s] > range_min[led][i] && _gPD[led][i][s] < range_max[led][i]){
 	    //	    if (_gPD[led][i][s] > range_min[led] && _gPD[led][i][s] < extended_range_max[led][i]){
 	      gPD[led][i].push_back(_gPD[led][i][s]);
