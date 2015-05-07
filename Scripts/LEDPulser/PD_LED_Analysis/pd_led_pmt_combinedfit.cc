@@ -110,7 +110,8 @@ vector<float> _gPD[2][NUM_CHANNELS];
 vector<float> _gPMTerr[2][NUM_CHANNELS];
 vector<float> _gPDerr[2][NUM_CHANNELS];
 
-Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led);
+Double_t func(float PDval, Double_t *par, Int_t i, Int_t led);
+Double_t func2(Double_t *PDval, Double_t *par);
 //Double_t PDfunc(float gPDval, Double_t *par, Int_t led, Int_t i);
 Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t led, Int_t iflag);
 Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k);
@@ -183,11 +184,23 @@ Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k){
 }  
 
  // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD
-Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
+Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
 {
-  Double_t PD_term = par[26]*( par[24]*gPDval + par[25]*gPDval*gPDval ) - par[0+3*i];
+  Double_t PD_term = par[26]*( par[24]*PDval + par[25]*PDval*PDval ) - par[0+3*i];
   Double_t PDcoeff = par[2+3*i]/(par[1+3*i]*par[1+3*i]);
   Double_t gcoeff = (-0.5)*(par[1+3*i]/par[2+3*i]);
+
+  Double_t value = gcoeff*( 1 - sqrt(1 + 4*PDcoeff*PD_term) );
+  return value;
+}
+
+// par[0] - par[2] --> PMTs, par[3] - par[5] --> PD,
+Double_t func2(Double_t *PDval, Double_t * par)
+{
+  Double_t _PDval = PDval[0];
+  Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval ) - par[0];
+  Double_t PDcoeff = par[2]/(par[1]*par[1]);
+  Double_t gcoeff = (-0.5)*(par[1]/par[2]);
 
   Double_t value = gcoeff*( 1 - sqrt(1 + 4*PDcoeff*PD_term) );
   return value;
@@ -1510,8 +1523,12 @@ int main (int argc, char **argv)
 	// Linear PMT
 	//	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(1./[1]) * (-[0] + [4]*([2]*x + [3]*x*x) )", 
 	// Nonlinear PMT
-	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(-0.5)*([1]/[2]) * (1 - sqrt(1 + 4*([2]/([1]*[1]))*([5]*([3]*x + [4]*x*x) - [0])))", 
-				      RANGE_MIN, range_max[led][i]); 
+	//	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(-0.5)*([1]/[2]) * (1 - sqrt(1 + 4*([2]/([1]*[1]))*([5]*([3]*x + [4]*x*x) - [0])))", 
+	//				      RANGE_MIN, range_max[led][i]); 
+	
+	fittedFunctions[led][i] = TF1(Form("f_%i_%i", led, i), func2, 
+				      RANGE_MIN, range_max[led][i], 6); // 6 params 
+	
 	//			      RANGE_MIN, extended_range_max[led][i]); // deprecated
 	
 	/*// Linear PMT
@@ -1538,10 +1555,10 @@ int main (int argc, char **argv)
       }
     }
     
-    Double_t * _par = fittedFunctions[0][0].GetParameters();
-    cout << _par[0] << " " << _par[1] << " " << _par[2] << endl;
-    cout << "Testing: " << func(0, _par, 0, 0) << " " << fittedFunctions[0][0](0);
-    return 0;
+    // Double_t * _par = fittedFunctions[0][0].GetParameters();
+    //cout << _par[0] << " " << _par[1] << " " << _par[2] << endl;
+    //    cout << "Testing: " << func(100, _par, 0, 0) << " " << fittedFunctions[0][0](100);
+    //return 0;
 
     //fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
     //fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
@@ -1887,13 +1904,11 @@ int main (int argc, char **argv)
   //	   pmt_time_rootfilename += ".root";
   //  pmt_time_canvas->SaveAs(pmt_time_filename, "9");
   //	   pmt_time_canvas->SaveAs(pmt_time_rootfilename, "9");
-  
 #endif
-  
 #if USE_ROOT_APPLICATION
   // run the root application
   app.Run();
 #endif
-  
+
   return 0;
 }
