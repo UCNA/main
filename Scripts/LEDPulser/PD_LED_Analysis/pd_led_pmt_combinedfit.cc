@@ -190,7 +190,6 @@ Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
   Double_t gcoeff = (-0.5)*(par[1+3*i]/par[2+3*i]);
 
   Double_t value = gcoeff*( 1 - sqrt(1 + 4*PDcoeff*PD_term) );
-  
   return value;
 }
 
@@ -1017,13 +1016,6 @@ int main (int argc, char **argv)
 #else	    
 	    graph[led][i]->Fit(fit, "R");  
 #endif
-	    //Testing
-	    /*if (led>0)  {
-	      PMT_keV_graph[0][i]->Draw("AP");
-	      PMT_keV_graph[1][i]->Draw("Psame");
-	      app.Run();
-	      return 0;
-	      }*/
 
 	    std::cout << "A fit for run " << run << " finished." << std::endl;
 	    
@@ -1082,13 +1074,6 @@ int main (int argc, char **argv)
       relativefit->SetParameter(4, 0.3);
       graph[UP][i]->Fit(relativefit, "R");
       
-      // Testing
-      /*TCanvas *ppp = new TCanvas();
-      graph[DOWN][i]->Draw("A*");
-      graph[UP][i]->Draw("same*");
-      app.Run();
-      return 0;
-      }*/
 #endif	
 
 #if MOVEDUPGRAPH      
@@ -1119,14 +1104,7 @@ int main (int argc, char **argv)
 	graph_465_moved_up[i]->SetPoint(pulse, xUP, y_scaled);
 	//	cout << "yrat = " << y_scaled/yUP << endl; 
       }
-      //Testing
-      /*TCanvas *pop = new TCanvas();
-      graph_465_moved_up[i]->Draw("A*");
-      graph[DOWN][i]->Draw("*same");
-      graph[UP][i]->Draw("*Same");
-      rescalefit->Draw("same");
-      app.Run();
-      return 0;*/
+
 #endif
 
   /// Plotting 
@@ -1559,6 +1537,12 @@ int main (int argc, char **argv)
 	//}
       }
     }
+    
+    Double_t * _par = fittedFunctions[0][0].GetParameters();
+    cout << _par[0] << " " << _par[1] << " " << _par[2] << endl;
+    cout << "Testing: " << func(0, _par, 0, 0) << " " << fittedFunctions[0][0](0);
+    return 0;
+
     //fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
     //fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
     //	fittedFunctions[led][i].SetParameter(6, gPDBetaEP[led][i]);
@@ -1570,22 +1554,6 @@ int main (int argc, char **argv)
       /*     for (int p = 0; p < 9; p++){
 	     cout << led << " " << i << " " << p << " " << fittedFunctions[led][i].GetParameter(p) << endl;
 	     } */
-
-
-
-    //Testing
-    /*  TCanvas * c1 = new TCanvas;
-	fittedFunctions[0].Draw();
-	c1->SaveAs("test.gif");
-	
-	return 0;
-    */
-    /*#if USE_ROOT_APPLICATION
-  // run the root application
-  app.Run();
-  #endif
-  return 0;
-  */
 
   fitfile.close();
   pepmtfitfile.close();
