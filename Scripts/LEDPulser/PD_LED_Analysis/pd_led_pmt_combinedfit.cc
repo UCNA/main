@@ -1353,7 +1353,7 @@ int main (int argc, char **argv)
 				   10., 10., -0.0001,
 				   10., 10., -0.0001,
 				   10., 10., -0.0001,
-				   3., -0.001, 5.};
+				   0.01, -0.001, 5.};
 				   //10., 3., 0., 
 				   //				   3};
  
@@ -1365,7 +1365,7 @@ int main (int argc, char **argv)
 				 1 ,0.1 , 0.00001,
 				 1 ,0.1 , 0.00001,
 				 1 ,0.1 , 0.00001, 
-				 0.1, 0.00001, 0.1};
+				 0.01, 0.00001, 0.1};
 				 //	 1. ,0.1 , 0.00001, 
 				 //				 0.1};
 
@@ -1532,12 +1532,12 @@ int main (int argc, char **argv)
 	// Linear PMT
 	//	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(1./[1]) * (-[0] + [4]*([2]*x + [3]*x*x) )", 
 	// Nonlinear PMT
-	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(-0.5)*[1]/[2] * (1 - sqrt(1 + 4*([2]/([1]*[1]))*([5]*([3]*x + [4]*x*x) - [0])))", 
+	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(-0.5)*([1]/[2]) * (1 - sqrt(1 + 4*([2]/([1]*[1]))*([5]*([3]*x + [4]*x*x) - [0])))", 
 				      RANGE_MIN, range_max[led][i]); 
 	//			      RANGE_MIN, extended_range_max[led][i]); // deprecated
 	
 	/*// Linear PMT
-	for (int j = 0; j < 2; j++){
+	  for (int j = 0; j < 2; j++){
 	  gMinuit->GetParameter(2*i + j, p_val[j], p_err[j]);
 	  fittedFunctions[led][i].SetParameter(j, p_val[j]);
 	  fittedFunctions[led][i].SetParameter(j+2, PD_parms[j]);
@@ -1554,7 +1554,9 @@ int main (int argc, char **argv)
 	fittedFunctions[led][i].SetParameter(4, PD_parms[1]);
 	if (led == 0) fittedFunctions[led][i].SetParameter(5, PD_parms[2]);
 	if (led == 1) fittedFunctions[led][i].SetParameter(5, 1.0);
-
+	//	for (int kk = 0; kk < 6; kk++){
+	//  cout << i << " " << kk << " " << fittedFunctions[led][i].GetParameter(kk) << endl;
+	//}
       }
     }
     //fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
