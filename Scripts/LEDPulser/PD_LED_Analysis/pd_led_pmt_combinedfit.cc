@@ -147,7 +147,7 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
       // no PD errors:
       delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
       _chisq_temp += delta*delta; 
-      cout << i << " " << led << " " << k << " " << gPMT[led][i][k] - func(gPD[led][i][k], par, i, led) << " " << delta << endl;
+      //      cout << i << " " << led << " " << k << " " << gPMT[led][i][k] - func(gPD[led][i][k], par, i, led) << " " << delta << endl;
       /*      // include PD errors:
       delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
       _chisq_temp += delta*delta/combiErr(par, i, led, k); // err already squared; */
@@ -155,7 +155,7 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     }
     chisq += _chisq_temp;
   }
-  cout << "Chi^2 = " << chisq << endl;
+  //  cout << "Chi^2 = " << chisq << endl;
   return chisq;
 }
 
