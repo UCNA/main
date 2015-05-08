@@ -124,7 +124,6 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
   for (int ded = 0; ded < 2; ded++){   // sum chi^2 for each led 
     value += subfcn(npar, gin, f, par, ded, iflag);
   }
-
   f = value;
 }  
 
@@ -147,8 +146,8 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
       
       // no PD errors:
       delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
-      _chisq_temp = delta*delta;
-      
+      _chisq_temp += delta*delta; 
+      cout << i << " " << led << " " << k << " " << gPMT[led][i][k] - func(gPD[led][i][k], par, i, led) << " " << delta << endl;
       /*      // include PD errors:
       delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
       _chisq_temp += delta*delta/combiErr(par, i, led, k); // err already squared; */
@@ -156,7 +155,7 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     }
     chisq += _chisq_temp;
   }
-  //  cout << "Chi^2 = " << chisq << endl;
+  cout << "Chi^2 = " << chisq << endl;
   return chisq;
 }
 
@@ -186,9 +185,16 @@ Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k){
  // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD
 Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
 {
-  Double_t PD_term = par[26]*( par[24]*PDval + par[25]*PDval*PDval ) - par[0+3*i];
+  Double_t scale = 0;
+  if (led == 0) scale = par[26];
+  if (led == 1) scale = 1.0;
+  //Double_t PD_term = par[26]*( par[24]*PDval + par[25]*PDval*PDval ) - par[0+3*i];
+  Double_t PD_term = scale*( par[24]*PDval + par[25]*PDval*PDval ) - par[0+3*i];
   Double_t PDcoeff = par[2+3*i]/(par[1+3*i]*par[1+3*i]);
   Double_t gcoeff = (-0.5)*(par[1+3*i]/par[2+3*i]);
+
+  //  if (4*PDcoeff*PD_term <= -1 ) PDcoeff = 0; // try to avoid bad radicals
+  if (4*PDcoeff*PD_term <= -1 ) return 1e6; // try to avoid bad radicals
 
   Double_t value = gcoeff*( 1 - sqrt(1 + 4*PDcoeff*PD_term) );
   return value;
@@ -1336,27 +1342,27 @@ int main (int argc, char **argv)
 				 0.1};*/
 
   // Non-linear PMT
-  static Double_t vstart[nvars] = {10., 3., -0.0001,
-				   10., 3., -0.0001,
-				   10., 3., -0.0001,
-				   10., 3., -0.0001,
-				   10., 10., -0.0001,
-				   10., 10., -0.0001,
-				   10., 10., -0.0001,
-				   10., 10., -0.0001,
-				   0.01, -0.001, 5.};
+  static Double_t vstart[nvars] = {0., 20., -0.000001,
+				   0., 20., -0.000001,
+				   0., 20., -0.000001,
+				   0., 20., -0.000001,
+				   0., 20., -0.000001,
+				   0., 20., -0.000001,
+				   0., 20., -0.000001,
+				   0., 20., -0.000001,
+				   3., -0.00001, 5.};
 				   //10., 3., 0., 
 				   //				   3};
- 
-  static Double_t step[nvars] = {1 , 0.1  , 0.00001,
-				 1, 0.1, 0.00001,
-				 1 ,0.1 , 0.00001,
-				 1 ,0.1 , 0.00001,
-				 1 ,0.1 , 0.00001,
-				 1 ,0.1 , 0.00001,
-				 1 ,0.1 , 0.00001,
-				 1 ,0.1 , 0.00001, 
-				 0.01, 0.00001, 0.1};
+
+  static Double_t step[nvars] = {1 , 0.1  , 0.001,
+				 1, 0.1, 0.001,
+				 1 ,0.1 , 0.001,
+				 1 ,0.1 , 0.001,
+				 1 ,0.1 , 0.001,
+				 1 ,0.1 , 0.001,
+				 1 ,0.1 , 0.001,
+				 1 ,0.1 , 0.001, 
+				 0.1, 0.001, 0.1};
 				 //	 1. ,0.1 , 0.00001, 
 				 //				 0.1};
 
@@ -1450,12 +1456,16 @@ int main (int argc, char **argv)
     for (int pp = 0; pp < nvars-3; pp++){
       //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], 0, 0, ierflg); // Linear PMT 
       gMinuit->mnparm(pp, Form("p%i", pp%3), vstart[pp], step[pp], 0, 0, ierflg);  // Non-linear PMT
+      //      if (pp%3 == 2) gMinuit->FixParameter(pp);
       //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], -100., 1000., ierflg); 
       // try not to put limits if we can avoid it
     }
     gMinuit->mnparm(nvars-3, "PDp1", vstart[nvars-3], step[nvars-3], 0.,10.,ierflg);
     gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], -1.,1.,ierflg);
     gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0., 10., ierflg);
+    /*   gMinuit->mnparm(nvars-3, "PDp1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
+    gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
+    gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);*/
  
     // Now ready for minimization step
     arglist[0] = 30000;
@@ -1549,16 +1559,19 @@ int main (int argc, char **argv)
 	fittedFunctions[led][i].SetParameter(4, PD_parms[1]);
 	if (led == 0) fittedFunctions[led][i].SetParameter(5, PD_parms[2]);
 	if (led == 1) fittedFunctions[led][i].SetParameter(5, 1.0);
-	//	for (int kk = 0; kk < 6; kk++){
-	//  cout << i << " " << kk << " " << fittedFunctions[led][i].GetParameter(kk) << endl;
-	//}
+	
       }
     }
-    
-    // Double_t * _par = fittedFunctions[0][0].GetParameters();
-    //cout << _par[0] << " " << _par[1] << " " << _par[2] << endl;
-    //    cout << "Testing: " << func(100, _par, 0, 0) << " " << fittedFunctions[0][0](100);
-    //return 0;
+
+    cout << fittedFunctions[0][7].Eval(0) << endl;
+    cout << fittedFunctions[1][7].Eval(0) << endl;
+
+    /*    Double_t * _par = fittedFunctions[0][0].GetParameters();
+    //Double_t * _asdfval; *_asdfval = 100;
+    cout << _par[0] << " " << _par[1] << " " << _par[2] << endl;
+    cout << _par[3] << " " << _par[4] << " " << _par[5] << endl;
+    //    cout << "Testing: " << " " << func(100, _par, 0, 0) << " " << func2(_asdfval, _par) << " " << fittedFunctions[0][0](100);
+    //return 0;*/
 
     //fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
     //fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
