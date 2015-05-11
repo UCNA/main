@@ -136,12 +136,12 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   
   //  int led = COMBINEDLED; // replace later with loop over LEDs
   //int led = gLED; // no longer needed now that we're looping
-  for (int i = 0; i < NUM_CHANNELS; i++){
-    //for (int i = 0; i < 4; i++){
+  // for (int i = 0; i < NUM_CHANNELS; i++){
+  for (int i = 0; i < 4; i++){
     // for (int i = 0; i < 1; i++){
     Double_t _chisq_temp = 0;
     for (int k=0; k<gPD[led][i].size(); k++){
-      // only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
+      //only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
       if (gPMTerr[led][i][k] < 0.000000001) continue;
       if (gPDerr[led][i][k] < 0.000000001) continue;
       
