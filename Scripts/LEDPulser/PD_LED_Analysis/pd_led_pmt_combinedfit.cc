@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_08_2015_16way_quadraticPMT_cubicPD_fit_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_11_2015_16way_quadraticPMT_cubicPD_movedscale_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -200,12 +200,17 @@ Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
   return value;
 }
 
+// implementation of func to allow for plotting.
 // par[0] - par[2] --> PMTs, par[3] - par[5] --> PD, par[6] --> cubic PD term
 Double_t func2(Double_t *PDval, Double_t * par)
 {
-  Double_t _PDval = PDval[0];
+  //  Double_t _PDval = PDval[0];
+  Double_t _PDval = PDval[0]*par[5]; // try including scale factor in PDval
+  Double_t PD_term = ( par[3]*_PDval + par[4]*_PDval*_PDval + par[6]*_PDval*_PDval*_PDval) - par[0]; 
+
   //Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval ) - par[0];
-  Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[6]*_PDval*_PDval*_PDval) - par[0];
+  //Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[6]*_PDval*_PDval*_PDval) - par[0];
+
   Double_t PDcoeff = par[2]/(par[1]*par[1]);
   Double_t gcoeff = (-0.5)*(par[1]/par[2]);
 
