@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_08_2015_16way_quadraticPMT_cubicPD_fit_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_11_2015_16way_quadraticPMT_cubicPD_fit_onlyE_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -137,6 +137,7 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   //  int led = COMBINEDLED; // replace later with loop over LEDs
   //int led = gLED; // no longer needed now that we're looping
   for (int i = 0; i < NUM_CHANNELS; i++){
+    //for (int i = 0; i < 4; i++){
     // for (int i = 0; i < 1; i++){
     Double_t _chisq_temp = 0;
     for (int k=0; k<gPD[led][i].size(); k++){
@@ -330,8 +331,8 @@ int main (int argc, char **argv)
   
   // some strings we will use
   TString wavelength[2] = { "405", "465" };
-  TString detector[8] = { "E1", "E2", "E3", "E4", "W1", "W2", "W3", "W4" };
-  TString Qadc[8] = { "Qadc0", "Qadc1", "Qadc2", "Qadc3", "Qadc4", "Qadc5", "Qadc6", "Qadc7"};
+  TString detector[NUM_CHANNELS] = { "E1", "E2", "E3", "E4", "W1", "W2", "W3", "W4" };
+  TString Qadc[NUM_CHANNELS] = { "Qadc0", "Qadc1", "Qadc2", "Qadc3", "Qadc4", "Qadc5", "Qadc6", "Qadc7"};
 
 
   vector <float> best_beta_endpt;
@@ -467,18 +468,18 @@ int main (int argc, char **argv)
   
   // The histograms and canvases we will use 
   TH2F* time_his2D[4];
-  TH1F* pmt_gain_his1D[8];
-  TH2F* pmt_gain_his2D[8];
+  TH1F* pmt_gain_his1D[NUM_CHANNELS];
+  TH2F* pmt_gain_his2D[NUM_CHANNELS];
   TH1F * time_his1D;
-  TH2F* pd_pmt_his2D[2][8];
-  TGraphErrors* graph[2][8];
-  TGraphErrors* graph_465_moved_up[8];
-  TGraphErrors* PMT_keV_graph[2][8];
-  TGraphErrors* constrained_graph[2][8];
-  TCanvas* canvas[8];
-  TGraph* g[8];
-  TGraphErrors* g_PE_PMT[8];
-  TGraphErrors* resg[8];
+  TH2F* pd_pmt_his2D[2][NUM_CHANNELS];
+  TGraphErrors* graph[2][NUM_CHANNELS];
+  TGraphErrors* graph_465_moved_up[NUM_CHANNELS];
+  TGraphErrors* PMT_keV_graph[2][NUM_CHANNELS];
+  TGraphErrors* constrained_graph[2][NUM_CHANNELS];
+  TCanvas* canvas[NUM_CHANNELS];
+  TGraph* g[NUM_CHANNELS];
+  TGraphErrors* g_PE_PMT[NUM_CHANNELS];
+  TGraphErrors* resg[NUM_CHANNELS];
   TCanvas * PE_PMT_canvas = new TCanvas();
   PE_PMT_canvas->Divide(2,4);
 
