@@ -200,11 +200,12 @@ Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
   return value;
 }
 
-// par[0] - par[2] --> PMTs, par[3] - par[5] --> PD,
+// par[0] - par[2] --> PMTs, par[3] - par[5] --> PD, par[6] --> cubic PD term
 Double_t func2(Double_t *PDval, Double_t * par)
 {
   Double_t _PDval = PDval[0];
-  Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval ) - par[0];
+  //Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval ) - par[0];
+  Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[6]*_PDval*_PDval*_PDval) - par[0];
   Double_t PDcoeff = par[2]/(par[1]*par[1]);
   Double_t gcoeff = (-0.5)*(par[1]/par[2]);
 
@@ -1407,7 +1408,8 @@ int main (int argc, char **argv)
 				     1.};*/
   //  int led = COMBINEDLED;  
 
-  double PD_parms[3], PD_errs[3];
+  //  double PD_parms[3], PD_errs[3];
+  double PD_parms[4], PD_errs[4];
   TF1 fittedFunctions[2][NUM_CHANNELS]; // separate functions for each LED
   //  TF1 LEDFreeFuncs[2][NUM_CHANNELS]; // not as interesting 
 
@@ -1529,9 +1531,17 @@ int main (int argc, char **argv)
     //Define functions from fitted parms.
       
     //    double PD_parms[3], PD_errs[3];
-    gMinuit->GetParameter(nvars-3, PD_parms[0], PD_errs[0]);
+
+    // quadratic PD fit
+    /*    gMinuit->GetParameter(nvars-3, PD_parms[0], PD_errs[0]);
     gMinuit->GetParameter(nvars-2, PD_parms[1], PD_errs[1]);
-    gMinuit->GetParameter(nvars-1, PD_parms[2], PD_errs[2]);
+    gMinuit->GetParameter(nvars-1, PD_parms[2], PD_errs[2]);*/
+    
+    // cubic PD fit
+    gMinuit->GetParameter(nvars-4, PD_parms[0], PD_errs[0]);
+    gMinuit->GetParameter(nvars-3, PD_parms[1], PD_errs[1]);
+    gMinuit->GetParameter(nvars-2, PD_parms[2], PD_errs[2]);
+    gMinuit->GetParameter(nvars-1, PD_parms[3], PD_errs[3]);
     
       
     double p_val[2], p_err[2];
@@ -1545,7 +1555,8 @@ int main (int argc, char **argv)
 	//				      RANGE_MIN, range_max[led][i]); 
 	
 	fittedFunctions[led][i] = TF1(Form("f_%i_%i", led, i), func2, 
-				      RANGE_MIN, range_max[led][i], 6); // 6 params 
+				      //				      RANGE_MIN, range_max[led][i], 6); // 6 params 
+				      RANGE_MIN, range_max[led][i], 7); // cubic fit needs 7 params 
 	
 	//			      RANGE_MIN, extended_range_max[led][i]); // deprecated
 	
@@ -1567,7 +1578,7 @@ int main (int argc, char **argv)
 	fittedFunctions[led][i].SetParameter(4, PD_parms[1]);
 	if (led == 0) fittedFunctions[led][i].SetParameter(5, PD_parms[2]);
 	if (led == 1) fittedFunctions[led][i].SetParameter(5, 1.0);
-	
+	fittedFunctions[led][i].SetParameter(6, PD_parms[3]); // cubic fit
       }
     }
 
