@@ -205,6 +205,25 @@ Double_t PDInterperr2(Double_t * par, Int_t i, Int_t led, Int_t k){
   return pde*deriv;
 }
 
+// Uses parameters for a cubic PD with quadratic PMT 
+// Uses implicitly defined derivative to calculate error
+Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k){ 
+  Double_t pde = gPDerr[led][i][k];
+  //  cout << "led: " << led << endl;
+  if (pde == 0) cout << "0000000 " << led << " " << i << " " << k << endl;
+  Double_t scale = 0;
+  if (led == 0) scale = par[26];
+  if (led == 1) scale = 1.0;
+  //  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k] + 
+  //					    3*par[27]*gPD[led][i][k]*gPD[led][i][k]);
+  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k]);
+					    
+  return pde*deriv;
+}
+
+
+
+
  // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, par[27] --> cubic PD term
 Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
 {
