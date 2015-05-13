@@ -118,6 +118,7 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
 Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k);
 Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k);
 Double_t PDInterperr2(Double_t * par, Int_t i, Int_t led, Int_t k);
+Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k);
 
 // calculate chi^2 
 void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
@@ -150,14 +151,14 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
       if (gPDerr[led][i][k] < 0.000000001) continue;
       
       // no PD errors:
-      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
-      _chisq_temp += delta*delta; 
-       //      cout << i << " " << led << " " << k << " " << gPMT[led][i][k] - func(gPD[led][i][k], par, i, led) << " " << delta << endl;
+      //   delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
+      // _chisq_temp += delta*delta; 
+     
+      //      cout << i << " " << led << " " << k << " " << gPMT[led][i][k] - func(gPD[led][i][k], par, i, led) << " " << delta << endl;
       
       // include PD errors:
-      /*    delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
+      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
       _chisq_temp += delta*delta/combiErr(par, i, led, k); // err already squared; 
-      */
     }
     chisq += _chisq_temp;
   }
@@ -168,13 +169,12 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
 Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k){
   Double_t combinederr, PDerr, PMTerr;
   PMTerr = gPMTerr[led][i][k];
-  //PDerr = PDInterperr(par, i, led, k);
-  PDerr = PDInterperr2(par, i, led, k);
+  PDerr = PDInterperr3(par, i, led, k);
   combinederr = PMTerr*PMTerr + PDerr*PDerr;
   return combinederr;
 }
 
-// from TGraph doc page: total error term when x and y both have errors is = 
+//from TGraph doc page: total error term when x and y both have errors is = 
 // #frac{(y-f1(x))^{2}}{ey^{2}+(#frac{1}{2}(exl+exh)f1'(x))^{2}}
 
 // works for a quadratic PD with linear PMT
@@ -200,28 +200,27 @@ Double_t PDInterperr2(Double_t * par, Int_t i, Int_t led, Int_t k){
   if (led == 1) scale = 1.0;
   //  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k] + 
   //					    3*par[27]*gPD[led][i][k]*gPD[led][i][k]);
-  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k]);
+  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k]); // linearized
 					    
   return pde*deriv;
 }
 
 // Uses parameters for a cubic PD with quadratic PMT 
-// Uses implicitly defined derivative to calculate error
+// Uses implicitly defined derivative to calculate error to highest order parameter used
 Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k){ 
-  Double_t pde = gPDerr[led][i][k];
-  //  cout << "led: " << led << endl;
-  if (pde == 0) cout << "0000000 " << led << " " << i << " " << k << endl;
+  Double_t PD  = gPD[led][i][k];
+  Double_t PDE = gPDerr[led][i][k];
+  Double_t PMT = gPMT[led][i][k]; // also need PMTval since it's implicit derivative
+ 
   Double_t scale = 0;
   if (led == 0) scale = par[26];
   if (led == 1) scale = 1.0;
-  //  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k] + 
-  //					    3*par[27]*gPD[led][i][k]*gPD[led][i][k]);
-  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k]);
+ 
+  Double_t deriv = scale * ( (par[24] + 2*par[25]*PD + 3*par[27]*PD*PD) /
+			     ( par[1+3*i] + 2*par[2+3*i]*PMT ) );
 					    
-  return pde*deriv;
+  return PDE*deriv;
 }
-
-
 
 
  // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, par[27] --> cubic PD term
