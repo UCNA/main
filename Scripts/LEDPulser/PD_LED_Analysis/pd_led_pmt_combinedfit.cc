@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_12_2015_16way_quadraticPMT_cubicPD_fit_linearerrors_Eonly_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_12_2015_16way_quadraticPMT_cubicPD_fit_linearerrors_Wonly_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -117,6 +117,7 @@ Double_t func2(Double_t *PDval, Double_t *par);
 Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t led, Int_t iflag);
 Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k);
 Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k);
+Double_t PDInterperr2(Double_t * par, Int_t i, Int_t led, Int_t k);
 
 // calculate chi^2 
 void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
@@ -139,8 +140,8 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   //int led = gLED; // no longer needed now that we're looping
   // for (int i = 0; i < NUM_CHANNELS; i++ ){
     //  for (int i = 0; i < NUM_CHANNELS; i = i+2 ){
-  for (int i = 0; i < 4; i++){
-  //  for (int i = 4; i < 8; i++){
+  //  for (int i = 0; i < 4; i++){
+  for (int i = 4; i < 8; i++){
   //   for (int i = 6; i < 7; i++){
     Double_t _chisq_temp = 0;
     for (int k=0; k<gPD[led][i].size(); k++){
@@ -167,7 +168,8 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
 Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k){
   Double_t combinederr, PDerr, PMTerr;
   PMTerr = gPMTerr[led][i][k];
-  PDerr = PDInterperr(par, i, led, k);
+  //  PDerr = PDInterperr(par, i, led, k);
+  PDerr = PDInterperr2(par, i, led, k);
   combinederr = PMTerr*PMTerr + PDerr*PDerr;
   return combinederr;
 }
@@ -186,6 +188,22 @@ Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k){
   Double_t deriv = (1./par[1+2*i]) * scale*(par[16] + 2*par[17]*gPD[led][i][k]);
   return pde*deriv;
 }  
+
+// Uses parameters for a cubic PD with quadratic PMT 
+// (but assumes linearity in calculating errors, since calc quadratic errors is hard)
+Double_t PDInterperr2(Double_t * par, Int_t i, Int_t led, Int_t k){ 
+  Double_t pde = gPDerr[led][i][k];
+  //  cout << "led: " << led << endl;
+  if (pde == 0) cout << "0000000 " << led << " " << i << " " << k << endl;
+  Double_t scale = 0;
+  if (led == 0) scale = par[26];
+  if (led == 1) scale = 1.0;
+  //  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k] + 
+  //					    3*par[27]*gPD[led][i][k]*gPD[led][i][k]);
+  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k]);
+					    
+  return pde*deriv;
+}
 
  // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, par[27] --> cubic PD term
 Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
@@ -1371,7 +1389,7 @@ int main (int argc, char **argv)
 				 1 ,0.1 , 0.001,
 				 1 ,0.1 , 0.001, 
 				 //				 0.1, 0.001, 0.1};
-				 0.1, 0.001, 0.1, 0.00001};
+				 0.1, 0.001, 0.1, 1e-7};
 				 //	 1. ,0.1 , 0.00001, 
 				 //				 0.1};
 
