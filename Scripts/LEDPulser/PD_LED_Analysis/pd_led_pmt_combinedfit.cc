@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_12_2015_16way_quadraticPMT_cubicPD_fit_linearerrors_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_12_2015_16way_quadraticPMT_cubicPD_fit_linearerrors_Eonly_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -85,6 +85,7 @@ FOLLOWING DOESN'T WORK:
 #define COMBINEDLED 1 // replace later with a loop
 #define USEBETAOFFSETS false
 #define RANGE_EXTENSION 3.0
+#define SPLIT_EW true
 
 const int pulser_steps = 64;
 
@@ -136,9 +137,9 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   
   //  int led = COMBINEDLED; // replace later with loop over LEDs
   //int led = gLED; // no longer needed now that we're looping
-  for (int i = 0; i < NUM_CHANNELS; i++ ){
+  // for (int i = 0; i < NUM_CHANNELS; i++ ){
     //  for (int i = 0; i < NUM_CHANNELS; i = i+2 ){
-  //  for (int i = 0; i < 4; i++){
+  for (int i = 0; i < 4; i++){
   //  for (int i = 4; i < 8; i++){
   //   for (int i = 6; i < 7; i++){
     Double_t _chisq_temp = 0;
