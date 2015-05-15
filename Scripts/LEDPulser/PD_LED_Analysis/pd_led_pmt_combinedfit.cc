@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_12_2015_16way_quadraticPMT_cubicPD_fit_linearerrors_Wonly_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_13_2015_16way_quadraticPMT_cubicPD_fit_impliciterrors_fixPDslope_Eonly_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -139,7 +139,7 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   
   //  int led = COMBINEDLED; // replace later with loop over LEDs
   //int led = gLED; // no longer needed now that we're looping
-  // for (int i = 0; i < NUM_CHANNELS; i++ ){
+  //  for (int i = 0; i < NUM_CHANNELS; i++ ){
     //  for (int i = 0; i < NUM_CHANNELS; i = i+2 ){
   for (int i = 0; i < 4; i++){
     //for (int i = 4; i < 8; i++){
@@ -1385,10 +1385,10 @@ int main (int argc, char **argv)
 				 0.1};*/
 
   // Non-linear PMT
-  static Double_t vstart[nvars] = {0., 0.5, -0.000001,
-				   0., 0.5, -0.000001,
-				   0., 0.5, -0.000001,
-				   0., 0.5, -0.000001,
+  static Double_t vstart[nvars] = {0., 1.5, -0.000001,
+				   0., 1.5, -0.000001,
+				   0., 1.5, -0.000001,
+				   0., 1.5, -0.000001,
 				   0., 0.5, -0.000001,
 				   0., 0.5, -0.000001,
 				   0., 0.5, -0.000001,
@@ -1499,14 +1499,14 @@ int main (int argc, char **argv)
    
     //  gMinuit->mnparm(27, "PD_Beta", vstart[27], step[27], vstart[27], vstart[27], ierflg);
    
-    for (int pp = 0; pp < nvars-3; pp++){
+  for (int pp = 0; pp < nvars-3; pp++){
       //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], 0, 0, ierflg); // Linear PMT 
-      gMinuit->mnparm(pp, Form("p%i", pp%3), vstart[pp], step[pp], 0, 0, ierflg);  // Non-linear PMT
+    gMinuit->mnparm(pp, Form("p%i", pp%3), vstart[pp], step[pp], 0, 0, ierflg);  // Non-linear PMT
       //      if (pp%3 == 2) gMinuit->FixParameter(pp);
       //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], -100., 1000., ierflg); 
       // try not to put limits if we can avoid it
     }
-    
+
     gMinuit->mnparm(nvars-4, "PDp1", vstart[nvars-4], step[nvars-4], 0.,10.,ierflg);
     gMinuit->mnparm(nvars-3, "PDp2", vstart[nvars-3], step[nvars-3], -1.,1.,ierflg);
     gMinuit->mnparm(nvars-2, "PDratio", vstart[nvars-2], step[nvars-2], 0., 10., ierflg);
@@ -1518,6 +1518,11 @@ int main (int argc, char **argv)
     gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
     gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);*/
  
+    // Scaling degeneracy affects all parameters. Break degeneracy by fixing PDp1.  
+    // PDp1 = 4.0 is roughly the favored value from E/W separate fits to run 21927
+    // possible that this value affects adversely fits to other runs - keep an eye on it.
+    gMinuit->FixParameter(24);  // lifts degeneracy of scaling all parameters.
+
     // Now ready for minimization step
     arglist[0] = 30000;
     arglist[1] = 0.1;
