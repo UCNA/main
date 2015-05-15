@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_13_2015_16way_quadraticPMT_cubicPD_fit_impliciterrors_fixPDslope_Eonly_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_14_2015_16way_separate_wavelength_coeff_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -112,8 +112,7 @@ vector<float> _gPMTerr[2][NUM_CHANNELS];
 vector<float> _gPDerr[2][NUM_CHANNELS];
 
 Double_t func(float PDval, Double_t *par, Int_t i, Int_t led);
-Double_t func2(Double_t *PDval, Double_t *par);
-//Double_t PDfunc(float gPDval, Double_t *par, Int_t led, Int_t i);
+Double_t func_plot(Double_t *PDval, Double_t *par);
 Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t led, Int_t iflag);
 Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k);
 Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k);
@@ -137,8 +136,6 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   Double_t delta = 0;
   Double_t chisq = 0;
   
-  //  int led = COMBINEDLED; // replace later with loop over LEDs
-  //int led = gLED; // no longer needed now that we're looping
   //  for (int i = 0; i < NUM_CHANNELS; i++ ){
     //  for (int i = 0; i < NUM_CHANNELS; i = i+2 ){
   for (int i = 0; i < 4; i++){
@@ -146,15 +143,8 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   //   for (int i = 6; i < 7; i++){
     Double_t _chisq_temp = 0;
     for (int k=0; k<gPD[led][i].size(); k++){
-      //only uses PMT errors - should redo to include PD errors (see TGraph::Fit() Doc)
       if (gPMTerr[led][i][k] < 0.000000001) continue;
       if (gPDerr[led][i][k] < 0.000000001) continue;
-      
-      // no PD errors:
-      //   delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k];
-      // _chisq_temp += delta*delta; 
-     
-      //      cout << i << " " << led << " " << k << " " << gPMT[led][i][k] - func(gPD[led][i][k], par, i, led) << " " << delta << endl;
       
       // include PD errors:
       delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
@@ -176,6 +166,24 @@ Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k){
 
 //from TGraph doc page: total error term when x and y both have errors is = 
 // #frac{(y-f1(x))^{2}}{ey^{2}+(#frac{1}{2}(exl+exh)f1'(x))^{2}}
+
+// Uses parameters for a cubic PD with quadratic PMT 
+// Uses implicitly defined derivative to calculate error to highest order parameter used
+ // par[0] - par[31] --> PMTs, par[32]-par[34] --> PD
+Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k){ 
+  Double_t PD  = gPD[led][i][k];
+  Double_t PDE = gPDerr[led][i][k];
+  Double_t PMT = gPMT[led][i][k]; // also need PMTval since it's implicit derivative
+ 
+  Double_t scale = 0;
+  if (led == 0) scale = par[4*i + 3];
+  if (led == 1) scale = 1.0;
+ 
+  Double_t deriv = scale * ( (par[32] + 2*par[33]*PD + 3*par[34]*PD*PD) /
+			     ( par[1+4*i] + 2*par[2+4*i]*PMT ) );
+					    
+  return PDE*deriv;
+}
 
 // works for a quadratic PD with linear PMT
 Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k){ 
@@ -205,24 +213,24 @@ Double_t PDInterperr2(Double_t * par, Int_t i, Int_t led, Int_t k){
   return pde*deriv;
 }
 
-// Uses parameters for a cubic PD with quadratic PMT 
-// Uses implicitly defined derivative to calculate error to highest order parameter used
-Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k){ 
-  Double_t PD  = gPD[led][i][k];
-  Double_t PDE = gPDerr[led][i][k];
-  Double_t PMT = gPMT[led][i][k]; // also need PMTval since it's implicit derivative
- 
+ // par[0] - par[31] --> PMTs, par[32]-par[34] --> PD
+Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
+{
   Double_t scale = 0;
-  if (led == 0) scale = par[26];
+  if (led == 0) scale = par[4*i + 3]; // PMT individual wavelength coefficient
   if (led == 1) scale = 1.0;
- 
-  Double_t deriv = scale * ( (par[24] + 2*par[25]*PD + 3*par[27]*PD*PD) /
-			     ( par[1+3*i] + 2*par[2+3*i]*PMT ) );
-					    
-  return PDE*deriv;
+  Double_t PD_term = scale*( par[32]*PDval + par[33]*PDval*PDval + par[34]*PDval*PDval*PDval ) - par[0+4*i];
+  Double_t PDcoeff = par[2+4*i]/(par[1+4*i]*par[1+4*i]);
+  Double_t gcoeff = (-0.5)*(par[1+4*i]/par[2+4*i]);
+
+  //  if (4*PDcoeff*PD_term <= -1 ) PDcoeff = 0; // try to avoid bad radicals
+  if (4*PDcoeff*PD_term <= -1 ) return 1e6; // try to avoid bad radicals
+
+  Double_t value = gcoeff*( 1 - sqrt(1 + 4*PDcoeff*PD_term) );
+  return value;
 }
 
-
+/*
  // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, par[27] --> cubic PD term
 Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
 {
@@ -239,13 +247,13 @@ Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
 
   Double_t value = gcoeff*( 1 - sqrt(1 + 4*PDcoeff*PD_term) );
   return value;
-}
+}*/
 
-// par[0] - par[2] --> PMTs, par[3] - par[5] --> PD, par[6] --> cubic PD term
-Double_t func2(Double_t *PDval, Double_t * par)
+// par[0] - par[2] --> PMTs, par[5] --> PMT wavelength coefficient,
+// par[3], par[4] --> PD, par[6] --> cubic PD term
+Double_t func_plot(Double_t *PDval, Double_t * par)
 {
   Double_t _PDval = PDval[0];
-  //Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval ) - par[0];
   Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[6]*_PDval*_PDval*_PDval) - par[0];
   Double_t PDcoeff = par[2]/(par[1]*par[1]);
   Double_t gcoeff = (-0.5)*(par[1]/par[2]);
@@ -253,42 +261,6 @@ Double_t func2(Double_t *PDval, Double_t * par)
   Double_t value = gcoeff*( 1 - sqrt(1 + 4*PDcoeff*PD_term) );
   return value;
 }
-
-/*
-// par[0] - par[15] --> PMTs offset, lin;  par[16]-par[18] --> PD lin, quad, scale
-Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
-{
-  Double_t scale = 0;
-  if (led == 0) scale = par[18];
-  if (led == 1) scale = 1.0;
-  Double_t value = (1./par[1+2*i]) * ( -par[0+2*i] + scale*(par[16]*gPDval + par[17]*gPDval*gPDval) );
-  return value;
-}
-*/
-
-
-/* // par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, gPDBetaEP[led][i] = beta endpoint in PD units for tube 
-Double_t func(float gPDval, Double_t *par, Int_t i, Int_t led)
-{
-  Double_t PDval = PDfunc(gPDval, par, led, i);
-  Double_t value = par[0+3*i] + par[1+3*i]*(PDval - gPMTBetaEP[i]) + par[2+3*i]*(PDval - gPMTBetaEP[i])*(PDval - gPMTBetaEP[i]); // Use PMTEP since PDval is approx linear with PMT response (??)
-  return value;
-  }*/
-
-  //  Double_t value = par[0+3*i] + par[1+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i])) + par[2+3*i]*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]))*(par[24] + par[25]*(gPD-BetaEP[led][i]) + par[26]*(gPD-BetaEP[led][i])*(gPD-BetaEP[led][i]));
-  //  Double_t value = par[0+3*i] + par[1+3*i]*gPD + par[2+3*i]*gPD*gPD;
-
- /*Double_t PDfunc(float gPDval, Double_t *par, Int_t led, Int_t i)
-{
-  // a quadratic function of PD
-  //  Double_t PDvalue = gPD;
-  //  Double_t PDvalue = par[24] + par[25]*(gPDval - gPDoff[led]) + par[26]*(gPDval - gPDoff[led])*(gPDval - gPDoff[led]);
-  Double_t PDvalue = par[24] + par[25]*(gPDval - gPDBetaEP[led][i]) + par[26]*(gPDval - gPDBetaEP[led][i])*(gPDval - gPDBetaEP[led][i]);
-  if (led == 0) PDvalue *= par[27]; // scaling factor between two LED wavelengths
-  //  if (led == 0) PDvalue *= 3; // scaling factor between two LED wavelengtsh
-  return PDvalue;
-  } */
-
 
 TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
 {
@@ -1324,8 +1296,9 @@ int main (int argc, char **argv)
     }  // end loop over channels
   
   //  const int nvars = 27; // non-linear PMT
-  const int nvars = 28; // non-linear PMT, add cubic PD term
+  //  const int nvars = 28; // non-linear PMT, add cubic PD term
   //  const int nvars = 19;  // Linear PMT
+  const int nvars = 35;  // quadratic PMT, cubic PD, separate eta_lambda for each PMT
 
   // Do Minuit stuff 
   TMinuit *gMinuit = new TMinuit(nvars);  //initialize TMinuit with a maximum of nvars params
@@ -1339,189 +1312,61 @@ int main (int argc, char **argv)
   gMinuit->mnexcm("SET ERR", arglist ,1,ierflg);
   
   // Set starting values and step sizes for parameters
-  //led = 0
-  /*  static Double_t vstart[nvars] = {1000., 10., -0.01,
-				   1000., 10., -0.01,
-				   1000., 10., -0.01,
-				   1000., 10., -0.01,
-				   1000., 10., -0.01,
-				   1000., 10., -0.01,
-				   1000., 10., -0.01,
-				   1000., 10., -0.01,
-				   0., 1., 0., 
-				   3};
-  
-  static Double_t step[nvars] = {10 , 1  , 0.01,
-				 10, 1, 0.01,
-				 10 ,1 , 0.01,
-				 10 ,1 , 0.01,
-				 10 ,1 , 0.01,
-				 10 ,1 , 0.01,
-				 10 ,1 , 0.01,
-				 10 ,1 , 0.01, 
-				 1. ,1.  , 0.0001, 
-				 1.};*/
-
-  /*static Double_t vstart[nvars] = {100., 1., -0.01,
-				   100., 1., -0.01,
-				   100., 1., -0.01,
-				   100., 1., -0.01,
-				   100., 1., -0.01,
-				   100., 1., -0.01,
-				   100., 1., -0.01,
-				   100., 1., -0.01,
-				   100., 1., 0., 
-				   3};
-  
-  static Double_t step[nvars] = {1 , 0.1  , 0.1,
-				 1, 0.1, 0.1,
-				 1 ,0.1 , 0.1,
-				 1 ,0.1 , 0.1,
-				 1 ,0.1 , 0.1,
-				 1 ,0.1 , 0.1,
-				 1 ,0.1 , 0.1,
-				 1 ,0.1 , 0.1, 
-				 1. ,0.1 , 0.1, 
-				 0.1};*/
 
   // Non-linear PMT
-  static Double_t vstart[nvars] = {0., 1.5, -0.000001,
-				   0., 1.5, -0.000001,
-				   0., 1.5, -0.000001,
-				   0., 1.5, -0.000001,
-				   0., 0.5, -0.000001,
-				   0., 0.5, -0.000001,
-				   0., 0.5, -0.000001,
-				   0., 0.5, -0.000001,
-				   //				   3., -0.00001, 5.};
-				   4., -0.001, 5., 0.0};
-				   //10., 3., 0., 
-				   //				   3};
+  static Double_t vstart[nvars] = {0., 1.5, -0.000001, 5.,
+				   0., 1.5, -0.000001, 5.,
+				   0., 1.5, -0.000001, 5., 
+				   0., 1.5, -0.000001, 5.,
+				   0., 0.5, -0.000001, 4.,
+				   0., 0.5, -0.000001, 4.,
+				   0., 0.5, -0.000001, 4.,
+				   0., 0.5, -0.000001, 4.,
+				   4., -0.001, 0.0};
 
-  static Double_t step[nvars] = {1 , 0.1  , 0.001,
-				 1, 0.1, 0.001,
-				 1 ,0.1 , 0.001,
-				 1 ,0.1 , 0.001,
-				 1 ,0.1 , 0.001,
-				 1 ,0.1 , 0.001,
-				 1 ,0.1 , 0.001,
-				 1 ,0.1 , 0.001, 
-				 //				 0.1, 0.001, 0.1};
-				 0.1, 0.001, 0.1, 1e-7};
-				 //	 1. ,0.1 , 0.00001, 
-				 //				 0.1};
+  static Double_t step[nvars] = {1, 0.1, 0.001, 0.1, 
+				 1, 0.1, 0.001, 0.1, 
+				 1, 0.1, 0.001, 0.1, 
+				 1, 0.1, 0.001, 0.1, 
+				 1, 0.1, 0.001, 0.1, 
+				 1, 0.1, 0.001, 0.1, 
+				 1, 0.1, 0.001, 0.1, 
+				 1, 0.1, 0.001, 0.1, 
+				 0.1, 0.001, 1e-7};
 
-  /* Linearized PMT
-  static Double_t vstart[nvars] = {10., 1.,      10., 1.,
-				   10., 1.,      10., 1.,
-				   10., 1.,      10., 1.,
-				   10., 1.,      10., 1.,
-				   3., -0.001, 5.};
- 
-  static Double_t step[nvars] = {1., 0.1,        1., 0.1, 
-				 1., 0.1,        1., 0.1, 
-				 1., 0.1,        1., 0.1, 
-				 1., 0.1,        1., 0.1, 
-				 0.1, 0.00001, 0.1};
-  */
 
-  /*  //led = 1 
-  static Double_t vstart_465[nvars] = {1000., 0.5, -0.001,
-				       1000., 0.5, -0.001,
-				       1000., 0.5, -0.001,
-				       1000., 0.5, -0.001,
-				       1000., 0.5, -0.001,
-				       1000., 0.5, -0.001,
-				       1000., 0.5, -0.001,
-				       1000., 0.5, -0.001,
-				       0., 1., 0., 
-				       3};
-  
-  static Double_t step_465[nvars] = {10 , 0.1  , 0.001,
-				     10, 0.1, 0.001,
-				     10 ,0.1 , 0.001,
-				     10 ,0.1 , 0.001,
-				     10 ,0.1 , 0.001,
-				     10 ,0.1 , 0.001,
-				     10 ,0.1 , 0.001,
-				     10 ,0.1 , 0.001, 
-				     1. ,0.1  , 0.0001, 
-				     1.};*/
-  //  int led = COMBINEDLED;  
-
-  //  double PD_parms[3], PD_errs[3];
   double PD_parms[4], PD_errs[4];
   TF1 fittedFunctions[2][NUM_CHANNELS]; // separate functions for each LED
-  //  TF1 LEDFreeFuncs[2][NUM_CHANNELS]; // not as interesting 
-
-  //  for (int led = 0; led < 2; led++){
-    //  cout << "----------------------------------------------------" << endl;
-  //  cout << "-------  MINUIT FOR LED " << led << "  -------------------------" << endl;
-  //  cout << "----------------------------------------------------" << endl;
-
-    //    gLED = led; // fill the global parameter telling us which LED we're on
-
-  //    if (led) { // use correct initial parameters.
-  //    memcpy(vstart, vstart_465, sizeof(vstart));
-  //   memcpy(step, step_465, sizeof(step));
-  //  }   
-    
-    //  gMinuit->FixParameter(27);
-    
-    /*    gMinuit->mnparm(0, "t0p0", vstart[0], step[0], 0,0,ierflg);
-    gMinuit->mnparm(1, "t0p1", vstart[1], step[1], 0,0,ierflg);
-    gMinuit->mnparm(2, "t0p2", vstart[2], step[2], 0,0,ierflg);
-    gMinuit->mnparm(3, "t1p0", vstart[3], step[3], 0,0,ierflg);
-    gMinuit->mnparm(4, "t1p1", vstart[4], step[4], 0,0,ierflg);
-    gMinuit->mnparm(5, "t1p2", vstart[5], step[5], 0,0,ierflg);
-    gMinuit->mnparm(6, "t2p0", vstart[6], step[6], 0,0,ierflg);
-    gMinuit->mnparm(7, "t2p1", vstart[7], step[7], 0,0,ierflg);
-    gMinuit->mnparm(8, "t2p2", vstart[8], step[8], 0,0,ierflg);
-    gMinuit->mnparm(9, "t3p0", vstart[9], step[9], 0,0,ierflg);
-    gMinuit->mnparm(10, "t3p1", vstart[10], step[10], 0,0,ierflg);
-    gMinuit->mnparm(11, "t3p2", vstart[11], step[11], 0,0,ierflg);
-    gMinuit->mnparm(12, "t4p0", vstart[12], step[12], 0,0,ierflg);
-    gMinuit->mnparm(13, "t4p1", vstart[13], step[13], 0,0,ierflg);
-    gMinuit->mnparm(14, "t4p2", vstart[14], step[14], 0,0,ierflg);
-    gMinuit->mnparm(15, "t5p0", vstart[15], step[15], 0,0,ierflg);
-    gMinuit->mnparm(16, "t5p1", vstart[16], step[16], 0,0,ierflg);
-    gMinuit->mnparm(17, "t5p2", vstart[17], step[17], 0,0,ierflg);
-    gMinuit->mnparm(18, "t6p0", vstart[18], step[18], 0,0,ierflg);
-    gMinuit->mnparm(19, "t6p1", vstart[19], step[19], 0,0,ierflg);
-    gMinuit->mnparm(20, "t6p2", vstart[20], step[20], 0,0,ierflg);
-    gMinuit->mnparm(21, "t7p0", vstart[21], step[21], 0,0,ierflg);
-    gMinuit->mnparm(22, "t7p1", vstart[22], step[22], 0,0,ierflg);
-    gMinuit->mnparm(23, "t7p2", vstart[23], step[23], 0,0,ierflg);
-    gMinuit->mnparm(24, "PDp0", vstart[24], step[24], 0,0,ierflg);
-    gMinuit->mnparm(25, "PDp1", vstart[25], step[25], 0,0,ierflg);
-    gMinuit->mnparm(26, "PDp2", vstart[26], step[26], 0,0,ierflg);
-    gMinuit->mnparm(27, "PDratio", vstart[27], step[27], 0, 0, ierflg);*/
-   
-    //  gMinuit->mnparm(27, "PD_Beta", vstart[27], step[27], vstart[27], vstart[27], ierflg);
    
   for (int pp = 0; pp < nvars-3; pp++){
-      //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], 0, 0, ierflg); // Linear PMT 
-    gMinuit->mnparm(pp, Form("p%i", pp%3), vstart[pp], step[pp], 0, 0, ierflg);  // Non-linear PMT
-      //      if (pp%3 == 2) gMinuit->FixParameter(pp);
-      //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], -100., 1000., ierflg); 
-      // try not to put limits if we can avoid it
-    }
+    //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], 0, 0, ierflg); // Linear PMT 
+    //   gMinuit->mnparm(pp, Form("p%i", pp%3), vstart[pp], step[pp], 0, 0, ierflg);  // Non-linear PMT
+    //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], -100., 1000., ierflg);  // try not to put limits if we can avoid it
 
-    gMinuit->mnparm(nvars-4, "PDp1", vstart[nvars-4], step[nvars-4], 0.,10.,ierflg);
+    // Non-linear PMT, separate eta_lambda term
+    if (pp%4 < 3) gMinuit->mnparm(pp, Form("p%i", pp%4), vstart[pp], step[pp], 0, 0, ierflg);  
+    if (pp%4 == 3) gMinuit->mnparm(pp, Form("nlambda%i", pp%4), vstart[pp], step[pp], 0, 0, ierflg);  
+  }
+  
+  /*    gMinuit->mnparm(nvars-4, "PDp1", vstart[nvars-4], step[nvars-4], 0.,10.,ierflg);
     gMinuit->mnparm(nvars-3, "PDp2", vstart[nvars-3], step[nvars-3], -1.,1.,ierflg);
     gMinuit->mnparm(nvars-2, "PDratio", vstart[nvars-2], step[nvars-2], 0., 10., ierflg);
-    gMinuit->mnparm(nvars-1, "PDp3", vstart[nvars-1], step[nvars-1], -1., 1., ierflg);
+    gMinuit->mnparm(nvars-1, "PDp3", vstart[nvars-1], step[nvars-1], -1., 1., ierflg);*/
     /*    gMinuit->mnparm(nvars-3, "PDp1", vstart[nvars-3], step[nvars-3], 0.,10.,ierflg);
     gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], -1.,1.,ierflg);
     gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0., 10., ierflg);*/
     /*   gMinuit->mnparm(nvars-3, "PDp1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
     gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
     gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);*/
+    gMinuit->mnparm(nvars-3, "PDq1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
+    gMinuit->mnparm(nvars-2, "PDq2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
+    gMinuit->mnparm(nvars-1, "PDq3", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);
  
     // Scaling degeneracy affects all parameters. Break degeneracy by fixing PDp1.  
     // PDp1 = 4.0 is roughly the favored value from E/W separate fits to run 21927
     // possible that this value affects adversely fits to other runs - keep an eye on it.
-    gMinuit->FixParameter(24);  // lifts degeneracy of scaling all parameters.
+    //    gMinuit->FixParameter(24);  // lifts degeneracy of scaling all parameters.
+    gMinuit->FixParameter(nvars-3);  // lifts degeneracy of scaling all parameters.
 
     // Now ready for minimization step
     arglist[0] = 30000;
@@ -1537,26 +1382,21 @@ int main (int argc, char **argv)
     // write to file
     double pp, pperr; 
     TString comb_fit_string = "";
-    //    for (int i = 0; i < NUM_CHANNELS + 1; i++){
-    // for (int j = 0; j < 3; j++){
     for (int p = 0; p < nvars; p++){
-      //	int p = 2*i + j;
       gMinuit->GetParameter(p, pp, pperr);
       comb_fit_string += run;                comb_fit_string += "\t"; 
       //      int i = p/2;  linear PMT
-      int i = p/3; // non-linear PMT
+      //      int i = p/3; // non-linear PMT
+      int i = p/4; // non-linear PMT with separate eta_lambda
       comb_fit_string += i;                  comb_fit_string += "\t"; 
-      //	comb_fit_string += led;                comb_fit_string += "\t"; 
       comb_fit_string += gMinuit->fCpnam[p]; comb_fit_string += "\t";
       comb_fit_string += pp;                 comb_fit_string += "\t";
       comb_fit_string += pperr;              comb_fit_string += "\t";
-      //	comb_fit_string += pefitchisq;         comb_fit_string += "\t";
-      //	comb_fit_string += pe_fit->GetNDF();      comb_fit_string += "\t";
       comb_fit_string += range_min[0][i];  comb_fit_string += "\t";
       comb_fit_string += range_max[0][i];  comb_fit_string += "\t";
       comb_fit_string += range_min[1][i];  comb_fit_string += "\t";
       comb_fit_string += range_max[1][i];  comb_fit_string += "\t";
-      comb_fit_string += "\n";
+      comb_fit_string += "\n";  
     }
     // find number of points used in fit
     Double_t NFit = 0;
@@ -1575,80 +1415,34 @@ int main (int argc, char **argv)
     combfitfile << comb_fit_string;
 	
     //Define functions from fitted parms.
-      
-    //    double PD_parms[3], PD_errs[3];
-
-    // quadratic PD fit
-    /*    gMinuit->GetParameter(nvars-3, PD_parms[0], PD_errs[0]);
+   
+    gMinuit->GetParameter(nvars-3, PD_parms[0], PD_errs[0]);
     gMinuit->GetParameter(nvars-2, PD_parms[1], PD_errs[1]);
-    gMinuit->GetParameter(nvars-1, PD_parms[2], PD_errs[2]);*/
+    gMinuit->GetParameter(nvars-1, PD_parms[2], PD_errs[2]);
     
-    // cubic PD fit
-    gMinuit->GetParameter(nvars-4, PD_parms[0], PD_errs[0]);
-    gMinuit->GetParameter(nvars-3, PD_parms[1], PD_errs[1]);
-    gMinuit->GetParameter(nvars-2, PD_parms[2], PD_errs[2]);
-    gMinuit->GetParameter(nvars-1, PD_parms[3], PD_errs[3]);
-    
-      
-    double p_val[2], p_err[2];
+    double _p_val, _p_err;
     double PDratio, PDratioErr;
     for (int led = 0; led < 2; led++){
       for (int i = 0; i < NUM_CHANNELS; i++){
-	// Linear PMT
-	//	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(1./[1]) * (-[0] + [4]*([2]*x + [3]*x*x) )", 
-	// Nonlinear PMT
-	//	fittedFunctions[led][i] = TF1(Form("f_%i", i), "(-0.5)*([1]/[2]) * (1 - sqrt(1 + 4*([2]/([1]*[1]))*([5]*([3]*x + [4]*x*x) - [0])))", 
-	//				      RANGE_MIN, range_max[led][i]); 
-	
-	fittedFunctions[led][i] = TF1(Form("f_%i_%i", led, i), func2, 
-				      //				      RANGE_MIN, range_max[led][i], 6); // 6 params 
+	fittedFunctions[led][i] = TF1(Form("f_%i_%i", led, i), func_plot, 
 				      RANGE_MIN, range_max[led][i], 7); // cubic fit needs 7 params 
-	
-	//			      RANGE_MIN, extended_range_max[led][i]); // deprecated
-	
-	/*// Linear PMT
-	  for (int j = 0; j < 2; j++){
-	  gMinuit->GetParameter(2*i + j, p_val[j], p_err[j]);
-	  fittedFunctions[led][i].SetParameter(j, p_val[j]);
-	  fittedFunctions[led][i].SetParameter(j+2, PD_parms[j]);
-	  if (led == 0) fittedFunctions[led][i].SetParameter(4, PD_parms[2]);
-	  if (led == 1) fittedFunctions[led][i].SetParameter(4, 1.0);
-	  }*/
-	
-	// Nonlinear PMT
+
 	for (int j = 0; j < 3; j++){
-	  gMinuit->GetParameter(3*i + j, p_val[j], p_err[j]);
-	  fittedFunctions[led][i].SetParameter(j, p_val[j]);
+	  gMinuit->GetParameter(4*i + j, _p_val, _p_err);
+	  fittedFunctions[led][i].SetParameter(j, _p_val);
 	}
+	gMinuit->GetParameter(4*i + 3, _p_val, _p_err);
+	if (led == 0) fittedFunctions[led][i].SetParameter(5, _p_val);
+	if (led == 1) fittedFunctions[led][i].SetParameter(5, 1.0);
+
 	fittedFunctions[led][i].SetParameter(3, PD_parms[0]);
 	fittedFunctions[led][i].SetParameter(4, PD_parms[1]);
-	if (led == 0) fittedFunctions[led][i].SetParameter(5, PD_parms[2]);
-	if (led == 1) fittedFunctions[led][i].SetParameter(5, 1.0);
-	fittedFunctions[led][i].SetParameter(6, PD_parms[3]); // cubic fit
+	fittedFunctions[led][i].SetParameter(6, PD_parms[2]); // cubic fit
       }
     }
 
     cout << fittedFunctions[0][7].Eval(0) << endl;
     cout << fittedFunctions[1][7].Eval(0) << endl;
-
-    /*    Double_t * _par = fittedFunctions[0][0].GetParameters();
-    //Double_t * _asdfval; *_asdfval = 100;
-    cout << _par[0] << " " << _par[1] << " " << _par[2] << endl;
-    cout << _par[3] << " " << _par[4] << " " << _par[5] << endl;
-    //    cout << "Testing: " << " " << func(100, _par, 0, 0) << " " << func2(_asdfval, _par) << " " << fittedFunctions[0][0](100);
-    //return 0;*/
-
-    //fittedFunctions[led][i].SetParameter(6, gPDoff[led]);
-    //fittedFunctions[led][i].SetParameter(7, gPDBetaEP[led][i]);
-    //	fittedFunctions[led][i].SetParameter(6, gPDBetaEP[led][i]);
-    //fittedFunctions[led][i].SetParameter(7, gPMTBetaEP[i]);
-    
-    // if (led == 0) fittedFunctions[led][i].SetParameter(8, PD_parms[2]);
-    //if (led == 1) fittedFunctions[led][i].SetParameter(8, 1);
-      
-      /*     for (int p = 0; p < 9; p++){
-	     cout << led << " " << i << " " << p << " " << fittedFunctions[led][i].GetParameter(p) << endl;
-	     } */
 
   fitfile.close();
   pepmtfitfile.close();
@@ -1990,3 +1784,35 @@ int main (int argc, char **argv)
 
   return 0;
 }
+
+    
+    /*    gMinuit->mnparm(0, "t0p0", vstart[0], step[0], 0,0,ierflg);
+    gMinuit->mnparm(1, "t0p1", vstart[1], step[1], 0,0,ierflg);
+    gMinuit->mnparm(2, "t0p2", vstart[2], step[2], 0,0,ierflg);
+    gMinuit->mnparm(3, "t1p0", vstart[3], step[3], 0,0,ierflg);
+    gMinuit->mnparm(4, "t1p1", vstart[4], step[4], 0,0,ierflg);
+    gMinuit->mnparm(5, "t1p2", vstart[5], step[5], 0,0,ierflg);
+    gMinuit->mnparm(6, "t2p0", vstart[6], step[6], 0,0,ierflg);
+    gMinuit->mnparm(7, "t2p1", vstart[7], step[7], 0,0,ierflg);
+    gMinuit->mnparm(8, "t2p2", vstart[8], step[8], 0,0,ierflg);
+    gMinuit->mnparm(9, "t3p0", vstart[9], step[9], 0,0,ierflg);
+    gMinuit->mnparm(10, "t3p1", vstart[10], step[10], 0,0,ierflg);
+    gMinuit->mnparm(11, "t3p2", vstart[11], step[11], 0,0,ierflg);
+    gMinuit->mnparm(12, "t4p0", vstart[12], step[12], 0,0,ierflg);
+    gMinuit->mnparm(13, "t4p1", vstart[13], step[13], 0,0,ierflg);
+    gMinuit->mnparm(14, "t4p2", vstart[14], step[14], 0,0,ierflg);
+    gMinuit->mnparm(15, "t5p0", vstart[15], step[15], 0,0,ierflg);
+    gMinuit->mnparm(16, "t5p1", vstart[16], step[16], 0,0,ierflg);
+    gMinuit->mnparm(17, "t5p2", vstart[17], step[17], 0,0,ierflg);
+    gMinuit->mnparm(18, "t6p0", vstart[18], step[18], 0,0,ierflg);
+    gMinuit->mnparm(19, "t6p1", vstart[19], step[19], 0,0,ierflg);
+    gMinuit->mnparm(20, "t6p2", vstart[20], step[20], 0,0,ierflg);
+    gMinuit->mnparm(21, "t7p0", vstart[21], step[21], 0,0,ierflg);
+    gMinuit->mnparm(22, "t7p1", vstart[22], step[22], 0,0,ierflg);
+    gMinuit->mnparm(23, "t7p2", vstart[23], step[23], 0,0,ierflg);
+    gMinuit->mnparm(24, "PDp0", vstart[24], step[24], 0,0,ierflg);
+    gMinuit->mnparm(25, "PDp1", vstart[25], step[25], 0,0,ierflg);
+    gMinuit->mnparm(26, "PDp2", vstart[26], step[26], 0,0,ierflg);
+    gMinuit->mnparm(27, "PDratio", vstart[27], step[27], 0, 0, ierflg);*/
+   
+    //  gMinuit->mnparm(27, "PD_Beta", vstart[27], step[27], vstart[27], vstart[27], ierflg);
