@@ -136,9 +136,9 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
   Double_t delta = 0;
   Double_t chisq = 0;
   
-  //  for (int i = 0; i < NUM_CHANNELS; i++ ){
+  for (int i = 0; i < NUM_CHANNELS; i++ ){
     //  for (int i = 0; i < NUM_CHANNELS; i = i+2 ){
-  for (int i = 0; i < 4; i++){
+  //  for (int i = 0; i < 4; i++){
     //for (int i = 4; i < 8; i++){
   //   for (int i = 6; i < 7; i++){
     Double_t _chisq_temp = 0;
