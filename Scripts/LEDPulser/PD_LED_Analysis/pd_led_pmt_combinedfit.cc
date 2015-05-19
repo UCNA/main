@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_14_2015_16way_separate_wavelength_coeff_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_19_2015_16way_separate_wavelength_coeff_18745_18768/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -85,7 +85,9 @@ FOLLOWING DOESN'T WORK:
 #define COMBINEDLED 1 // replace later with a loop
 #define USEBETAOFFSETS false
 #define RANGE_EXTENSION 3.0
-#define SPLIT_EW true
+#define SWAPLEDS true // Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal. 
+#define PMT_THRESHOLD_LOW 1e-5   // Only affect Minuit Fit
+#define PMT_THRESHOLD_HIGH 5000  // Only affect Minuit Fit
 
 const int pulser_steps = 64;
 
@@ -145,7 +147,8 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     for (int k=0; k<gPD[led][i].size(); k++){
       if (gPMTerr[led][i][k] < 0.000000001) continue;
       if (gPDerr[led][i][k] < 0.000000001) continue;
-      
+      cout << i << " " << led << " " << k << " " << gPD[led][i][k]; 
+      cout <<  " " << gPMT[0][i][k] << " " << gPMT[1][i][k] << endl;
       // include PD errors:
       delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
       _chisq_temp += delta*delta/combiErr(par, i, led, k); // err already squared; 
@@ -782,8 +785,17 @@ int main (int argc, char **argv)
       return 0;
 #else
       
-      for (int led = 0; led < 2; led++)
+      for (int kled = 0; kled < 2; kled++)
 	{
+	  // Some runs have 405nm as "UP", some have it as "DOWN"
+	  // SWAPLEDS flag allows reversal. 
+	  int led = 0;
+#if SWAPLEDS
+	  led = (kled + 1)%2;
+#else
+	  led = kled;
+#endif
+
 	  graph[led][i] = new TGraphErrors(pulser_steps);
 	  for (int pulse = 0; pulse < pulser_steps; pulse++)
 	    {
@@ -801,12 +813,10 @@ int main (int argc, char **argv)
 		  graph[led][i]->SetPoint(pulse, x_avg, y_avg);
 		  graph[led][i]->SetPointError(pulse, sx, sy);
 		  // pipe values out to global so fit function can access
-		  //if (!led){ 		  // just do 405 nm for now, fix later
 		  _gPD[led][i].push_back(x_avg);
 		  _gPMT[led][i].push_back(y_avg);
 		  _gPDerr[led][i].push_back(sx);
 		  _gPMTerr[led][i].push_back(sy);
-		  //}
 		}
 	    }
 	}
@@ -945,19 +955,18 @@ int main (int argc, char **argv)
 	    out_raw_string += "\n";
 	    rawfile << out_raw_string;
 	    if (_gPD[led][i][s] > range_min[led][i] && _gPD[led][i][s] < range_max[led][i]){
-	    //	    if (_gPD[led][i][s] > range_min[led] && _gPD[led][i][s] < extended_range_max[led][i]){
-	      gPD[led][i].push_back(_gPD[led][i][s]);
-	      gPMT[led][i].push_back(_gPMT[led][i][s]);
-	      gPDerr[led][i].push_back(_gPDerr[led][i][s]);
-	      gPMTerr[led][i].push_back(_gPMTerr[led][i][s]);
-	      /*if (led){
-	      cout << " WORD " <<  gPD[led][i].back() << " " <<
-		gPDerr[led][i].back() << " " <<
-		gPMT[led][i].back() << " " <<
-		gPMTerr[led][i].back() << endl;
-	      //  }*/
+	      if (_gPMT[led][i][s] > PMT_THRESHOLD_LOW && _gPMT[led][i][s] < PMT_THRESHOLD_HIGH){
+		gPD[led][i].push_back(_gPD[led][i][s]);
+		gPMT[led][i].push_back(_gPMT[led][i][s]);
+		gPDerr[led][i].push_back(_gPDerr[led][i][s]);
+		gPMTerr[led][i].push_back(_gPMTerr[led][i][s]);
+		/*	      if (led) {
+		cout << i << " " << led << " " << s << " " << gPD[led][i][s]; 
+		cout <<  " " << gPMT[0][i][s] << " " << gPMT[1][i][s] << endl;
+		}*/
+	      }
 	    }
-	  }  
+	  }
 	  
 	  //	  if (led) return 0;
 	  
@@ -1314,7 +1323,8 @@ int main (int argc, char **argv)
   // Set starting values and step sizes for parameters
 
   // Non-linear PMT
-  static Double_t vstart[nvars] = {0., 1.5, -0.000001, 5.,
+  // works for 21927-21939
+  /*  static Double_t vstart[nvars] = {0., 1.5, -0.000001, 5.,
 				   0., 1.5, -0.000001, 5.,
 				   0., 1.5, -0.000001, 5., 
 				   0., 1.5, -0.000001, 5.,
@@ -1322,7 +1332,18 @@ int main (int argc, char **argv)
 				   0., 0.5, -0.000001, 4.,
 				   0., 0.5, -0.000001, 4.,
 				   0., 0.5, -0.000001, 4.,
+				   4., -0.001, 0.0}; */
+
+  static Double_t vstart[nvars] = {0., 0.5, -0.000001, 5.,
+				   0., 0.5, -0.000001, 5.,
+				   0., 0.5, -0.000001, 5., 
+				   0., 0.5, -0.000001, 5.,
+				   0., 0.5, -0.000001, 4.,
+				   0., 0.5, -0.000001, 4.,
+				   0., 0.5, -0.000001, 4.,
+				   0., 0.5, -0.000001, 4.,
 				   4., -0.001, 0.0};
+
 
   static Double_t step[nvars] = {1, 0.1, 0.001, 0.1, 
 				 1, 0.1, 0.001, 0.1, 
