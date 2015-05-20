@@ -85,7 +85,7 @@ FOLLOWING DOESN'T WORK:
 #define COMBINEDLED 1 // replace later with a loop
 #define USEBETAOFFSETS false
 #define RANGE_EXTENSION 3.0
-#define SWAPLEDS true // Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal. 
+#define SWAPLEDS true // Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
 #define PMT_THRESHOLD_LOW 1e-5   // Only affect Minuit Fit
 #define PMT_THRESHOLD_HIGH 5000  // Only affect Minuit Fit
 
@@ -147,8 +147,6 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     for (int k=0; k<gPD[led][i].size(); k++){
       if (gPMTerr[led][i][k] < 0.000000001) continue;
       if (gPDerr[led][i][k] < 0.000000001) continue;
-      cout << i << " " << led << " " << k << " " << gPD[led][i][k]; 
-      cout <<  " " << gPMT[0][i][k] << " " << gPMT[1][i][k] << endl;
       // include PD errors:
       delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
       _chisq_temp += delta*delta/combiErr(par, i, led, k); // err already squared; 
@@ -785,17 +783,8 @@ int main (int argc, char **argv)
       return 0;
 #else
       
-      for (int kled = 0; kled < 2; kled++)
+      for (int led = 0; led < 2; led++)
 	{
-	  // Some runs have 405nm as "UP", some have it as "DOWN"
-	  // SWAPLEDS flag allows reversal. 
-	  int led = 0;
-#if SWAPLEDS
-	  led = (kled + 1)%2;
-#else
-	  led = kled;
-#endif
-
 	  graph[led][i] = new TGraphErrors(pulser_steps);
 	  for (int pulse = 0; pulse < pulser_steps; pulse++)
 	    {
@@ -956,14 +945,12 @@ int main (int argc, char **argv)
 	    rawfile << out_raw_string;
 	    if (_gPD[led][i][s] > range_min[led][i] && _gPD[led][i][s] < range_max[led][i]){
 	      if (_gPMT[led][i][s] > PMT_THRESHOLD_LOW && _gPMT[led][i][s] < PMT_THRESHOLD_HIGH){
+		//		cout << "DERP " << i << " " << led << " " << s << " " <<  _gPMT[led][i][s] << endl;
 		gPD[led][i].push_back(_gPD[led][i][s]);
 		gPMT[led][i].push_back(_gPMT[led][i][s]);
 		gPDerr[led][i].push_back(_gPDerr[led][i][s]);
 		gPMTerr[led][i].push_back(_gPMTerr[led][i][s]);
-		/*	      if (led) {
-		cout << i << " " << led << " " << s << " " << gPD[led][i][s]; 
-		cout <<  " " << gPMT[0][i][s] << " " << gPMT[1][i][s] << endl;
-		}*/
+		//cout << "YERP " << i << " " << led << " " << s << " " << gPMT[led][i].back() << endl;
 	      }
 	    }
 	  }
@@ -1322,53 +1309,47 @@ int main (int argc, char **argv)
   
   // Set starting values and step sizes for parameters
 
+  double etastart = 5.0;
+#if SWAPLEDS 
+  etastart = 1./etastart; // must invert when LEDS are swapped 
+#endif 
+
   // Non-linear PMT
   // works for 21927-21939
-  /*  static Double_t vstart[nvars] = {0., 1.5, -0.000001, 5.,
-				   0., 1.5, -0.000001, 5.,
-				   0., 1.5, -0.000001, 5., 
-				   0., 1.5, -0.000001, 5.,
-				   0., 0.5, -0.000001, 4.,
-				   0., 0.5, -0.000001, 4.,
-				   0., 0.5, -0.000001, 4.,
-				   0., 0.5, -0.000001, 4.,
-				   4., -0.001, 0.0}; */
+  static Double_t vstart[nvars] = {0., 1.5, -0.000001, etastart,
+				   0., 1.5, -0.000001, etastart,
+				   0., 1.5, -0.000001, etastart,
+				   0., 1.5, -0.000001, etastart,
+				   0., 0.5, -0.000001, etastart,
+				   0., 0.5, -0.000001, etastart,
+				   0., 0.5, -0.000001, etastart,
+				   0., 0.5, -0.000001, etastart,
+				   4., -0.001, 0.0}; 
 
-  static Double_t vstart[nvars] = {0., 0.5, -0.000001, 5.,
-				   0., 0.5, -0.000001, 5.,
-				   0., 0.5, -0.000001, 5., 
-				   0., 0.5, -0.000001, 5.,
-				   0., 0.5, -0.000001, 4.,
-				   0., 0.5, -0.000001, 4.,
-				   0., 0.5, -0.000001, 4.,
-				   0., 0.5, -0.000001, 4.,
-				   4., -0.001, 0.0};
-
-
-  static Double_t step[nvars] = {1, 0.1, 0.001, 0.1, 
-				 1, 0.1, 0.001, 0.1, 
-				 1, 0.1, 0.001, 0.1, 
-				 1, 0.1, 0.001, 0.1, 
-				 1, 0.1, 0.001, 0.1, 
-				 1, 0.1, 0.001, 0.1, 
-				 1, 0.1, 0.001, 0.1, 
-				 1, 0.1, 0.001, 0.1, 
+  static Double_t step[nvars] = {1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
 				 0.1, 0.001, 1e-7};
 
 
   double PD_parms[4], PD_errs[4];
   TF1 fittedFunctions[2][NUM_CHANNELS]; // separate functions for each LED
    
-  for (int pp = 0; pp < nvars-3; pp++){
+  for (int p = 0; p < nvars-3; p++){
     //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], 0, 0, ierflg); // Linear PMT 
     //   gMinuit->mnparm(pp, Form("p%i", pp%3), vstart[pp], step[pp], 0, 0, ierflg);  // Non-linear PMT
     //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], -100., 1000., ierflg);  // try not to put limits if we can avoid it
 
     // Non-linear PMT, separate eta_lambda term
-    if (pp%4 < 3) gMinuit->mnparm(pp, Form("p%i", pp%4), vstart[pp], step[pp], 0, 0, ierflg);  
-    if (pp%4 == 3) gMinuit->mnparm(pp, Form("nlambda%i", pp%4), vstart[pp], step[pp], 0, 0, ierflg);  
+    if (p%4 < 3) gMinuit->mnparm(p, Form("p%i", p%4), vstart[p], step[p], 0, 0, ierflg);  
+    if (p%4 == 3) gMinuit->mnparm(p, "nlambda", vstart[p], step[p], 0, 0, ierflg);  
   }
-  
+ 
   /*    gMinuit->mnparm(nvars-4, "PDp1", vstart[nvars-4], step[nvars-4], 0.,10.,ierflg);
     gMinuit->mnparm(nvars-3, "PDp2", vstart[nvars-3], step[nvars-3], -1.,1.,ierflg);
     gMinuit->mnparm(nvars-2, "PDratio", vstart[nvars-2], step[nvars-2], 0., 10., ierflg);
@@ -1405,6 +1386,12 @@ int main (int argc, char **argv)
     TString comb_fit_string = "";
     for (int p = 0; p < nvars; p++){
       gMinuit->GetParameter(p, pp, pperr);
+#if SWAPLEDS
+      if (p%4 == 3 && p < nvars - 3){ // need to invert scale factor for runs with LEDs swapped
+	pp = 1./pp;
+	pperr = pperr * pp * pp; // y = 1/x --> dy = dx/x^2 = dx*y^2
+      }
+#endif
       comb_fit_string += run;                comb_fit_string += "\t"; 
       //      int i = p/2;  linear PMT
       //      int i = p/3; // non-linear PMT
