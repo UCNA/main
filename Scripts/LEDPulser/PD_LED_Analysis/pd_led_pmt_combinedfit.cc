@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_19_2015_16way_separate_wavelength_coeff_18745_18768/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_20_2015_16way_separate_wavelength_coeff_21274_21328/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -85,7 +85,7 @@ FOLLOWING DOESN'T WORK:
 #define COMBINEDLED 1 // replace later with a loop
 #define USEBETAOFFSETS false
 #define RANGE_EXTENSION 3.0
-#define SWAPLEDS true // Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
+#define SWAPLEDS false // Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
 #define PMT_THRESHOLD_LOW 1e-5   // Only affect Minuit Fit
 #define PMT_THRESHOLD_HIGH 5000  // Only affect Minuit Fit
 
@@ -1316,10 +1316,10 @@ int main (int argc, char **argv)
 
   // Non-linear PMT
   // works for 21927-21939
-  static Double_t vstart[nvars] = {0., 1.5, -0.000001, etastart,
-				   0., 1.5, -0.000001, etastart,
-				   0., 1.5, -0.000001, etastart,
-				   0., 1.5, -0.000001, etastart,
+  static Double_t vstart[nvars] = {0., 1.0, -0.000001, etastart,
+				   0., 1.0, -0.000001, etastart,
+				   0., 1.0, -0.000001, etastart,
+				   0., 1.0, -0.000001, etastart,
 				   0., 0.5, -0.000001, etastart,
 				   0., 0.5, -0.000001, etastart,
 				   0., 0.5, -0.000001, etastart,
@@ -1640,8 +1640,8 @@ int main (int argc, char **argv)
 
 	ew_canvas->Update();
 	TPaveStats * st = (TPaveStats*)graph[DOWN][i]->GetListOfFunctions()->FindObject("stats");
-	if (st==NULL) cout << "Null TPaveStats - oops?" << endl;
-	else {
+	//	if (st==NULL)cout << "Null TPaveStats - oops?" << endl;
+	if (st!=NULL){
 	  st->SetX1NDC(0.1);
 	  st->SetX2NDC(0.5);
 	}
