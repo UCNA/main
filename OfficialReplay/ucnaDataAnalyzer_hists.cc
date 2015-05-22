@@ -119,6 +119,7 @@ void ucnaDataAnalyzer11b::setupHistograms() {
 				hBiPulser[s][t].back()->SetLineColor(t+1);
 				hBiPulser[s][t].back()->GetXaxis()->SetTitle("ADC channels above pedestal");
 			}
+			hRawPMT[s][t] = registeredTH1F(sideSubst("hRawPMTSpectrum_%c", s)+itos(t), "Raw PMT Spectrum", 200, -100, 3900) ; 
 		}
 	}
 	
@@ -169,6 +170,20 @@ void ucnaDataAnalyzer11b::fillEarlyHistograms() {
 	if(!fBkhfGood)
 		hBkhfFailRate->Fill(fTimeScaler[BOTH]);
 }
+
+
+void ucnaDataAnalyzer11b::fillRawPMTHistograms() {
+  //        if (isScintTrigger() && !isLED()){
+	  for(Side s = EAST; s <= WEST; ++s){
+	    for(unsigned int t=0; t<nBetaTubes; t++){
+	      if (fSide == s){
+		hRawPMT[s][t]->Fill(sevt[s].adc[t]);
+	      }
+	    }
+	  }
+	  
+}
+
 
 void ucnaDataAnalyzer11b::fillHistograms() {
 	

@@ -1,0 +1,66 @@
+# Run Beta Spectrum Study over all Beta runs
+# typiccal command: 
+# ./BetaEnergyScaleStudy /data4/saslutsky/OfficialReplayData_06_2014/hists/spec_23171.root
+# use standard output to dump to a text file
+
+#### USAGE: python QuickBiPeakBatch.py >>  txt.txt
+
+## Simon Slutsky 06/09/2014
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+def createBetaRunList(filename):
+    sourcerunlist = list()
+    f = open(filename, "r")
+    beta_types = ["A2","A5","A7","A10","B2","B5","B7","B10"]
+    for line in f:    
+        for beta_type in beta_types:
+            if line.find(beta_type) > 0:
+                if line[0] == "*":       # only take "good" runs
+                    run = line[1:6]      # parse run list
+                    sourcerunlist.append(run)
+    
+    return sourcerunlist
+
+def makeAllBetaEndpointPlots(filename, showb=0):
+    data = np.genfromtxt(filename, delimiter = "\t", 
+                  names = ['Run', 'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7'])
+    
+    fig = plt.figure()
+    plt.subplot(111)
+    colors = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
+    runlist = data['Run']
+    for i in range(8):
+        endpoints = data['e' + str(i)]
+        print endpoints
+        pltlabel = ("W" if i/4 else "E") + str(i%4) 
+        plt.errorbar(runlist, endpoints, color = colors[i%4], linestyle = "None", 
+                     marker = ('v' if i/4 else 'o') ,  markersize = 6, label = pltlabel )
+        ax = plt.gca()
+    plt.legend(title = "Raw Beta Linearized Endpoints", loc = 2)
+    ax.set_xlabel("Run Number")
+    ax.set_ylabel("Linearized Beta Endpoint (ADC Counts)")
+#    ax.set_ylim(0, 2000)
+    if showb:
+        plt.show()
+    
+    return fig
+ 
+if __name__ == "__main__":
+    basepath = "/home/saslutsky/UCNA/UCNAReplay_052214/UCNA/"
+    filepath = "/Aux/UCNA Run Log 2012.txt"
+    
+    sourcerunlist = createBetaRunList(basepath+filepath)
+
+    #basecmdstring = "./BetaEnergyScaleStudy /data4/saslutsky/OfficialReplayData_06_2014/hists/spec_"
+    basecmdstring  = "./pd_led_pmt_analysis "
+
+    for run in sourcerunlist:
+#        cmdstring = basecmdstring + str(run) + ".root"
+        cmdstring = basecmdstring + str(run)
+        
+#        print cmdstring
+        os.system(cmdstring)
+

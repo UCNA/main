@@ -1,0 +1,73 @@
+#####################
+# UCNA Run Data Log #
+#####################
+#
+#	--- file format description ---
+#
+#	Run lines start with a '*', of the form:
+#		*[Run Number] [Run Type]
+#
+#	Data run types (may be optionally followed by a slow daq run number):
+#
+#		BgOff/BgOn	background with flipper off/on
+#		BetaOff/BetaOn	beta decay with flipper off/on
+#		A1...A12,B1...B12	data octet segments
+#
+#	Calibration run types:		
+#		SourcesCal		Source calibration
+#		Xe			Acrivated Xenon calibration
+#		Other			Miscellaneous run (see comments)
+#		
+#
+#	Lines starting with an '@' specify properties of all the following runs
+#	(until over-written by another '@' line):
+#		@cycle	<Name>		start a contiguous group of runs to be analyzed togetherl resets @cal to 0
+#		@sources <Sources>	sources in holder, Left to Right in wirechamber Y position (from Sn Bi Sr85 Sr90 Cd In)
+#	All other lines (those not starting with a '*' or an '@') are comments.
+#
+
+##########################
+#                        #
+#   A1   Background Off  #
+#   A2   Beta Off        #
+#   A3   Depol Off->On   #
+#   A4   Background On   #
+#   A5   Beta On         #
+#   A6   Depol On->Off   #
+#   A7   Beta On         #
+#   A8   Depol On->Off   #
+#   A9   Background On   #
+#   A10  Beta Off        #
+#   A11  Depol Off->On   #
+#   A12  Background Off  #
+#                        #
+#   B1   Background On   #
+#   B2   Beta On         #
+#   B3   Depol On->Off   #
+#   B4   Background Off  #
+#   B5   Beta Off        #
+#   B6   Depol Off->On   #
+#   B7   Beta Off        #
+#   B8   Depol Off->On   #
+#   B9   Background Off  #
+#   B10  Beta On         #
+#   B11  Depol On->Off   #
+#   B12  Background On   #
+#                        #
+##########################
+
+# Xenon
+
+*21596	Xe
+*21597	Xe
+*21598	Xe
+*21599	Xe
+*21600	Xe
+*21601	Xe
+*21602	Xe
+*21603	Xe
+*21604	Xe
+*21605	Xe
+
+
+

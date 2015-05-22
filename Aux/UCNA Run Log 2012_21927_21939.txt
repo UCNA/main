@@ -1,0 +1,88 @@
+#####################
+# UCNA Run Data Log #
+#####################
+#
+#	--- file format description ---
+#
+#	Run lines start with a '*', of the form:
+#		*[Run Number] [Run Type]
+#
+#	Data run types (may be optionally followed by a slow daq run number):
+#
+#		BgOff/BgOn	background with flipper off/on
+#		BetaOff/BetaOn	beta decay with flipper off/on
+#		A1...A12,B1...B12	data octet segments
+#
+#	Calibration run types:		
+#		SourcesCal		Source calibration
+#		Xe			Acrivated Xenon calibration
+#		Other			Miscellaneous run (see comments)
+#		
+#
+#	Lines starting with an '@' specify properties of all the following runs
+#	(until over-written by another '@' line):
+#		@cycle	<Name>		start a contiguous group of runs to be analyzed togetherl resets @cal to 0
+#		@sources <Sources>	sources in holder, Left to Right in wirechamber Y position (from Sn Bi Sr85 Sr90 Cd In)
+#	All other lines (those not starting with a '*' or an '@') are comments.
+#
+
+##########################
+#                        #
+#   A1   Background Off  #
+#   A2   Beta Off        #
+#   A3   Depol Off->On   #
+#   A4   Background On   #
+#   A5   Beta On         #
+#   A6   Depol On->Off   #
+#   A7   Beta On         #
+#   A8   Depol On->Off   #
+#   A9   Background On   #
+#   A10  Beta Off        #
+#   A11  Depol Off->On   #
+#   A12  Background Off  #
+#                        #
+#   B1   Background On   #
+#   B2   Beta On         #
+#   B3   Depol On->Off   #
+#   B4   Background Off  #
+#   B5   Beta Off        #
+#   B6   Depol Off->On   #
+#   B7   Beta Off        #
+#   B8   Depol Off->On   #
+#   B9   Background Off  #
+#   B10  Beta On         #
+#   B11  Depol On->Off   #
+#   B12  Background On   #
+#                        #
+##########################
+
+@sources Cd
+*21927	 SourcesCal			# 0.0in out West
+@sources E Cd Cs
+*21928	 SourcesCal			# 0.5in out East
+@sources Cd Cs
+*21929	 SourcesCal			# 1.0in out West
+@sources E Cd Cs InE
+*21930	 SourcesCal			# 1.5in out East
+@sources Cd Cs InW
+*21931	 SourcesCal			# 2.0in out West
+@sources Cd Cs InE
+*21932	 SourcesCal			# 2.5in out East
+@sources Cd Cs InW
+*21933	 SourcesCal			# 3.0in out West
+@sources Cd Cs InE
+*21934	 SourcesCal			# 3.5in out East
+@sources Cs InW
+*21935	 SourcesCal			# 4.0in out West
+@sources Cs InE
+*21936	 SourcesCal			# 4.5in out East
+@sources InW
+*21937	 SourcesCal			# 5.0in out West
+@sources InE
+*21938	 SourcesCal			# 5.5in out East
+@sources
+*21939	SourcesCal			# 6.0in out West
+
+
+
+

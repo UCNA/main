@@ -1,3 +1,4 @@
+//g++ -o lgprob LGProbError.cpp pmtprobstuff.cpp lgpmtTools.cpp `root-config --cflags --glibs`
 //#include <fstream>
 #include <iostream>
 #include <stdlib.h>
@@ -5,16 +6,28 @@
 //#include <unistd.h> 
 #include <math.h>
 #include <cmath> 
-#include <TFile.h>
-#include <TH1F.h>
-#include <TTreeReader.h>
-#include <TMath.h>
-#include <TRandom3.h>
-#include <TTreeReaderValue.h>
+#include "TFile.h"
+#include "TH1F.h"
+#include "TTree.h"
+//#include "TTreeReader.h"
+//#include "TTreeReaderValue.h"
+#include "TMath.h"
+#include "TRandom3.h"
 //#include "/home/cmswank/Documents/ucna/main/Scripts/lgprobmap/pmtprobstuff.h"
 //#include "/home/cmswank/Documents/ucna/main/Scripts/lgprobmap/lgpmtTools.h"
 #include "pmtprobstuff.h"
 #include "lgpmtTools.h"
+#include "TLatex.h"
+#include "TFormula.h"
+#include "TAxis.h"
+#include "TPave.h"
+#include "TPaveStats.h"
+#include "TBox.h"
+#include "TText.h"
+#include "TH2.h"
+#include "TF1.h"
+#include "TH2F.h"
+#include "TPaveText.h"
 
 using namespace std;
 

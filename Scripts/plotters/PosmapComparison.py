@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append("..")
+
 from ucnacore.PyxUtils import *
 from ucnacore.EncalDB import *
 from ucnacore.QFile import *
