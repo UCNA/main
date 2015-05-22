@@ -19,7 +19,10 @@ from math import sqrt
 import sys
 
 def makeCuts(data):
-    cutruns = [21599, 21601, 21602, 21933, 21295, 21298,21312, 21318, 21288, 21933]
+    cutruns = [18746,
+               21288, 21295, 21298, 21312, 21318, 
+               21599, 21601, 21602, 
+               21933 ]
     cutsAll = True
     for i in cutruns:
         _cut = (data['Run']!=i)
@@ -36,7 +39,8 @@ if __name__ == "__main__":
     plt.rc('axes', color_cycle=['r', 'g', 'b', 'y'])
 
     # import data. 
-    basedir = "/data1/saslutsky/LEDPulser/images_05_20_2015_16way_separate_wavelength_coeff_21274_21328/"
+#    basedir = "/data1/saslutsky/LEDPulser/images_05_20_2015_16way_separate_wavelength_coeff_21274_21328/"
+    basedir = "/data1/saslutsky/LEDPulser/images_05_14_2015_16way_separate_wavelength_coeff_21927_21939/"
     outputfile = PdfPages(basedir + "FitResultsCombined.pdf")
     data = np.genfromtxt(basedir + "FitResults_Combined.txt", 
                          skip_header=0, 
@@ -47,11 +51,11 @@ if __name__ == "__main__":
                                   'Rmin', 'Rmax', 'Rmin2', 'Rmax2'],
                          dtype = "int, int, S10, float, float, float" )
     
-    print data
-    print data['Channel']
+#    print data
+#    print data['Channel']
     #cut bad runs
     data = makeCuts(data)
-
+    print data
     npars = 4   #p0, p1, p2, nlambda for each tube
     parnames = ["p0", "p1", "p2", "nlambda"]
 
@@ -73,7 +77,6 @@ if __name__ == "__main__":
 #        tmpAxes = [tmpAx0, tmpAx1, tmpAx2, tmpAx3]
         axes = [tmpAx0, tmpAx1, tmpAx2, tmpAx3]
         figures.append(tmpFig0)
-   
         _chan = ""
         marks = 8
         if i < 4:
