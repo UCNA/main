@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_20_2015_16way_separate_wavelength_coeff_21274_21328/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_20_2015_16way_separate_wavelength_coeff_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -1295,12 +1295,12 @@ int main (int argc, char **argv)
   //  const int nvars = 28; // non-linear PMT, add cubic PD term
   //  const int nvars = 19;  // Linear PMT
   const int nvars = 35;  // quadratic PMT, cubic PD, separate eta_lambda for each PMT
-
+  
   // Do Minuit stuff 
   TMinuit *gMinuit = new TMinuit(nvars);  //initialize TMinuit with a maximum of nvars params
   gMinuit->SetPrintLevel(0); // 0 = normal, 1 = verbose
   gMinuit->SetFCN(fcn);
-
+  
   Double_t arglist[10];
   Int_t ierflg = 0;
   
@@ -1308,12 +1308,12 @@ int main (int argc, char **argv)
   gMinuit->mnexcm("SET ERR", arglist ,1,ierflg);
   
   // Set starting values and step sizes for parameters
-
+  
   double etastart = 5.0;
 #if SWAPLEDS 
   etastart = 1./etastart; // must invert when LEDS are swapped 
 #endif 
-
+  
   // Non-linear PMT
   // works for 21927-21939
   static Double_t vstart[nvars] = {0., 1.0, -0.000001, etastart,
@@ -1325,7 +1325,7 @@ int main (int argc, char **argv)
 				   0., 0.5, -0.000001, etastart,
 				   0., 0.5, -0.000001, etastart,
 				   4., -0.001, 0.0}; 
-
+  
   static Double_t step[nvars] = {1, 0.1, 0.00001, 0.1, 
 				 1, 0.1, 0.00001, 0.1, 
 				 1, 0.1, 0.00001, 0.1, 
@@ -1339,35 +1339,21 @@ int main (int argc, char **argv)
 
   double PD_parms[4], PD_errs[4];
   TF1 fittedFunctions[2][NUM_CHANNELS]; // separate functions for each LED
-   
+  
   for (int p = 0; p < nvars-3; p++){
-    //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], 0, 0, ierflg); // Linear PMT 
-    //   gMinuit->mnparm(pp, Form("p%i", pp%3), vstart[pp], step[pp], 0, 0, ierflg);  // Non-linear PMT
-    //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], -100., 1000., ierflg);  // try not to put limits if we can avoid it
-
     // Non-linear PMT, separate eta_lambda term
     if (p%4 < 3) gMinuit->mnparm(p, Form("p%i", p%4), vstart[p], step[p], 0, 0, ierflg);  
     if (p%4 == 3) gMinuit->mnparm(p, "nlambda", vstart[p], step[p], 0, 0, ierflg);  
   }
- 
-  /*    gMinuit->mnparm(nvars-4, "PDp1", vstart[nvars-4], step[nvars-4], 0.,10.,ierflg);
-    gMinuit->mnparm(nvars-3, "PDp2", vstart[nvars-3], step[nvars-3], -1.,1.,ierflg);
-    gMinuit->mnparm(nvars-2, "PDratio", vstart[nvars-2], step[nvars-2], 0., 10., ierflg);
-    gMinuit->mnparm(nvars-1, "PDp3", vstart[nvars-1], step[nvars-1], -1., 1., ierflg);*/
-    /*    gMinuit->mnparm(nvars-3, "PDp1", vstart[nvars-3], step[nvars-3], 0.,10.,ierflg);
-    gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], -1.,1.,ierflg);
-    gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0., 10., ierflg);*/
-    /*   gMinuit->mnparm(nvars-3, "PDp1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
-    gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
-    gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);*/
-    gMinuit->mnparm(nvars-3, "PDq1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
-    gMinuit->mnparm(nvars-2, "PDq2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
-    gMinuit->mnparm(nvars-1, "PDq3", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);
- 
-    // Scaling degeneracy affects all parameters. Break degeneracy by fixing PDp1.  
-    // PDp1 = 4.0 is roughly the favored value from E/W separate fits to run 21927
-    // possible that this value affects adversely fits to other runs - keep an eye on it.
-    //    gMinuit->FixParameter(24);  // lifts degeneracy of scaling all parameters.
+  
+  gMinuit->mnparm(nvars-3, "PDq1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
+  gMinuit->mnparm(nvars-2, "PDq2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
+  gMinuit->mnparm(nvars-1, "PDq3", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);
+  
+  // Scaling degeneracy affects all parameters. Break degeneracy by fixing PDp1.  
+  // PDp1 = 4.0 is roughly the favored value from E/W separate fits to run 21927
+  // possible that this value affects adversely fits to other runs - keep an eye on it.
+  
     gMinuit->FixParameter(nvars-3);  // lifts degeneracy of scaling all parameters.
 
     // Now ready for minimization step
@@ -1457,6 +1443,11 @@ int main (int argc, char **argv)
   convfactorfile.close();
   combfitfile.close();
   //  constrainfitfile.close();
+
+  // Form residual plots for combined fits
+  for 
+
+
 
    TString pe_pmt_filename = "pe_pmt";
    pe_pmt_filename = OUTPUT_IMAGE_DIR + pe_pmt_filename;
@@ -1600,12 +1591,17 @@ int main (int argc, char **argv)
 	gStyle->SetOptFit(0);
 	gStyle->SetOptStat(0);
 	graph[DOWN][i]->SetMarkerColor(6);
+	graph[UP][i]->SetMarkerColor(4);	
+#if SWAPLEDS 
+	graph[DOWN][i]->SetMarkerColor(4);
+	graph[UP][i]->SetMarkerColor(6);
+#endif	
 	graph[UP][i]->Draw("AP");
 	graph[UP][i]->SetName("GraphUP");
 	//	graph[DOWN][i]->Draw("AP");
 	graph[DOWN][i]->Draw("sameP");
 	graph[DOWN][i]->SetName("GraphDOWN");
-	graph[UP][i]->SetMarkerColor(4);
+
 	//graph[UP][i]->Draw("SameP");
 	//	graph[UP][i]->SetName("GraphUP");
 	/*	graph[DOWN][i]->SetTitle(title);
