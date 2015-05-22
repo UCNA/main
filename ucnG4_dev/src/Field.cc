@@ -13,7 +13,7 @@ extern "C" {
 			     const double *x, const double *y, const double *z);
 	    }
 
-Field::Field(const G4String& filename): myMessenger(new FieldMessenger(this)), rmax2(20*20*cm2), fieldScale(1.0), afp_m(0.), RobbyField(true) {
+Field::Field(const G4String& filename): myMessenger(new FieldMessenger(this)), rmax2(20*20*cm2), fieldScale(1.0), afp_m(0.), RobbyField(false) {
   if(!RobbyField) {LoadFieldMap(filename);}
 }
 

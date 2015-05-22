@@ -13,7 +13,12 @@ limdat = {2008:[(0,5.0),(250,5.0),(500,500*0.013),(900,900*0.025),(1000,1000*0.0
 	                #2011:[(0,2.5),(200,200*0.0125),(500,500*0.0250),(1000,500*0.0250)],
 			2012:[(0,2.5),(200,200*0.0125),(500,500*0.0125),(1000,500*0.0125)] }
 
-badruns = {2011:[(17359,17360),(17361,17361),(17376,17376),(17520,17520),(17874,17874),(17891,17891),(18037,18037),(18370,18386),(18620,18620),(19357,19357),(17233,17249)],#,(19823,19863)],#,(18617,19863)],
+#badruns = {2011:[(17359,17360),(17361,17361),(17376,17376),(17520,17520),(17874,17874),(17891,17891),(18037,18037),(18370,18386),(18620,18620),(19357,19357),(17233,17249)],#,(19823,19863)],#,(18617,19863)],
+	   #2012:[(20818,20818),(20829,20829),(21094,21094),(21322,21322),(22451,22451),(22782,22782)] }
+
+#The badruns below are to mimic precisely the runs which are not being used in the parallel analyzer. For 
+# consistency with what Dave has said to ignore, use above list.
+badruns = {2011:[(17383,17383),(17385,17385),(17382,17382),(17886,17886),(17912,17912),(19347,19364),(17233,17249),(17871,18055),(19899,20000)],#,(19823,19863)],#,(18617,19863)],
 	   2012:[(20818,20818),(20829,20829),(21094,21094),(21322,21322),(22451,22451),(22782,22782)] }
 #This is for MB personal test of running energy cal
 #badruns = {2011:[(17233,17249)],2012:[]}
@@ -220,8 +225,8 @@ if __name__=="__main__":
 	plotAllErrors(outpath,2011,gaussFiles=False,gaussUnc=False)
 	for s in ["East","West"]:
 		plotAllErrors(outpath,2011,s,gaussFiles=False,gaussUnc=False)
-	#for s in ["East","West"]:
-	#		for t in range(5):
-	#			plotAllErrors(outpath,2012,s,t,gaussFiles=False,gaussUnc=False)
+	for s in ["East","West"]:
+			for t in range(4):
+				plotAllErrors(outpath,2011,s,t,gaussFiles=False,gaussUnc=False)
 				#plotAllWidths(outpath,2010,s,t)
 		
