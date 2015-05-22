@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_20_2015_16way_separate_wavelength_coeff_21927_21939/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_22_2015_16way_separate_wavelength_coeff_residuals_18745_18768/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -85,7 +85,7 @@ FOLLOWING DOESN'T WORK:
 #define COMBINEDLED 1 // replace later with a loop
 #define USEBETAOFFSETS false
 #define RANGE_EXTENSION 3.0
-#define SWAPLEDS false // Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
+#define SWAPLEDS true // Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
 #define PMT_THRESHOLD_LOW 1e-5   // Only affect Minuit Fit
 #define PMT_THRESHOLD_HIGH 5000  // Only affect Minuit Fit
 
@@ -489,6 +489,7 @@ int main (int argc, char **argv)
   TGraphErrors* graph_465_moved_up[NUM_CHANNELS];
   TGraphErrors* PMT_keV_graph[2][NUM_CHANNELS];
   TGraphErrors* constrained_graph[2][NUM_CHANNELS];
+  TGraphErrors* residual_graph[2][NUM_CHANNELS];
   TCanvas* canvas[NUM_CHANNELS];
   TGraph* g[NUM_CHANNELS];
   TGraphErrors* g_PE_PMT[NUM_CHANNELS];
@@ -1445,10 +1446,66 @@ int main (int argc, char **argv)
   //  constrainfitfile.close();
 
   // Form residual plots for combined fits
-  for 
-
-
-
+  for (int i = 0; i < NUM_CHANNELS; i++){
+    for (int led = 0; led < 2; led++){
+      residual_graph[led][i] = new TGraphErrors(pulser_steps);
+      residual_graph[led][i]->SetTitle(Form("Run %i: Residuals for Tube %i", run, i));
+      for (int pulse = 0; pulse < pulser_steps; pulse++){
+	double x, y;
+	double ex, ey;
+	graph[led][i]->GetPoint(pulse,x,y);
+	if (x > RANGE_MIN && x < range_max[led][i]){ //exclude points outside fit range
+	  ex = graph[led][i]->GetErrorX(pulse);
+	  ey = graph[led][i]->GetErrorY(pulse);
+	  double residual = ( y - fittedFunctions[led][i].Eval(x) ) / ey; // normalized resid
+	  residual_graph[led][i]->SetPoint(pulse, x, residual);
+	  //	  residual_graph[led][i]->SetPointError(pulse, ex, ey);
+	}
+      }
+    }
+  }
+  
+  TCanvas * residual_can[2];// = new TCanvas("Residuals");
+  residual_can[0] = new TCanvas("ResidualsE");
+  residual_can[1] = new TCanvas("ResidualsW");
+  residual_can[0]->Divide(2,2);
+  residual_can[1]->Divide(2,2);
+  for (int i = 0; i < NUM_CHANNELS; i++){
+    residual_can[i/4]->cd(i%4 + 1);
+    residual_graph[0][i]->SetMarkerColor(6);
+    residual_graph[1][i]->SetMarkerColor(4);	
+#if SWAPLEDS 
+    residual_graph[0][i]->SetMarkerColor(4);
+    residual_graph[1][i]->SetMarkerColor(6);
+#endif	
+    residual_graph[0][i]->Draw("*A");
+    residual_graph[1][i]->Draw("*same");
+    residual_graph[0][i]->GetXaxis()->SetTitle("PD");
+    residual_graph[0][i]->GetYaxis()->SetTitle("PMT Residual/#sigma");
+    double rxmin1, rxmax1, rymin1, rymax1;
+    double rxmin2, rxmax2, rymin2, rymax2;
+    residual_graph[0][i]->ComputeRange(rxmin1, rymin1, rxmax1, rymax1);
+    residual_graph[1][i]->ComputeRange(rxmin2, rymin2, rxmax2, rymax2);
+    double rymin = (rymin1<rymin2)?rymin1:rymin2;
+    double rymax = (rymax1>rymax2)?rymax1:rymax2;
+    rymin = (rymin < -10)?rymin:-10;
+    rymax = (rymax >  10)?rymax: 10;
+    residual_graph[0][i]->GetYaxis()->SetRangeUser(rymin, rymax);
+  }
+  for (int ew = 0; ew < 2; ew++){
+    TString side = (ew==0)?"E":"W";
+    //    residual_can[ew]->SetTitle(Form("Residuals for %s tubes, Run %i", side.Data(), run));
+    TString residual_filename = "pd_led_pmt_residuals_";
+    residual_filename = OUTPUT_IMAGE_DIR + residual_filename;
+    residual_filename += argv[1];
+    residual_filename += "_";
+    residual_filename += side;
+    TString residual_rootfilename = residual_filename + ".root";
+    residual_filename += ".gif";
+    residual_can[ew]->SaveAs(residual_filename, "9");
+    residual_can[ew]->SaveAs(residual_rootfilename, "9");
+  }
+  
    TString pe_pmt_filename = "pe_pmt";
    pe_pmt_filename = OUTPUT_IMAGE_DIR + pe_pmt_filename;
    pe_pmt_filename += argv[1];
