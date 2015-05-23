@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
+// c++ includes 
+#include <iostream>
+#include <fstream>
 //#include <gsl/gsl_poly.h>
 
 // ROOT includes
@@ -16,13 +20,11 @@
 #include <TH2F.h>
 #include <TStyle.h>
 #include <TApplication.h>
-
-#include <iostream>
-#include <fstream>
 #include <TPaveStats.h>
 #include <TPave.h>
 #include <TAttText.h>
 #include <TList.h>
+
 using namespace std;
 
 // Fitter includes
