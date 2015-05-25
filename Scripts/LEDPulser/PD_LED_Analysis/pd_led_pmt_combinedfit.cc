@@ -1199,12 +1199,13 @@ int main (int argc, char **argv)
         g[i] = new TGraph(pulser_steps);
         g_PE_PMT[i] = new TGraphErrors(pulser_steps);
         float d_pe = 0, d_pmt = 0;
+        int led = LED_TYPE;
         for (unsigned pulse = 0; pulse < pulser_steps; pulse++)
         {
             double x, y;
-            double n = x_sum[0][LED_TYPE][pulse];  //-1); sigma_mean = STDDEV/sqrt(N)
-            graph[LED_TYPE][i]->GetPoint(pulse,x,y);
-            double sy = graph[LED_TYPE][i]->GetErrorY(pulse)*sqrt(n);  //-1); sigma_mean = STDDEV/sqrt(N)
+            double n = x_sum[0][led][pulse];  //-1); sigma_mean = STDDEV/sqrt(N)
+            graph[led][i]->GetPoint(pulse,x,y);
+            double sy = graph[led][i]->GetErrorY(pulse)*sqrt(n);  //-1); sigma_mean = STDDEV/sqrt(N)
             //	  std::cout << "PE: " << "y = " << y << " sy = " << sy << "\n";
             float pe = (sy<1)? 0:pow(y/sy,2);
             if (not isnan(pe) and y < max_adc_channel and pe < max_npe){
@@ -1213,7 +1214,7 @@ int main (int argc, char **argv)
 
                 // propogation of errors of pe, neglecting uncertainty in sy --> d(pe) = pe*2*d(y)/y = 2*d(y)*y/sy^2 =  2*y/(sqrt(N)*sy)
                 d_pe  = 2*y/(sy*sqrt(n));
-                d_pmt = graph[LED_TYPE][i]->GetErrorY(pulse);
+                d_pmt = graph[led][i]->GetErrorY(pulse);
                 g_PE_PMT[i]->SetPointError(pulse, d_pe, d_pmt);
 
             }
@@ -1267,7 +1268,7 @@ int main (int argc, char **argv)
         g_PE_PMT[i]->Draw("AP");
 
 #if DO_LED_FIT
-        TF1 *pd_fit = new TF1("polyfit", "[0]*x", range_min[LED_TYPE][i], range_max[LED_TYPE][i]);
+        TF1 *pd_fit = new TF1("polyfit", "[0]*x", range_min[led][i], range_max[led][i]);
         if (g[i]->Fit(pd_fit, "R"))
             continue;
         printf("done.\n");
@@ -1280,7 +1281,7 @@ int main (int argc, char **argv)
 
         printf("Plotting residuals...");	
         canvas[i]->GetPad(2)->cd(2);
-        resg[i] = new TGraphErrors(*graph[LED_TYPE][i]);
+        resg[i] = new TGraphErrors(*graph[led][i]);
         resg[i]->SetTitle("PMT Linearity Residual");
         resg[i]->SetMinimum(-0.1);
         resg[i]->SetMaximum(0.1);
