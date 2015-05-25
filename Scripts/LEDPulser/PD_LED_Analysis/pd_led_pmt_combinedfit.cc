@@ -115,6 +115,8 @@ vector<float> _gPMT[2][NUM_CHANNELS];
 vector<float> _gPD[2][NUM_CHANNELS];
 vector<float> _gPMTerr[2][NUM_CHANNELS];
 vector<float> _gPDerr[2][NUM_CHANNELS];
+vector<float> _gPMTserr[2][NUM_CHANNELS];
+vector<float> _gPDserr[2][NUM_CHANNELS];
 
 Double_t func(float PDval, Double_t *par, Int_t i, Int_t led);
 Double_t func_plot(Double_t *PDval, Double_t *par);
@@ -803,29 +805,36 @@ int main (int argc, char **argv)
             for (int pulse = 0; pulse < pulser_steps; pulse++)
             {
                 //float d = num_pulses[led][pulse];
-                float d = x_sum[0][led][pulse];
-                if (d > 1)
+                float n = x_sum[0][led][pulse];
+                if (n > 1)
                 {
-                    //float x_avg = x_sum[led][pulse]/d;
-                    //float y_avg = y_sum[led][pulse]/d;
-                    //float x2_avg = x2_sum[led][pulse]/d; 
-                    //float y2_avg = y2_sum[led][pulse]/d;
-                    float x_avg = x_sum[1][led][pulse]/d;
-                    float y_avg = y_sum[1][led][pulse]/d;
-                    float x2_avg = x_sum[2][led][pulse]/d; 
-                    float y2_avg = y_sum[2][led][pulse]/d;
-                    float sx = sqrt((x2_avg - x_avg*x_avg)/(d-1));
-                    float sy = sqrt((y2_avg - y_avg*y_avg)/(d-1));
-                    //cout << "sx " << x2_avg << ", ";
-                    //cout << x_avg*x_avg << ", " << sx << endl;
-                    //cout << sy << endl;
-                    graph[led][i]->SetPoint(pulse, x_avg, y_avg);
-                    graph[led][i]->SetPointError(pulse, sx, sy);
+                    //float ex = x_sum[led][pulse]/n;
+                    //float ey = y_sum[led][pulse]/n;
+                    //float ex2 = x2_sum[led][pulse]/n; 
+                    //float ey2 = y2_sum[led][pulse]/n;
+                    /// expectation values from sums
+                    float ex = x_sum[1][led][pulse]/n;
+                    float ey = y_sum[1][led][pulse]/n;
+                    float ex2 = x_sum[2][led][pulse]/n; 
+                    float ey2 = y_sum[2][led][pulse]/n;
+                    /// uniformly minimal variance unbiased estimators
+                    float sx2 = (ex2 - ex*ex)/(n-1);       
+                    float sy2 = (ey2 - ey*ey)/(n-1);
+                    float sx = sqrt(sx2);
+                    float sy = sqrt(sy2);
+                    float ssx = sx*sx*sqrt(2/(n-1));
+                    float ssy = sy*sy*sqrt(2/(n-1));
+
                     // pipe values out to global so fit function can access
-                    _gPD[led][i].push_back(x_avg);
-                    _gPMT[led][i].push_back(y_avg);
+                    _gPD[led][i].push_back(ex);
+                    _gPMT[led][i].push_back(ey);
                     _gPDerr[led][i].push_back(sx);
                     _gPMTerr[led][i].push_back(sy);
+                    _gPDserr[led][i].push_back(ssx);
+                    _gPMTserr[led][i].push_back(ssy);
+
+                    graph[led][i]->SetPoint(pulse, ex, ey);
+                    graph[led][i]->SetPointError(pulse, sx, sy);
                 }
             }
         }
