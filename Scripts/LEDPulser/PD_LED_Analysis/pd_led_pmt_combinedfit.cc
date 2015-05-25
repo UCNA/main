@@ -329,6 +329,7 @@ int main (int argc, char **argv)
     // constants (maybe should be set by options too?)
     //enum {DOWN, UP, GAIN, TIME, TIMEUP, TIMEDOWN, TIMEGAIN};
     enum {DOWN, UP, GAIN, TIME};
+    enum {PD, PMT};
     const int max_cycles = 100; // more than an hour
     int n = max_cycles * pulser_steps * 100;  // this can be updated later to be more accurate
     //	const float max_pdc_channel = 400;
@@ -345,7 +346,7 @@ int main (int argc, char **argv)
 
 
     // some strings we will use
-    TString wavelength[2] = { "405", "465" };
+    TString wavelength[2] = { "405 nm", "465 nm" };
     TString detector[NUM_CHANNELS] = { "E1", "E2", "E3", "E4", "W1", "W2", "W3", "W4" };
     TString Qadc[NUM_CHANNELS] = { "Qadc0", "Qadc1", "Qadc2", "Qadc3", "Qadc4", "Qadc5", "Qadc6", "Qadc7"};
 
@@ -751,27 +752,21 @@ int main (int argc, char **argv)
                 if (subperiod / 2 + epsilon < subcycle_time and subcycle_time < subperiod - epsilon) // gain
                 {
                     int led = (cycle_time > period/2);
-                    if (cycle_time > period / 2) // ramp up (465nm?)
+                    int ramp = (cycle_time > period / 2)? UP : DOWN; 
+                    if (not i)        // Only Fill once
+                        time_his2D[ramp]->Fill(time/1e6,x);
+                    pd_pmt_his2D[ramp][i]->Fill(x, y);
+                    /*
+                    x_sum[ramp][subcycle] += x;
+                    y_sum[ramp][subcycle] += y;
+                    x2_sum[ramp][subcycle] += x*x;
+                    y2_sum[ramp][subcycle] += y*y;
+                    num_pulses[ramp][subcycle] ++;
+                    */
+                    for (int m = 0; m < MOMENTS; m++)
                     {
-                        if (not i)
-                            time_his2D[UP]->Fill(time/1e6,x);
-                        pd_pmt_his2D[UP][i]->Fill(x, y);
-                        x_sum[UP][subcycle] += x;
-                        y_sum[UP][subcycle] += y;
-                        x2_sum[UP][subcycle] += x*x;
-                        y2_sum[UP][subcycle] += y*y;
-                        num_pulses[UP][subcycle] ++;
-                    }
-                    if (cycle_time < period / 2) // ramp down (405nm?)
-                    {
-                        if (not i)        // Only Fill once
-                            time_his2D[DOWN]->Fill(time/1e6,x);
-                        pd_pmt_his2D[DOWN][i]->Fill(x, y);
-                        x_sum[DOWN][subcycle] += x;
-                        y_sum[DOWN][subcycle] += y;
-                        x2_sum[DOWN][subcycle] += x*x;
-                        y2_sum[DOWN][subcycle] += y*y;
-                        num_pulses[DOWN][subcycle] ++;
+                        x_sum[m][ramp][subcycle] += pow(x,m);
+                        y_sum[m][ramp][subcycle] += pow(y,m);
                     }
                 }
                 time_his2D[TIME]->Fill( time/1e6, x);
