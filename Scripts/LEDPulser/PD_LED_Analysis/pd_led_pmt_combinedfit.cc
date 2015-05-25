@@ -74,6 +74,7 @@ using namespace std;
 #define DO_LED_FIT 1
 #define POLYFIT 0
 #define OFFSETPOLYFIT 1
+#define MOMENTS 2
 //#define CONSTRAINFIT 1
 #define BETAADCCOUNTS 782
 #define PLOTBOTHLEDS 1
