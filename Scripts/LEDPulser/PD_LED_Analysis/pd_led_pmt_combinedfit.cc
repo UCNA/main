@@ -68,13 +68,13 @@ using namespace std;
 #define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_20_2015_16way_separate_wavelength_coeff_21274_21328/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
-#define ORDER 2 // Power law fit
-//#define ORDER 3 // Kevin's default
+#define ORDER 2                 /// power law fit (Kevin had 3)
 #define FIT2D false
 #define DO_LED_FIT 1
 #define POLYFIT 0
 #define OFFSETPOLYFIT 1
-#define MOMENTS 2
+#define MOMENTS 3               /// number of moments to fit: 0, 1, 2
+#define LEDS 2                  /// only two: 404 nm and 465 nm
 //#define CONSTRAINFIT 1
 #define BETAADCCOUNTS 782
 #define PLOTBOTHLEDS 1
@@ -82,15 +82,15 @@ using namespace std;
 #define MOVEDUPGRAPH false
 #define KEVSCALED false
 #define RANGE_MAX_OVERRIDE false
-#define RANGE_MAX_VALUE 100.0 // only if RANGE_MAX_OVERRIDE = true
+#define RANGE_MAX_VALUE 100.0   /// only if RANGE_MAX_OVERRIDE = true
 #define FIXBETAENDPOINT true
-#define RELATIVEBETAPLOTS false  // supersedes FIXBETAENDPOINT (and everything else)
-#define COMBINEDLED 1 // replace later with a loop
+#define RELATIVEBETAPLOTS false /// supersedes FIXBETAENDPOINT (and everything else)
+#define COMBINEDLED 1           /// replace later with a loop
 #define USEBETAOFFSETS false
 #define RANGE_EXTENSION 3.0
-#define SWAPLEDS false // Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
-#define PMT_THRESHOLD_LOW 1e-5   // Only affect Minuit Fit
-#define PMT_THRESHOLD_HIGH 5000  // Only affect Minuit Fit
+#define SWAPLEDS false          /// Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
+#define PMT_THRESHOLD_LOW 1e-5  /// Only affect Minuit Fit
+#define PMT_THRESHOLD_HIGH 5000 /// Only affect Minuit Fit
 
 const int pulser_steps = 64;
 
@@ -676,14 +676,28 @@ int main (int argc, char **argv)
         int cycle = 0;
         int subcycle = 0;
 
+        float x_sum[MOMENTS][2][pulser_steps];
+        float y_sum[MOMENTS][2][pulser_steps];
+
+        // TODO: for (int sig = 0; sig < 2; sig++)
+        for (int m = 0; m < MOMENTS; m++)
+            for (int led = 0; led < LEDS; led++)
+                for (int pulse = 0; pulse < pulser_steps; pulse++)
+                {
+                    x_sum[m][led][pulse] = 0;
+                    y_sum[m][led][pulse] = 0;
+                }
+
+        /* TODO REMOVE
         float x_sum[2][pulser_steps];
         float y_sum[2][pulser_steps];
         float x2_sum[2][pulser_steps];
         float y2_sum[2][pulser_steps];
         int num_pulses[2][pulser_steps];
+        */
 
+        /* TODO REMOVE
         for (int led = 0; led < 2; led++)
-        {
             for (int pulse = 0; pulse < pulser_steps; pulse++)
             {
                 x_sum[led][pulse] = 0;
@@ -692,7 +706,7 @@ int main (int argc, char **argv)
                 y2_sum[led][pulse] = 0;
                 num_pulses[led][pulse] = 0;
             }
-        }
+        */
 
         for (int j = 0; j < vn; j++) 
         {
@@ -737,7 +751,8 @@ int main (int argc, char **argv)
 #endif
 #endif
                  */
-                if (epsilon < subcycle_time and subcycle_time < subperiod/2 - epsilon) // ramps
+                if (epsilon < subcycle_time 
+                and subcycle_time < subperiod/2 - epsilon) // ramps
                 {
                     if (not i){               // only fill once
                         time_his2D[GAIN]->Fill(time/1e6, x);
@@ -750,7 +765,8 @@ int main (int argc, char **argv)
                     pmt_gain_his1D[i]->Fill(y);
                     pmt_gain_his2D[i]->Fill(time/1e6, y);
                 }
-                if (subperiod / 2 + epsilon < subcycle_time and subcycle_time < subperiod - epsilon) // gain
+                if (subperiod / 2 + epsilon < subcycle_time 
+                and subcycle_time < subperiod - epsilon) // gain
                 {
                     int led = (cycle_time > period/2);
                     int ramp = (cycle_time > period / 2)? UP : DOWN; 
@@ -786,16 +802,22 @@ int main (int argc, char **argv)
             graph[led][i] = new TGraphErrors(pulser_steps);
             for (int pulse = 0; pulse < pulser_steps; pulse++)
             {
-                float d = num_pulses[led][pulse];
-                if (d > 0)
+                //float d = num_pulses[led][pulse];
+                float d = x_sum[0][led][pulse];
+                if (d > 1)
                 {
-                    float x_avg = x_sum[led][pulse]/d;
-                    float y_avg = y_sum[led][pulse]/d;
-                    float x2_avg = x2_sum[led][pulse]/d; 
-                    float y2_avg = y2_sum[led][pulse]/d;
+                    //float x_avg = x_sum[led][pulse]/d;
+                    //float y_avg = y_sum[led][pulse]/d;
+                    //float x2_avg = x2_sum[led][pulse]/d; 
+                    //float y2_avg = y2_sum[led][pulse]/d;
+                    float x_avg = x_sum[1][led][pulse]/d;
+                    float y_avg = y_sum[1][led][pulse]/d;
+                    float x2_avg = x_sum[2][led][pulse]/d; 
+                    float y2_avg = y_sum[2][led][pulse]/d;
                     float sx = sqrt((x2_avg - x_avg*x_avg)/(d-1));
                     float sy = sqrt((y2_avg - y_avg*y_avg)/(d-1));
-                    //		  cout << "sx " << x2_avg << ", " << x_avg*x_avg << ", " << sx << endl;
+                    //cout << "sx " << x2_avg << ", ";
+                    //cout << x_avg*x_avg << ", " << sx << endl;
                     //cout << sy << endl;
                     graph[led][i]->SetPoint(pulse, x_avg, y_avg);
                     graph[led][i]->SetPointError(pulse, sx, sy);
@@ -1180,8 +1202,9 @@ int main (int argc, char **argv)
         for (unsigned pulse = 0; pulse < pulser_steps; pulse++)
         {
             double x, y;
+            double n = x_sum[0][LED_TYPE][pulse];  //-1); sigma_mean = STDDEV/sqrt(N)
             graph[LED_TYPE][i]->GetPoint(pulse,x,y);
-            double sy = graph[LED_TYPE][i]->GetErrorY(pulse)*sqrt(num_pulses[LED_TYPE][pulse]);  //-1); sigma_mean = STDDEV/sqrt(N)
+            double sy = graph[LED_TYPE][i]->GetErrorY(pulse)*sqrt(n);  //-1); sigma_mean = STDDEV/sqrt(N)
             //	  std::cout << "PE: " << "y = " << y << " sy = " << sy << "\n";
             float pe = (sy<1)? 0:pow(y/sy,2);
             if (not isnan(pe) and y < max_adc_channel and pe < max_npe){
@@ -1189,7 +1212,7 @@ int main (int argc, char **argv)
                 g_PE_PMT[i]->SetPoint(pulse, pe, y);
 
                 // propogation of errors of pe, neglecting uncertainty in sy --> d(pe) = pe*2*d(y)/y = 2*d(y)*y/sy^2 =  2*y/(sqrt(N)*sy)
-                d_pe  = 2*y/( sy * sqrt(num_pulses[LED_TYPE][pulse]) );
+                d_pe  = 2*y/(sy*sqrt(n));
                 d_pmt = graph[LED_TYPE][i]->GetErrorY(pulse);
                 g_PE_PMT[i]->SetPointError(pulse, d_pe, d_pmt);
 
