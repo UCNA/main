@@ -2,6 +2,7 @@
 #
 #  Name:         Makefile
 #  Created by:   Michael Mendenhall
+#  Modified by:  Kevin Hickerson
 #
 #  Contents:     Makefile for UCNA Analysis code
 #
@@ -19,7 +20,7 @@ CC = cc
 CXX = g++
 
 CXXFLAGS = -std=c++0x -O3 -fPIC `root-config --cflags` -pedantic -Wall -Wextra -I. \
-	-IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics
+	-IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics -IOptics
 LDFLAGS =  -L. -lUCNA -lSpectrum -lMLP `root-config --libs` -lMathMore
 
 ifdef PROFILER_COMPILE
@@ -43,7 +44,10 @@ endif
 # things to build
 #
 
-VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/:Physics/:Examples/:Fierz/:Standalone/
+VPATH = ./:IOUtils/:RootUtils/:BaseTypes/:MathUtils/:Calibration/:Analysis/:Studies/:Physics/:Examples/:Fierz/:Standalone/:Optics/
+
+Optics = lgpmtTools.o  lightguideProb.o  pmtprobstuff.o  sign.o \
+		   LGProbRootFileIn.o LGProbError.o  LGProbRootInOut.o 
 
 Physics = BetaSpectrum.o ElectronBindingEnergy.o NuclEvtGen.o
 
@@ -67,7 +71,7 @@ Studies = SegmentSaver.o RunAccumulator.o OctetAnalyzer.o OctetSimuCloneManager.
 	CathodeTuningAnalyzer.o PositionBasisPlugin.o PositionBinnedPlugin.o WirechamberGainMapPlugins.o XenonAnalyzer.o \
 	PlotMakers.o AsymmetryCorrections.o FierzFitter.o GravitySpectrometerPlugin.o SimEdepPlugin.o KurieStudy.o
 
-objects = $(IOUtils) $(ROOTUtils) $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics)
+objects = $(IOUtils) $(ROOTUtils) $(Utils) $(Calibration) $(Analysis) $(Studies) $(Physics) $(Optics)
 
 
 
@@ -85,12 +89,12 @@ libUCNA.a: $(objects)
 	
 
 ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm CombinedAbFit \
-	FPNCalc  MWPC_Efficiency_Sim FierzOctetAnalyzer OctetAnalyzerExample
+	FPNCalc  MWPC_Efficiency_Sim FierzOctetAnalyzer OctetAnalyzerExample lgprobmap
 
 examples: $(ExampleObjs)
 
 StandaloneObjs = GammaComptons BetaEndpoint BetaOctetPositions MC_Comparisons MiscJunk \
-					MC_EventGen QuasiRandomTest MWPC_Energy_Cal MC_Plugin_Analyzer TriggerEfficMapper
+	MC_EventGen QuasiRandomTest MWPC_Energy_Cal MC_Plugin_Analyzer TriggerEfficMapper 
 
 standalone: $(StandaloneObjs)
 
