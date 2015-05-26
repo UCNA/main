@@ -63,7 +63,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_22_2015_16way_separate_wavelength_coeff_residuals_18745_18768/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_05_26_2015_16way_separate_wavelength_coeff_residuals_21650_21950/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -85,7 +85,7 @@ FOLLOWING DOESN'T WORK:
 #define COMBINEDLED 1 // replace later with a loop
 #define USEBETAOFFSETS false
 #define RANGE_EXTENSION 3.0
-#define SWAPLEDS true // Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
+#define SWAPLEDS false // Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
 #define PMT_THRESHOLD_LOW 1e-5   // Only affect Minuit Fit
 #define PMT_THRESHOLD_HIGH 5000  // Only affect Minuit Fit
 
@@ -147,6 +147,10 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     for (int k=0; k<gPD[led][i].size(); k++){
       if (gPMTerr[led][i][k] < 0.000000001) continue;
       if (gPDerr[led][i][k] < 0.000000001) continue;
+      // No PD errros:
+      //delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k]; 
+      //_chisq_temp += delta*delta; 
+      
       // include PD errors:
       delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
       _chisq_temp += delta*delta/combiErr(par, i, led, k); // err already squared; 
@@ -1446,6 +1450,7 @@ int main (int argc, char **argv)
   //  constrainfitfile.close();
 
   // Form residual plots for combined fits
+  double chiSq = 0.;
   for (int i = 0; i < NUM_CHANNELS; i++){
     for (int led = 0; led < 2; led++){
       residual_graph[led][i] = new TGraphErrors(pulser_steps);
@@ -1460,11 +1465,13 @@ int main (int argc, char **argv)
 	  double residual = ( y - fittedFunctions[led][i].Eval(x) ) / ey; // normalized resid
 	  residual_graph[led][i]->SetPoint(pulse, x, residual);
 	  //	  residual_graph[led][i]->SetPointError(pulse, ex, ey);
+	  chiSq += residual*residual;
 	}
       }
     }
   }
-  
+  cout << "Residuals chiSq " << chiSq <<  endl; 
+
   TCanvas * residual_can[2];// = new TCanvas("Residuals");
   residual_can[0] = new TCanvas("ResidualsE");
   residual_can[1] = new TCanvas("ResidualsW");
