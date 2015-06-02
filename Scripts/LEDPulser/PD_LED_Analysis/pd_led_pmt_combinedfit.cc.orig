@@ -138,6 +138,29 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
 
 Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t led, Int_t iflag)
 {
+<<<<<<< HEAD
+  Double_t PMT_term = 0;
+  Double_t PD_term = 0;
+  Double_t delta = 0;
+  Double_t chisq = 0;
+  
+  for (int i = 0; i < NUM_CHANNELS; i++ ){
+    //  for (int i = 0; i < NUM_CHANNELS; i = i+2 ){
+  //  for (int i = 0; i < 4; i++){
+    //for (int i = 4; i < 8; i++){
+  //   for (int i = 6; i < 7; i++){
+    Double_t _chisq_temp = 0;
+    for (int k=0; k<gPD[led][i].size(); k++){
+      if (gPMTerr[led][i][k] < 0.000000001) continue;
+      if (gPDerr[led][i][k] < 0.000000001) continue;
+      // No PD errros:
+      //delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led))/gPMTerr[led][i][k]; 
+      //_chisq_temp += delta*delta; 
+      
+      // include PD errors:
+      delta = (gPMT[led][i][k] - func(gPD[led][i][k], par, i, led));
+      _chisq_temp += delta*delta/combiErr(par, i, led, k); // err already squared; 
+=======
     Double_t PMT_term = 0;
     Double_t PD_term = 0;
     Double_t delta = 0;
@@ -157,6 +180,7 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
             _chisq_temp += delta*delta/combiErr(par, i, led, k); // err already squared; 
         }
         chisq += _chisq_temp;
+>>>>>>> 1a994e284b85cf98e0adc6dddcd3c0f569582af5
     }
     cout << "Chi^2 = " << chisq << endl;
     return chisq;
@@ -470,6 +494,154 @@ int main (int argc, char **argv)
             std::cout << cycle << "th Period: " << (max_time[cycle] - max_time[cycle-1]) / 1e6 << "\n";
         }
 #endif
+<<<<<<< HEAD
+  }
+  
+  // Define a histo for the true PD signal history (before cycle parsing)
+  TString true_time_title = "True PD time sequence for run ";
+  true_time_title += run;
+  TH2F* true_time_his2D = new TH2F("true_time_his2D", true_time_title,
+				   360000., 0, 3600.,
+				   1<<8, -100, 1000);
+  h1.Draw("Pdc36:S83028/1000000.>>true_time_his2D", "(int(Sis00) & 128) > 0", "goff");
+  
+  // Define cuts
+  TCut *led_cut = new TCut("(int(Sis00) & 128) > 0");  // 129 if east-PMTs on, 161 if GMS-ref also on
+  TCut *pedestal_cut = new TCut("!(int(Sis00) & 1)");  
+  
+  
+  // The histograms and canvases we will use 
+  TH2F* time_his2D[4];
+  TH1F* pmt_gain_his1D[NUM_CHANNELS];
+  TH2F* pmt_gain_his2D[NUM_CHANNELS];
+  TH1F * time_his1D;
+  TH2F* pd_pmt_his2D[2][NUM_CHANNELS];
+  TGraphErrors* graph[2][NUM_CHANNELS];
+  TGraphErrors* graph_465_moved_up[NUM_CHANNELS];
+  TGraphErrors* PMT_keV_graph[2][NUM_CHANNELS];
+  TGraphErrors* constrained_graph[2][NUM_CHANNELS];
+  TGraphErrors* residual_graph[2][NUM_CHANNELS];
+  TCanvas* canvas[NUM_CHANNELS];
+  TGraph* g[NUM_CHANNELS];
+  TGraphErrors* g_PE_PMT[NUM_CHANNELS];
+  TGraphErrors* resg[NUM_CHANNELS];
+  TCanvas * PE_PMT_canvas = new TCanvas();
+  PE_PMT_canvas->Divide(2,4);
+
+  // global Style options
+  gStyle->SetPalette(1);
+  gStyle->SetOptStat("");
+  
+  
+  // find PD pedestal
+  h1.SetBranchStatus("Pdc36", 1);
+  TF1 *pd_pedestal_fit = FitGaussian("Pdc36", &h1, pedestal_cut);
+  float pd_pedestal = 0;
+  if (pd_pedestal_fit)
+    pd_pedestal = pd_pedestal_fit->GetParameter(1);
+  else
+    printf("couldn't fit pedestal to Pdc36\n");
+  printf("PD pedestal = %f\n", pd_pedestal);
+  
+  
+  // Making our histograms for the time sequence
+  TString time_title = "PD time sequence for run ";
+  time_title += run;
+  time_his2D[TIME] = new TH2F("H2F_time_name", time_title, 
+			      3600*10, 0, 3600,
+			      1<<8, -pd_pedestal, 500-pd_pedestal);
+  
+  time_his2D[UP] = new TH2F("H2F_time_up_name", time_title, 
+			    3600*10, 0, 3600,
+			    1<<8, -pd_pedestal, 500-pd_pedestal);
+  
+  time_his2D[DOWN] = new TH2F("H2F_time_down_name", time_title, 
+			      3600*10, 0, 3600,
+			      1<<8, -pd_pedestal, 500-pd_pedestal);
+  
+  time_his2D[GAIN] = new TH2F("H2F_time_gain_name", time_title, 
+			      3600*10, 0, 3600,
+			      1<<8, -pd_pedestal, 500-pd_pedestal);
+  time_his1D = new TH1F("H1F_time_gain_name_1D", time_title,
+			100, 200, 300);
+  
+  // prepare a file to store linearity fit parameters
+  //  double * fitpars = 0; 
+  //  double * fitparerrors = 0;
+  double ** fitpars = new double*[2];
+  double ** fitparerrors = new double*[2];
+  double fitchisq = 0;
+  int Npar;
+
+  double * pefitpars = 0; 
+  double * pefitparerrors = 0;
+  double pefitchisq = 0;
+  int peNpar;
+
+  TString fitfilename = "FitResults.txt";
+  //	#if CONSTRAINFIT
+  TString constrainfitfilename = "FitResults_constrained.txt";
+  //	#endif
+  fitfilename = OUTPUT_IMAGE_DIR + fitfilename;
+  constrainfitfilename = OUTPUT_IMAGE_DIR + constrainfitfilename;
+
+  ofstream fitfile;
+  fitfile.open(fitfilename, std::ofstream::out | std::ofstream::app);
+  //  ofstream constrainfitfile;
+  //constrainfitfile.open(constrainfitfilename, std::ofstream::out | std::ofstream::app);
+  // Can't get the string to write for only first file
+  /*TString fit_header_string = "Run\t";
+    fit_header_string += "Channel\t";
+    fit_header_string += "Wavelength\t";
+    fit_header_string += "p0\tp0Err\t";
+    fit_header_string += "p1\tp1Err\t";
+    fit_header_string += "p2\tp2Err\t";
+    fit_header_string += "Chi2\t";
+    fit_header_string += "\n";
+    ftfile << fit_header_string;
+  */
+  
+  TString pepmtfitfilename = "FitResults_PE_PMT.txt";
+  pepmtfitfilename = OUTPUT_IMAGE_DIR + pepmtfitfilename;
+  ofstream pepmtfitfile; 
+  pepmtfitfile.open(pepmtfitfilename, std::ofstream::out | std::ofstream::app);
+
+  TString combfitfilename = "FitResults_Combined.txt";
+  combfitfilename = OUTPUT_IMAGE_DIR + combfitfilename;
+  ofstream combfitfile; 
+  combfitfile.open(combfitfilename, std::ofstream::out | std::ofstream::app);
+  
+  TString convfactorfilename = "PD_keV_conversion_factors.txt";
+  convfactorfilename = OUTPUT_IMAGE_DIR + convfactorfilename;
+  ofstream convfactorfile;
+  convfactorfile.open(convfactorfilename, std::ofstream::out | std::ofstream::app);
+
+  TString rawfilename = "RawGraphData.txt";
+  rawfilename = OUTPUT_IMAGE_DIR + rawfilename;
+  ofstream rawfile;
+  rawfile.open(rawfilename, std::ofstream::out | std::ofstream::app);
+      
+  float gain_sum = 0;
+  float gain2_sum = 0;
+  int gain_cnt = 0;
+  
+  // Max Beta ADC Channels for given run segments 
+  // will use later for determing run ranges
+  //  float beta_Cd_ratio = 63./782.;
+  //  float beta_Bi_ratio = 1047./782.;
+  float beta_Cd_ratio = 63./BETAADCCOUNTS;
+  float beta_Bi_ratio = 1047./BETAADCCOUNTS;
+
+  //< 20500
+  float BetaADC_below_20500[NUM_CHANNELS] = {500, 500, 850, 500, 700, 550, 700, 1050};
+  // 20500-21250
+  float BetaADC_20500_21250[NUM_CHANNELS] = {550, 400, 850, 500, 450, 600, 500, 1050};
+  // >21250
+  float BetaADC_21250_above[NUM_CHANNELS] = {650, 650, 1200, 550, 750, 700, 900, 1000};
+  
+  // go through each PMT channel
+  for (unsigned i = 0; i < NUM_CHANNELS; i++) 
+=======
     }
 
     // Define a histo for the true PD signal history (before cycle parsing)
@@ -615,6 +787,7 @@ int main (int argc, char **argv)
 
     // go through each PMT channel
     for (unsigned i = 0; i < NUM_CHANNELS; i++) 
+>>>>>>> 1a994e284b85cf98e0adc6dddcd3c0f569582af5
     {
         // set up only the branches we use
         h1.SetBranchStatus("*", 0);
@@ -1321,6 +1494,28 @@ int main (int argc, char **argv)
         pepmtfitfile << pe_out_fit_string;
 
     }  // end loop over channels
+<<<<<<< HEAD
+  
+  //  const int nvars = 27; // non-linear PMT
+  //  const int nvars = 28; // non-linear PMT, add cubic PD term
+  //  const int nvars = 19;  // Linear PMT
+  const int nvars = 35;  // quadratic PMT, cubic PD, separate eta_lambda for each PMT
+  
+  // Do Minuit stuff 
+  TMinuit *gMinuit = new TMinuit(nvars);  //initialize TMinuit with a maximum of nvars params
+  gMinuit->SetPrintLevel(0); // 0 = normal, 1 = verbose
+  gMinuit->SetFCN(fcn);
+  
+  Double_t arglist[10];
+  Int_t ierflg = 0;
+  
+  arglist[0] = 1;
+  gMinuit->mnexcm("SET ERR", arglist ,1,ierflg);
+  
+  // Set starting values and step sizes for parameters
+  
+  double etastart = 5.0;
+=======
 
     //  const int nvars = 27; // non-linear PMT
     //  const int nvars = 28; // non-linear PMT, add cubic PD term
@@ -1341,9 +1536,53 @@ int main (int argc, char **argv)
     // Set starting values and step sizes for parameters
 
     double etastart = 5.0;
+>>>>>>> 1a994e284b85cf98e0adc6dddcd3c0f569582af5
 #if SWAPLEDS 
     etastart = 1./etastart; // must invert when LEDS are swapped 
 #endif 
+<<<<<<< HEAD
+  
+  // Non-linear PMT
+  // works for 21927-21939
+  static Double_t vstart[nvars] = {0., 1.0, -0.000001, etastart,
+				   0., 1.0, -0.000001, etastart,
+				   0., 1.0, -0.000001, etastart,
+				   0., 1.0, -0.000001, etastart,
+				   0., 0.5, -0.000001, etastart,
+				   0., 0.5, -0.000001, etastart,
+				   0., 0.5, -0.000001, etastart,
+				   0., 0.5, -0.000001, etastart,
+				   4., -0.001, 0.0}; 
+  
+  static Double_t step[nvars] = {1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 1, 0.1, 0.00001, 0.1, 
+				 0.1, 0.001, 1e-7};
+
+
+  double PD_parms[4], PD_errs[4];
+  TF1 fittedFunctions[2][NUM_CHANNELS]; // separate functions for each LED
+  
+  for (int p = 0; p < nvars-3; p++){
+    // Non-linear PMT, separate eta_lambda term
+    if (p%4 < 3) gMinuit->mnparm(p, Form("p%i", p%4), vstart[p], step[p], 0, 0, ierflg);  
+    if (p%4 == 3) gMinuit->mnparm(p, "nlambda", vstart[p], step[p], 0, 0, ierflg);  
+  }
+  
+  gMinuit->mnparm(nvars-3, "PDq1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
+  gMinuit->mnparm(nvars-2, "PDq2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
+  gMinuit->mnparm(nvars-1, "PDq3", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);
+  
+  // Scaling degeneracy affects all parameters. Break degeneracy by fixing PDp1.  
+  // PDp1 = 4.0 is roughly the favored value from E/W separate fits to run 21927
+  // possible that this value affects adversely fits to other runs - keep an eye on it.
+  
+=======
 
     // Non-linear PMT
     // works for 21927-21939
@@ -1351,10 +1590,10 @@ int main (int argc, char **argv)
         0., 1.0, -0.000001, etastart,
         0., 1.0, -0.000001, etastart,
         0., 1.0, -0.000001, etastart,
-        0., 1.0, -0.000001, etastart,
-        0., 1.0, -0.000001, etastart,
-        0., 1.0, -0.000001, etastart,
-        0., 1.0, -0.000001, etastart,
+        0., 0.5, -0.000001, etastart,
+        0., 0.5, -0.000001, etastart,
+        0., 0.5, -0.000001, etastart,
+        0., 0.5, -0.000001, etastart,
         4., -0.001, 0.0}; 
 
     static Double_t step[nvars] = {1, 0.1, 0.00001, 0.1, 
@@ -1399,6 +1638,7 @@ int main (int argc, char **argv)
     // PDp1 = 4.0 is roughly the favored value from E/W separate fits to run 21927
     // possible that this value affects adversely fits to other runs - keep an eye on it.
     //    gMinuit->FixParameter(24);  // lifts degeneracy of scaling all parameters.
+>>>>>>> 1a994e284b85cf98e0adc6dddcd3c0f569582af5
     gMinuit->FixParameter(nvars-3);  // lifts degeneracy of scaling all parameters.
 
     // Now ready for minimization step
@@ -1483,6 +1723,141 @@ int main (int argc, char **argv)
     cout << fittedFunctions[0][7].Eval(0) << endl;
     cout << fittedFunctions[1][7].Eval(0) << endl;
 
+<<<<<<< HEAD
+  fitfile.close();
+  pepmtfitfile.close();
+  convfactorfile.close();
+  combfitfile.close();
+  //  constrainfitfile.close();
+
+  // Form residual plots for combined fits
+  double chiSq = 0.;
+  for (int i = 0; i < NUM_CHANNELS; i++){
+    for (int led = 0; led < 2; led++){
+      residual_graph[led][i] = new TGraphErrors(pulser_steps);
+      residual_graph[led][i]->SetTitle(Form("Run %i: Residuals for Tube %i", run, i));
+      for (int pulse = 0; pulse < pulser_steps; pulse++){
+	double x, y;
+	double ex, ey;
+	graph[led][i]->GetPoint(pulse,x,y);
+	if (x > RANGE_MIN && x < range_max[led][i]){ //exclude points outside fit range
+	  ex = graph[led][i]->GetErrorX(pulse);
+	  ey = graph[led][i]->GetErrorY(pulse);
+	  double residual = ( y - fittedFunctions[led][i].Eval(x) ) / ey; // normalized resid
+	  residual_graph[led][i]->SetPoint(pulse, x, residual);
+	  //	  residual_graph[led][i]->SetPointError(pulse, ex, ey);
+	  chiSq += residual*residual;
+	}
+      }
+    }
+  }
+  cout << "Residuals chiSq " << chiSq <<  endl; 
+
+  TCanvas * residual_can[2];// = new TCanvas("Residuals");
+  residual_can[0] = new TCanvas("ResidualsE");
+  residual_can[1] = new TCanvas("ResidualsW");
+  residual_can[0]->Divide(2,2);
+  residual_can[1]->Divide(2,2);
+  for (int i = 0; i < NUM_CHANNELS; i++){
+    residual_can[i/4]->cd(i%4 + 1);
+    residual_graph[0][i]->SetMarkerColor(6);
+    residual_graph[1][i]->SetMarkerColor(4);	
+#if SWAPLEDS 
+    residual_graph[0][i]->SetMarkerColor(4);
+    residual_graph[1][i]->SetMarkerColor(6);
+#endif	
+    residual_graph[0][i]->Draw("*A");
+    residual_graph[1][i]->Draw("*same");
+    residual_graph[0][i]->GetXaxis()->SetTitle("PD");
+    residual_graph[0][i]->GetYaxis()->SetTitle("PMT Residual/#sigma");
+    double rxmin1, rxmax1, rymin1, rymax1;
+    double rxmin2, rxmax2, rymin2, rymax2;
+    residual_graph[0][i]->ComputeRange(rxmin1, rymin1, rxmax1, rymax1);
+    residual_graph[1][i]->ComputeRange(rxmin2, rymin2, rxmax2, rymax2);
+    double rymin = (rymin1<rymin2)?rymin1:rymin2;
+    double rymax = (rymax1>rymax2)?rymax1:rymax2;
+    rymin = (rymin < -10)?rymin:-10;
+    rymax = (rymax >  10)?rymax: 10;
+    residual_graph[0][i]->GetYaxis()->SetRangeUser(rymin, rymax);
+  }
+  for (int ew = 0; ew < 2; ew++){
+    TString side = (ew==0)?"E":"W";
+    //    residual_can[ew]->SetTitle(Form("Residuals for %s tubes, Run %i", side.Data(), run));
+    TString residual_filename = "pd_led_pmt_residuals_";
+    residual_filename = OUTPUT_IMAGE_DIR + residual_filename;
+    residual_filename += argv[1];
+    residual_filename += "_";
+    residual_filename += side;
+    TString residual_rootfilename = residual_filename + ".root";
+    residual_filename += ".gif";
+    residual_can[ew]->SaveAs(residual_filename, "9");
+    residual_can[ew]->SaveAs(residual_rootfilename, "9");
+  }
+  
+   TString pe_pmt_filename = "pe_pmt";
+   pe_pmt_filename = OUTPUT_IMAGE_DIR + pe_pmt_filename;
+   pe_pmt_filename += argv[1];
+   TString pe_pmt_rootfilename = pe_pmt_filename;
+   pe_pmt_filename += ".gif";
+   pe_pmt_rootfilename += ".root";
+   PE_PMT_canvas->SaveAs(pe_pmt_filename,"9");
+   PE_PMT_canvas->SaveAs(pe_pmt_rootfilename,"9");
+
+  
+  std::cout << "Fitting Gain Parameters" << std::endl;
+  TF1 * mygaus = new TF1("mygaus", "gaus", 0, 1000);
+  time_his1D->Fit("mygaus");
+  double * projfit_pars = mygaus->GetParameters();
+  double * projfit_errs = mygaus->GetParErrors();
+  int projfit_Npars = mygaus->GetNpar();
+  double projfit_chisq = mygaus->GetChisquare()/mygaus->GetNDF();
+  
+  std::cout << "Writing gain parameters" << std::endl;
+  TString gainfilename = "GainResults.txt";
+  gainfilename = OUTPUT_IMAGE_DIR + gainfilename;
+  ofstream gainfile;
+  gainfile.open(gainfilename, std::ofstream::out | std::ofstream::app);
+  TString out_gain_string = "";
+  out_gain_string += run;                        out_gain_string += "\t"; 
+  for (int q = 0; q < projfit_Npars; q++){
+    out_gain_string += projfit_pars[q];          out_gain_string += "\t";
+    out_gain_string += projfit_errs[q];          out_gain_string += "\t";
+  }
+  out_gain_string += projfit_chisq;              out_gain_string += "\t";
+  out_gain_string += "\n";
+  gainfile << out_gain_string;	
+  
+  gainfile.close();
+  
+  // Fit and write out results for PMT response during gain period
+  double * pmt_pars;
+  double * pmt_errs;
+  int pmt_Npars = 0;
+  double pmt_chisq = 0.;
+  TF1 * pmtgaus = new TF1("pmtgaus", "gaus", 0, 3000);
+  
+  TString PMTgainfilename = "PMTGainResults.txt";
+  PMTgainfilename = OUTPUT_IMAGE_DIR + PMTgainfilename;
+  ofstream PMTgainfile;
+  PMTgainfile.open(PMTgainfilename, std::ofstream::out | std::ofstream::app);
+  
+  for (int chan = 0; chan < NUM_CHANNELS; chan++){
+    std::cout << "Fitting PMT gain parameters " << chan << std::endl;
+    pmt_gain_his1D[chan]->Fit("pmtgaus","R");
+    pmt_pars = pmtgaus->GetParameters();
+    pmt_errs = pmtgaus->GetParErrors();
+    pmt_Npars = pmtgaus->GetNpar();
+    pmt_chisq = pmtgaus->GetChisquare()/pmtgaus->GetNDF();
+    
+    std::cout << "Writing ADC gain parameters " << chan << std::endl;
+    
+    TString adc_out_gain_string = "";
+    adc_out_gain_string += run;                    adc_out_gain_string += "\t"; 
+    adc_out_gain_string += chan;                   adc_out_gain_string += "\t"; 
+    for (int q = 0; q < pmt_Npars; q++){
+      adc_out_gain_string += pmt_pars[q];          adc_out_gain_string += "\t";
+      adc_out_gain_string += pmt_errs[q];          adc_out_gain_string += "\t";
+=======
     fitfile.close();
     pepmtfitfile.close();
     convfactorfile.close();
@@ -1556,6 +1931,7 @@ int main (int argc, char **argv)
         adc_out_gain_string += pmt_chisq;              adc_out_gain_string += "\t";
         adc_out_gain_string += "\n";
         PMTgainfile << adc_out_gain_string;	
+>>>>>>> 1a994e284b85cf98e0adc6dddcd3c0f569582af5
     }
     PMTgainfile.close();
 
@@ -1623,6 +1999,66 @@ int main (int argc, char **argv)
                 title += " nm and ";
                 title += wavelength[UP];
 #endif
+<<<<<<< HEAD
+	title += " nm)";
+	//pd_pmt_his2D[UP][i]->SetTitle(title);
+	//pd_pmt_his2D[DOWN][i]->SetTitle(title);
+	//pd_pmt_his2D[DOWN][i]->Draw("colz");
+	//graph[DOWN][i]->Draw("SameP");
+	gStyle->SetOptFit(0);
+	gStyle->SetOptStat(0);
+	graph[DOWN][i]->SetMarkerColor(6);
+	graph[UP][i]->SetMarkerColor(4);	
+#if SWAPLEDS 
+	graph[DOWN][i]->SetMarkerColor(4);
+	graph[UP][i]->SetMarkerColor(6);
+#endif	
+	graph[UP][i]->Draw("AP");
+	graph[UP][i]->SetName("GraphUP");
+	//	graph[DOWN][i]->Draw("AP");
+	graph[DOWN][i]->Draw("sameP");
+	graph[DOWN][i]->SetName("GraphDOWN");
+
+	//graph[UP][i]->Draw("SameP");
+	//	graph[UP][i]->SetName("GraphUP");
+	/*	graph[DOWN][i]->SetTitle(title);
+	graph[DOWN][i]->GetXaxis()->SetTitle("PD");
+	graph[DOWN][i]->GetYaxis()->SetTitle("PMT (ADC)");*/
+	graph[UP][i]->SetTitle(title);
+	graph[UP][i]->GetXaxis()->SetTitle("PD");
+	graph[UP][i]->GetYaxis()->SetTitle("PMT (ADC)");
+	graph[UP][i]->GetYaxis()->SetRangeUser(-50, 4000);
+
+	for (int led = 0; led < 2; led++){
+	  fittedFunctions[led][i].SetLineColor(8);
+	  fittedFunctions[led][i].Draw("same");
+	}
+
+	TPad *subpad = new TPad("subpad","",0.37,0.58,0.7,0.89);
+	subpad->Draw();
+	subpad->cd();
+	TGraph * newgraphUP = (TGraph*)graph[UP][i]->Clone("newUP");
+	TGraph * newgraphDOWN = (TGraph*)graph[DOWN][i]->Clone("newDOWN");
+	newgraphUP->Draw("AP");
+	newgraphDOWN->Draw("sameP");
+	newgraphUP->SetTitle("");
+	newgraphUP->GetXaxis()->SetTitle("");
+	newgraphUP->GetYaxis()->SetRangeUser(-50, 750);
+	newgraphUP->GetXaxis()->SetRangeUser(-10, 50);
+
+	for (int led = 0; led < 2; led++){
+	  fittedFunctions[led][i].SetLineColor(8);
+	  fittedFunctions[led][i].Draw("same");
+	}	// redraw on inset
+
+	ew_canvas->Update();
+	TPaveStats * st = (TPaveStats*)graph[DOWN][i]->GetListOfFunctions()->FindObject("stats");
+	//	if (st==NULL)cout << "Null TPaveStats - oops?" << endl;
+	if (st!=NULL){
+	  st->SetX1NDC(0.1);
+	  st->SetX2NDC(0.5);
+	}
+=======
                 title += " nm)";
                 //pd_pmt_his2D[UP][i]->SetTitle(title);
                 //pd_pmt_his2D[DOWN][i]->SetTitle(title);
@@ -1676,6 +2112,7 @@ int main (int argc, char **argv)
                     st->SetX1NDC(0.1);
                     st->SetX2NDC(0.5);
                 }
+>>>>>>> 1a994e284b85cf98e0adc6dddcd3c0f569582af5
 
 #if MOVEDUPGRAPH
                 graph_465_moved_up[i]->SetMarkerColor(4);
