@@ -107,6 +107,9 @@ if __name__ == "__main__":
     outputfile = PdfPages(basedir + "FitResultsCombined_" + 
                           str(min(runlist)) + "_" +
                           str(max(runlist)) + ".pdf")
+    p1file = PdfPages(basedir + "FitResultsCombined_" + 
+                          str(min(runlist)) + "_" +
+                          str(max(runlist)) + "_p1.pdf")
     
 
     print data
@@ -115,6 +118,7 @@ if __name__ == "__main__":
 
     axes = list()
     figures = list()
+    p1Figures = list()
     for i in range(0,8): # 8 channels 
         data_cut = list()
         for j in range (0, npars): 
@@ -131,9 +135,10 @@ if __name__ == "__main__":
         ## Prepare Plots
 
         tmpFig0, (tmpAx0, tmpAx1, tmpAx2, tmpAx3) = plt.subplots(nrows=4, sharex = True, sharey=False)
-#        tmpAxes = [tmpAx0, tmpAx1, tmpAx2, tmpAx3]
+        p1Fig, p1Ax = plt.subplots(nrows = 1)
         axes = [tmpAx0, tmpAx1, tmpAx2, tmpAx3]
         figures.append(tmpFig0)
+        p1Figures.append(p1Fig)
         _chan = ""
         marks = 8
         if i < 4:
@@ -151,17 +156,30 @@ if __name__ == "__main__":
                              linestyle='None', marker='^',
                              markersize=marks, label=_chan, color = 'Black')
             axes[j].set_ylabel("p" + str(j))
+            
+        p1Ax.errorbar(data_cut[1]['Run'], 
+                             data_cut[1]['ParVal'], 
+                             yerr=data_cut[1]['ParErr'], 
+                             linestyle='None', marker='^',
+                             markersize=marks, label=_chan, color = 'Black')
 
         axes[3].set_ylabel("$\eta_{\lambda}$")        
         axes[0].set_title(_chan)
         xmin, xmax = min(data_cut[j]['Run']), max(data_cut[j]['Run']) 
         axes[0].set_xlim([xmin - 0.5, xmax + 0.5])
         axes[3].set_xlabel('Run Number')
-   
+
+        p1Ax.set_ylabel("p" + str(1))
+        p1Ax.set_title(_chan)
+        p1Ax.set_xlim([xmin - 0.5, xmax + 0.5])
+        p1Ax.set_xlabel('Run Number')
+
     if savebool: 
         for f in range (0, 8):
             outputfile.savefig(figures[f])
+            p1file.savefig(p1Figures[f])
     
     outputfile.close()
+    p1file.close()
     if showbool:
         plt.show(block=True)     #block=True keeps the plot window open when in interactive mode 
