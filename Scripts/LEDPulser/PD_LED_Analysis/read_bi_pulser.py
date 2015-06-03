@@ -1,10 +1,17 @@
 #!/usr/bin/python
 
+#Usage: python read_bi_pulser.py <runlist>,
+# where <runlist> is a formatted runlist as found in UCNA_AUX.
+# If no runlist is supplied, default to ${UCNA_AUX}/UCNA Run Log 2012.txt.
+
 import csv
 import sys
 from math import sqrt
-from os import path
+#from os import path
+import os
 import string
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 class ChrisPulserFile:
     def __init__(self, run):
@@ -14,7 +21,7 @@ class ChrisPulserFile:
         #    infile += sys.argv[1]
         infile += "/ChrisPulser.txt"
 
-        if not path.exists(infile):
+        if not os.path.exists(infile):
             #print "No file found for run " + str(run)
             self.array = 0
             #sys.exit(-1)
@@ -111,7 +118,8 @@ def GetBiRuns(runtype = False):
         # how does using this run list make any sense?
        # runstring = "../../Aux/UCNA_LED_run_log.txt" 
 #        runstring = "../../Aux/UCNA_RUN_LOG_2012_renamed.txt" 
-        runstring = "../../Aux/UCNA Run Log 2012.txt" 
+#        runstring = "../../Aux/UCNA Run Log 2012.txt" 
+        runstring = os.environ['UCNA_AUX'] + "/UCNA Run Log 2012.txt" 
     else:     
         runstring = sys.argv[1]
 
@@ -208,7 +216,42 @@ def return_key_vals(keystringIn, valerr):
     
 if __name__ == "__main__":
     
+    outputfile = PdfPages("BiPulser_21700_21950.pdf")
+
     centvalarray = return_key_vals("center", "val")
     centerrarray = return_key_vals("center", "err")
-    print centvalarray
-   # print centerrarray
+    runlist = GetBiRuns()
+    
+    figures = list()
+    for i in range(0, 8):
+        if i < 4:
+            _chan = "E" 
+            _chan = _chan + str(i)
+        if i >3 and i < 8:
+            _chan = "W" 
+            _chan = _chan + str(i-4)
+        
+        fig, ax = plt.subplots()
+        figures.append(fig)
+        ax.errorbar(runlist, centvalarray[i], 
+                    yerr = centerrarray[i], linestyle='None', 
+                    marker= 'o', markersize = 4)       
+
+        centvalarray_strip = [c for c in centvalarray[i] if c>0.0]
+        ymin, ymax = min(centvalarray_strip), max(centvalarray[i]) 
+        ax.set_ylim(ymin - 1, ymax + 1)
+        ax.set_xlabel("Run Number")
+        ax.set_ylabel("PMT (ADC)")
+        ax.set_title(" Bi Pulser " + _chan)
+
+        ax.set_xlim(21703.5, 21950.5)
+        outputfile.savefig(figures[i])
+
+    outputfile.close()
+    plt.show()
+
+   # 
+   # print runlist
+
+
+    
