@@ -15,8 +15,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 class ChrisPulserFile:
     def __init__(self, run):
-#        infile = "/home/saslutsky/UCNA/OfficialReplayData/data/Monitors/Run_"
-        infile = "/data4/saslutsky/OfficialReplayData/data/Monitors/Run_"
+        infile = "/data1/saslutsky/OfficialReplayData/data/Monitors/Run_"
         infile += str(run)
         #    infile += sys.argv[1]
         infile += "/ChrisPulser.txt"
@@ -178,7 +177,7 @@ def get_tube_separated_arrays(keyIn, runlistIn):
                                                                 tube, cpf.array, keyIn)
                     valarray[usetube].append(calc_avg_w_error.value)
                     errarray[usetube].append(calc_avg_w_error.error)
-                #            print str(tube_center.value) + " " + str(tube_center.error)
+                    #print str(tube_center.value) + " " + str(tube_center.error)
                 else:
                     valarray[usetube].append(0.0)
                     errarray[usetube].append(0.0)
@@ -221,7 +220,7 @@ if __name__ == "__main__":
     centvalarray = return_key_vals("center", "val")
     centerrarray = return_key_vals("center", "err")
     runlist = GetBiRuns()
-    
+        
     figures = list()
     for i in range(0, 8):
         if i < 4:
