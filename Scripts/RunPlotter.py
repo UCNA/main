@@ -13,6 +13,7 @@ from ucnacore.EncalDB import *
 import matplotlib.pyplot as plt
 import matplotlib.dates as dates
 from datetime import timedelta
+from datetime import date
 
 def fixRunDB(undoBool = False):
     # fixes some sort of bug where many runs are listed
@@ -72,7 +73,16 @@ def getTimeForRun(runnumb, conn = 0):
         conn = open_connection()
     conn.execute("SELECT start_time, end_time FROM run WHERE run_number = %s"%runnumb)
     result = conn.fetchall()
-    return findMidTime(result[0][0], result[0][1])
+#    print runnumb
+    if len (result) > 0:
+ #       print result[0][0]
+ #       print result[0][1]
+        return findMidTime(result[0][0], result[0][1])
+    else:
+ #       prevrun = str(int(runnumb) - 1)
+  #      nextrun = str(int(runnumb) + 1)
+   #     return findMidTime(getTimeForRun(prevrun), getTimeForRun(nextrun))
+        return date(2005,01,01)
 
 def getTimeForRunlist(runlist):
     conn = open_connection()
