@@ -114,7 +114,7 @@ if __name__ == "__main__":
     plt.rc('axes', color_cycle=['r', 'g', 'b', 'y'])
 
 #    basedir = "/data1/saslutsky/LEDPulser/images_05_26_2015_16way_separate_wavelength_coeff_residuals_21650_21950/"
-    basedir = "/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_21373/"
+    basedir = "/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/"
     data = getLEDdata(basedir)
 
     runlist = data['Run']

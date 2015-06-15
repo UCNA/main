@@ -14,7 +14,8 @@ from math import sqrt
 
 def read_PD_LED_response():
 #    imagedir = '/data4/saslutsky/PulserComp/imagesLEDDebug'
-    imagedir = '/data4/saslutsky/PulserComp/images_06_09_2014'
+#    imagedir = '/data4/saslutsky/PulserComp/images_06_09_2014'
+    imagedir = '/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/'
     filename = 'GainResults.txt'
     path = imagedir + "/" +filename
     
@@ -34,6 +35,7 @@ def read_PD_LED_response():
 if __name__ == "__main__":
 
     saveBool = 0
+    
     plt.ion() #turn on interactive mode
     rcParams['figure.figsize'] = 10, 10     #Set default fig size
     

@@ -325,20 +325,21 @@ if __name__ == "__main__":
                         #yerr = centerrarray[i],
                         linestyle='None', 
                         marker= 'o', markersize = 4)       
+            ax.set_xlabel("Run Number")
 
         if datebool: 
             timelist = getTimeForRunlist(runlist)
-            ax.xaxis.set_major_formatter(dates.DateFormatter("%m/%d/%y"))
+            ax.xaxis.set_major_formatter(dates.DateFormatter("%m/%d/%y %H:%M"))
             ax.plot_date(timelist, centvalarray[i],
                          #yerr = centerrarray[i],
                          linestyle='None', 
                          marker= 'o', markersize = 4)       
-                         
+            ax.set_xlabel("Time")
+             
         centvalarray_strip = [c for c in centvalarray[i] if c>0.0]
         ymin, ymax = min(centvalarray_strip), max(centvalarray[i]) 
 #        ymin, ymax = max(centvalarray_strip) - 400, max(centvalarray[i]) 
         ax.set_ylim(ymin - 1, ymax + 1)
-        ax.set_xlabel("Run Number")
         ax.set_ylabel("PMT (ADC)")
         ax.set_title(" Bi Pulser " + _chan)
 
