@@ -13,9 +13,7 @@ from math import sqrt
 import sys
 
 def ReadLEDFile():
-#   imagedir = '/data4/saslutsky/PulserComp/imagesPMTGain' # has fewer runs for some reason
-#    imagedir = '/data4/saslutsky/PulserComp/imagesLEDDebug'
-    imagedir = '/data4/saslutsky/PulserComp/images_06_09_2014'
+    imagedir = '/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/'
     filename = 'PMTGainResults.txt'
     path = imagedir + "/" +filename
     
@@ -30,7 +28,7 @@ def ReadLEDFile():
                                   'MuErr','Sigma','SigmaErr', 'Chi2'])
     readData.sort(order = 'Run')
 
-    return readData
+    return readData, outputpath
 
 def getLEDDataforTube(tubeIn):
     dat = ReadLEDFile()
@@ -41,10 +39,12 @@ def getLEDDataforTube(tubeIn):
 # copy/pasted from pd_led_gain.py - needs updates
 if __name__ == "__main__":
 
+    savebool = sys.argv[1]
+
     plt.ion() #turn on interactive mode
     rcParams['figure.figsize'] = 10, 10     #Set default fig size
 
-    data = ReadLEDFile()
+    data, outputpath = ReadLEDFile()
     
     means = data['Mu']
     meanErrs = data['MuErr']
@@ -103,10 +103,11 @@ if __name__ == "__main__":
    # ax5.set_ylim([-0.00015, -0.00008])
    # ax8.set_ylim([0, 8])
 
-    outputfile = PdfPages(outputpath)
-    for f in range(0, len(figures)):
-        outputfile.savefig(figures[f])
-    outputfile.close()
+    if savebool:
+        outputfile = PdfPages(outputpath)
+        for f in range(0, len(figures)):
+            outputfile.savefig(figures[f])
+        outputfile.close()
 
     plt.show(block=True)     #block=True keeps the plot window open when in interactive mode 
 
