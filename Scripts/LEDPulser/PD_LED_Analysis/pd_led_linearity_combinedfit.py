@@ -24,24 +24,67 @@ from RunPlotter import getTimeForRunlist
 
 def makeQualityCuts(data):
     cutruns = [18746, 18751, 18760, 18761, 
+               21186, 22647, # just a bad run
                21288, 21295, 21298, 21312, 21318, 
+               21378,  # bad run
                21599, 21601, 21602, 
                21674, 21686, 
                21792, # refuses to fit
                21903, 21932, 21933, 
                21777, 21891, 21948, 21911, #runs including a bad cycle
-
+               21429, 21430, 21431, 21342, 22261, # no PMT data
                20782, 20889, 20685, 20287]  # haven't/should investigate by eye
 
     
-    bimodalrange1 = range(21650, 21704)
-    bimodalrange2 = range(21827, 21843)
-    bimodalrange3 = range(21865, 21878)
-    bimodalranges = [bimodalrange1, bimodalrange2, bimodalrange3]
+#    bimodalrange1 = range(21650, 21704)
+#    bimodalrange2 = range(21827, 21843)
+#    bimodalrange3 = range(21865, 21878)
+#    bimodalrange4 = range(21354, 21377)
+#    bimodalrange5 = range(21070, 21114)
+#    bimodalrange6 = range(21194, 21231)
+#    bimodalrange7 = range(22358, 22389)
+#    bimodalranges = [bimodalrange1, bimodalrange2, bimodalrange3,
+#                     bimodalrange4, bimodalrange5, bimodalrange6, bimodalrange7]
+ 
+    bimodalranges = [range(20988, 20934), 
+                     range(20944, 21041), # no PMT data
+                     range(21045, 21048),
+                     range(21053, 21056), range(21070, 21114), range(21127, 21166),
+                     range(21170, 21192), range(21194, 21232), range(21238, 21253),
+                     range(21290, 21343), range(21353, 21377), range(21412, 21419),
+                     range(21629, 21633), range(21640, 21704), range(21827, 21842),
+                     range(21865, 21877), range(21993, 22003), range(22084, 22093),
+                     [22111],
+                     range(22123, 22163), range(22311, 22339), range(22344, 22350),
+                     range(22358, 22389), range(22412, 22437), range(22441, 22480),
+                     range(22483, 22511), range(22733, 22737), range(22746, 22753),
+                     range(22793, 22803), range(22829, 22834), range(22873, 22896),
+                     range(22947, 22953), range(22955, 22980), range(23010, 23017),
+                     range(23081, 23084)]
     for bmr in bimodalranges:
         for j in bmr:
             cutruns.append(j)
-    
+
+#    ledcullrange0 = range(20333, 20342) # cull 20333-20341, by eye, bad LEDs
+    #from $UCNA_AUX/UCNA Run Log 2012_LEDculled.txt:
+#    ledcullrange1 = [20507, 20731] # 20731 large error bars
+#    ledcullrange2 = range(20515, 20532) # cull 20515-20531
+#    ledcullrange3 = range(20818, 20838) # cull 20818-20837
+#    ledcullrange4 = range(20901, 20918) # cull 20901-20817
+#    ledcullrange4 = [21690, 21694, 21703] # covered in bimodal range 1
+#    ledcullrange5 = [21707, 21708]
+#########    # 20970 seems to be first good run, runs before it have confusingly large offset (p0)
+    ledcullrange0 = range(18000, 20970) 
+###############################
+    ledcullrange6 = [22222, 22301, 22302, 22448, 22450]
+    ledcullrange7 = range(22453, 22463) # cull 22453-22462
+    ledcullrange8 = [22778]
+    ledcullranges = [ledcullrange0, ledcullrange6,
+                     ledcullrange7, ledcullrange8 ]
+    for lcr in ledcullranges:
+        for k in lcr:
+            cutruns.append(k)
+  #  print cutruns
     cutsAll = True
     for i in cutruns:
         _cut = (data['Run']!=i)
@@ -55,7 +98,7 @@ def checkChiSq(data, run):
     cutCond = runCut & chiCut
     chi_data_cut = data[cutCond]
     retarray = chi_data_cut['ParVal'] != 0.0  # cut runs with chisq = 0
-    print retarray
+#    print retarray
     if retarray[0]:
         return run
     else:
@@ -74,7 +117,7 @@ def makeChiCuts(data):
             runlist_short.append(run)
 
     for run in runlist_short:
-        print "Checking ChiSq for run " + str(run)
+#        print "Checking ChiSq for run " + str(run)
         cutrun = checkChiSq(data, run)
         cutlist.append(cutrun)
         
@@ -230,15 +273,29 @@ if __name__ == "__main__":
                                  yerr=data_cut[j]['ParErr'], 
                                  linestyle='None', marker='^',
                                  markersize=marks, label=_chan, color = 'Black')
+                axes[j].xaxis_date()
                 axes[3].set_xlabel('Time')
         
             axes[j].set_ylabel("p" + str(j))
 
-        p1Ax.errorbar(data_cut[1]['Run'], 
-                             data_cut[1]['ParVal'], 
-                             yerr=data_cut[1]['ParErr'], 
-                             linestyle='None', marker='^',
-                             markersize=marks, label=_chan, color = 'Black')
+        if not datebool:
+            p1Ax.errorbar(data_cut[1]['Run'], 
+                          data_cut[1]['ParVal'], 
+                          yerr=data_cut[1]['ParErr'], 
+                          linestyle='None', marker='^',
+                          markersize=marks, label=_chan, color = 'Black')
+            p1Ax.set_xlabel('Run Number')
+            
+        if datebool:
+            timelist = getTimeForRunlist(data_cut[1]['Run'])
+            p1Ax.errorbar(timelist, 
+                          data_cut[1]['ParVal'], 
+                          yerr=data_cut[1]['ParErr'], 
+                          linestyle='None', marker='^',
+                          markersize=marks, label=_chan, color = 'Black')
+            p1Ax.xaxis_date()
+            p1Ax.set_xlabel('Time')
+
 
         axes[3].set_ylabel("$\eta_{\lambda}$")        
         axes[0].set_title(_chan)
@@ -246,7 +303,7 @@ if __name__ == "__main__":
 
         p1Ax.set_ylabel("p" + str(1))
         p1Ax.set_title(_chan)
-        p1Ax.set_xlabel('Run Number')
+        
 
     if savebool: 
         for f in range (0, 8):
