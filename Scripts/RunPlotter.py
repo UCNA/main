@@ -139,10 +139,24 @@ def PlotRuns(conn):
                                   
     plt.show()
 
+def writeRunsToFile(conn):
+    midlist, runlist, startlist, endlist = createtimelist(conn)
+    outfile = open('RunsByDate.txt', 'w')
+    for i in range(len(midlist)):
+        outstring  = str(runlist[i])   + "\t"
+        outstring += str(startlist[i]) + "\t "
+        outstring += str(midlist[i])   + "\t "
+        outstring += str(endlist[i])   + "\n "
+        outfile.write(outstring)
+
+    outfile.close()
+    return 0 
+
 if __name__ == "__main__":
     
     conn = open_connection()
-    PlotRuns(conn)
+#    PlotRuns(conn)
+    writeRunsToFile(conn)
     
     
     
