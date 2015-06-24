@@ -279,18 +279,18 @@ if __name__ == "__main__":
             axes[j].set_ylabel("p" + str(j))
 
         if not datebool:
-            p1Ax.errorbar(data_cut[1]['Run'], 
-                          data_cut[1]['ParVal'], 
-                          yerr=data_cut[1]['ParErr'], 
+            p1Ax.errorbar(data_cut[2]['Run'], 
+                          data_cut[2]['ParVal'], 
+                          yerr=data_cut[2]['ParErr'], 
                           linestyle='None', marker='^',
                           markersize=marks, label=_chan, color = 'Black')
             p1Ax.set_xlabel('Run Number')
             
         if datebool:
-            timelist = getTimeForRunlist(data_cut[1]['Run'])
+            timelist = getTimeForRunlist(data_cut[2]['Run'])
             p1Ax.errorbar(timelist, 
-                          data_cut[1]['ParVal'], 
-                          yerr=data_cut[1]['ParErr'], 
+                          data_cut[2]['ParVal'], 
+                          yerr=data_cut[2]['ParErr'], 
                           linestyle='None', marker='^',
                           markersize=marks, label=_chan, color = 'Black')
             p1Ax.xaxis_date()
@@ -301,7 +301,7 @@ if __name__ == "__main__":
         axes[0].set_title(_chan)
         
 
-        p1Ax.set_ylabel("p" + str(1))
+        p1Ax.set_ylabel("p2")
         p1Ax.set_title(_chan)
         
 
