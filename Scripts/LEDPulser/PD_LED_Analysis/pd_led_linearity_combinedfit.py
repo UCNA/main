@@ -23,7 +23,12 @@ sys.path.append('../../') # find RunPlotter.py
 from RunPlotter import getTimeForRunlist
 
 def makeQualityCuts(data):
-    cutruns = [18746, 18751, 18760, 18761, 
+    cutruns = [18424, # explicit bimodal change in the middle of the run (only E?)
+               18429, 18430, 18520, 18559, 18644, 18646, 18648, 18787  # LEDs swapped, bad cycle finding
+               18456,  # bad fits
+               18505, 18506, 18524, 18532, 18533 # no data 
+               18577, 18969, 19322, # bad cylce finding
+               18746, 18751, 18760, 18761, 
                21186, 22647, # just a bad run
                21288, 21295, 21298, 21312, 21318, 
                21378,  # bad run
@@ -32,7 +37,7 @@ def makeQualityCuts(data):
                21792, # refuses to fit
                21903, 21932, 21933, 
                21777, 21891, 21948, 21911, #runs including a bad cycle
-               21429, 21430, 21431, 21342, 22261, # no PMT data
+               21429, 21430, 21431, 21432, 22261, # no PMT data
                20782, 20889, 20685, 20287]  # haven't/should investigate by eye
 
     
@@ -46,8 +51,11 @@ def makeQualityCuts(data):
 #    bimodalranges = [bimodalrange1, bimodalrange2, bimodalrange3,
 #                     bimodalrange4, bimodalrange5, bimodalrange6, bimodalrange7]
  
-    bimodalranges = [range(20988, 20934), 
-                     range(20944, 21041), # no PMT data
+    bimodalranges = [range(18462, 18477), 
+                     range(18539, 18544),
+                     [18731], 
+                     range(20988, 20994), 
+                     range(20994, 21041), # no PMT data
                      range(21045, 21048),
                      range(21053, 21056), range(21070, 21114), range(21127, 21166),
                      range(21170, 21192), range(21194, 21232), range(21238, 21253),
@@ -73,13 +81,29 @@ def makeQualityCuts(data):
 #    ledcullrange4 = range(20901, 20918) # cull 20901-20817
 #    ledcullrange4 = [21690, 21694, 21703] # covered in bimodal range 1
 #    ledcullrange5 = [21707, 21708]
+
+    ledcullrange0 = range(0, 17544) # cull runs before 17544, the first run with linear ramp
+    # not implying 17544-17646 are useful, but are not obviously cullable
+    ledcullrange1 = range(17647, 18422) # cull runs 17647-18421, LEDs swapped, bad cycle finding
+    ledcullrange2 = range(18651, 18661) # cull 18651-18660, no sweep data?
+    ledcullrange3 = range(18684, 18711) # cull 18684-18710, no or little data
+    ledcullrange4 = range(18769, 18781) # cull 18769-18780, 
+    ledcullrange4a = range(18794, 18801) # cull 18794-18800, no sweep data or bad data
+    ledcullrange4b = range(19002, 19024 ) # cull 19002-19023, no sweep data
+    ledcullrange4c = range(19047, 19317 ) # cull 19047-19316, no sweep data
+
 #########    # 20970 seems to be first good run, runs before it have confusingly large offset (p0)
-    ledcullrange0 = range(18000, 20970) 
+    ledcullrange5 = range(20254, 20970) 
+    
 ###############################
     ledcullrange6 = [22222, 22301, 22302, 22448, 22450]
     ledcullrange7 = range(22453, 22463) # cull 22453-22462
     ledcullrange8 = [22778]
-    ledcullranges = [ledcullrange0, ledcullrange6,
+    ledcullranges = [ledcullrange0, ledcullrange1, 
+                     ledcullrange2, ledcullrange3, 
+                     ledcullrange4, ledcullrange4a,
+                     ledcullrange4b,ledcullrange4c,
+                     ledcullrange5, ledcullrange6,
                      ledcullrange7, ledcullrange8 ]
     for lcr in ledcullranges:
         for k in lcr:
