@@ -13,7 +13,8 @@ from ucnacore.EncalDB import *
 import matplotlib.pyplot as plt
 import matplotlib.dates as dates
 from datetime import timedelta
-from datetime import date
+from datetime import date, datetime
+from heapq import nlargest, nsmallest
 
 def fixRunDB(undoBool = False):
     # fixes some sort of bug where many runs are listed
@@ -82,7 +83,7 @@ def getTimeForRun(runnumb, conn = 0):
  #       prevrun = str(int(runnumb) - 1)
   #      nextrun = str(int(runnumb) + 1)
    #     return findMidTime(getTimeForRun(prevrun), getTimeForRun(nextrun))
-        return date(2005,01,01)
+        return datetime(2005,01,01, 0 ,0 ,0)
 
 def getTimeForRunlist(runlist):
     conn = open_connection()
@@ -151,6 +152,13 @@ def writeRunsToFile(conn):
 
     outfile.close()
     return 0 
+
+def findMinMaxTime(timelist):
+    mintime = nsmallest(2, list(set(timelist)))[-1] # find 2nd smallest time to exclude stupid 2005 dates
+    maxtime = nlargest (1, list(set(timelist)))[-1] # nsmallest, nlargest from "heapq"
+    #    list(set(...)) removes duplicates
+    return mintime, maxtime
+    
 
 if __name__ == "__main__":
     

@@ -20,13 +20,13 @@ import sys
 import matplotlib.dates as dates
 
 sys.path.append('../../') # find RunPlotter.py
-from RunPlotter import getTimeForRunlist
+from RunPlotter import getTimeForRunlist, findMinMaxTime
 
 def makeQualityCuts(data):
     cutruns = [18424, # explicit bimodal change in the middle of the run (only E?)
-               18429, 18430, 18520, 18559, 18644, 18646, 18648, 18787  # LEDs swapped, bad cycle finding
+               18429, 18430, 18520, 18559, 18644, 18646, 18648, 18787,  # LEDs swapped, bad cycle finding
                18456,  # bad fits
-               18505, 18506, 18524, 18532, 18533 # no data 
+               18505, 18506, 18524, 18532, 18533, # no data 
                18577, 18969, 19322, # bad cylce finding
                18746, 18751, 18760, 18761, 
                21186, 22647, # just a bad run
@@ -173,6 +173,11 @@ def getLEDdata(basedir):
 
 if __name__ == "__main__":
     
+    if len(sys.argv) < 4:
+        print "\n Usage: python pd_led_linearity_combinedfit.py <showbool> <savebool> <datebool>"
+        print " Please set flags\n"
+        sys.exit()
+
     showbool = int(sys.argv[1]) # boolean to control plotting
     savebool = int(sys.argv[2]) # boolean to control saving
     datebool = int(sys.argv[3]) # boolean to toggle run#/date for x-axis # DOESN'T WORK
@@ -181,7 +186,9 @@ if __name__ == "__main__":
     plt.rc('axes', color_cycle=['r', 'g', 'b', 'y'])
 
 #    basedir = "/data1/saslutsky/LEDPulser/images_05_26_2015_16way_separate_wavelength_coeff_residuals_21650_21950/"
-    basedir = "/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/"
+#    basedir = "/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/"
+    basedir = "/data1/saslutsky/LEDPulser/images_06_23_2015_16way_separate_wavelength_coeff_16306_19316/"
+
     data = getLEDdata(basedir)
 
     runlist = data['Run']
@@ -299,7 +306,9 @@ if __name__ == "__main__":
                                  markersize=marks, label=_chan, color = 'Black')
                 axes[j].xaxis_date()
                 axes[3].set_xlabel('Time')
-        
+                mintime, maxtime = findMinMaxTime(timelist) # from RunPlotter.py
+                axes[3].set_xlim(mintime, maxtime)
+
             axes[j].set_ylabel("p" + str(j))
 
         if not datebool:
@@ -319,8 +328,9 @@ if __name__ == "__main__":
                           markersize=marks, label=_chan, color = 'Black')
             p1Ax.xaxis_date()
             p1Ax.set_xlabel('Time')
-
-
+            mintime, maxtime = findMinMaxTime(timelist) # from RunPlotter.py
+            p1Ax.set_xlim(mintime, maxtime)
+            
         axes[3].set_ylabel("$\eta_{\lambda}$")        
         axes[0].set_title(_chan)
         
