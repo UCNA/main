@@ -65,7 +65,7 @@ using namespace std;
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_06_23_2015_16way_separate_wavelength_coeff_16306_20254/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_06_25_2015_16way_separate_wavelength_coeff_19317_20253/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2                 /// power law fit (Kevin had 3)
@@ -88,7 +88,7 @@ using namespace std;
 #define COMBINEDLED 1           /// replace later with a loop
 #define USEBETAOFFSETS false
 #define RANGE_EXTENSION 3.0
-#define SWAPLEDS true          /// Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
+#define SWAPLEDS false        /// Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
 #define PMT_THRESHOLD_LOW 1e-5  /// Only affect Minuit Fit
 #define PMT_THRESHOLD_HIGH 5000 /// Only affect Minuit Fit
 
@@ -1600,15 +1600,23 @@ int main (int argc, char **argv)
 #endif
 
 #if NUM_CHANNELS == 8
-    TCanvas *ew_canvas = new TCanvas("all_pmt_linearity_canvas", 
-            "PMT linearity scans for all tubes", 1280, 720);
-    TCanvas *ew_canvas_scaled = new TCanvas("all_pmt_linearity_canvas_scaled", 
-            "PMT linearity scans for all tubes", 1280, 720);
+    TCanvas *ew_canvas = 
+      new TCanvas("all_pmt_linearity_canvas", 
+		  "PMT linearity scans for all tubes", 1280, 720);
+    TCanvas *ew_canvas_scaled = 
+      new TCanvas("all_pmt_linearity_canvas_scaled", 
+		  "PMT linearity scans for all tubes", 1280, 720);
+    TCanvas *ew_canvas_full = 
+      new TCanvas("all_pmt_full_canvas",
+		  "PMT/LED data", 1280, 720); 
+    
     ew_canvas->Divide(2,1);
     ew_canvas_scaled->Divide(2,1);
+    ew_canvas_full->Divide(2,1);
     for (int ew = 0; ew < 2; ew++) {
         ew_canvas->GetPad(ew+1)->Divide(2,2);
         ew_canvas_scaled->GetPad(ew+1)->Divide(2,2);
+	ew_canvas_full->GetPad(ew+1)->Divide(2,2);
         for (int tx = 0; tx < 2; tx++) {
             for (int ty = 0; ty < 2; ty++) {
                 int i = 4*ew+tx+2*ty;
@@ -1624,8 +1632,8 @@ int main (int argc, char **argv)
                 title += wavelength[UP];
 #endif
                 title += " nm)";
-                //pd_pmt_his2D[UP][i]->SetTitle(title);
-                //pd_pmt_his2D[DOWN][i]->SetTitle(title);
+                pd_pmt_his2D[UP][i]->SetTitle(title);
+                pd_pmt_his2D[DOWN][i]->SetTitle(title);
                 //pd_pmt_his2D[DOWN][i]->Draw("colz");
                 //graph[DOWN][i]->Draw("SameP");
                 gStyle->SetOptFit(0);
@@ -1693,6 +1701,12 @@ int main (int argc, char **argv)
                 PMT_keV_graph[UP][i]->Draw("sameP");
                 PMT_keV_graph[UP][i]->SetName("ScaledGraphUP");
 #endif
+		
+		ew_canvas_full->GetPad(ew+1)->cd(tx+2*ty+1);
+		pd_pmt_his2D[DOWN][i]->Draw("colz");
+                pd_pmt_his2D[UP][i]->Draw("Samecolz");  
+		graph[DOWN][i]->Draw("SameP");
+		graph[UP][i]->Draw("SameP");
                 //	pd_pmt_his2D[DOWN][i]->GetYaxis()->SetRangeUser(0, 2000);
             }
         }
@@ -1752,11 +1766,20 @@ int main (int argc, char **argv)
     pd_led_pmt_scaled_filename +=  "pd_led_pmt_scaled_";
     pd_led_pmt_scaled_filename +=  argv[1];
     pd_led_pmt_scaled_filename += ".gif";
+    TString pd_led_pmt_full_filename = OUTPUT_IMAGE_DIR;
+    pd_led_pmt_full_filename +=  "pd_led_pmt_full_";
+    pd_led_pmt_full_filename +=  argv[1];
+    TString pd_led_pmt_full_rootfilename = pd_led_pmt_full_filename;
+    pd_led_pmt_full_rootfilename += ".root";
+    pd_led_pmt_full_filename +=  ".gif";
+    
     ew_canvas->SaveAs(pd_led_pmt_filename,"9");
     // ew_constr_canvas->SaveAs(pd_led_pmt_constr_filename, "9");
     ew_canvas->SaveAs(pd_led_pmt_rootfilename,"9");
     //ew_constr_canvas->SaveAs(pd_led_pmt_constr_rootfilename, "9");
     ew_canvas_scaled->SaveAs(pd_led_pmt_scaled_filename, "9");
+    ew_canvas_full->SaveAs(pd_led_pmt_full_filename, "9");
+    ew_canvas_full->SaveAs(pd_led_pmt_full_rootfilename, "9");
 
 #endif
 #endif
