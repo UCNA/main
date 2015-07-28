@@ -53,8 +53,6 @@ def concatenateSourceSegments(runlognamearray = ["/home/saslutsky/UCNA/main/Aux/
 
     return allsegmentsflat
 
-
-
 def makeVLinesforSegments(axisIn, startrun = 0):
     segmentlist = identifySourceSegments()
     vlinelist = [run - 1 for run in segmentlist if run > startrun]  # otherwise vlines overlap markers :-p                                       
