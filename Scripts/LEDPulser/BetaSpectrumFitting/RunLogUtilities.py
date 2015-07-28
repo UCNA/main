@@ -41,7 +41,7 @@ def identifySourceSegments(use_empirical_list_bool=0, runlogname = "/home/saslut
 
     return runlist
 
-def concatenateSourceSegments(runlognamearray = ["/home/saslutsky/UCNA/main/Aux/UCNA Run Log.txt",
+def catSourceSegments(runlognamearray = ["/home/saslutsky/UCNA/main/Aux/UCNA Run Log.txt",
                                        "/home/saslutsky/UCNA/main/Aux/UCNA Run Log 2012.txt"],
                               use_empirical_list_bool=0):
     allsegments = list()
@@ -52,8 +52,6 @@ def concatenateSourceSegments(runlognamearray = ["/home/saslutsky/UCNA/main/Aux/
     allsegmentsflat = [run for segment in allsegments for run in segment]
 
     return allsegmentsflat
-
-
 
 def makeVLinesforSegments(axisIn, startrun = 0):
     segmentlist = identifySourceSegments()
