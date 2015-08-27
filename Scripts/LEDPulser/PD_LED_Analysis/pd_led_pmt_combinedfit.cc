@@ -65,7 +65,7 @@ using namespace std;
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_06_25_2015_16way_separate_wavelength_coeff_19317_20253/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_08_26_2015_newPDGainFits_test/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2                 /// power law fit (Kevin had 3)
@@ -158,7 +158,7 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
         }
         chisq += _chisq_temp;
     }
-    cout << "Chi^2 = " << chisq << endl;
+    //    cout << "Chi^2 = " << chisq << endl;
     return chisq;
 }
 
@@ -535,9 +535,12 @@ int main (int argc, char **argv)
 
     time_his2D[GAIN] = new TH2F("H2F_time_gain_name", time_title, 
             3600*10, 0, 3600,
-            1<<8, -pd_pedestal, 500-pd_pedestal);
+//            1<<8, -pd_pedestal, 500-pd_pedestal);
+            1<<8, -pd_pedestal, 750);
+
     time_his1D = new TH1F("H1F_time_gain_name_1D", time_title,
-            100, 200, 300);
+//            100, 200, 300);
+            550, 200, 750);
 
     // prepare a file to store linearity fit parameters
     //  double * fitpars = 0; 
@@ -1500,8 +1503,11 @@ int main (int argc, char **argv)
 
 
     std::cout << "Fitting Gain Parameters" << std::endl;
-    TF1 * mygaus = new TF1("mygaus", "gaus", 0, 1000);
-    time_his1D->Fit("mygaus");
+    TF1 * mygaus = new TF1("mygaus", "gaus", 0, 300);
+    TF1 * mygausbimodal = new TF1("mygausbimodal", "gaus", 300, 1000);
+    mygausbimodal->SetLineColor(2);
+    time_his1D->Fit("mygaus", "R");
+    time_his1D->Fit("mygausbimodal", "R+");
     double * projfit_pars = mygaus->GetParameters();
     double * projfit_errs = mygaus->GetParErrors();
     int projfit_Npars = mygaus->GetNpar();
@@ -1793,7 +1799,9 @@ int main (int argc, char **argv)
     //    gain_his_pol1->Draw("scat");
     //gain_canvas->cd(3); 
     time_his1D->Draw();
-
+    //    mygaus->Draw("same");
+    //mygausbimodal->Draw("same");
+      
 
 #if OUTPUT_IMAGE
     TString pd_gain_filename = "pd_gain_";
@@ -1801,9 +1809,9 @@ int main (int argc, char **argv)
     pd_gain_filename += argv[1];
     TString pd_gain_rootfilename = pd_gain_filename;
     pd_gain_filename += ".gif";
-    //	   pd_gain_rootfilename += ".root";
+    pd_gain_rootfilename += ".root";
     gain_canvas->SaveAs(pd_gain_filename, "9");
-    //	   gain_canvas->SaveAs(pd_gain_rootfilename, "9");
+    gain_canvas->SaveAs(pd_gain_rootfilename, "9");
 #endif
 
     TCanvas * pmt_gain_canvas = new TCanvas("pmt_gain_canvas", "Fitted ADC gains", 1000, 800);

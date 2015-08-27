@@ -163,8 +163,8 @@ def findMinMaxTime(timelist):
 if __name__ == "__main__":
     
     conn = open_connection()
-#    PlotRuns(conn)
-    writeRunsToFile(conn)
+    PlotRuns(conn)
+#    writeRunsToFile(conn)
     
     
     
