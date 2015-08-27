@@ -65,7 +65,7 @@ using namespace std;
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_08_26_2015_newPDGainFits_test/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_08_26_2015_newPDGainFits_20970_23173/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2                 /// power law fit (Kevin had 3)
@@ -654,7 +654,7 @@ int main (int argc, char **argv)
         time_gain_his2D_name += detector[i];
 
         pmt_gain_his1D[i] = new TH1F (time_gain_his1D_name, "", 
-                300, 0, 3000);
+                300, 0, 6000);
         pmt_gain_his2D[i] = new TH2F (time_gain_his2D_name, "", 
                 3600*10, 0, 3600,
                 300, 0, 3000);
@@ -1508,10 +1508,15 @@ int main (int argc, char **argv)
     mygausbimodal->SetLineColor(2);
     time_his1D->Fit("mygaus", "R");
     time_his1D->Fit("mygausbimodal", "R+");
+
     double * projfit_pars = mygaus->GetParameters();
     double * projfit_errs = mygaus->GetParErrors();
     int projfit_Npars = mygaus->GetNpar();
     double projfit_chisq = mygaus->GetChisquare()/mygaus->GetNDF();
+
+    double * projfitbimodal_pars = mygausbimodal->GetParameters();
+    double * projfitbimodal_errs = mygausbimodal->GetParErrors();
+    double projfitbimodal_chisq = mygausbimodal->GetChisquare()/mygausbimodal->GetNDF();
 
     std::cout << "Writing gain parameters" << std::endl;
     TString gainfilename = "GainResults.txt";
@@ -1523,6 +1528,10 @@ int main (int argc, char **argv)
     for (int q = 0; q < projfit_Npars; q++){
         out_gain_string += projfit_pars[q];          out_gain_string += "\t";
         out_gain_string += projfit_errs[q];          out_gain_string += "\t";
+    }
+    for (int q = 0; q < projfit_Npars; q++){
+        out_gain_string += projfitbimodal_pars[q];          out_gain_string += "\t";
+        out_gain_string += projfitbimodal_errs[q];          out_gain_string += "\t";
     }
     out_gain_string += projfit_chisq;              out_gain_string += "\t";
     out_gain_string += "\n";
