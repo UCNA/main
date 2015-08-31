@@ -21,7 +21,8 @@ from RunPlotter import getTimeForRunlist
 def read_PD_LED_response():
 #    imagedir = '/data4/saslutsky/PulserComp/imagesLEDDebug'
 #    imagedir = '/data4/saslutsky/PulserComp/images_06_09_2014'
-    imagedir = '/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/'
+#    imagedir = '/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/'
+    imagedir = '/data1/saslutsky/LEDPulser/images_08_26_2015_newPDGainFits_20970_23173/'
     filename = 'GainResults.txt'
     path = imagedir + "/" +filename
     
@@ -32,89 +33,129 @@ def read_PD_LED_response():
     # TODO: improve this to read the header string from the file
     data = np.genfromtxt(path, skip_header=1, 
                          delimiter = "\t", 
-                         names = ['Run','A', 'AErr','Mu',
-                                  'MuErr','Sigma','SigmaErr', 'Chi2'])
+                         names = ['Run',
+                                  'A', 'AErr','Mu','MuErr','Sigma','SigmaErr', #'Chi2', 
+                                  'BiA', 'BiAErr','BiMu','BiMuErr','BiSigma','BiSigmaErr', 'Chi2'])#'BiChi2'])
     data.sort(order = 'Run') 
 
     return data
 
+def readTemperatureData():
+    data = np.genfromtxt("TavgFile.dat", delimiter = " ", 
+                         names = ['Run', 'SCSW', 'SCSE', 'PPM'])
+
+    data.sort(order = 'Run')
+    return data
+       
 if __name__ == "__main__":
 
     saveBool = int(sys.argv[1])
     dateBool = int(sys.argv[2])
-    
+
     plt.ion() #turn on interactive mode
     rcParams['figure.figsize'] = 10, 10     #Set default fig size
     
     data = read_PD_LED_response()
-        
-    means = data['Mu']
-    meanErrs = data['MuErr']
-    average = sum(means[:]/len(means))
-    print "AVERAGE = " + str(average)
-
-    # calculate "gain" arbitrarily normalized to 260 
-    gains = [m/average for m in means]
-    gainsErr = [mErr/average for mErr in meanErrs]
-
-    #fig = plt.figure()
+    tempdata = readTemperatureData()
+    
     fig0, (ax0) = plt.subplots()
     fig1, (ax1) = plt.subplots()
-    fig2, (ax2) = plt.subplots()
-    fig3, (ax3) = plt.subplots()
-    figChi, (ax4) = plt.subplots()
-    figures = [fig0, fig1, fig2, fig3, figChi]
-    axes = [ax0, ax1, ax2, ax3, ax4]
+    figures = [fig0, fig1]
+    axes = [ax0, ax1]
 
     plt.rc('axes', color_cycle=['r', 'g', 'b', 'y'])
 
     ax0.set_title("A")
     ax1.set_title("Mean Response")
-    ax2.set_title("Relative Gain")    
-    ax3.set_title("Sigma")
-    ax4.set_title("Chi2")
 
     marks = 4
-    if not dateBool:
-        ax0.errorbar(data['Run'], data['A'], yerr=data['AErr'],
-                     linestyle='None', marker='o', markersize=marks)
-        ax1.errorbar(data['Run'], data['Mu'], yerr=data['MuErr'],
-                     linestyle='None', marker='o', markersize=marks)
-        ax2.errorbar(data['Run'], gains, gainsErr,
-                     linestyle='None', marker='o', markersize=marks)
-        ax3.errorbar(data['Run'], data['Sigma'], yerr=data['SigmaErr'],
-                     linestyle='None', marker='o', markersize=marks)
-        ax4.errorbar(data['Run'], data['Chi2'], 
-                     linestyle='None', marker='o', markersize=marks)
-    
-        ax0.set_xlim([20800, 24000])
-        ax1.set_xlim([20800, 24000])
-        ax2.set_xlim([20800, 24000])
-        ax3.set_xlim([20800, 24000])
-        ax4.set_xlim([20800, 24000])
 
-        ax0.set_xlabel('Run Number')
-        ax1.set_xlabel('Run Number')
-        ax2.set_xlabel('Run Number')
-        ax3.set_xlabel('Run Number')
-        ax4.set_xlabel('Run Number')
+    #cull data
+    #   print data[np.where(data['BiAErr'] > data['BiA'])]
+    #   data = np.delete(data, np.where(abs(data['BiAErr']) > abs(data['BiA'])), 0)
+
+    dataMu = data['Mu']
+    dataA = data['A']
+    dataRun = data['Run']
+    dataMuErr = data['MuErr']
+    dataAErr = data['AErr']
+
+    dataBiMu = data['BiMu']
+    dataBiA = data['BiA']
+    dataBiRun = data['Run']
+    dataBiMuErr = data['BiMuErr']
+    dataBiAErr = data['BiAErr']
+
+    tempRun = tempdata['Run']
+    tempSCSE = tempdata['SCSE']
+
+    cutcond = np.where( (abs(data['MuErr']) > abs(data['Mu'])/50.) | (data['Mu'] < 0.00001) )
+    dataMu =     np.delete(dataMu, cutcond, 0)
+    dataA =      np.delete(dataA, cutcond, 0)
+    dataMuErr =  np.delete(dataMuErr,  cutcond, 0)
+    dataAErr =   np.delete(dataAErr,   cutcond, 0)
+    dataRun =    np.delete(dataRun, cutcond, 0)
+
+    Bicutcond = np.where( ( (abs(data['BiMuErr']) > abs(data['BiMu'])/50.) ) | (data['BiMu'] < 0.00001)| (data['BiA'] < 3) | (abs(data['BiAErr']) > abs(data['BiA']/10.) ) ) 
+    dataBiMu =     np.delete(dataBiMu,  Bicutcond,  0)
+    dataBiA =      np.delete(dataBiA,  Bicutcond,  0)
+    dataBiMuErr =  np.delete(dataBiMuErr,  Bicutcond, 0)
+    dataBiAErr =   np.delete(dataBiAErr, Bicutcond,  0)
+    dataBiRun =    np.delete(dataBiRun, Bicutcond,  0)
+    
+    tempcutcond = np.where ( tempdata['SCSE'] < 0.00001 ) 
+    tempRun = np.delete(tempRun, tempcutcond, 0)
+    tempSCSE = np.delete(tempSCSE, tempcutcond, 0)
+    print tempcutcond
+
+    dataA = [da-10000 for da in dataA]
+    BiMuScale = 1.25
+    dataBiMu = [dmb/BiMuScale for dmb in dataBiMu]
+    MuScale = 20
+    dataMu = [dm+MuScale for dm in dataMu]
+    tempSCSE = [tE + 273.15 for tE in tempSCSE]
+    
+    if not dateBool:
+        ax0.errorbar(dataRun, dataA, yerr=dataAErr,
+                     linestyle='None', marker='o', markersize=marks)
+        ax1.errorbar(dataRun, dataMu, yerr=dataMuErr,
+                     linestyle='None', marker='o', markersize=marks)
+        ax0.errorbar(dataBiRun, dataBiA, yerr=dataBiAErr,
+                     linestyle='None', marker='o', markersize=marks)
+        ax1.errorbar(dataBiRun, dataBiMu, yerr=dataBiMuErr,
+                     linestyle='None', marker='o', markersize=marks)
+        ax1.errorbar(tempRun, tempSCSE, 
+                     linestyle='None', marker='o', markersize=marks)
+
+#    ax0.set_xlim([20800, 24000])
+#    ax1.set_xlim([20800, 24000])
+#    ax0.set_xlabel('Run Number')
+#    ax1.set_xlabel('Run Number')
 
     if dateBool:
-        timelist = getTimeForRunlist(data['Run'])
-        
-        ax0.errorbar(timelist, data['A'], yerr=data['AErr'],
+        timelist = getTimeForRunlist(dataRun)
+        Bitimelist = getTimeForRunlist(dataBiRun)
+        temptimelist = getTimeForRunlist(tempRun)
+
+        ax0.errorbar(timelist, dataA, yerr=dataAErr,
                      linestyle='None', marker='o', markersize=marks)
-        ax1.errorbar(timelist, data['Mu'], yerr=data['MuErr'],
+        ax1.errorbar(timelist, dataMu, yerr=dataMuErr, 
+                     label = "Normal PD LED Response + " + str(MuScale),
                      linestyle='None', marker='o', markersize=marks)
-        ax2.errorbar(timelist, gains, gainsErr,
+        ax0.errorbar(Bitimelist, dataBiA, yerr=dataBiAErr,
                      linestyle='None', marker='o', markersize=marks)
-        ax3.errorbar(timelist, data['Sigma'], yerr=data['SigmaErr'],
+        ax1.errorbar(Bitimelist, dataBiMu, yerr=dataBiMuErr, 
+                     label = "Bimodal PD LED Response/" + str(BiMuScale),
                      linestyle='None', marker='o', markersize=marks)
-        ax4.errorbar(timelist, data['Chi2'], 
+        ax1.errorbar(temptimelist, tempSCSE,
+                     label = "SCS E Temperature (K)",
                      linestyle='None', marker='o', markersize=marks)
-    
+
         for ax in axes:
             ax.set_xlabel('Time')
+
+
+    leg1 = ax1.legend()
 
  #   ax0.set_ylim([0, 60])
 #    ax1.set_ylim([0, 18])
