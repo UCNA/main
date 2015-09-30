@@ -45,19 +45,23 @@
 using namespace std;
 
 //Set File Name       
-void WireChamberResponse::SetPhysTree(string filename){
-
-  TFile* myFile = TFile::Open(filename.c_str());
-  phys = (TTree*)myFile->Get("phys");
-  entnum=phys->GetEntries();
-  phys->SetBranchAddress("Cathodes_Wx",&cathwx);
-  phys->SetBranchAddress("ScintE",&scintE);
-  phys->SetBranchAddress("ScintW",&scintW);
-  phys->SetBranchAddress("Cathodes_Ey",&cathey);
-  phys->SetBranchAddress("Cathodes_Ex",&cathex);
-  phys->SetBranchAddress("Cathodes_Wy",&cathwy);
- 
-  return;
+void WireChamberResponse::SetPhysTree(int rnum){
+	stringstream fname;
+ 	fname<<this->ORD<<"/hists/spec_"<<rnum<<".root";
+	if(this->FilExists(fname.str())){
+		string filename=fname.str();
+		TFile* myFile = TFile::Open(filename.c_str());
+		phys = (TTree*)myFile->Get("phys");
+  		entnum=phys->GetEntries();
+  		phys->SetBranchAddress("Cathodes_Wx",&cathwx);
+  		phys->SetBranchAddress("ScintE",&scintE);
+  		phys->SetBranchAddress("ScintW",&scintW);
+  		phys->SetBranchAddress("Cathodes_Ey",&cathey);
+  		phys->SetBranchAddress("Cathodes_Ex",&cathex);
+  		phys->SetBranchAddress("Cathodes_Wy",&cathwy);
+		return;
+	}
+	else{cout<<"\nRun "<<rnum<<"does not exist in:\n"<<ORD<<"/hists/ \n";return;}
 }
 
 //Find Max index
@@ -158,6 +162,21 @@ int WireChamberResponse::ResponseType(Float_t cath[]){
 	}	
 	else {return 7;}	 	
 }
+
+
+ bool WireChamberResponse::FilExists(const std::string& name) {
+    ifstream f(name.c_str());
+    if (f.good()) {
+        f.close();
+        return true;
+    } else {
+        f.close();
+        return false;
+    }   
+}
+
+
+
 
 /*
 

@@ -38,12 +38,13 @@
 #include <gsl/gsl_sf_ellint.h> 
 
 	//this class is designed to take a maxtrix with LED quadratic fits (in simon's format but turned into a matrix) and apply them to the data;
-	//it will have a feature to export a new Ttree with the new data. 		
+			
 
 class LEDPMTApp{
 private:
         std::string privatestring="HOW DARE YOU! THIS IS PRIVATE!!";
 public:
+	char * ORD=getenv ("UCNAOUTPUTDIR"); //Official Replay Data 
 	Int_t runnum; //current run number.	
 	Float_t led0[8];
 	Float_t led1[8];
@@ -57,14 +58,17 @@ public:
 	Float_t scintE[16];    //scintillation assumed LED corrected. 
    	Float_t scintW[16];		
 	Int_t entnum;
+	bool import=false;    //did we import from text? or use a root file?
 	TFile * myFile;
 	TTree * LEDfit;  //TTree to store the data in.
 	std::string matrixfile;	
 
+	//void LEDPMTApp::ApplyCorrection(int runnumber);  //results are found in PMTLED[8] after function is run.
+
 	void SetMatrixFile(std::string filename);
 	bool FilExists(const std::string& name);
-	void SetPhysTree(std::string filename);
-	int ImportLED(std::string filename);   ///1 is a successful import, 0 is a failure. 
+	void SetPhysTree(int rnum);
+	int ImportLED(std::string filename);   ///1 is a successful import, 0 is a failure. also it yells at you if it fails. 
 	void LoadLEData(std::string filename);
 
 	

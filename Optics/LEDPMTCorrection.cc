@@ -44,28 +44,35 @@ using namespace std;
 	//it will have a feature to export a new Ttree with the new data. 		
 
 
-     //phys tree is michaels output, I don't use analyzed data (i think) just using basic data. 
-void LEDPMTApp::SetPhysTree(string filename){
-
+     //phys tree is Michael M's output, I don't use analyzed data (i think, atleast its not too analyzed) just using basic data. 
+void LEDPMTApp::SetPhysTree(int rnum){
+	stringstream fname;
+ 	fname<<this->ORD<<"/hists/spec_"<<rnum<<".root";
+	if(this->FilExists(fname.str())){
+	string filename=fname.str();
   	TFile* myFile2 = TFile::Open(filename.c_str());
   	phys = (TTree*)myFile2->Get("phys");
   	entnum=phys->GetEntries();
   	phys->SetBranchAddress("ScintE",&scintE);
   	phys->SetBranchAddress("ScintW",&scintW);					
-  return;
+  return;}
+	else{cout<<"\nRun "<<rnum<<"does not exist in:\n"<<ORD<<"/hists/ \n";return;}
 }
 
 
 //this function is used if the LEData root file exists already
 void LEDPMTApp::LoadLEData(string filename){
-  	this->myFile = TFile::Open(filename.c_str());
+	if(!import){  	
+	this->myFile = TFile::Open(filename.c_str());
   	LEDfit = (TTree*)myFile->Get("LEDfit");
-  	LEDfit->SetBranchAddress("LED0",&led0);
+	}
+	LEDfit->SetBranchAddress("Runnum",&runnum);  	
+	LEDfit->SetBranchAddress("LED0",&led0);
   	LEDfit->SetBranchAddress("LEDerror0",&lederror0);
 	LEDfit->SetBranchAddress("LED1",&led1);
   	LEDfit->SetBranchAddress("LEDerror1",&lederror1);
 	LEDfit->SetBranchAddress("LED2",&led2);
-  	LEDfit->SetBranchAddress("lederror2",&lederror2);						
+  	LEDfit->SetBranchAddress("LEDerror2",&lederror2);						
   return;
 }
 
@@ -79,6 +86,7 @@ int LEDPMTApp::ImportLED(string filename){
 	fname.append(".root");	
 	this->myFile= new TFile(fname.c_str(),"recreate");
 	this->LEDfit= new TTree("LEDfit", "Matrix of LED fit data");  
+	TBranch *Runnum = LEDfit->Branch("Runnum",&runnum,"Runnum/I");	
 	TBranch *LED0 = LEDfit->Branch("LED0",&led0,"led0[8]/F");
 	TBranch *LEDerror0 = LEDfit->Branch("LEDerror0",&lederror0,"lederror0[8]/F");
 	TBranch *LED1 = LEDfit->Branch("LED1",&led1,"led1[8]/F");
@@ -90,6 +98,7 @@ int LEDPMTApp::ImportLED(string filename){
 	
 	
 	if (this->FilExists(filename.c_str())){  	
+	import=true;	
 	ifstream myfile(filename.c_str());
   	string stupid="stupid";
   	
@@ -98,7 +107,7 @@ int LEDPMTApp::ImportLED(string filename){
 
 			
 			   
-			//cycle throughthe first few rounds (of useless data (for our purposes (at the moment)))
+			//cycle throughthe first few rounds (of useless data (for our purposes (at the moment)))^20
 			ledin.append(stupid);
 			std::size_t found = ledin.find(delim);
 			std::size_t dumb  = ledin.find(stupid);
@@ -126,14 +135,13 @@ int LEDPMTApp::ImportLED(string filename){
 						if(i%8==3) this->lederror1[i/8]=atof(local.c_str());
 						if(i%8==4) this->led2[i/8]=atof(local.c_str());
 						if(i%8==5) this->lederror2[i/8]=atof(local.c_str());
-						cout<<i/8<<"\n";
 						}
-			Float_t rootsucks=led1[0];
-			cout<<rootsucks<<"\n";
+			
 			this->LEDfit->Fill();
 			//Float_t rootsucks=led1[0];
 			//cout<<rootsucks<<"\n";
     			}
+			LoadLEData(" "); //file name not needed after import.  but a string is. 
     			myfile.close();
 			return 1;
   	}
@@ -155,20 +163,35 @@ int LEDPMTApp::ImportLED(string filename){
 }
 
 void LEDPMTApp::SetMatrixFile(string filename){
-	char* ORD;
-  	ORD = getenv ("UCNAOUTPUTDIR");
 	string matrixfile;
 	this->matrixfile.append(ORD);
 	this->matrixfile.append("/");
 	this->matrixfile.append(filename.c_str());
 }
 
-
+/*
+void LEDPMTApp::ApplyCorrection(int runnumber){
+		
+	this->myFile= new TFile(fname.c_str(),"recreate");
+	this->LEDfit= new TTree("LEDfit", "Matrix of LED fit data");  
+	TBranch *Runnum = LEDfit->Branch("Runnum",&runnum,"Runnum/I");	
+	TBranch *LED0 = LEDfit->Branch("LED0",&led0,"led0[8]/F");
+	int looper=this->LEDfit->GetEntries();
+	for(int i =0; i< looper; i++){
+	 	this->LEDfit->GetEntry(i);
+	 		if(this->runnum==runnumber){
+				for(int i =0; i<4;i++){
+					this->PMTLED[i]=this->led0[i]+this->led1[i]*scintE[i]+this->led2[i]*pow(scintE[i],2);
+					this->PMTLED[i+4]=this->PMTLED[i+4]=this->led0[i+4]+this->led1[i+4]*scintE[i+4]+this->led2[i+4]*pow(scintE[i+4],2);
+				}
+			}
+	}
+}*/
 
 
 
 int main(){
-	
+	int runnum=22000; //spec_22000.root;
 	//Initialize a wire chamber response!!!...
 	WireChamberResponse *WCR =new WireChamberResponse();
 	//optional values (default shown)	
@@ -177,17 +200,16 @@ int main(){
 	WCR->platfrac=0.90; //platue criteria 90% of highest value is partof the platue
 	WCR->trifrac=1.5;  // a triangle hasto be worth 1.5 times the lower triangle to be a left or right leaning triangle.
 	//load file. 	
-	WCR->SetPhysTree("$UCNAOUTPUTDIR/hists/spec_22000.root");	
+	WCR->SetPhysTree(runnum);	
 	
 	LEDPMTApp *LED =new LEDPMTApp();
-	LED->SetPhysTree("$UCNAOUTPUTDIR/hists/spec_22000.root");
+	LED->SetPhysTree(runnum);
 	
 
-	//ONLY THE FILE NAME. must be in official replay data). 
+	//ONLY THE FILE NAME. must be in official replay data). //it was either this or find the $ and fix it. 
 	LED->ImportLED("MatrixLEData.txt");
+	
 
-	//LED->phys->Show(13); 
-	//LED->phys->Show(12);//WORKS!!!
 	LED->LEDfit->Write();  //WORKS, numbers are in the right spots and are the right values also. 
 	
 }

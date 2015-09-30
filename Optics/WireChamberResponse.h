@@ -1,5 +1,5 @@
 
-//#include <fstream>
+#include <fstream>
 #include <string>
 #include <iostream>
 #include <stdlib.h>
@@ -41,6 +41,7 @@ private:
         std::string privatestring="DO NOT, I repeat DO NOT read this string, its private";
 public:
 	//look at all of these public (government funded) types!
+	char * ORD=getenv ("UCNAOUTPUTDIR"); //Official Replay Data 
 	Float_t threshold=120;    //what is the event threshold on the wires. 
 	Float_t threshold2=82;   //what is the event threshold on the neighbors. 	
 	Float_t cathwx[16];   //cathode data
@@ -68,7 +69,8 @@ public:
 	int ResponseType(Float_t cath[]);   //main function of the class
 
 	//sub functions. used to make the main function. 
-	void SetPhysTree(std::string filename);
+	bool FilExists(const std::string& name);	
+	void SetPhysTree(int rnum);
 	int MaxInd(Float_t cath[]);   //finds max and ind, used by tri ind and quad ind. 
 	void SetCaths(int cathdex);
 	void SetTempCaths(Float_t cath[]); //sets the cathode
