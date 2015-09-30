@@ -202,6 +202,7 @@ void LEDPMTApp::ApplyCorrection(int rnum){
 				   this->WCR->phys->GetEntry(ii);
 				   this->phys->GetEntry(ii);
 				   for(int i =0; i<4;i++){
+					//collecting and setting all the values.
 					this->PMT[i]=scintE[i];
 					this->PMT[i+4]=scintW[i];
 					this->PMTLED[i]=this->led0[i]+this->led1[i]*scintE[i]+this->led2[i]*pow(scintE[i],2);
@@ -223,7 +224,7 @@ void LEDPMTApp::ApplyCorrection(int rnum){
 			}
 		}
 	}
-	if(!isthere) cout<<"\nThere is no LED fit data for run "<<rnum<<". Sorry (not really.)\n";
+	if(!isthere) cout<<"\nThere is no LED fit data for run "<<rnum<<". Sorry (well, I'm a computer, so I'm not sorry.)\n";
 	cout<<"\n"; return;
 	}
 	else {cout<<"\n"<<"File "<<fname2.str()<<" does not exist.\nSorry (not really.)\n";return;}
