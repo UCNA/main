@@ -1,4 +1,4 @@
-//g++ -o LEDPMT LEDMPTCorrection.cc WireChamberResponse.cpp `root-config --cflags --glibs`
+//g++ -o LEDPMT LEDPMTCorrection.cc WireChamberResponse.cpp `root-config --cflags --glibs`
 #include "WireChamberResponse.h"
 #include "LEDPMTCorrection.h"
 #include <string>
@@ -60,11 +60,11 @@ void LEDPMTApp::SetPhysTree(string filename){
 void LEDPMTApp::LoadLEData(string filename){
   	this->myFile = TFile::Open(filename.c_str());
   	LEDfit = (TTree*)myFile->Get("LEDfit");
-  	LEDfit->SetBranchAddress("led0",&led0);
-  	LEDfit->SetBranchAddress("lederror0",&lederror0);
-	LEDfit->SetBranchAddress("led1",&led1);
-  	LEDfit->SetBranchAddress("lederror1",&lederror1);
-	LEDfit->SetBranchAddress("led2",&led2);
+  	LEDfit->SetBranchAddress("LED0",&led0);
+  	LEDfit->SetBranchAddress("LEDerror0",&lederror0);
+	LEDfit->SetBranchAddress("LED1",&led1);
+  	LEDfit->SetBranchAddress("LEDerror1",&lederror1);
+	LEDfit->SetBranchAddress("LED2",&led2);
   	LEDfit->SetBranchAddress("lederror2",&lederror2);						
   return;
 }
@@ -79,12 +79,12 @@ int LEDPMTApp::ImportLED(string filename){
 	fname.append(".root");	
 	this->myFile= new TFile(fname.c_str(),"recreate");
 	this->LEDfit= new TTree("LEDfit", "Matrix of LED fit data");  
-	TBranch *LED0 = LEDfit->Branch("led0",&led0,"led0[8]/F");
-	TBranch *LEDerror0 = LEDfit->Branch("lederror0",&lederror0,"lederror0[8]/F");
-	TBranch *LED1 = LEDfit->Branch("led1",&led1,"led1[8]/F");
-	TBranch *LEDerror1=LEDfit->Branch("lederror1",&lederror1,"lederror1[8]/F");
-	TBranch *LED2= LEDfit->Branch("led2",&led2,"led2[8]/F"); 	
-	TBranch *LEDerror2=LEDfit->Branch("lederror2",&lederror2,"lederror2[8]/F");
+	TBranch *LED0 = LEDfit->Branch("LED0",&led0,"led0[8]/F");
+	TBranch *LEDerror0 = LEDfit->Branch("LEDerror0",&lederror0,"lederror0[8]/F");
+	TBranch *LED1 = LEDfit->Branch("LED1",&led1,"led1[8]/F");
+	TBranch *LEDerror1=LEDfit->Branch("LEDerror1",&lederror1,"lederror1[8]/F");
+	TBranch *LED2= LEDfit->Branch("LED2",&led2,"led2[8]/F"); 	
+	TBranch *LEDerror2=LEDfit->Branch("LEDerror2",&lederror2,"lederror2[8]/F");
 	string ledin;
   	std::string delim (" ");
 	
@@ -114,23 +114,25 @@ int LEDPMTApp::ImportLED(string filename){
 						}
       			
 			///starting this loop we are on the 6th entry. This is the start of the LED fit data. 
-			for(int i = 0; i<(72-5); i++){
+			for(int i = 0; i<64; i++){
       						ledintemp.append(stupid);
 						found=ledintemp.find(delim);
 						dumb=ledintemp.find(stupid);
 						local = ledintemp.substr (0,found);
 						ledintemp=ledintemp.substr(found+1,dumb);
-      						if(i%8==0){ this->led0[i/8]=atof(local.c_str());}
+      						if(i%8==0) this->led0[i/8]=atof(local.c_str());
 						if(i%8==1) this->lederror0[i/8]=atof(local.c_str());
-						if(i%8==2) {this->led1[i/8]=atof(local.c_str());cout<<atof(local.c_str())<<"\n";}
+						if(i%8==2) this->led1[i/8]=atof(local.c_str());
 						if(i%8==3) this->lederror1[i/8]=atof(local.c_str());
 						if(i%8==4) this->led2[i/8]=atof(local.c_str());
 						if(i%8==5) this->lederror2[i/8]=atof(local.c_str());
+						cout<<i/8<<"\n";
 						}
-
+			Float_t rootsucks=led1[0];
+			cout<<rootsucks<<"\n";
 			this->LEDfit->Fill();
-			Float_t Rootislying=led1[0];
-			cout<<Rootislying<<"\n";
+			//Float_t rootsucks=led1[0];
+			//cout<<rootsucks<<"\n";
     			}
     			myfile.close();
 			return 1;
