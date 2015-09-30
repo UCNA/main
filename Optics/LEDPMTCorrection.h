@@ -46,7 +46,7 @@ private:
 public:
 	char * ORD=getenv ("UCNAOUTPUTDIR"); //Official Replay Data 
 	Int_t runnum; //current run number.	
-	WireChamberResponse *WCR =new WireChamberResponse();
+	WireChamberResponse *WCR =new WireChamberResponse();  //we need this to fill in the wire chamber response. 
 	Float_t led0[8];
 	Float_t led1[8];
 	Float_t led2[8];

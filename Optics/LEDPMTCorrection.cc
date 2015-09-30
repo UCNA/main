@@ -232,9 +232,15 @@ void LEDPMTApp::ApplyCorrection(int rnum){
 
 
 int main(){
-	for(int runnum=21670;runnum<23713;runnum++){ //spec_22000.root;
+	stringstream fname;
+	LEDPMTApp *LED =new LEDPMTApp();	
+	for(int runnum=21670;runnum<23713;runnum++){ 
+	
+		
+	fname<<LED->ORD<<"hists/spec_"<<runnum<<".root";
+	
 	//Initialize a wire chamber response!!!...
-	LEDPMTApp *LED =new LEDPMTApp();
+	
 	LED->SetPhysTree(runnum);
 		
 	//WireChamberResponse *WCR =new WireChamberResponse();
@@ -253,9 +259,12 @@ int main(){
 	
 
 	LED->LEDfit->Write();
-	LED->ApplyCorrection(runnum);  //WORKS, numbers are in the right spots and are the right values also. 
+	LED->ApplyCorrection(runnum); 
+	if(LED->FilExists(fname.str())){	
+		LED->LEDphys->Write();
+		LED->LEDphysfile->Close();
+	} 			
 	}
-//LED->LEDphys->Show(12);
-	//LED->LEDphys->Show(13);
+
 }
 
