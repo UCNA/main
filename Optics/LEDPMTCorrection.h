@@ -1,4 +1,4 @@
-
+#include "WireChamberResponse.h"
 #include <string>
 //#include <sys/stat.h>
 #include <fstream>
@@ -46,6 +46,7 @@ private:
 public:
 	char * ORD=getenv ("UCNAOUTPUTDIR"); //Official Replay Data 
 	Int_t runnum; //current run number.	
+	WireChamberResponse *WCR =new WireChamberResponse();
 	Float_t led0[8];
 	Float_t led1[8];
 	Float_t led2[8];
@@ -54,16 +55,22 @@ public:
 	Float_t lederror2[8];
 	Float_t PMT[8];
 	Float_t PMTLED[8];
+	Float_t PMTLEDError[8];
 	TTree * phys;
+	///////////////////This is the TTree with the applied PMT data.////////////////////////////////	
+	TFile * LEDphysfile;
+	TTree * LEDphys; //new tree with corrected PMT data! will have branch list. 
+	//////////////////////////////////////////////////
 	Float_t scintE[16];    //scintillation assumed LED corrected. 
    	Float_t scintW[16];		
-	Int_t entnum;
+	Int_t entnum;       
 	bool import=false;    //did we import from text? or use a root file?
 	TFile * myFile;
-	TTree * LEDfit;  //TTree to store the data in.
+	//////////////////This 
+	TTree * LEDfit;  //TTree to store the LED fit matrix in for easy(ish) access. 
 	std::string matrixfile;	
 
-	//void LEDPMTApp::ApplyCorrection(int runnumber);  //results are found in PMTLED[8] after function is run.
+	void ApplyCorrection(int runnumber);  //results are found in PMTLED[8] after function is run.
 
 	void SetMatrixFile(std::string filename);
 	bool FilExists(const std::string& name);

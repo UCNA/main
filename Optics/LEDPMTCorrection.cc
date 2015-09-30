@@ -1,5 +1,4 @@
 //g++ -o LEDPMT LEDPMTCorrection.cc WireChamberResponse.cpp `root-config --cflags --glibs`
-#include "WireChamberResponse.h"
 #include "LEDPMTCorrection.h"
 #include <string>
 //#include <sys/stat.h>
@@ -42,7 +41,7 @@ using namespace std;
 
 	//this class is designed to take a maxtrix with LED quadratic fits (in simon's format but turned into a matrix) and apply them to the data;
 	//it will have a feature to export a new Ttree with the new data. 		
-
+	
 
      //phys tree is Michael M's output, I don't use analyzed data (i think, atleast its not too analyzed) just using basic data. 
 void LEDPMTApp::SetPhysTree(int rnum){
@@ -56,7 +55,7 @@ void LEDPMTApp::SetPhysTree(int rnum){
   	phys->SetBranchAddress("ScintE",&scintE);
   	phys->SetBranchAddress("ScintW",&scintW);					
   return;}
-	else{cout<<"\nRun "<<rnum<<"does not exist in:\n"<<ORD<<"/hists/ \n";return;}
+	else{cout<<"\nspec_"<<rnum<<".root does not exist in:\n"<<ORD<<"/hists/ \n";return;}
 }
 
 
@@ -82,7 +81,9 @@ int LEDPMTApp::ImportLED(string filename){
 	string dot=".";
 	std::size_t dotpos;	
 	dotpos=filename.find(dot);
-	fname=filename.substr(0,dotpos);
+	fname.append(ORD);
+	fname.append("/");
+	fname.append(filename.substr(0,dotpos));
 	fname.append(".root");	
 	this->myFile= new TFile(fname.c_str(),"recreate");
 	this->LEDfit= new TTree("LEDfit", "Matrix of LED fit data");  
@@ -169,48 +170,92 @@ void LEDPMTApp::SetMatrixFile(string filename){
 	this->matrixfile.append(filename.c_str());
 }
 
-/*
-void LEDPMTApp::ApplyCorrection(int runnumber){
+
+void LEDPMTApp::ApplyCorrection(int rnum){
+	
+	stringstream fname,fname2;
+	fname2<<this->ORD<<"hists/spec_"<<rnum<<".root";
+	if(this->FilExists(fname2.str())){
+	Float_t wctemp[16]; Int_t wcindtemp[16];Float_t wcresptemp[4];		
+ 	fname<<this->ORD<<"hists/LEDspec_"<<rnum<<".root";
+	string filename=fname.str();	
 		
-	this->myFile= new TFile(fname.c_str(),"recreate");
-	this->LEDfit= new TTree("LEDfit", "Matrix of LED fit data");  
-	TBranch *Runnum = LEDfit->Branch("Runnum",&runnum,"Runnum/I");	
-	TBranch *LED0 = LEDfit->Branch("LED0",&led0,"led0[8]/F");
-	int looper=this->LEDfit->GetEntries();
-	for(int i =0; i< looper; i++){
-	 	this->LEDfit->GetEntry(i);
-	 		if(this->runnum==runnumber){
-				for(int i =0; i<4;i++){
+	this->LEDphysfile = new TFile(filename.c_str(),"recreate");
+	this->LEDphys= new TTree("LEDphys", "LED fit Corrected PMT to photon proportional value");  
+	TBranch *Runnum = LEDphys->Branch("Runnum",&rnum,"Runnum/I");	
+	TBranch *PMTLED = LEDphys->Branch("PMTLED",&this->PMTLED,"PMTLED[8]/F");
+	TBranch *PMTLEDError = LEDphys->Branch("PMTLEDError",&this->PMTLEDError,"PMTLEDError[8]/F");
+	TBranch *PMT = LEDphys->Branch("PMT",&this->PMT,"PMT[8]/F");
+	TBranch *WCResponse = LEDphys->Branch("WCResponse",&wcresptemp,"WCResponse[4]/F");
+	TBranch *WCMaxind = LEDphys->Branch("WCMaxind",&wcindtemp,"WCMaxind[16]/I");	
+	TBranch *WCMax = LEDphys->Branch("WCMax",&wctemp,"WCMax[16]/F");
+	
+	bool isthere=false;	
+	for(int iii =0; iii<this->LEDfit->GetEntries(); iii++){
+	 	this->LEDfit->GetEntry(iii);
+		
+	 		if(this->runnum==rnum){
+				isthere=true;			
+				cout<<"\nDanger: Filling run "<<rnum<<"'s TTree with LED corrected PMT values. Keep all arms and legs inside the cart.\n";
+				for(int ii = 0; ii< this->phys->GetEntries();ii++){
+				   if(ii%10000==0)cout<<"*";
+				   this->WCR->phys->GetEntry(ii);
+				   this->phys->GetEntry(ii);
+				   for(int i =0; i<4;i++){
+					this->PMT[i]=scintE[i];
+					this->PMT[i+4]=scintW[i];
 					this->PMTLED[i]=this->led0[i]+this->led1[i]*scintE[i]+this->led2[i]*pow(scintE[i],2);
-					this->PMTLED[i+4]=this->PMTLED[i+4]=this->led0[i+4]+this->led1[i+4]*scintE[i+4]+this->led2[i+4]*pow(scintE[i+4],2);
+					this->PMTLED[i+4]=this->led0[i+4]+this->led1[i+4]*scintW[i]+this->led2[i+4]*pow(scintW[i],2);
+					this->PMTLEDError[i]=this->lederror0[i]+this->lederror1[i]*scintE[i]+this->lederror2[i]*pow(scintE[i],2);
+					this->PMTLEDError[i+4]=this->lederror0[i+4]+this->lederror1[i+4]*scintW[i]+this->lederror2[i+4]*pow(scintW[i],2);
+					wcresptemp[0]=this->WCR->ResponseType(this->WCR->cathex);
+					wctemp[i]=this->WCR->quadmax[i];wcindtemp[i]=this->WCR->quadind[i];					
+					wcresptemp[1]=this->WCR->ResponseType(this->WCR->cathey);
+					wctemp[i+4]=this->WCR->quadmax[i];wcindtemp[i+4]=this->WCR->quadind[i];	
+				        wcresptemp[2]=this->WCR->ResponseType(this->WCR->cathwx);
+					wctemp[i+8]=this->WCR->quadmax[i];wcindtemp[i+8]=this->WCR->quadind[i];	
+					wcresptemp[3]=this->WCR->ResponseType(this->WCR->cathwy);
+					wctemp[i+12]=this->WCR->quadmax[i];wcindtemp[i+12]=this->WCR->quadind[i];						
 				}
+				
+				this->LEDphys->Fill();
+				
 			}
+		}
 	}
-}*/
+	if(!isthere) cout<<"\nThere is no LED fit data for run "<<rnum<<". Sorry (not really.)\n";
+	cout<<"\n"; return;
+	}
+	else {cout<<"\n"<<"File "<<fname2.str()<<" does not exist.\nSorry (not really.)\n";return;}
+}
 
 
 
 int main(){
-	int runnum=22000; //spec_22000.root;
+	for(int runnum=21670;runnum<23713;runnum++){ //spec_22000.root;
 	//Initialize a wire chamber response!!!...
-	WireChamberResponse *WCR =new WireChamberResponse();
-	//optional values (default shown)	
-	WCR->threshold=120;  //adc threshold (is it really an event?)	
-	WCR->threshold2=82;  //triangle daughter threshold. 		
-	WCR->platfrac=0.90; //platue criteria 90% of highest value is partof the platue
-	WCR->trifrac=1.5;  // a triangle hasto be worth 1.5 times the lower triangle to be a left or right leaning triangle.
-	//load file. 	
-	WCR->SetPhysTree(runnum);	
-	
 	LEDPMTApp *LED =new LEDPMTApp();
 	LED->SetPhysTree(runnum);
+		
+	//WireChamberResponse *WCR =new WireChamberResponse();
+	//optional values (default shown)	
+	LED->WCR->threshold=120;  //adc threshold (is it really an event?)	
+	LED->WCR->threshold2=82;  //triangle daughter threshold. 		
+	LED->WCR->platfrac=0.90; //platue criteria 90% of highest value is partof the platue
+	LED->WCR->trifrac=1.5;  // a triangle hasto be worth 1.5 times the lower triangle to be a left or right leaning triangle.
+	//load file. 	
+	LED->WCR->SetPhysTree(runnum);	
+	
 	
 
 	//ONLY THE FILE NAME. must be in official replay data). //it was either this or find the $ and fix it. 
 	LED->ImportLED("MatrixLEData.txt");
 	
 
-	LED->LEDfit->Write();  //WORKS, numbers are in the right spots and are the right values also. 
-	
+	LED->LEDfit->Write();
+	LED->ApplyCorrection(runnum);  //WORKS, numbers are in the right spots and are the right values also. 
+	}
+//LED->LEDphys->Show(12);
+	//LED->LEDphys->Show(13);
 }
 
