@@ -41,11 +41,11 @@ private:
         std::string privatestring="DO NOT, I repeat DO NOT read this string, its private";
 public:
 	//look at all of these public (government funded) types!
-	Float_t threshold;    //what is the event threshold on the wires. 
-	Float_t threshold2;   //what is the event threshold on the neighbors. 	
+	Float_t threshold=120;    //what is the event threshold on the wires. 
+	Float_t threshold2=82;   //what is the event threshold on the neighbors. 	
 	Float_t cathwx[16];   //cathode data
-	Float_t platfrac;
-	Float_t trifrac;	
+	Float_t platfrac=0.9;
+	Float_t trifrac=1.5;	
 	Float_t cathwy[16];
 	Float_t cathex[16];
 	Float_t cathey[16];
@@ -64,16 +64,17 @@ public:
 	Float_t quadmax[4];   //then we should store it as well. but 5 is getting thrown out. 
 	Float_t quind[4];	    //sorted quad ind. 	
 
+
+	int ResponseType(Float_t cath[]);   //main function of the class
+
+	//sub functions. used to make the main function. 
 	void SetPhysTree(std::string filename);
 	int MaxInd(Float_t cath[]);   //finds max and ind, used by tri ind and quad ind. 
 	void SetCaths(int cathdex);
 	void SetTempCaths(Float_t cath[]); //sets the cathode
-	int ResponseType(Float_t cath[]);        //determines classification stored in resptype
+	     //determines classification stored in resptype
 	void TriMax(Float_t cath[]);  //sets the trimax and triind values
 	void QuadMax(Float_t cath[]); //sets the quadmax and quadind values
-	void SortQuad(Float_t quind[]);
-
-
 };
 
 

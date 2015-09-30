@@ -86,7 +86,7 @@ double LGerror(double xerr, double yerr,double xpos,double ypos,int lgnum){
 
 	double PMTtot[10];  //ten points enough??? NO!!!
 	
-	for(int i = 0; i<10; ++i){
+	for(int i = 0; i<100; ++i){
 	
 	
 	PMTtot[i]=lightguideprob(alThor->Gaus(xpos,xerr),alThor->Gaus(ypos,yerr),lgnum);	

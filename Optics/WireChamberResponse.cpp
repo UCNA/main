@@ -159,13 +159,15 @@ int WireChamberResponse::ResponseType(Float_t cath[]){
 	else {return 7;}	 	
 }
 
-
+/*
 
 //testing grounds
 int main()
 {
 	
   	WireChamberResponse *WCR =new WireChamberResponse();
+	
+	//optional definitions; default values are shown here. 	
 	WCR->threshold=120;  //adc threshold (is it really an event?)	
 	WCR->threshold2=82;  //triangle daughter threshold. 		
 	WCR->platfrac=0.90;
