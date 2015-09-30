@@ -57,16 +57,16 @@ public:
 	Float_t PMTLED[8];
 	Float_t PMTLEDError[8];
 	TTree * phys;
-	///////////////////This is the TTree with the applied PMT data.////////////////////////////////	
+		///////////////////This is the TTree with the applied PMT data.////////////////////////////////	
 	TFile * LEDphysfile;
-	TTree * LEDphys; //new tree with corrected PMT data! will have branch list. 
-	//////////////////////////////////////////////////
+	TTree * LEDphys; //new tree with corrected PMT data! branches: Runnum,PMTLED,PMTLEDError,PMT,WCResponse,WCMaxind,WCMax. 
+		//////////////////////////////////////////////////
 	Float_t scintE[16];    //scintillation assumed LED corrected. 
    	Float_t scintW[16];		
 	Int_t entnum;       
 	bool import=false;    //did we import from text? or use a root file?
 	TFile * myFile;
-	//////////////////This 
+		//////////////////This is the fit tree. 
 	TTree * LEDfit;  //TTree to store the LED fit matrix in for easy(ish) access. 
 	std::string matrixfile;	
 

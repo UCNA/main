@@ -255,12 +255,13 @@ int main(){
 	
 	
 
-	//ONLY THE FILE NAME. must be in official replay data). //it was either this or find the $ and fix it. 
+	//ONLY THE FILE NAME. must be in $UCNAOUPPUTDIR). 
 	LED->ImportLED("MatrixLEData.txt");
 	
 
 	LED->LEDfit->Write();
 	LED->ApplyCorrection(runnum); 
+	//there is no controll on the subclasses if the file does not exist. only the LED and WCR classes. 
 	if(LED->FilExists(fname.str())){	
 		LED->LEDphys->Write();
 		LED->LEDphysfile->Close();
