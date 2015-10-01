@@ -186,10 +186,10 @@ void LEDPMTApp::ApplyCorrection(int rnum){
 	TBranch *PMTLEDError = LEDphys->Branch("PMTLEDError",&this->PMTLEDError,"PMTLEDError[8]/F");
 	TBranch *PMT = LEDphys->Branch("PMT",&this->PMT,"PMT[8]/F");
 	TBranch *WCResponse = LEDphys->Branch("WCResponse",&wcresptemp,"WCResponse[4]/F");
-	TBranch *WCPosition = LEDphys->Branch("WCPosition",&wcindtemp,"WCPosition[4]/I");	
+	TBranch *WCPosition = LEDphys->Branch("WCPosition",&wcpostemp,"WCPosition[4]/I");	
 	TBranch *WCMaxind = LEDphys->Branch("WCMaxind",&wcindtemp,"WCMaxind[16]/I");	
 	TBranch *WCMax = LEDphys->Branch("WCMax",&wctemp,"WCMax[16]/F");
-	
+
 	bool isthere=false;	
 	for(int iii =0; iii<this->LEDfit->GetEntries(); iii++){	 	
 			this->LEDfit->GetEntry(iii);
@@ -239,7 +239,7 @@ void LEDPMTApp::ApplyCorrection(int rnum){
 ///EXAMPLES!!!
 int main(){
 	stringstream fname;
-	
+
 	LEDPMTApp *LED =new LEDPMTApp();
 	
 	//file must must be in $UCNAOUPPUTDIR). 
@@ -262,18 +262,20 @@ int main(){
 	LED->WCR->phys->GetEntry(i);
 	cout<<"Cathode Type: "<<LED->WCR->ResponseType(LED->WCR->cathwx)<<"\n";
 	cout<<"At wire position: "<<LED->WCR->wcpos<<"\n";
-	}*/	
+	}*/
+	
 	LED->ApplyCorrection(runnum); 
 	
 
 	//there is no controll to not seg fault on the TTree subclasses if the file does not exist. only the LED and WCR classes. 
 	if(LED->FilExists(fname.str())){	
 		LED->LEDphys->Write();	
+		LED->LEDphysfile->Close();	
+		LED->physfile->Close();
+		LED->WCR->physfile->Close();
 	} 	
 	//always close the files at the end of a use
-	LED->LEDphysfile->Close();	
-	LED->physfile->Close();
-	LED->WCR->physfile->Close();
+	
 
 	}
 	//same LEDfits use same TFile for all run numbers, close after loop. 
