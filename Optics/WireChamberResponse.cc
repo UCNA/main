@@ -50,8 +50,8 @@ void WireChamberResponse::SetPhysTree(int rnum){
  	fname<<this->ORD<<"hists/spec_"<<rnum<<".root";
 	if(this->FilExists(fname.str())){
 		string filename=fname.str();
-		TFile* myFile = TFile::Open(filename.c_str());
-		phys = (TTree*)myFile->Get("phys");
+		this->physfile = TFile::Open(filename.c_str());
+		phys = (TTree*)physfile->Get("phys");
   		entnum=phys->GetEntries();
   		phys->SetBranchAddress("Cathodes_Wx",&cathwx);
   		phys->SetBranchAddress("ScintE",&scintE);
@@ -140,27 +140,37 @@ int WireChamberResponse::ResponseType(Float_t cath[]){
 	//Platue Response. 	
 		int platnum=1;
 		for (int i =0; i<3; i++){	
-		if ((0.9*quadmax[0])<quadmax[i+1]) {platnum++;}
+			if ((0.9*quadmax[0])<quadmax[i+1]) {platnum++;}
 		}
-	
-		if (platnum>1) {return (2+platnum);}
+		//we have a platue, is it continious?
+		if (platnum>1) {
+			int platcheck=1;
+			bool cont=false;		
+			this->QuadMax((float*)this->quadind);
+				for(int i = 0; i<platnum-1;i++){
+					if(abs((int)quadmax[i]-(int)quadmax[i+1])==1) platcheck++;					
+					}
+			if(platcheck==platnum) {this->wcpos=(int)quadmax[0]; this->QuadMax(cath); return (platnum+2);}
+			else {this->wcpos=0; this->QuadMax(cath); return 8;} ///Split Platue !! undefined response (too complicated)
+		}
+
 	
 	//Triangle Response Type
 		else{
 		//CLASS 0  single point. 
-			if(quadmax[1]<threshold2){return 0; }	
+			if(quadmax[1]<threshold2){this->wcpos=quadind[0]; return 0; }	
 			else{
 				if( (quadind[0]-quadind[1])^2==1){
-			   	     if((quadmax[1]>1.5*quadmax[2] ||  (quadind[0]-quadind[2])^2>1 ) && (quadind[0]-quadind[1])==1 ){return 2; }
-			   	    else if((quadmax[1]>1.5*quadmax[2] ||  (quadind[0]-quadind[2])^2>1 ) && (quadind[0]-quadind[1])==-1 ){return 3; }
-			            else if ((quadind[0]-quadind[2])^2==1){return 1;}	   
+			   	     if((quadmax[1]>1.5*quadmax[2] ||  (quadind[0]-quadind[2])^2>1 ) && (quadind[0]-quadind[1])==1 ){this->wcpos=quadind[0];return 2; }
+			   	    else if((quadmax[1]>1.5*quadmax[2] ||  (quadind[0]-quadind[2])^2>1 ) && (quadind[0]-quadind[1])==-1 ){this->wcpos=quadind[0]; return 3; }
+			            else if ((quadind[0]-quadind[2])^2==1){this->wcpos=quadind[0]; return 1;}	   
 			         }
-		                 else{return 0;}			
+		                 else{this->wcpos=quadind[0]; return 0;}			
 			    }	
 		    }
 	
 	}	
-	else {return 7;}	 	
+	else {this->wcpos=0;return 7;}	 	
 }
 
 

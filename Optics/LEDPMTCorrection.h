@@ -56,6 +56,7 @@ public:
 	Float_t PMT[8];
 	Float_t PMTLED[8];
 	Float_t PMTLEDError[8];
+	TFile * physfile;	
 	TTree * phys;
 		///////////////////This is the TTree with the applied PMT data.////////////////////////////////	
 	TFile * LEDphysfile;
@@ -65,7 +66,7 @@ public:
    	Float_t scintW[16];		
 	Int_t entnum;       
 	bool import=false;    //did we import from text? or use a root file?
-	TFile * myFile;
+	TFile * LEDfitfile;
 		//////////////////This is the fit tree. 
 	TTree * LEDfit;  //TTree to store the LED fit matrix in for easy(ish) access. 
 	std::string matrixfile;	

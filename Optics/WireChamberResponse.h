@@ -54,8 +54,8 @@ public:
 	Float_t scintE[16];    //scintillation assumed LED corrected. 
    	Float_t scintW[16];    //West Scint (these are not currently used)
 	int entnum;	 //number of entries in the tree. 
-	TFile *myFile;    //I guess it needs the file????
-	TTree *phys;     //data tree. 
+	TFile *physfile;    //TFile
+	TTree *phys;     //MPMs data tree. 
 	int resptype[4];   //Response classification 	
 	Float_t max;	   //single value max
 	Float_t maxind;      //single value max
@@ -63,7 +63,8 @@ public:
 	Float_t trimax[3];    //I pooped a little just now.
 	int quadind[4];     //what if its a 4 fold platue??
 	Float_t quadmax[4];   //then we should store it as well. but 5 is getting thrown out. 
-	Float_t quind[4];	    //sorted quad ind. 	
+	Float_t quind[4];
+	Int_t wcpos;	    //sorted quad ind. 	
 
 
 	int ResponseType(Float_t cath[]);   //main function of the class
