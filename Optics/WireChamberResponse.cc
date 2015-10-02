@@ -146,7 +146,10 @@ int WireChamberResponse::ResponseType(Float_t cath[]){
 		if (platnum>1) {
 			int platcheck=1;
 			bool cont=false;		
-			this->QuadMax((float*)this->quadind);
+			float indtemp[platnum];
+			for (int i = 0; i<platnum; i++) indtemp[i]=(float)this->quadind[i]; 
+			for (int i = platnum; i<4; i++) indtemp[i]=-42;
+			this->QuadMax(indtemp);
 				for(int i = 0; i<platnum-1;i++){
 					if(abs((int)quadmax[i]-(int)quadmax[i+1])==1) platcheck++;					
 					}

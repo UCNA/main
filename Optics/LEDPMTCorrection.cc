@@ -46,7 +46,7 @@ using namespace std;
      //phys tree is Michael M's output, I don't use analyzed data (i think, atleast its not too analyzed) just using basic data. 
 void LEDPMTApp::SetPhysTree(int rnum){
 	stringstream fname;
- 	fname<<this->ORD<<"/hists/spec_"<<rnum<<".root";
+ 	fname<<this->ORD<<"hists/spec_"<<rnum<<".root";
 	if(this->FilExists(fname.str())){
 	string filename=fname.str();
   	this->physfile = TFile::Open(filename.c_str());
@@ -215,7 +215,7 @@ void LEDPMTApp::ApplyCorrection(int rnum){
 					wcresptemp[1]=this->WCR->ResponseType(this->WCR->cathey);
 					wcpostemp[1]=this->WCR->wcpos;					
 					wctemp[i+4]=this->WCR->quadmax[i];wcindtemp[i+4]=this->WCR->quadind[i];	
-				        wcresptemp[2]=this->WCR->ResponseType(this->WCR->cathwx);
+				    wcresptemp[2]=this->WCR->ResponseType(this->WCR->cathwx);
 					wcpostemp[2]=this->WCR->wcpos;					
 					wctemp[i+8]=this->WCR->quadmax[i];wcindtemp[i+8]=this->WCR->quadind[i];	
 					wcresptemp[3]=this->WCR->ResponseType(this->WCR->cathwy);
