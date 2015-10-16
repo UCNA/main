@@ -1,4 +1,5 @@
 #include "WireChamberResponse.h"
+#include "PMTSpectrumMap.h"
 #include <string>
 //#include <sys/stat.h>
 #include <fstream>
@@ -45,6 +46,7 @@ private:
         std::string privatestring="HOW DARE YOU! THIS IS PRIVATE!!";
 public:
 	char * ORD=getenv ("UCNAOUTPUTDIR"); //Official Replay Data 
+	bool isthere=false;		
 	Int_t runnum; //current run number.	
 	WireChamberResponse *WCR =new WireChamberResponse();  //we need this to fill in the wire chamber response. 
 	Float_t led0[8];

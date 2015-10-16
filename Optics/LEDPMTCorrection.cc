@@ -178,24 +178,24 @@ void LEDPMTApp::ApplyCorrection(int rnum){
  	fname<<this->ORD<<"hists/LEDspec_"<<rnum<<".root";
 	string filename=fname.str();	
 		
-	this->LEDphysfile = new TFile(filename.c_str(),"recreate");
 	
-	this->LEDphys= new TTree("LEDphys", "LED fit Corrected PMT to photon proportional value");  
-	TBranch *Runnum = LEDphys->Branch("Runnum",&rnum,"Runnum/I");	
-	TBranch *PMTLED = LEDphys->Branch("PMTLED",&this->PMTLED,"PMTLED[8]/F");
-	TBranch *PMTLEDError = LEDphys->Branch("PMTLEDError",&this->PMTLEDError,"PMTLEDError[8]/F");
-	TBranch *PMT = LEDphys->Branch("PMT",&this->PMT,"PMT[8]/F");
-	TBranch *WCResponse = LEDphys->Branch("WCResponse",&wcresptemp,"WCResponse[4]/F");
-	TBranch *WCPosition = LEDphys->Branch("WCPosition",&wcpostemp,"WCPosition[4]/I");	
-	TBranch *WCMaxind = LEDphys->Branch("WCMaxind",&wcindtemp,"WCMaxind[16]/I");	
-	TBranch *WCMax = LEDphys->Branch("WCMax",&wctemp,"WCMax[16]/F");
 
-	bool isthere=false;	
+	isthere=false;	
 	for(int iii =0; iii<this->LEDfit->GetEntries(); iii++){	 	
 			this->LEDfit->GetEntry(iii);
 		
 	 		if(this->runnum==rnum){
-				isthere=true;			
+					this->LEDphysfile = new TFile(filename.c_str(),"recreate");
+					this->LEDphys= new TTree("LEDphys", "LED fit Corrected PMT to photon proportional value");  
+					TBranch *Runnum = LEDphys->Branch("Runnum",&rnum,"Runnum/I");	
+					TBranch *PMTLED = LEDphys->Branch("PMTLED",&this->PMTLED,"PMTLED[8]/F");
+					TBranch *PMTLEDError = LEDphys->Branch("PMTLEDError",&this->PMTLEDError,"PMTLEDError[8]/F");
+					TBranch *PMT = LEDphys->Branch("PMT",&this->PMT,"PMT[8]/F");
+					TBranch *WCResponse = LEDphys->Branch("WCResponse",&wcresptemp,"WCResponse[4]/F");
+					TBranch *WCPosition = LEDphys->Branch("WCPosition",&wcpostemp,"WCPosition[4]/I");	
+					TBranch *WCMaxind = LEDphys->Branch("WCMaxind",&wcindtemp,"WCMaxind[16]/I");	
+					TBranch *WCMax = LEDphys->Branch("WCMax",&wctemp,"WCMax[16]/F");
+					isthere=true;			
 			cout<<"\nDanger: Filling run "<<rnum<<"'s TTree with LED corrected PMT values.\nKeep all arms and legs inside the cart.\n";
 				for(int ii = 0; ii< this->phys->GetEntries();ii++){
 				   if(ii%10000==0)cout<<"*";
@@ -248,31 +248,33 @@ int main(){
 	for(int runnum=20900;runnum<23713;runnum++){ 
 	
 		
-	//fname<<LED->ORD<<"hists/spec_"<<runnum<<".root";
+		fname<<LED->ORD<<"hists/spec_"<<runnum<<".root";
 	
-	//int runnum=21966;
-	LED->SetPhysTree(runnum);
-	//Default values shown. 	
-	LED->WCR->threshold=100;  //adc threshold (is it really an event?)	
-	LED->WCR->threshold2=62;  //triangle daughter threshold. 		
-	LED->WCR->platfrac=0.90; //platue criteria 90% of highest value is partof the platue
-	LED->WCR->trifrac=1.5;  // a triangle hasto be worth 1.5 times the lower triangle to be a left or right leaning triangle.
-	LED->WCR->SetPhysTree(runnum);
-	/*for(int i= 1; i<100; i++){	
-	LED->WCR->phys->GetEntry(i);
-	cout<<"Cathode Type: "<<LED->WCR->ResponseType(LED->WCR->cathwx)<<"\n";
-	cout<<"At wire position: "<<LED->WCR->wcpos<<"\n";
-	}*/
+		//int runnum=21966;
+		LED->SetPhysTree(runnum);
+		//Default values shown. 	
+		LED->WCR->threshold=100;  //adc threshold (is it really an event?)	
+		LED->WCR->threshold2=62;  //triangle daughter threshold. 		
+		LED->WCR->platfrac=0.90; //platue criteria 90% of highest value is partof the platue
+		LED->WCR->trifrac=1.5;  // a triangle hasto be worth 1.5 times the lower triangle to be a left or right leaning 		triangle.
+		LED->WCR->SetPhysTree(runnum);
+		/*for(int i= 1; i<100; i++){	
+		LED->WCR->phys->GetEntry(i);
+		cout<<"Cathode Type: "<<LED->WCR->ResponseType(LED->WCR->cathwx)<<"\n";
+		cout<<"At wire position: "<<LED->WCR->wcpos<<"\n";
+		}*/
 	
-	LED->ApplyCorrection(runnum); 
+		LED->ApplyCorrection(runnum); 
 	
 
 	//there is no controll to not seg fault on the TTree subclasses if the file does not exist. only the LED and WCR classes. 
-	if(LED->FilExists(fname.str())){	
-		LED->LEDphys->Write();	
-		LED->LEDphysfile->Close();	
-		LED->physfile->Close();
-		LED->WCR->physfile->Close();
+		if(LED->FilExists(fname.str())){	
+			LED->physfile->Close();
+			LED->WCR->physfile->Close();
+			if(LED->isthere){			
+			LED->LEDphys->Write();	
+			LED->LEDphysfile->Close();	
+			}
 	} 	
 	//always close the files at the end of a use
 	
@@ -281,6 +283,20 @@ int main(){
 	//same LEDfits use same TFile for all run numbers, close after loop. 
 	LED->LEDfitfile->Close();
 	
+	///Create Spectrum Map
+	
+	PMTSpectrumMap * PSM = new PMTSpectrumMap();
+	PSM->ConstructSpectrumMap();
+ 
+	for(int runnum=21966;runnum<22003;runnum++){
+		fname<<LED->ORD<<"hists/LEDspec_"<<runnum<<".root";
+		PSM->SetPhysTree(runnum);		
+		PSM->FillSpectrumMap();
+		if(PSM->FilExists(fname.str())) PSM->LEDphysfile->Close();
+	}
+
+  
+
 
 }
 
