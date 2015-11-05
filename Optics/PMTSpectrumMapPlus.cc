@@ -263,13 +263,13 @@ void PMTSpectrumMap::FillPMTMap(){
 	string filename;
 	Float_t alphatemp;
 	Double_t tempspec[300];	
-	fname<<this->ORD<<"/PMT_SPEC_MAP.root";
+	fname<<this->ORD<<"/PMT_MAP_Plus.root";
 	filename=fname.str();	
-	this->SpecMapfile = new TFile(filename.c_str(),"recreate");
-	this->SpecMap= new TTree("SpecMap", "PMT Spectrum Maps");  
+	this->PMTMapfile = new TFile(filename.c_str(),"recreate");
+	this->PMTMap= new TTree("PMTMap", "PMT Fit Maps");  
 	//TBranch *SpectrumMap = LEDphys->Branch("SpectrumMap",this->specmap,"Runnum/TH1F[165888]");
-	TBranch *PmtMap = SpecMap->Branch("PmtMap", &this->PMTMAP,"PmtMap[165888]/F");
-	TBranch *PmtError = SpecMap->Branch("PmtError", &this->PMTERRORMAP,"PmtError[165888]/F");
+	TBranch *PmtMap = PMTMap->Branch("PmtMap", &this->PMTMAP,"PmtMap[165888]/F");
+	TBranch *PmtError = PMTMap->Branch("PmtError", &this->PMTERRORMAP,"PmtError[165888]/F");
 	
 	
 	//loop through human readable array index 
@@ -299,11 +299,11 @@ void PMTSpectrumMap::FillPMTMap(){
 		tempgraph->Draw("same");}
 		}*/
 	}}}}}
-	SpecMap->Fill();
-	SpecMap->Write();
+	PMTMap->Fill();
+	PMTMap->Write();
 	//specmap->Write();
-	SpecMapfile->Write();
-	SpecMapfile->Close();	
+	PMTMapfile->Write();
+	PMTMapfile->Close();	
 	return;
 }
 
@@ -338,7 +338,7 @@ Float_t PMTSpectrumMap::MinAlpha(int flatind,int resolution,TSpline3 *spec0inter
 
 	return alpha;
 	}
-	else{this->pmtfiterror=0; return 1;}
+	else{this->pmtfiterror=0; return 0;}
 }
 
 
@@ -350,7 +350,7 @@ Float_t PMTSpectrumMap::ChiSquaredBrah(Float_t alpha,TSpline3 *spec0inter){
 	Float_t derror; //funny sounding
 	if (alpha>0){
 	for(int i = 0; i<300;i++){
-		dpmt=(pmttemp[i+1*(i<299)]-pmttemp[i-1*(i>0)])/pmttempsum*(1000.000/300.000*(float)(2-1*(i==299)-1*(i==0)));
+		dpmt=(pmttemp[i+8-(299-i)*(i>290)]-pmttemp[(i-8)*(i>8)])/pmttempsum/(1000.000/300.000*(float)(17-(299-i)*(i>290)-(i-8)*(i>8)));
 		derror=sqrt(pow(dpmt,2)*pow(pmttemperror[i],2));	
 	
 		if(spec0x[i]/alpha < 1000 && derror>0){
@@ -362,7 +362,7 @@ Float_t PMTSpectrumMap::ChiSquaredBrah(Float_t alpha,TSpline3 *spec0inter){
 	} 
 
 
-     return (chitemp);  // error again, chisquared is super fucked up right now, no idea why cause erros and such look perfect.  
+     return chitemp/300;  // chisquared is super fucked up right now, no idea why cause erros and such look perfect.  
 	}
 	else return 1e30; //big number... hopefully. 
 }
@@ -375,7 +375,7 @@ int main(int argc, char **argv){
 	stringstream fname;	
 	string filename;			
 	PMTSpectrumMap * PSM = new PMTSpectrumMap();
-	fname<<PSM->ORD<<"PMT_SPEC_MAP.root";
+	fname<<PSM->ORD<<"PMT_SPEC_MAP_Plus.root";
 	filename=fname.str();
 	PSM->SpecMapfile = new TFile(filename.c_str(),"recreate");
 	PSM->ConstructSpectrumMap();
@@ -444,7 +444,7 @@ int main(int argc, char **argv){
 		pmap->SetPoint(ii,(double)x,(double)y,(double)z);		
 		ii++;
 	}}
-	pmap->Draw("surf1");
+	pmap->Draw("colz");
 	
 	TCanvas * c2=new TCanvas();	
 	c2->cd();
@@ -460,7 +460,7 @@ int main(int argc, char **argv){
 		pmap2->SetPoint(ii,(double)x2,(double)y2,(double)z2);		
 		ii++;
 	}}
-	pmap2->Draw("surf1");
+	pmap2->Draw("colz");
 
 app.Run(); 
 	PSM->SpecMapfile->Close();

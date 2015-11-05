@@ -1,6 +1,4 @@
 //g++ -o WCR WireChamberResponse.cpp `root-config --cflags --glibs`
-//g++ -o lgprob LGProbPMTQadc.cpp pmtprobstuff.cpp lgpmtTools.cpp FlattenPMTMap.cc -lgsl -lgslcblas -lm `root-config --cflags --glibs`
-
 
 #include "WireChamberResponse.h"
 #include <string>
@@ -89,7 +87,7 @@ int WireChamberResponse::MaxInd(Float_t cath[])
 }
 
 
-void WireChamberResponse::TriMax(Float_t cath[]){
+void WireChamberResponse::TriMax(Float_t cath[]){  //this function isn't used. 
 	this->SetTempCaths(cath);	
 	for (int i = 0; i<3;i++){	
 	triind[i]=MaxInd(tempcath); //This function exports the index and stores the maximum internally
@@ -133,16 +131,16 @@ void WireChamberResponse::SetTempCaths(Float_t cath[]){
 
 
 
-//This is were the rubber meets the road. 
+//This is were the rubber meets the road. As in this is where the wire chamber response class is chosen.  
 int WireChamberResponse::ResponseType(Float_t cath[]){
 	this->QuadMax(cath);
 	if (quadmax[0]>threshold){	
 	//Platue Response. 	
 		int platnum=1;
 		for (int i =0; i<3; i++){	
-			if ((0.9*quadmax[0])<quadmax[i+1]) {platnum++;}
+			if ((platfrac*quadmax[0])<quadmax[i+1]) {platnum++;}
 		}
-		//we have a platue, is it continious?
+		//we have a platue, is it continious?  //I have no idea how this works anymore, it probably made sense at the time. 
 		if (platnum>1) {
 			int platcheck=1;
 			bool cont=false;		
@@ -158,17 +156,18 @@ int WireChamberResponse::ResponseType(Float_t cath[]){
 		}
 
 	
-	//Triangle Response Type
+	//Triangle Response Type  (platue number is less than 2)
 		else{
 		//CLASS 0  single point. 
 			if(quadmax[1]<threshold2){this->wcpos=quadind[0]; return 0; }	
+			//We have a triangle! 			
 			else{
 				if( (quadind[0]-quadind[1])^2==1){
-			   	     if((quadmax[1]>1.5*quadmax[2] ||  (quadind[0]-quadind[2])^2>1 ) && (quadind[0]-quadind[1])==1 ){this->wcpos=quadind[0];return 2; }
-			   	    else if((quadmax[1]>1.5*quadmax[2] ||  (quadind[0]-quadind[2])^2>1 ) && (quadind[0]-quadind[1])==-1 ){this->wcpos=quadind[0]; return 3; }
-			            else if ((quadind[0]-quadind[2])^2==1){this->wcpos=quadind[0]; return 1;}	   
+			   	     if((quadmax[1]>trifrac*quadmax[2] ||  (quadind[0]-quadind[2])^2>1 ) && (quadind[0]-quadind[1])==1 ){this->wcpos=quadind[0];return 2; } //right leaning
+			   	    else if((quadmax[1]>trifrac*quadmax[2] ||  (quadind[0]-quadind[2])^2>1 ) && (quadind[0]-quadind[1])==-1 ){this->wcpos=quadind[0]; return 3; } //left leaning
+			            else if ((quadind[0]-quadind[2])^2==1){this->wcpos=quadind[0]; return 1;} //centered triangle
 			         }
-		                 else{this->wcpos=quadind[0]; return 0;}			
+		                 else{this->wcpos=quadind[0]; return 0;} //series of spread out points above threshold, return the largest. 			
 			    }	
 		    }
 	
@@ -191,28 +190,31 @@ int WireChamberResponse::ResponseType(Float_t cath[]){
 
 
 
-/*
 
 //testing grounds
 int main()
 {
 	
   	WireChamberResponse *WCR =new WireChamberResponse();
-	
+
+	//Set response thresholds, TODO: make these fuzzy to get chi^2. note: this is nearly impossible.
 	//optional definitions; default values are shown here. 	
 	WCR->threshold=120;  //adc threshold (is it really an event?)	
 	WCR->threshold2=82;  //triangle daughter threshold. 		
-	WCR->platfrac=0.90;
-	WCR->trifrac=1.5;	
-	WCR->SetPhysTree(22000);
+	WCR->platfrac=0.90;  //what is the platue threshold.?? 
+	WCR->trifrac=1.5;	  //what is the leaning threshold.?? 		 
+	
+	//set run number
+	WCR->SetPhysTree(22000); //run number that you want to get the responses for. 
 
   	
-	
+	//lets apply the response to a few events and see how it did!
 	for(int i =10; i<20; i++){	
 	
+	//get the damn entry
 	WCR->phys->GetEntry(i);
-	
-	cout<<WCR->ResponseType(WCR->cathwx)<<"\n";
+		
+	cout<<WCR->ResponseType(WCR->cathwx)<<"\n";  //this is how to use the function to get response. 
 	cout<<WCR->quadmax[0]<<" "<<WCR->quadmax[1]<<" "<<WCR->quadmax[2]<<" "<<WCR->quadmax[3]<<"\n";	
 	cout<<WCR->quadind[0]<<" "<<WCR->quadind[1]<<" "<<WCR->quadind[2]<<" "<<WCR->quadind[3]<<"\n";	
 

@@ -108,8 +108,10 @@ public:
 	//ROOT::Math::Interpolator* spec0inter= new ROOT::Math::Interpolator(300);
 	
 	
-	TFile * SpecMapfile;
-	TTree * SpecMap;
+	TFile * SpecMapfile;  //holds map of spectrums
+	TTree * SpecMap;      
+	TFile * PMTMapfile;  //holds best fit of spectrums and error or chi^2. 
+	TTree * PMTMap;
 	TFile * LEDphysfile;
 	TTree * LEDphys;
 	Float_t min;

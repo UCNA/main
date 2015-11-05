@@ -75,9 +75,8 @@ public:
 	int MaxInd(Float_t cath[]);   //finds max and ind, used by tri ind and quad ind. 
 	void SetCaths(int cathdex);
 	void SetTempCaths(Float_t cath[]); //sets the cathode
-	     //determines classification stored in resptype
-	void TriMax(Float_t cath[]);  //sets the trimax and triind values
-	void QuadMax(Float_t cath[]); //sets the quadmax and quadind values
+	void TriMax(Float_t cath[]);  //sets the trimax and triind values, it is not used anywhere,
+	void QuadMax(Float_t cath[]); //sets the quadmax and quadind values, 
 };
 
 

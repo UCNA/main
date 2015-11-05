@@ -344,7 +344,7 @@ int main(int argc, char **argv){
 		pmap->SetPoint(ii,(double)x,(double)y,(double)z);		
 		ii++;
 	}}
-	pmap->Draw("surf1");
+	pmap->Draw("colz");
 	
 	TCanvas * c2=new TCanvas();	
 	c2->cd();
@@ -360,7 +360,7 @@ int main(int argc, char **argv){
 		pmap2->SetPoint(ii,(double)x2,(double)y2,(double)z2);		
 		ii++;
 	}}
-	pmap2->Draw("surf1");
+	pmap2->Draw("colz");
 
 app.Run(); 
 	PSM->SpecMapfile->Close();
