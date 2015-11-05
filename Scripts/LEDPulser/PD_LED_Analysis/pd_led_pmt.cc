@@ -23,6 +23,7 @@
 #include <TPave.h>
 #include <TAttText.h>
 #include <TList.h>
+#include <TError.h>
 using namespace std;
 
 /**
@@ -50,7 +51,7 @@ FOLLOWING DOESN'T WORK:
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_13_2015_21274_21328/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data4/saslutsky/PulserComp/images_04_22_2015_fixorigin/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2 // Power law fit
@@ -69,8 +70,9 @@ FOLLOWING DOESN'T WORK:
 #define RANGE_MAX_VALUE 100.0 // only if RANGE_MAX_OVERRIDE = true
 #define FIXBETAENDPOINT true
 #define RELATIVEBETAPLOTS false  // supersedes FIXBETAENDPOINT (and everything else)
+#define SAVESUBCYCLES false // Saves each histogram for each LED subcycle. Very slow, leave false unless needed.
 
-TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
+TH1F* FitGaussian(const char *name, TTree *tree, TCut* cut, TF1* pedestalfit)
 {
   char gaussian_name[1024];
   sprintf(gaussian_name, "pedestal_histogram_%s", name);
@@ -84,7 +86,8 @@ TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
   if (not gaussian_histogram->Fit(fit, "RN"))
     {
       printf("Gaussian fit success: mu = %g, sigma = %g\n", fit->GetParameter(1), fit->GetParameter(2));
-      return fit;
+      *pedestalfit = *fit;
+      return gaussian_histogram;
     } 
   else 
     {
@@ -99,6 +102,8 @@ TF1* FitGaussian(const char *name, TTree *tree, TCut* cut)
  */
 int main (int argc, char **argv)
 {
+  gErrorIgnoreLevel = 5000; // suppress messages for saved gifs
+
   // first run number
   if (argc < 2)
     {
@@ -207,7 +212,6 @@ int main (int argc, char **argv)
       max_time[cycle] = 0;
     }
   
-  
   // Sync peaks and find periods
   {
     // set the branches we need
@@ -280,8 +284,8 @@ int main (int argc, char **argv)
   // Define cuts
   TCut *led_cut = new TCut("(int(Sis00) & 128) > 0");  // 129 if east-PMTs on, 161 if GMS-ref also on
   TCut *pedestal_cut = new TCut("!(int(Sis00) & 1)");  
-  
-  
+  //TCut *pedestal_cut = new TCut("!(int(Sis00) & 1) && !(int(Sis00) & 2) && !(int(Sis00 & 32)) && !(int(Sis00) & 64)");  // This cut is slightly nicer but has 10% of the events of the looser cut.
+    
   // The histograms and canvases we will use 
   TH2F* time_his2D[4];
   TH1F* pmt_gain_his1D[8];
@@ -298,6 +302,7 @@ int main (int argc, char **argv)
   TGraphErrors* g_PE_PMT[8];
   TGraphErrors* resg[8];
   TCanvas * PE_PMT_canvas = new TCanvas();
+  TCanvas * cyclecan = new TCanvas();
   PE_PMT_canvas->Divide(2,4);
 
   // global Style options
@@ -307,15 +312,30 @@ int main (int argc, char **argv)
   
   // find PD pedestal
   h1.SetBranchStatus("Pdc36", 1);
-  TF1 *pd_pedestal_fit = FitGaussian("Pdc36", &h1, pedestal_cut);
+  TF1 pd_pedestal_fit;
+  TH1F *pd_pedestal_hist = FitGaussian("Pdc36", &h1, pedestal_cut, &pd_pedestal_fit);
+  TList * listie = pd_pedestal_hist->GetListOfFunctions();
   float pd_pedestal = 0;
-  if (pd_pedestal_fit)
-    pd_pedestal = pd_pedestal_fit->GetParameter(1);
+  if (&pd_pedestal_fit){
+    pd_pedestal = pd_pedestal_fit.GetParameter(1);
+    listie->Add(&pd_pedestal_fit);
+  }
   else
     printf("couldn't fit pedestal to Pdc36\n");
   printf("PD pedestal = %f\n", pd_pedestal);
-  
-  
+
+  /* 
+  #if USE_ROOT_APPLICATION
+  // run the root application
+  pd_pedestal_hist->SetTitle("PD Pedestal plot");
+  pd_pedestal_hist->GetXaxis()->SetTitle("PD");
+  pd_pedestal_hist->Draw();
+  pd_pedestal_fit.Draw("same");
+  app.Run();
+#endif
+  return 0; // testing 
+  */
+ 
   // Making our histograms for the time sequence
   TString time_title = "PD time sequence for run ";
   time_title += run;
@@ -337,6 +357,10 @@ int main (int argc, char **argv)
   time_his1D = new TH1F("H1F_time_gain_name_1D", time_title,
 			100, 200, 300);
   
+  const int nsubcycs = 64;
+  TH1F * PDhis[NUM_CHANNELS][nsubcycs]; //= new TH1F("PD", "PD", 100, -100, 300);
+  TH1F * PMThis[NUM_CHANNELS][nsubcycs]; //= new TH1F("PMT", "PMT", 100, -100, 300);
+
   // prepare a file to store linearity fit parameters
   //  double * fitpars = 0; 
   //  double * fitparerrors = 0;
@@ -402,7 +426,7 @@ int main (int argc, char **argv)
   float BetaADC_21250_above[NUM_CHANNELS] = {650, 650, 1200, 550, 750, 700, 900, 1000};
   
   // go through each PMT channel
-  for (unsigned i = 0; i < NUM_CHANNELS; i++) 
+  for (unsigned i = 0; i < NUM_CHANNELS; i++)  // Begin loop over channels
     {
       // set up only the branches we use
       h1.SetBranchStatus("*", 0);
@@ -413,11 +437,26 @@ int main (int argc, char **argv)
       
       
       // Find PMT Qadc Pedestal
-      TF1 *pmt_pedestal_fit = FitGaussian(Qadc[i], &h1, pedestal_cut);
+      TF1 pmt_pedestal_fit;
+      TH1F *pmt_pedestal_hist = FitGaussian(Qadc[i], &h1, pedestal_cut, &pmt_pedestal_fit); 
+      TList * listie = pmt_pedestal_hist->GetListOfFunctions();
       float pmt_pedestal = 0;
-      if (pmt_pedestal_fit)
-	pmt_pedestal = pmt_pedestal_fit->GetParameter(1);
+      if (&pmt_pedestal_fit){
+	listie->Add(&pmt_pedestal_fit);
+	pmt_pedestal = pmt_pedestal_fit.GetParameter(1); 
+	cout << "PMT Pedestal " << i << " = " << pmt_pedestal << endl;
+      }
       
+      /*      // testing
+#if USE_ROOT_APPLICATION
+      // run the root application
+      pmt_pedestal_hist->SetTitle(Form("PMT Pedestal plot, tube %i", i));
+      pmt_pedestal_hist->GetXaxis()->SetTitle("ADC");
+      pmt_pedestal_hist->Draw();
+      pmt_pedestal_fit.Draw("same");
+      app.Run();
+#endif
+return 0; */      
       
       // Define PMT:PD scan histograms
       TString H2F_down_name = "H2F_down_name_";
@@ -483,23 +522,29 @@ int main (int argc, char **argv)
 	      num_pulses[led][pulse] = 0;
 	    }
 	}
-      
+      cyclecan->cd();
+      for (int s = 0; s < nsubcycs; s++){
+	//	cout << "Making Subcycle Histos for channel, subcycle" <<  i << " " << s << endl;
+	PDhis[i][s] = new TH1F(Form("PDhis_%i_%i", i, s), "", 150, -100, 500);
+	PMThis[i][s] = new TH1F(Form("PMThis_%i_%i", i, s), "", 75, -100, 3000);
+      }
+
       for (int j = 0; j < vn; j++) 
 	{
 	  if (cycle+1 == max_cycles or max_val[cycle+1] == 0)
 	    break;
-	  
 	  float period = max_time[cycle+1] - max_time[cycle];
 	  float time = s83028v[j] - start_time;
 	  float cycle_time = s83028v[j] - last_time;
 	  if (cycle_time > period or period > max_period or period < min_period)
 	    {
+	      cout << "Updating cycle. Cycle = " << cycle << ", Subcycle = " << subcycle << endl;
+	      //	      for (int s = 0; s < 32; s++){cout << s << " " << x_sum[DOWN][s] << endl;}
 	      cycle++;
 	      subcycle = 0;
 	      cycle_time -= last_time;
 	      last_time = max_time[cycle];
 	    }
-	  
 	  if (min_period < period and period < max_period)
 	    {
 	      float subperiod = period / pulser_steps;
@@ -508,11 +553,23 @@ int main (int argc, char **argv)
 		{
 		  subcycle++;
 		  subcycle_time -= subperiod;
+		  
+#if SAVESUBCYCLES
+		  PMThis[i][subcycle-1]->Fit("gaus","Q");
+		  PMThis[i][subcycle-1]->Draw();
+		  cyclecan->Update();	
+		  cyclecan->SaveAs(Form("PMThis_%i_%i.gif", i, subcycle-1));
+		  PDhis[i][subcycle-1]->Fit("gaus", "Q");
+		  PDhis[i][subcycle-1]->Draw();
+		  cyclecan->SaveAs(Form("PDhis_%i_%i.gif", i, subcycle-1));
+		  cyclecan->Update();
+
+#endif
 		}
 	      
 	      float x = pdc36v[j] - pd_pedestal;
 	      float y = qadcv[j] - pmt_pedestal;
-	      
+
 	      /*#if LINEARIZE
 		#if ORDER
 		// back out linearity from pd
@@ -527,6 +584,7 @@ int main (int argc, char **argv)
 		#endif
 		#endif
 	      */
+		  
 	      if (epsilon < subcycle_time and subcycle_time < subperiod/2 - epsilon) // ramps
 		{
 		  if (not i){               // only fill once
@@ -556,10 +614,14 @@ int main (int argc, char **argv)
 		    }
 		  if (cycle_time < period / 2) // ramp down (405nm?)
 		    {
+		      PMThis[i][subcycle]->Fill(y);
+		      PDhis[i][subcycle]->Fill(x);
 		      if (not i)        // Only Fill once
 			time_his2D[DOWN]->Fill(time/1e6,x);
 		      pd_pmt_his2D[DOWN][i]->Fill(x, y);
+		      //		      cout << "PRE  i: " << i << " cycle " << cycle << " subcycle " << subcycle << " x_sum = " << x_sum[DOWN][subcycle] << endl;	
 		      x_sum[DOWN][subcycle] += x;
+		      //		      cout << "POST i: " << i << " cycle " << cycle << " subcycle " << subcycle << " x_sum = " << x_sum[DOWN][subcycle] << endl;
 		      y_sum[DOWN][subcycle] += y;
 		      x2_sum[DOWN][subcycle] += x*x;
 		      y2_sum[DOWN][subcycle] += y*y;
@@ -570,13 +632,36 @@ int main (int argc, char **argv)
 	    }
 	}
 
+
+#if SAVESUBCYCLES
+      // Save the last ones
+      PMThis[i][subcycle]->Fit("gaus", "Q");
+      PMThis[i][subcycle]->Draw();
+      cyclecan->Update();
+      cyclecan->SaveAs(Form("PMThis_%i_%i.gif", i, subcycle));
+      PDhis[i][subcycle]->Fit("gaus", "Q");
+      PDhis[i][subcycle]->Draw(); 
+      cyclecan->Update();
+      cyclecan->SaveAs(Form("PDhis_%i_%i.gif", i, subcycle));
+#endif
+           
+      /*#if USE_ROOT_APPLICATION
+      // run the root application
+      //      cout << x_sum[DOWN][31] << endl;
+      //cout << y_sum[DOWN][31] << endl;
+      PDhis->Draw();
+      PMThis->SetLineColor(2);
+      PMThis->Draw("Same");
+      app.Run();
+#endif
+return 0; // testing */
+      
       // set the graph points to the averages of the led cloud
       // TODO might be better to actually fit the peak better
 #if FIT2D
       printf("Coming Soon");
       return 0;
 #else
-      
       for (int led = 0; led < 2; led++)
 	{
 	  graph[led][i] = new TGraphErrors(pulser_steps);
@@ -587,7 +672,8 @@ int main (int argc, char **argv)
 	      if (d > 0)
 		{
 		  float x_avg = x_sum[led][pulse]/d;
-		  float y_avg = y_sum[led][pulse]/d;
+		  float y_avg = y_sum[led][pulse]/d;	
+		  //		  cout << pulse << " x_avg= " << x_avg << endl;
 		  float x2_avg = x2_sum[led][pulse]/d; 
 		  float y2_avg = y2_sum[led][pulse]/d;
 		  float sx = sqrt((x2_avg - x_avg*x_avg)/(d-1));
@@ -601,7 +687,6 @@ int main (int argc, char **argv)
 	}
 
 #endif
-
             
       //Use approx Maximum beta-endpoints over each run interval to 
       // determine the best run range. Beta endpoint = 782 keV, Cd-109 = 63 keV, Bi-207 = 1047 keV	  
@@ -762,7 +847,8 @@ int main (int argc, char **argv)
 
 	    */
 	    
-	    fit_string = "[0] + [1]*x + [2]*(x)**2";
+	    //	    fit_string = "[0] + [1]*x + [2]*(x)**2";
+	    fit_string = "[0]*x + [1]*(x)**2";
 
 #endif
 
@@ -771,6 +857,7 @@ int main (int argc, char **argv)
 #endif
 #if FIXBETAENDPOINT 
 	    fit_string = "[0] + [1]*(x-[3]) + [2]*(x-[3])**2";
+	    //	    fit_string = "[0]*(x-[2]) + [1]*(x-[2])**2";
 #endif
 	    cout << "Fit String: " <<  fit_string << endl;
 	    // Carry out the fit
@@ -782,9 +869,13 @@ int main (int argc, char **argv)
 	    //Replaced with Energy Scaled graph 1/13/2015 
 	    //	    if (led) fit->SetParameters(10, 0.5, -0.05); 
 	    //	    else fit->SetParameters(10, 10.0, -0.05);
-	    if (led) fit->SetParameters(750, 0.75, -0.0005); 
-	    else fit->SetParameters(0.0, 0.75, -0.0005);
-   
+
+	    //if (led) fit->SetParameters(750, 0.75, -0.0005); 
+	    //else fit->SetParameters(0.0, 0.75, -0.0005); 
+
+	    if (led) fit->SetParameters(5, -0.01); // fix pedestal = 0 // 4/21/2015 SS
+	    else fit->SetParameters(20, -0.01); 
+
 	    float best_beta_endpt_PD = range_max[led]/beta_Bi_ratio;
 #if RANGE_MAX_OVERRIDE // need actual bi peak position if range_max gets altered
 	    best_beta_endpt_PD = bi_peak_pd/beta_Bi_ratio;
@@ -794,11 +885,17 @@ int main (int argc, char **argv)
 	    //	    cout << "Fixing x-offset to be apprx Beta endpoint " << PD_Bept << endl;
 #if FIXBETAENDPOINT 
 	    cout << "Fixing x-offset to be apprx Beta endpoint " << best_beta_endpt_PD << endl;
-	    if (led) fit->SetParameters(750., 5., -0.0005); 
 	    //else fit->SetParameters(3000.0, 10., -0.1);
 	    //	    else  fit->SetParameters(600, 10, -0.0005); 
-	    else  fit->SetParameters(800, 20, -0.0005); 
+
+	    //	    if (led) fit->SetParameters(750., 5., -0.0005);  // with offset
+	    //	    else  fit->SetParameters(800, 20, -0.0005); 
+
+	    if (led) fit->SetParameters(BETAADCCOUNTS, 5., -0.0005); // fix offset
+	    else  fit->SetParameters(BETAADCCOUNTS, 20, -0.0005); 
+
 	    fit->FixParameter(3, best_beta_endpt_PD);  // fix x-offset to be the calculated PD value for beta endpoint 
+	    fit->FixParameter(0, BETAADCCOUNTS);   // 4/21/15 equivalent to fixing pedestal=0
 #endif
 	    // }
 #if DO_LED_FIT

@@ -12,10 +12,12 @@ from math import sqrt
 #from ROOT import TCanvas
 import sys
 
+sys.path.append('../../') # find RunPlotter.py
+from RunPlotter import getTimeForRunlist
+import matplotlib.dates as dates
+
 def ReadLEDFile():
-#   imagedir = '/data4/saslutsky/PulserComp/imagesPMTGain' # has fewer runs for some reason
-#    imagedir = '/data4/saslutsky/PulserComp/imagesLEDDebug'
-    imagedir = '/data4/saslutsky/PulserComp/images_06_09_2014'
+    imagedir = '/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/'
     filename = 'PMTGainResults.txt'
     path = imagedir + "/" +filename
     
@@ -30,7 +32,7 @@ def ReadLEDFile():
                                   'MuErr','Sigma','SigmaErr', 'Chi2'])
     readData.sort(order = 'Run')
 
-    return readData
+    return readData, outputpath
 
 def getLEDDataforTube(tubeIn):
     dat = ReadLEDFile()
@@ -41,10 +43,13 @@ def getLEDDataforTube(tubeIn):
 # copy/pasted from pd_led_gain.py - needs updates
 if __name__ == "__main__":
 
-    plt.ion() #turn on interactive mode
-    rcParams['figure.figsize'] = 10, 10     #Set default fig size
+    savebool = sys.argv[1]
+    datebool = sys.argv[2]
 
-    data = ReadLEDFile()
+    plt.ion() #turn on interactive mode
+    rcParams['figure.figsize'] = 10, 10     #Set default fig siz
+
+    data, outputpath = ReadLEDFile()
     
     means = data['Mu']
     meanErrs = data['MuErr']
@@ -64,6 +69,7 @@ if __name__ == "__main__":
     figures = [fig0, fig1, fig2, fig3, figChi]
     
     plt.rc('axes', color_cycle=['r', 'g', 'b', 'y'])
+    axes = [ax0, ax1, ax2, ax3, ax4]
 
     ax0.set_title("A")
     ax1.set_title("Mean Response")
@@ -71,42 +77,78 @@ if __name__ == "__main__":
     ax3.set_title("Sigma")
     ax4.set_title("Chi2")
 
-    ax0.set_xlabel('Run Number')
-    ax1.set_xlabel('Run Number')
-    ax2.set_xlabel('Run Number')
-    ax3.set_xlabel('Run Number')
-    ax4.set_xlabel('Run Number')
-
     marks = 4
-    ax0.errorbar(data['Run'], data['A'], yerr=data['AErr'],
-                 linestyle='None', marker='o', markersize=marks)
-    ax1.errorbar(data['Run'], data['Mu'], yerr=data['MuErr'],
-                 linestyle='None', marker='o', markersize=marks)
-    ax2.errorbar(data['Run'], gains, gainsErr,
-                 linestyle='None', marker='o', markersize=marks)
-    ax3.errorbar(data['Run'], data['Sigma'], yerr=data['SigmaErr'],
-                 linestyle='None', marker='o', markersize=marks)
-    ax4.errorbar(data['Run'], data['Chi2'], 
+    if not datebool:
+        ax0.errorbar(data['Run'], data['A'], yerr=data['AErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax1.errorbar(data['Run'], data['Mu'], yerr=data['MuErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax2.errorbar(data['Run'], gains, gainsErr,
+                     linestyle='None', marker='o', markersize=marks)
+        ax3.errorbar(data['Run'], data['Sigma'], yerr=data['SigmaErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax4.errorbar(data['Run'], data['Chi2'], 
                  linestyle='None', marker='o', markersize=marks)
     
-    ax0.set_xlim([20800, 24000])
-    ax1.set_xlim([20800, 24000])
-    ax2.set_xlim([20800, 24000])
-    ax3.set_xlim([20800, 24000])
-    ax4.set_xlim([20800, 24000])
+     #   ax0.set_xlim([20800, 24000])
+     #   ax1.set_xlim([20800, 24000])
+     #   ax2.set_xlim([20800, 24000])
+     #   ax3.set_xlim([20800, 24000])
+     #   ax4.set_xlim([20800, 24000])
+        ax0.set_xlabel('Run Number')
+        ax1.set_xlabel('Run Number')
+        ax2.set_xlabel('Run Number')
+        ax3.set_xlabel('Run Number')
+        ax4.set_xlabel('Run Number')
 
- #   ax0.set_ylim([0, 60])
-#    ax1.set_ylim([0, 18])
-  #  ax2.set_ylim([0.85, 1.1])
-   # ax3.set_ylim([0.85, 1.05])
-   # ax4.set_ylim([-0.0005, 0.0])
-   # ax5.set_ylim([-0.00015, -0.00008])
-   # ax8.set_ylim([0, 8])
+    if datebool: 
+        timelist = getTimeForRunlist(data['Run'])
+        ax0.errorbar(timelist, data['A'], yerr=data['AErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax1.errorbar(timelist, data['Mu'], yerr=data['MuErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax2.errorbar(timelist, gains, gainsErr,
+                     linestyle='None', marker='o', markersize=marks)
+        ax3.errorbar(timelist, data['Sigma'], yerr=data['SigmaErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax4.errorbar(timelist, data['Chi2'], 
+                     linestyle='None', marker='o', markersize=marks)
+        for ax in axes:
+            ax.xaxis.set_major_formatter(dates.DateFormatter("%m/%d/%y"))
+            ax.xaxis_date()
+            ax.set_xlabel('Time')
+            
+    sepfigs = list()
+    sepaxes = list()
+    for i in range(0,8):
+        tmpfig, (tmpax) = plt.subplots()
+        if i < 4:
+            chan = "E" + str(i)
+        else: 
+            chan = "W" + str(i%4)
+        tmpax.set_title("PMT Response to LED Gain Pulse: " + chan)
+        tmpax.set_ylabel("PMT (ADC)")
+        sepfigs.append(tmpfig)
+        sepaxes.append(tmpax)
 
-    outputfile = PdfPages(outputpath)
-    for f in range(0, len(figures)):
-        outputfile.savefig(figures[f])
-    outputfile.close()
+        data_cut = data[[data['tube']  == i]]
+#        print data_cut
+
+        if not datebool:
+            tmpax.errorbar(data_cut['Run'], data_cut['Mu'], yerr=data_cut['MuErr'],
+                           linestyle='None', marker='o', markersize=marks)
+            tmpax.set_xlabel('Run Number')
+        if datebool:
+            timelist = getTimeForRunlist(data_cut['Run'])
+            tmpax.errorbar(timelist, data_cut['Mu'], yerr=data_cut['MuErr'],
+                           linestyle='None', marker='o', markersize=marks)
+            tmpax.set_xlabel('Time')
+
+    if savebool:
+        outputfile = PdfPages(outputpath)
+        for f in range(0, len(figures)):
+            outputfile.savefig(figures[f])
+        outputfile.close()
 
     plt.show(block=True)     #block=True keeps the plot window open when in interactive mode 
 

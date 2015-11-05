@@ -11,10 +11,17 @@ from pylab import *
 from matplotlib.backends.backend_pdf import PdfPages
 from math import sqrt
 #from ROOT import TCanvas
+import sys
+
+# date plotting stuff
+sys.path.append('../../') # find RunPlotter.py
+import matplotlib.dates as dates
+from RunPlotter import getTimeForRunlist
 
 def read_PD_LED_response():
 #    imagedir = '/data4/saslutsky/PulserComp/imagesLEDDebug'
-    imagedir = '/data4/saslutsky/PulserComp/images_06_09_2014'
+#    imagedir = '/data4/saslutsky/PulserComp/images_06_09_2014'
+    imagedir = '/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/'
     filename = 'GainResults.txt'
     path = imagedir + "/" +filename
     
@@ -33,7 +40,9 @@ def read_PD_LED_response():
 
 if __name__ == "__main__":
 
-    saveBool = 0
+    saveBool = int(sys.argv[1])
+    dateBool = int(sys.argv[2])
+    
     plt.ion() #turn on interactive mode
     rcParams['figure.figsize'] = 10, 10     #Set default fig size
     
@@ -55,7 +64,8 @@ if __name__ == "__main__":
     fig3, (ax3) = plt.subplots()
     figChi, (ax4) = plt.subplots()
     figures = [fig0, fig1, fig2, fig3, figChi]
-    
+    axes = [ax0, ax1, ax2, ax3, ax4]
+
     plt.rc('axes', color_cycle=['r', 'g', 'b', 'y'])
 
     ax0.set_title("A")
@@ -64,29 +74,47 @@ if __name__ == "__main__":
     ax3.set_title("Sigma")
     ax4.set_title("Chi2")
 
-    ax0.set_xlabel('Run Number')
-    ax1.set_xlabel('Run Number')
-    ax2.set_xlabel('Run Number')
-    ax3.set_xlabel('Run Number')
-    ax4.set_xlabel('Run Number')
-
     marks = 4
-    ax0.errorbar(data['Run'], data['A'], yerr=data['AErr'],
-                 linestyle='None', marker='o', markersize=marks)
-    ax1.errorbar(data['Run'], data['Mu'], yerr=data['MuErr'],
-                 linestyle='None', marker='o', markersize=marks)
-    ax2.errorbar(data['Run'], gains, gainsErr,
-                 linestyle='None', marker='o', markersize=marks)
-    ax3.errorbar(data['Run'], data['Sigma'], yerr=data['SigmaErr'],
-                 linestyle='None', marker='o', markersize=marks)
-    ax4.errorbar(data['Run'], data['Chi2'], 
-                 linestyle='None', marker='o', markersize=marks)
+    if not dateBool:
+        ax0.errorbar(data['Run'], data['A'], yerr=data['AErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax1.errorbar(data['Run'], data['Mu'], yerr=data['MuErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax2.errorbar(data['Run'], gains, gainsErr,
+                     linestyle='None', marker='o', markersize=marks)
+        ax3.errorbar(data['Run'], data['Sigma'], yerr=data['SigmaErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax4.errorbar(data['Run'], data['Chi2'], 
+                     linestyle='None', marker='o', markersize=marks)
     
-    ax0.set_xlim([20800, 24000])
-    ax1.set_xlim([20800, 24000])
-    ax2.set_xlim([20800, 24000])
-    ax3.set_xlim([20800, 24000])
-    ax4.set_xlim([20800, 24000])
+        ax0.set_xlim([20800, 24000])
+        ax1.set_xlim([20800, 24000])
+        ax2.set_xlim([20800, 24000])
+        ax3.set_xlim([20800, 24000])
+        ax4.set_xlim([20800, 24000])
+
+        ax0.set_xlabel('Run Number')
+        ax1.set_xlabel('Run Number')
+        ax2.set_xlabel('Run Number')
+        ax3.set_xlabel('Run Number')
+        ax4.set_xlabel('Run Number')
+
+    if dateBool:
+        timelist = getTimeForRunlist(data['Run'])
+        
+        ax0.errorbar(timelist, data['A'], yerr=data['AErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax1.errorbar(timelist, data['Mu'], yerr=data['MuErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax2.errorbar(timelist, gains, gainsErr,
+                     linestyle='None', marker='o', markersize=marks)
+        ax3.errorbar(timelist, data['Sigma'], yerr=data['SigmaErr'],
+                     linestyle='None', marker='o', markersize=marks)
+        ax4.errorbar(timelist, data['Chi2'], 
+                     linestyle='None', marker='o', markersize=marks)
+    
+        for ax in axes:
+            ax.set_xlabel('Time')
 
  #   ax0.set_ylim([0, 60])
 #    ax1.set_ylim([0, 18])
