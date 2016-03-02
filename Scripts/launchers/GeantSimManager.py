@@ -303,14 +303,14 @@ if __name__ == "__main__":
 ######################## Neutrons 2011-2013 ###############################
 	if options.neutrons:
 		
-		betaSim = GeantSimManager("XuanTest_SettingsON_saveAll", geometry="2011/2012",vacuum="1e-5 torr")#, fmap=os.environ["UCNA_AUX"]+"/UniformFieldmap.txt")
+		betaSim = GeantSimManager("XuanTest_quickie", geometry="2011/2012",vacuum="1e-5 torr")#, fmap=os.environ["UCNA_AUX"]+"/UniformFieldmap.txt")
 	#betaSim.set_generator("neutronBetaUnpol")
 	       	betaSim.set_evtsrc("n1_f_p")
 		if options.sim:
 			betaSim.set_detector_offsets()
 			betaSim.settings["ana_args"] += " saveall"
 			#betaSim.g4_out_dir_base = os.environ["G4OUTDIR"]
-			betaSim.launch_sims(maxIn=30000)
+			betaSim.launch_sims(maxIn=30)
 			
 		if options.ana:
 			betaSim.launch_postanalyzer()
