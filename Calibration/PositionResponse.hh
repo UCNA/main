@@ -38,9 +38,13 @@ public:
 	/// forbid copying
 	PositioningInterpolator& operator=(PositioningInterpolator&) { smassert(false); return *this; }
 	/// evaluate from interpolation table
-	double eval(double x, double y);	
+	double eval(double x, double y);
+        ///evaluate straight from position map
+        double evalNoInterp(double x, double y);
 	
+        const PosmapInfo pmi;
 	SectorCutter S;
+        
 	
 protected:	
 	InterpoSequence sRadial;
@@ -69,6 +73,8 @@ public:
 	const SectorCutter& getSectors(Side s, unsigned int t) const { smassert((s==EAST||s==WEST) && t<tubes[s].size() && tubes[s][t]); return tubes[s][t]->S; }
 	/// get positioning correction for given tube
 	double eval(Side s, unsigned int t, double x, double y, bool normalize = false) const;
+        /// get positioning correction for given tube not interpolated
+	double evalNoInterp(Side s, unsigned int t, double x, double y, bool normalize = false) const;
 	/// set normalization to c at center
 	void setNormCenter(double c = 1.0);
 	/// set normalization to average of c

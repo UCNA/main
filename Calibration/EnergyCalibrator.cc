@@ -348,6 +348,7 @@ void PMTCalibrator::calibrateEnergy(Side s, float x, float y, ScintEvent& evt, f
 		
 		evt.nPE[t] = E0*weight[t];
 		evt.tuben[t].x = E0;
+		evt.tubenNoInterp[t].x = l0/etaNoInterp(s,t,x,y); //Added to do Xe posmap iterations
 		
 		// de-weight for clipping, unless all PMTs clipped
 		if(nclipped<nBetaTubes) {

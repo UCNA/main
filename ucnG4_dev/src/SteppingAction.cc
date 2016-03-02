@@ -19,7 +19,7 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep) {
 	// check that computation limit is not exceeded (trapped events)
 	G4int StepNo = aStep->GetTrack()->GetCurrentStepNumber();
 	timeSpentSoFar = ((EventAction*)G4EventManager::GetEventManager()->GetUserEventAction())->getCPUTime();
-	if(StepNo >= 2000000 || timeSpentSoFar > 60) {
+	if(StepNo >= 200 || timeSpentSoFar > 60) {
 		G4cout << "Tracking killed by computation time limit" << G4endl;
 		aStep->GetTrack()->SetTrackStatus(fStopAndKill);
 		SetTrappedFlag(1);  

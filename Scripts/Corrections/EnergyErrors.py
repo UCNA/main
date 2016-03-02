@@ -77,20 +77,29 @@ def plotEnergyErrors(year=2011):
 
 	gCx=graph.graphxy(width=15,height=8,
 					  x=graph.axis.lin(title="Energy [keV]",min=0,max=800),
-					  y=graph.axis.lin(title="uncertainty $\\Delta A/A$ [\\%]",min=0,max=1.0),
+					  y=graph.axis.lin(title="uncertainty $\\Delta A/A$ [\\%]",min=0,max=1.),
 					  key = graph.key.key(pos="tr"))
 	setTexrunner(gCx)
 			 
 	gdat = [ [x,100*energyErrorA(x,year),100*energyErrorSimple(x,year),100*energyErrorRC(x,year)] for x in unifrange(50,850.,800) ]
-	gCx.plot(graph.data.points(gdat[::8],x=1,y=3,title="$A={\\beta \\over 2}A_0$"),
-				 [ graph.style.line([style.linewidth.THick,style.linestyle.dotted]),])
+	gdat2010 = [ [x,100*energyErrorA(x,2010),100*energyErrorSimple(x,2010),100*energyErrorRC(x,2010)] for x in unifrange(50,850.,800) ]
+	gdatComp = [ [x,100*energyErrorA(x,20112),100*energyErrorSimple(x,20112),100*energyErrorRC(x,20112)] for x in unifrange(50,850.,800) ]
+	#gCx.plot(graph.data.points(gdat[::8],x=1,y=3,title="$A={\\beta \\over 2}A_0$"),
+	#			 [ graph.style.line([style.linewidth.THick,style.linestyle.dotted]),])
 	#gCx.plot(graph.data.points(gdat,x=1,y=4,title="$A={\\beta \\over 2}(1+$R.C.$)A_0$"),
 	#			 [ graph.style.line([style.linewidth.THick,style.linestyle.dashed]),])
-	gCx.plot(graph.data.points(gdat,x=1,y=2,title="MC asymmetry"),
+	#gCx.plot(graph.data.points(gdat,x=1,y=2,title="MC asymmetry"),
+	#		 [ graph.style.line([style.linewidth.THick]),])
+	gCx.plot(graph.data.points(gdat2010,x=1,y=2,title="2010"),
 			 [ graph.style.line([style.linewidth.THick]),])
+	#gCx.plot(graph.data.points(gdatComp,x=1,y=2,title="2011-2012 Official Analyzer"),
+	#		 [ graph.style.line([style.linewidth.THick,color.rgb.red]),])
+	gCx.plot(graph.data.points(gdat,x=1,y=2,title="2011-2012 Parallel Analyzer"),
+			 [ graph.style.line([style.linewidth.THick,color.rgb.blue]),])
 			 
 	print "Eavg MC =",weightStats(gdat,220,670)
-	print "Eavg plain = ",weightStats([(x[0],x[2]) for x in gdat],220,670)
+	
+	#print "Eavg plain = ",weightStats([(x[0],x[2]) for x in gdat],220,670)
 				 			 
 	gCx.writetofile("%s/Corrections/EnergyUncert%i.pdf"%(baseOutPath,year))
 

@@ -88,6 +88,7 @@ struct TrigInfo {
 struct ScintEvent {
 	Float_t adc[nBetaTubes];		///< raw pedestal-subtracted PMT ADCs
 	float_err tuben[nBetaTubes];	///< individual tube reconstructed energies
+        float_err tubenNoInterp[nBetaTubes];   ///< ind. tube reconstructed energies WITHOUT position map interpolation
 	float_err energy;				///< total reconstructed energy
 	Float_t nPE[nBetaTubes];		///< number of PE seen by each PMT
 };

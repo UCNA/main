@@ -56,6 +56,8 @@ public:
 	float getDeltaADC(Side s, unsigned int t) const { return deltaADC[s][t]; }
 	/// positioning intensity factor eta
 	virtual float eta(Side s, unsigned int t, float x, float y) const { return P->eval(s,t,x,y,true); }
+        ///Non-interpolated positioning intensity factor etaNoInterp
+        virtual float etaNoInterp(Side s, unsigned int t, float x, float y) const { return P->evalNoInterp(s,t,x,y,true); }
 	/// linearize tube adc (plus GMS correction), ADC -> L = eta*Evis
 	float linearityCorrector(Side s, unsigned int t, float adc, float time) const;
 	/// invert linearity correction to raw ADC
