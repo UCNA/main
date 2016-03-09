@@ -8,8 +8,9 @@
 #include <cmath> 
 #include "TFile.h"
 #include "TH1F.h"
-#include "TTreeReader.h"
-#include "TTreeReaderValue.h"
+#include "TTree.h"
+//#include "TTreeReader.h"          /// only in newer Root
+//#include "TTreeReaderValue.h"     /// only in newer Root
 using namespace std;
  
 //This is a collection of functions that are useful for light guide map creation. 

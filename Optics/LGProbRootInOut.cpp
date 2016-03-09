@@ -8,11 +8,14 @@
 #include "TFile.h"
 #include "TH1F.h"
 #include "TMath.h"
-#include "TTreeReader.h"
-#include "TTreeReaderValue.h"
+#include "TTree.h"
+//#include "TTreeReader.h"          /// Later versions of root
+//#include "TTreeReaderValue.h"     /// Later versions of root
 #include "TRandom3.h"
-#include "/home/cmswank/Documents/ucna/main/Scripts/lgprobmap/pmtprobstuff.h"
-#include "/home/cmswank/Documents/ucna/main/Scripts/lgprobmap/lgpmtTools.h"
+//#include "/home/cmswank/Documents/ucna/main/Scripts/lgprobmap/pmtprobstuff.h"
+//#include "/home/cmswank/Documents/ucna/main/Scripts/lgprobmap/lgpmtTools.h"
+#include "pmtprobstuff.h"
+#include "lgpmtTools.h"
 
 
 using namespace std;
