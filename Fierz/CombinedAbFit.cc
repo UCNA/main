@@ -218,6 +218,27 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+    
+    /*
+    TFile *fierz_mc_tfile = new TFile(
+		"Fierz/ratio.root");
+	if (fierzratio_data_tfile->IsZombie())
+	{
+		std::cout << "File not found." << std::endl;
+		exit(1);
+	}
+    */
+
+    TFile *sm_mc_tfile = new TFile(
+        "/home/xuansun/Documents/SimData_Beta/"
+        "xuan_analyzed_baseBetas.root");
+		//"Fierz/ratio.root");
+	if (sm_mc_tfile->IsZombie())
+	{
+		std::cout << "File not found." << std::endl;
+		exit(1);
+	}
+
     TFile *fierzratio_data_tfile = new TFile(
 		"Fierz/ratio.root");
 	if (fierzratio_data_tfile->IsZombie())
