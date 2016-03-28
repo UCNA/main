@@ -199,7 +199,9 @@ int main(int argc, char *argv[])
 
 	// load the files that contain our histograms
     TFile *asymmetry_data_tfile = new TFile(
-		"/home/mmendenhall/Plots/OctetAsym_Offic/Range_0-1000/CorrectAsym/CorrectedAsym.root");
+        //"/media/hickerson/boson/Data/Plots/"
+        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+        "Range_0-1000/CorrectAsym/CorrectedAsym.root");
 	if (asymmetry_data_tfile->IsZombie())
 	{
 		std::cout << "File not found." << std::endl;
@@ -207,7 +209,9 @@ int main(int argc, char *argv[])
 	}
 
     TFile *ucna_data_tfile = new TFile(
-		"/home/mmendenhall/Plots/OctetAsym_Offic/OctetAsym_Offic.root");
+        //"/media/hickerson/boson/Data/Plots/"
+        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+		"OctetAsym_Offic.root");
 	if (ucna_data_tfile->IsZombie())
 	{
 		std::cout << "File not found." << std::endl;
