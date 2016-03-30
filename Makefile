@@ -88,7 +88,7 @@ libUCNA.a: $(objects)
 	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
 	
 
-ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm CombinedAbFit \
+ExampleObjs = CalibratorExample DataScannerExample ExtractFierzTerm CombinedAbFit ExtractCombinedAbFit \
 	FPNCalc  MWPC_Efficiency_Sim FierzOctetAnalyzer OctetAnalyzerExample lgprobmap
 
 examples: $(ExampleObjs)
