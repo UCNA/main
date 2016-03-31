@@ -426,7 +426,8 @@ struct STLhistogram {
     }
 };
 
-class UCNAModel {
+struct UCNAModel {
+    int          size;
     TH1F*        raw[2][2];
     STLhistogram counts[2][2];
     STLhistogram super_ratio;
@@ -451,27 +452,38 @@ vector<double> super_sum_errors;
 */
 
 UCNAModel ucna_data; // Need construction.
-UCNAModel ucna_mc; // Need construction.
+UCNAModel ucna_sm_mc; // Need construction.
+UCNAModel ucna_fierz_mc; // Need construction.
 
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
 	double chi2 = 0; 
 	double chi,	E; 
 
-	int n = asymmetry_energy.size();
+	int n = ucna_data.asymmetry.energy.size();
+	//int n = asymmetry_energy.size();
 	for (int i = 0; i < n; i++)
 	{
-		double par[2] = {p[0],p[1]};
-		E = asymmetry_energy[i];
-		chi = (asymmetry_values[i] - asymmetry_fit_func(&E,par)) / asymmetry_errors[i];
+		double par[2] = {p[0],p[1]}; // A, b
+		E = ucna_data.asymmetry.energy[i];
+		//chi = (asymmetry_values[i] - asymmetry_fit_func(&E,par)) / asymmetry_errors[i];
+		double Y = ucna_data.asymmetry.values[i];
+        double f = asymmetry_fit_func(&E,par);
+        double eY = ucna_data.asymmetry.errors[i];
+		chi = (Y - f) / eY;
 		chi2 += chi*chi; 
 	}
 
-	n = fierzratio_energy.size();
+	//n = fierzratio_energy.size();
 	for (int i = 0; i < n; i++) { 
-		double par[2] = {p[1], expected[0][1]};
-		E = fierzratio_energy[i];
-		chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
+		//double par[2] = {p[1], expected[0][1]};
+		E = ucna_data.super_sum.energy[i];
+		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
+		double Y =      ucna_data    .super_sum.values[i];
+        double f = p[1]*ucna_sm_mc   .super_sum.values[i] 
+                 + p[2]*ucna_fierz_mc.super_sum.values[i];
+        double eY =     ucna_data    .super_sum.errors[i];
+		chi = (Y - f) / eY;
 		chi2 += chi*chi; 
 	}
 	fval = chi2; 
