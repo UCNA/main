@@ -1,3 +1,4 @@
+/*
 // UCNA includes
 #include "G4toPMT.hh"
 #include "PenelopeToPMT.hh"
@@ -19,36 +20,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-
-/*
-///
-/// physical constants
-///
-const double    pi          = 3.1415926535;         /// pi
-const double    alpha       = 1/137.035999;         /// fine-structure constant
-const double    a2pi        = alpha/(2*pi);         /// alpha over 2pi
-const double    m_e         = 510.9988484;          /// electron mass       (14)
-const double    m_p         = 938272.046;           /// proton mass         (21)
-const double    m_n         = 939565.378;           /// neutron mass        (21)
-const double    mu_p        = 2.792846;             /// proton moment       (7)
-const double    mu_n        = -1.9130427;           /// neutron moment      (5)
-const double    muV         = mu_p - mu_n;          /// nucleon moment      (9)
-const double    Q           = 782.344;              /// end point KE        (30)
-const double    E0          = m_e + Q;              /// end point E         (30)
-const double    L           = -1.27590;             /// gA/gV               (450)
-const double    M           = 1 + 3*L*L;            /// matrix element
-const double    I_0         = 1.63632;              /// 0th moment          (25)
-const double    I_1         = 1.07017;              /// 1st moment          (15)
-const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
 */
+// UCNA includes
+#include "G4toPMT.hh"
+#include "PenelopeToPMT.hh"
+#include "CalDBSQL.hh"
+#include "FierzFitter.hh"
+
+// ROOT includes
+#include <TH1F.h>
+#include <TLegend.h>
+#include <TF1.h>
+#include <TVirtualFitter.h>
+#include <TList.h>
+#include <TStyle.h>
+#include <TApplication.h>
+#include <TMatrixD.h>
+
+// C++ includes
+#include <iostream>
+#include <fstream>
+#include <string>
+
+// C includes
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 
 ///
 /// settings
 ///
-double min_E = 230;
-double max_E = 660;
 double expected_fierz = 0.6540;				/// full range (will get overwritten) 
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
@@ -59,48 +61,14 @@ static int bins = 150;						/// replace with value from data or smoothing fit
 double scale_x = 1.0;
 
 
-class FierzHistogram {
-  public: 
-    double minBin;
-    double maxBin;
-    unsigned int nBins;
-    TH1F *fierz_super_sum_histogram;
-    TH1F *sm_super_sum_histogram;
-    TH1F* fierz_histogram[2][2];
-    TH1F* sm_histogram[2][2];
+double min_E = 220; /// min energy from the 2013 paper
+double max_E = 670; /// max range from the 2013 paper
 
-    FierzHistogram( double _minBin, double _maxBin, unsigned int _nBins) {
-        minBin = _minBin;
-        maxBin = _maxBin;
-        nBins = _nBins;
-        fierz_super_sum_histogram = new TH1F("fierz_histogram", "", nBins, minBin, maxBin);
-        sm_super_sum_histogram = new TH1F("standard_model_histogram", "", nBins, minBin, maxBin);
-        for (int side = 0; side < 2; side++)
-            for (int spin = 0; spin < 2; spin++) {
-                fierz_histogram[side][spin] = new TH1F("fierz_super_sum", "", nBins, minBin, maxBin);
-                sm_histogram[side][spin] = new TH1F("standard_model_super_sum", "", nBins, minBin, maxBin);
-            }
-    }
 
-/*
-    double evaluate(double *x, double*p) {
-        double rv = 0;
-        rv += p[0] * sm_histogram->GetBinContent(sm_histogram->FindBin(x[0]));        
-        rv += p[1] * fierz_histogram->GetBinContent(fierz_histogram->FindBin(x[0]));
-        return rv;
-    }
-*/
+// expected values (based on the energy range) need to be visible to the chi^2 code
+double expected[3][3];
 
-    void normalizeHistogram(TH1F* hist) {
-        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
-    }
 
-    void normalizeHistogram(TH1F* hist, double min, double max) {
-		int _min = hist->FindBin(min);
-		int _max = hist->FindBin(max);
-        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
-    }
-};
 
 
 /// ug. needs to be static
@@ -422,42 +390,7 @@ void output_histogram(string filename, TH1F* h, double ax, double ay)
 }
 
 
-// UCNA includes
-#include "G4toPMT.hh"
-#include "PenelopeToPMT.hh"
-#include "CalDBSQL.hh"
-#include "FierzFitter.hh"
-
-// ROOT includes
-#include <TH1F.h>
-#include <TLegend.h>
-#include <TF1.h>
-#include <TVirtualFitter.h>
-#include <TList.h>
-#include <TStyle.h>
-#include <TApplication.h>
-#include <TMatrixD.h>
-
-// C++ includes
-#include <iostream>
-#include <fstream>
-#include <string>
-
-// C includes
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-
-// energy range from the 2013 paper
-double min_E = 220;
-double max_E = 670;
-
-// expected values (based on the energy range) need to be visible to the chi^2 code
-double expected[3][3];
-
-
-#if 1
+#if 0
 using namespace std;
 int output_histogram(string filename, TH1F* h, double ax, double ay)
 {
@@ -476,38 +409,49 @@ int output_histogram(string filename, TH1F* h, double ax, double ay)
 }
 #endif
 
-struct EnergySpectrum {
+struct STLhistogram {
+    int size;
     int detector;
     int spin;
     TH1F* central;
-    TH1F* asymetric;
-    TH1F* fierz;
     vector<double> energy;        
     vector<double> values;        
     vector<double> errors;        
 
-    void init() {
+    void init(int size) {
+        this->size = size;
         energy = vector<double>();
 	    values = vector<double>();
 	    errors = vector<double>();
     }
 };
 
+class UCNAModel {
+    TH1F*        raw[2][2];
+    STLhistogram counts[2][2];
+    STLhistogram super_ratio;
+    STLhistogram super_sum;
+    STLhistogram asymmetry;
+};
+
 
 // data need to be globals to be visible by func 
+/*
 vector<double> asymmetry_energy;        
 vector<double> asymmetry_values;        
 vector<double> asymmetry_errors;        
 
-vector<double> fierzratio_energy;        
-vector<double> fierzratio_values;        
-vector<double> fierzratio_errors;        
+vector<double> super_ratio_energy;        
+vector<double> super_ratio_values;        
+vector<double> super_ratio_errors;        
 
-vector<double> fierzratio_energy;        
-vector<double> fierzratio_values;        
-vector<double> fierzratio_errors;        
+vector<double> super_sum_energy;        
+vector<double> super_sum_values;        
+vector<double> super_sum_errors;        
+*/
 
-
+UCNAModel ucna_data; // Need construction.
+UCNAModel ucna_mc; // Need construction.
 
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
@@ -515,7 +459,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 	double chi,	E; 
 
 	int n = asymmetry_energy.size();
-	for (int i = 0; i < n; ++i )
+	for (int i = 0; i < n; i++)
 	{
 		double par[2] = {p[0],p[1]};
 		E = asymmetry_energy[i];
@@ -524,7 +468,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 	}
 
 	n = fierzratio_energy.size();
-	for (int i = 0; i < n; ++i ) { 
+	for (int i = 0; i < n; i++) { 
 		double par[2] = {p[1], expected[0][1]};
 		E = fierzratio_energy[i];
 		chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
@@ -535,7 +479,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 
 
-//TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2]) 
+#if 0
 TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[2][2]) 
 { 
 	// set up best guess
@@ -636,7 +580,7 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[2][2])
 
 	return func; 
 }
-
+#endif
 
 
 

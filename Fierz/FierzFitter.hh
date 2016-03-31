@@ -1,3 +1,6 @@
+#ifndef FIERZ_FITTER
+#define FIERZ_FITTER
+
 // UCNA includes
 #include "G4toPMT.hh"
 #include "PenelopeToPMT.hh"
@@ -61,6 +64,49 @@ int output_histogram(string filename, TH1F* h, double ax, double ay)
 	return 0;
 }
 #endif
+
+class FierzHistogram {
+  public: 
+    double minBin;
+    double maxBin;
+    unsigned int nBins;
+    TH1F *fierz_super_sum_histogram;
+    TH1F *sm_super_sum_histogram;
+    TH1F* fierz_histogram[2][2];
+    TH1F* sm_histogram[2][2];
+
+    FierzHistogram( double _minBin, double _maxBin, unsigned int _nBins) {
+        minBin = _minBin;
+        maxBin = _maxBin;
+        nBins = _nBins;
+        fierz_super_sum_histogram = new TH1F("fierz_histogram", "", nBins, minBin, maxBin);
+        sm_super_sum_histogram = new TH1F("standard_model_histogram", "", nBins, minBin, maxBin);
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++) {
+                fierz_histogram[side][spin] = new TH1F("fierz_super_sum", "", nBins, minBin, maxBin);
+                sm_histogram[side][spin] = new TH1F("standard_model_super_sum", "", nBins, minBin, maxBin);
+            }
+    }
+
+    /*
+    double evaluate(double *x, double*p) {
+        double rv = 0;
+        rv += p[0] * sm_histogram->GetBinContent(sm_histogram->FindBin(x[0]));        
+        rv += p[1] * fierz_histogram->GetBinContent(fierz_histogram->FindBin(x[0]));
+        return rv;
+    }
+    */
+
+    void normalizeHistogram(TH1F* hist) {
+        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
+    }
+
+    void normalizeHistogram(TH1F* hist, double min, double max) {
+		int _min = hist->FindBin(min);
+		int _max = hist->FindBin(max);
+        hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
+    }
+};
 
 
 /// beta spectrum with little b term
@@ -200,3 +246,6 @@ double GetEntries(TH1F* histogram, double min, double max)
 
 	return N;
 }
+
+
+#endif // FIERZ_FITTER
