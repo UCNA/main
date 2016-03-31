@@ -6,10 +6,6 @@
 #include "FierzFitter.hh"
 
 // ROOT includes
-#include <TH1F.h>
-#include <TLegend.h>
-#include <TF1.h>
-#include <TNtuple.h>
 
 // C++ includes
 #include <iostream>
@@ -36,6 +32,7 @@
 #include <TStyle.h>
 #include <TApplication.h>
 #include <TMatrixD.h>
+#include <TNtuple.h>
 
 // C++ includes
 #include <iostream>
@@ -491,7 +488,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 
 
-#if 0
+#if 1
 TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[2][2]) 
 { 
 	// set up best guess
@@ -796,7 +793,8 @@ int main(int argc, char *argv[])
         //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
 		//"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/OctetAsym_10keV_Bins.root");
 		//"/home/mmendenhall/UCNA/PostPlots/OctetAsym_Offic/OctetAsym_Offic.root");
-		"/home/mmendenhall/Plots/OctetAsym_Offic/OctetAsym_Offic.root");
+		//"/home/mmendenhall/Plots/OctetAsym_Offic/OctetAsym_Offic.root");
+        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/OctetAsym_Offic.root");
 	if (ucna_data_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
@@ -1063,8 +1061,9 @@ int main(int argc, char *argv[])
 	//ratio_tfile->Close();
 
 
-	return 0;
-}
+    /// CODE BREAK
+
+
 	// load the files that contain our histograms
     TFile *asymmetry_data_tfile = new TFile(
         //"/media/hickerson/boson/Data/Plots/"
@@ -1076,8 +1075,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+/* NOW declared above
     TFile *ucna_data_tfile = new TFile(
-        //"/media/hickerson/boson/Data/Plots/"
         "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
 		"OctetAsym_Offic.root");
 	if (ucna_data_tfile->IsZombie())
@@ -1085,7 +1084,7 @@ int main(int argc, char *argv[])
 		std::cout << "File not found." << std::endl;
 		exit(1);
 	}
-
+*/
     TFile *sm_mc_tfile = new TFile(
         "/home/xuansun/Documents/SimData_Beta/"
         "xuan_analyzed_baseBetas.root");
