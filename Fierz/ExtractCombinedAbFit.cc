@@ -407,7 +407,7 @@ int output_histogram(string filename, TH1F* h, double ax, double ay)
 #endif
 
 struct STLhistogram {
-    int size;
+    int bins;
     int detector;
     int spin;
     TH1F* central;
@@ -415,21 +415,49 @@ struct STLhistogram {
     vector<double> values;        
     vector<double> errors;        
 
-    void init(int size) {
-        this->size = size;
-        energy = vector<double>();
-	    values = vector<double>();
-	    errors = vector<double>();
+    void init(int bins) {
+        this->bins = bins;
+        energy = vector<double>(bins);
+	    values = vector<double>(bins);
+	    errors = vector<double>(bins);
+    }
+
+    void fill(TH1F *histogram) {
+        TAxis *axis  = histogram->GetXaxis();
+        bins = histogram->GetNbinsX(); 
+        for (int ix = 1; ix <= bins + 1; ix++)
+        {
+            double E = axis->GetBinCenter(ix);
+            //if (min_E < E and E < max_E)
+            {
+                double Y = histogram->GetBinContent(ix);
+                double eY = histogram->GetBinError(ix);
+                energy.push_back(E);
+                values.push_back(Y);
+                errors.push_back(eY);
+            }
+        }
     }
 };
 
 struct UCNAModel {
-    int          size;
+    int          bins;
     TH1F*        raw[2][2];
     STLhistogram counts[2][2];
     STLhistogram super_ratio;
     STLhistogram super_sum;
     STLhistogram asymmetry;
+
+    void init(int bins) {
+        this->bins = bins;
+        // TODO init TH1Fs
+        for (int i=0; i<2; i++)
+            for (int j=0; j<2; j++)
+                counts[i][j].init(bins);
+        super_ratio.init(bins);
+        super_sum.init(bins);
+        asymmetry.init(bins);
+    }
 };
 
 
@@ -467,7 +495,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 		double Y = ucna_data.asymmetry.values[i];
         double f = asymmetry_fit_func(&E,par);
         double eY = ucna_data.asymmetry.errors[i];
-		chi = (Y - f) / eY;
+		chi = (Y - f)/eY;
 		chi2 += chi*chi; 
 	}
 
@@ -480,7 +508,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
         double f = p[1]*ucna_sm_mc   .super_sum.values[i] 
                  + p[2]*ucna_fierz_mc.super_sum.values[i];
         double eY =     ucna_data    .super_sum.errors[i];
-		chi = (Y - f) / eY;
+		chi = (Y - f)/eY;
 		chi2 += chi*chi; 
 	}
 	fval = chi2; 
@@ -507,21 +535,26 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[2][2])
 	// fit now all the function together
 
 	// fill data structure for fit (coordinates + values + errors) 
-	TAxis *xaxis1  = asymmetry->GetXaxis();
-	TAxis *xaxis2  = fierzratio->GetXaxis();
+	//TAxis *xaxis1  = asymmetry->GetXaxis();
+	//TAxis *xaxis2  = fierzratio->GetXaxis();
 
-	int nbinX1 = asymmetry->GetNbinsX(); 
-	int nbinX2 = fierzratio->GetNbinsX(); 
+	//int nbins = asymmetry->GetNbinsX(); 
+	//int nbinX2 = fierzratio->GetNbinsX(); 
+    //TODO assert they are the same
 
-	// reset data structure
+    /// reset data structure
+    ucna_data.asymmetry.fill(asymmetry);
+    /*
 	asymmetry_energy = vector<double>();
 	asymmetry_values = vector<double>();
 	asymmetry_errors = vector<double>();
 	fierzratio_energy = vector<double>();
 	fierzratio_values = vector<double>();
 	fierzratio_errors = vector<double>();
+    */
 
-	for (int ix = 1; ix <= nbinX1; ++ix)
+    /*
+	for (int ix = 1; ix <= nbins; ++ix)
 	{
 		double E = xaxis1->GetBinCenter(ix);
 		if (min_E < E and E < max_E)
@@ -542,6 +575,7 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[2][2])
 			fierzratio_errors.push_back( fierzratio->GetBinError(ix) );
 		}
 	}
+    */
 
 	// set up the minuit fitter
 	TVirtualFitter::SetDefaultFitter("Minuit");
@@ -575,7 +609,7 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[2][2])
 	func->SetParameters(minParams);
 	func->SetParErrors(parErrors);
 	func->SetChisquare(chi2);
-	int ndf = asymmetry_energy.size() + fierzratio_energy.size()- nvpar;
+	// TODO int ndf = asymmetry_energy.size() + fierzratio_energy.size()- nvpar;
 	func->SetNDF(ndf);
     
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
