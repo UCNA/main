@@ -1,22 +1,3 @@
-/*
-// UCNA includes
-#include "G4toPMT.hh"
-#include "PenelopeToPMT.hh"
-#include "CalDBSQL.hh"
-#include "FierzFitter.hh"
-
-// ROOT includes
-
-// C++ includes
-#include <iostream>
-#include <fstream>
-#include <string>
-
-// C includes
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-*/
 // UCNA includes
 #include "G4toPMT.hh"
 #include "PenelopeToPMT.hh"
@@ -428,10 +409,13 @@ struct STLhistogram {
         for (int ix = 1; ix <= bins + 1; ix++)
         {
             double E = axis->GetBinCenter(ix);
-            //if (min_E < E and E < max_E)
+            if (min_E < E and E < max_E)
             {
                 double Y = histogram->GetBinContent(ix);
                 double eY = histogram->GetBinError(ix);
+                //energy.push_back(E);
+                //values.push_back(Y);
+                //errors.push_back(eY);
                 energy.push_back(E);
                 values.push_back(Y);
                 errors.push_back(eY);
@@ -598,7 +582,7 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[2][2])
 	// get result
 	double minParams[nPar];
 	double parErrors[nPar];
-	for (int i = 0; i < nPar; ++i) {  
+	for (int i=0; i<nPar; ++i) {  
 		minParams[i] = minuit->GetParameter(i);
 		parErrors[i] = minuit->GetParError(i);
 	}
@@ -609,12 +593,13 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[2][2])
 	func->SetParameters(minParams);
 	func->SetParErrors(parErrors);
 	func->SetChisquare(chi2);
-	// TODO int ndf = asymmetry_energy.size() + fierzratio_energy.size()- nvpar;
+	int ndf = ucna_data.asymmetry.energy.size() 
+            + ucna_data.super_sum.energy.size()- nvpar;
 	func->SetNDF(ndf);
     
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
-	for (int i = 0; i < nPar; i++)
-		for (int j = 0; j < nPar; j++)
+	for (int i=0; i<nPar; i++)
+		for (int j=0; j<nPar; j++)
 			cov[i][j] = minuit->GetCovarianceMatrixElement(i,j);
 
 	cout << endl;
