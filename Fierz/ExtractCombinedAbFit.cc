@@ -666,7 +666,7 @@ int main(int argc, char *argv[])
             (TH1F*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
     TH1F *supersum_histogram = 
             (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
-    TTree *tchain = (TTree*)sm_mc_tfile->Get("anaTree");
+    TChain *tchain = (TChain*)sm_mc_tfile->Get("anaTree");
     //TH1F *fierzratio_histogram = 
     //        (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
 	int n = tchain->GetEntries();
