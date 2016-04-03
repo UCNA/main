@@ -643,7 +643,10 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
     TFile *sm_mc_tfile = new TFile(
-        "/home/xuansun/Documents/SimData_Beta/xuan_analyzed_baseBetas.root");
+        "/home/xuansun/Documents/SimData_Beta/"
+        //"xuan_analyzed_baseBetas.root");
+        //"SimAnalyzed_Beta_fierz.root");
+        "SimAnalyzed_Beta.root");  
 	if (sm_mc_tfile->IsZombie())
 	{
 		std::cout << "File not found." << std::endl;
@@ -664,9 +667,21 @@ int main(int argc, char *argv[])
 	/// extract the histograms from the files
     TH1F *asymmetry_histogram = 
             (TH1F*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
+    if (not asymmetry_histogram) {
+        printf("Error getting asymmetry histogram.\n");
+        exit(1);
+    }
     TH1F *supersum_histogram = 
             (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
-    TChain *tchain = (TChain*)sm_mc_tfile->Get("anaTree");
+    if (not supersum_histogram) {
+        printf("Error getting super sum histogram.\n");
+        exit(1);
+    }
+    TChain *tchain = (TChain*)sm_mc_tfile->Get("SimAnalyzed");
+    if (not tchain) {
+        printf("Error getting Standard Model Monte Carlo.\n");
+        exit(1);
+    }
     //TH1F *fierzratio_histogram = 
     //        (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
 	int n = tchain->GetEntries();
