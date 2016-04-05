@@ -83,7 +83,7 @@ def plotEnergyErrors(year=2011):
 			 
 	gdat = [ [x,100*energyErrorA(x,year),100*energyErrorSimple(x,year),100*energyErrorRC(x,year)] for x in unifrange(50,850.,800) ]
 	gdat2010 = [ [x,100*energyErrorA(x,2010),100*energyErrorSimple(x,2010),100*energyErrorRC(x,2010)] for x in unifrange(50,850.,800) ]
-	gdatComp = [ [x,100*energyErrorA(x,20112),100*energyErrorSimple(x,20112),100*energyErrorRC(x,20112)] for x in unifrange(50,850.,800) ]
+	gdatComp = [ [x,100*energyErrorA(x,2011),100*energyErrorSimple(x,2011),100*energyErrorRC(x,2011)] for x in unifrange(50,850.,800) ]
 	#gCx.plot(graph.data.points(gdat[::8],x=1,y=3,title="$A={\\beta \\over 2}A_0$"),
 	#			 [ graph.style.line([style.linewidth.THick,style.linestyle.dotted]),])
 	#gCx.plot(graph.data.points(gdat,x=1,y=4,title="$A={\\beta \\over 2}(1+$R.C.$)A_0$"),
@@ -92,9 +92,9 @@ def plotEnergyErrors(year=2011):
 	#		 [ graph.style.line([style.linewidth.THick]),])
 	gCx.plot(graph.data.points(gdat2010,x=1,y=2,title="2010"),
 			 [ graph.style.line([style.linewidth.THick]),])
-	#gCx.plot(graph.data.points(gdatComp,x=1,y=2,title="2011-2012 Official Analyzer"),
-	#		 [ graph.style.line([style.linewidth.THick,color.rgb.red]),])
-	gCx.plot(graph.data.points(gdat,x=1,y=2,title="2011-2012 Parallel Analyzer"),
+	gCx.plot(graph.data.points(gdatComp,x=1,y=2,title="2011-2012 Parallel Analyzer"),
+			 [ graph.style.line([style.linewidth.THick,color.rgb.red]),])
+	gCx.plot(graph.data.points(gdat,x=1,y=2,title="2012-2013 Parallel Analyzer"),
 			 [ graph.style.line([style.linewidth.THick,color.rgb.blue]),])
 			 
 	print "Eavg MC =",weightStats(gdat,220,670)
