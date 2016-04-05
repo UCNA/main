@@ -438,6 +438,15 @@ struct UCNAModel {
     }
 };
 
+struct UCNAEvent {
+    double EdepQ;
+    double Edep;
+    double MWPCEnergy;
+    double ScintPos;
+    double MWPCPos;
+    double time;
+    double primMomentum;
+};
 
 // data need to be globals to be visible by func 
 /*
@@ -567,64 +576,24 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[nPar][nPar])
 int main(int argc, char *argv[])
 {
 	TApplication app("Extract Combined A + b Fitter", &argc, argv);
-
-	TH1::AddDirectory(kFALSE);
-	//expected_fierz = evaluate_expected_fierz(min_E, max_E);
-	//std::cout << "Expected Fierz " << expected_fierz << "\n";
-	
-	// Geant4 MC data scanner object
-	//G4toPMT G2P;
-	//PenelopeToPMT G2P;
-
-	// use data from these MC files (most recent unpolarized beta decay, includes Fermi function spectrum correction)
-	// note wildcard * in filename; MC output is split up over many files, but G2P will TChain them together
-	//G2P.addFile("/home/ucna/penelope_output/ndecay_10/event_*.root"); // standard final Penelope
-	//G2P.addFile("/home/mmendenhall/geant4/output/20120824_MagF_neutronBetaUnpol/analyzed_*.root"); // magnetic wiggles Monte Carlo
-	//G2P.addFile("/home/mmendenhall/geant4/output/20120823_neutronBetaUnpol/analyzed_*.root"); // standard final Monte Carlo 
-	//G2P.addFile("/home/mmendenhall/geant4/output/20120810_neutronBetaUnpol/analyzed_*.root");
-	//G2P.addFile("/home/mmendenhall/geant4/output/Livermore_neutronBetaUnpol_geomC/analyzed_*.root");
-	//G2P.addFile("/home/mmendenhall/geant4/output/Baseline_20110826_neutronBetaUnpol_geomC/analyzed_*.root");
-	//G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined");
-    //G2P.addFile("/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
+	//TH1::AddDirectory(kFALSE);
+	/// Geant4 MC data scanner object
+	/// G4toPMT G2P;
+	/// use data from these MC files (most recent unpolarized beta decay, 
+    /// includes Fermi function spectrum correction)
+	/// note wildcard * in filename; 
+    /// MC output is split up over many files, but G2P will TChain them together
 	//G2P.addFile("/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_*.root");
 	
-	// PMT Calibrator loads run-specific energy calibrations info for selected run (14111)
-	// and uses default Calibrations DB connection to most up-to-date though possibly unstable "mpm_debug"
-	//RunNum run_number = 14111;
-	//PMTCalibrator PCal(run_number);
+	/// PMT Calibrator loads run-specific energy calibrations info for selected run
+	/// and uses default Calibrations DB connection to most up-to-date though possibly unstable "mpm_debug"
 	
-	// Energy simulators for both sides using same PMT Calibrator
-	/*
-	PMTGenerator PGenE;
-	PGenE.setCalibrator(&PCal);
-	PMTGenerator PGenW;
-	PGenW.setCalibrator(&PCal);
-	*/
-	//PMTGenerator PGen;
-	//PGen.setCalibrator(&PCal);
-	// set the data scanner to use these PMT Calibrators
-	//G2P.setGenerators(&PGenE,&PGenW);
-	//G2P.setCalibrator(PCal);
+	/// If you really want this to be random, 
+    /// you will need to seed rand() with something 
+    /// other than default.
+	srand( time(NULL) );
 
-	
-    /*
-    double minBin = 0;
-    double maxBin = 1000;
-    unsigned int nBins = 40;
-    TH1F *fierz_histogram = new TH1F("fierz_histogram", "", nBins, minBin, maxBin);
-    TH1F *sm_histogram = new TH1F("standard_model_histogram", "", nBins, minBin, maxBin);
-    */
-    //FierzHistogram mc(0,1000,40);
-
-	// start a scan over the data. Argument "true" means start at random offset in file instead of at beginning
-	// if you really want this to be random, you will need to seed rand() with something other than default
-	// note that it can take many seconds to load the first point of a scan (loading file segment into memory), but will go much faster afterwards.
-	//G2P.startScan(false);
-	//std::cout << "Finished scan." << std::endl;
-
-	srand ( time(NULL) );
-
-	/// load the files that contain our histograms
+	/// load the files that contain data histograms
     TFile *asymmetry_data_tfile = new TFile(
         "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
         "Range_0-1000/CorrectAsym/CorrectedAsym.root");
@@ -642,27 +611,25 @@ int main(int argc, char *argv[])
 		std::cout << "File not found." << std::endl;
 		exit(1);
 	}
+
     TFile *sm_mc_tfile = new TFile(
         "/home/xuansun/Documents/SimData_Beta/"
-        //"xuan_analyzed_baseBetas.root");
-        //"SimAnalyzed_Beta_fierz.root");
         "SimAnalyzed_Beta.root");  
 	if (sm_mc_tfile->IsZombie())
 	{
 		std::cout << "File not found." << std::endl;
 		exit(1);
 	}
-    sm_mc_tfile->ls();
+    //sm_mc_tfile->ls();
 
-    /*
-    TFile *fierzratio_data_tfile = new TFile(
-		"Fierz/ratio.root");
-	if (fierzratio_data_tfile->IsZombie())
+    TFile *fierz_mc_tfile = new TFile(
+        "/home/xuansun/Documents/SimData_Beta/"
+        "SimAnalyzed_Beta_fierz.root");
+	if (fierz_mc_tfile->IsZombie())
 	{
 		std::cout << "File not found." << std::endl;
 		exit(1);
 	}
-    */
 
 	/// extract the histograms from the files
     TH1F *asymmetry_histogram = 
@@ -671,57 +638,75 @@ int main(int argc, char *argv[])
         printf("Error getting asymmetry histogram.\n");
         exit(1);
     }
+
     TH1F *supersum_histogram = 
             (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
     if (not supersum_histogram) {
         printf("Error getting super sum histogram.\n");
         exit(1);
     }
-    TChain *tchain = (TChain*)sm_mc_tfile->Get("SimAnalyzed");
-    if (not tchain) {
+
+    TChain *sm_mc_chain = (TChain*)sm_mc_tfile->Get("SimAnalyzed");
+    if (not sm_mc_chain) {
         printf("Error getting Standard Model Monte Carlo.\n");
         exit(1);
     }
-    //TH1F *fierzratio_histogram = 
-    //        (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
-	int n = tchain->GetEntries();
+    
+    TChain *fierz_mc_chain = (TChain*)fierz_mc_tfile->Get("SimAnalyzed");
+    if (not fierz_mc_chain) {
+        printf("Error getting Fierz Monte Carlo.\n");
+        exit(1);
+    }
+
+	int n = sm_mc_chain->GetEntries();
 	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
 
-	tchain->SetBranchStatus("*",0);
-	tchain->SetBranchStatus("EdepQ",1);
-	tchain->SetBranchStatus("Edep",1);
-	tchain->SetBranchStatus("MWPCEnergy",1);
-	tchain->SetBranchStatus("ScintPos",1);
-	tchain->SetBranchStatus("MWPCPos",1);
-	tchain->SetBranchStatus("time",1);
-	tchain->SetBranchStatus("primTheta",1);
-	tchain->SetBranchStatus("primKE",1);
-	tchain->SetBranchStatus("primPos",1);
-	tchain->SetBranchStatus("EdepSD",1);
-	tchain->SetBranchStatus("thetaInSD",1);
-	tchain->SetBranchStatus("thetaOutSD",1);
-	tchain->SetBranchStatus("keInSD",1);
-	tchain->SetBranchStatus("keOutSD",1);
-	//G2P.setReadpoints();
-
+	sm_mc_chain->SetBranchStatus("*",false);
+	sm_mc_chain->SetBranchStatus("EdepQ",true);
+	sm_mc_chain->SetBranchStatus("Edep",true);
+	sm_mc_chain->SetBranchStatus("MWPCEnergy",true);
+	sm_mc_chain->SetBranchStatus("ScintPos",true);
+	sm_mc_chain->SetBranchStatus("MWPCPos",true);
+	sm_mc_chain->SetBranchStatus("time",true);
+	//sm_mc_chain->SetBranchStatus("primTheta",true);
+	//sm_mc_chain->SetBranchStatus("primKE",true);
+	//sm_mc_chain->SetBranchStatus("primPos",true);
+	//sm_mc_chain->SetBranchStatus("EdepSD",true);
+	//sm_mc_chain->SetBranchStatus("thetaInSD",true);
+	//sm_mc_chain->SetBranchStatus("thetaOutSD",true);
+	//sm_mc_chain->SetBranchStatus("keInSD",true);
+	//sm_mc_chain->SetBranchStatus("keOutSD",true);
+	sm_mc_chain->SetBranchStatus("primMomentum",true);
 
 	TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
 	if (mc_tfile->IsZombie())
 	{
-		//printf("File "+beta_filename+"not found.\n");
-		std::cout << "Can't make MC file" << std::endl;
+		std::cout << "Can't make MC file.\n";
 		exit(1);
 	}
 	TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
 
-	unsigned int nSimmed = 0;	// counter for how many (triggering) events have been simulated
-	//while(G2P.nextPoint()) { // will stop 
-	while(true) {
-		// perform energy calibrations/simulations to fill class variables with correct values for this simulated event
+	unsigned int nSimmed = 0;	/// counter for how many (triggering) events have been simulated
+    
+     
+     /*
+	sm_mc_chain->SetBranchAddress("EdepQ",true);
+	sm_mc_chain->SetBranchAddress("Edep",true);
+	sm_mc_chain->SetBranchAddress("MWPCEnergy",true);
+	sm_mc_chain->SetBranchAddress("ScintPos",true);
+	sm_mc_chain->SetBranchAddress("MWPCPos",true);
+	sm_mc_chain->SetBranchAddress("time",true);
+    */
+
+
+	while (false) {
+    //for (int i=0; i<
+		/// perform energy calibrations/simulations to fill class 
+        /// variables with correct values for this simulated event
 		//G2P.recalibrateEnergy();
 		
 		/// check the event characteristics on each side
-		for(Side s = EAST; s <= WEST; ++s) {
+		for(Side s=EAST; s<=WEST; ++s) {
 			/// get event classification type. 
             /// TYPE_IV_EVENT means the event didn't trigger this side.
 			/// TODO EventType tp = G2P.fType;
@@ -754,7 +739,7 @@ int main(int argc, char *argv[])
 			nSimmed++;
 		}
 		
-		// break when enough data has been generated.
+		/// break when enough data has been generated.
 		if(nSimmed >= nToSim)
 			break;
 	}
@@ -776,8 +761,8 @@ int main(int argc, char *argv[])
 
 	//mc_tfile->Close();
 
-    for (int side = 0; side < 2; side++)
-        for (int spin = 0; spin < 2; spin++)
+    for (int side=0; side<2; side++)
+        for (int spin=0; spin<2; spin++)
 		{
             normalize(mc.fierz_histogram[side][spin], min_E, max_E);
             normalize(mc.sm_histogram[side][spin], min_E, max_E);
@@ -807,16 +792,18 @@ int main(int argc, char *argv[])
     canvas->SaveAs(pdf_filename);
     */
 
-    /*
-        If you want a fast way to get the combined data spectrums for comparison, I already have it extracted as a ROOT histogram for my own data/MC comparisons.
-        You can read the ROOT TFile at:
-        /home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root
-        and get the TH1F histograms named:
-        Combined_Events_<S><afp>1<type>
-        where <S>='E' or 'W' is the side, <afp>='0' or '1' for AFP Off/On, and <type>='0','1','2' for type 0, I, or II/III backscatter events.
-        (the '1' in the name after <afp> indicates foreground runs; set to '0' if you want to see the background data).
-    */
-
+    /**
+     *  If you want a fast way to get the combined data spectrums for comparison, 
+     *  I already have it extracted as a ROOT histogram for my own data/MC comparisons.
+     *  You can read the ROOT TFile at:
+     *      /media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/OctetAsym_Offic.root
+     *  and get the TH1F histograms named:
+     *  Combined_Events_<S><afp><fg/bg><type> where 
+     *      <S>='E' or 'W' is the side, 
+     *      <afp>='0' or '1' for AFP Off/On, 
+     *      <fg/bg>='0' for background or '1' for foreground data
+     *      <type>='0','1','2' for type 0, I, or II/III backscatter events.
+     */
 #if 0
     TFile *ucna_data_tfile = new TFile(
         //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
