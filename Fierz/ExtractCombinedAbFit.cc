@@ -435,7 +435,7 @@ struct UCNAModel {
         super_ratio.init(bins);
         super_sum.init(bins);
         asymmetry.init(bins);
-    }
+   }
 };
 
 struct UCNAEvent {
@@ -668,6 +668,7 @@ int main(int argc, char *argv[])
 	sm_mc_chain->SetBranchStatus("ScintPos",true);
 	sm_mc_chain->SetBranchStatus("MWPCPos",true);
 	sm_mc_chain->SetBranchStatus("time",true);
+	sm_mc_chain->SetBranchStatus("type",true);
 	//sm_mc_chain->SetBranchStatus("primTheta",true);
 	//sm_mc_chain->SetBranchStatus("primKE",true);
 	//sm_mc_chain->SetBranchStatus("primPos",true);
