@@ -14,6 +14,7 @@
 #include <TApplication.h>
 #include <TMatrixD.h>
 #include <TNtuple.h>
+#include <TLeaf.h>
 
 /// C++ includes
 #include <iostream>
@@ -30,12 +31,13 @@ double expected_fierz = 0.6540;				/// full range (will get overwritten)
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
 static unsigned nToSim = 5e7;				/// how many triggering events to simulate
-static double loading_prob = 40; 			/// ucn loading probability (percent)
+static double loading_prob = 1/1.68; 		/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
 double scale_x = 1.00000;
 
 double min_E = 220;                         /// min energy from the 2013 paper
 double max_E = 670;                         /// max range from the 2013 paper
+double fedutial_cut = 50;                   /// radial cut in millimeters 
 
 
 // expected values (based on the energy range) need to be visible to the chi^2 code
@@ -663,7 +665,9 @@ int main(int argc, char *argv[])
 	sm_mc_chain->SetBranchStatus("side",true);
 	sm_mc_chain->SetBranchStatus("type",true);
 	sm_mc_chain->SetBranchStatus("Erecon",true);
-	//sm_mc_chain->SetBranchStatus("primMomentum",true);
+	sm_mc_chain->SetBranchStatus("primMomentum",true);
+    sm_mc_chain->SetBranchStatus("MWPCPosAdjusted",true);
+    sm_mc_chain->SetBranchStatus("MWPCPosAdjusted",true);
 
 	TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
 	if (mc_tfile->IsZombie())
@@ -676,16 +680,26 @@ int main(int argc, char *argv[])
 	unsigned int nSimmed = 0;	/// counter for how many (triggering) events have been simulated
     int PID, side, type;
     double energy;
+    double mwpcPosW[3], mwpcPosE[3], primMomentum[3];
 
     sm_mc_chain->SetBranchAddress("PID",&PID);
     sm_mc_chain->SetBranchAddress("side",&side);
     sm_mc_chain->SetBranchAddress("type",&type);
     sm_mc_chain->SetBranchAddress("Erecon",&energy);
+	sm_mc_chain->SetBranchAddress("primMomentum",primMomentum);
+    sm_mc_chain->GetBranch("MWPCPosAdjusted")->GetLeaf("MWPCPosAdjE")->SetAddress(mwpcPosE);
+    sm_mc_chain->GetBranch("MWPCPosAdjusted")->GetLeaf("MWPCPosAdjW")->SetAddress(mwpcPosW);
 
     for (int evt=0; evt<nevents; evt++) {
         sm_mc_chain->GetEvent(evt);
 
         if (PID!=1) 
+            continue;
+
+        double radiusW = mwpcPosW[0]*mwpcPosW[0] + mwpcPosW[1]*mwpcPosW[1]; 
+        double radiusE = mwpcPosE[0]*mwpcPosE[0] + mwpcPosE[1]*mwpcPosE[1]; 
+        double fidcut2 = fedutial_cut*fedutial_cut;
+        if (radiusW > fidcut2 or radiusE > fidcut2) 
             continue;
 
         if (type<4) {
