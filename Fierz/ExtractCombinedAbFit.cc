@@ -31,7 +31,10 @@ double expected_fierz = 0.6540;				/// full range (will get overwritten)
 //static double expected_fierz = 0.6111;	/// for range 150 - 600
 //static double expected_gluck = 11.8498;   /// for range 150 - 600
 static unsigned nToSim = 5e7;				/// how many triggering events to simulate
-static double loading_prob = 1/1.68; 		/// ucn loading probability (percent)
+static double afp_on_prob = 0.68/1.68; 		/// afp on probability per neutron
+static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron
+static unsigned rand_bins = 100; 	        /// probability granularity
+int large_prime = 179430331;                /// a large prime number
 static int bins = 150;						/// replace with value from data or smoothing fit
 double scale_x = 1.00000;
 
@@ -699,14 +702,19 @@ int main(int argc, char *argv[])
         double radiusW = mwpcPosW[0]*mwpcPosW[0] + mwpcPosW[1]*mwpcPosW[1]; 
         double radiusE = mwpcPosE[0]*mwpcPosE[0] + mwpcPosE[1]*mwpcPosE[1]; 
         double fidcut2 = fedutial_cut*fedutial_cut;
+
         if (radiusW > fidcut2 or radiusE > fidcut2) 
-            continue;
+            break;
 
-        if (type<4) {
-			bool load = (nSimmed % 100 < loading_prob); /// fill with loading efficiency 
-
-            mc.sm_histogram[side][load]->Fill(energy, 1);
-			tntuple->Fill(side, load, energy);
+        /// Type 0, Type I, Type II/III events 
+        if (type<4) { 
+            /// fill with loading efficiency 
+			double p = (large_prime*nSimmed % rand_bins)/rand_bins;
+			bool afp_side = (p < afp_off_prob)? EAST : WEST;
+            bool sim_side = primMomentum[2] < 0? EAST : WEST;
+            bool true_side = side xor afp_side xor sim_side;
+            mc.sm_histogram[true_side][afp_side]->Fill(energy, 1);
+			tntuple->Fill(true_side, afp_side, energy);
 			nSimmed++;
         }
         /*  hEreconALL->Fill(Erecon);
@@ -722,6 +730,7 @@ int main(int argc, char *argv[])
 			break;
     }    
      
+    #if 0
 	while (false) {
 		/// perform energy calibrations/simulations to fill class 
         /// variables with correct values for this simulated event
@@ -751,7 +760,8 @@ int main(int argc, char *argv[])
 			#endif 
 
 			/// fill with loading efficiency 
-			bool load = (nSimmed % 100 < loading_prob);
+			/// NOT the way to do this anymore 
+            //bool load = (nSimmed % 100 < loading_prob);
 
 			/// calculate the energy with a distortion factor
 			/// double energy = scale_x * G2P.getErecon();
@@ -765,6 +775,7 @@ int main(int argc, char *argv[])
 		if(nSimmed >= nToSim)
 			break;
 	}
+    #endif
     
 	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
 
