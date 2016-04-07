@@ -939,13 +939,13 @@ int main(int argc, char *argv[])
     printf("Chi^2 / ( N - 1) = %f / %f = %f\n",chisq, N-1, chisq/(N-1));
     */
 
-    TString fit_pdf_filename = "/data/kevinh/mc/fierz_fit_data.pdf";
+    TString fit_pdf_filename = "mc/fierz_fit_data.pdf";
     canvas->SaveAs(fit_pdf_filename);
 
     // compute and plot the super ratio
     TH1F *super_ratio_histogram = compute_super_ratio(ucna_data.raw);
     super_ratio_histogram->Draw();
-    TString super_ratio_pdf_filename = "/data/kevinh/mc/super_ratio_data.pdf";
+    TString super_ratio_pdf_filename = "mc/super_ratio_data.pdf";
     canvas->SaveAs(super_ratio_pdf_filename);
 
     // compute and plot the super ratio asymmetry 
@@ -993,7 +993,7 @@ int main(int argc, char *argv[])
     asym_legend->Draw();
 	*/
 
-    TString asymmetry_pdf_filename = "/data/kevinh/mc/asymmetry_data.pdf";
+    TString asymmetry_pdf_filename = "mc/asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
 
     /// Compute the super sums
@@ -1019,7 +1019,7 @@ int main(int argc, char *argv[])
     legend->Draw();
 
     /// save the data and Mote Carlo plots
-    TString super_sum_pdf_filename = "/data/kevinh/mc/super_sum_data.pdf";
+    TString super_sum_pdf_filename = "mc/super_sum_data.pdf";
     canvas->SaveAs(super_sum_pdf_filename);
 	TFile* ratio_tfile = new TFile("Fierz/ratio.root", "recreate");
 	if (ratio_tfile->IsZombie())
@@ -1087,14 +1087,14 @@ int main(int argc, char *argv[])
     ratio_legend->Draw();
 
 	/// output for root
-    TString fierz_ratio_pdf_filename = "/data/kevinh/mc/fierz_ratio.pdf";
+    TString fierz_ratio_pdf_filename = "mc/fierz_ratio.pdf";
     canvas->SaveAs(fierz_ratio_pdf_filename);
 
 	/// output for gnuplot
-	output_histogram("/data/kevinh/mc/super-sum-data.dat", super_sum_histogram, 1, 1000);
-	output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
-	output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
-	output_histogram("/data/kevinh/mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
+	output_histogram("mc/super-sum-data.dat", super_sum_histogram, 1, 1000);
+	output_histogram("mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
+	output_histogram("mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
+	output_histogram("mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
 
 
 	fierz_ratio_histogram->SetDirectory(ratio_tfile);
