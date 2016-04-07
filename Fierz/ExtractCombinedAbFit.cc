@@ -656,23 +656,14 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-	int n = sm_mc_chain->GetEntries();
-	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
+	int nevents = sm_mc_chain->GetEntries();
+	std::cout << "Total number of Monte Carlo entries without cuts: " << nevents << std::endl;
 	sm_mc_chain->SetBranchStatus("*",false);
 	sm_mc_chain->SetBranchStatus("PID",true);
 	sm_mc_chain->SetBranchStatus("side",true);
 	sm_mc_chain->SetBranchStatus("type",true);
 	sm_mc_chain->SetBranchStatus("Erecon",true);
-    /*
-	sm_mc_chain->SetBranchStatus("EdepQ",true);
-	sm_mc_chain->SetBranchStatus("Edep",true);
-	sm_mc_chain->SetBranchStatus("MWPCEnergy",true);
-	sm_mc_chain->SetBranchStatus("ScintPos",true);
-	sm_mc_chain->SetBranchStatus("MWPCPos",true);
-	sm_mc_chain->SetBranchStatus("time",true);
-	sm_mc_chain->SetBranchStatus("type",true);
-	sm_mc_chain->SetBranchStatus("primMomentum",true);
-    */
+	//sm_mc_chain->SetBranchStatus("primMomentum",true);
 
 	TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
 	if (mc_tfile->IsZombie())
@@ -683,20 +674,41 @@ int main(int argc, char *argv[])
 	TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
 
 	unsigned int nSimmed = 0;	/// counter for how many (triggering) events have been simulated
-    
+    int PID, side, type;
+    double energy;
+
+    sm_mc_chain->SetBranchAddress("PID",&PID);
+    sm_mc_chain->SetBranchAddress("side",&side);
+    sm_mc_chain->SetBranchAddress("type",&type);
+    sm_mc_chain->SetBranchAddress("Erecon",&energy);
+
+    for (int evt=0; evt<nevents; evt++) {
+        sm_mc_chain->GetEvent(evt);
+
+        if (PID!=1) 
+            continue;
+
+        if (type<4) {
+			bool load = (nSimmed % 100 < loading_prob); /// fill with loading efficiency 
+
+            mc.sm_histogram[side][load]->Fill(energy, 1);
+			tntuple->Fill(side, load, energy);
+			nSimmed++;
+        }
+        /*  hEreconALL->Fill(Erecon);
+        if (type==0) 
+            hErecon0->Fill(Erecon);
+        else if (type==1) 
+            hErecon1->Fill(Erecon);
+        else if (type==2 or type==3) 
+            hErecon23->Fill(Erecon); */
+
+		/// break when enough data has been generated.
+		if(nSimmed >= nToSim)
+			break;
+    }    
      
-     /*
-	sm_mc_chain->SetBranchAddress("EdepQ",true);
-	sm_mc_chain->SetBranchAddress("Edep",true);
-	sm_mc_chain->SetBranchAddress("MWPCEnergy",true);
-	sm_mc_chain->SetBranchAddress("ScintPos",true);
-	sm_mc_chain->SetBranchAddress("MWPCPos",true);
-	sm_mc_chain->SetBranchAddress("time",true);
-    */
-
-
 	while (false) {
-    //for (int i=0; i<
 		/// perform energy calibrations/simulations to fill class 
         /// variables with correct values for this simulated event
 		//G2P.recalibrateEnergy();
