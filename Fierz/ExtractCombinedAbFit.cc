@@ -669,8 +669,8 @@ int main(int argc, char *argv[])
 	sm_mc_chain->SetBranchStatus("type",true);
 	sm_mc_chain->SetBranchStatus("Erecon",true);
 	sm_mc_chain->SetBranchStatus("primMomentum",true);
-    sm_mc_chain->SetBranchStatus("MWPCPosAdjusted",true);
-    sm_mc_chain->SetBranchStatus("MWPCPosAdjusted",true);
+    sm_mc_chain->SetBranchStatus("ScintPosAdjusted",true);
+    sm_mc_chain->SetBranchStatus("ScintPosAdjusted",true);
 
 	TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
 	if (mc_tfile->IsZombie())
@@ -690,8 +690,8 @@ int main(int argc, char *argv[])
     sm_mc_chain->SetBranchAddress("type",&type);
     sm_mc_chain->SetBranchAddress("Erecon",&energy);
 	sm_mc_chain->SetBranchAddress("primMomentum",primMomentum);
-    sm_mc_chain->GetBranch("MWPCPosAdjusted")->GetLeaf("MWPCPosAdjE")->SetAddress(mwpcPosE);
-    sm_mc_chain->GetBranch("MWPCPosAdjusted")->GetLeaf("MWPCPosAdjW")->SetAddress(mwpcPosW);
+    sm_mc_chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
+    sm_mc_chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
 
     for (int evt=0; evt<nevents; evt++) {
         sm_mc_chain->GetEvent(evt);
