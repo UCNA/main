@@ -32,12 +32,10 @@ double expected_fierz = 0.6540;				/// full range (will get overwritten)
 static unsigned nToSim = 5e7;				/// how many triggering events to simulate
 static double loading_prob = 40; 			/// ucn loading probability (percent)
 static int bins = 150;						/// replace with value from data or smoothing fit
-//double scale_x = 1.015;
-double scale_x = 1.0;
+double scale_x = 1.00000;
 
-
-double min_E = 220; /// min energy from the 2013 paper
-double max_E = 670; /// max range from the 2013 paper
+double min_E = 220;                         /// min energy from the 2013 paper
+double max_E = 670;                         /// max range from the 2013 paper
 
 
 // expected values (based on the energy range) need to be visible to the chi^2 code
@@ -660,8 +658,12 @@ int main(int argc, char *argv[])
 
 	int n = sm_mc_chain->GetEntries();
 	std::cout << "Total number of Monte Carlo entries without cuts: " << n << std::endl;
-
 	sm_mc_chain->SetBranchStatus("*",false);
+	sm_mc_chain->SetBranchStatus("PID",true);
+	sm_mc_chain->SetBranchStatus("side",true);
+	sm_mc_chain->SetBranchStatus("type",true);
+	sm_mc_chain->SetBranchStatus("Erecon",true);
+    /*
 	sm_mc_chain->SetBranchStatus("EdepQ",true);
 	sm_mc_chain->SetBranchStatus("Edep",true);
 	sm_mc_chain->SetBranchStatus("MWPCEnergy",true);
@@ -669,15 +671,8 @@ int main(int argc, char *argv[])
 	sm_mc_chain->SetBranchStatus("MWPCPos",true);
 	sm_mc_chain->SetBranchStatus("time",true);
 	sm_mc_chain->SetBranchStatus("type",true);
-	//sm_mc_chain->SetBranchStatus("primTheta",true);
-	//sm_mc_chain->SetBranchStatus("primKE",true);
-	//sm_mc_chain->SetBranchStatus("primPos",true);
-	//sm_mc_chain->SetBranchStatus("EdepSD",true);
-	//sm_mc_chain->SetBranchStatus("thetaInSD",true);
-	//sm_mc_chain->SetBranchStatus("thetaOutSD",true);
-	//sm_mc_chain->SetBranchStatus("keInSD",true);
-	//sm_mc_chain->SetBranchStatus("keOutSD",true);
 	sm_mc_chain->SetBranchStatus("primMomentum",true);
+    */
 
 	TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
 	if (mc_tfile->IsZombie())
