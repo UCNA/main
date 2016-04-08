@@ -704,17 +704,17 @@ int main(int argc, char *argv[])
         double fidcut2 = fedutial_cut*fedutial_cut;
 
         if (radiusW > fidcut2 or radiusE > fidcut2) 
-            break;
+            continue;
 
         /// Type 0, Type I, Type II/III events 
         if (type<4) { 
             /// fill with loading efficiency 
 			double p = (large_prime*nSimmed % rand_bins)/rand_bins;
-			bool afp_side = (p < afp_off_prob)? EAST : WEST;
-            bool sim_side = primMomentum[2] < 0? EAST : WEST;
-            bool true_side = side xor afp_side xor sim_side;
-            mc.sm_histogram[true_side][afp_side]->Fill(energy, 1);
-			tntuple->Fill(true_side, afp_side, energy);
+			double afp = (p < afp_off_prob)? -1 : +1;
+            //bool spin = (afp * primMomentum[2]) < 0? EAST : WEST;
+            bool spin = (afp < 0)? EAST : WEST;
+            mc.sm_histogram[side][spin]->Fill(energy, 1);
+			tntuple->Fill(side, spin, energy);
 			nSimmed++;
         }
         /*  hEreconALL->Fill(Erecon);
