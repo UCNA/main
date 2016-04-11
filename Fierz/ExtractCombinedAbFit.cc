@@ -5,7 +5,7 @@
 #include "FierzFitter.hh"
 
 /// ROOT includes
-#include <TH1F.h>
+#include <TH1.h>
 #include <TLegend.h>
 #include <TF1.h>
 #include <TVirtualFitter.h>
@@ -28,10 +28,10 @@
 
 /// settings
 double expected_fierz = 0.6540;				/// full range (will get overwritten) 
-//static double expected_fierz = 0.6111;	/// for range 150 - 600
-//static double expected_gluck = 11.8498;   /// for range 150 - 600
+//static double expected_fierz = 0.6111;	/// for range 150-600
+//static double expected_gluck = 11.8498;   /// for range 150-600
 static unsigned nToSim = 5e7;				/// how many triggering events to simulate
-static double afp_on_prob = 0.68/1.68; 		/// afp on probability per neutron
+///static double afp_on_prob = 0.68/1.68; 		/// afp on probability per neutron
 static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron
 static unsigned rand_bins = 100; 	        /// probability granularity
 int large_prime = 179430331;                /// a large prime number
@@ -41,13 +41,12 @@ double scale_x = 1.00000;
 double min_E = 220;                         /// min energy from the 2013 paper
 double max_E = 670;                         /// max range from the 2013 paper
 double fedutial_cut = 50;                   /// radial cut in millimeters 
+double fidcut2 = 50*50;                     /// mm^2 radial cut
 
+double expected[3][3];                      /// expected values (based on the energy range)
+                                            /// need to be visible to the chi^2 code
 
-// expected values (based on the energy range) need to be visible to the chi^2 code
-double expected[3][3];
-
-
-/// ug. Needs to be static
+// ug. Needs to be static
 FierzHistogram mc(0,1500,bins);
 
 /**
@@ -121,13 +120,13 @@ double mc_model(double *x, double*p)
 }
 
 
-void normalize(TH1F* hist) 
+void normalize(TH1D* hist) 
 {
     hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
 }
 
 
-void normalize(TH1F* hist, double min, double max) 
+void normalize(TH1D* hist, double min, double max) 
 {
 	int _min = hist->FindBin(min);
 	int _max = hist->FindBin(max);
@@ -155,10 +154,12 @@ double evaluate_expected_fierz(double min, double max)
 */
 
 
-/// S = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
-TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] ) 
+/**
+ * Si := (r[0][0] r[1][1]) / (r[0][1] * r[1][0])
+ */
+TH1D* compute_super_ratio(TH1D* rate_histogram[2][2] ) 
 {
-    TH1F *super_ratio_histogram = new TH1F(*(rate_histogram[0][0]));
+    TH1D *super_ratio_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = super_ratio_histogram->GetNbinsX();
 	std::cout << "Number of bins " << bins << std::endl;
     for (int bin = 1; bin < bins+2; bin++) {
@@ -166,7 +167,6 @@ TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] )
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
-        //double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
         double super_ratio = r[0][0]*r[1][1]/r[0][1]/r[1][0];
         super_ratio_histogram->SetBinContent(bin, super_ratio);
         super_ratio_histogram->SetBinError(bin, 0.01);   // TODO compute correctly!!
@@ -175,9 +175,12 @@ TH1F* compute_super_ratio(TH1F* rate_histogram[2][2] )
 }
 
 
-TH1F* compute_super_sum(TH1F* rate_histogram[2][2]) 
+/**
+ * S := r[0][0] + r[1][1] + r[0][1] + r[1][0]
+ */
+TH1D* compute_super_sum(TH1D* rate_histogram[2][2]) 
 {
-    TH1F *super_sum_histogram = new TH1F(*(rate_histogram[0][0]));
+    TH1D *super_sum_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = super_sum_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) {
         double r[2][2];
@@ -185,8 +188,6 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2])
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
-        //double rel_error = TMath::Sqrt( 1/r[0][0] + 1/r[1][0] + 1/r[1][1] * r[0][1]); 
-                             // TODO XXX that formula looks WRONG!
         double rel_error = TMath::Sqrt( 1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]);
         if ( TMath::IsNaN(super_sum)) 
             super_sum = 0;
@@ -202,9 +203,9 @@ TH1F* compute_super_sum(TH1F* rate_histogram[2][2])
 }
 
 
-TH1F* compute_asymmetry(TH1F* rate_histogram[2][2]) 
+TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) 
 {
-    TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
+    TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) 
 	{
@@ -227,9 +228,9 @@ TH1F* compute_asymmetry(TH1F* rate_histogram[2][2])
 }
 
 
-TH1F* compute_corrected_asymmetry(TH1F* rate_histogram[2][2], TH1F* correction) 
+TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction) 
 {
-    TH1F *asymmetry_histogram = new TH1F(*(rate_histogram[0][0]));
+    TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) 
 	{
@@ -257,10 +258,10 @@ TH1F* compute_corrected_asymmetry(TH1F* rate_histogram[2][2], TH1F* correction)
 }
 
 
-TH1F* compute_rate_function(TH1F* rate_histogram[2][2], 
+TH1D* compute_rate_function(TH1D* rate_histogram[2][2], 
                             double (*rate_function)(double r[2][2]))
 {
-    TH1F *out_histogram = new TH1F(*(rate_histogram[0][0]));
+    TH1D *out_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = out_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) {
         double r[2][2];
@@ -275,11 +276,11 @@ TH1F* compute_rate_function(TH1F* rate_histogram[2][2],
 }
 
 
-TH1F* compute_rate_function(TH1F* rate_histogram[2][2], 
+TH1D* compute_rate_function(TH1D* rate_histogram[2][2], 
                             double (*rate_function)(double r[2][2]),
                             double (*error_function)(double r[2][2])) 
 {
-    TH1F *out_histogram = new TH1F(*(rate_histogram[0][0]));
+    TH1D *out_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = out_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) {
         double r[2][2];
@@ -306,10 +307,10 @@ TH1F* compute_rate_function(TH1F* rate_histogram[2][2],
 
 
 /*
-TH1F* compute_rate_error_function(TH1F* rate_histogram[2][2], 
+TH1D* compute_rate_error_function(TH1D* rate_histogram[2][2], 
                                   double (*rate_error_function)(double r[2][2])) 
 {
-    TH1F *out_histogram = new TH1F(*(rate_histogram[0][0]));
+    TH1D *out_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = out_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) {
         double sr[2][2];
@@ -351,7 +352,7 @@ double super_sum_error(double r[2][2]) {
 
 
 using namespace std;
-void output_histogram(string filename, TH1F* h, double ax, double ay)
+void output_histogram(string filename, TH1D* h, double ax, double ay)
 {
 	using namespace std;
 	ofstream ofs;
@@ -370,7 +371,7 @@ void output_histogram(string filename, TH1F* h, double ax, double ay)
 
 #if 0
 using namespace std;
-int output_histogram(string filename, TH1F* h, double ax, double ay)
+int output_histogram(string filename, TH1D* h, double ax, double ay)
 {
 	ofstream ofs;
 	ofs.open(filename.c_str());
@@ -391,7 +392,7 @@ struct STLhistogram {
     int bins;
     int detector;
     int spin;
-    TH1F* central;
+    TH1D* central;
     vector<double> energy;        
     vector<double> values;        
     vector<double> errors;        
@@ -403,7 +404,7 @@ struct STLhistogram {
 	    errors = vector<double>(bins);
     }
 
-    void fill(TH1F *histogram) {
+    void fill(TH1D *histogram) {
         TAxis *axis  = histogram->GetXaxis();
         bins = histogram->GetNbinsX(); 
         for (int ix = 1; ix <= bins + 1; ix++)
@@ -423,7 +424,7 @@ struct STLhistogram {
 
 struct UCNAModel {
     int          bins;
-    TH1F*        raw[2][2];
+    TH1D*        raw[2][2];
     STLhistogram counts[2][2];
     STLhistogram super_ratio;
     STLhistogram super_sum;
@@ -431,7 +432,7 @@ struct UCNAModel {
 
     void init(int bins) {
         this->bins = bins;
-        // TODO init TH1Fs
+        // TODO init TH1Ds
         for (int i=0; i<2; i++)
             for (int j=0; j<2; j++)
                 counts[i][j].init(bins);
@@ -509,7 +510,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 #if 1
 static const int nPar = 3;
 
-TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[nPar][nPar]) 
+TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar]) 
 { 
 	/// set up free fit parameters with best guess
 	double iniParams[nPar] = {-0.12, 0, 1e6};
@@ -523,7 +524,7 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[nPar][nPar])
 
 	/// fill data structure for fit (coordinates + values + errors) 
 	std::cout << "Do global fit" << std::endl;
-    ucna_data.asymmetry.fill(asymmetry);
+    	ucna_data.asymmetry.fill(asymmetry);
 
 	/// set up the minuit fitter
 	TVirtualFitter::SetDefaultFitter("Minuit");
@@ -558,14 +559,14 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[nPar][nPar])
 	func->SetParErrors(parErrors);
 	func->SetChisquare(chi2);
 	int ndf = ucna_data.asymmetry.energy.size() 
-            + ucna_data.super_sum.energy.size()- nvpar;
+            	+ ucna_data.super_sum.energy.size() - nvpar;
 	func->SetNDF(ndf);
     
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
 	for (int i=0; i<nPar; i++)
 		for (int j=0; j<nPar; j++)
 			cov[i][j] = minuit->GetCovarianceMatrixElement(i,j);
-
+	
 	cout << endl;
 	cout << "    chi^2 = " << chi2 << ", ndf = " << ndf << ", chi^2/ndf = " << chi2/ndf << endl;
 	cout << endl;
@@ -575,103 +576,26 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[nPar][nPar])
 #endif
 
 
-
-int main(int argc, char *argv[])
+int fill_simulation(string filename, string title, TH1D* histogram, TH1D* super_sum)
 {
-	TApplication app("Extract Combined A + b Fitter", &argc, argv);
-	//TH1::AddDirectory(kFALSE);
-	/// Geant4 MC data scanner object
-	/// G4toPMT G2P;
-	/// use data from these MC files (most recent unpolarized beta decay, 
-    /// includes Fermi function spectrum correction)
-	/// note wildcard * in filename; 
-    /// MC output is split up over many files, but G2P will TChain them together
-	//G2P.addFile("/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_*.root");
-	
-	/// PMT Calibrator loads run-specific energy calibrations info for selected run
-	/// and uses default Calibrations DB connection to most up-to-date though possibly unstable "mpm_debug"
-	
-	/// If you really want this to be random, 
-    /// you will need to seed rand() with something 
-    /// other than default.
-	srand( time(NULL) );
-
-	/// load the files that contain data histograms
-    TFile *asymmetry_data_tfile = new TFile(
-        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-        "Range_0-1000/CorrectAsym/CorrectedAsym.root");
-	if (asymmetry_data_tfile->IsZombie())
-	{
-		std::cout << "File not found." << std::endl;
-		exit(1);
-	}
-
-    TFile *ucna_data_tfile = new TFile(
-        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-		"OctetAsym_Offic.root");
-	if (ucna_data_tfile->IsZombie())
-	{
-		std::cout << "File not found." << std::endl;
-		exit(1);
-	}
-
-    TFile *sm_mc_tfile = new TFile(
-        "/home/xuansun/Documents/SimData_Beta/"
-        "SimAnalyzed_Beta.root");  
-	if (sm_mc_tfile->IsZombie())
-	{
-		std::cout << "File not found." << std::endl;
-		exit(1);
-	}
-    //sm_mc_tfile->ls();
-
-    TFile *fierz_mc_tfile = new TFile(
-        "/home/xuansun/Documents/SimData_Beta/"
-        "SimAnalyzed_Beta_fierz.root");
-	if (fierz_mc_tfile->IsZombie())
-	{
-		std::cout << "File not found." << std::endl;
-		exit(1);
-	}
-
-	/// extract the histograms from the files
-    TH1F *asymmetry_histogram = 
-            (TH1F*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
-    if (not asymmetry_histogram) {
-        printf("Error getting asymmetry histogram.\n");
-        exit(1);
-    }
-
-    TH1F *supersum_histogram = 
-            (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
-    if (not supersum_histogram) {
-        printf("Error getting super sum histogram.\n");
-        exit(1);
-    }
-
-    TChain *sm_mc_chain = (TChain*)sm_mc_tfile->Get("SimAnalyzed");
-    if (not sm_mc_chain) {
-        printf("Error getting Standard Model Monte Carlo.\n");
-        exit(1);
-    }
-    
-    TChain *fierz_mc_chain = (TChain*)fierz_mc_tfile->Get("SimAnalyzed");
-    if (not fierz_mc_chain) {
+    TChain *chain = (TChain*)fierz_mc_tfile->Get("SimAnalyzed");
+    if (not chain) {
         printf("Error getting Fierz Monte Carlo.\n");
         exit(1);
     }
 
-	int nevents = sm_mc_chain->GetEntries();
+	int nevents = chain->GetEntries();
 	std::cout << "Total number of Monte Carlo entries without cuts: " << nevents << std::endl;
-	sm_mc_chain->SetBranchStatus("*",false);
-	sm_mc_chain->SetBranchStatus("PID",true);
-	sm_mc_chain->SetBranchStatus("side",true);
-	sm_mc_chain->SetBranchStatus("type",true);
-	sm_mc_chain->SetBranchStatus("Erecon",true);
-	sm_mc_chain->SetBranchStatus("primMomentum",true);
-    sm_mc_chain->SetBranchStatus("ScintPosAdjusted",true);
-    sm_mc_chain->SetBranchStatus("ScintPosAdjusted",true);
+	chain->SetBranchStatus("*",false);
+	chain->SetBranchStatus("PID",true);
+	chain->SetBranchStatus("side",true);
+	chain->SetBranchStatus("type",true);
+	chain->SetBranchStatus("Erecon",true);
+	chain->SetBranchStatus("primMomentum",true);
+    chain->SetBranchStatus("ScintPosAdjusted",true);
+    chain->SetBranchStatus("ScintPosAdjusted",true);
 
+	/*
 	TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
 	if (mc_tfile->IsZombie())
 	{
@@ -679,30 +603,31 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
+    */
 
-	unsigned int nSimmed = 0;	/// counter for how many (triggering) events have been simulated
+	unsigned int nSimmed = 0;	/// events have been simulated after cuts
     int PID, side, type;
     double energy;
     double mwpcPosW[3], mwpcPosE[3], primMomentum[3];
 
-    sm_mc_chain->SetBranchAddress("PID",&PID);
-    sm_mc_chain->SetBranchAddress("side",&side);
-    sm_mc_chain->SetBranchAddress("type",&type);
-    sm_mc_chain->SetBranchAddress("Erecon",&energy);
-	sm_mc_chain->SetBranchAddress("primMomentum",primMomentum);
-    sm_mc_chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
-    sm_mc_chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
+    chain->SetBranchAddress("PID",&PID);
+    chain->SetBranchAddress("side",&side);
+    chain->SetBranchAddress("type",&type);
+    chain->SetBranchAddress("Erecon",&energy);
+	chain->SetBranchAddress("primMomentum",primMomentum);
+    chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
+    chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
 
     for (int evt=0; evt<nevents; evt++) {
-        sm_mc_chain->GetEvent(evt);
+        chain->GetEvent(evt);
 
+        /// cut out bad events
         if (PID!=1) 
             continue;
 
+        /// radial fiducial cut
         double radiusW = mwpcPosW[0]*mwpcPosW[0] + mwpcPosW[1]*mwpcPosW[1]; 
         double radiusE = mwpcPosE[0]*mwpcPosE[0] + mwpcPosE[1]*mwpcPosE[1]; 
-        double fidcut2 = fedutial_cut*fedutial_cut;
-
         if (radiusW > fidcut2 or radiusE > fidcut2) 
             continue;
 
@@ -713,7 +638,7 @@ int main(int argc, char *argv[])
 			double afp = (p < afp_off_prob)? -1 : +1;
             //bool spin = (afp * primMomentum[2]) < 0? EAST : WEST;
             bool spin = (afp < 0)? EAST : WEST;
-            mc.sm_histogram[side][spin]->Fill(energy, 1);
+            histogram[side][spin]->Fill(energy, 1);
 			tntuple->Fill(side, spin, energy);
 			nSimmed++;
         }
@@ -766,7 +691,7 @@ int main(int argc, char *argv[])
 			/// calculate the energy with a distortion factor
 			/// double energy = scale_x * G2P.getErecon();
             double energy = 0;  /// TODO XXXXXXXX
-            mc.sm_histogram[s][load]->Fill(energy, 1);
+            histogram[s][load]->Fill(energy, 1);
 			tntuple->Fill(s, load, energy);
 			nSimmed++;
 		}
@@ -779,27 +704,103 @@ int main(int argc, char *argv[])
     
 	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
 
-	tntuple->SetDirectory(mc_tfile);
-	tntuple->Write();
+	//tntuple->SetDirectory(mc_tfile);
+	//tntuple->Write();
 
-    mc.sm_super_sum_histogram = compute_super_sum(mc.sm_histogram);
-    normalize(mc.sm_super_sum_histogram, min_E, max_E);
-	mc.sm_super_sum_histogram->SetDirectory(mc_tfile);
-	mc.sm_super_sum_histogram->Write();
+	/// compute and normalize super sum
+    super_sum = compute_super_sum(histogram);
+    normalize(histogram, min_E, max_E);
 
-    mc.fierz_super_sum_histogram = compute_super_sum(mc.fierz_histogram);
-    normalize(mc.fierz_super_sum_histogram, min_E, max_E);
-	mc.fierz_super_sum_histogram->SetDirectory(mc_tfile);
-	mc.fierz_super_sum_histogram->Write();
+    for (int side=0; side<2; side++)
+        for (int spin=0; spin<2; spin++)
+            normalize(histogram[side][spin], min_E, max_E);
+}
+
+
+int main(int argc, char *argv[])
+{
+	TApplication app("Extract Combined A + b Fitter", &argc, argv);
+	//TH1::AddDirectory(kFALSE);
+	/// Geant4 MC data scanner object
+	/// G4toPMT G2P;
+	/// use data from these MC files (most recent unpolarized beta decay, 
+    /// includes Fermi function spectrum correction)
+	/// note wildcard * in filename; 
+    /// MC output is split up over many files, but G2P will TChain them together
+	//G2P.addFile("/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_*.root");
+	
+	/// PMT Calibrator loads run-specific energy calibrations info for selected run
+	/// and uses default Calibrations DB connection to most up-to-date though possibly unstable "mpm_debug"
+	
+	/// If you really want this to be random, 
+    /// you will need to seed rand() with something 
+    /// other than default.
+	srand( time(NULL) );
+
+	/// load the files that contain data histograms
+    TFile *asymmetry_data_tfile = new TFile(
+        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+        "Range_0-1000/CorrectAsym/CorrectedAsym.root");
+	if (asymmetry_data_tfile->IsZombie())
+	{
+		std::cout << "File not found." << std::endl;
+		exit(1);
+	}
+
+    TFile *ucna_data_tfile = new TFile(
+        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+		"OctetAsym_Offic.root");
+	if (ucna_data_tfile->IsZombie())
+	{
+		std::cout << "File not found." << std::endl;
+		exit(1);
+	}
+
+	/// extract the histograms from the files
+    TH1D *asymmetry_histogram = 
+            (TH1D*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
+    if (not asymmetry_histogram) {
+        printf("Error getting asymmetry histogram.\n");
+        exit(1);
+    }
+
+    TH1D *super_sum_histogram = 
+            (TH1D*)ucna_data_tfile->Get("Total_Events_SuperSum");
+    if (not super_sum_histogram) {
+        printf("Error getting super sum histogram.\n");
+        exit(1);
+    }
+
+    fill_simulation("/home/xuansun/Documents/SimData_Beta/"
+                    "SimAnalyzed_Beta.root",
+                    "Monte Carlo Standard Model beta spectrum",
+                    mc.sm_histogram,
+					mc.sm_super_sum_hisotgram);
+
+    fill_simulation("/home/xuansun/Documents/SimData_Beta/"
+                    "SimAnalyzed_Beta_fierz.root",
+                    "Monte Carlo Fierz beta spectrum",
+                    mc.fierz_histogram,
+					mc.fierz_super_sum_hisotgram);
+
+	//histogram->SetDirectory(mc_tfile);
+	//histogram->Write();
+
+	//mc.sm_super_sum_histogram->SetDirectory(mc_tfile);
+	//mc.sm_super_sum_histogram->Write();
+
+	//mc.fierz_super_sum_histogram->SetDirectory(mc_tfile);
+	//mc.fierz_super_sum_histogram->Write();
 
 	//mc_tfile->Close();
 
+/*
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
 		{
             normalize(mc.fierz_histogram[side][spin], min_E, max_E);
             normalize(mc.sm_histogram[side][spin], min_E, max_E);
-        }
+        }*/
 
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
 
@@ -830,7 +831,7 @@ int main(int argc, char *argv[])
      *  I already have it extracted as a ROOT histogram for my own data/MC comparisons.
      *  You can read the ROOT TFile at:
      *      /media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/OctetAsym_Offic.root
-     *  and get the TH1F histograms named:
+     *  and get the TH1D histograms named:
      *  Combined_Events_<S><afp><fg/bg><type> where 
      *      <S>='E' or 'W' is the side, 
      *      <afp>='0' or '1' for AFP Off/On, 
@@ -864,32 +865,32 @@ int main(int argc, char *argv[])
 	*/
 
 	#define EVENT_TYPE -1 
-    TH1F *ucna_data_raw[2][2] = {
+    TH1D *ucna_data_raw[2][2] = {
 	#if EVENT_TYPE == 0
-        {   (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_E_Off"),
-            (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_E_On")
-        },{ (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_W_Off"),
-            (TH1F*)ucna_data_tfile->Get("hEnergy_Type_0_W_On") }};
+        {   (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_E_Off"),
+            (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_E_On")
+        },{ (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_W_Off"),
+            (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_W_On") }};
 	#endif
 	#if EVENT_TYPE == -1
-        {   //(TH1F*)ucna_data_tfile->Get("Combined_Events_E010"),
-            //(TH1F*)ucna_data_tfile->Get("Combined_Events_E110")
-            (TH1F*)ucna_data_tfile->Get("hTotalEvents_E_Off;1"),
-            (TH1F*)ucna_data_tfile->Get("hTotalEvents_E_On;1"),
-        },{ //(TH1F*)ucna_data_tfile->Get("Combined_Events_W010"),
-            //(TH1F*)ucna_data_tfile->Get("Combined_Events_W110")
-            (TH1F*)ucna_data_tfile->Get("hTotalEvents_W_Off;1"),
-            (TH1F*)ucna_data_tfile->Get("hTotalEvents_W_On;1") }};
+        {   //(TH1D*)ucna_data_tfile->Get("Combined_Events_E010"),
+            //(TH1D*)ucna_data_tfile->Get("Combined_Events_E110")
+            (TH1D*)ucna_data_tfile->Get("hTotalEvents_E_Off;1"),
+            (TH1D*)ucna_data_tfile->Get("hTotalEvents_E_On;1"),
+        },{ //(TH1D*)ucna_data_tfile->Get("Combined_Events_W010"),
+            //(TH1D*)ucna_data_tfile->Get("Combined_Events_W110")
+            (TH1D*)ucna_data_tfile->Get("hTotalEvents_W_Off;1"),
+            (TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1") }};
 	#endif
 #endif
-    ucna_data.raw[0][0]=(TH1F*)ucna_data_tfile->Get("hTotalEvents_E_Off;1");
-    ucna_data.raw[0][1]=(TH1F*)ucna_data_tfile->Get("hTotalEvents_E_On;1");
-    ucna_data.raw[1][0]=(TH1F*)ucna_data_tfile->Get("hTotalEvents_W_Off;1");
-    ucna_data.raw[1][1]=(TH1F*)ucna_data_tfile->Get("hTotalEvents_W_On;1");
+    ucna_data.raw[0][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_Off;1");
+    ucna_data.raw[0][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_On;1");
+    ucna_data.raw[1][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_Off;1");
+    ucna_data.raw[1][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1");
     printf("Number of bins in data %d\n", ucna_data.raw[0][0]->GetNbinsX());
 
     /* Already background subtracted...
-        TH1F *background_histogram = (TH1F*)ucna_data_tfile->Get("Combined_Events_E000");
+        TH1D *background_histogram = (TH1D*)ucna_data_tfile->Get("Combined_Events_E000");
         ucna_data.raw->Add(background_histogram,-1);
         // normalize after background subtraction
         background_histogram->Draw("");
@@ -909,14 +910,14 @@ int main(int argc, char *argv[])
 		}
 
 	/*
-    TH1F *ucna_correction_histogram = (TH1F*)ucna_correction_histogram->Get("Delta_3_C");
+    TH1D *ucna_correction_histogram = (TH1D*)ucna_correction_histogram->Get("Delta_3_C");
 	if (not ucna_correction_histogram)
 	{
 		puts("Correction histogram is null. Aborting...");
 		exit(1);
 	}
 	*/
-    //TH1F *ucna_correction_histogram = new TH1F(*ucna_data.raw[0][0]);
+    //TH1D *ucna_correction_histogram = new TH1D(*ucna_data.raw[0][0]);
 	/*
 	while (tfile has more entries)
 	{
@@ -943,13 +944,13 @@ int main(int argc, char *argv[])
     canvas->SaveAs(fit_pdf_filename);
 
     // compute and plot the super ratio
-    TH1F *super_ratio_histogram = compute_super_ratio(ucna_data.raw);
+    TH1D *super_ratio_histogram = compute_super_ratio(ucna_data.raw);
     super_ratio_histogram->Draw();
     TString super_ratio_pdf_filename = "mc/super_ratio_data.pdf";
     canvas->SaveAs(super_ratio_pdf_filename);
 
     // compute and plot the super ratio asymmetry 
-    //TH1F *asymmetry_histogram = compute_corrected_asymmetry(ucna_data.raw, ucna_correction_histogram);
+    //TH1D *asymmetry_histogram = compute_corrected_asymmetry(ucna_data.raw, ucna_correction_histogram);
 
 	// fit the Fierz term from the asymmetry
 	/*
@@ -997,7 +998,7 @@ int main(int argc, char *argv[])
     canvas->SaveAs(asymmetry_pdf_filename);
 
     /// Compute the super sums
-    TH1F *super_sum_histogram = compute_super_sum(ucna_data.raw);
+    TH1D *super_sum_histogram = compute_super_sum(ucna_data.raw);
 	std::cout << "Number of super sum entries " << (int)super_sum_histogram->GetEntries() << std::endl;
     normalize(super_sum_histogram, min_E, max_E);
     super_sum_histogram->SetLineColor(2);
@@ -1011,8 +1012,8 @@ int main(int argc, char *argv[])
 
     /// make a pretty legend
     TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
-    legend->AddEntry(super_sum_histogram, "Type 0 supersum", "l");
-    legend->AddEntry(mc.sm_super_sum_histogram, "Monte Carlo supersum", "p");
+    legend->AddEntry(super_sum_histogram, "Type 0 super_sum", "l");
+    legend->AddEntry(mc.sm_super_sum_histogram, "Monte Carlo super_sum", "p");
     //legend->AddEntry(bonehead_sum_histogram, "Bonehead sum", "l");
     legend->SetTextSize(0.03);
     legend->SetBorderSize(0);
@@ -1029,7 +1030,7 @@ int main(int argc, char *argv[])
 	}
 
     /// compute little b factor
-    TH1F *fierz_ratio_histogram = new TH1F(*super_sum_histogram);
+    TH1D *fierz_ratio_histogram = new TH1D(*super_sum_histogram);
 	fierz_ratio_histogram->SetName("fierz_ratio_histogram");
     //fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
     int bins = super_sum_histogram->GetNbinsX();
@@ -1058,7 +1059,7 @@ int main(int argc, char *argv[])
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
 
 	/// A fit histogram for output to gnuplot
-    TH1F *fierz_fit_histogram = new TH1F(*super_sum_histogram);
+    TH1D *fierz_fit_histogram = new TH1D(*super_sum_histogram);
 	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
 		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
 
@@ -1106,8 +1107,8 @@ int main(int argc, char *argv[])
 
 
 	double cov[nPar][nPar]; 
-	double entries = supersum_histogram->GetEffectiveEntries();
-	double N = GetEntries(supersum_histogram, min_E, max_E);
+	double entries = super_sum_histogram->GetEffectiveEntries();
+	double N = GetEntries(super_sum_histogram, min_E, max_E);
 
 	/// set all expectation values for this range
 	for (int m=0; m<=2; m++)
@@ -1129,7 +1130,7 @@ int main(int argc, char *argv[])
 	TMatrixD p_cov = p_cov_inv.Invert(&det);
 
 	/// do the fitting
-	TF1* func = combined_fit(asymmetry_histogram, supersum_histogram, cov);
+	TF1* func = combined_fit(asymmetry_histogram, super_sum_histogram, cov);
 
 	/// output the data info
 	cout << " ENERGY RANGE:" << endl;
@@ -1181,7 +1182,7 @@ int main(int argc, char *argv[])
 
 	/*
 	// A fit histogram for output to gnuplot
-    TH1F *fierz_fit_histogram = new TH1F(*asymmetry_histogram);
+    TH1D *fierz_fit_histogram = new TH1D(*asymmetry_histogram);
 	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
 		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
 

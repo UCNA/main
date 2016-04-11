@@ -7,7 +7,7 @@
 #include "CalDBSQL.hh"
 
 // ROOT includes
-#include <TH1F.h>
+#include <TH1.h>
 #include <TLegend.h>
 #include <TF1.h>
 #include <TVirtualFitter.h>
@@ -48,7 +48,7 @@ const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
 
 using namespace std;
 #if 0
-int output_histogram(string filename, TH1F* h, double ax, double ay)
+int output_histogram(string filename, TH1D* h, double ax, double ay)
 {
 	ofstream ofs;
 	ofs.open(filename.c_str());
@@ -70,21 +70,21 @@ class FierzHistogram {
     double minBin;
     double maxBin;
     unsigned int nBins;
-    TH1F *fierz_super_sum_histogram;
-    TH1F *sm_super_sum_histogram;
-    TH1F* fierz_histogram[2][2];
-    TH1F* sm_histogram[2][2];
+    TH1D *fierz_super_sum_histogram;
+    TH1D *sm_super_sum_histogram;
+    TH1D* fierz_histogram[2][2];
+    TH1D* sm_histogram[2][2];
 
     FierzHistogram( double _minBin, double _maxBin, unsigned int _nBins) {
         minBin = _minBin;
         maxBin = _maxBin;
         nBins = _nBins;
-        fierz_super_sum_histogram = new TH1F("fierz_histogram", "", nBins, minBin, maxBin);
-        sm_super_sum_histogram = new TH1F("standard_model_histogram", "", nBins, minBin, maxBin);
+        fierz_super_sum_histogram = new TH1D("fierz_histogram", "", nBins, minBin, maxBin);
+        sm_super_sum_histogram = new TH1D("standard_model_histogram", "", nBins, minBin, maxBin);
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++) {
-                fierz_histogram[side][spin] = new TH1F("fierz_super_sum", "", nBins, minBin, maxBin);
-                sm_histogram[side][spin] = new TH1F("standard_model_super_sum", "", nBins, minBin, maxBin);
+                fierz_histogram[side][spin] = new TH1D("fierz_super_sum", "", nBins, minBin, maxBin);
+                sm_histogram[side][spin] = new TH1D("standard_model_super_sum", "", nBins, minBin, maxBin);
             }
     }
 
@@ -97,11 +97,11 @@ class FierzHistogram {
     }
     */
 
-    void normalizeHistogram(TH1F* hist) {
+    void normalizeHistogram(TH1D* hist) {
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
     }
 
-    void normalizeHistogram(TH1F* hist, double min, double max) {
+    void normalizeHistogram(TH1D* hist, double min, double max) {
 		int _min = hist->FindBin(min);
 		int _max = hist->FindBin(max);
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
@@ -180,7 +180,7 @@ double evaluate_expected_fierz(double min, double max, int integral_size = 1234)
 
 
 
-void compute_fit(TH1F* histogram, TF1* fierz_fit) 
+void compute_fit(TH1D* histogram, TF1* fierz_fit) 
 {
 	// compute chi squared
     double chisq = fierz_fit->GetChisquare();
@@ -235,7 +235,7 @@ double fierzratio_fit_func(double *x, double *par)
 
 
 
-double GetEntries(TH1F* histogram, double min, double max)
+double GetEntries(TH1D* histogram, double min, double max)
 {
 	double entries = histogram->GetEffectiveEntries();
 	double part_int = histogram->Integral(
