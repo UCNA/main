@@ -106,11 +106,11 @@ struct UCNAModel {
     int    bins;
     double min;
     double max;
-    //TH1D *raw[2][2];
+    TH1D *raw[2][2];
     //TH1D *super_sum_histogram;
     //TH1D *super_ratio_histogram;
 
-    STLhistogram counts[2][2];
+    //STLhistogram raw[2][2];
     STLhistogram super_ratio;
     STLhistogram super_sum;
     STLhistogram asymmetry;
@@ -120,9 +120,11 @@ struct UCNAModel {
         this->min = min;
         this->max = max;
         // TODO init TH1Ds
-        for (int i=0; i<2; i++)
-            for (int j=0; j<2; j++)
-                counts[i][j].init(bins, min, max);
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++) {
+                //raw[side][spin].init(bins, min, max);
+                raw[side][spin] = 0;
+            }
         super_ratio.init(bins, min, max);
         super_sum.init(bins, min, max);
         asymmetry.init(bins, min, max);
@@ -151,9 +153,9 @@ class UCNAFierzFitter {
     TH1D *fierz_histogram[2][2];
     TH1D *sm_histogram[2][2];
     */
-    UCNAModel *sm;
-    UCNAModel *fierz;
-    UCNAModel *data;
+    UCNAModel sm;
+    UCNAModel fierz;
+    UCNAModel data;
 
     FierzHistogram(unsigned int _nBins, double _minBin, double _maxBin) {
         minBin = _minBin;

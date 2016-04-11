@@ -418,16 +418,16 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 	double chi2 = 0; 
 	double chi,	E; 
 
-	int n = ucna_data.asymmetry.energy.size();
+	int n = ucna.data.asymmetry.energy.size();
 	//int n = asymmetry_energy.size();
 	for (int i = 0; i < n; i++)
 	{
 		double par[2] = {p[0],p[1]}; // A, b
-		E = ucna_data.asymmetry.energy[i];
+		E = ucna.data.asymmetry.energy[i];
 		//chi = (asymmetry_values[i] - asymmetry_fit_func(&E,par)) / asymmetry_errors[i];
-		double Y = ucna_data.asymmetry.values[i];
+		double Y = ucna.data.asymmetry.values[i];
         double f = asymmetry_fit_func(&E,par);
-        double eY = ucna_data.asymmetry.errors[i];
+        double eY = ucna.data.asymmetry.errors[i];
 		chi = (Y - f)/eY;
 		chi2 += chi*chi; 
 	}
@@ -435,12 +435,12 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 	//n = fierzratio_energy.size();
 	for (int i = 0; i < n; i++) { 
 		//double par[2] = {p[1], expected[0][1]};
-		E = ucna_data.super_sum.energy[i];
+		E = ucna.data.super_sum.energy[i];
 		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
-		double Y =      ucna_data    .super_sum.values[i];
-        double f = p[1]*ucna_sm_mc   .super_sum.values[i] 
-                 + p[2]*ucna_fierz_mc.super_sum.values[i];
-        double eY =     ucna_data    .super_sum.errors[i];
+		double Y =      ucna.data    .super_sum.values[i];
+        double f = p[1]*ucna.sm_mc   .super_sum.values[i] 
+                 + p[2]*ucna.fierz_mc.super_sum.values[i];
+        double eY =     ucna.data    .super_sum.errors[i];
 		chi = (Y-f)/eY;
 		chi2 += chi*chi; 
 	}
@@ -466,7 +466,7 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 
 	/// fill data structure for fit (coordinates + values + errors) 
 	std::cout << "Do global fit" << std::endl;
-    	ucna_data.asymmetry.fill(asymmetry);
+    	ucna.data.asymmetry.fill(asymmetry);
 
 	/// set up the minuit fitter
 	TVirtualFitter::SetDefaultFitter("Minuit");
@@ -500,8 +500,8 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 	func->SetParameters(minParams);
 	func->SetParErrors(parErrors);
 	func->SetChisquare(chi2);
-	int ndf = ucna_data.asymmetry.energy.size() 
-            	+ ucna_data.super_sum.energy.size() - nvpar;
+	int ndf = ucna.data.asymmetry.energy.size() 
+            	+ ucna.data.super_sum.energy.size() - nvpar;
 	func->SetNDF(ndf);
     
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
@@ -696,6 +696,15 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/// extract the histograms from the files
+    ucna.data.asymmetry.histogram = 
+            (TH1D*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
+    if (not asymmetry_histogram) {
+        printf("Error getting asymmetry histogram.\n");
+        exit(1);
+    }
+
+	/// load the files that contain data histograms
     TFile *ucna_data_tfile = new TFile(
         "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
 		"OctetAsym_Offic.root");
@@ -705,15 +714,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/// extract the histograms from the files
-    TH1D *asymmetry_histogram = 
-            (TH1D*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
-    if (not asymmetry_histogram) {
-        printf("Error getting asymmetry histogram.\n");
-        exit(1);
-    }
-
-    TH1D *ucna.data.super_sum.histogram = 
+    ucna.data.super_sum.histogram = 
             (TH1D*)ucna_data_tfile->Get("Total_Events_SuperSum");
     if (not ucna.data.super_sum.histogram) {
         printf("Error getting super sum histogram.\n");
@@ -723,13 +724,13 @@ int main(int argc, char *argv[])
     fill_simulation("/home/xuansun/Documents/SimData_Beta/"
                     "SimAnalyzed_Beta.root",
                     "Monte Carlo Standard Model beta spectrum",
-                    mc.sm_histogram,
+                    ucna.sm.raw,                        /// mc.sm_histogram,
 					ucna.sm.super_sum.histogram);
 
     fill_simulation("/home/xuansun/Documents/SimData_Beta/"
                     "SimAnalyzed_Beta_fierz.root",
                     "Monte Carlo Fierz beta spectrum",
-                    mc.fierz_histogram,
+                    ucna.fierz.raw,                     /// mc.fierz_histogram,
 					ucna.fierz.super_sum.histogram);
 
 	//histogram->SetDirectory(mc_tfile);
@@ -813,7 +814,7 @@ int main(int argc, char *argv[])
 	*/
 
 	#define EVENT_TYPE -1 
-    TH1D *ucna_data_raw[2][2] = {
+    TH1D *ucna.data_raw[2][2] = {
 	#if EVENT_TYPE == 0
         {   (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_E_Off"),
             (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_E_On")
@@ -831,11 +832,11 @@ int main(int argc, char *argv[])
             (TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1") }};
 	#endif
 #endif
-    ucna_data.raw[0][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_Off;1");
-    ucna_data.raw[0][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_On;1");
-    ucna_data.raw[1][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_Off;1");
-    ucna_data.raw[1][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1");
-    printf("Number of bins in data %d\n", ucna_data.raw[0][0]->GetNbinsX());
+    ucna.data.raw[0][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_Off;1");
+    ucna.data.raw[0][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_On;1");
+    ucna.data.raw[1][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_Off;1");
+    ucna.data.raw[1][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1");
+    printf("Number of bins in data %d\n", ucna.data.raw[0][0]->GetNbinsX());
 
     /* Already background subtracted...
         TH1D *background_histogram = (TH1D*)ucna_data_tfile->Get("Combined_Events_E000");
@@ -849,8 +850,8 @@ int main(int argc, char *argv[])
 		{
 			std::cout << "Number of entries in (" 
 					  << side << ", " << spin << ") is "
-					  << (int)ucna_data.raw[side][spin]->GetEntries() << std::endl;
-			if (ucna_data.raw[side][spin] == NULL)
+					  << (int)ucna.data.raw[side][spin]->GetEntries() << std::endl;
+			if (ucna.data.raw[side][spin] == NULL)
 			{
 				puts("histogram is null. Aborting...");
 				exit(1);
@@ -858,19 +859,19 @@ int main(int argc, char *argv[])
 		}
 
 	/*
-    TH1D *ucna_correction_histogram = (TH1D*)ucna_correction_histogram->Get("Delta_3_C");
-	if (not ucna_correction_histogram)
+    TH1D *ucna.correction_histogram = (TH1D*)ucna.correction_histogram->Get("Delta_3_C");
+	if (not ucna.correction_histogram)
 	{
 		puts("Correction histogram is null. Aborting...");
 		exit(1);
 	}
 	*/
-    //TH1D *ucna_correction_histogram = new TH1D(*ucna_data.raw[0][0]);
+    //TH1D *ucna.correction_histogram = new TH1D(*ucna.data.raw[0][0]);
 	/*
 	while (tfile has more entries)
 	{
-        double bin = (ucna_correction_file->GetBinContent(bin);
-        double correction = ucna_correction_histogram->GetBinContent(bin);
+        double bin = (ucna.correction_file->GetBinContent(bin);
+        double correction = ucna.correction_histogram->GetBinContent(bin);
         printf("Setting bin content for correction bin %d, to %f\n", bin, correction);
         ucna.data.super_sum.histogram->SetBinContent(bin, correction);
         ucna.data.super_sum.histogram->SetBinError(bin, correction_error);
@@ -882,7 +883,7 @@ int main(int argc, char *argv[])
     fit->SetParameter(0,0.0);
     fit->SetParameter(1,0.0);
     fit->SetParameter(2,1.0);
-    ucna_data.raw[0][0]->Fit("fierz_fit");
+    ucna.data.raw[0][0]->Fit("fierz_fit");
     double chisq = fit->GetChisquare();
     double N = fit->GetNDF();
     printf("Chi^2 / ( N - 1) = %f / %f = %f\n",chisq, N-1, chisq/(N-1));
@@ -892,13 +893,15 @@ int main(int argc, char *argv[])
     canvas->SaveAs(fit_pdf_filename);
 
     // compute and plot the super ratio
-    TH1D *ucna.data.super_ratio.histogram = compute_super_ratio(ucna_data.raw);
+    /*
+    TH1D *ucna.data.super_ratio.histogram = compute_super_ratio(ucna.data.raw);
     ucna.data.super_ratio.histogram->Draw();
     TString super_ratio_pdf_filename = "mc/super_ratio_data.pdf";
     canvas->SaveAs(super_ratio_pdf_filename);
+    */
 
     // compute and plot the super ratio asymmetry 
-    //TH1D *asymmetry_histogram = compute_corrected_asymmetry(ucna_data.raw, ucna_correction_histogram);
+    //TH1D *asymmetry_histogram = compute_corrected_asymmetry(ucna.data.raw, ucna.correction_histogram);
 
 	// fit the Fierz term from the asymmetry
 	/*
@@ -946,7 +949,7 @@ int main(int argc, char *argv[])
     canvas->SaveAs(asymmetry_pdf_filename);
 
     /// Compute the super sums
-    TH1D *ucna.data.super_sum.histogram = compute_super_sum(ucna_data.raw);
+    ucna.data.super_sum.histogram = compute_super_sum(ucna.data.raw);
 	std::cout << "Number of super sum entries " << (int)ucna.data.super_sum.histogram->GetEntries() << std::endl;
     normalize(ucna.data.super_sum.histogram, min_E, max_E);
     ucna.data.super_sum.histogram->SetLineColor(2);
