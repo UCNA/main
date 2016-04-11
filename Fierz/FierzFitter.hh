@@ -144,9 +144,9 @@ struct UCNAEvent {
 
 class UCNAFierzFitter {
   public: 
-    double minBin;
-    double maxBin;
-    unsigned int nBins;
+    double min;
+    double max;
+    unsigned int bins;
     /*
     TH1D *fierz_super_sum_histogram;
     TH1D *sm_super_sum_histogram;
@@ -157,16 +157,16 @@ class UCNAFierzFitter {
     UCNAModel fierz;
     UCNAModel data;
 
-    UCNAFierzFitter(unsigned int _nBins, double _minBin, double _maxBin) {
-        minBin = _minBin;
-        maxBin = _maxBin;
-        nBins = _nBins;
-        fierz.super_sum.histogram = new TH1D("fierz_histogram", "", nBins, minBin, maxBin);
-        sm.super_sum.histogram = new TH1D("standard_model_histogram", "", nBins, minBin, maxBin);
+    UCNAFierzFitter(unsigned int _bins, double _min, double _max) {
+        min = _min;
+        max = _max;
+        bins = _bins;
+        fierz.super_sum.histogram = new TH1D("fierz_histogram", "", bins, min, max);
+        sm.super_sum.histogram = new TH1D("standard_model_histogram", "", bins, min, max);
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++) {
-                fierz.raw[side][spin] = new TH1D("fierz_super_sum", "", nBins, minBin, maxBin);
-                sm.raw[side][spin] = new TH1D("standard_model_super_sum", "", nBins, minBin, maxBin);
+                fierz.raw[side][spin] = new TH1D("fierz_super_sum", "", bins, min, max);
+                sm.raw[side][spin] = new TH1D("standard_model_super_sum", "", bins, min, max);
             }
     }
 

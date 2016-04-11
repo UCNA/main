@@ -49,7 +49,6 @@ double expected[3][3];                      /// expected values (based on the en
 
 // ug. Needs to be static
 //FierzHistogram mc(0,1500,bins);
-FierzFitter ff(0,1500,bins);
 
 /**
  * x[0] : kenetic energy
@@ -410,7 +409,9 @@ vector<double> super_sum_errors;
 UCNAModel ucna_data; // Need construction.
 UCNAModel ucna_sm_mc; // Need construction.
 UCNAModel ucna_fierz_mc; // Need construction.
+//FierzHistogram mc(0,1500,bins);
 */
+/// This needs to be static
 UCNAFierzFitter ucna(bins, min_E, max_E);
 
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
@@ -1166,7 +1167,7 @@ if (not asymmetry_histogram) {
 	TMatrixD p_cov = p_cov_inv.Invert(&det);
 
 	/// do the fitting
-	TF1* func = combined_fit(asymmetry_histogram, ucna.data.super_sum.histogram, cov);
+	TF1* func = combined_fit(ucna.data.asymmetry.histogram, ucna.data.super_sum.histogram, cov);
 
 	/// output the data info
 	cout << " ENERGY RANGE:" << endl;
@@ -1243,7 +1244,7 @@ if (not asymmetry_histogram) {
 	gStyle->SetStatY(0.6);
 
 	c1->cd(1);
-	asymmetry_histogram->Draw();
+	ucna.data.asymmetry.histogram->Draw();
 	func->SetRange(min_E, max_E);
 	func->DrawCopy("cont1 same");
 	/*
