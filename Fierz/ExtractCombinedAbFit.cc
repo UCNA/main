@@ -15,6 +15,7 @@
 #include <TMatrixD.h>
 #include <TNtuple.h>
 #include <TLeaf.h>
+#include <TString.h>
 
 /// C++ includes
 #include <iostream>
@@ -47,25 +48,25 @@ double expected[3][3];                      /// expected values (based on the en
                                             /// need to be visible to the chi^2 code
 
 // ug. Needs to be static
-FierzHistogram mc(0,1500,bins);
+//FierzHistogram mc(0,1500,bins);
+FierzFitter ff(0,1500,bins);
 
 /**
  * x[0] : kenetic energy
  * p[0] : b, fierz term
- */
 double theoretical_fierz_spectrum(double *x, double*p) 
 {
     double rv = 0;
-    //unsigned n = mc.sm_histogram->FindBin(p[3]*x[0]*x[0] + p[2]*x[0] - p[1]);        
-    unsigned n = mc.sm_super_sum_histogram->FindBin(p[2]*x[0] - p[1]);        
+    //unsigned n = ff.mc.sm_histogram->FindBin(p[3]*x[0]*x[0] + p[2]*x[0] - p[1]);        
+    unsigned n = ff.sm.super_sum.histogram->FindBin(p[2]*x[0] - p[1]);        
     //unsigned n = mc.sm_histogram->FindBin(x[0]);        
     double b = p[0];
     double norm = 1 + expected_fierz * b;
-    rv += mc.sm_super_sum_histogram->GetBinContent(n) / norm;
-    rv += b * expected_fierz * mc.fierz_super_sum_histogram->GetBinContent(n) / norm;
+    rv += ff.sm_super_sum_histogram->GetBinContent(n) / norm;
+    rv += b * expected_fierz * ucna.fierz.super_sum.histogram->GetBinContent(n) / norm;
     return rv;
 }
-
+ */
 
 /*
 /// beta spectrum with little b term
@@ -352,11 +353,12 @@ double super_sum_error(double r[2][2]) {
 
 
 using namespace std;
-void output_histogram(string filename, TH1D* h, double ax, double ay)
+void output_histogram(TString filename, TH1D* h, double ax, double ay)
 {
 	using namespace std;
 	ofstream ofs;
-	ofs.open(filename.c_str());
+	//ofs.open(filename.c_str());
+	ofs.open(filename);
 	for (int i = 1; i < h->GetNbinsX(); i++)
 	{
 		double x = ax * h->GetBinCenter(i);
@@ -388,69 +390,6 @@ int output_histogram(string filename, TH1D* h, double ax, double ay)
 }
 #endif
 
-struct STLhistogram {
-    int bins;
-    int detector;
-    int spin;
-    TH1D* central;
-    vector<double> energy;        
-    vector<double> values;        
-    vector<double> errors;        
-
-    void init(int bins) {
-        this->bins = bins;
-        energy = vector<double>(bins);
-	    values = vector<double>(bins);
-	    errors = vector<double>(bins);
-    }
-
-    void fill(TH1D *histogram) {
-        TAxis *axis  = histogram->GetXaxis();
-        bins = histogram->GetNbinsX(); 
-        for (int ix = 1; ix <= bins + 1; ix++)
-        {
-            double E = axis->GetBinCenter(ix);
-            if (min_E < E and E < max_E)
-            {
-                double Y = histogram->GetBinContent(ix);
-                double eY = histogram->GetBinError(ix);
-                energy.push_back(E);
-                values.push_back(Y);
-                errors.push_back(eY);
-            }
-        }
-    }
-};
-
-struct UCNAModel {
-    int          bins;
-    TH1D*        raw[2][2];
-    STLhistogram counts[2][2];
-    STLhistogram super_ratio;
-    STLhistogram super_sum;
-    STLhistogram asymmetry;
-
-    void init(int bins) {
-        this->bins = bins;
-        // TODO init TH1Ds
-        for (int i=0; i<2; i++)
-            for (int j=0; j<2; j++)
-                counts[i][j].init(bins);
-        super_ratio.init(bins);
-        super_sum.init(bins);
-        asymmetry.init(bins);
-   }
-};
-
-struct UCNAEvent {
-    double EdepQ;
-    double Edep;
-    double MWPCEnergy;
-    double ScintPos;
-    double MWPCPos;
-    double time;
-    double primMomentum;
-};
 
 // data need to be globals to be visible by func 
 /*
@@ -467,9 +406,12 @@ vector<double> super_sum_values;
 vector<double> super_sum_errors;        
 */
 
+/*
 UCNAModel ucna_data; // Need construction.
 UCNAModel ucna_sm_mc; // Need construction.
 UCNAModel ucna_fierz_mc; // Need construction.
+*/
+UCNAFierzFitter ucna;
 
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
@@ -499,7 +441,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
         double f = p[1]*ucna_sm_mc   .super_sum.values[i] 
                  + p[2]*ucna_fierz_mc.super_sum.values[i];
         double eY =     ucna_data    .super_sum.errors[i];
-		chi = (Y - f)/eY;
+		chi = (Y-f)/eY;
 		chi2 += chi*chi; 
 	}
 	fval = chi2; 
@@ -576,7 +518,7 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 #endif
 
 
-int fill_simulation(string filename, string title, TH1D* histogram, TH1D* super_sum)
+int fill_simulation(TString filename, TString title, TH1D* histogram[2][2], TH1D* super_sum)
 {
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
@@ -646,7 +588,7 @@ int fill_simulation(string filename, string title, TH1D* histogram, TH1D* super_
             //bool spin = (afp * primMomentum[2]) < 0? EAST : WEST;
             bool spin = (afp < 0)? EAST : WEST;
             histogram[side][spin]->Fill(energy, 1);
-			tntuple->Fill(side, spin, energy);
+			//tntuple->Fill(side, spin, energy);
 			nSimmed++;
         }
         /*  hEreconALL->Fill(Erecon);
@@ -716,7 +658,7 @@ int fill_simulation(string filename, string title, TH1D* histogram, TH1D* super_
 
 	/// compute and normalize super sum
     super_sum = compute_super_sum(histogram);
-    normalize(histogram, min_E, max_E);
+    normalize(super_sum, min_E, max_E);
 
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
@@ -771,9 +713,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    TH1D *super_sum_histogram = 
+    TH1D *ucna.data.super_sum.histogram = 
             (TH1D*)ucna_data_tfile->Get("Total_Events_SuperSum");
-    if (not super_sum_histogram) {
+    if (not ucna.data.super_sum.histogram) {
         printf("Error getting super sum histogram.\n");
         exit(1);
     }
@@ -782,22 +724,22 @@ int main(int argc, char *argv[])
                     "SimAnalyzed_Beta.root",
                     "Monte Carlo Standard Model beta spectrum",
                     mc.sm_histogram,
-					mc.sm_super_sum_hisotgram);
+					ucna.sm.super_sum.histogram);
 
     fill_simulation("/home/xuansun/Documents/SimData_Beta/"
                     "SimAnalyzed_Beta_fierz.root",
                     "Monte Carlo Fierz beta spectrum",
                     mc.fierz_histogram,
-					mc.fierz_super_sum_hisotgram);
+					ucna.fierz.super_sum.histogram);
 
 	//histogram->SetDirectory(mc_tfile);
 	//histogram->Write();
 
-	//mc.sm_super_sum_histogram->SetDirectory(mc_tfile);
-	//mc.sm_super_sum_histogram->Write();
+	//ucna.sm.super_sum.histogram->SetDirectory(mc_tfile);
+	//ucna.sm.super_sum.histogram->Write();
 
-	//mc.fierz_super_sum_histogram->SetDirectory(mc_tfile);
-	//mc.fierz_super_sum_histogram->Write();
+	//ucna.fierz.super_sum.histogram->SetDirectory(mc_tfile);
+	//ucna.fierz.super_sum.histogram->Write();
 
 	//mc_tfile->Close();
 
@@ -810,11 +752,11 @@ int main(int argc, char *argv[])
 
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
 
-	mc.fierz_super_sum_histogram->SetStats(0);
-    mc.fierz_super_sum_histogram->SetLineColor(3);
-    mc.fierz_super_sum_histogram->Draw("");
-    mc.sm_super_sum_histogram->SetLineColor(1);
-    mc.sm_super_sum_histogram->Draw("Same");
+	ucna.fierz.super_sum.histogram->SetStats(0);
+    ucna.fierz.super_sum.histogram->SetLineColor(3);
+    ucna.fierz.super_sum.histogram->Draw("");
+    ucna.sm.super_sum.histogram->SetLineColor(1);
+    ucna.sm.super_sum.histogram->Draw("Same");
 
     // fit a smooth model to the mc
     /*
@@ -930,8 +872,8 @@ int main(int argc, char *argv[])
         double bin = (ucna_correction_file->GetBinContent(bin);
         double correction = ucna_correction_histogram->GetBinContent(bin);
         printf("Setting bin content for correction bin %d, to %f\n", bin, correction);
-        super_sum_histogram->SetBinContent(bin, correction);
-        super_sum_histogram->SetBinError(bin, correction_error);
+        ucna.data.super_sum.histogram->SetBinContent(bin, correction);
+        ucna.data.super_sum.histogram->SetBinError(bin, correction_error);
     }
 	*/
 
@@ -950,8 +892,8 @@ int main(int argc, char *argv[])
     canvas->SaveAs(fit_pdf_filename);
 
     // compute and plot the super ratio
-    TH1D *super_ratio_histogram = compute_super_ratio(ucna_data.raw);
-    super_ratio_histogram->Draw();
+    TH1D *ucna.data.super_ratio.histogram = compute_super_ratio(ucna_data.raw);
+    ucna.data.super_ratio.histogram->Draw();
     TString super_ratio_pdf_filename = "mc/super_ratio_data.pdf";
     canvas->SaveAs(super_ratio_pdf_filename);
 
@@ -1004,22 +946,22 @@ int main(int argc, char *argv[])
     canvas->SaveAs(asymmetry_pdf_filename);
 
     /// Compute the super sums
-    TH1D *super_sum_histogram = compute_super_sum(ucna_data.raw);
-	std::cout << "Number of super sum entries " << (int)super_sum_histogram->GetEntries() << std::endl;
-    normalize(super_sum_histogram, min_E, max_E);
-    super_sum_histogram->SetLineColor(2);
-	super_sum_histogram->SetStats(0);
-    super_sum_histogram->Draw("");
+    TH1D *ucna.data.super_sum.histogram = compute_super_sum(ucna_data.raw);
+	std::cout << "Number of super sum entries " << (int)ucna.data.super_sum.histogram->GetEntries() << std::endl;
+    normalize(ucna.data.super_sum.histogram, min_E, max_E);
+    ucna.data.super_sum.histogram->SetLineColor(2);
+	ucna.data.super_sum.histogram->SetStats(0);
+    ucna.data.super_sum.histogram->Draw("");
 
     /// Draw Monte Carlo
-    mc.sm_super_sum_histogram->SetLineColor(1);
-    mc.sm_super_sum_histogram->SetMarkerStyle(4);
-    mc.sm_super_sum_histogram->Draw("same p0");
+    ucna.sm.super_sum.histogram->SetLineColor(1);
+    ucna.sm.super_sum.histogram->SetMarkerStyle(4);
+    ucna.sm.super_sum.histogram->Draw("same p0");
 
     /// make a pretty legend
     TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
-    legend->AddEntry(super_sum_histogram, "Type 0 super_sum", "l");
-    legend->AddEntry(mc.sm_super_sum_histogram, "Monte Carlo super_sum", "p");
+    legend->AddEntry(ucna.data.super_sum.histogram, "Type 0 super_sum", "l");
+    legend->AddEntry(ucna.sm.super_sum.histogram, "Monte Carlo super_sum", "p");
     //legend->AddEntry(bonehead_sum_histogram, "Bonehead sum", "l");
     legend->SetTextSize(0.03);
     legend->SetBorderSize(0);
@@ -1030,31 +972,31 @@ int main(int argc, char *argv[])
     canvas->SaveAs(super_sum_pdf_filename);
 	TFile* ratio_tfile = new TFile("Fierz/ratio.root", "recreate");
 	if (ratio_tfile->IsZombie())
-	{
+    {
 		std::cout << "Can't recreate MC file" << std::endl;
 		exit(1);
 	}
 
     /// compute little b factor
-    TH1D *fierz_ratio_histogram = new TH1D(*super_sum_histogram);
+    TH1D *fierz_ratio_histogram = new TH1D(*ucna.data.super_sum.histogram);
 	fierz_ratio_histogram->SetName("fierz_ratio_histogram");
-    //fierz_ratio_histogram->Divide(super_sum_histogram, mc.sm_super_sum_histogram);
-    int bins = super_sum_histogram->GetNbinsX();
+    //fierz_ratio_histogram->Divide(ucna.data.super_sum.histogram, ucna.sm.super_sum.histogram);
+    int bins = ucna.data.super_sum.histogram->GetNbinsX();
     for (int bin = 1; bin < bins+1; bin++) {
-		double X = super_sum_histogram->GetBinContent(bin);
-		double Y = mc.sm_super_sum_histogram->GetBinContent(bin);
+		double X = ucna.data.super_sum.histogram->GetBinContent(bin);
+		double Y = ucna.sm.super_sum.histogram->GetBinContent(bin);
 		double Z = Y > 0 ? X/Y : 0;
 
 		fierz_ratio_histogram->SetBinContent(bin, Z);
 
-		double x = super_sum_histogram->GetBinError(bin);
-		double y = mc.sm_super_sum_histogram->GetBinError(bin);
+		double x = ucna.data.super_sum.histogram->GetBinError(bin);
+		double y = ucna.sm.super_sum.histogram->GetBinError(bin);
 		fierz_ratio_histogram->SetBinError(bin, Z*TMath::Sqrt(x*x/X/X + y*y/Y/Y));
 	}
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
-	std::cout << super_sum_histogram->GetNbinsX() << std::endl;
-	std::cout << mc.sm_super_sum_histogram->GetNbinsX() << std::endl;
+	std::cout << ucna.data.super_sum.histogram->GetNbinsX() << std::endl;
+	std::cout << ucna.sm.super_sum.histogram->GetNbinsX() << std::endl;
 	
 
 	/// fit the Fierz ratio 
@@ -1065,7 +1007,7 @@ int main(int argc, char *argv[])
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
 
 	/// A fit histogram for output to gnuplot
-    TH1D *fierz_fit_histogram = new TH1D(*super_sum_histogram);
+    TH1D *fierz_fit_histogram = new TH1D(*ucna.data.super_sum.histogram);
 	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
 		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
 
@@ -1098,8 +1040,8 @@ int main(int argc, char *argv[])
     canvas->SaveAs(fierz_ratio_pdf_filename);
 
 	/// output for gnuplot
-	output_histogram("mc/super-sum-data.dat", super_sum_histogram, 1, 1000);
-	output_histogram("mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
+	output_histogram("mc/super-sum-data.dat", ucna.data.super_sum.histogram, 1, 1000);
+	output_histogram("mc/super-sum-mc.dat", ucna.sm.super_sum.histogram, 1, 1000);
 	output_histogram("mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
 	output_histogram("mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
 
@@ -1113,8 +1055,8 @@ int main(int argc, char *argv[])
 
 
 	double cov[nPar][nPar]; 
-	double entries = super_sum_histogram->GetEffectiveEntries();
-	double N = GetEntries(super_sum_histogram, min_E, max_E);
+	double entries = ucna.data.super_sum.histogram->GetEffectiveEntries();
+	double N = GetEntries(ucna.data.super_sum.histogram, min_E, max_E);
 
 	/// set all expectation values for this range
 	for (int m=0; m<=2; m++)
@@ -1136,7 +1078,7 @@ int main(int argc, char *argv[])
 	TMatrixD p_cov = p_cov_inv.Invert(&det);
 
 	/// do the fitting
-	TF1* func = combined_fit(asymmetry_histogram, super_sum_histogram, cov);
+	TF1* func = combined_fit(asymmetry_histogram, ucna.data.super_sum.histogram, cov);
 
 	/// output the data info
 	cout << " ENERGY RANGE:" << endl;
@@ -1199,8 +1141,8 @@ int main(int argc, char *argv[])
     canvas->SaveAs(pdf_filename);
 
 	/// output for gnuplot
-	//output_histogram("/data/kevinh/mc/super-sum-data.dat", super_sum_histogram, 1, 1000);
-	//output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
+	//output_histogram("/data/kevinh/mc/super-sum-data.dat", ucna.data.super_sum.histogram, 1, 1000);
+	//output_histogram("/data/kevinh/mc/super-sum-mc.dat", ucna.sm.super_sum.histogram, 1, 1000);
 	//output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
 	//output_histogram("/data/kevinh/mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
 

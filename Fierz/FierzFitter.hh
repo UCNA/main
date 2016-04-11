@@ -65,26 +65,106 @@ int output_histogram(string filename, TH1D* h, double ax, double ay)
 }
 #endif
 
-class FierzHistogram {
+struct STLhistogram {
+    int bins;
+    int detector;
+    int spin;
+    double min, max;
+    TH1D* histogram;
+    vector<double> energy;        
+    vector<double> values;        
+    vector<double> errors;        
+
+    void init(int bins, double min, double max) {
+        this->bins = bins;
+        this->min = min;
+        this->max = max;
+        energy = vector<double>(bins);
+	    values = vector<double>(bins);
+	    errors = vector<double>(bins);
+    }
+
+    void fill(TH1D *histogram) {
+        TAxis *axis  = histogram->GetXaxis();
+        bins = histogram->GetNbinsX(); 
+        for (int ix = 1; ix <= bins + 1; ix++)
+        {
+            double E = axis->GetBinCenter(ix);
+            if (min < E and E < max)
+            {
+                double Y = histogram->GetBinContent(ix);
+                double eY = histogram->GetBinError(ix);
+                energy.push_back(E);
+                values.push_back(Y);
+                errors.push_back(eY);
+            }
+        }
+    }
+};
+
+struct UCNAModel {
+    int    bins;
+    double min;
+    double max;
+    //TH1D *raw[2][2];
+    //TH1D *super_sum_histogram;
+    //TH1D *super_ratio_histogram;
+
+    STLhistogram counts[2][2];
+    STLhistogram super_ratio;
+    STLhistogram super_sum;
+    STLhistogram asymmetry;
+
+    void init(int bins, double min, double max) {
+        this->bins = bins;
+        this->min = min;
+        this->max = max;
+        // TODO init TH1Ds
+        for (int i=0; i<2; i++)
+            for (int j=0; j<2; j++)
+                counts[i][j].init(bins, min, max);
+        super_ratio.init(bins, min, max);
+        super_sum.init(bins, min, max);
+        asymmetry.init(bins, min, max);
+   }
+};
+
+
+struct UCNAEvent {
+    double EdepQ;
+    double Edep;
+    double MWPCEnergy;
+    double ScintPos;
+    double MWPCPos;
+    double time;
+    double primMomentum;
+};
+
+class UCNAFierzFitter {
   public: 
     double minBin;
     double maxBin;
     unsigned int nBins;
+    /*
     TH1D *fierz_super_sum_histogram;
     TH1D *sm_super_sum_histogram;
-    TH1D* fierz_histogram[2][2];
-    TH1D* sm_histogram[2][2];
+    TH1D *fierz_histogram[2][2];
+    TH1D *sm_histogram[2][2];
+    */
+    UCNAModel *sm;
+    UCNAModel *fierz;
+    UCNAModel *data;
 
-    FierzHistogram( double _minBin, double _maxBin, unsigned int _nBins) {
+    FierzHistogram(unsigned int _nBins, double _minBin, double _maxBin) {
         minBin = _minBin;
         maxBin = _maxBin;
         nBins = _nBins;
-        fierz_super_sum_histogram = new TH1D("fierz_histogram", "", nBins, minBin, maxBin);
-        sm_super_sum_histogram = new TH1D("standard_model_histogram", "", nBins, minBin, maxBin);
+        fierz.super_sum.histogram = new TH1D("fierz_histogram", "", nBins, minBin, maxBin);
+        sm.super_sum.histogram = new TH1D("standard_model_histogram", "", nBins, minBin, maxBin);
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++) {
-                fierz_histogram[side][spin] = new TH1D("fierz_super_sum", "", nBins, minBin, maxBin);
-                sm_histogram[side][spin] = new TH1D("standard_model_super_sum", "", nBins, minBin, maxBin);
+                fierz.histogram[side][spin] = new TH1D("fierz_super_sum", "", nBins, minBin, maxBin);
+                sm.histogram[side][spin] = new TH1D("standard_model_super_sum", "", nBins, minBin, maxBin);
             }
     }
 
