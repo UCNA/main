@@ -418,16 +418,20 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 	double chi2 = 0; 
 	double chi,	E; 
 
-	int n = ucna.data.asymmetry.energy.size();
 	//int n = asymmetry_energy.size();
+	//int n = ucna.data.asymmetry.energy.size();
+	int n = ucna.data.asymmetry.histogram->GetEntries();
 	for (int i = 0; i < n; i++)
 	{
 		double par[2] = {p[0],p[1]}; // A, b
-		E = ucna.data.asymmetry.energy[i];
 		//chi = (asymmetry_values[i] - asymmetry_fit_func(&E,par)) / asymmetry_errors[i];
-		double Y = ucna.data.asymmetry.values[i];
+		//E = ucna.data.asymmetry.energy[i];
+		E = ucna.data.asymmetry.histogram->GetBinCenter(i);
+		//double Y = ucna.data.asymmetry.values[i];
+		double Y = ucna.data.asymmetry.histogram->GetBinContent(i);
         double f = asymmetry_fit_func(&E,par);
-        double eY = ucna.data.asymmetry.errors[i];
+        //double eY = ucna.data.asymmetry.errors[i];
+		double eY = ucna.data.asymmetry.histogram->GetBinError(i);
 		chi = (Y - f)/eY;
 		chi2 += chi*chi; 
 	}
@@ -437,10 +441,14 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 		//double par[2] = {p[1], expected[0][1]};
 		E = ucna.data.super_sum.energy[i];
 		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
-		double Y =      ucna.data    .super_sum.values[i];
-        double f = p[1]*ucna.sm_mc   .super_sum.values[i] 
-                 + p[2]*ucna.fierz_mc.super_sum.values[i];
-        double eY =     ucna.data    .super_sum.errors[i];
+		/*double Y =      ucna.data .super_sum.values[i];
+        double f = p[1]*ucna.sm   .super_sum.values[i] 
+                 + p[2]*ucna.fierz.super_sum.values[i];
+        double eY =     ucna.data .super_sum.errors[i];*/
+		double Y =      ucna.data .super_sum.histogram->GetBinContent(i);
+        double f = p[1]*ucna.sm   .super_sum.histogram->GetBinContent(i) 
+                 + p[2]*ucna.fierz.super_sum.histogram->GetBinContent(i);
+        double eY =     ucna.data .super_sum.histogram->GetBinError(i);
 		chi = (Y-f)/eY;
 		chi2 += chi*chi; 
 	}
