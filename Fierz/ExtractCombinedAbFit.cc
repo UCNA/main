@@ -501,7 +501,8 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 	func->SetParErrors(parErrors);
 	func->SetChisquare(chi2);
 	int ndf = ucna.data.asymmetry.energy.size() 
-            	+ ucna.data.super_sum.energy.size() - nvpar;
+            + ucna.data.super_sum.energy.size() 
+            - nvpar;
 	func->SetNDF(ndf);
     
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
@@ -517,7 +518,7 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 }
 #endif
 
-int fill_super_sum(TString filename, TString title, TString name, TH1D* histogram)
+int fill_data(TString filename, TString title, TString name, TH1D* histogram)
 {
 	/// load the files that contain data histograms
 	TFile* tfile = new TFile(filename);
@@ -534,7 +535,7 @@ int fill_super_sum(TString filename, TString title, TString name, TH1D* histogra
     }
 }
 
-int fill_super_sum(TString filename, TString title, TH1D* histogram[2][2], TH1D* super_sum)
+int fill_simulation(TString filename, TString title, TString name, TH1D* histogram[2][2], TH1D* super_sum)
 {
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
@@ -543,7 +544,7 @@ int fill_super_sum(TString filename, TString title, TH1D* histogram[2][2], TH1D*
 		exit(1);
 	}
 
-    TChain *chain = (TChain*)tfile->Get("SimAnalyzed");
+    TChain *chain = (TChain*)tfile->Get(name);
     if (not chain) {
 		std::cout << "Could not find " << title << std::endl;
 		std::cout << "File not found: " << filename << std::endl;
@@ -703,6 +704,7 @@ int main(int argc, char *argv[])
     /// other than default.
 	srand( time(NULL) );
 
+/*
 	/// load the files that contain data histograms
     TFile *asymmetry_data_tfile = new TFile(
         "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
@@ -736,17 +738,47 @@ int main(int argc, char *argv[])
     if (not ucna.data.super_sum.histogram) {
         printf("Error getting super sum histogram.\n");
         exit(1);
-    }
+    }*/
+/*
+/// load the files that contain data histograms
+TFile *asymmetry_data_tfile = new TFile(
+if (asymmetry_data_tfile->IsZombie())
+{
+    std::cout << "File not found." << std::endl;
+    exit(1);
+}
+
+/// extract the histograms from the files
+ucna.data.asymmetry.histogram = 
+        (TH1D*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
+if (not asymmetry_histogram) {
+    printf("Error getting asymmetry histogram.\n");
+    exit(1);
+}
+*/
+    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+              "Range_0-1000/CorrectAsym/CorrectedAsym.root",
+              "2010 final official asymmetry",
+              "hAsym_Corrected_C",
+              ucna.data.asymmetry.histogram);
+
+    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+		      "OctetAsym_Offic.root");
+              "2010 final official supersum",
+              "Total_Events_SuperSum",
+              ucna.data.super_sum.histogram);
 
     fill_simulation("/home/xuansun/Documents/SimData_Beta/"
                     "SimAnalyzed_Beta.root",
                     "Monte Carlo Standard Model beta spectrum",
+                    "SimAnalyzed",
                     ucna.sm.raw,                        /// mc.sm_histogram,
 					ucna.sm.super_sum.histogram);
 
     fill_simulation("/home/xuansun/Documents/SimData_Beta/"
                     "SimAnalyzed_Beta_fierz.root",
                     "Monte Carlo Fierz beta spectrum",
+                    "SimAnalyzed",
                     ucna.fierz.raw,                     /// mc.fierz_histogram,
 					ucna.fierz.super_sum.histogram);
 
