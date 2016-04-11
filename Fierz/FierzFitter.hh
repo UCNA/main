@@ -65,15 +65,36 @@ int output_histogram(string filename, TH1D* h, double ax, double ay)
 }
 #endif
 
-struct STLhistogram {
+struct UCNAhistogram {
+    //int side;
+    //int spin;
     int bins;
-    int detector;
-    int spin;
     double min, max;
     TH1D* histogram;
     vector<double> energy;        
     vector<double> values;        
-    vector<double> errors;        
+    vector<double> errors;
+
+    UCNAhistogram(int bins, double min, double max) 
+      : bins(bins),
+        min(min), max(max),
+        histogram(NULL),
+        energy(bins),        
+        values(bins),        
+        errors(bins)
+    {}
+    
+    /*
+    UCNAhistogram(int side, int, spin, int bins, double min, double max) 
+      : side(side),
+        spin(spin),
+        bins(bins),
+        min(min), max(max),
+        histogram(NULL),
+        energy(bins),        
+        values(bins),        
+        errors(bins)
+    {}*/
 
     void init(int bins, double min, double max) {
         this->bins = bins;
@@ -104,16 +125,26 @@ struct STLhistogram {
 
 struct UCNAModel {
     int    bins;
-    double min;
-    double max;
+    double min, max;
     TH1D *raw[2][2];
-    //TH1D *super_sum_histogram;
-    //TH1D *super_ratio_histogram;
 
-    //STLhistogram raw[2][2];
-    STLhistogram super_ratio;
-    STLhistogram super_sum;
-    STLhistogram asymmetry;
+    UCNAhistogram super_ratio;
+    UCNAhistogram super_sum;
+    UCNAhistogram asymmetry;
+
+    //UCNAhistogram counts[2][2];
+
+    UCNAModel(int bins, double min, double max) 
+      : bins(bins), min(min), max(max),
+        //raw({{NULL,NULL},{NULL,NULL}}),
+        super_ratio(bins, min, max),
+        super_sum(bins, min, max),
+        asymmetry(bins, min, max)
+    {
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                raw[side][spin] = 0;
+    }
 
     void init(int bins, double min, double max) {
         this->bins = bins;
@@ -142,11 +173,10 @@ struct UCNAEvent {
     double primMomentum;
 };
 
-class UCNAFierzFitter {
-  public: 
+struct UCNAFierzFitter {
+    int bins;
     double min;
     double max;
-    unsigned int bins;
     /*
     TH1D *fierz_super_sum_histogram;
     TH1D *sm_super_sum_histogram;
@@ -157,10 +187,21 @@ class UCNAFierzFitter {
     UCNAModel fierz;
     UCNAModel data;
 
-    UCNAFierzFitter(unsigned int _bins, double _min, double _max) {
-        min = _min;
-        max = _max;
-        bins = _bins;
+    UCNAFierzFitter(int bins, double min, double max)
+      : bins(bins), min(min), max(max),
+        sm(bins, min, max),
+        fierz(bins, min, max),
+        data(bins, min, max) 
+    {}
+
+        /*
+        fierz.super_sum.histogram = 0;
+        sm.super_sum.histogram = 0;
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++) {
+                fierz.raw[side][spin] = 0;
+                sm.raw[side][spin] = 0;
+            }
         fierz.super_sum.histogram = new TH1D("fierz_histogram", "", bins, min, max);
         sm.super_sum.histogram = new TH1D("standard_model_histogram", "", bins, min, max);
         for (int side = 0; side < 2; side++)
@@ -169,6 +210,7 @@ class UCNAFierzFitter {
                 sm.raw[side][spin] = new TH1D("standard_model_super_sum", "", bins, min, max);
             }
     }
+            */
 
     /*
     double evaluate(double *x, double*p) {

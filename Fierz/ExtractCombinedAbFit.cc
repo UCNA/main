@@ -435,7 +435,7 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
         double f = asymmetry_fit_func(&E,par);
         //double eY = ucna.data.asymmetry.errors[i];
 		double eY = ucna.data.asymmetry.histogram->GetBinError(i);
-		chi = (Y - f)/eY;
+		chi = (Y-f)/eY;
 		chi2 += chi*chi; 
 	}
 
@@ -529,7 +529,8 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 }
 #endif
 
-int fill_data(TString filename, TString title, TString name, TH1D* histogram)
+int fill_data(TString filename, TString title, 
+              TString name, TH1D* histogram)
 {
 	/// load the files that contain data histograms
 	TFile* tfile = new TFile(filename);
@@ -552,7 +553,8 @@ int fill_data(TString filename, TString title, TString name, TH1D* histogram)
     return entries;
 }
 
-int fill_simulation(TString filename, TString title, TString name, TH1D* histogram[2][2], TH1D* super_sum)
+int fill_simulation(TString filename, TString title, TString name, 
+                    TH1D* histogram[2][2], TH1D* super_sum)
 {
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
@@ -579,15 +581,13 @@ int fill_simulation(TString filename, TString title, TString name, TH1D* histogr
     chain->SetBranchStatus("ScintPosAdjusted",true);
     chain->SetBranchStatus("ScintPosAdjusted",true);
 
-	/*
-	TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
+	/* TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
 	if (mc_tfile->IsZombie())
 	{
 		std::cout << "Can't make MC file.\n";
 		exit(1);
 	}
-	TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
-    */
+	TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy"); */
 
 	unsigned int nSimmed = 0;	/// events have been simulated after cuts
     int PID, side, type;
