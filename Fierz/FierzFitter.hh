@@ -165,8 +165,8 @@ class UCNAFierzFitter {
         sm.super_sum.histogram = new TH1D("standard_model_histogram", "", nBins, minBin, maxBin);
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++) {
-                fierz.histogram[side][spin] = new TH1D("fierz_super_sum", "", nBins, minBin, maxBin);
-                sm.histogram[side][spin] = new TH1D("standard_model_super_sum", "", nBins, minBin, maxBin);
+                fierz.raw[side][spin] = new TH1D("fierz_super_sum", "", nBins, minBin, maxBin);
+                sm.raw[side][spin] = new TH1D("standard_model_super_sum", "", nBins, minBin, maxBin);
             }
     }
 

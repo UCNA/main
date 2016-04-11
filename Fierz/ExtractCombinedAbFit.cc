@@ -411,7 +411,7 @@ UCNAModel ucna_data; // Need construction.
 UCNAModel ucna_sm_mc; // Need construction.
 UCNAModel ucna_fierz_mc; // Need construction.
 */
-UCNAFierzFitter ucna;
+UCNAFierzFitter ucna(bins, min_E, max_E);
 
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
