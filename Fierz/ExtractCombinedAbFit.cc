@@ -194,8 +194,10 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2])
 
         if (TMath::IsNaN(rel_error)) 
 			rel_error = 0;
+        
+        if (bin % 10 == 0)
+            printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
 
-        printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
         super_sum_histogram->SetBinContent(bin, super_sum);
         super_sum_histogram->SetBinError(bin, super_sum*rel_error);
     }
@@ -532,19 +534,21 @@ int fill_data(TString filename, TString title, TString name, TH1D* histogram)
 	/// load the files that contain data histograms
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
-		std::cout << "Could not find " << title << std::endl;
-		std::cout << "File not found: " << filename << std::endl;
+		std::cout << "Error loading " << title << ":\n";
+		std::cout << "File not found: " << filename << ".\n";
 		exit(1);
 	}
 
     histogram = (TH1D*)tfile->Get(name);
     if (not histogram) {
-		std::cout << "Error getting " << name << " histogram\n";
+		std::cout << "Error in file " << filename << ":\n";
+		std::cout << "Error getting " << title << ":\n";
+		std::cout << "Cannot find histogram named " << name << ".\n";
         exit(1);
     }
 
 	int entries=histogram->GetEntries();
-	std::cout << "Number of entries in " << title << " is " << entries << std::endl;
+	std::cout << "Number of entries in " << title << " is " << entries << ".\n";
     return entries;
 }
 
@@ -552,20 +556,20 @@ int fill_simulation(TString filename, TString title, TString name, TH1D* histogr
 {
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
-		std::cout << "Could not find " << title << std::endl;
-		std::cout << "File not found: " << filename << std::endl;
+		std::cout << "Error loading " << title << ":\n";
+		std::cout << "File not found: " << filename << ".\n";
 		exit(1);
 	}
 
     TChain *chain = (TChain*)tfile->Get(name);
     if (not chain) {
-		std::cout << "Could not find " << title << std::endl;
-		std::cout << "File not found: " << filename << std::endl;
+		std::cout << "Error in file " << filename << ":\n";
+		std::cout << "Error getting " << title << ":\n";
+		std::cout << "Cannot find chain or tree named " << name << ".\n";
         exit(1);
     }
 
 	int nevents = chain->GetEntries();
-	std::cout << "Total number of Monte Carlo entries without cuts: " << nevents << std::endl;
 	chain->SetBranchStatus("*",false);
 	chain->SetBranchStatus("PID",true);
 	chain->SetBranchStatus("side",true);
@@ -682,6 +686,7 @@ int fill_simulation(TString filename, TString title, TString name, TH1D* histogr
 	}
     #endif
     
+	std::cout << "Total number of Monte Carlo entries without cuts: " << nevents << std::endl;
 	std::cout << "Total number of Monte Carlo entries with cuts: " << nSimmed << std::endl;
 
 	//tntuple->SetDirectory(mc_tfile);
