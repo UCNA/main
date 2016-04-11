@@ -578,7 +578,14 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 
 int fill_simulation(string filename, string title, TH1D* histogram, TH1D* super_sum)
 {
-    TChain *chain = (TChain*)fierz_mc_tfile->Get("SimAnalyzed");
+	TFile* tfile = new TFile(filename);
+	if (tfile->IsZombie()) {
+		std::cout << "Could not find " << title << std::endl;
+		std::cout << "File not found: " << filename << std::endl;
+		exit(1);
+	}
+
+    TChain *chain = (TChain*)tfile->Get("SimAnalyzed");
     if (not chain) {
         printf("Error getting Fierz Monte Carlo.\n");
         exit(1);
@@ -794,8 +801,7 @@ int main(int argc, char *argv[])
 
 	//mc_tfile->Close();
 
-/*
-    for (int side=0; side<2; side++)
+    /* for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
 		{
             normalize(mc.fierz_histogram[side][spin], min_E, max_E);
