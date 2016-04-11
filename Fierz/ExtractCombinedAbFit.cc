@@ -517,8 +517,24 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 }
 #endif
 
+int fill_super_sum(TString filename, TString title, TString name, TH1D* histogram)
+{
+	/// load the files that contain data histograms
+	TFile* tfile = new TFile(filename);
+	if (tfile->IsZombie()) {
+		std::cout << "Could not find " << title << std::endl;
+		std::cout << "File not found: " << filename << std::endl;
+		exit(1);
+	}
 
-int fill_simulation(TString filename, TString title, TH1D* histogram[2][2], TH1D* super_sum)
+    histogram = (TH1D*)tfile->Get(name);
+    if (not histogram) {
+		std::cout << "Error getting " << name << " histogram\n";
+        exit(1);
+    }
+}
+
+int fill_super_sum(TString filename, TString title, TH1D* histogram[2][2], TH1D* super_sum)
 {
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
@@ -529,7 +545,8 @@ int fill_simulation(TString filename, TString title, TH1D* histogram[2][2], TH1D
 
     TChain *chain = (TChain*)tfile->Get("SimAnalyzed");
     if (not chain) {
-        printf("Error getting Fierz Monte Carlo.\n");
+		std::cout << "Could not find " << title << std::endl;
+		std::cout << "File not found: " << filename << std::endl;
         exit(1);
     }
 
