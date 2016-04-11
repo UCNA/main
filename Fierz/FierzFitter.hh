@@ -157,7 +157,7 @@ class UCNAFierzFitter {
     UCNAModel fierz;
     UCNAModel data;
 
-    FierzHistogram(unsigned int _nBins, double _minBin, double _maxBin) {
+    UCNAFierzFitter(unsigned int _nBins, double _minBin, double _maxBin) {
         minBin = _minBin;
         maxBin = _maxBin;
         nBins = _nBins;

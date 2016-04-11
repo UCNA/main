@@ -533,6 +533,10 @@ int fill_data(TString filename, TString title, TString name, TH1D* histogram)
 		std::cout << "Error getting " << name << " histogram\n";
         exit(1);
     }
+
+	int entries=histogram->GetEntries();
+	std::cout << "Number of entries in " << title << " is " << entries << std::endl;
+    return entries;
 }
 
 int fill_simulation(TString filename, TString title, TString name, TH1D* histogram[2][2], TH1D* super_sum)
@@ -681,6 +685,8 @@ int fill_simulation(TString filename, TString title, TString name, TH1D* histogr
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             normalize(histogram[side][spin], min_E, max_E);
+
+    return nSimmed;
 }
 
 
@@ -763,7 +769,7 @@ if (not asymmetry_histogram) {
               ucna.data.asymmetry.histogram);
 
     fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-		      "OctetAsym_Offic.root");
+		      "OctetAsym_Offic.root",
               "2010 final official supersum",
               "Total_Events_SuperSum",
               ucna.data.super_sum.histogram);
@@ -1020,8 +1026,8 @@ if (not asymmetry_histogram) {
     canvas->SaveAs(asymmetry_pdf_filename);
 
     /// Compute the super sums
-    ucna.data.super_sum.histogram = compute_super_sum(ucna.data.raw);
-	std::cout << "Number of super sum entries " << (int)ucna.data.super_sum.histogram->GetEntries() << std::endl;
+    // TODO make seperate from the loaded one: 
+    // ucna.data.super_sum.histogram = compute_super_sum(ucna.data.raw);
     normalize(ucna.data.super_sum.histogram, min_E, max_E);
     ucna.data.super_sum.histogram->SetLineColor(2);
 	ucna.data.super_sum.histogram->SetStats(0);
