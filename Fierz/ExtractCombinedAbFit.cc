@@ -881,10 +881,32 @@ if (not asymmetry_histogram) {
             (TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1") }};
 	#endif
 #endif
+    /*
     ucna.data.raw[0][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_Off;1");
     ucna.data.raw[0][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_On;1");
     ucna.data.raw[1][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_Off;1");
     ucna.data.raw[1][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1");
+    */
+    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+              "OctetAsym_Offic.root",
+              "2010 final official east afp off spectrum",
+              "hTotalEvents_E_off;1",
+              ucna.data.raw[0][0]);
+    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+              "OctetAsym_Offic.root",
+              "2010 final official east afp on spectrum",
+              "hTotalEvents_E_on;1",
+              ucna.data.raw[0][1]);
+    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+              "OctetAsym_Offic.root",
+              "2010 final official west afp off spectrum",
+              "hTotalEvents_W_off;1",
+              ucna.data.raw[1][0]);
+    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+              "OctetAsym_Offic.root",
+              "2010 final official west afp on spectrum",
+              "hTotalEvents_W_on;1",
+              ucna.data.raw[1][1]);
     printf("Number of bins in data %d\n", ucna.data.raw[0][0]->GetNbinsX());
 
     /* Already background subtracted...
