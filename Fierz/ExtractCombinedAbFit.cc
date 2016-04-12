@@ -178,22 +178,39 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2] )
 /**
  * S := r[0][0] + r[1][1] + r[0][1] + r[1][0]
  */
-TH1D* compute_super_sum(TH1D* rate_histogram[2][2]) 
+TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum_histogram) 
 {
-    TH1D *super_sum_histogram = new TH1D(*(rate_histogram[0][0]));
+    //TH1D *super_sum_histogram = new TH1D(*(rate_histogram[0][0]));
+    for (int side=0; side<2; side++)
+        for (int spin=0; spin<2; spin++)
+            if (not histogram[side][spin]) {
+                std::cout << "Error: histogram is not constructed.\n";
+                std::cout << "Side: "<< side << " Spin: " << spin <<".\n";
+                exit(1);
+            }
+
+    if (not super_sum_histogram) {
+        std::cout << "Error: super sum histogram is not constructed.\n";
+        exit(1);
+    }
+
     int bins = super_sum_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
-                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+                r[side][spin] = histogram[side][spin]->GetBinContent(bin);
         double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
         double rel_error = TMath::Sqrt( 1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]);
-        if ( TMath::IsNaN(super_sum)) 
+        if ( TMath::IsNaN(super_sum)) {
             super_sum = 0;
+            std::cout << "Warning: super sum: division by zero.\n";
+        }
 
-        if (TMath::IsNaN(rel_error)) 
+        if (TMath::IsNaN(rel_error)) {
 			rel_error = 0;
+            std::cout << "Warning: super sum error: division by zero.\n";
+        }
         
         if (bin % 10 == 0)
             printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
@@ -478,7 +495,9 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 
 	/// fill data structure for fit (coordinates + values + errors) 
 	std::cout << "Do global fit" << std::endl;
-    	ucna.data.asymmetry.fill(asymmetry);
+    ucna.data.asymmetry.fill(asymmetry);
+    ucna.data.super_sum.fill(super_sum);
+    //ucna.data.super_ratio.fill(super_ratio);
 
 	/// set up the minuit fitter
 	TVirtualFitter::SetDefaultFitter("Minuit");
@@ -712,7 +731,7 @@ int fill_simulation(TString filename, TString title, TString name,
 	//tntuple->Write();
 
 	/// compute and normalize super sum
-    super_sum = compute_super_sum(histogram);
+    compute_super_sum(histogram, super_sum);
     normalize(super_sum, min_E, max_E);
 
     for (int side=0; side<2; side++)
