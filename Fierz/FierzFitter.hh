@@ -95,7 +95,9 @@ struct UCNAhistogram {
         energy(bins),        
         values(bins),        
         errors(bins)
-    {}
+    {
+        
+    }
     /*
     UCNAhistogram(int side, int, spin, int bins, double min, double max) 
       : side(side),

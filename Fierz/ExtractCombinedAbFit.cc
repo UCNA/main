@@ -442,12 +442,13 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 	//n = fierzratio_energy.size();
 	for (int i = 0; i < n; i++) { 
 		//double par[2] = {p[1], expected[0][1]};
-		E = ucna.data.super_sum.energy[i];
+		//E = ucna.data.super_sum.energy[i];
 		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
 		/*double Y =      ucna.data .super_sum.values[i];
         double f = p[1]*ucna.sm   .super_sum.values[i] 
                  + p[2]*ucna.fierz.super_sum.values[i];
         double eY =     ucna.data .super_sum.errors[i];*/
+		E = ucna.data.super_sum.histogram->GetBinCenter(i);
 		double Y =      ucna.data .super_sum.histogram->GetBinContent(i);
         double f = p[1]*ucna.sm   .super_sum.histogram->GetBinContent(i) 
                  + p[2]*ucna.fierz.super_sum.histogram->GetBinContent(i);
