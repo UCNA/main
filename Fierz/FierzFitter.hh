@@ -96,7 +96,7 @@ struct UCNAhistogram {
         values(bins),        
         errors(bins)
     {
-        
+        histogram = new TH1D(name, title, bins, min, max);
     }
     /*
     UCNAhistogram(int side, int, spin, int bins, double min, double max) 
@@ -108,7 +108,7 @@ struct UCNAhistogram {
         energy(bins),        
         values(bins),        
         errors(bins)
-    {}*/
+    {}
 
     void init(int bins, double min, double max) {
         this->bins = bins;
@@ -118,6 +118,7 @@ struct UCNAhistogram {
 	    values = vector<double>(bins);
 	    errors = vector<double>(bins);
     }
+    */
 
     void fill(TH1D *histogram) {
         TAxis *axis  = histogram->GetXaxis();
@@ -166,9 +167,9 @@ struct UCNAModel {
     UCNAModel(TString name, TString title, int bins, double min, double max) 
       : name(name), title(title),
         bins(bins), min(min), max(max),
-        super_ratio(name, title, bins, min, max),
-        super_sum(name, title, bins, min, max),
-        asymmetry(name, title, bins, min, max)
+        super_ratio(name + "_super_ratio", title, bins, min, max),
+        super_sum(name + "_super_sum", title, bins, min, max),
+        asymmetry(name + "_asymmetry", title, bins, min, max)
     {
         for (int side = 0; side < 2; side++) {
             TString sub_name = name;
@@ -193,6 +194,7 @@ struct UCNAModel {
         }
     }
 
+    /*
     void init(int bins, double min, double max) {
         this->bins = bins;
         this->min = min;
@@ -207,6 +209,7 @@ struct UCNAModel {
         super_sum.init(bins, min, max);
         asymmetry.init(bins, min, max);
    }
+   */
 };
 
 

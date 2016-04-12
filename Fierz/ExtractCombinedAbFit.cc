@@ -541,6 +541,11 @@ int fill_data(TString filename, TString title,
 		exit(1);
 	}
 
+    if (histogram) {
+		std::cout << "Warning: histogram " << title << " already exists and is being deleted.\n";
+        delete histogram;
+    }
+
     histogram = (TH1D*)tfile->Get(name);
     if (not histogram) {
 		std::cout << "Error in file " << filename << ":\n";
@@ -561,8 +566,14 @@ int fill_simulation(TString filename, TString title, TString name,
         for (int spin=0; spin<2; spin++)
             if (not histogram[side][spin]) {
                 std::cout << "Error: histogram for "<< name << " is not constructed.\n";
+                std::cout << "Side: "<< side << " Spin: " << spin <<".\n";
                 exit(1);
             }
+
+    if (not super_sum) {
+        std::cout << "Error: super sum histogram for "<< name << " is not constructed.\n";
+        exit(1);
+    }
 
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
