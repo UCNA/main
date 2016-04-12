@@ -127,6 +127,8 @@ struct UCNAModel {
     int    bins;
     double min, max;
     TH1D *raw[2][2];
+    TString name;
+    TString title;
 
     UCNAhistogram super_ratio;
     UCNAhistogram super_sum;
@@ -144,6 +146,36 @@ struct UCNAModel {
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 raw[side][spin] = 0;
+    }
+
+    UCNAModel(TString name, TString title, int bins, double min, double max) 
+      : bins(bins), min(min), max(max),
+        //raw({{NULL,NULL},{NULL,NULL}}),
+        super_ratio(name, title, bins, min, max),
+        super_sum(name, title, bins, min, max),
+        asymmetry(name, title, bins, min, max)
+    {
+        for (int side = 0; side < 2; side++) {
+            TString sub_name = name;
+            TString sub_title = title;
+            if (not side) {
+                sub_name += "_E";
+                sub_title += " East";
+            } else {
+                sub_name += "_W";
+                sub_title += " West";
+            }
+            for (int spin = 0; spin < 2; spin++) {
+                if (not spin) {
+                    sub_name += "_off";
+                    sub_title += " AFP off";
+                } else {
+                    sub_name += "_on";
+                    sub_title += " AFP on";
+                }
+                raw[side][spin] = new TH1D(sub_name, sub_title, bins, min, max);
+            }
+        }
     }
 
     void init(int bins, double min, double max) {

@@ -556,7 +556,6 @@ int fill_data(TString filename, TString title,
 int fill_simulation(TString filename, TString title, TString name, 
                     TH1D* histogram[2][2], TH1D* super_sum)
 {
-
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
 		std::cout << "Error loading " << title << ":\n";
