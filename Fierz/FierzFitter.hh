@@ -342,7 +342,10 @@ double evaluate_expected_fierz(double m, double n, double min, double max, int i
 		h1->SetBinContent(K, y1);
 		h2->SetBinContent(K, y2);
 	}
-	return h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
+	double rv = h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
+    delete h1;
+    delete h2;
+    return rv;
 }
 
 

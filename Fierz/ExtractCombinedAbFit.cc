@@ -76,7 +76,7 @@ double fierz_beta_spectrum(const double *val, const double *par)
 		return 0;                               /// zero outside range
 
 	const double b = par[0];                    /// Fierz parameter
-	const int n = par[1];                    	/// Fierz exponent
+	const int    n = par[1];                    /// Fierz exponent
 	const double E = K + m_e;                   /// electron energy
 	const double e = Q - K;                     /// neutrino energy
 	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
@@ -926,6 +926,8 @@ if (not asymmetry_histogram) {
     ucna.data.raw[1][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_Off;1");
     ucna.data.raw[1][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1");
     */
+
+    /* TODO figure out where these went.
     fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
               "OctetAsym_Offic.root",
               "2010 final official east afp off spectrum",
@@ -947,6 +949,7 @@ if (not asymmetry_histogram) {
               "hTotalEvents_W_on;1",
               ucna.data.raw[1][1]);
     printf("Number of bins in data %d\n", ucna.data.raw[0][0]->GetNbinsX());
+    */
 
     /* Already background subtracted...
         TH1D *background_histogram = (TH1D*)ucna_data_tfile->Get("Combined_Events_E000");
@@ -955,6 +958,7 @@ if (not asymmetry_histogram) {
         background_histogram->Draw("");
     */
 
+/*
 	for (int side = 0; side < 2; side++)
 		for (int spin = 0; spin < 2; spin++)
 		{
@@ -967,6 +971,7 @@ if (not asymmetry_histogram) {
 				exit(1);
 			}
 		}
+        */
 
 	/*
     TH1D *ucna.correction_histogram = (TH1D*)ucna.correction_histogram->Get("Delta_3_C");
@@ -1061,7 +1066,7 @@ if (not asymmetry_histogram) {
     /// Compute the super sums
     // TODO make seperate from the loaded one: 
     // ucna.data.super_sum.histogram = compute_super_sum(ucna.data.raw);
-    normalize(ucna.data.super_sum.histogram, min_E, max_E);
+    //normalize(ucna.data.super_sum.histogram, min_E, max_E);
     ucna.data.super_sum.histogram->SetLineColor(2);
 	ucna.data.super_sum.histogram->SetStats(0);
     ucna.data.super_sum.histogram->Draw("");
