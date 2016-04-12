@@ -68,6 +68,8 @@ int output_histogram(string filename, TH1D* h, double ax, double ay)
 struct UCNAhistogram {
     //int side;
     //int spin;
+    TString name;
+    TString title;
     int bins;
     double min, max;
     TH1D* histogram;
@@ -76,14 +78,24 @@ struct UCNAhistogram {
     vector<double> errors;
 
     UCNAhistogram(int bins, double min, double max) 
-      : bins(bins),
-        min(min), max(max),
+      : name(""),
+        title(""),
+        bins(bins), min(min), max(max),
         histogram(NULL),
         energy(bins),        
         values(bins),        
         errors(bins)
     {}
     
+    UCNAhistogram(TString name, TString title, int bins, double min, double max) 
+      : name(name),
+        title(title),
+        bins(bins), min(min), max(max),
+        histogram(NULL),
+        energy(bins),        
+        values(bins),        
+        errors(bins)
+    {}
     /*
     UCNAhistogram(int side, int, spin, int bins, double min, double max) 
       : side(side),
@@ -124,11 +136,11 @@ struct UCNAhistogram {
 };
 
 struct UCNAModel {
+    TString name;
+    TString title;
     int    bins;
     double min, max;
     TH1D *raw[2][2];
-    TString name;
-    TString title;
 
     UCNAhistogram super_ratio;
     UCNAhistogram super_sum;
@@ -149,8 +161,8 @@ struct UCNAModel {
     }
 
     UCNAModel(TString name, TString title, int bins, double min, double max) 
-      : bins(bins), min(min), max(max),
-        //raw({{NULL,NULL},{NULL,NULL}}),
+      : name(name), title(title),
+        bins(bins), min(min), max(max),
         super_ratio(name, title, bins, min, max),
         super_sum(name, title, bins, min, max),
         asymmetry(name, title, bins, min, max)
@@ -221,9 +233,9 @@ struct UCNAFierzFitter {
 
     UCNAFierzFitter(int bins, double min, double max)
       : bins(bins), min(min), max(max),
-        sm(bins, min, max),
-        fierz(bins, min, max),
-        data(bins, min, max) 
+        sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
+        fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
+        data("ucna_data_", "UCNA data", bins, min, max) 
     {}
 
         /*
