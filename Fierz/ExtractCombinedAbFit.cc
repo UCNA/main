@@ -557,6 +557,13 @@ int fill_data(TString filename, TString title,
 int fill_simulation(TString filename, TString title, TString name, 
                     TH1D* histogram[2][2], TH1D* super_sum)
 {
+    for (int side=0; side<2; side++)
+        for (int spin=0; spin<2; spin++)
+            if (not histogram[side][spin]) {
+                std::cout << "Error: histogram for "<< name << " is not constructed.\n";
+                exit(1);
+            }
+
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
 		std::cout << "Error loading " << title << ":\n";
