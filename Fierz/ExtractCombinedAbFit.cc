@@ -195,11 +195,22 @@ TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum_histogram)
     }
 
     int bins = super_sum_histogram->GetNbinsX();
+    for (int side = 0; side < 2; side++)
+        for (int spin = 0; spin < 2; spin++) {
+            int ss_bins = histogram[side][spin]->GetNbinsX();
+            if (bins != ss_bins and ss_bins == 0) {
+                std::cout << "Error: super sum and side spin histogram sizes don't match.\n";
+                std::cout << "super sum bins: " << bins << "\n";
+                exit(1);
+            }
+        }
+
     for (int bin = 1; bin < bins+2; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = histogram[side][spin]->GetBinContent(bin);
+
         double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
         double rel_error = TMath::Sqrt( 1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]);
         if ( TMath::IsNaN(super_sum)) {
