@@ -149,7 +149,8 @@ struct UCNAModel {
     //UCNAhistogram counts[2][2];
 
     UCNAModel(int bins, double min, double max) 
-      : bins(bins), min(min), max(max),
+      : name(""), title(""), 
+        bins(bins), min(min), max(max),
         //raw({{NULL,NULL},{NULL,NULL}}),
         super_ratio(bins, min, max),
         super_sum(bins, min, max),
@@ -227,9 +228,9 @@ struct UCNAFierzFitter {
     TH1D *fierz_histogram[2][2];
     TH1D *sm_histogram[2][2];
     */
-    UCNAModel sm;
-    UCNAModel fierz;
-    UCNAModel data;
+    UCNAModel sm;           /// Standard Model Monte Carlo
+    UCNAModel fierz;        /// Fierz Monte Carlo
+    UCNAModel data;         /// Measured data to fit
 
     UCNAFierzFitter(int bins, double min, double max)
       : bins(bins), min(min), max(max),
