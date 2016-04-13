@@ -446,9 +446,9 @@ UCNAFierzFitter ucna(bins, min_E, max_E);
 
 void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
-	double chi2 = 0; 
-	double chi,	E; 
-
+	double chi2=0, chi;
+    int n = ucna.bins;
+/*
 	//int n = asymmetry_energy.size();
 	//int n = ucna.data.asymmetry.energy.size();
 	int n = ucna.data.asymmetry.histogram->GetEntries();
@@ -463,12 +463,14 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
         double f = asymmetry_fit_func(&E,par);
         //double eY = ucna.data.asymmetry.errors[i];
 		double eY = ucna.data.asymmetry.histogram->GetBinError(i);
+        assert(eY > 0);
 		chi = (Y-f)/eY;
 		chi2 += chi*chi; 
 	}
+*/
 
 	//n = fierzratio_energy.size();
-	for (int i = 0; i < n; i++) { 
+	for (int i=0; i<n; i++) { 
 		//double par[2] = {p[1], expected[0][1]};
 		//E = ucna.data.super_sum.energy[i];
 		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
@@ -476,11 +478,12 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
         double f = p[1]*ucna.sm   .super_sum.values[i] 
                  + p[2]*ucna.fierz.super_sum.values[i];
         double eY =     ucna.data .super_sum.errors[i];*/
-		E = ucna.data.super_sum.histogram->GetBinCenter(i);
-		double Y =      ucna.data .super_sum.histogram->GetBinContent(i);
+		//double E      = ucna.data .super_sum.histogram->GetBinCenter(i);
+		double Y      = ucna.data .super_sum.histogram->GetBinContent(i);
+        double eY     = ucna.data .super_sum.histogram->GetBinError(i);
         double f = p[1]*ucna.sm   .super_sum.histogram->GetBinContent(i) 
                  + p[2]*ucna.fierz.super_sum.histogram->GetBinContent(i);
-        double eY =     ucna.data .super_sum.histogram->GetBinError(i);
+        assert(eY > 0);
 		chi = (Y-f)/eY;
 		chi2 += chi*chi; 
 	}
@@ -870,6 +873,10 @@ if (not asymmetry_histogram) {
         }*/
 
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
+    if (not canvas) {
+        std::cout << "Can't open new canvas.\n";
+        exit(0);
+    }
 
 	ucna.fierz.super_sum.histogram->SetStats(0);
     ucna.fierz.super_sum.histogram->SetLineColor(3);
