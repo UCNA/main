@@ -98,6 +98,9 @@ struct UCNAhistogram {
     {
         histogram = new TH1D(name, title, bins, min, max);
     }
+
+    normalize();
+
     /*
     UCNAhistogram(int side, int, spin, int bins, double min, double max) 
       : side(side),
@@ -141,9 +144,9 @@ struct UCNAhistogram {
 struct UCNAModel {
     TString name;
     TString title;
-    int    bins;
-    double min, max;
-    TH1D *raw[2][2];
+    int     bins;
+    double  min, max;
+    TH1D*   raw[2][2];
 
     UCNAhistogram super_ratio;
     UCNAhistogram super_sum;

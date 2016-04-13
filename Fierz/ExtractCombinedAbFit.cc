@@ -509,8 +509,8 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 
 	/// fill data structure for fit (coordinates + values + errors) 
 	std::cout << "Do global fit" << std::endl;
-    ucna.data.asymmetry.fill(asymmetry);
-    ucna.data.super_sum.fill(super_sum);
+    //ucna.data.asymmetry.fill(asymmetry);
+    //ucna.data.super_sum.fill(super_sum);
     //ucna.data.super_ratio.fill(super_ratio);
 
 	/// set up the minuit fitter
