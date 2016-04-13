@@ -3,26 +3,28 @@
 
 double UCNAhistogram::normalize() 
 {
-	int bin_min = hist->FindBin(min);
-	int bin_max = hist->FindBin(max);
+	int bin_min = histogram->FindBin(min);
+	int bin_max = histogram->FindBin(max);
     double integrand = 1;
-    integrand += (hitogram->GetBinCeter(bin_min) - min)
+    integrand += (histogram->GetBinCenter(bin_min) - min)
                 / histogram->GetBinWidth(bin_min)
                 / histogram->GetBinWidth(bin_min)
                 * histogram->GetBinContent(bin_min)
-               + (max - hitogram->GetBinCeter(bin_max))
+               + (max - histogram->GetBinCenter(bin_max))
                 / histogram->GetBinWidth(bin_max)
                 / histogram->GetBinWidth(bin_max)
                 * histogram->GetBinContent(bin_max);
 
-    for (int bin=bin_min+1; bin<min_max; bin++)
+    for (int bin=bin_min+1; bin<bin_max; bin++)
         integrand += histogram->GetBinContent(bin)
                    / histogram->GetBinWidth(bin);
 
 	histogram->Scale(1/integrand);
+    return integrand;
 }
 
 
+#if 0
 void normalize(double min, double max) 
 {
 	int bin_min = hist->FindBin(min);
@@ -184,4 +186,4 @@ TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction)
     return asymmetry_histogram;
 }
 
-
+#endif

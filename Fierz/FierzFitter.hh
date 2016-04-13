@@ -99,7 +99,7 @@ struct UCNAhistogram {
         histogram = new TH1D(name, title, bins, min, max);
     }
 
-    normalize();
+    double normalize();
 
     /*
     UCNAhistogram(int side, int, spin, int bins, double min, double max) 
