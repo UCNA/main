@@ -195,7 +195,7 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
         for (int spin=0; spin<2; spin++)
             if (not rate_histogram[side][spin]) {
                 std::cout << "Error: rate histogram on side: "
-                          << (side? "east" : "west") << "and afp: "
+                          << (side? "east":"west") << "and afp: "
                           << (spin? "off":"on") << "is not constructed.\n";
                 exit(1);
             }
