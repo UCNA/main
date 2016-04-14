@@ -176,11 +176,10 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2] )
 
 
 /**
- * S := r[0][0] + r[1][1] + r[0][1] + r[1][0]
+ * S := sqrt(r[0][0] r[1][1]) + sqrt(r[0][1] + r[1][0])
  */
 TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum_histogram) 
 {
-    //TH1D *super_sum_histogram = new TH1D(*(rate_histogram[0][0]));
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not histogram[side][spin]) {
@@ -195,34 +194,41 @@ TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum_histogram)
     }
 
     int bins = super_sum_histogram->GetNbinsX();
-    for (int side = 0; side < 2; side++)
+    for (int side=0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++) {
             int ss_bins = histogram[side][spin]->GetNbinsX();
-            if (bins != ss_bins and ss_bins == 0) {
+            if (bins != ss_bins) {
                 std::cout << "Error: super sum and side spin histogram sizes don't match.\n";
+                std::cout << "super sum bins: " << bins << "\n";
+                exit(1);
+            }
+            if (ss_bins <= 0) {
+                std::cout << "Error: bad bin number.\n";
                 std::cout << "super sum bins: " << bins << "\n";
                 exit(1);
             }
         }
 
-    for (int bin = 1; bin < bins+2; bin++) {
+    for (int bin=1; bin < bins+2; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = histogram[side][spin]->GetBinContent(bin);
 
         double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
-        double rel_error = TMath::Sqrt( 1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]);
-        if ( TMath::IsNaN(super_sum)) {
+        double rel_error = TMath::Sqrt(1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]);
+        if (TMath::IsNaN(super_sum)) {
             super_sum = 0;
-            std::cout << "Warning: super sum: division by zero.\n";
-        }
+            std::cout << "Warning: super sum is not a number: "<<super_sum<<".\n";
+        } else
+            std::cout << "Warning: super sum is zero.\n";
 
         if (TMath::IsNaN(rel_error)) {
 			rel_error = 0;
             std::cout << "Warning: super sum error: division by zero.\n";
-        }
-        
+        } else if (rel_error <= 0) 
+            std::cout << "Warning: super sum error: error is non positive.\n";
+
         if (bin % 10 == 0)
             printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
 
@@ -233,8 +239,7 @@ TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum_histogram)
 }
 
 
-TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) 
-{
+TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
     TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) 
@@ -397,6 +402,14 @@ void output_histogram(TString filename, TH1D* h, double ax, double ay)
 		ofs << x << '\t' << r << '\t' << sr << endl;
 	}
 	ofs.close();
+}
+
+
+double random(double min, double max) 
+{
+    //double p = (large_prime*nSimmed % rand_bins)/rand_bins;
+    double p = rand();
+    return min + (max-min)*p/RAND_MAX;
 }
 
 
@@ -670,10 +683,11 @@ int fill_simulation(TString filename, TString title, TString name,
         /// Type 0, Type I, Type II/III events 
         if (type<4) { 
             /// fill with loading efficiency 
-			double p = (large_prime*nSimmed % rand_bins)/rand_bins;
+            double p = random(0,1);
 			double afp = (p < afp_off_prob)? -1 : +1;
-            //bool spin = (afp * primMomentum[2]) < 0? EAST : WEST;
             bool spin = (afp < 0)? EAST : WEST;
+            //std::cout <<"energy: "<<energy<<" side: "<<"side: "<<side
+            //          <<" spin: "<<spin<<" afp: "<<afp<<" p: "<<p<<".\n";
             histogram[side][spin]->Fill(energy, 1);
 			//tntuple->Fill(side, spin, energy);
 			nSimmed++;
@@ -746,11 +760,13 @@ int fill_simulation(TString filename, TString title, TString name,
 
 	/// compute and normalize super sum
     compute_super_sum(histogram, super_sum);
-    normalize(super_sum, min_E, max_E);
+    //normalize(super_sum, min_E, max_E);
 
+    /*
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             normalize(histogram[side][spin], min_E, max_E);
+            */
 
     return nSimmed;
 }
