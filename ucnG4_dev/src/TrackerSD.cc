@@ -60,7 +60,9 @@ void TrackerSD::Initialize(G4HCofThisEvent* HCE) {
 double TrackerSD::quenchFactor(double E) const {
 	const G4double a = 116.7*MeV*cm*cm/g;		// dEdx fit parameter a*e^(b*E)
 	const G4double b = -0.7287;					// dEdx fit parameter a*e^(b*E)
-	const G4double dEdx = a*rho*pow(E/keV,b);	// estimated dE/dx
+	const G4double c = 1.35*MeV*cm*cm/g;	       // dEdx fit parameter for addition of BradF's term at higher energies (c*(1-exp(d*E)))
+	const G4double d = 0.00125;		       // dEdx fit parameter for addition of BradF's term at higher energies (c*(1-exp(d*E)))
+	const G4double dEdx = a*rho*pow(E/keV,b) + c*rho*(1-exp(-d*E/keV));	// estimated dE/dx
 	return 1.0/(1+kb*dEdx);
 }
 
