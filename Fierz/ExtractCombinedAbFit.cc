@@ -157,9 +157,20 @@ double evaluate_expected_fierz(double min, double max)
 /**
  * Si := (r[0][0] r[1][1]) / (r[0][1] * r[1][0])
  */
-TH1D* compute_super_ratio(TH1D* rate_histogram[2][2] ) 
+TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogram = NULL) 
 {
-    TH1D *super_ratio_histogram = new TH1D(*(rate_histogram[0][0]));
+    for (int side=0; side<2; side++)
+        for (int spin=0; spin<2; spin++)
+            if (not rate_histogram[side][spin]) {
+                std::cout << "Error: rate histogram on side: "
+                          << (side? "east" : "west") << "and afp: "
+                          << (spin? "off":"on") << "is not constructed.\n";
+                exit(1);
+            }
+
+    if (not super_ratio_histogram)
+        super_ratio_histogram = new TH1D(*(rate_histogram[0][0]));
+
     int bins = super_ratio_histogram->GetNbinsX();
 	std::cout << "Number of bins " << bins << std::endl;
     for (int bin = 1; bin < bins+2; bin++) {
@@ -178,25 +189,26 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2] )
 /**
  * S := sqrt(r[0][0] r[1][1]) + sqrt(r[0][1] + r[1][0])
  */
-TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum_histogram) 
+TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL) 
 {
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
-            if (not histogram[side][spin]) {
-                std::cout << "Error: histogram is not constructed.\n";
-                std::cout << "Side: "<< side << " Spin: " << spin <<".\n";
+            if (not rate_histogram[side][spin]) {
+                std::cout << "Error: rate histogram on side: "
+                          << (side? "east" : "west") << "and afp: "
+                          << (spin? "off":"on") << "is not constructed.\n";
                 exit(1);
             }
 
     if (not super_sum_histogram) {
-        std::cout << "Error: super sum histogram is not constructed.\n";
-        exit(1);
+        std::cout << "Warning: super sum histogram is not constructed.\n";
+        super_sum_histogram = new TH1D(*(rate_histogram[0][0]));
     }
 
     int bins = super_sum_histogram->GetNbinsX();
     for (int side=0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++) {
-            int ss_bins = histogram[side][spin]->GetNbinsX();
+            int ss_bins = rate_histogram[side][spin]->GetNbinsX();
             if (bins != ss_bins) {
                 std::cout << "Error: super sum and side spin histogram sizes don't match.\n";
                 std::cout << "super sum bins: " << bins << "\n";
@@ -213,27 +225,27 @@ TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum_histogram)
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
-                r[side][spin] = histogram[side][spin]->GetBinContent(bin);
+                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
 
         double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
-        double rel_error = TMath::Sqrt(1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]);
+        double error = TMath::Sqrt(1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]) * super_sum;
         if (TMath::IsNaN(super_sum)) {
             super_sum = 0;
             std::cout << "Warning: super sum is not a number: "<<super_sum<<".\n";
-        } else
+        } else if (super_sum == 0)
             std::cout << "Warning: super sum is zero.\n";
 
-        if (TMath::IsNaN(rel_error)) {
-			rel_error = 0;
+        if (TMath::IsNaN(error)) {
+			error = 0;
             std::cout << "Warning: super sum error: division by zero.\n";
-        } else if (rel_error <= 0) 
+        } else if (error <= 0) 
             std::cout << "Warning: super sum error: error is non positive.\n";
 
         if (bin % 10 == 0)
             printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
 
         super_sum_histogram->SetBinContent(bin, super_sum);
-        super_sum_histogram->SetBinError(bin, super_sum*rel_error);
+        super_sum_histogram->SetBinError(bin, error);
     }
     return super_sum_histogram;
 }
@@ -496,9 +508,10 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
         double eY     = ucna.data .super_sum.histogram->GetBinError(i);
         double f = p[1]*ucna.sm   .super_sum.histogram->GetBinContent(i) 
                  + p[2]*ucna.fierz.super_sum.histogram->GetBinContent(i);
-        assert(eY > 0);
-		chi = (Y-f)/eY;
-		chi2 += chi*chi; 
+        if(eY > 0) {
+		    chi = (Y-f)/eY;
+		    chi2 += chi*chi; 
+        }
 	}
 	fval = chi2; 
 }
