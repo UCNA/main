@@ -259,20 +259,30 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
 TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
     TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
-    for (int bin = 1; bin < bins+2; bin++) 
+    for (int bin=1; bin <= bins; bin++) 
 	{
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
-        double sqrt_super_ratio = TMath::Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
-        if ( TMath::IsNaN(sqrt_super_ratio) ) 
-            sqrt_super_ratio = 0;
-		double denom = 1 + sqrt_super_ratio;
-        double asymmetry = (1 - sqrt_super_ratio) / denom;
-		double sqrt_inverse_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]);
-		double asymmetry_error = sqrt_inverse_sum * sqrt_super_ratio / (denom * denom);  
+        double super_ratio = TMath::Sqrt(r[0][0]*r[1][1]/r[0][1]/r[1][0]);
+        if (TMath::IsNaN(super_ratio)) {
+            std::cout << "Warning: super ratio in bin "<<bin<<" is not a number:\n"
+                      << "Was "<<super_ratio<<". Setting to zero and continuing.\n";
+            super_ratio = 0;
+        }
+
+		double norm = 1 + super_ratio;
+        double asymmetry = (1 - super_ratio) / norm;
         asymmetry_histogram->SetBinContent(bin, asymmetry);
+
+		double inv_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]) / norm;
+		double asymmetry_error = super_ratio * inv_sum / norm;  
+        if (TMath::IsNaN(asymmetry_error) or asymmetry_error <= 0) {
+            std::cout << "Warning: super ratio in bin "<<bin<<" is not a number:\n"
+                      << "Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
+            asymmetry_error = 0.01;
+        }
         asymmetry_histogram->SetBinError(bin, asymmetry_error);
         //printf("Setting bin content for asymmetry bin %d, to %f\n", bin, asymmetry);
     }
