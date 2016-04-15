@@ -34,7 +34,6 @@ double expected_fierz = 0.6540;				/// full range (will get overwritten)
 static unsigned nToSim = 5e7;				/// how many triggering events to simulate
 ///static double afp_on_prob = 0.68/1.68; 		/// afp on probability per neutron
 static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron
-static unsigned rand_bins = 100; 	        /// probability granularity
 int large_prime = 179430331;                /// a large prime number
 static int bins = 150;						/// replace with value from data or smoothing fit
 double scale_x = 1.00000;
@@ -469,7 +468,7 @@ UCNAModel ucna_fierz_mc; // Need construction.
 /// This needs to be static
 UCNAFierzFitter ucna(bins, min_E, max_E);
 
-void combined_chi2(Int_t & nPar, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
+void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
 	double chi2=0, chi;
     int n = ucna.data.asymmetry.bins;
@@ -479,7 +478,7 @@ void combined_chi2(Int_t & nPar, Double_t * /*grad*/ , Double_t &fval, Double_t 
 	for (int i = 0; i < n; i++)
 	{
 		// E = ucna.data.asymmetry.energy[i];
-		double E = ucna.data.asymmetry.histogram->GetBinCenter(i);
+		//double E = ucna.data.asymmetry.histogram->GetBinCenter(i);
 		double Y = ucna.data.asymmetry.histogram->GetBinContent(i);
         //double f = asymmetry_fit_func(&E,p);
         double f = A/(1+0.6*b);
@@ -568,9 +567,10 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 	func->SetParameters(minParams);
 	func->SetParErrors(parErrors);
 	func->SetChisquare(chi2);
-	int ndf = ucna.data.asymmetry.energy.size() 
-            + ucna.data.super_sum.energy.size() 
-            - nvpar;
+	//int ndf = ucna.data.asymmetry.energy.size() 
+    //        + ucna.data.super_sum.energy.size() - nvpar;
+	int ndf = ucna.data.asymmetry.bins
+            + ucna.data.super_sum.bins - nvpar;
 	func->SetNDF(ndf);
     
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
@@ -1246,7 +1246,7 @@ if (not asymmetry_histogram) {
 	
 	/// find the predicted inverse covariance matrix for this range
 	double A = -0.12;
-	TMatrixD p_cov_inv(2,2);
+	TMatrixD p_cov_inv(3,3);
 	p_cov_inv[0][0] =  N/4*expected[2][0];
 	p_cov_inv[1][0] = 
     p_cov_inv[0][1] = -N*A/4*expected[2][1];
