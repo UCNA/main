@@ -469,46 +469,43 @@ UCNAModel ucna_fierz_mc; // Need construction.
 /// This needs to be static
 UCNAFierzFitter ucna(bins, min_E, max_E);
 
-void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
+void combined_chi2(Int_t & nPar, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
 	double chi2=0, chi;
-    int n = ucna.bins;
-/*
-	//int n = asymmetry_energy.size();
+    int n = ucna.data.asymmetry.bins;
 	//int n = ucna.data.asymmetry.energy.size();
-	int n = ucna.data.asymmetry.histogram->GetEntries();
+    double A=p[0], b=p[1], N=p[2];
+	//double par[3] = {p[0],p[1],p[2]}; // A, b, N
 	for (int i = 0; i < n; i++)
 	{
-		double par[2] = {p[0],p[1]}; // A, b
-		//chi = (asymmetry_values[i] - asymmetry_fit_func(&E,par)) / asymmetry_errors[i];
-		//E = ucna.data.asymmetry.energy[i];
-		E = ucna.data.asymmetry.histogram->GetBinCenter(i);
-		//double Y = ucna.data.asymmetry.values[i];
+		// E = ucna.data.asymmetry.energy[i];
+		double E = ucna.data.asymmetry.histogram->GetBinCenter(i);
 		double Y = ucna.data.asymmetry.histogram->GetBinContent(i);
-        double f = asymmetry_fit_func(&E,par);
-        //double eY = ucna.data.asymmetry.errors[i];
+        //double f = asymmetry_fit_func(&E,p);
+        double f = A/(1+0.6*b);
 		double eY = ucna.data.asymmetry.histogram->GetBinError(i);
-        assert(eY > 0);
-		chi = (Y-f)/eY;
-		chi2 += chi*chi; 
+        if (eY > 0) {
+            chi = (Y-f)/eY;
+            chi2 += chi*chi; 
+        }
 	}
-*/
 
 	//n = fierzratio_energy.size();
+    n = ucna.data.super_sum.bins;
+	//double par[2] = {p[1], expected[0][1]};
 	for (int i=0; i<n; i++) { 
-		//double par[2] = {p[1], expected[0][1]};
 		//E = ucna.data.super_sum.energy[i];
-		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
 		/*double Y =      ucna.data .super_sum.values[i];
         double f = p[1]*ucna.sm   .super_sum.values[i] 
                  + p[2]*ucna.fierz.super_sum.values[i];
         double eY =     ucna.data .super_sum.errors[i];*/
 		//double E      = ucna.data .super_sum.histogram->GetBinCenter(i);
-		double Y      = ucna.data .super_sum.histogram->GetBinContent(i);
-        double eY     = ucna.data .super_sum.histogram->GetBinError(i);
-        double f = p[1]*ucna.sm   .super_sum.histogram->GetBinContent(i) 
-                 + p[2]*ucna.fierz.super_sum.histogram->GetBinContent(i);
-        if(eY > 0) {
+		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
+		double Y  = ucna.data .super_sum.histogram->GetBinContent(i);
+        double eY = ucna.data .super_sum.histogram->GetBinError(i);
+        double f  = N*ucna.sm .super_sum.histogram->GetBinContent(i) 
+                  + N*b*ucna.fierz.super_sum.histogram->GetBinContent(i);
+        if (eY > 0) {
 		    chi = (Y-f)/eY;
 		    chi2 += chi*chi; 
         }
@@ -1254,6 +1251,7 @@ if (not asymmetry_histogram) {
 	p_cov_inv[1][0] = 
     p_cov_inv[0][1] = -N*A/4*expected[2][1];
 	p_cov_inv[1][1] =  N*(expected[0][2] - expected[0][1]*expected[0][1]);
+	p_cov_inv[2][2] =  N;
 
 	/// find the covariance matrix
 	double det = 0;
