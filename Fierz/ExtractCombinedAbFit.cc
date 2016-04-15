@@ -161,9 +161,9 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not rate_histogram[side][spin]) {
-                std::cout << "Error: rate histogram on side: "
-                          << (side? "east" : "west") << "and afp: "
-                          << (spin? "off":"on") << "is not constructed.\n";
+                std::cout << "Error: rate histogram on the "
+                          << (side? "west":"east") << " side with afp "
+                          << (spin? "on":"off") << " is not constructed.\n";
                 exit(1);
             }
 
@@ -172,14 +172,20 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
 
     int bins = super_ratio_histogram->GetNbinsX();
 	std::cout << "Number of bins " << bins << std::endl;
-    for (int bin = 1; bin < bins+2; bin++) {
+    for (int bin = 1; bin < bins; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_ratio = r[0][0]*r[1][1]/r[0][1]/r[1][0];
+        if (TMath::IsNaN(super_ratio)) {
+            std::cout << "Warning: super ratio in bin "<<bin<<" is not a number:\n"
+                      << "Was "<<super_ratio<<". Setting to zero and continuing.\n";
+            super_ratio = 0;
+        }
         super_ratio_histogram->SetBinContent(bin, super_ratio);
         super_ratio_histogram->SetBinError(bin, 0.01);   // TODO compute correctly!!
+        std::cout << "Warning: super ratio is not computed correctly.\n";
     }
     return super_ratio_histogram;
 }
@@ -278,7 +284,7 @@ TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction)
 {
     TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = asymmetry_histogram->GetNbinsX();
-    for (int bin = 1; bin < bins+2; bin++) 
+    for (int bin = 1; bin < bins; bin++) 
 	{
         double r[2][2];
         for (int side = 0; side < 2; side++)
@@ -309,7 +315,7 @@ TH1D* compute_rate_function(TH1D* rate_histogram[2][2],
 {
     TH1D *out_histogram = new TH1D(*(rate_histogram[0][0]));
     int bins = out_histogram->GetNbinsX();
-    for (int bin = 1; bin < bins+2; bin++) {
+    for (int bin = 1; bin < bins+1; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
@@ -482,7 +488,8 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 		double Y = ucna.data.asymmetry.histogram->GetBinContent(i);
         //double f = asymmetry_fit_func(&E,p);
         double f = A/(1+0.6*b);
-		double eY = ucna.data.asymmetry.histogram->GetBinError(i);
+		//double eY = ucna.data.asymmetry.histogram->GetBinError(i);
+		double eY = 0.1;
         if (eY > 0) {
             chi = (Y-f)/eY;
             chi2 += chi*chi; 
@@ -520,8 +527,8 @@ static const int nPar = 3;
 TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar]) 
 { 
 	/// set up free fit parameters with best guess
+	TString iniParamNames[nPar] = {"A", "b", "N"};
 	double iniParams[nPar] = {-0.12, 0, 1e6};
-	const char * iniParamNames[nPar] = {"A", "b", "N"};
 
 	/// create fit function
 	TF1 * func = new TF1("func", asymmetry_fit_func, min_E, max_E, nPar);
@@ -531,9 +538,6 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 
 	/// fill data structure for fit (coordinates + values + errors) 
 	std::cout << "Do global fit" << std::endl;
-    //ucna.data.asymmetry.fill(asymmetry);
-    //ucna.data.super_sum.fill(super_sum);
-    //ucna.data.super_ratio.fill(super_ratio);
 
 	/// set up the minuit fitter
 	TVirtualFitter::SetDefaultFitter("Minuit");
@@ -551,15 +555,16 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 	/// minimize
 	arglist[0] = 50;    /// number of function calls
 	arglist[1] = 0.1;   /// tolerance
-	minuit->ExecuteCommand("MIGRAD",arglist,nPar);
+	minuit->ExecuteCommand("MIGRAD", arglist, nPar);
 
-	/// extract results from minuit
 	double minParams[nPar];
 	double parErrors[nPar];
 	for (int i=0; i<nPar; ++i) {  
 		minParams[i] = minuit->GetParameter(i);
 		parErrors[i] = minuit->GetParError(i);
 	}
+
+	/// extract results from minuit
 	double chi2, edm, errdef; 
 	int nvpar, nparx;
 	minuit->GetStats(chi2,edm,errdef,nvpar,nparx);
@@ -567,10 +572,8 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar])
 	func->SetParameters(minParams);
 	func->SetParErrors(parErrors);
 	func->SetChisquare(chi2);
-	//int ndf = ucna.data.asymmetry.energy.size() 
-    //        + ucna.data.super_sum.energy.size() - nvpar;
-	int ndf = ucna.data.asymmetry.bins
-            + ucna.data.super_sum.bins - nvpar;
+
+	int ndf = asymmetry->GetNbinsX() + super_sum->GetNbinsX() - nvpar;
 	func->SetNDF(ndf);
     
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
@@ -802,58 +805,7 @@ int main(int argc, char *argv[])
     /// other than default.
 	srand( time(NULL) );
 
-/*
-	/// load the files that contain data histograms
-    TFile *asymmetry_data_tfile = new TFile(
-        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-        "Range_0-1000/CorrectAsym/CorrectedAsym.root");
-	if (asymmetry_data_tfile->IsZombie())
-	{
-		std::cout << "File not found." << std::endl;
-		exit(1);
-	}
-
-	/// extract the histograms from the files
-    ucna.data.asymmetry.histogram = 
-            (TH1D*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
-    if (not asymmetry_histogram) {
-        printf("Error getting asymmetry histogram.\n");
-        exit(1);
-    }
-
-	/// load the files that contain data histograms
-    TFile *ucna_data_tfile = new TFile(
-        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-		"OctetAsym_Offic.root");
-	if (ucna_data_tfile->IsZombie())
-	{
-		std::cout << "File not found." << std::endl;
-		exit(1);
-	}
-
-    ucna.data.super_sum.histogram = 
-            (TH1D*)ucna_data_tfile->Get("Total_Events_SuperSum");
-    if (not ucna.data.super_sum.histogram) {
-        printf("Error getting super sum histogram.\n");
-        exit(1);
-    }*/
-/*
-/// load the files that contain data histograms
-TFile *asymmetry_data_tfile = new TFile(
-if (asymmetry_data_tfile->IsZombie())
-{
-    std::cout << "File not found." << std::endl;
-    exit(1);
-}
-
-/// extract the histograms from the files
-ucna.data.asymmetry.histogram = 
-        (TH1D*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
-if (not asymmetry_histogram) {
-    printf("Error getting asymmetry histogram.\n");
-    exit(1);
-}
-*/
+    /// load the files that contain data histograms
     fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
               "Range_0-1000/CorrectAsym/CorrectedAsym.root",
               "2010 final official asymmetry",
@@ -1012,6 +964,15 @@ if (not asymmetry_histogram) {
               "hTotalEvents_W_on;1",
               ucna.data.raw[1][1]);
     printf("Number of bins in data %d\n", ucna.data.raw[0][0]->GetNbinsX());
+    for (int side=EAST; side<=WEST; side++)
+        for (int afp=EAST; afp<=WEST; afp++) {
+            TString title = "2010 final official "+side?"west":"east";
+            fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+                      "OctetAsym_Offic.root",
+                      "2010 final official west afp on spectrum",
+                      "hTotalEvents_W_on;1",
+                      ucna.data.raw[side][afp]);
+        }
     */
 
     /* Already background subtracted...
@@ -1246,12 +1207,12 @@ if (not asymmetry_histogram) {
 	
 	/// find the predicted inverse covariance matrix for this range
 	double A = -0.12;
-	TMatrixD p_cov_inv(3,3);
+	TMatrixD p_cov_inv(2,2);
 	p_cov_inv[0][0] =  N/4*expected[2][0];
 	p_cov_inv[1][0] = 
     p_cov_inv[0][1] = -N*A/4*expected[2][1];
 	p_cov_inv[1][1] =  N*(expected[0][2] - expected[0][1]*expected[0][1]);
-	p_cov_inv[2][2] =  N;
+	//p_cov_inv[2][2] =  N;
 
 	/// find the covariance matrix
 	double det = 0;
@@ -1307,7 +1268,7 @@ if (not asymmetry_histogram) {
 	cout << "    Expected statistical error for b in this range is " << p_sig_b << endl;
 	cout << "    Actual statistical error for b in this range is " << sig_b << endl;
 	cout << "    Ratio for b error is " << sig_b / p_sig_b << endl;
-	cout << "    Expected cor(A,b) = " << p_cov[1][0] / p_sig_A / p_sig_b << endl;
+	cout << "    Expected cor(A,b) = " << p_cov[1][0] / (p_sig_A * p_sig_b) << endl;
 	cout << "    Actual cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
 
 	/*
