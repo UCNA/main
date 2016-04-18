@@ -533,20 +533,22 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 
 #if 1
+/// set up free fit parameters with best guess
 static const int nPar = 3;
+TString iniParamNames[nPar] = {"A", "b", "N"};
+double iniParams[nPar] = {-0.12, 0, 1e6};
+
 
 //TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar]) 
-TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov) 
+TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
 { 
-	/// set up free fit parameters with best guess
-	TString iniParamNames[nPar] = {"A", "b", "N"};
-	double iniParams[nPar] = {-0.12, 0, 1e6};
-
 	/// create fit function
-	TF1 * func = new TF1("func", asymmetry_fit_func, min_E, max_E, nPar);
-	func->SetParameters(iniParams);
-	for (int i=0; i<nPar; i++)
-		func->SetParName(i, iniParamNames[i]);
+    if (not func) {
+        func = new TF1("func", asymmetry_fit_func, min_E, max_E, nPar);
+        func->SetParameters(iniParams);
+        for (int i=0; i<nPar; i++)
+            func->SetParName(i, iniParamNames[i]);
+    }
 
 	/// fill data structure for fit (coordinates + values + errors) 
 	std::cout << "Do global fit" << std::endl;
@@ -1229,12 +1231,15 @@ int main(int argc, char *argv[])
 	
 	/// find the predicted inverse covariance matrix for this range
 	double A = -0.12;
-	TMatrixD p_cov_inv(2,2);
+	TMatrixD p_cov_inv(nPar,nPar);
+	for (int i = 0; i < 2; i++)
+		for (int j = 0; j < 2; j++)
+	        p_cov_inv[i][j] = 0;
 	p_cov_inv[0][0] =  N/4*expected[2][0];
 	p_cov_inv[1][0] = 
     p_cov_inv[0][1] = -N*A/4*expected[2][1];
 	p_cov_inv[1][1] =  N*(expected[0][2] - expected[0][1]*expected[0][1]);
-	//p_cov_inv[2][2] =  N;
+	p_cov_inv[2][2] =  N;
 
 	/// find the covariance matrix
 	double det = 0;
@@ -1242,8 +1247,8 @@ int main(int argc, char *argv[])
 	double p_var_b = 1 / p_cov_inv[1][1];
 	TMatrixD p_cov = p_cov_inv.Invert(&det);
 
-	/// do the fitting
-	TF1* func = combined_fit(ucna.data.asymmetry.histogram, ucna.data.super_sum.histogram, cov);
+	/// actually do the fitting
+	TF1* func = combined_fit(ucna.data.asymmetry.histogram, ucna.data.super_sum.histogram, cov, 0);
 
 	/// output the data info
 	cout << " ENERGY RANGE:" << endl;
@@ -1252,18 +1257,20 @@ int main(int argc, char *argv[])
 	cout << "    Number of counts in energy range is " <<  (int)N << endl;
 	cout << endl;
 
-	/// output the details	
+	/// output the fit covariance details
 	cout << " FIT COVARIANCE MATRIX cov(A,b) =\n";
-	for (int i = 0; i < nPar; i++) {
-		for (int j = 0; j < nPar; j++) {
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 2; j++) {
 			cout << "\t" << cov[i][j];
 		}
 		cout << "\n";
 	}
 
+    /// get the fit standard errors
 	double sig_A = sqrt(cov[0][0]);
 	double sig_b = sqrt(cov[1][1]);
 
+	/// output the predicted covariance details	
 	cout << endl;
 	cout << " PREDICTED COVARIANCE MATRIX cov(A,b) =\n";
 	for (int i = 0; i < 2; i++) {
@@ -1273,32 +1280,47 @@ int main(int argc, char *argv[])
 		cout << "\n";
 	}
 
+    /// get the predicted standard errors
 	double p_sig_A = sqrt(p_cov[0][0]);
 	double p_sig_b = sqrt(p_cov[1][1]);
 
-	cout << endl;
-	cout << " FOR UNCOMBINED FITS:\n";
-	cout << "    Expected statistical error for A in this range is without b is " 
+	cout<<endl;
+	cout<<" FOR UNCOMBINED FITS:\n";
+	cout<<"    Expected statistical error for A in this range is without b is " 
 					<< sqrt(p_var_A) << endl;
-	cout << "    Expected statistical error for b in this range is without A is "
+	cout<<"    Expected statistical error for b in this range is without A is "
 					<< sqrt(p_var_b) << endl;
-	cout << endl;
-	cout << " FOR COMBINED FITS:\n";
-	cout << "    Expected statistical error for A in this range is " << p_sig_A << endl;
-	cout << "    Actual statistical error for A in this range is " << sig_A << endl;
-	cout << "    Ratio for A error is " << sig_A / p_sig_A << endl;
-	cout << "    Expected statistical error for b in this range is " << p_sig_b << endl;
-	cout << "    Actual statistical error for b in this range is " << sig_b << endl;
-	cout << "    Ratio for b error is " << sig_b / p_sig_b << endl;
-	cout << "    Expected cor(A,b) = " << p_cov[1][0] / (p_sig_A * p_sig_b) << endl;
-	cout << "    Actual cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
+	cout<<endl;
+	cout<<" FOR COMBINED FITS:\n";
+	cout<<"    Expected statistical error for A in this range is " << p_sig_A << endl;
+	cout<<"    Actual statistical error for A in this range is " << sig_A << endl;
+	cout<<"    Ratio for A error is " << sig_A / p_sig_A << endl;
+	cout<<"    Expected statistical error for b in this range is " << p_sig_b << endl;
+	cout<<"    Actual statistical error for b in this range is " << sig_b << endl;
+	cout<<"    Ratio for b error is " << sig_b / p_sig_b << endl;
+	cout<<"    Expected cor(A,b) = " << p_cov[1][0] / (p_sig_A * p_sig_b) << endl;
+	cout<<"    Actual cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
+
+	for (int i = 0; i < nPar; i++) {
+        TString name = func->GetParName(i);
+        double param = func->GetParameter(i);
+	    double sigma = sqrt(cov[0][0]);
+	    double expected_sigma = sqrt(p_cov[i][i]);
+        double factor = sigma/expected_sigma;
+        cout<<"    Expected statistical error for "<<name<<" in this range is "<<expected_sigma<<".\n";
+        cout<<"    Actual statistical error for "<<name<<" in this range is "<<sigma<<".\n";
+        cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n";
+	    for (int i = 0; i < nPar; i++) {
+            cout<<"    Expected cor(A,b) = " << p_cov[1][0] / (p_sig_A * p_sig_b) << endl;
+            cout<<"    Actual cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
+        }
+    }
 
 	/*
 	// A fit histogram for output to gnuplot
     TH1D *fierz_fit_histogram = new TH1D(*asymmetry_histogram);
 	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
 		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
-
 	
 
 	/// output for root
@@ -1313,8 +1335,9 @@ int main(int argc, char *argv[])
 
 	*/
 
+#if 0
 	// Create a new canvas.
-	TCanvas * c1 = new TCanvas("c1","Two HIstogram Fit example",100,10,900,800);
+	TCanvas * c1 = new TCanvas("c1","Two Histogram Fit example",100,10,900,800);
 	c1->Divide(2,2);
 	gStyle->SetOptFit();
 	gStyle->SetStatY(0.6);
@@ -1338,7 +1361,7 @@ int main(int argc, char *argv[])
 	gPad->SetLogz();
 	func->Draw("surf1 same");
 	*/
-
+#endif
 	app.Run();
 
 	return 0;
