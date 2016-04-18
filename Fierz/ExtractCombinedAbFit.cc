@@ -43,8 +43,9 @@ double max_E = 670;                         /// max range from the 2013 paper
 double fedutial_cut = 50;                   /// radial cut in millimeters 
 double fidcut2 = 50*50;                     /// mm^2 radial cut
 
-double expected[3][3];                      /// expected values (based on the energy range)
-                                            /// need to be visible to the chi^2 code
+//double expected[3][3];                      /// expected values (based on the energy range)
+//TMatrixD expected(3,3);                      /// expected values (based on the energy range)
+                                            /// needs to be visible to the chi^2 code
 
 // ug. Needs to be static
 //FierzHistogram mc(0,1500,bins);
@@ -534,7 +535,8 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 #if 1
 static const int nPar = 3;
 
-TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar]) 
+//TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar]) 
+TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov) 
 { 
 	/// set up free fit parameters with best guess
 	TString iniParamNames[nPar] = {"A", "b", "N"};
@@ -795,6 +797,93 @@ int fill_simulation(TString filename, TString title, TString name,
 }
 
 
+/// compute little b factor using the Fierz ratio method
+TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
+    TH1D *fierz_ratio_histogram = new TH1D(*data_histogram);
+	fierz_ratio_histogram->SetName("fierz_ratio_histogram");
+    //fierz_ratio_histogram->Divide(ucna.data.super_sum.histogram, ucna.sm.super_sum.histogram);
+    int bins = data_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+1; bin++) {
+		double X = data_histogram->GetBinContent(bin);
+		double Y = sm_histogram->GetBinContent(bin);
+		double Z = Y > 0 ? X/Y : 0;
+
+		fierz_ratio_histogram->SetBinContent(bin, Z);
+
+		double x = data_histogram->GetBinError(bin);
+		double y = sm_histogram->GetBinError(bin);
+		fierz_ratio_histogram->SetBinError(bin, Z*TMath::Sqrt(x*x/X/X + y*y/Y/Y));
+	}
+    fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
+    fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
+	std::cout << data_histogram->GetNbinsX() << std::endl;
+	std::cout << sm_histogram->GetNbinsX() << std::endl;
+
+    /// fit the Fierz ratio 
+	char fit_str[1024];
+    sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", m_e, m_e, expected_fierz);
+    TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
+    fierz_fit->SetParameter(0,0);
+	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
+
+	/// A fit histogram for output to gnuplot
+    TH1D *fierz_fit_histogram = new TH1D(*ucna.data.super_sum.histogram);
+	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
+		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
+
+	/// compute chi squared
+    double chisq = fierz_fit->GetChisquare();
+    double NDF = fierz_fit->GetNDF();
+	char b_str[1024];
+	sprintf(b_str, "b = %1.3f #pm %1.3f", fierz_fit->GetParameter(0), fierz_fit->GetParError(0));
+	char chisq_str[1024];
+    printf("Chi^2 / (NDF-1) = %f / %f = %f\n", chisq, NDF-1, chisq/(NDF-1));
+	sprintf(chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(NDF-1));
+
+	/// draw the ratio plot
+	fierz_ratio_histogram->SetStats(0);
+    fierz_ratio_histogram->Draw();
+
+	/// draw a legend on the plot
+    TLegend* ratio_legend = new TLegend(0.3,0.85,0.6,0.65);
+    ratio_legend->AddEntry(fierz_ratio_histogram, "Data ratio to Monte Carlo (Type 0)", "l");
+    ratio_legend->AddEntry(fierz_fit, "Fierz term fit", "l");
+    ratio_legend->AddEntry((TObject*)0, "1+b(#frac{m_{e}}{E} - #LT #frac{m_{e}}{E} #GT)", "");
+    ratio_legend->AddEntry((TObject*)0, b_str, "");
+    ratio_legend->AddEntry((TObject*)0, chisq_str, "");
+    ratio_legend->SetTextSize(0.03);
+    ratio_legend->SetBorderSize(0);
+    ratio_legend->Draw();
+
+	/// output for root
+    TString fierz_ratio_pdf_filename = "mc/fierz_ratio.pdf";
+    TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
+    if (not canvas) {
+        std::cout << "Can't open new canvas.\n";
+        exit(0);
+    }
+    canvas->SaveAs(fierz_ratio_pdf_filename);
+
+	/// output for gnuplot
+	output_histogram("mc/super-sum-data.dat", data_histogram, 1, 1000);
+	output_histogram("mc/super-sum-mc.dat", sm_histogram, 1, 1000);
+	output_histogram("mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
+	output_histogram("mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
+
+	TFile* ratio_tfile = new TFile("Fierz/ratio.root", "recreate");
+	if (ratio_tfile->IsZombie())
+    {
+		std::cout << "Can't recreate MC file" << std::endl;
+		exit(1);
+	}
+	fierz_ratio_histogram->SetDirectory(ratio_tfile);
+	fierz_ratio_histogram->Write();
+	ratio_tfile->Close();
+
+    return fierz_ratio_histogram;
+}
+    
+
 int main(int argc, char *argv[])
 {
 	TApplication app("Extract Combined A + b Fitter", &argc, argv);
@@ -832,14 +921,14 @@ int main(int argc, char *argv[])
                     "SimAnalyzed_Beta.root",
                     "Monte Carlo Standard Model beta spectrum",
                     "SimAnalyzed",
-                    ucna.sm.raw,                        /// mc.sm_histogram,
+                    ucna.sm.raw,
 					ucna.sm.super_sum.histogram);
 
     fill_simulation("/home/xuansun/Documents/SimData_Beta/"
                     "SimAnalyzed_Beta_fierz.root",
                     "Monte Carlo Fierz beta spectrum",
                     "SimAnalyzed",
-                    ucna.fierz.raw,                     /// mc.fierz_histogram,
+                    ucna.fierz.raw,
 					ucna.fierz.super_sum.histogram);
 
 	//histogram->SetDirectory(mc_tfile);
@@ -1112,8 +1201,8 @@ int main(int argc, char *argv[])
 
     /// make a pretty legend
     TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
-    legend->AddEntry(ucna.data.super_sum.histogram, "Type 0 super_sum", "l");
-    legend->AddEntry(ucna.sm.super_sum.histogram, "Monte Carlo super_sum", "p");
+    legend->AddEntry(ucna.data.super_sum.histogram, "Type 0 super sum", "l");
+    legend->AddEntry(ucna.sm.super_sum.histogram, "Monte Carlo super sum", "p");
     //legend->AddEntry(bonehead_sum_histogram, "Bonehead sum", "l");
     legend->SetTextSize(0.03);
     legend->SetBorderSize(0);
@@ -1122,91 +1211,14 @@ int main(int argc, char *argv[])
     /// save the data and Mote Carlo plots
     TString super_sum_pdf_filename = "mc/super_sum_data.pdf";
     canvas->SaveAs(super_sum_pdf_filename);
-	TFile* ratio_tfile = new TFile("Fierz/ratio.root", "recreate");
-	if (ratio_tfile->IsZombie())
-    {
-		std::cout << "Can't recreate MC file" << std::endl;
-		exit(1);
-	}
-
-    /// compute little b factor
-    TH1D *fierz_ratio_histogram = new TH1D(*ucna.data.super_sum.histogram);
-	fierz_ratio_histogram->SetName("fierz_ratio_histogram");
-    //fierz_ratio_histogram->Divide(ucna.data.super_sum.histogram, ucna.sm.super_sum.histogram);
-    int bins = ucna.data.super_sum.histogram->GetNbinsX();
-    for (int bin = 1; bin < bins+1; bin++) {
-		double X = ucna.data.super_sum.histogram->GetBinContent(bin);
-		double Y = ucna.sm.super_sum.histogram->GetBinContent(bin);
-		double Z = Y > 0 ? X/Y : 0;
-
-		fierz_ratio_histogram->SetBinContent(bin, Z);
-
-		double x = ucna.data.super_sum.histogram->GetBinError(bin);
-		double y = ucna.sm.super_sum.histogram->GetBinError(bin);
-		fierz_ratio_histogram->SetBinError(bin, Z*TMath::Sqrt(x*x/X/X + y*y/Y/Y));
-	}
-    fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
-    fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
-	std::cout << ucna.data.super_sum.histogram->GetNbinsX() << std::endl;
-	std::cout << ucna.sm.super_sum.histogram->GetNbinsX() << std::endl;
-	
-
-	/// fit the Fierz ratio 
-	char fit_str[1024];
-    sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", m_e, m_e, expected_fierz);
-    TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
-    fierz_fit->SetParameter(0,0);
-	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
-
-	/// A fit histogram for output to gnuplot
-    TH1D *fierz_fit_histogram = new TH1D(*ucna.data.super_sum.histogram);
-	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
-		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
-
-	/// compute chi squared
-    double chisq = fierz_fit->GetChisquare();
-    double NDF = fierz_fit->GetNDF();
-	char b_str[1024];
-	sprintf(b_str, "b = %1.3f #pm %1.3f", fierz_fit->GetParameter(0), fierz_fit->GetParError(0));
-	char chisq_str[1024];
-    printf("Chi^2 / (NDF-1) = %f / %f = %f\n", chisq, NDF-1, chisq/(NDF-1));
-	sprintf(chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(NDF-1));
-
-	/// draw the ratio plot
-	fierz_ratio_histogram->SetStats(0);
-    fierz_ratio_histogram->Draw();
-
-	/// draw a legend on the plot
-    TLegend* ratio_legend = new TLegend(0.3,0.85,0.6,0.65);
-    ratio_legend->AddEntry(fierz_ratio_histogram, "Data ratio to Monte Carlo (Type 0)", "l");
-    ratio_legend->AddEntry(fierz_fit, "Fierz term fit", "l");
-    ratio_legend->AddEntry((TObject*)0, "1+b(#frac{m_{e}}{E} - #LT #frac{m_{e}}{E} #GT)", "");
-    ratio_legend->AddEntry((TObject*)0, b_str, "");
-    ratio_legend->AddEntry((TObject*)0, chisq_str, "");
-    ratio_legend->SetTextSize(0.03);
-    ratio_legend->SetBorderSize(0);
-    ratio_legend->Draw();
-
-	/// output for root
-    TString fierz_ratio_pdf_filename = "mc/fierz_ratio.pdf";
-    canvas->SaveAs(fierz_ratio_pdf_filename);
-
-	/// output for gnuplot
-	output_histogram("mc/super-sum-data.dat", ucna.data.super_sum.histogram, 1, 1000);
-	output_histogram("mc/super-sum-mc.dat", ucna.sm.super_sum.histogram, 1, 1000);
-	output_histogram("mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
-	output_histogram("mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
-
-
-	fierz_ratio_histogram->SetDirectory(ratio_tfile);
-	fierz_ratio_histogram->Write();
-	//ratio_tfile->Close();
 
 
     /// CODE BREAK
 
 
-	double cov[nPar][nPar]; 
+	//double cov[nPar][nPar]; 
+    TMatrixD cov(nPar,nPar);
+    TMatrixD expected(nPar,nPar);
 	double entries = ucna.data.super_sum.histogram->GetEffectiveEntries();
 	double N = GetEntries(ucna.data.super_sum.histogram, min_E, max_E);
 
