@@ -29,6 +29,8 @@
 #include <time.h>
 
 using std::setw;
+using std::cout;
+using namespace TMath;
 
 /// settings
 double expected_fierz = 0.6540;				/// full range (will get overwritten) 
@@ -93,7 +95,7 @@ double fierz_beta_spectrum(const double *val, const double *par)
 	const int    n = par[1];                    /// Fierz exponent
 	const double E = K + m_e;                   /// electron energy
 	const double e = Q - K;                     /// neutrino energy
-	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum
+	const double p = Sqrt(E*E - m_e*m_e);       /// electron momentum
 	const double x = pow(m_e/E,n);              /// Fierz term
 	const double f = (1 + b*x)/(1 + b*x_1);     /// Fierz factor
 	const double k = 1.3723803e-11/Q;           /// normalization factor
@@ -112,7 +114,7 @@ double beta_spectrum(const double *val, const double *par)
 		return 0;                               /// zero outside range
 
 	const double E = K + m_e;                   /// electron energy
-	const double p = sqrt(E*E - m_e*m_e);       /// electron momentum 
+	const double p = Sqrt(E*E - m_e*m_e);       /// electron momentum 
 	const double e = (Q - K) / Q;               /// reduced neutrino energy
 	const double x = pow(m_e/E,n);              /// Fierz term
 	const double k = 1.3723803E-11/Q;           /// normalization factor
@@ -130,7 +132,7 @@ double mc_model(double *x, double*p)
     double _x = x[0] / m_e;
     for (int i = deg; i >= 0; i--)
         _exp = p[i] + _x * _exp;
-    return TMath::Exp(_exp);
+    return Exp(_exp);
 }
 
 
@@ -193,7 +195,7 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_ratio = r[0][0]*r[1][1]/r[0][1]/r[1][0];
-        if (TMath::IsNaN(super_ratio)) {
+        if (IsNaN(super_ratio)) {
             cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
                 <<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
             super_ratio = 0;
@@ -207,7 +209,7 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
 
 
 /**
- * S := sqrt(r[0][0] r[1][1]) + sqrt(r[0][1] + r[1][0])
+ * S := Sqrt(r[0][0] r[1][1]) + Sqrt(r[0][1] + r[1][0])
  */
 TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL) 
 {
@@ -247,15 +249,15 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
 
-        double super_sum = TMath::Sqrt(r[0][0] * r[1][1]) + TMath::Sqrt(r[0][1] * r[1][0]);
-        double error = TMath::Sqrt(1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]) * super_sum;
-        if (TMath::IsNaN(super_sum)) {
+        double super_sum = Sqrt(r[0][0] * r[1][1]) + Sqrt(r[0][1] * r[1][0]);
+        double error = Sqrt(1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]) * super_sum;
+        if (IsNaN(super_sum)) {
             super_sum = 0;
             cout<<"Warning: super sum is not a number: "<<super_sum<<".\n";
         } else if (super_sum == 0)
             cout<<"Warning: super sum is zero.\n";
 
-        if (TMath::IsNaN(error)) {
+        if (IsNaN(error)) {
 			error = 0;
             cout<<"Warning: super sum error: division by zero.\n";
         } else if (error <= 0) 
@@ -280,8 +282,8 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
-        double super_ratio = TMath::Sqrt(r[0][0]*r[1][1]/r[0][1]/r[1][0]);
-        if (TMath::IsNaN(super_ratio)) {
+        double super_ratio = Sqrt(r[0][0]*r[1][1]/r[0][1]/r[1][0]);
+        if (IsNaN(super_ratio)) {
             cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n";
             cout<<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
             super_ratio = 0;
@@ -291,9 +293,9 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
         double asymmetry = (1 - super_ratio) / norm;
         asymmetry_histogram->SetBinContent(bin, asymmetry);
 
-		double inv_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]) / norm;
+		double inv_sum = Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]) / norm;
 		double asymmetry_error = super_ratio * inv_sum / norm;  
-        if (TMath::IsNaN(asymmetry_error) or asymmetry_error <= 0) {
+        if (IsNaN(asymmetry_error) or asymmetry_error <= 0) {
             cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n";
             cout<<"Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
             asymmetry_error = 0.01;
@@ -315,16 +317,16 @@ TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction)
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
-        double sqrt_super_ratio = TMath::Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
-        if ( TMath::IsNaN(sqrt_super_ratio) ) 
+        double sqrt_super_ratio = Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
+        if ( IsNaN(sqrt_super_ratio) ) 
             sqrt_super_ratio = 0;
 		double denom = 1 + sqrt_super_ratio;
         double asymmetry = (1 - sqrt_super_ratio) / denom;
-		double sqrt_inverse_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]);
+		double sqrt_inverse_sum = Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]);
 		double asymmetry_error = sqrt_inverse_sum * sqrt_super_ratio / (denom * denom);  
 		double K = asymmetry_histogram->GetBinCenter(bin);
 		double E = K + m_e;                   /// electron energy
-		double p = sqrt(E*E - m_e*m_e);       /// electron momentum
+		double p = Sqrt(E*E - m_e*m_e);       /// electron momentum
 		double beta = p / E;				  /// v/c
         asymmetry_histogram->SetBinContent(bin, -2*asymmetry/beta);
         asymmetry_histogram->SetBinError(bin, 2*asymmetry_error/beta);
@@ -410,8 +412,8 @@ double bonehead_asymmetry(double r[2][2]) {
 
 double super_ratio_asymmetry(double r[2][2]) {
     double super_ratio = (r[0][0]*r[1][1])/(r[0][1]*r[1][0]);
-    double sqrt_super_ratio = TMath::Sqrt(super_ratio);
-    if ( TMath::IsNaN(sqrt_super_ratio) ) 
+    double sqrt_super_ratio = Sqrt(super_ratio);
+    if ( IsNaN(sqrt_super_ratio) ) 
         sqrt_super_ratio = 0;
     return (1-sqrt_super_ratio)/(1+sqrt_super_ratio);
 }
@@ -420,18 +422,16 @@ double super_ratio_asymmetry(double r[2][2]) {
 /*
 double super_sum_error(double r[2][2]) {
     double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
-    double sqrt_super_ratio = TMath::Sqrt(super_ratio);
-    if ( TMath::IsNaN(sqrt_super_ratio) ) 
+    double sqrt_super_ratio = Sqrt(super_ratio);
+    if ( IsNaN(sqrt_super_ratio) ) 
         sqrt_super_ratio = 0;
     //return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
 }
 */
 
 
-using namespace std;
 void output_histogram(TString filename, TH1D* h, double ax, double ay)
 {
-	using namespace std;
 	ofstream ofs;
 	//ofs.open(filename.c_str());
 	ofs.open(filename);
@@ -817,7 +817,7 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
 
 		double x = data_histogram->GetBinError(bin);
 		double y = sm_histogram->GetBinError(bin);
-		fierz_ratio_histogram->SetBinError(bin, Z*TMath::Sqrt(x*x/X/X + y*y/Y/Y));
+		fierz_ratio_histogram->SetBinError(bin, Z*Sqrt(x*x/X/X + y*y/Y/Y));
 	}
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
@@ -1268,8 +1268,8 @@ int main(int argc, char *argv[])
 	}
 
     /// get the fit standard errors
-	//double sig_A = sqrt(cov[0][0]);
-	//double sig_b = sqrt(cov[1][1]);
+	//double sig_A = Sqrt(cov[0][0]);
+	//double sig_b = Sqrt(cov[1][1]);
 
 	/// output the predicted covariance details	
 	cout<<"\n PREDICTED COVARIANCE MATRIX\n";
@@ -1281,16 +1281,16 @@ int main(int argc, char *argv[])
 	}
 
     /// get the predicted standard errors
-	//double p_sig_A = sqrt(p_cov[0][0]);
-	//double p_sig_b = sqrt(p_cov[1][1]);
+	//double p_sig_A = Sqrt(p_cov[0][0]);
+	//double p_sig_b = Sqrt(p_cov[1][1]);
 
     /*
 	cout<<endl;
 	cout<<" FOR UNCOMBINED FITS:\n";
 	cout<<"    Expected statistical error for A in this range is without b is " 
-					<< sqrt(p_var_A)<<endl;
+					<< Sqrt(p_var_A)<<endl;
 	cout<<"    Expected statistical error for b in this range is without A is "
-					<< sqrt(p_var_b)<<endl;
+					<< Sqrt(p_var_b)<<endl;
 	cout<<endl;
 	cout<<" FOR COMBINED FITS:\n";
 	cout<<"    Expected statistical error for A in this range is "<<p_sig_A<<endl;
@@ -1300,14 +1300,14 @@ int main(int argc, char *argv[])
 	cout<<"    Actual statistical error for b in this range is "<<sig_b<<endl;
 	cout<<"    Ratio for b error is "<<sig_b / p_sig_b<<endl;
 	cout<<"    Expected cor(A,b) = "<<p_cov[1][0] / (p_sig_A * p_sig_b)<<endl;
-	cout<<"    Actual cor(A,b) = "<<cov[1][0] / sqrt(cov[0][0] * cov[1][1])<<endl;
+	cout<<"    Actual cor(A,b) = "<<cov[1][0] / Sqrt(cov[0][0] * cov[1][1])<<endl;
     */
 
     /// Compute independent standard errors
 	cout<<"\n FOR UNCOMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
         TString name = func->GetParName(i);
-        double sigma = 1/sqrt(p_cov_inv[i][i]);
+        double sigma = 1/Sqrt(p_cov_inv[i][i]);
 	    cout<<"    Expected independent statistical error for "<<name<<" is "<<sigma<<".\n";
     }
 
@@ -1316,8 +1316,8 @@ int main(int argc, char *argv[])
 	for (int i=0; i<nPar; i++) {
         TString name = func->GetParName(i);
         //double param = func->GetParameter(i);
-	    double sigma = sqrt(cov[i][i]);
-	    double expected_sigma = sqrt(p_cov[i][i]);
+	    double sigma = Sqrt(cov[i][i]);
+	    double expected_sigma = Sqrt(p_cov[i][i]);
         double factor = sigma/expected_sigma;
         cout<<"    Expected statistical error for "<<name<<" in this range is "<<expected_sigma<<".\n";
         cout<<"    Actual statistical error for "<<name<<" in this range is "<<sigma<<".\n";
@@ -1330,8 +1330,8 @@ int main(int argc, char *argv[])
         TString name_i = func->GetParName(i);
 	    for (int j = i+1; j<nPar; j++) {
             TString name_j = func->GetParName(j);
-	        double p_cor_ij = p_cov[j][i]/sqrt(p_cov[i][i]*p_cov[j][j]);
-            double cor_ij = cov[j][i]/sqrt(cov[i][i]*cov[j][j]);
+	        double p_cor_ij = p_cov[j][i]/Sqrt(p_cov[i][i]*p_cov[j][j]);
+            double cor_ij = cov[j][i]/Sqrt(cov[i][i]*cov[j][j]);
             cout<<"    Expected cor("<<name_i<<","<<name_j<<") = "<<p_cor_ij<<".\n";
             cout<<"    Actual cor("<<name_i<<","<<name_j<<") = "<<cor_ij<<".\n";
         }
