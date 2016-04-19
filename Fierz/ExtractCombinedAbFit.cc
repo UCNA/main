@@ -279,7 +279,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_ratio = TMath::Sqrt(r[0][0]*r[1][1]/r[0][1]/r[1][0]);
         if (TMath::IsNaN(super_ratio)) {
-            cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
+            cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n";
             cout<<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
             super_ratio = 0;
         }
@@ -291,7 +291,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
 		double inv_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]) / norm;
 		double asymmetry_error = super_ratio * inv_sum / norm;  
         if (TMath::IsNaN(asymmetry_error) or asymmetry_error <= 0) {
-            cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
+            cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n";
             cout<<"Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
             asymmetry_error = 0.01;
         }
