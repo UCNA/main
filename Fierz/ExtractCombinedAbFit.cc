@@ -19,6 +19,7 @@
 
 /// C++ includes
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <string>
 
@@ -26,6 +27,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+using std::setw;
 
 /// settings
 double expected_fierz = 0.6540;				/// full range (will get overwritten) 
@@ -44,7 +47,7 @@ double fedutial_cut = 50;                   /// radial cut in millimeters
 double fidcut2 = 50*50;                     /// mm^2 radial cut
 
 /// set up free fit parameters with best guess
-static const int nPar = 2;
+static const int nPar = 3;
 TString iniParamNames[3] = {"A", "b", "N"};
 double iniParams[3] = {-0.12, 0, 1e6};
 
@@ -500,16 +503,14 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 {
 	double chi2=0, chi;
     int n = ucna.data.asymmetry.bins;
-	//int n = ucna.data.asymmetry.energy.size();
-    double A=p[0], b=p[1], N=p[2];
+    double A=p[0], b=p[1], N=p[2]; // TODO make nPar correct here
 	//double par[3] = {p[0],p[1],p[2]}; // A, b, N
 	for (int i = 0; i < n; i++)
 	{
-		// E = ucna.data.asymmetry.energy[i];
-		//double E = ucna.data.asymmetry.histogram->GetBinCenter(i);
+		double E = ucna.data.asymmetry.histogram->GetBinCenter(i);
 		double Y = ucna.data.asymmetry.histogram->GetBinContent(i);
         //double f = asymmetry_fit_func(&E,p);
-        double f = A/(1+0.6*b);
+        double f = A/(1 + b*m_e/(E+m_e));
 		//double eY = ucna.data.asymmetry.histogram->GetBinError(i);
 		double eY = 0.1;
         if (eY > 0) {
@@ -518,7 +519,6 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
         }
 	}
 
-	//n = fierzratio_energy.size();
     n = ucna.data.super_sum.bins;
 	//double par[2] = {p[1], expected[0][1]};
 	for (int i=0; i<n; i++) { 
@@ -1251,17 +1251,19 @@ int main(int argc, char *argv[])
                              ucna.data.super_sum.histogram, cov, 0);
 
 	/// output the data info
+    cout<<setprecision(5);
 	cout<<" ENERGY RANGE:\n";
 	cout<<"    Energy range is "<<min_E<<" - "<<max_E<<" keV.\n";
 	cout<<"    Number of counts in full data is "<<(int)entries<<".\n";
-	cout<<"    Number of counts in energy range is "<<(int)N<<".\n\n";
-	cout<<"    Number of counts after energy cut is "<< N/entries<<".\n";
+	cout<<"    Number of counts in energy range is "<<(int)N<<".\n";
+	cout<<"    Efficiency energy cut is "<< N/entries*100<<"%.\n";
 
 	/// output the fit covariance details
 	cout<<"\n FIT COVARIANCE MATRIX\n";
 	for (int i=0; i<nPar; i++) {
+        cout<<"    ";
 		for (int j=0; j<nPar; j++)
-			cout<<"\t"<<cov[i][j];
+			cout<<setw(14)<<cov[i][j];
 	    cout<<endl;
 	}
 
@@ -1270,11 +1272,11 @@ int main(int argc, char *argv[])
 	//double sig_b = sqrt(cov[1][1]);
 
 	/// output the predicted covariance details	
-	cout<<endl;
 	cout<<"\n PREDICTED COVARIANCE MATRIX\n";
 	for (int i=0; i<nPar; i++) {
+        cout<<"    ";
 		for (int j=0; j<nPar; j++)
-			cout<<"\t"<<p_cov[i][j];
+			cout<<setw(14)<<p_cov[i][j];
 		cout<<"\n";
 	}
 
@@ -1305,7 +1307,7 @@ int main(int argc, char *argv[])
 	cout<<"\n FOR UNCOMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
         TString name = func->GetParName(i);
-        double sigma = pow(p_cov_inv[i][i],-0.5);
+        double sigma = 1/sqrt(p_cov_inv[i][i]);
 	    cout<<"    Expected independent statistical error for "<<name<<" is "<<sigma<<".\n";
     }
 
@@ -1319,11 +1321,11 @@ int main(int argc, char *argv[])
         double factor = sigma/expected_sigma;
         cout<<"    Expected statistical error for "<<name<<" in this range is "<<expected_sigma<<".\n";
         cout<<"    Actual statistical error for "<<name<<" in this range is "<<sigma<<".\n";
-        cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n\n";
+        cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n";
     }
 
     /// Compare predicted and actual correlations
-	cout<<" CORRELATIONS FACTORS FOR COMBINED FITS:\n";
+	cout<<"\n CORRELATIONS FACTORS FOR COMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
         TString name_i = func->GetParName(i);
 	    for (int j = i+1; j<nPar; j++) {
