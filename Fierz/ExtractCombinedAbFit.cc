@@ -534,9 +534,9 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 #if 1
 /// set up free fit parameters with best guess
-static const int nPar = 3;
-TString iniParamNames[nPar] = {"A", "b", "N"};
-double iniParams[nPar] = {-0.12, 0, 1e6};
+static const int nPar = 2;
+TString iniParamNames[3] = {"A", "b", "N"};
+double iniParams[3] = {-0.12, 0, 1e6};
 
 
 //TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar]) 
@@ -1218,13 +1218,14 @@ int main(int argc, char *argv[])
 
 	//double cov[nPar][nPar]; 
     TMatrixD cov(nPar,nPar);
-    TMatrixD expected(nPar,nPar);
 	double entries = ucna.data.super_sum.histogram->GetEffectiveEntries();
 	double N = GetEntries(ucna.data.super_sum.histogram, min_E, max_E);
 
 	/// set all expectation values for this range
-	for (int m=0; m<=2; m++)
-		for (int n=0; n<=2; n++)
+    double nSpec = 4;
+    TMatrixD expected(nSpec,nSpec);
+	for (int m=0; m<nSpec; m++)
+		for (int n=0; n<nSpec; n++)
 			expected[m][n] = evaluate_expected_fierz(m,n,min_E,max_E);
 	
 	/// find the predicted inverse covariance matrix for this range
@@ -1237,7 +1238,7 @@ int main(int argc, char *argv[])
 	p_cov_inv[1][0] = 
     p_cov_inv[0][1] = -N*A/4*expected[2][1];
 	p_cov_inv[1][1] =  N*(expected[0][2] - expected[0][1]*expected[0][1]);
-	p_cov_inv[2][2] =  N;
+	//p_cov_inv[2][2] =  N;
 
 	/// find the covariance matrix
 	double det = 0;
@@ -1253,14 +1254,14 @@ int main(int argc, char *argv[])
 	cout<<" ENERGY RANGE:\n";
 	cout<<"    Energy range is "<<min_E<<" - "<<max_E<<" keV.\n";
 	cout<<"    Number of counts in full data is "<<(int)entries<<".\n";
-	cout<<"    Number of counts in energy range is "<< (int)N<<".\n\n";
+	cout<<"    Number of counts in energy range is "<<(int)N<<".\n\n";
+	cout<<"    Number of counts after energy cut is "<< N/entries<<".\n";
 
 	/// output the fit covariance details
-	cout<<" FIT COVARIANCE MATRIX\n";
+	cout<<"\n FIT COVARIANCE MATRIX\n";
 	for (int i=0; i<nPar; i++) {
-		for (int j=0; j<nPar; j++) {
+		for (int j=0; j<nPar; j++)
 			cout<<"\t"<<cov[i][j];
-		}
 	    cout<<endl;
 	}
 
@@ -1270,11 +1271,10 @@ int main(int argc, char *argv[])
 
 	/// output the predicted covariance details	
 	cout<<endl;
-	cout<<" PREDICTED COVARIANCE MATRIX\n";
+	cout<<"\n PREDICTED COVARIANCE MATRIX\n";
 	for (int i=0; i<nPar; i++) {
-		for (int j=0; j<nPar; j++) {
+		for (int j=0; j<nPar; j++)
 			cout<<"\t"<<p_cov[i][j];
-		}
 		cout<<"\n";
 	}
 
@@ -1301,13 +1301,15 @@ int main(int argc, char *argv[])
 	cout<<"    Actual cor(A,b) = "<<cov[1][0] / sqrt(cov[0][0] * cov[1][1])<<endl;
     */
 
+    /// Compute independent standard errors
 	cout<<"\n FOR UNCOMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
         TString name = func->GetParName(i);
-	    cout<<"    Expected independent statistical error for "<<name
-            <<" is "<<pow(p_cov_inv[i][i],-0.5)<<".\n";
+        double sigma = pow(p_cov_inv[i][i],-0.5);
+	    cout<<"    Expected independent statistical error for "<<name<<" is "<<sigma<<".\n";
     }
 
+    /// Compare predicted and actual standard errors
 	cout<<"\n FOR COMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
         TString name = func->GetParName(i);
@@ -1320,6 +1322,7 @@ int main(int argc, char *argv[])
         cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n\n";
     }
 
+    /// Compare predicted and actual correlations
 	cout<<" CORRELATIONS FACTORS FOR COMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
         TString name_i = func->GetParName(i);
