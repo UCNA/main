@@ -37,7 +37,7 @@ double expected_fierz = 0.6540;				/// full range (will get overwritten)
 //static double expected_fierz = 0.6111;	/// for range 150-600
 //static double expected_gluck = 11.8498;   /// for range 150-600
 static unsigned nToSim = 5e7;				/// how many triggering events to simulate
-///static double afp_on_prob = 0.68/1.68; 		/// afp on probability per neutron
+//static double afp_on_prob = 0.68/1.68; 	/// afp on probability per neutron
 static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron
 int large_prime = 179430331;                /// a large prime number
 static int bins = 150;						/// replace with value from data or smoothing fit
@@ -126,7 +126,7 @@ double beta_spectrum(const double *val, const double *par)
 
 
 unsigned deg = 4;
-double mc_model(double *x, double*p) 
+double mc_model(double *x, double *p) 
 {
     double _exp = 0;
     double _x = x[0] / m_e;
@@ -136,8 +136,7 @@ double mc_model(double *x, double*p)
 }
 
 
-void normalize(TH1D* hist) 
-{
+void normalize(TH1D* hist) {
     hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
 }
 
@@ -790,7 +789,7 @@ int fill_simulation(TString filename, TString title, TString name,
 
 	/// compute and normalize super sum
     compute_super_sum(histogram, super_sum);
-    //normalize(super_sum, min_E, max_E);
+    normalize(super_sum, min_E, max_E);
 
     /*
     for (int side=0; side<2; side++)
@@ -909,7 +908,7 @@ int main(int argc, char *argv[])
     /// other than default.
 	srand( time(NULL) );
 
-    /// load the files that contain data histograms
+    /// Load the files that contain data histograms.
     fill_data("Range_0-1000/CorrectAsym/CorrectedAsym.root",
               "2010 final official asymmetry",
               "hAsym_Corrected_C",
