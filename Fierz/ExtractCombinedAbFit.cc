@@ -1301,18 +1301,33 @@ int main(int argc, char *argv[])
 	cout<<"    Expected cor(A,b) = " << p_cov[1][0] / (p_sig_A * p_sig_b) << endl;
 	cout<<"    Actual cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
 
+	cout<<"\n FOR UNCOMBINED FITS:\n";
+	for (int i = 0; i < nPar; i++) {
+	cout<<"    Expected statistical error for A in this range is without b is " 
+					<< sqrt(p_var_A) << endl;
+    }
+
+	cout<<"\n FOR COMBINED FITS:\n";
 	for (int i = 0; i < nPar; i++) {
         TString name = func->GetParName(i);
         double param = func->GetParameter(i);
-	    double sigma = sqrt(cov[0][0]);
+	    double sigma = sqrt(cov[i][i]);
 	    double expected_sigma = sqrt(p_cov[i][i]);
         double factor = sigma/expected_sigma;
         cout<<"    Expected statistical error for "<<name<<" in this range is "<<expected_sigma<<".\n";
         cout<<"    Actual statistical error for "<<name<<" in this range is "<<sigma<<".\n";
         cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n";
-	    for (int i = 0; i < nPar; i++) {
-            cout<<"    Expected cor(A,b) = " << p_cov[1][0] / (p_sig_A * p_sig_b) << endl;
-            cout<<"    Actual cor(A,b) = " << cov[1][0] / sqrt(cov[0][0] * cov[1][1]) << endl;
+    }
+
+	cout<<"\n CORRELATIONS FACTORS FOR COMBINED FITS:\n";
+	for (int i = 0; i < nPar; i++) {
+        TString name_i = func->GetParName(i);
+	    for (int j = i+1; j < nPar; j++) {
+            TString name_j = func->GetParName(j);
+	        double p_cor_ij = p_cov[j][i] / sqrt(p_cov[i][i] * p_cov[j][j]);
+            double cor_ij = cov[j][i] / sqrt(cov[i][i]*cov[j][j]);
+            cout<<"    Expected cor("<<name_i<<","<<name_j<<") = "<<p_cor_ij<<".\n";
+            cout<<"    Actual cor("<<name_i<<","<<name_j<<") = "<<cor_ij<<".\n";
         }
     }
 
