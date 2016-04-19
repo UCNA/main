@@ -1178,52 +1178,43 @@ int main(int argc, char *argv[])
     asym_legend->Draw();
 	*/
 
-    TString asymmetry_pdf_filename = "mc/asymmetry_data.pdf";
-    canvas->SaveAs(asymmetry_pdf_filename);
-
-    /// Compute the super sums
-    // TODO make seperate from the loaded one: 
-    // ucna.data.super_sum.histogram = compute_super_sum(ucna.data.raw);
-    //normalize(ucna.data.super_sum.histogram, min_E, max_E);
-    ucna.data.super_sum.histogram->SetLineColor(2);
-	ucna.data.super_sum.histogram->SetStats(0);
-    ucna.data.super_sum.histogram->Draw("");
-
-    /// Draw Monte Carlo
-    ucna.sm.super_sum.histogram->SetLineColor(1);
-    ucna.sm.super_sum.histogram->SetMarkerStyle(4);
-    ucna.sm.super_sum.histogram->Draw("same p0");
-
-    /// make a pretty legend
-    TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
-    legend->AddEntry(ucna.data.super_sum.histogram, "Type 0 super sum", "l");
-    legend->AddEntry(ucna.sm.super_sum.histogram, "Monte Carlo super sum", "p");
-    //legend->AddEntry(bonehead_sum_histogram, "Bonehead sum", "l");
-    legend->SetTextSize(0.03);
-    legend->SetBorderSize(0);
-    legend->Draw();
-
-    /// save the data and Mote Carlo plots
-    TString super_sum_pdf_filename = "mc/super_sum_data.pdf";
-    canvas->SaveAs(super_sum_pdf_filename);
 
 
-    /// CODE BREAK
+    /// FITTING 
 
-
-	//double cov[nPar][nPar]; 
     TMatrixD cov(nPar,nPar);
 	double entries = ucna.data.super_sum.histogram->GetEffectiveEntries();
 	double N = GetEntries(ucna.data.super_sum.histogram, min_E, max_E);
 
-	/// set all expectation values for this range
+	/// Actually do the fitting.
+	TF1* func = combined_fit(ucna.data.asymmetry.histogram, 
+                             ucna.data.super_sum.histogram, cov, 0);
+
+	/// Output the data info.
+    cout<<setprecision(5);
+	cout<<" ENERGY RANGE:\n";
+	cout<<"    Energy range is "<<min_E<<" - "<<max_E<<" keV.\n";
+	cout<<"    Number of counts in full data is "<<(int)entries<<".\n";
+	cout<<"    Number of counts in energy range is "<<(int)N<<".\n";
+	cout<<"    Efficiency energy cut is "<< N/entries*100<<"%.\n";
+
+	/// Set all expectation values for this range.
     double nSpec = 4;
     TMatrixD expected(nSpec,nSpec);
 	for (int m=0; m<nSpec; m++)
 		for (int n=0; n<nSpec; n++)
 			expected[m][n] = evaluate_expected_fierz(m,n,min_E,max_E);
 	
-	/// find the predicted inverse covariance matrix for this range
+	/// Output the fit covariance details.
+	cout<<"\n FIT COVARIANCE MATRIX\n";
+	for (int i=0; i<nPar; i++) {
+        cout<<"    ";
+		for (int j=0; j<nPar; j++)
+			cout<<setw(14)<<cov[i][j];
+	    cout<<endl;
+	}
+
+	/// Calculate the predicted inverse covariance matrix for this range.
 	double A = -0.12;
 	TMatrixD p_cov_inv(nPar,nPar);
 	for (int i=0; i<nPar; i++)
@@ -1239,38 +1230,11 @@ int main(int argc, char *argv[])
     if (nPar > 2)
 	    p_cov_inv[2][2] =  N;
 
-	/// find the covariance matrix
+	/// Compute the predicted covariance matrix by inverse.
 	double det = 0;
-	//double p_var_A = 1/p_cov_inv[0][0];
-	//double p_var_b = 1/p_cov_inv[1][1];
 	TMatrixD p_cov = p_cov_inv.Invert(&det);
 
-	/// actually do the fitting
-	TF1* func = combined_fit(ucna.data.asymmetry.histogram, 
-                             ucna.data.super_sum.histogram, cov, 0);
-
-	/// output the data info
-    cout<<setprecision(5);
-	cout<<" ENERGY RANGE:\n";
-	cout<<"    Energy range is "<<min_E<<" - "<<max_E<<" keV.\n";
-	cout<<"    Number of counts in full data is "<<(int)entries<<".\n";
-	cout<<"    Number of counts in energy range is "<<(int)N<<".\n";
-	cout<<"    Efficiency energy cut is "<< N/entries*100<<"%.\n";
-
-	/// output the fit covariance details
-	cout<<"\n FIT COVARIANCE MATRIX\n";
-	for (int i=0; i<nPar; i++) {
-        cout<<"    ";
-		for (int j=0; j<nPar; j++)
-			cout<<setw(14)<<cov[i][j];
-	    cout<<endl;
-	}
-
-    /// get the fit standard errors
-	//double sig_A = Sqrt(cov[0][0]);
-	//double sig_b = Sqrt(cov[1][1]);
-
-	/// output the predicted covariance details	
+	/// Output the predicted covariance details.
 	cout<<"\n PREDICTED COVARIANCE MATRIX\n";
 	for (int i=0; i<nPar; i++) {
         cout<<"    ";
@@ -1279,30 +1243,7 @@ int main(int argc, char *argv[])
 		cout<<"\n";
 	}
 
-    /// get the predicted standard errors
-	//double p_sig_A = Sqrt(p_cov[0][0]);
-	//double p_sig_b = Sqrt(p_cov[1][1]);
-
-    /*
-	cout<<endl;
-	cout<<" FOR UNCOMBINED FITS:\n";
-	cout<<"    Expected statistical error for A in this range is without b is " 
-					<< Sqrt(p_var_A)<<endl;
-	cout<<"    Expected statistical error for b in this range is without A is "
-					<< Sqrt(p_var_b)<<endl;
-	cout<<endl;
-	cout<<" FOR COMBINED FITS:\n";
-	cout<<"    Expected statistical error for A in this range is "<<p_sig_A<<endl;
-	cout<<"    Actual statistical error for A in this range is "<<sig_A<<endl;
-	cout<<"    Ratio for A error is "<<sig_A / p_sig_A<<endl;
-	cout<<"    Expected statistical error for b in this range is "<<p_sig_b<<endl;
-	cout<<"    Actual statistical error for b in this range is "<<sig_b<<endl;
-	cout<<"    Ratio for b error is "<<sig_b / p_sig_b<<endl;
-	cout<<"    Expected cor(A,b) = "<<p_cov[1][0] / (p_sig_A * p_sig_b)<<endl;
-	cout<<"    Actual cor(A,b) = "<<cov[1][0] / Sqrt(cov[0][0] * cov[1][1])<<endl;
-    */
-
-    /// Compute independent standard errors
+    /// Compute independent standard errors.
 	cout<<"\n FOR UNCOMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
         TString name = func->GetParName(i);
@@ -1310,7 +1251,7 @@ int main(int argc, char *argv[])
 	    cout<<"    Expected independent statistical error for "<<name<<" is "<<sigma<<".\n";
     }
 
-    /// Compare predicted and actual standard errors
+    /// Compare predicted and actual standard errors.
 	cout<<"\n FOR COMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
         TString name = func->GetParName(i);
@@ -1323,7 +1264,7 @@ int main(int argc, char *argv[])
         cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n";
     }
 
-    /// Compare predicted and actual correlations
+    /// Compare predicted and actual correlations.
 	cout<<"\n CORRELATIONS FACTORS FOR COMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
         TString name_i = func->GetParName(i);
@@ -1336,8 +1277,37 @@ int main(int argc, char *argv[])
         }
     }
 
+
+    /// DISPLAYING AND OUTPUTTING
+    
+    TString asymmetry_pdf_filename = "mc/asymmetry_data.pdf";
+    canvas->SaveAs(asymmetry_pdf_filename);
+
+    /// Compute the super sums.
+    ucna.data.super_sum.histogram->SetLineColor(2);
+	ucna.data.super_sum.histogram->SetStats(0);
+    ucna.data.super_sum.histogram->Draw("");
+
+    /// Draw Monte Carlo.
+    ucna.sm.super_sum.histogram->SetLineColor(1);
+    ucna.sm.super_sum.histogram->SetMarkerStyle(4);
+    ucna.sm.super_sum.histogram->Draw("same p0");
+
+    /// Make a pretty legend.
+    TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
+    legend->AddEntry(ucna.data.super_sum.histogram, "Type 0 super sum", "l");
+    legend->AddEntry(ucna.sm.super_sum.histogram, "Monte Carlo super sum", "p");
+    legend->SetTextSize(0.03);
+    legend->SetBorderSize(0);
+    legend->Draw();
+
+    /// Save the data and Mote Carlo plots.
+    TString super_sum_pdf_filename = "mc/super_sum_data.pdf";
+    canvas->SaveAs(super_sum_pdf_filename);
+
+
 	/*
-	// A fit histogram for output to gnuplot
+	/// A fit histogram for output to gnuplot
     TH1D *fierz_fit_histogram = new TH1D(*asymmetry_histogram);
 	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
 		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));

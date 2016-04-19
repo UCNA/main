@@ -160,8 +160,7 @@ struct UCNAModel {
         //raw({{NULL,NULL},{NULL,NULL}}),
         super_ratio(bins, min, max),
         super_sum(bins, min, max),
-        asymmetry(bins, min, max)
-    {
+        asymmetry(bins, min, max) {
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 raw[side][spin] = 0;
@@ -236,15 +235,17 @@ struct UCNAFierzFitter {
     TH1D *fierz_histogram[2][2];
     TH1D *sm_histogram[2][2];
     */
-    UCNAModel sm;           /// Standard Model Monte Carlo
-    UCNAModel fierz;        /// Fierz Monte Carlo
+    UCNAModel sm;           /// Standard Model Monte Carlo spectrum
+    UCNAModel fierz;        /// Fierz Monte Carlo spectrum
     UCNAModel data;         /// Measured data to fit
+    UCNAModel fit;          /// Fierz + Standard Model Monte Carlo best fit
 
     UCNAFierzFitter(int bins, double min, double max)
       : bins(bins), min(min), max(max),
         sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
         fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
-        data("ucna_data_", "UCNA data", bins, min, max) 
+        data("ucna_data_", "UCNA data", bins, min, max),
+        fit("ucna_fit_", "Standard Model + Fierz best fit", bins, min, max) 
     {}
 
         /*
@@ -274,11 +275,11 @@ struct UCNAFierzFitter {
     }
     */
 
-    void normalizeHistogram(TH1D* hist) {
+    void normalize(TH1D* hist) {
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
     }
 
-    void normalizeHistogram(TH1D* hist, double min, double max) {
+    void normalize(TH1D* hist, double min, double max) {
 		int _min = hist->FindBin(min);
 		int _max = hist->FindBin(max);
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
@@ -390,9 +391,6 @@ void compute_fit(TH1D* histogram, TF1* fierz_fit)
 }
 
 
-
-
-
 double asymmetry_fit_func(double *x, double *par)
 {
 	double A = par[0];
@@ -403,7 +401,6 @@ double asymmetry_fit_func(double *x, double *par)
 }
 
 
-
 double fierzratio_fit_func(double *x, double *par)
 {
 	double b = par[0];
@@ -412,7 +409,6 @@ double fierzratio_fit_func(double *x, double *par)
 
 	return (1 + b*m_e/E) / (1 + b*m_e_E);
 }
-
 
 
 double GetEntries(TH1D* histogram, double min, double max)
