@@ -162,7 +162,7 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not rate_histogram[side][spin]) {
-                std::cout<<"Error: rate histogram on the "
+                cout<<"Error: rate histogram on the "
                          <<(side? "west":"east")<<" side with afp "
                          <<(spin? "on":"off")<<" is not constructed.\n";
                 exit(1);
@@ -172,7 +172,7 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
         super_ratio_histogram = new TH1D(*(rate_histogram[0][0]));
 
     int bins = super_ratio_histogram->GetNbinsX();
-	std::cout<<"Number of bins "<<bins<<std::endl;
+	cout<<"Number of bins "<<bins<<endl;
     for (int bin = 1; bin < bins; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
@@ -180,13 +180,13 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_ratio = r[0][0]*r[1][1]/r[0][1]/r[1][0];
         if (TMath::IsNaN(super_ratio)) {
-            std::cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
+            cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
                      <<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
             super_ratio = 0;
         }
         super_ratio_histogram->SetBinContent(bin, super_ratio);
         super_ratio_histogram->SetBinError(bin, 0.01);   // TODO compute correctly!!
-        std::cout<<"Warning: super ratio is not computed correctly.\n";
+        cout<<"Warning: super ratio is not computed correctly.\n";
     }
     return super_ratio_histogram;
 }
@@ -200,14 +200,14 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not rate_histogram[side][spin]) {
-                std::cout<<"Error: rate histogram on side: "
+                cout<<"Error: rate histogram on side: "
                          <<(side? "west":"east")<<"and afp: "
                          <<(spin? "on":"off")<<"is not constructed.\n";
                 exit(1);
             }
 
     if (not super_sum_histogram) {
-        std::cout<<"Warning: super sum histogram is not constructed.\n";
+        cout<<"Warning: super sum histogram is not constructed.\n";
         super_sum_histogram = new TH1D(*(rate_histogram[0][0]));
     }
 
@@ -216,13 +216,13 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
         for (int spin = 0; spin < 2; spin++) {
             int ss_bins = rate_histogram[side][spin]->GetNbinsX();
             if (bins != ss_bins) {
-                std::cout<<"Error: super sum and side spin histogram sizes don't match.\n";
-                std::cout<<"super sum bins: "<<bins<<"\n";
+                cout<<"Error: super sum and side spin histogram sizes don't match.\n";
+                cout<<"super sum bins: "<<bins<<"\n";
                 exit(1);
             }
             if (ss_bins <= 0) {
-                std::cout<<"Error: bad bin number.\n";
-                std::cout<<"super sum bins: "<<bins<<"\n";
+                cout<<"Error: bad bin number.\n";
+                cout<<"super sum bins: "<<bins<<"\n";
                 exit(1);
             }
         }
@@ -237,15 +237,15 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
         double error = TMath::Sqrt(1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]) * super_sum;
         if (TMath::IsNaN(super_sum)) {
             super_sum = 0;
-            std::cout<<"Warning: super sum is not a number: "<<super_sum<<".\n";
+            cout<<"Warning: super sum is not a number: "<<super_sum<<".\n";
         } else if (super_sum == 0)
-            std::cout<<"Warning: super sum is zero.\n";
+            cout<<"Warning: super sum is zero.\n";
 
         if (TMath::IsNaN(error)) {
 			error = 0;
-            std::cout<<"Warning: super sum error: division by zero.\n";
+            cout<<"Warning: super sum error: division by zero.\n";
         } else if (error <= 0) 
-            std::cout<<"Warning: super sum error: error is non positive.\n";
+            cout<<"Warning: super sum error: error is non positive.\n";
 
         if (bin % 10 == 0)
             printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
@@ -268,7 +268,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_ratio = TMath::Sqrt(r[0][0]*r[1][1]/r[0][1]/r[1][0]);
         if (TMath::IsNaN(super_ratio)) {
-            std::cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
+            cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
                      <<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
             super_ratio = 0;
         }
@@ -280,7 +280,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
 		double inv_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]) / norm;
 		double asymmetry_error = super_ratio * inv_sum / norm;  
         if (TMath::IsNaN(asymmetry_error) or asymmetry_error <= 0) {
-            std::cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
+            cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
                      <<"Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
             asymmetry_error = 0.01;
         }
@@ -551,7 +551,7 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
     }
 
 	/// fill data structure for fit (coordinates + values + errors) 
-	std::cout<<"Do global fit"<<std::endl;
+	cout<<"Do global fit"<<endl;
 
 	/// set up the minuit fitter
 	TVirtualFitter::SetDefaultFitter("Minuit");
@@ -607,26 +607,26 @@ int fill_data(TString filename, TString title,
 	/// load the files that contain data histograms
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
-		std::cout<<"Error loading "<<title<<":\n";
-		std::cout<<"File not found: "<<filename<<".\n";
+		cout<<"Error loading "<<title<<":\n";
+		cout<<"File not found: "<<filename<<".\n";
 		exit(1);
 	}
 
     if (histogram) {
-		std::cout<<"Warning: histogram "<<title<<" already exists and is being deleted.\n";
+		cout<<"Warning: histogram "<<title<<" already exists and is being deleted.\n";
         delete histogram;
     }
 
     histogram = (TH1D*)tfile->Get(name);
     if (not histogram) {
-		std::cout<<"Error in file "<<filename<<":\n";
-		std::cout<<"Error getting "<<title<<":\n";
-		std::cout<<"Cannot find histogram named "<<name<<".\n";
+		cout<<"Error in file "<<filename<<":\n";
+		cout<<"Error getting "<<title<<":\n";
+		cout<<"Cannot find histogram named "<<name<<".\n";
         exit(1);
     }
 
 	int entries=histogram->GetEntries();
-	std::cout<<"Number of entries in "<<title<<" is "<<entries<<".\n";
+	cout<<"Number of entries in "<<title<<" is "<<entries<<".\n";
     return entries;
 }
 
@@ -636,28 +636,28 @@ int fill_simulation(TString filename, TString title, TString name,
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not histogram[side][spin]) {
-                std::cout<<"Error: histogram for "<< name<<" is not constructed.\n";
-                std::cout<<"Side: "<< side<<" Spin: "<<spin <<".\n";
+                cout<<"Error: histogram for "<< name<<" is not constructed.\n";
+                cout<<"Side: "<< side<<" Spin: "<<spin <<".\n";
                 exit(1);
             }
 
     if (not super_sum) {
-        std::cout<<"Error: super sum histogram for "<< name<<" is not constructed.\n";
+        cout<<"Error: super sum histogram for "<< name<<" is not constructed.\n";
         exit(1);
     }
 
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
-		std::cout<<"Error loading "<<title<<":\n";
-		std::cout<<"File not found: "<<filename<<".\n";
+		cout<<"Error loading "<<title<<":\n";
+		cout<<"File not found: "<<filename<<".\n";
 		exit(1);
 	}
 
     TChain *chain = (TChain*)tfile->Get(name);
     if (not chain) {
-		std::cout<<"Error in file "<<filename<<":\n";
-		std::cout<<"Error getting "<<title<<":\n";
-		std::cout<<"Cannot find chain or tree named "<<name<<".\n";
+		cout<<"Error in file "<<filename<<":\n";
+		cout<<"Error getting "<<title<<":\n";
+		cout<<"Cannot find chain or tree named "<<name<<".\n";
         exit(1);
     }
 
@@ -674,7 +674,7 @@ int fill_simulation(TString filename, TString title, TString name,
 	/* TFile* mc_tfile = new TFile("Fierz/mc.root", "recreate");
 	if (mc_tfile->IsZombie())
 	{
-		std::cout << "Can't make MC file.\n";
+		cout << "Can't make MC file.\n";
 		exit(1);
 	}
 	TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy"); */
@@ -711,7 +711,7 @@ int fill_simulation(TString filename, TString title, TString name,
             double p = random(0,1);
 			double afp = (p < afp_off_prob)? -1 : +1;
             bool spin = (afp < 0)? EAST : WEST;
-            //std::cout <<"energy: "<<energy<<" side: "<<"side: "<<side
+            //cout <<"energy: "<<energy<<" side: "<<"side: "<<side
             //          <<" spin: "<<spin<<" afp: "<<afp<<" p: "<<p<<".\n";
             histogram[side][spin]->Fill(energy, 1);
 			//tntuple->Fill(side, spin, energy);
@@ -777,8 +777,8 @@ int fill_simulation(TString filename, TString title, TString name,
 	}
     #endif
     
-	std::cout<<"Total number of Monte Carlo entries without cuts: "<<nevents<<std::endl;
-	std::cout<<"Total number of Monte Carlo entries with cuts: "<<nSimmed<<std::endl;
+	cout<<"Total number of Monte Carlo entries without cuts: "<<nevents<<endl;
+	cout<<"Total number of Monte Carlo entries with cuts: "<<nSimmed<<endl;
 
 	//tntuple->SetDirectory(mc_tfile);
 	//tntuple->Write();
@@ -816,8 +816,8 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
 	}
     fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
     fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
-	std::cout<<data_histogram->GetNbinsX()<<std::endl;
-	std::cout<<sm_histogram->GetNbinsX()<<std::endl;
+	cout<<data_histogram->GetNbinsX()<<endl;
+	cout<<sm_histogram->GetNbinsX()<<endl;
 
     /// fit the Fierz ratio 
 	char fit_str[1024];
@@ -859,7 +859,7 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
     TString fierz_ratio_pdf_filename = "mc/fierz_ratio.pdf";
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
     if (not canvas) {
-        std::cout<<"Can't open new canvas.\n";
+        cout<<"Can't open new canvas.\n";
         exit(0);
     }
     canvas->SaveAs(fierz_ratio_pdf_filename);
@@ -873,7 +873,7 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
 	TFile* ratio_tfile = new TFile("Fierz/ratio.root", "recreate");
 	if (ratio_tfile->IsZombie())
     {
-		std::cout<<"Can't recreate MC file.\n";
+		cout<<"Can't recreate MC file.\n";
 		exit(1);
 	}
 	fierz_ratio_histogram->SetDirectory(ratio_tfile);
@@ -951,7 +951,7 @@ int main(int argc, char *argv[])
 
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
     if (not canvas) {
-        std::cout<<"Can't open new canvas.\n";
+        cout<<"Can't open new canvas.\n";
         exit(0);
     }
 
@@ -1001,7 +1001,7 @@ int main(int argc, char *argv[])
 	if (ucna_data_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
-		std::cout << "Data file not found." << std::endl;
+		cout << "Data file not found." << endl;
 		exit(1);
 	}
 
@@ -1010,7 +1010,7 @@ int main(int argc, char *argv[])
 	if (ucna_correction_tfile->IsZombie())
 	{
 		//printf("File "+beta_filename+"not found.\n");
-		std::cout << "Correction file not found." << std::endl;
+		cout << "Correction file not found." << endl;
 		exit(1);
 	}
 	*/
@@ -1085,9 +1085,9 @@ int main(int argc, char *argv[])
 	for (int side = 0; side < 2; side++)
 		for (int spin = 0; spin < 2; spin++)
 		{
-			std::cout << "Number of entries in (" 
+			cout << "Number of entries in (" 
 					  << side << ", " << spin << ") is "
-					  << (int)ucna.data.raw[side][spin]->GetEntries() << std::endl;
+					  << (int)ucna.data.raw[side][spin]->GetEntries() << endl;
 			if (ucna.data.raw[side][spin] == NULL)
 			{
 				puts("histogram is null. Aborting...");
