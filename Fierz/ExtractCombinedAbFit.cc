@@ -163,8 +163,8 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
         for (int spin=0; spin<2; spin++)
             if (not rate_histogram[side][spin]) {
                 cout<<"Error: rate histogram on the "
-                         <<(side? "west":"east")<<" side with afp "
-                         <<(spin? "on":"off")<<" is not constructed.\n";
+                    <<(side? "west":"east")<<" side with afp "
+                    <<(spin? "on":"off")<<" is not constructed.\n";
                 exit(1);
             }
 
@@ -269,7 +269,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
         double super_ratio = TMath::Sqrt(r[0][0]*r[1][1]/r[0][1]/r[1][0]);
         if (TMath::IsNaN(super_ratio)) {
             cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
-                     <<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
+                <<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
             super_ratio = 0;
         }
 
@@ -281,7 +281,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
 		double asymmetry_error = super_ratio * inv_sum / norm;  
         if (TMath::IsNaN(asymmetry_error) or asymmetry_error <= 0) {
             cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
-                     <<"Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
+                <<"Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
             asymmetry_error = 0.01;
         }
         asymmetry_histogram->SetBinError(bin, asymmetry_error);
@@ -1225,13 +1225,13 @@ int main(int argc, char *argv[])
 	/// set all expectation values for this range
 	for (int m=0; m<=2; m++)
 		for (int n=0; n<=2; n++)
-			expected[m][n] = evaluate_expected_fierz(m, n, min_E, max_E);
+			expected[m][n] = evaluate_expected_fierz(m,n,min_E,max_E);
 	
 	/// find the predicted inverse covariance matrix for this range
 	double A = -0.12;
 	TMatrixD p_cov_inv(nPar,nPar);
-	for (int i = 0; i < 2; i++)
-		for (int j = 0; j < 2; j++)
+	for (int i=0; i<nPar; i++)
+		for (int j=0; j<nPar; j++)
 	        p_cov_inv[i][j] = 0;
 	p_cov_inv[0][0] =  N/4*expected[2][0];
 	p_cov_inv[1][0] = 
@@ -1241,8 +1241,8 @@ int main(int argc, char *argv[])
 
 	/// find the covariance matrix
 	double det = 0;
-	double p_var_A = 1 / p_cov_inv[0][0];
-	double p_var_b = 1 / p_cov_inv[1][1];
+	//double p_var_A = 1/p_cov_inv[0][0];
+	//double p_var_b = 1/p_cov_inv[1][1];
 	TMatrixD p_cov = p_cov_inv.Invert(&det);
 
 	/// actually do the fitting
@@ -1256,32 +1256,33 @@ int main(int argc, char *argv[])
 	cout<<"    Number of counts in energy range is "<< (int)N<<".\n\n";
 
 	/// output the fit covariance details
-	cout<<" FIT COVARIANCE MATRIX cov(A,b) =\n";
-	for (int i = 0; i < 2; i++) {
-		for (int j = 0; j < 2; j++) {
+	cout<<" FIT COVARIANCE MATRIX\n";
+	for (int i=0; i<nPar; i++) {
+		for (int j=0; j<nPar; j++) {
 			cout<<"\t"<<cov[i][j];
 		}
 	    cout<<endl;
 	}
 
     /// get the fit standard errors
-	double sig_A = sqrt(cov[0][0]);
-	double sig_b = sqrt(cov[1][1]);
+	//double sig_A = sqrt(cov[0][0]);
+	//double sig_b = sqrt(cov[1][1]);
 
 	/// output the predicted covariance details	
 	cout<<endl;
-	cout<<" PREDICTED COVARIANCE MATRIX cov(A,b) =\n";
-	for (int i = 0; i < 2; i++) {
-		for (int j = 0; j < 2; j++) {
+	cout<<" PREDICTED COVARIANCE MATRIX\n";
+	for (int i=0; i<nPar; i++) {
+		for (int j=0; j<nPar; j++) {
 			cout<<"\t"<<p_cov[i][j];
 		}
 		cout<<"\n";
 	}
 
     /// get the predicted standard errors
-	double p_sig_A = sqrt(p_cov[0][0]);
-	double p_sig_b = sqrt(p_cov[1][1]);
+	//double p_sig_A = sqrt(p_cov[0][0]);
+	//double p_sig_b = sqrt(p_cov[1][1]);
 
+    /*
 	cout<<endl;
 	cout<<" FOR UNCOMBINED FITS:\n";
 	cout<<"    Expected statistical error for A in this range is without b is " 
@@ -1298,29 +1299,31 @@ int main(int argc, char *argv[])
 	cout<<"    Ratio for b error is "<<sig_b / p_sig_b<<endl;
 	cout<<"    Expected cor(A,b) = "<<p_cov[1][0] / (p_sig_A * p_sig_b)<<endl;
 	cout<<"    Actual cor(A,b) = "<<cov[1][0] / sqrt(cov[0][0] * cov[1][1])<<endl;
+    */
 
 	cout<<"\n FOR UNCOMBINED FITS:\n";
-	for (int i = 0; i < nPar; i++) {
-	cout<<"    Expected statistical error for A in this range is without b is " 
-					<< sqrt(p_var_A)<<endl;
+	for (int i=0; i<nPar; i++) {
+        TString name = func->GetParName(i);
+	    cout<<"    Expected independent statistical error for "<<name
+            <<" is "<<pow(p_cov_inv[i][i],-0.5)<<".\n";
     }
 
 	cout<<"\n FOR COMBINED FITS:\n";
-	for (int i = 0; i < nPar; i++) {
+	for (int i=0; i<nPar; i++) {
         TString name = func->GetParName(i);
-        double param = func->GetParameter(i);
+        //double param = func->GetParameter(i);
 	    double sigma = sqrt(cov[i][i]);
 	    double expected_sigma = sqrt(p_cov[i][i]);
         double factor = sigma/expected_sigma;
         cout<<"    Expected statistical error for "<<name<<" in this range is "<<expected_sigma<<".\n";
         cout<<"    Actual statistical error for "<<name<<" in this range is "<<sigma<<".\n";
-        cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n";
+        cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n\n";
     }
 
-	cout<<"\n CORRELATIONS FACTORS FOR COMBINED FITS:\n";
-	for (int i = 0; i < nPar; i++) {
+	cout<<" CORRELATIONS FACTORS FOR COMBINED FITS:\n";
+	for (int i=0; i<nPar; i++) {
         TString name_i = func->GetParName(i);
-	    for (int j = i+1; j < nPar; j++) {
+	    for (int j = i+1; j<nPar; j++) {
             TString name_j = func->GetParName(j);
 	        double p_cor_ij = p_cov[j][i] / sqrt(p_cov[i][i] * p_cov[j][j]);
             double cor_ij = cov[j][i] / sqrt(cov[i][i]*cov[j][j]);
