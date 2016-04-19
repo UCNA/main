@@ -43,9 +43,20 @@ double max_E = 670;                         /// max range from the 2013 paper
 double fedutial_cut = 50;                   /// radial cut in millimeters 
 double fidcut2 = 50*50;                     /// mm^2 radial cut
 
+/// set up free fit parameters with best guess
+static const int nPar = 2;
+TString iniParamNames[3] = {"A", "b", "N"};
+double iniParams[3] = {-0.12, 0, 1e6};
+
+/// Path to experiment data files.
+TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
+
+/// Path to Monte Carlo files.
+TString mc_dir = "/home/xuansun/Documents/SimData_Beta/";
+
 //double expected[3][3];                      /// expected values (based on the energy range)
 //TMatrixD expected(3,3);                      /// expected values (based on the energy range)
-                                            /// needs to be visible to the chi^2 code
+//                                            /// needs to be visible to the chi^2 code
 
 // ug. Needs to be static
 //FierzHistogram mc(0,1500,bins);
@@ -181,7 +192,7 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
         double super_ratio = r[0][0]*r[1][1]/r[0][1]/r[1][0];
         if (TMath::IsNaN(super_ratio)) {
             cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
-                     <<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
+                <<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
             super_ratio = 0;
         }
         super_ratio_histogram->SetBinContent(bin, super_ratio);
@@ -269,7 +280,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
         double super_ratio = TMath::Sqrt(r[0][0]*r[1][1]/r[0][1]/r[1][0]);
         if (TMath::IsNaN(super_ratio)) {
             cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
-                <<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
+            cout<<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
             super_ratio = 0;
         }
 
@@ -281,7 +292,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
 		double asymmetry_error = super_ratio * inv_sum / norm;  
         if (TMath::IsNaN(asymmetry_error) or asymmetry_error <= 0) {
             cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
-                <<"Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
+            cout<<"Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
             asymmetry_error = 0.01;
         }
         asymmetry_histogram->SetBinError(bin, asymmetry_error);
@@ -533,21 +544,15 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 
 #if 1
-/// set up free fit parameters with best guess
-static const int nPar = 2;
-TString iniParamNames[3] = {"A", "b", "N"};
-double iniParams[3] = {-0.12, 0, 1e6};
-
-
 //TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar]) 
 TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
 { 
 	/// create fit function
     if (not func) {
-        func = new TF1("func", asymmetry_fit_func, min_E, max_E, nPar);
+        func = new TF1("func", asymmetry_fit_func, ucna.min, ucna.max, nPar);
         func->SetParameters(iniParams);
         for (int i=0; i<nPar; i++)
-            func->SetParName(i, iniParamNames[i]);
+            func->SetParName(i,iniParamNames[i]);
     }
 
 	/// fill data structure for fit (coordinates + values + errors) 
@@ -605,7 +610,7 @@ int fill_data(TString filename, TString title,
               TString name, TH1D* histogram)
 {
 	/// load the files that contain data histograms
-	TFile* tfile = new TFile(filename);
+	TFile* tfile = new TFile(data_dir + filename);
 	if (tfile->IsZombie()) {
 		cout<<"Error loading "<<title<<":\n";
 		cout<<"File not found: "<<filename<<".\n";
@@ -646,7 +651,7 @@ int fill_simulation(TString filename, TString title, TString name,
         exit(1);
     }
 
-	TFile* tfile = new TFile(filename);
+	TFile* tfile = new TFile(mc_dir + filename);
 	if (tfile->IsZombie()) {
 		cout<<"Error loading "<<title<<":\n";
 		cout<<"File not found: "<<filename<<".\n";
@@ -661,7 +666,7 @@ int fill_simulation(TString filename, TString title, TString name,
         exit(1);
     }
 
-	int nevents = chain->GetEntries();
+	int nEvents = chain->GetEntries();
 	chain->SetBranchStatus("*",false);
 	chain->SetBranchStatus("PID",true);
 	chain->SetBranchStatus("side",true);
@@ -692,7 +697,7 @@ int fill_simulation(TString filename, TString title, TString name,
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
 
-    for (int evt=0; evt<nevents; evt++) {
+    for (int evt=0; evt<nEvents; evt++) {
         chain->GetEvent(evt);
 
         /// cut out bad events
@@ -777,7 +782,7 @@ int fill_simulation(TString filename, TString title, TString name,
 	}
     #endif
     
-	cout<<"Total number of Monte Carlo entries without cuts: "<<nevents<<endl;
+	cout<<"Total number of Monte Carlo entries without cuts: "<<nEvents<<endl;
 	cout<<"Total number of Monte Carlo entries with cuts: "<<nSimmed<<endl;
 
 	//tntuple->SetDirectory(mc_tfile);
@@ -905,27 +910,23 @@ int main(int argc, char *argv[])
 	srand( time(NULL) );
 
     /// load the files that contain data histograms
-    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-              "Range_0-1000/CorrectAsym/CorrectedAsym.root",
+    fill_data("Range_0-1000/CorrectAsym/CorrectedAsym.root",
               "2010 final official asymmetry",
               "hAsym_Corrected_C",
               ucna.data.asymmetry.histogram);
 
-    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-		      "OctetAsym_Offic.root",
+    fill_data("OctetAsym_Offic.root",
               "2010 final official supersum",
               "Total_Events_SuperSum",
               ucna.data.super_sum.histogram);
 
-    fill_simulation("/home/xuansun/Documents/SimData_Beta/"
-                    "SimAnalyzed_Beta.root",
+    fill_simulation("SimAnalyzed_Beta.root",
                     "Monte Carlo Standard Model beta spectrum",
                     "SimAnalyzed",
                     ucna.sm.raw,
 					ucna.sm.super_sum.histogram);
 
-    fill_simulation("/home/xuansun/Documents/SimData_Beta/"
-                    "SimAnalyzed_Beta_fierz.root",
+    fill_simulation("SimAnalyzed_Beta_fierz.root",
                     "Monte Carlo Fierz beta spectrum",
                     "SimAnalyzed",
                     ucna.fierz.raw,
@@ -1042,23 +1043,19 @@ int main(int argc, char *argv[])
     */
 
     /* TODO figure out where these went.
-    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-              "OctetAsym_Offic.root",
+    fill_data("OctetAsym_Offic.root",
               "2010 final official east afp off spectrum",
               "hTotalEvents_E_off;1",
               ucna.data.raw[0][0]);
-    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-              "OctetAsym_Offic.root",
+    fill_data("OctetAsym_Offic.root",
               "2010 final official east afp on spectrum",
               "hTotalEvents_E_on;1",
               ucna.data.raw[0][1]);
-    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-              "OctetAsym_Offic.root",
+    fill_data("OctetAsym_Offic.root",
               "2010 final official west afp off spectrum",
               "hTotalEvents_W_off;1",
               ucna.data.raw[1][0]);
-    fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-              "OctetAsym_Offic.root",
+    fill_data( "OctetAsym_Offic.root",
               "2010 final official west afp on spectrum",
               "hTotalEvents_W_on;1",
               ucna.data.raw[1][1]);
@@ -1066,8 +1063,7 @@ int main(int argc, char *argv[])
     for (int side=EAST; side<=WEST; side++)
         for (int afp=EAST; afp<=WEST; afp++) {
             TString title = "2010 final official "+side?"west":"east";
-            fill_data("/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
-                      "OctetAsym_Offic.root",
+            fill_data("OctetAsym_Offic.root",
                       "2010 final official west afp on spectrum",
                       "hTotalEvents_W_on;1",
                       ucna.data.raw[side][afp]);
@@ -1234,15 +1230,15 @@ int main(int argc, char *argv[])
 	for (int i=0; i<nPar; i++)
 		for (int j=0; j<nPar; j++)
 	        p_cov_inv[i][j] = 0;
-	p_cov_inv[0][0] =  N/4*expected[2][0];
-    if (nPar >= 1) {
+    if (nPar > 0)
+	    p_cov_inv[0][0] =  N/4*expected[2][0];
+    if (nPar > 1) {
         p_cov_inv[1][0] = 
         p_cov_inv[0][1] = -N*A/4*expected[2][1];
         p_cov_inv[1][1] =  N*(expected[0][2] - expected[0][1]*expected[0][1]);
     }
-    if (nPar >= 1) {
+    if (nPar > 2)
 	    p_cov_inv[2][2] =  N;
-    }
 
 	/// find the covariance matrix
 	double det = 0;
@@ -1332,8 +1328,8 @@ int main(int argc, char *argv[])
         TString name_i = func->GetParName(i);
 	    for (int j = i+1; j<nPar; j++) {
             TString name_j = func->GetParName(j);
-	        double p_cor_ij = p_cov[j][i] / sqrt(p_cov[i][i] * p_cov[j][j]);
-            double cor_ij = cov[j][i] / sqrt(cov[i][i]*cov[j][j]);
+	        double p_cor_ij = p_cov[j][i]/sqrt(p_cov[i][i]*p_cov[j][j]);
+            double cor_ij = cov[j][i]/sqrt(cov[i][i]*cov[j][j]);
             cout<<"    Expected cor("<<name_i<<","<<name_j<<") = "<<p_cor_ij<<".\n";
             cout<<"    Actual cor("<<name_i<<","<<name_j<<") = "<<cor_ij<<".\n";
         }
