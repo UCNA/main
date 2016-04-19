@@ -1235,10 +1235,14 @@ int main(int argc, char *argv[])
 		for (int j=0; j<nPar; j++)
 	        p_cov_inv[i][j] = 0;
 	p_cov_inv[0][0] =  N/4*expected[2][0];
-	p_cov_inv[1][0] = 
-    p_cov_inv[0][1] = -N*A/4*expected[2][1];
-	p_cov_inv[1][1] =  N*(expected[0][2] - expected[0][1]*expected[0][1]);
-	//p_cov_inv[2][2] =  N;
+    if (nPar >= 1) {
+        p_cov_inv[1][0] = 
+        p_cov_inv[0][1] = -N*A/4*expected[2][1];
+        p_cov_inv[1][1] =  N*(expected[0][2] - expected[0][1]*expected[0][1]);
+    }
+    if (nPar >= 1) {
+	    p_cov_inv[2][2] =  N;
+    }
 
 	/// find the covariance matrix
 	double det = 0;
