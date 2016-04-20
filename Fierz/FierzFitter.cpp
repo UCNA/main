@@ -24,6 +24,65 @@ double UCNAhistogram::normalize()
 }
 
 
+TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
+{ 
+	/// create fit function
+    if (not func) {
+        func = new TF1("func", asymmetry_fit_func, ucna.min, ucna.max, nPar);
+        func->SetParameters(iniParams);
+        for (int i=0; i<nPar; i++)
+            func->SetParName(i,iniParamNames[i]);
+    }
+
+	/// fill data structure for fit (coordinates + values + errors) 
+	cout<<"Do global fit"<<endl;
+
+	/// set up the minuit fitter
+	TVirtualFitter::SetDefaultFitter("Minuit");
+	TVirtualFitter *minuit = TVirtualFitter::Fitter(0,nPar);
+	for (int i=0; i<nPar; ++i)
+		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1, 0, 0);
+	minuit->SetFCN(combined_chi2);
+	minuit->SetErrorDef(1);	        /// 1 for chi^2
+
+	/// set print level
+	double arglist[100];
+	arglist[0] = 0;
+	minuit->ExecuteCommand("SET PRINT", arglist, 1);
+
+	/// minimize
+	arglist[0] = 50;    /// number of function calls
+	arglist[1] = 0.1;   /// tolerance
+	minuit->ExecuteCommand("MIGRAD", arglist, nPar);
+
+	double minParams[nPar];
+	double parErrors[nPar];
+	for (int i=0; i<nPar; ++i) {  
+		minParams[i] = minuit->GetParameter(i);
+		parErrors[i] = minuit->GetParError(i);
+	}
+
+	/// extract results from minuit
+	double chi2, edm, errdef; 
+	int nvpar, nparx;
+	minuit->GetStats(chi2,edm,errdef,nvpar,nparx);
+
+	func->SetParameters(minParams);
+	func->SetParErrors(parErrors);
+	func->SetChisquare(chi2);
+
+	int ndf = asymmetry->GetNbinsX() + super_sum->GetNbinsX() - nvpar;
+	func->SetNDF(ndf);
+    
+	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
+	for (int i=0; i<nPar; i++)
+		for (int j=0; j<nPar; j++)
+			cov[i][j] = minuit->GetCovarianceMatrixElement(i,j);
+	
+	cout<<"\n    chi^2 = "<<chi2<<", ndf = "<<ndf<<", chi^2/ndf = "<<chi2/ndf<<".\n\n";
+
+	return func; 
+}
 #if 0
 void normalize(double min, double max) 
 {
