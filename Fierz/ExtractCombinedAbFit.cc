@@ -789,7 +789,7 @@ int fill_simulation(TString filename, TString title, TString name,
 
 	/// compute and normalize super sum
     compute_super_sum(histogram, super_sum);
-    normalize(super_sum, min_E, max_E);
+    //normalize(super_sum, min_E, max_E);
 
     /*
     for (int side=0; side<2; side++)
@@ -1157,6 +1157,7 @@ int main(int argc, char *argv[])
 	/// Actually do the fitting.
 	TF1* func = combined_fit(ucna.data.asymmetry.histogram, 
                              ucna.data.super_sum.histogram, cov, 0);
+    //ucna.data.super_sum.normalize();
 
 	/// Output the data info.
     cout<<setprecision(5);
