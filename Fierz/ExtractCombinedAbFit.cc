@@ -43,7 +43,8 @@ int large_prime = 179430331;                /// a large prime number
 static int bins = 150;						/// replace with value from data or smoothing fit
 double scale_x = 1.00000;
 
-double min_E = 220;                         /// min energy from the 2013 paper
+//double min_E = 220;                         /// min energy from the 2013 paper
+double min_E = 120;                         /// min energy from the 2013 paper
 double max_E = 670;                         /// max range from the 2013 paper
 double fedutial_cut = 50;                   /// radial cut in millimeters 
 double fidcut2 = 50*50;                     /// mm^2 radial cut
@@ -59,9 +60,9 @@ TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/";
 /// Path to Monte Carlo files.
 TString mc_dir = "/home/xuansun/Documents/SimData_Beta/";
 
-//double expected[3][3];                      /// expected values (based on the energy range)
-//TMatrixD expected(3,3);                      /// expected values (based on the energy range)
-//                                            /// needs to be visible to the chi^2 code
+//double expected[3][3];     /// expected values (based on the energy range)
+//TMatrixD expected(3,3);    /// expected values (based on the energy range)
+//                           /// needs to be visible to the chi^2 code or DOES it?
 
 // ug. Needs to be static
 //FierzHistogram mc(0,1500,bins);
@@ -248,7 +249,7 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
 
-        double super_sum = Sqrt(r[0][0] * r[1][1]) + Sqrt(r[0][1] * r[1][0]);
+        double super_sum = Sqrt(r[0][0]*r[1][1]) + Sqrt(r[0][1]*r[1][0]);
         double error = Sqrt(1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]) * super_sum;
         if (IsNaN(super_sum)) {
             super_sum = 0;
@@ -543,7 +544,6 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 
 #if 1
-//TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, double cov[nPar][nPar]) 
 TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
 { 
 	/// create fit function
@@ -961,22 +961,6 @@ int main(int argc, char *argv[])
     ucna.sm.super_sum.histogram->SetLineColor(1);
     ucna.sm.super_sum.histogram->Draw("Same");
 
-    // fit a smooth model to the mc
-    /*
-    TF1 *mc_fit = new TF1("fierz_mc_fit", mc_model, 0, 1000, deg+1);
-    mc_fit->SetParameter(0,-0.5);
-    mc_fit->SetParameter(1,1.0);
-    mc_fit->SetParameter(2,1.0);
-    mc_fit->SetParameter(3,1.0);
-    mc_fit->SetParameter(4,1.0);
-    //mc_fit->SetParameter(5,1.0);
-    //mc_fit->SetParameter(6,1.0);
-    mc.sm_histogram->Fit("fierz_mc_fit");
-
-    TString pdf_filename = "/data/kevinh/mc/fierz_models_to_fit.pdf";
-    canvas->SaveAs(pdf_filename);
-    */
-
     /**
      *  If you want a fast way to get the combined data spectrums for comparison, 
      *  I already have it extracted as a ROOT histogram for my own data/MC comparisons.
@@ -998,22 +982,6 @@ int main(int argc, char *argv[])
 		//"/home/mmendenhall/UCNA/PostPlots/OctetAsym_Offic/OctetAsym_Offic.root");
 		//"/home/mmendenhall/Plots/OctetAsym_Offic/OctetAsym_Offic.root");
         "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/OctetAsym_Offic.root");
-	if (ucna_data_tfile->IsZombie())
-	{
-		//printf("File "+beta_filename+"not found.\n");
-		cout << "Data file not found." << endl;
-		exit(1);
-	}
-
-	/*
-	TFile* ucna_correction_tfile = new TFile("Fierz/tree.root");
-	if (ucna_correction_tfile->IsZombie())
-	{
-		//printf("File "+beta_filename+"not found.\n");
-		cout << "Correction file not found." << endl;
-		exit(1);
-	}
-	*/
 
 	#define EVENT_TYPE -1 
     TH1D *ucna.data_raw[2][2] = {

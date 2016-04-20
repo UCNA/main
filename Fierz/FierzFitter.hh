@@ -229,22 +229,21 @@ struct UCNAFierzFitter {
     int bins;
     double min;
     double max;
-    /*
-    TH1D *fierz_super_sum_histogram;
-    TH1D *sm_super_sum_histogram;
-    TH1D *fierz_histogram[2][2];
-    TH1D *sm_histogram[2][2];
-    */
-    UCNAModel sm;           /// Standard Model Monte Carlo spectrum
-    UCNAModel fierz;        /// Fierz Monte Carlo spectrum
-    UCNAModel data;         /// Measured data to fit
-    UCNAModel fit;          /// Fierz + Standard Model Monte Carlo best fit
+
+    UCNAModel data;         /// Measured foreground data to fit
+    UCNAModel bg;           /// Measured background data to remove
+    UCNAModel sm;           /// Standard Model vector Monte Carlo spectrum
+    UCNAModel axial;        /// Axial vector Monte Carlo spectrum
+    UCNAModel fierz;        /// Fierz (Scaler + tensor) Monte Carlo spectrum
+    UCNAModel fit;          /// Vector + axial + Fierz Monte Carlo best fit
 
     UCNAFierzFitter(int bins, double min, double max)
       : bins(bins), min(min), max(max),
-        sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
-        fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
         data("ucna_data_", "UCNA data", bins, min, max),
+        bg("ucna_bg_", "Standard Model Monte Carlo", bins, min, max),
+        sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
+        axial("ucna_axial_", "Standard Model Monte Carlo", bins, min, max),
+        fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
         fit("ucna_fit_", "Standard Model + Fierz best fit", bins, min, max) 
     {}
 
