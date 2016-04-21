@@ -289,6 +289,9 @@ struct UCNAFierzFitter {
     */
 };
 
+double asymmetry_fit_func(double *x, double *par);
+
+
 
 /// beta spectrum with little b term
 double fierz_beta_spectrum(const double *val, const double *par) 
@@ -333,8 +336,6 @@ double beta_spectrum(const double *val, const double *par)
 }
 
 
-
-
 double evaluate_expected_fierz(double m, double n, double min, double max, int integral_size = 1234) 
 {
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
@@ -354,7 +355,6 @@ double evaluate_expected_fierz(double m, double n, double min, double max, int i
     delete h2;
     return rv;
 }
-
 
 
 double evaluate_expected_fierz(double min, double max, int integral_size = 1234) 
@@ -414,17 +414,8 @@ double fierzratio_fit_func(double *x, double *par)
 }
 
 
-double GetEntries(TH1D* histogram, double min, double max)
-{
-	double entries = histogram->GetEffectiveEntries();
-	double part_int = histogram->Integral(
-					  histogram->FindBin(min),
-					  histogram->FindBin(max));
-	double full_int = histogram->Integral();
-	double N = entries * part_int / full_int;
+double GetEntries(TH1D* histogram, double min, double max);
 
-	return N;
-}
 
 
 #endif // FIERZ_FITTER

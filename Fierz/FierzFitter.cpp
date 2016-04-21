@@ -119,17 +119,31 @@ void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Doub
 	}
 	fval = chi2; 
 }
-#if 0
+
+
+double GetEntries(TH1D* histogram, double min, double max)
+{
+	double entries = histogram->GetEffectiveEntries();
+	double part_int = histogram->Integral(
+					  histogram->FindBin(min),
+					  histogram->FindBin(max));
+	double full_int = histogram->Integral();
+	double N = entries * part_int / full_int;
+
+	return N;
+}
+
+/*
 void normalize(double min, double max) 
 {
 	int bin_min = hist->FindBin(min);
 	int bin_max = hist->FindBin(max);
 	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
 }
+*/
 
 
-/*
-double evaluate_expected_fierz(double min, double max) 
+double evaluate_expected_fierz(double min, double max, double integral_size) 
 {
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
     TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
@@ -145,8 +159,8 @@ double evaluate_expected_fierz(double min, double max)
 	}
 	return h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
 }
-*/
 
+#if 0
 
 /**
  * Si := (r[0][0] r[1][1]) / (r[0][1] * r[1][0])
