@@ -58,7 +58,7 @@ double iniParams[3] = {-0.12, 0, 1e6};
 TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
 
 /// Path to Monte Carlo files.
-TString mc_dir = "/home/xuansun/Documents/SimData_Beta/";
+TString mc_dir = "/home/xuansun/Documents/SimData_Beta/3mill_beta_SimProcessed/";
 
 //double expected[3][3];     /// expected values (based on the energy range)
 //TMatrixD expected(3,3);    /// expected values (based on the energy range)
@@ -173,7 +173,7 @@ double evaluate_expected_fierz(double min, double max)
 /**
  * Si := (r[0][0] r[1][1]) / (r[0][1] * r[1][0])
  */
-TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogram = NULL) 
+TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogram = 0) 
 {
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
@@ -499,47 +499,6 @@ UCNAModel ucna_fierz_mc; // Need construction.
 /// This needs to be static
 UCNAFierzFitter ucna(bins, min_E, max_E);
 
-void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
-{
-	double chi2=0, chi;
-    int n = ucna.data.asymmetry.bins;
-    double A=p[0], b=p[1], N=p[2]; // TODO make nPar correct here
-	//double par[3] = {p[0],p[1],p[2]}; // A, b, N
-	for (int i = 0; i < n; i++)
-	{
-		double E = ucna.data.asymmetry.histogram->GetBinCenter(i);
-		double Y = ucna.data.asymmetry.histogram->GetBinContent(i);
-        //double f = asymmetry_fit_func(&E,p);
-        double f = A/(1 + b*m_e/(E+m_e));
-		//double eY = ucna.data.asymmetry.histogram->GetBinError(i);
-		double eY = 0.1;
-        if (eY > 0) {
-            chi = (Y-f)/eY;
-            chi2 += chi*chi; 
-        }
-	}
-
-    n = ucna.data.super_sum.bins;
-	//double par[2] = {p[1], expected[0][1]};
-	for (int i=0; i<n; i++) { 
-		//E = ucna.data.super_sum.energy[i];
-		/*double Y =      ucna.data .super_sum.values[i];
-        double f = p[1]*ucna.sm   .super_sum.values[i] 
-                 + p[2]*ucna.fierz.super_sum.values[i];
-        double eY =     ucna.data .super_sum.errors[i];*/
-		//double E      = ucna.data .super_sum.histogram->GetBinCenter(i);
-		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
-		double Y  = ucna.data .super_sum.histogram->GetBinContent(i);
-        double eY = ucna.data .super_sum.histogram->GetBinError(i);
-        double f  = N*ucna.sm .super_sum.histogram->GetBinContent(i) 
-                  + N*b*ucna.fierz.super_sum.histogram->GetBinContent(i);
-        if (eY > 0) {
-		    chi = (Y-f)/eY;
-		    chi2 += chi*chi; 
-        }
-	}
-	fval = chi2; 
-}
 
 
 
@@ -1095,9 +1054,15 @@ int main(int argc, char *argv[])
 	double entries = ucna.data.super_sum.histogram->GetEffectiveEntries();
 	double N = GetEntries(ucna.data.super_sum.histogram, min_E, max_E);
 
+    TF1 func("func", &asymmetry_fit_func, min_E, max_E, nPar);
+    for (int i=0; i<nPar; i++) {
+        func.SetParameters(iniParams);
+        func.SetParName(i,iniParamNames[i]);
+    }
+
 	/// Actually do the fitting.
-	TF1* func = combined_fit(ucna.data.asymmetry.histogram, 
-                             ucna.data.super_sum.histogram, cov, 0);
+	ucna.combined_fit(ucna.data.asymmetry.histogram, 
+                      ucna.data.super_sum.histogram, cov, &func);
     //ucna.data.super_sum.normalize();
 
 	/// Output the data info.
@@ -1156,7 +1121,7 @@ int main(int argc, char *argv[])
     /// Compute independent standard errors.
 	cout<<"\n FOR UNCOMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
-        TString name = func->GetParName(i);
+        TString name = func.GetParName(i);
         double sigma = 1/Sqrt(p_cov_inv[i][i]);
 	    cout<<"    Expected independent statistical error for "<<name<<" is "<<sigma<<".\n";
     }
@@ -1164,8 +1129,8 @@ int main(int argc, char *argv[])
     /// Compare predicted and actual standard errors.
 	cout<<"\n FOR COMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
-        TString name = func->GetParName(i);
-        //double param = func->GetParameter(i);
+        TString name = func.GetParName(i);
+        //double param = func.GetParameter(i);
 	    double sigma = Sqrt(cov[i][i]);
 	    double expected_sigma = Sqrt(p_cov[i][i]);
         double factor = sigma/expected_sigma;
@@ -1177,9 +1142,9 @@ int main(int argc, char *argv[])
     /// Compare predicted and actual correlations.
 	cout<<"\n CORRELATIONS FACTORS FOR COMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
-        TString name_i = func->GetParName(i);
+        TString name_i = func.GetParName(i);
 	    for (int j = i+1; j<nPar; j++) {
-            TString name_j = func->GetParName(j);
+            TString name_j = func.GetParName(j);
 	        double p_cor_ij = p_cov[j][i]/Sqrt(p_cov[i][i]*p_cov[j][j]);
             double cor_ij = cov[j][i]/Sqrt(cov[i][i]*cov[j][j]);
             cout<<"    Expected cor("<<name_i<<","<<name_j<<") = "<<p_cor_ij<<".\n";
@@ -1244,22 +1209,22 @@ int main(int argc, char *argv[])
 
 	c1->cd(1);
 	ucna.data.asymmetry.histogram->Draw();
-	func->SetRange(min_E, max_E);
-	func->DrawCopy("cont1 same");
+	func.SetRange(min_E, max_E);
+	func.DrawCopy("cont1 same");
 	/*
 	c1->cd(2);
 	asymmetry->Draw("lego");
-	func->DrawCopy("surf1 same");
+	func.DrawCopy("surf1 same");
 	*/
 	c1->cd(3);
-	func->SetRange(min_E, max_E);
+	func.SetRange(min_E, max_E);
 	///TODO fierzratio_histogram->Draw();
-	func->DrawCopy("cont1 same");
+	func.DrawCopy("cont1 same");
 	/*
 	c1->cd(4);
 	fierzratio->Draw("lego");
 	gPad->SetLogz();
-	func->Draw("surf1 same");
+	func.Draw("surf1 same");
 	*/
 #endif
 	app.Run();

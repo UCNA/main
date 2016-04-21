@@ -247,6 +247,10 @@ struct UCNAFierzFitter {
         fit("ucna_fit_", "Standard Model + Fierz best fit", bins, min, max) 
     {}
 
+    void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */);
+    //void combined_chi2(int &, double *grad, double &fval, double *p, int iflag);
+
+    TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1 *func);
         /*
         fierz.super_sum.histogram = 0;
         sm.super_sum.histogram = 0;
@@ -272,7 +276,6 @@ struct UCNAFierzFitter {
         rv += p[1] * fierz_histogram->GetBinContent(fierz_histogram->FindBin(x[0]));
         return rv;
     }
-    */
 
     void normalize(TH1D* hist) {
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
@@ -283,6 +286,7 @@ struct UCNAFierzFitter {
 		int _max = hist->FindBin(max);
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
     }
+    */
 };
 
 

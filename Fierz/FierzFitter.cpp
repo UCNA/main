@@ -24,26 +24,22 @@ double UCNAhistogram::normalize()
 }
 
 
-TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
+//TF1* UCNAFierzFitter::combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
+TF1* UCNAFierzFitter::combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1 *func)
 { 
-	/// create fit function
+    int nPar = func->GetNpar();
     if (not func) {
-        func = new TF1("func", asymmetry_fit_func, ucna.min, ucna.max, nPar);
-        func->SetParameters(iniParams);
-        for (int i=0; i<nPar; i++)
-            func->SetParName(i,iniParamNames[i]);
+        cout<<"Fit function not set.\n";
+        exit(1);
     }
-
-	/// fill data structure for fit (coordinates + values + errors) 
-	cout<<"Do global fit"<<endl;
 
 	/// set up the minuit fitter
 	TVirtualFitter::SetDefaultFitter("Minuit");
 	TVirtualFitter *minuit = TVirtualFitter::Fitter(0,nPar);
 	for (int i=0; i<nPar; ++i)
 		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1, 0, 0);
-	minuit->SetFCN(combined_chi2);
-	minuit->SetErrorDef(1);	        /// 1 for chi^2
+	minuit->SetFCN((void*)&UCNAFierzFitter::combined_chi2);
+	minuit->SetErrorDef(1);	    /// 1 for chi^2
 
 	/// set print level
 	double arglist[100];
@@ -51,25 +47,22 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
 	minuit->ExecuteCommand("SET PRINT", arglist, 1);
 
 	/// minimize
-	arglist[0] = 50;    /// number of function calls
-	arglist[1] = 0.1;   /// tolerance
+	arglist[0] = 50;            /// number of function calls
+	arglist[1] = 0.1;           /// tolerance
 	minuit->ExecuteCommand("MIGRAD", arglist, nPar);
-
-	double minParams[nPar];
-	double parErrors[nPar];
-	for (int i=0; i<nPar; ++i) {  
-		minParams[i] = minuit->GetParameter(i);
-		parErrors[i] = minuit->GetParError(i);
-	}
 
 	/// extract results from minuit
 	double chi2, edm, errdef; 
 	int nvpar, nparx;
 	minuit->GetStats(chi2,edm,errdef,nvpar,nparx);
-
-	func->SetParameters(minParams);
-	func->SetParErrors(parErrors);
 	func->SetChisquare(chi2);
+
+	for (int i=0; i<nPar; ++i) {  
+		double param = minuit->GetParameter(i);
+		double error = minuit->GetParError(i);
+        func->SetParameter(i,param);
+        func->SetParError(i,error);
+	}
 
 	int ndf = asymmetry->GetNbinsX() + super_sum->GetNbinsX() - nvpar;
 	func->SetNDF(ndf);
@@ -82,6 +75,49 @@ TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
 	cout<<"\n    chi^2 = "<<chi2<<", ndf = "<<ndf<<", chi^2/ndf = "<<chi2/ndf<<".\n\n";
 
 	return func; 
+}
+
+
+void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
+{
+	double chi2=0, chi;
+    int n = data.asymmetry.bins;
+    double A=p[0], b=p[1], N=p[2]; // TODO make nPar correct here
+	//double par[3] = {p[0],p[1],p[2]}; // A, b, N
+	for (int i = 0; i < n; i++)
+	{
+		double E = data.asymmetry.histogram->GetBinCenter(i);
+		double Y = data.asymmetry.histogram->GetBinContent(i);
+        //double f = asymmetry_fit_func(&E,p);
+        double f = A/(1 + b*m_e/(E+m_e));
+		//double eY = data.asymmetry.histogram->GetBinError(i);
+		double eY = 0.1;
+        if (eY > 0) {
+            chi = (Y-f)/eY;
+            chi2 += chi*chi; 
+        }
+	}
+
+    n = data.super_sum.bins;
+	//double par[2] = {p[1], expected[0][1]};
+	for (int i=0; i<n; i++) { 
+		//E = data.super_sum.energy[i];
+		/*double Y =      data .super_sum.values[i];
+        double f = p[1]*sm   .super_sum.values[i] 
+                 + p[2]*fierz.super_sum.values[i];
+        double eY =     data .super_sum.errors[i];*/
+		//double E      = data .super_sum.histogram->GetBinCenter(i);
+		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
+		double Y  = data .super_sum.histogram->GetBinContent(i);
+        double eY = data .super_sum.histogram->GetBinError(i);
+        double f  = N*sm .super_sum.histogram->GetBinContent(i) 
+                  + N*b*fierz.super_sum.histogram->GetBinContent(i);
+        if (eY > 0) {
+		    chi = (Y-f)/eY;
+		    chi2 += chi*chi; 
+        }
+	}
+	fval = chi2; 
 }
 #if 0
 void normalize(double min, double max) 
