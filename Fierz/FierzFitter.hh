@@ -247,10 +247,13 @@ struct UCNAFierzFitter {
         fit("ucna_fit_", "Standard Model + Fierz best fit", bins, min, max) 
     {}
 
-    void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */);
-    //void combined_chi2(int &, double *grad, double &fval, double *p, int iflag);
+    //void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */);
+    double asymmetry_chi2(double A, double b);
+    double supersum_chi2(double b, double N);
+    double combined_chi2(double A, double b, double N);
 
-    TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1 *func);
+    //TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1 *func);
+    TF1* combined_fit(TMatrixD &cov, TF1 *func, void *fcn_ptr);
         /*
         fierz.super_sum.histogram = 0;
         sm.super_sum.histogram = 0;
@@ -394,26 +397,8 @@ void compute_fit(TH1D* histogram, TF1* fierz_fit)
 }
 
 
-double asymmetry_fit_func(double *x, double *par)
-{
-	double A = par[0];
-	double b = par[1];
-	double E = x[0] + m_e;
-
-	return A / (1 + b*m_e/E);
-}
-
-
-double fierzratio_fit_func(double *x, double *par)
-{
-	double b = par[0];
-	double m_e_E = par[1];
-	double E = x[0] + m_e;
-
-	return (1 + b*m_e/E) / (1 + b*m_e_E);
-}
-
-
+double asymmetry_fit_func(double *x, double *par);
+double fierzratio_fit_func(double *x, double *par);
 double GetEntries(TH1D* histogram, double min, double max);
 
 

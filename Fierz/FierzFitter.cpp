@@ -25,7 +25,8 @@ double UCNAhistogram::normalize()
 
 
 //TF1* UCNAFierzFitter::combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
-TF1* UCNAFierzFitter::combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1 *func)
+TF1* UCNAFierzFitter::combined_fit(
+TMatrixD &cov, TF1 *func, void* global_fcn_ptr)
 { 
     int nPar = func->GetNpar();
     if (not func) {
@@ -38,7 +39,7 @@ TF1* UCNAFierzFitter::combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &c
 	TVirtualFitter *minuit = TVirtualFitter::Fitter(0,nPar);
 	for (int i=0; i<nPar; ++i)
 		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1, 0, 0);
-	minuit->SetFCN((void*)&UCNAFierzFitter::combined_chi2);
+	minuit->SetFCN(global_fcn_ptr);
 	minuit->SetErrorDef(1);	    /// 1 for chi^2
 
 	/// set print level
@@ -64,6 +65,8 @@ TF1* UCNAFierzFitter::combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &c
         func->SetParError(i,error);
 	}
 
+    TH1D* asymmetry = data.asymmetry.histogram; 
+    TH1D* super_sum = data.super_sum.histogram; 
 	int ndf = asymmetry->GetNbinsX() + super_sum->GetNbinsX() - nvpar;
 	func->SetNDF(ndf);
     
@@ -78,6 +81,59 @@ TF1* UCNAFierzFitter::combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &c
 }
 
 
+double UCNAFierzFitter::asymmetry_chi2(double A, double b)
+{
+	double chi2 = 0;
+    int n = data.asymmetry.bins;
+	for (int i = 0; i < n; i++)
+	{
+		double E = data.asymmetry.histogram->GetBinCenter(i);
+        if (E < min or E > max)
+            continue;
+		double Y = data.asymmetry.histogram->GetBinContent(i);
+		double eY = data.asymmetry.histogram->GetBinError(i);
+        double f = A/(1 + b*m_e/(E+m_e)); 
+        //double f = asymmetry_fit_func(&E,p);
+        if (eY > 0) {
+            double chi = (Y-f)/eY;
+            chi2 += chi*chi; 
+        }
+	}
+    return chi2;
+}
+
+
+double UCNAFierzFitter::supersum_chi2(double b, double N)
+{
+	double chi2 = 0;
+    int n = data.asymmetry.bins;
+	for (int i = 0; i < n; i++)
+	{
+		double E = data.asymmetry.histogram->GetBinCenter(i);
+        if (E < min or E > max)
+            continue;
+		double Y = data.asymmetry.histogram->GetBinContent(i);
+		double eY = data.asymmetry.histogram->GetBinError(i);
+        double f  = N*sm.super_sum.histogram->GetBinContent(i) 
+                  + N*b*fierz.super_sum.histogram->GetBinContent(i);
+        if (eY > 0) {
+            double chi = (Y-f)/eY;
+            chi2 += chi*chi; 
+        }
+	}
+    return chi2;
+}
+
+
+double UCNAFierzFitter::combined_chi2(double A, double b, double N)
+{
+	double chi2 = asymmetry_chi2(A,b) + supersum_chi2(b,N);
+    return chi2;
+}
+
+
+#if 0
+//void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
 	double chi2=0, chi;
@@ -119,6 +175,7 @@ void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Doub
 	}
 	fval = chi2; 
 }
+#endif
 
 
 double GetEntries(TH1D* histogram, double min, double max)

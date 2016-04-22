@@ -70,6 +70,7 @@ TString mc_dir = "/home/xuansun/Documents/SimData_Beta/3mill_beta_SimProcessed/"
 /**
  * x[0] : kenetic energy
  * p[0] : b, fierz term
+ */
 double theoretical_fierz_spectrum(double *x, double*p) 
 {
     double rv = 0;
@@ -82,7 +83,6 @@ double theoretical_fierz_spectrum(double *x, double*p)
     rv += b * expected_fierz * ucna.fierz.super_sum.histogram->GetBinContent(n) / norm;
     return rv;
 }
- */
 
 /*
 /// beta spectrum with little b term
@@ -499,8 +499,12 @@ UCNAModel ucna_fierz_mc; // Need construction.
 /// This needs to be static
 UCNAFierzFitter ucna(bins, min_E, max_E);
 
-
-
+void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
+{
+    double A=p[0], b=p[1], N=p[2]; // TODO make nPar correct here
+	double chi2 = ucna.combined_chi2(A,b,N);
+	fval = chi2; 
+}
 
 #if 1
 #endif
@@ -540,13 +544,13 @@ int fill_simulation(TString filename, TString title, TString name,
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not histogram[side][spin]) {
-                cout<<"Error: histogram for "<< name<<" is not constructed.\n";
+                cout<<"Error: histogram for "<<name<<" is not constructed.\n";
                 cout<<"Side: "<< side<<" Spin: "<<spin <<".\n";
                 exit(1);
             }
 
     if (not super_sum) {
-        cout<<"Error: super sum histogram for "<< name<<" is not constructed.\n";
+        cout<<"Error: super sum histogram for "<<name<<" is not constructed.\n";
         exit(1);
     }
 
@@ -1060,9 +1064,16 @@ int main(int argc, char *argv[])
         func.SetParName(i,iniParamNames[i]);
     }
 
+    /* TODO
+    TF1 chi2("func", &combined_chi2, min_E, max_E, nPar);
+    for (int i=0; i<nPar; i++) {
+        func.SetParameters(iniParams);
+        func.SetParName(i,iniParamNames[i]);
+    }
+    */
+
 	/// Actually do the fitting.
-	ucna.combined_fit(ucna.data.asymmetry.histogram, 
-                      ucna.data.super_sum.histogram, cov, &func);
+	ucna.combined_fit(cov, &func, &combined_chi2);
     //ucna.data.super_sum.normalize();
 
 	/// Output the data info.
