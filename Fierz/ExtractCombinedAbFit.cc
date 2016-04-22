@@ -1092,7 +1092,7 @@ int main(int argc, char *argv[])
     TMatrixD expected(nSpec,nSpec);
 	for (int m=0; m<nSpec; m++)
 		for (int n=0; n<nSpec; n++)
-			expected[m][n] = evaluate_expected_fierz(m,n,min_E,max_E);
+			expected[m][n] = evaluate_expected_fierz(m,n,min_E,max_E,1112);
 	
 	/// Output the fit covariance details.
 	cout<<"\n FIT COVARIANCE MATRIX\n";

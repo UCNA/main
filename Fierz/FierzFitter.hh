@@ -341,7 +341,7 @@ double beta_spectrum(const double *val, const double *par) ;
 */
 
 
-double evaluate_expected_fierz(double m, double n, double min, double max, int integral_size = 1234) ;
+double evaluate_expected_fierz(double m, double n, double min, double max, double) ;
 /*
 {
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
@@ -364,7 +364,7 @@ double evaluate_expected_fierz(double m, double n, double min, double max, int i
 */
 
 
-double evaluate_expected_fierz(double min, double max, int integral_size = 1234) ;
+double evaluate_expected_fierz(double min, double max, double) ;
 /*
 {
 	return evaluate_expected_fierz(0, 1, min, max, integral_size);
