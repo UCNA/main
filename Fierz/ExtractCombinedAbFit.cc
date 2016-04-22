@@ -126,6 +126,7 @@ double beta_spectrum(const double *val, const double *par)
 */
 
 
+/*
 unsigned deg = 4;
 double mc_model(double *x, double *p) 
 {
@@ -148,6 +149,7 @@ void normalize(TH1D* hist, double min, double max)
 	int _max = hist->FindBin(max);
 	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
 }
+*/
 
 
 /*

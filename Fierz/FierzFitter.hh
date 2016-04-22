@@ -293,12 +293,11 @@ struct UCNAFierzFitter {
     */
 };
 
-double asymmetry_fit_func(double *x, double *par);
-
 
 
 /// beta spectrum with little b term
-double fierz_beta_spectrum(const double *val, const double *par) 
+double fierz_beta_spectrum(const double *val, const double *par) ;
+/*
 {
 	const double K = val[0];                    /// kinetic energy
 	if (K <= 0 or K >= Q)
@@ -316,11 +315,12 @@ double fierz_beta_spectrum(const double *val, const double *par)
 
 	return P;
 }
-
+*/
 
 
 /// beta spectrum with expected x^-n and beta^m
-double beta_spectrum(const double *val, const double *par) 
+double beta_spectrum(const double *val, const double *par) ;
+/*
 {
 	const double K = val[0];                    	///< kinetic energy
 	if (K <= 0 or K >= Q)
@@ -338,9 +338,11 @@ double beta_spectrum(const double *val, const double *par)
 
 	return P;
 }
+*/
 
 
-double evaluate_expected_fierz(double m, double n, double min, double max, int integral_size = 1234) 
+double evaluate_expected_fierz(double m, double n, double min, double max, int integral_size = 1234) ;
+/*
 {
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
     TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
@@ -359,15 +361,19 @@ double evaluate_expected_fierz(double m, double n, double min, double max, int i
     delete h2;
     return rv;
 }
+*/
 
 
-double evaluate_expected_fierz(double min, double max, int integral_size = 1234) 
+double evaluate_expected_fierz(double min, double max, int integral_size = 1234) ;
+/*
 {
 	return evaluate_expected_fierz(0, 1, min, max, integral_size);
 }
+*/
 
 
 
+/*
 void compute_fit(TH1D* histogram, TF1* fierz_fit) 
 {
 	// compute chi squared
@@ -396,6 +402,7 @@ void compute_fit(TH1D* histogram, TF1* fierz_fit)
     ratio_legend->SetBorderSize(0);
     ratio_legend->Draw();
 }
+*/
 
 
 double asymmetry_fit_func(double *x, double *par);
