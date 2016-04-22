@@ -253,7 +253,8 @@ struct UCNAFierzFitter {
     double combined_chi2(double A, double b, double N);
 
     //TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1 *func);
-    TF1* combined_fit(TMatrixD &cov, TF1 *func, void *fcn_ptr);
+    TF1* combined_fit(TMatrixD &cov, TF1 *func,  
+        void (*)(Int_t&, Double_t*, Double_t&, Double_t*, Int_t));
         /*
         fierz.super_sum.histogram = 0;
         sm.super_sum.histogram = 0;

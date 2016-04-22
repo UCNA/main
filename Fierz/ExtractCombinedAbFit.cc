@@ -70,12 +70,11 @@ TString mc_dir = "/home/xuansun/Documents/SimData_Beta/3mill_beta_SimProcessed/"
 /**
  * x[0] : kenetic energy
  * p[0] : b, fierz term
- */
 double theoretical_fierz_spectrum(double *x, double*p) 
 {
     double rv = 0;
     //unsigned n = ff.mc.sm_histogram->FindBin(p[3]*x[0]*x[0] + p[2]*x[0] - p[1]);        
-    unsigned n = ff.sm.super_sum.histogram->FindBin(p[2]*x[0] - p[1]);        
+    //unsigned n = ff.sm.super_sum.histogram->FindBin(p[2]*x[0] - p[1]);        
     //unsigned n = mc.sm_histogram->FindBin(x[0]);        
     double b = p[0];
     double norm = 1 + expected_fierz * b;
@@ -83,6 +82,7 @@ double theoretical_fierz_spectrum(double *x, double*p)
     rv += b * expected_fierz * ucna.fierz.super_sum.histogram->GetBinContent(n) / norm;
     return rv;
 }
+ */
 
 /*
 /// beta spectrum with little b term
@@ -501,6 +501,7 @@ UCNAFierzFitter ucna(bins, min_E, max_E);
 
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
+    assert(n==3);
     double A=p[0], b=p[1], N=p[2]; // TODO make nPar correct here
 	double chi2 = ucna.combined_chi2(A,b,N);
 	fval = chi2; 

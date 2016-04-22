@@ -26,7 +26,8 @@ double UCNAhistogram::normalize()
 
 //TF1* UCNAFierzFitter::combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
 TF1* UCNAFierzFitter::combined_fit(
-TMatrixD &cov, TF1 *func, void* global_fcn_ptr)
+TMatrixD &cov, TF1 *func, 
+        void (*global_fcn_ptr)(Int_t&, Double_t*, Double_t&, Double_t*, Int_t) )
 { 
     int nPar = func->GetNpar();
     if (not func) {
