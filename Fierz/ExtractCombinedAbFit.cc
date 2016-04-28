@@ -145,7 +145,7 @@ double evaluate_expected_fierz(double min, double max)
 }
 */
 
-bool test_contructed(TH1D* rate_histogram[2][2], TH1D* histogram = 0, double min = 0, double max = 0, int bin = 0) 
+bool test_constructed(TH1D* rate_histogram[2][2], TH1D* histogram = 0, double min = 0, double max = 0, int bin = 0) 
 {
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
@@ -207,8 +207,8 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
         super_ratio_histogram = new TH1D(*(rate_histogram[0][0]));
         */
 
-    if (not test_contructed(rate_histogram, super_ratio_histogram) {
-        cout<<"Error: computing super ratio.\n Aborting.\n"
+    if (not test_constructed(rate_histogram, super_ratio_histogram)) {
+        cout<<"Error: computing super ratio.\n Aborting.\n";
         exit(1);
     }
 
@@ -238,8 +238,8 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
  */
 TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL, double min = 0, double max = 0, int bins = 0) 
 {
-    if (not test_contructed(rate_histogram, super_sum_histogram) {
-        cout<<"Error: computing super sum.\n Aborting.\n"
+    if (not test_constructed(rate_histogram, super_sum_histogram)) {
+        cout<<"Error: computing super sum.\n Aborting.\n";
         exit(1);
     }
     /*
@@ -311,8 +311,8 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
 
 TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = NULL, double min = 0, double max = 0, int bins = 0) 
 {
-    if (not test_contructed(rate_histogram, super_ratio_histogram) {
-        cout<<"Error: computing super sum.\n Aborting.\n"
+    if (not test_constructed(rate_histogram, asymmetry_histogram)) {
+        cout<<"Error: computing super sum.\n Aborting.\n";
         exit(1);
     }
     /*
@@ -595,7 +595,7 @@ int fill_data(TString filename, TString title,
  * Fill in asymmetry and super sums from simulation data
  */
 int fill_simulation(TString filename, TString title, TString name, 
-                    TH1D* histogram[2][2], TH1D* super_sum)
+                    TH1D* histogram[2][2], TH1D* super_sum, TH1D* asymmetry)
 {
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
@@ -885,13 +885,15 @@ int main(int argc, char *argv[])
                     "Monte Carlo Standard Model beta spectrum",
                     "SimAnalyzed",
                     ucna.sm.raw,
-					ucna.sm.super_sum.histogram);
+					ucna.sm.super_sum.histogram, 
+                    ucna.sm.asymmetry.histogram);
 
     fill_simulation("SimAnalyzed_Beta_fierz.root",
                     "Monte Carlo Fierz beta spectrum",
                     "SimAnalyzed",
                     ucna.fierz.raw,
-					ucna.fierz.super_sum.histogram);
+					ucna.fierz.super_sum.histogram, 
+                    ucna.fierz.asymmetry.histogram);
 
 	//histogram->SetDirectory(mc_tfile);
 	//histogram->Write();
