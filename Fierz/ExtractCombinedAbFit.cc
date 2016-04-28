@@ -466,14 +466,8 @@ vector<double> super_sum_values;
 vector<double> super_sum_errors;        
 */
 
-/*
-UCNAModel ucna_data; // Need construction.
-UCNAModel ucna_sm_mc; // Need construction.
-UCNAModel ucna_fierz_mc; // Need construction.
-//FierzHistogram mc(0,1500,bins);
-*/
 /// This needs to be static
-UCNAFierzFitter ucna(bins, min_E, max_E);
+UCNAFierzFitter ucna(bins, KEmin, KEmax);
 
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
@@ -706,8 +700,9 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
 
     /// fit the Fierz ratio 
 	char fit_str[1024];
+	double expected_fierz = evaluate_expected_fierz(0,0,KEmin,KEmax,18112); /// TODO I'm not sure the 0,0 is right!
     sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", m_e, m_e, expected_fierz);
-    TF1 *fierz_fit = new TF1("fierz_fit", fit_str, min_E, max_E);
+    TF1 *fierz_fit = new TF1("fierz_fit", fit_str, KEmin_b, KEmax_b);
     fierz_fit->SetParameter(0,0);
 	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
 
@@ -1023,28 +1018,20 @@ int main(int argc, char *argv[])
 
 
     /// FITTING 
-
     TMatrixD cov(nPar,nPar);
 	double entries = ucna.data.super_sum.histogram->GetEffectiveEntries();
-	double N = GetEntries(ucna.data.super_sum.histogram, min_E, max_E);
+	double N = GetEntries(ucna.data.super_sum.histogram, KEmin, KEmax);
 
-    TF1 func("func", &asymmetry_fit_func, min_E, max_E, nPar);
+    TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, KEmin_A, KEmax_A, nPar);
+    TF1 super_sum_func("asymmetry_fit_func", &super_sum_fit_func, KEmin_b, KEmax_b, nPar);
+    TF1 func("asymmetry_fit_func", &asymmetry_fit_func, KEmin_A, KEmax_A, nPar);
     for (int i=0; i<nPar; i++) {
         func.SetParameters(iniParams);
         func.SetParName(i,iniParamNames[i]);
     }
 
-    /* TODO
-    TF1 chi2("func", &combined_chi2, min_E, max_E, nPar);
-    for (int i=0; i<nPar; i++) {
-        func.SetParameters(iniParams);
-        func.SetParName(i,iniParamNames[i]);
-    }
-    */
-
-	/// Actually do the fitting.
-	ucna.combined_fit(cov, &func, &combined_chi2);
-    //ucna.data.super_sum.normalize();
+	/// Actually do the combined fitting.
+	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
 
 	/// Output the data info.
     cout<<setprecision(5);
