@@ -28,15 +28,18 @@
 #include <stdlib.h>
 #include <time.h>
 
+/// name spaces
 using std::setw;
 using std::cout;
 using namespace TMath;
 
 /// cuts and settings
 static unsigned nToSim = 5e7;				/// how many triggering events to simulate
-//static double afp_on_prob = 0.68/1.68; 	/// afp on probability per neutron
-static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron
+static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron (0.68/1.68 for on)
+int bins = 150;                             /// number of bins to use fit spectral plots
 
+double KEmin = 0;                           /// min kinetic energy for plots
+double KEmax = 900;                         /// max kinetic range for plots
 double KEmin_A = 120;                       /// min kinetic energy for asymmetry fit
 double KEmax_A = 670;                       /// max kinetic range for asymmetry fit
 double KEmin_b = 120;                       /// min kinetic energy for Fierz fit
@@ -54,23 +57,6 @@ TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/";
 
 /// path to Monte Carlo files
 TString mc_dir = "/home/xuansun/Documents/SimData_Beta/3mill_beta_SimAndProcessed/";
-
-/**
- * x[0] : kenetic energy
- * p[0] : b, fierz term
-double theoretical_fierz_spectrum(double *x, double*p) 
-{
-    double rv = 0;
-    //unsigned n = ff.mc.sm_histogram->FindBin(p[3]*x[0]*x[0] + p[2]*x[0] - p[1]);        
-    //unsigned n = ff.sm.super_sum.histogram->FindBin(p[2]*x[0] - p[1]);        
-    //unsigned n = mc.sm_histogram->FindBin(x[0]);        
-    double b = p[0];
-    double norm = 1 + expected_fierz * b;
-    rv += ff.sm_super_sum_histogram->GetBinContent(n) / norm;
-    rv += b * expected_fierz * ucna.fierz.super_sum.histogram->GetBinContent(n) / norm;
-    return rv;
-}
- */
 
 /*
 /// beta spectrum with little b term
