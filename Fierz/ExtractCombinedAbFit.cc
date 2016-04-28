@@ -145,7 +145,7 @@ double evaluate_expected_fierz(double min, double max)
 }
 */
 
-bool test_constructed(TH1D* rate_histogram[2][2], TH1D* histogram = 0, double min = 0, double max = 0, int bin = 0) 
+bool test_constructed(TH1D* rate_histogram[2][2], TH1D* histogram = 0)//, double min = 0, double max = 0, int bin = 0) 
 {
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
@@ -236,7 +236,7 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
 /**
  * S := 1/2 Sqrt(r[0][0] r[1][1]) + 1/2 Sqrt(r[0][1] r[1][0])
  */
-TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL, double min = 0, double max = 0, int bins = 0) 
+TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL, double min = 0, double max = 0) 
 {
     if (not test_constructed(rate_histogram, super_sum_histogram)) {
         cout<<"Error: computing super sum.\n Aborting.\n";
@@ -309,7 +309,7 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
 }
 
 
-TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = NULL, double min = 0, double max = 0, int bins = 0) 
+TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = NULL, double min = 0, double max = 0) 
 {
     if (not test_constructed(rate_histogram, asymmetry_histogram)) {
         cout<<"Error: computing super sum.\n Aborting.\n";
@@ -748,8 +748,8 @@ int fill_simulation(TString filename, TString title, TString name,
 	//tntuple->Write();
 
 	/// compute and normalize super sum
-    compute_super_sum(histogram, super_sum, min, max);
-    compute_asymmetry(histogram, asymmetry, min, max);
+    compute_super_sum(histogram, super_sum);
+    compute_asymmetry(histogram, asymmetry);
     //normalize(super_sum, min_E, max_E);
 
     /*
