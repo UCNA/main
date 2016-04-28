@@ -172,14 +172,16 @@ bool test_rate_histograms(TH1D* rate_histogram[2][2])
  */
 bool test_range(TH1D* histogram, double min = 0, double max = 0) 
 {
-    if (not histogram)
+    if (not histogram) {
         cout<<"Error: No histogram to test ranges on.\n";
         return false;
+    }
 
     TAxis *axis = histogram->GetXaxis();
-    if (not axis)
+    if (not axis) {
         cout<<"Error: No axis in histogram to test ranges on.\n";
         return false;
+    }
 
     double bin_min = axis->FindBin(min);
     double lower = axis->GetBinLowEdge(bin_min);
