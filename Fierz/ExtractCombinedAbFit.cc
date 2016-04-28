@@ -157,7 +157,7 @@ bool test_constructed(TH1D* rate_histogram[2][2], TH1D* histogram = 0)//, double
             }
 
     if (not histogram) {
-        cout<<"Error: extracted histogram is not constructed.\n";
+        cout<<"Error: Extracted histogram is not constructed.\n";
         return false;
     }
 
@@ -168,7 +168,7 @@ bool test_constructed(TH1D* rate_histogram[2][2], TH1D* histogram = 0)//, double
         for (int spin = 0; spin < 2; spin++) {
             int rate_bins = rate_histogram[side][spin]->GetNbinsX();
             if (bins != rate_bins) {
-                cout<<"Error: extracted and side spin histogram sizes don't match.\n";
+                cout<<"Error: Extracted and side spin histogram sizes don't match.\n";
                 cout<<"       Rate histogram on the "
                     <<(side? "west":"east")<<" side with afp "
                     <<(spin? "on":"off")<<" has "<<rate_bins<<".\n";
@@ -239,7 +239,7 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
 TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL, double min = 0, double max = 0) 
 {
     if (not test_constructed(rate_histogram, super_sum_histogram)) {
-        cout<<"Error: computing super sum.\n Aborting.\n";
+        cout<<"Error: Problem constructing super sum.\n Aborting.\n";
         exit(1);
     }
     /*
@@ -289,15 +289,15 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
         double error = Sqrt(1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]) * super_sum;
         if (IsNaN(super_sum)) {
             super_sum = 0;
-            cout<<"Warning: super sum is not a number: "<<super_sum<<".\n";
+            cout<<"Warning: Super sum is not a number: "<<super_sum<<".\n";
         } else if (super_sum == 0)
-            cout<<"Warning: super sum is zero.\n";
+            cout<<"Warning: Super sum is zero.\n";
 
         if (IsNaN(error)) {
 			error = 0;
-            cout<<"Warning: super sum error: division by zero.\n";
+            cout<<"Warning: Super sum error: division by zero.\n";
         } else if (error <= 0) 
-            cout<<"Warning: super sum error: error is non positive.\n";
+            cout<<"Warning: Super sum error: error is non positive.\n";
 
         if (bin % 10 == 0)
             printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
@@ -312,42 +312,10 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
 TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = NULL, double min = 0, double max = 0) 
 {
     if (not test_constructed(rate_histogram, asymmetry_histogram)) {
-        cout<<"Error: computing super sum.\n Aborting.\n";
+        cout<<"Error: Bad input histograms for computing asymmetry.\n Aborting.\n";
         exit(1);
     }
-    /*
-    for (int side=0; side<2; side++)
-        for (int spin=0; spin<2; spin++)
-            if (not rate_histogram[side][spin]) {
-                cout<<"Error: rate histogram on side: "
-                         <<(side? "west":"east")<<"and afp: "
-                         <<(spin? "on":"off")<<"is not constructed.\n";
-                exit(1);
-            }
 
-    if (not asymmetry_histogram) {
-        cout<<"Warning: asymmetry histogram is not constructed.\n";
-        asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
-    }
-
-    if (not bins) 
-        bins = asymmetry_histogram->GetNbinsX();
-
-    for (int side=0; side < 2; side++)
-        for (int spin = 0; spin < 2; spin++) {
-            int ss_bins = rate_histogram[side][spin]->GetNbinsX();
-            if (bins != ss_bins) {
-                cout<<"Error: asymmetry and side spin histogram sizes don't match.\n";
-                cout<<"asymmetry bins: "<<bins<<"\n";
-                exit(1);
-            }
-            if (ss_bins <= 0) {
-                cout<<"Error: bad bin number.\n";
-                cout<<"asymmetry bins: "<<bins<<"\n";
-                exit(1);
-            }
-        }
-        */
     if (not bins) 
         bins = asymmetry_histogram->GetNbinsX();
 
@@ -359,20 +327,20 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = 
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_ratio = Sqrt(r[0][0]*r[1][1]/r[0][1]/r[1][0]);
         if (IsNaN(super_ratio)) {
-            cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n";
-            cout<<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
+            cout<<"Warning: While computing asymmetry, super ratio in bin "<<bin<<" is not a number:\n";
+            cout<<"         Was "<<super_ratio<<". Setting to zero and continuing.\n";
             super_ratio = 0;
         }
 
-		double norm = 1 + super_ratio;
+		double norm = 1 + super_ratio;  assert(norm > 0);
         double asymmetry = (1 - super_ratio) / norm;
         asymmetry_histogram->SetBinContent(bin, asymmetry);
 
 		double inv_sum = Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]) / norm;
 		double asymmetry_error = super_ratio * inv_sum / norm;  
         if (IsNaN(asymmetry_error) or asymmetry_error <= 0) {
-            cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n";
-            cout<<"Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
+            cout<<"Warning: Asymmetry error in bin "<<bin<<" is not a number:\n";
+            cout<<"         Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
             asymmetry_error = 0.01;
         }
         asymmetry_histogram->SetBinError(bin, asymmetry_error);
@@ -597,16 +565,13 @@ int fill_data(TString filename, TString title,
 int fill_simulation(TString filename, TString title, TString name, 
                     TH1D* histogram[2][2], TH1D* super_sum, TH1D* asymmetry)
 {
-    for (int side=0; side<2; side++)
-        for (int spin=0; spin<2; spin++)
-            if (not histogram[side][spin]) {
-                cout<<"Error: histogram for "<<name<<" is not constructed.\n";
-                cout<<"Side: "<< side<<" Spin: "<<spin <<".\n";
-                exit(1);
-            }
+    if (not test_constructed(histogram, super_sum)) {
+        cout<<"Error with the rates or super sum histogram.\nAborting.\n";
+        exit(1);
+    }
 
-    if (not super_sum) {
-        cout<<"Error: super sum histogram for "<<name<<" is not constructed.\n";
+    if (not asymmetry) {
+        cout<<"Error with asymmetry for "<<name<<": histogram not constructed.\nAborting.\n";
         exit(1);
     }
 
