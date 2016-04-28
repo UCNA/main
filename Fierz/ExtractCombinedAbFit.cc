@@ -145,12 +145,55 @@ double evaluate_expected_fierz(double min, double max)
 }
 */
 
+bool test_contructed(TH1D* rate_histogram[2][2], TH1D* histogram = 0, double min = 0, double max = 0, int bin = 0) 
+{
+    for (int side=0; side<2; side++)
+        for (int spin=0; spin<2; spin++)
+            if (not rate_histogram[side][spin]) {
+                cout<<"Error: rate histogram on the "
+                    <<(side? "west":"east")<<" side with afp "
+                    <<(spin? "on":"off")<<" is not constructed.\n";
+                return false;
+            }
+
+    if (not histogram) {
+        cout<<"Error: extracted histogram is not constructed.\n";
+        return false;
+    }
+
+    if (not bins)
+        bins = histogram->GetNbinsX();
+
+    for (int side=0; side < 2; side++)
+        for (int spin = 0; spin < 2; spin++) {
+            int rate_bins = rate_histogram[side][spin]->GetNbinsX();
+            if (bins != rate_bins) {
+                cout<<"Error: extracted and side spin histogram sizes don't match.\n";
+                cout<<"       Rate histogram on the "
+                    <<(side? "west":"east")<<" side with afp "
+                    <<(spin? "on":"off")<<" has "<<rate_bins<<".\n";
+                cout<<"       Extracted histogram has "<<bins<<" bins.\n";
+                return false;
+            }
+            if (rate_bins <= 0) {
+                cout<<"Error: Bad bin number.\n";
+                cout<<"       Rate histogram on the "
+                    <<(side? "west":"east")<<" side with afp "
+                    <<(spin? "on":"off")<<" has "<<rate_bins<<".\n";
+                return false;
+            }
+        }
+
+    return true;
+}
+
 
 /**
  * Si := (r[0][0] r[1][1]) / (r[0][1] * r[1][0])
  */
 TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogram = 0) 
 {
+    /*
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not rate_histogram[side][spin]) {
@@ -162,6 +205,12 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
 
     if (not super_ratio_histogram)
         super_ratio_histogram = new TH1D(*(rate_histogram[0][0]));
+        */
+
+    if (not test_contructed(rate_histogram, super_ratio_histogram) {
+        cout<<"Error: computing super ratio.\n Aborting.\n"
+        exit(1);
+    }
 
     int bins = super_ratio_histogram->GetNbinsX();
 	cout<<"Number of bins "<<bins<<endl;
@@ -185,10 +234,15 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
 
 
 /**
- * S := Sqrt(r[0][0] r[1][1]) + Sqrt(r[0][1] + r[1][0])
+ * S := 1/2 Sqrt(r[0][0] r[1][1]) + 1/2 Sqrt(r[0][1] r[1][0])
  */
-TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL) 
+TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL, double min = 0, double max = 0, int bins = 0) 
 {
+    if (not test_contructed(rate_histogram, super_sum_histogram) {
+        cout<<"Error: computing super sum.\n Aborting.\n"
+        exit(1);
+    }
+    /*
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not rate_histogram[side][spin]) {
@@ -203,7 +257,9 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
         super_sum_histogram = new TH1D(*(rate_histogram[0][0]));
     }
 
-    int bins = super_sum_histogram->GetNbinsX();
+    if (not bins) 
+        bins = super_sum_histogram->GetNbinsX();
+
     for (int side=0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++) {
             int ss_bins = rate_histogram[side][spin]->GetNbinsX();
@@ -218,8 +274,12 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
                 exit(1);
             }
         }
+        */
 
-    for (int bin=1; bin < bins+2; bin++) {
+    if (not bins) 
+        bins = super_sum_histogram->GetNbinsX();
+
+    for (int bin=1; bin<bins+2; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
@@ -249,9 +309,48 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
 }
 
 
-TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) {
-    TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
-    int bins = asymmetry_histogram->GetNbinsX();
+TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = NULL, double min = 0, double max = 0, int bins = 0) 
+{
+    if (not test_contructed(rate_histogram, super_ratio_histogram) {
+        cout<<"Error: computing super sum.\n Aborting.\n"
+        exit(1);
+    }
+    /*
+    for (int side=0; side<2; side++)
+        for (int spin=0; spin<2; spin++)
+            if (not rate_histogram[side][spin]) {
+                cout<<"Error: rate histogram on side: "
+                         <<(side? "west":"east")<<"and afp: "
+                         <<(spin? "on":"off")<<"is not constructed.\n";
+                exit(1);
+            }
+
+    if (not asymmetry_histogram) {
+        cout<<"Warning: asymmetry histogram is not constructed.\n";
+        asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
+    }
+
+    if (not bins) 
+        bins = asymmetry_histogram->GetNbinsX();
+
+    for (int side=0; side < 2; side++)
+        for (int spin = 0; spin < 2; spin++) {
+            int ss_bins = rate_histogram[side][spin]->GetNbinsX();
+            if (bins != ss_bins) {
+                cout<<"Error: asymmetry and side spin histogram sizes don't match.\n";
+                cout<<"asymmetry bins: "<<bins<<"\n";
+                exit(1);
+            }
+            if (ss_bins <= 0) {
+                cout<<"Error: bad bin number.\n";
+                cout<<"asymmetry bins: "<<bins<<"\n";
+                exit(1);
+            }
+        }
+        */
+    if (not bins) 
+        bins = asymmetry_histogram->GetNbinsX();
+
     for (int bin=1; bin <= bins; bin++) 
 	{
         double r[2][2];
@@ -451,24 +550,8 @@ int output_histogram(string filename, TH1D* h, double ax, double ay)
 #endif
 
 
-// data need to be globals to be visible by func 
-/*
-vector<double> asymmetry_energy;        
-vector<double> asymmetry_values;        
-vector<double> asymmetry_errors;        
-
-vector<double> super_ratio_energy;        
-vector<double> super_ratio_values;        
-vector<double> super_ratio_errors;        
-
-vector<double> super_sum_energy;        
-vector<double> super_sum_values;        
-vector<double> super_sum_errors;        
-*/
-
-/// This needs to be static
+/// This needs to be static and global for MINUIT to work
 UCNAFierzFitter ucna(bins, KEmin, KEmax);
-
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
     assert(n==3);
@@ -477,13 +560,11 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &fval, Double_t *p,
 	fval = chi2; 
 }
 
-#if 1
-#endif
 
+/// load the files that contain data histograms
 int fill_data(TString filename, TString title, 
               TString name, TH1D* histogram)
 {
-	/// load the files that contain data histograms
 	TFile* tfile = new TFile(data_dir + filename);
 	if (tfile->IsZombie()) {
 		cout<<"Error loading "<<title<<":\n";
@@ -509,6 +590,10 @@ int fill_data(TString filename, TString title,
     return entries;
 }
 
+
+/**
+ * Fill in asymmetry and super sums from simulation data
+ */
 int fill_simulation(TString filename, TString title, TString name, 
                     TH1D* histogram[2][2], TH1D* super_sum)
 {
@@ -663,7 +748,8 @@ int fill_simulation(TString filename, TString title, TString name,
 	//tntuple->Write();
 
 	/// compute and normalize super sum
-    compute_super_sum(histogram, super_sum);
+    compute_super_sum(histogram, super_sum, min, max);
+    compute_asymmetry(histogram, asymmetry, min, max);
     //normalize(super_sum, min_E, max_E);
 
     /*
