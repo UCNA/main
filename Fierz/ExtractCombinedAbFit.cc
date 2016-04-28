@@ -36,7 +36,7 @@ using namespace TMath;
 /// cuts and settings
 static unsigned nToSim = 5e7;				/// how many triggering events to simulate
 static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron (0.68/1.68 for on)
-int bins = 150;                             /// number of bins to use fit spectral plots
+int KEbins = 150;                           /// number of bins to use fit spectral plots
 
 double KEmin = 0;                           /// min kinetic energy for plots
 double KEmax = 900;                         /// max kinetic range for plots
@@ -145,7 +145,7 @@ double evaluate_expected_fierz(double min, double max)
 }
 */
 
-bool test_constructed(TH1D* rate_histogram[2][2], TH1D* histogram = 0)//, double min = 0, double max = 0, int bin = 0) 
+bool test_rate_histograms(TH1D* rate_histogram[2][2])
 {
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
@@ -156,14 +156,58 @@ bool test_constructed(TH1D* rate_histogram[2][2], TH1D* histogram = 0)//, double
                 return false;
             }
 
-    if (not histogram) {
-        cout<<"Error: Extracted histogram is not constructed.\n";
+    return true;
+}
+
+
+/**
+ * test_range
+ * Tests the rang properties of a histogram. 
+ * Is the top and bottom energies aligned with bins, for example.
+ * 
+ * bin = 0          underflow bin
+ * bin = 1          first bin with low-edge INCLUDED
+ * bin = bins       last bin with upper-edge EXCLUDED
+ * bin = bins + 1   overflow bin
+ */
+bool test_range(TH1D* histogram, double min = 0, double max = 0) 
+{
+    if (not histogram)
+        return false;
+
+    TAxis *axis = histogram->GetXaxis();
+    if (not axis)
+        return false;
+
+    double bin_min = axis->FindBin(min);
+    double lower = axis->GetBinLowEdge(bin_min);
+    if (min and min != lower) {
+        cout<<"Error: Minimum does not align with a bin minimum.\n";
+        cout<<"       Minimum is "<<min<<" and bin minimum is "<<lower<<".\n";
         return false;
     }
 
-    if (not bins)
-        bins = histogram->GetNbinsX();
+    double bin_max = axis->FindBin(max);
+    double upper = axis->GetBinUpEdge(bin_max);
+    if (max and max != upper) {
+        cout<<"Error: Maximum does not align with a bin maximum.\n";
+        cout<<"       Maximum is "<<max<<" and bin maximum is "<<upper<<".\n";
+        return false;
+    }
+}
 
+
+bool test_construction(TH1D* rate_histogram[2][2], TH1D* out_histogram) 
+{
+    if (not test_rate_histograms(rate_histogram))
+        return false;
+
+    if (not out_histogram) {
+        cout<<"Error: Output histogram is not constructed.\n";
+        return false;
+    }
+
+    int bins = out_histogram->GetNbinsX();
     for (int side=0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++) {
             int rate_bins = rate_histogram[side][spin]->GetNbinsX();
@@ -193,23 +237,14 @@ bool test_constructed(TH1D* rate_histogram[2][2], TH1D* histogram = 0)//, double
  */
 TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogram = 0) 
 {
-    /*
-    for (int side=0; side<2; side++)
-        for (int spin=0; spin<2; spin++)
-            if (not rate_histogram[side][spin]) {
-                cout<<"Error: rate histogram on the "
-                    <<(side? "west":"east")<<" side with afp "
-                    <<(spin? "on":"off")<<" is not constructed.\n";
-                exit(1);
-            }
-
-    if (not super_ratio_histogram)
-        super_ratio_histogram = new TH1D(*(rate_histogram[0][0]));
-        */
-
-    if (not test_constructed(rate_histogram, super_ratio_histogram)) {
-        cout<<"Error: computing super ratio.\n Aborting.\n";
+    if (not test_construction(rate_histogram, super_ratio_histogram)) {
+        cout<<"Error: computing super ratio.\nAborting.\n";
         exit(1);
+    }
+
+    if (not super_ratio_histogram) {
+        cout<<"Warning: No super ratio histogram. Copying rate[0][0].\n";
+        super_ratio_histogram = new TH1D(*(rate_histogram[0][0]));
     }
 
     int bins = super_ratio_histogram->GetNbinsX();
@@ -221,13 +256,13 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
         double super_ratio = r[0][0]*r[1][1]/r[0][1]/r[1][0];
         if (IsNaN(super_ratio)) {
-            cout<<"Warning: super ratio in bin "<<bin<<" is not a number:\n"
-                <<"Was "<<super_ratio<<". Setting to zero and continuing.\n";
+            cout<<"Warning: Super ratio in bin "<<bin<<" is not a number:\n"
+                <<"         Was "<<super_ratio<<". Setting to zero and continuing.\n";
             super_ratio = 0;
         }
         super_ratio_histogram->SetBinContent(bin, super_ratio);
         super_ratio_histogram->SetBinError(bin, 0.01);   // TODO compute correctly!!
-        cout<<"Warning: super ratio is not computed correctly.\n";
+        cout<<"Warning: Super ratio is not computed correctly.\n";
     }
     return super_ratio_histogram;
 }
@@ -238,48 +273,19 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
  */
 TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL, double min = 0, double max = 0) 
 {
-    if (not test_constructed(rate_histogram, super_sum_histogram)) {
-        cout<<"Error: Problem constructing super sum.\n Aborting.\n";
+    if (not test_construction(rate_histogram, super_sum_histogram)) {
+        cout<<"Error: Problem constructing super sum histogram.\n Aborting.\n";
         exit(1);
     }
-    /*
-    for (int side=0; side<2; side++)
-        for (int spin=0; spin<2; spin++)
-            if (not rate_histogram[side][spin]) {
-                cout<<"Error: rate histogram on side: "
-                         <<(side? "west":"east")<<"and afp: "
-                         <<(spin? "on":"off")<<"is not constructed.\n";
-                exit(1);
-            }
 
     if (not super_sum_histogram) {
-        cout<<"Warning: super sum histogram is not constructed.\n";
+        cout<<"Warning: Super sum histogram is not constructed.\n";
         super_sum_histogram = new TH1D(*(rate_histogram[0][0]));
     }
 
-    if (not bins) 
-        bins = super_sum_histogram->GetNbinsX();
+    int bins = super_sum_histogram->GetNbinsX();
 
-    for (int side=0; side < 2; side++)
-        for (int spin = 0; spin < 2; spin++) {
-            int ss_bins = rate_histogram[side][spin]->GetNbinsX();
-            if (bins != ss_bins) {
-                cout<<"Error: super sum and side spin histogram sizes don't match.\n";
-                cout<<"super sum bins: "<<bins<<"\n";
-                exit(1);
-            }
-            if (ss_bins <= 0) {
-                cout<<"Error: bad bin number.\n";
-                cout<<"super sum bins: "<<bins<<"\n";
-                exit(1);
-            }
-        }
-        */
-
-    if (not bins) 
-        bins = super_sum_histogram->GetNbinsX();
-
-    for (int bin=1; bin<bins+2; bin++) {
+    for (int bin=1; bin<bins+1; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
@@ -311,14 +317,12 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
 
 TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = NULL, double min = 0, double max = 0) 
 {
-    if (not test_constructed(rate_histogram, asymmetry_histogram)) {
+    if (not test_construction(rate_histogram, asymmetry_histogram)) {
         cout<<"Error: Bad input histograms for computing asymmetry.\n Aborting.\n";
         exit(1);
     }
 
-    if (not bins) 
-        bins = asymmetry_histogram->GetNbinsX();
-
+    int bins = asymmetry_histogram->GetNbinsX();
     for (int bin=1; bin <= bins; bin++) 
 	{
         double r[2][2];
@@ -565,7 +569,7 @@ int fill_data(TString filename, TString title,
 int fill_simulation(TString filename, TString title, TString name, 
                     TH1D* histogram[2][2], TH1D* super_sum, TH1D* asymmetry)
 {
-    if (not test_constructed(histogram, super_sum)) {
+    if (not test_construction(histogram, super_sum)) {
         cout<<"Error with the rates or super sum histogram.\nAborting.\n";
         exit(1);
     }
