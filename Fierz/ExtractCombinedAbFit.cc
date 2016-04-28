@@ -173,10 +173,12 @@ bool test_rate_histograms(TH1D* rate_histogram[2][2])
 bool test_range(TH1D* histogram, double min = 0, double max = 0) 
 {
     if (not histogram)
+        cout<<"Error: No histogram to test ranges on.\n";
         return false;
 
     TAxis *axis = histogram->GetXaxis();
     if (not axis)
+        cout<<"Error: No axis in histogram to test ranges on.\n";
         return false;
 
     double bin_min = axis->FindBin(min);
@@ -194,6 +196,8 @@ bool test_range(TH1D* histogram, double min = 0, double max = 0)
         cout<<"       Maximum is "<<max<<" and bin maximum is "<<upper<<".\n";
         return false;
     }
+
+    return true;
 }
 
 
@@ -285,7 +289,7 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
 
     int bins = super_sum_histogram->GetNbinsX();
     if (not test_range(super_sum_histogram, min, max)) {
-        cout<<"Error: Problem with ranges in super sun histogram.\n";
+        cout<<"Error: Problem with ranges in super sum histogram.\n";
         exit(1);
     }
 
