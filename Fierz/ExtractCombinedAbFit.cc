@@ -284,8 +284,12 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
     }
 
     int bins = super_sum_histogram->GetNbinsX();
+    if (not test_range(super_sum_histogram, min, max)) {
+        cout<<"Error: Problem with ranges in super sun histogram.\n";
+        exit(1);
+    }
 
-    for (int bin=1; bin<bins+1; bin++) {
+    for (int bin=1; bin<=bins; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
@@ -523,7 +527,7 @@ int output_histogram(string filename, TH1D* h, double ax, double ay)
 
 
 /// This needs to be static and global for MINUIT to work
-UCNAFierzFitter ucna(bins, KEmin, KEmax);
+UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
     assert(n==3);
