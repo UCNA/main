@@ -32,20 +32,15 @@ using std::setw;
 using std::cout;
 using namespace TMath;
 
-/// settings
-double expected_fierz = 0.6540;				/// full range (will get overwritten) 
-//static double expected_fierz = 0.6111;	/// for range 150-600
-//static double expected_gluck = 11.8498;   /// for range 150-600
+/// cuts and settings
 static unsigned nToSim = 5e7;				/// how many triggering events to simulate
 //static double afp_on_prob = 0.68/1.68; 	/// afp on probability per neutron
 static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron
-int large_prime = 179430331;                /// a large prime number
-static int bins = 150;						/// replace with value from data or smoothing fit
-double scale_x = 1.00000;
 
-//double min_E = 220;                         /// min energy from the 2013 paper
-double min_E = 120;                         /// min energy from the 2013 paper
-double max_E = 670;                         /// max range from the 2013 paper
+double KEmin_A = 120;                       /// min kinetic energy for asymmetry fit
+double KEmax_A = 670;                       /// max kinetic range for asymmetry fit
+double KEmin_b = 120;                       /// min kinetic energy for Fierz fit
+double KEmax_b = 670;                       /// max kinetic range for Fierz fit
 double fedutial_cut = 50;                   /// radial cut in millimeters 
 double fidcut2 = 50*50;                     /// mm^2 radial cut
 
@@ -54,18 +49,11 @@ static const int nPar = 3;
 TString iniParamNames[3] = {"A", "b", "N"};
 double iniParams[3] = {-0.12, 0, 1e6};
 
-/// Path to experiment data files.
+/// path to experiment data files
 TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
 
-/// Path to Monte Carlo files.
-TString mc_dir = "/home/xuansun/Documents/SimData_Beta/3mill_beta_SimProcessed/";
-
-//double expected[3][3];     /// expected values (based on the energy range)
-//TMatrixD expected(3,3);    /// expected values (based on the energy range)
-//                           /// needs to be visible to the chi^2 code or DOES it?
-
-// ug. Needs to be static
-//FierzHistogram mc(0,1500,bins);
+/// path to Monte Carlo files
+TString mc_dir = "/home/xuansun/Documents/SimData_Beta/3mill_beta_SimAndProcessed/";
 
 /**
  * x[0] : kenetic energy
@@ -717,7 +705,7 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
     for (int bin = 1; bin < bins+1; bin++) {
 		double X = data_histogram->GetBinContent(bin);
 		double Y = sm_histogram->GetBinContent(bin);
-		double Z = Y > 0 ? X/Y : 0;
+		double Z = Y>0? X/Y : 0;
 
 		fierz_ratio_histogram->SetBinContent(bin, Z);
 
@@ -848,13 +836,6 @@ int main(int argc, char *argv[])
 	//ucna.fierz.super_sum.histogram->Write();
 
 	//mc_tfile->Close();
-
-    /* for (int side=0; side<2; side++)
-        for (int spin=0; spin<2; spin++)
-		{
-            normalize(mc.fierz_histogram[side][spin], min_E, max_E);
-            normalize(mc.sm_histogram[side][spin], min_E, max_E);
-        }*/
 
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
     if (not canvas) {
