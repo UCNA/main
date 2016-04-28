@@ -1023,12 +1023,10 @@ int main(int argc, char *argv[])
 	double N = GetEntries(ucna.data.super_sum.histogram, KEmin, KEmax);
 
     TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, KEmin_A, KEmax_A, nPar);
-    TF1 super_sum_func("asymmetry_fit_func", &super_sum_fit_func, KEmin_b, KEmax_b, nPar);
-    TF1 func("asymmetry_fit_func", &asymmetry_fit_func, KEmin_A, KEmax_A, nPar);
-    for (int i=0; i<nPar; i++) {
-        func.SetParameters(iniParams);
-        func.SetParName(i,iniParamNames[i]);
-    }
+    // TODO TF1 super_sum_func("asymmetry_fit_func", &super_sum_fit_func, KEmin_b, KEmax_b, nPar);
+    asymmetry_func.SetParameters(iniParams);
+    for (int i=0; i<nPar; i++)
+        asymmetry_func.SetParName(i, iniParamNames[i]);
 
 	/// Actually do the combined fitting.
 	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
@@ -1036,7 +1034,9 @@ int main(int argc, char *argv[])
 	/// Output the data info.
     cout<<setprecision(5);
 	cout<<" ENERGY RANGE:\n";
-	cout<<"    Energy range is "<<min_E<<" - "<<max_E<<" keV.\n";
+	cout<<"    Full Energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
+	cout<<"    Energy range for A fit is "<<KEmin_A<<" - "<<KEmax_A<<" keV.\n";
+	cout<<"    Energy range for b fit is "<<KEmin_b<<" - "<<KEmax_b<<" keV.\n";
 	cout<<"    Number of counts in full data is "<<(int)entries<<".\n";
 	cout<<"    Number of counts in energy range is "<<(int)N<<".\n";
 	cout<<"    Efficiency energy cut is "<< N/entries*100<<"%.\n";
@@ -1046,7 +1046,7 @@ int main(int argc, char *argv[])
     TMatrixD expected(nSpec,nSpec);
 	for (int m=0; m<nSpec; m++)
 		for (int n=0; n<nSpec; n++)
-			expected[m][n] = evaluate_expected_fierz(m,n,min_E,max_E,1112);
+			expected[m][n] = evaluate_expected_fierz(m,n,KEmin_b,KEmax_b,5112);
 	
 	/// Output the fit covariance details.
 	cout<<"\n FIT COVARIANCE MATRIX\n";
@@ -1089,7 +1089,7 @@ int main(int argc, char *argv[])
     /// Compute independent standard errors.
 	cout<<"\n FOR UNCOMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
-        TString name = func.GetParName(i);
+        TString name = asymmetry_func.GetParName(i);
         double sigma = 1/Sqrt(p_cov_inv[i][i]);
 	    cout<<"    Expected independent statistical error for "<<name<<" is "<<sigma<<".\n";
     }
@@ -1097,7 +1097,7 @@ int main(int argc, char *argv[])
     /// Compare predicted and actual standard errors.
 	cout<<"\n FOR COMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
-        TString name = func.GetParName(i);
+        TString name = asymmetry_func.GetParName(i);
         //double param = func.GetParameter(i);
 	    double sigma = Sqrt(cov[i][i]);
 	    double expected_sigma = Sqrt(p_cov[i][i]);
@@ -1110,9 +1110,9 @@ int main(int argc, char *argv[])
     /// Compare predicted and actual correlations.
 	cout<<"\n CORRELATIONS FACTORS FOR COMBINED FITS:\n";
 	for (int i=0; i<nPar; i++) {
-        TString name_i = func.GetParName(i);
+        TString name_i = asymmetry_func.GetParName(i);
 	    for (int j = i+1; j<nPar; j++) {
-            TString name_j = func.GetParName(j);
+            TString name_j = asymmetry_func.GetParName(j);
 	        double p_cor_ij = p_cov[j][i]/Sqrt(p_cov[i][i]*p_cov[j][j]);
             double cor_ij = cov[j][i]/Sqrt(cov[i][i]*cov[j][j]);
             cout<<"    Expected cor("<<name_i<<","<<name_j<<") = "<<p_cor_ij<<".\n";
