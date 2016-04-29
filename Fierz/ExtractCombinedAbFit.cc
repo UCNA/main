@@ -319,7 +319,7 @@ bool test_construction(TH1D* rate_histogram[2][2], TH1D* out_histogram)
 
 
 /**
- * Si := (r[0][0] r[1][1]) / (r[0][1] * r[1][0])
+ * Si := (r[0,0] r[1,1]) / (r[0,1] r[1,0])
  */
 TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogram = 0) 
 {
@@ -356,7 +356,7 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
 
 
 /**
- * S := 1/2 Sqrt(r[0][0] r[1][1]) + 1/2 Sqrt(r[0][1] r[1][0])
+ * S := 1/2 Sqrt(r(0,0) r[1,1] + 1/2 Sqrt(r[0,1] r[1,0])
  */
 TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL, double min = 0, double max = 0) 
 {
@@ -429,7 +429,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = 
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
-        double super_ratio = Sqrt(r[0][0]*r[1][1]/r[0][1]/r[1][0]);
+        double super_ratio = Sqrt(r[0][0]*r[1][1]/(r[0][1]*r[1][0]));
         if (IsNaN(super_ratio)) {
             cout<<"Warning: While computing asymmetry, super ratio in bin "<<bin<<" is not a number:\n";
             cout<<"         Was "<<super_ratio<<". Setting to zero and continuing.\n";
@@ -977,8 +977,8 @@ int main(int argc, char *argv[])
 
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
     if (not canvas) {
-        cout<<"Can't open new canvas.\n";
-        exit(0);
+        cout<<"Error: Can't open new canvas.\n";
+        exit(1);
     }
 
 	ucna.fierz.super_sum.histogram->SetStats(0);
@@ -1053,15 +1053,14 @@ int main(int argc, char *argv[])
               "hTotalEvents_W_on;1",
               ucna.data.raw[1][1]);
     printf("Number of bins in data %d\n", ucna.data.raw[0][0]->GetNbinsX());
+    */
     for (int side=EAST; side<=WEST; side++)
         for (int afp=EAST; afp<=WEST; afp++) {
-            TString title = "2010 final official "+side?"west":"east";
-            fill_data("OctetAsym_Offic.root",
-                      "2010 final official west afp on spectrum",
-                      "hTotalEvents_W_on;1",
-                      ucna.data.raw[side][afp]);
+            TString sw = side? "west":"east", s = side? "W":"E", a = afp? "on":"off";
+            TString title = "2010 final official "+s+" afp "+a;
+            TString cut = "hTotalEvents_"+s+"_"+a+";1";
+            fill_data("OctetAsym_Offic.root", title, cut, ucna.data.raw[side][afp]);
         }
-    */
 
     /* Already background subtracted...
         TH1D *background_histogram = (TH1D*)ucna_data_tfile->Get("Combined_Events_E000");
