@@ -580,7 +580,6 @@ double super_sum_error(double r[2][2]) {
 void output_histogram(TString filename, TH1D* h, double ax, double ay)
 {
 	ofstream ofs;
-	//ofs.open(filename.c_str());
 	ofs.open(filename);
 	for (int i = 1; i < h->GetNbinsX(); i++)
 	{
@@ -596,7 +595,6 @@ void output_histogram(TString filename, TH1D* h, double ax, double ay)
 
 double random(double min, double max) 
 {
-    //double p = (large_prime*nSimmed % rand_bins)/rand_bins;
     double p = rand();
     return min + (max-min)*p/RAND_MAX;
 }
@@ -641,7 +639,7 @@ int fill_data(TString filename, TString title,
 	if (tfile->IsZombie()) {
 		cout<<"Error loading "<<title<<":\n";
 		cout<<"File not found: "<<filename<<".\n";
-		exit(1);
+		return 0;
 	}
 
     if (histogram) {
@@ -654,7 +652,7 @@ int fill_data(TString filename, TString title,
 		cout<<"Error in file "<<filename<<":\n";
 		cout<<"Error getting "<<title<<":\n";
 		cout<<"Cannot find histogram named "<<name<<".\n";
-        exit(1);
+        return 0;
     }
 
 	int entries=histogram->GetEntries();
@@ -1054,14 +1052,21 @@ int main(int argc, char *argv[])
               "2010 final official west afp on spectrum",
               "hTotalEvents_W_on;1",
               ucna.data.raw[1][1]);
-    printf("Number of bins in data %d\n", ucna.data.raw[0][0]->GetNbinsX());
     */
+
+
+    /* TODO figure out where these went.
+        */
     for (int side=EAST; side<=WEST; side++)
         for (int afp=EAST; afp<=WEST; afp++) {
             TString sw = side? "west":"east", s = side? "W":"E", a = afp? "on":"off";
             TString title = "2010 final official "+s+" afp "+a;
             TString cut = "hTotalEvents_"+s+"_"+a+";1";
-            fill_data("OctetAsym_Offic.root", title, cut, ucna.data.raw[side][afp]);
+            int entries = fill_data("OctetAsym_Offic.root", title, cut, ucna.data.raw[side][afp]);
+            if (entries) 
+                cout<<"Status: Number of entries in "<<sw<<" side with afp "<<a<<" is "<<entries<<".\n";
+            else
+                cout<<"Error: found no events in "<<title;
         }
 
     /* Already background subtracted...
@@ -1071,7 +1076,7 @@ int main(int argc, char *argv[])
         background_histogram->Draw("");
     */
 
-/*
+    /*
 	for (int side = 0; side < 2; side++)
 		for (int spin = 0; spin < 2; spin++)
 		{
@@ -1280,11 +1285,11 @@ int main(int argc, char *argv[])
 
 
     /// DISPLAYING AND OUTPUTTING
-    
     TString asymmetry_pdf_filename = "mc/asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
 
-    /// Compute the super sums.
+    /// Draw the super sums.
+    ucna.data.super_sum.histogram->Scale(20);
     ucna.data.super_sum.histogram->SetLineColor(2);
 	ucna.data.super_sum.histogram->SetStats(0);
     ucna.data.super_sum.histogram->Draw("");
