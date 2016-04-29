@@ -38,7 +38,7 @@ static unsigned nToSim = 5e7;				/// how many triggering events to simulate
 static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron (0.68/1.68 for on)
 int KEbins = 150;                           /// number of bins to use fit spectral plots
 
-double KEmin = 0;                           /// min kinetic energy for plots
+double KEmin = 50;                          /// min kinetic energy for plots
 double KEmax = 900;                         /// max kinetic range for plots
 double KEmin_A = 120;                       /// min kinetic energy for asymmetry fit
 double KEmax_A = 670;                       /// max kinetic range for asymmetry fit
@@ -161,6 +161,76 @@ bool test_rate_histograms(TH1D* rate_histogram[2][2])
 
 
 /**
+ * test_minimum
+ * Tests the range properties of a histogram. 
+ * Is the top and bottom energies aligned with bins, for example.
+ * 
+ * bin = 0          underflow bin
+ * bin = 1          first bin with low-edge INCLUDED
+ * bin = bins       last bin with upper-edge EXCLUDED
+ * bin = bins + 1   overflow bin
+ */
+int test_min(TH1D* histogram, double min = 0) 
+{
+    if (not histogram) {
+        cout<<"Error: No histogram to test range on.\n";
+        return false;
+    }
+
+    TAxis *axis = histogram->GetXaxis();
+    if (not axis) {
+        cout<<"Error: No axis in histogram to test range on.\n";
+        return false;
+    }
+
+    double bin_min = axis->FindBin(min);
+    double lower = axis->GetBinLowEdge(bin_min);
+    if (min and min != lower) {
+        cout<<"Error: Minimum does not align with a bin minimum.\n";
+        cout<<"       Minimum is "<<min<<" and bin minimum is "<<lower<<".\n";
+        return false;
+    }
+
+    return bin_min;
+}
+
+
+/**
+ * test_maximum
+ * Tests the range properties of a histogram. 
+ * Is the top and bottom energies aligned with bins, for example.
+ * 
+ * bin = 0          underflow bin
+ * bin = 1          first bin with low-edge INCLUDED
+ * bin = bins       last bin with upper-edge EXCLUDED
+ * bin = bins + 1   overflow bin
+ */
+int test_max(TH1D* histogram, double max = 0) 
+{
+    if (not histogram) {
+        cout<<"Error: No histogram to test range on.\n";
+        return false;
+    }
+
+    TAxis *axis = histogram->GetXaxis();
+    if (not axis) {
+        cout<<"Error: No axis in histogram to test range on.\n";
+        return false;
+    }
+
+    double bin_max = axis->FindBin(max);
+    double upper = axis->GetBinUpEdge(bin_max);
+    if (max and max != upper) {
+        cout<<"Error: Maximum does not align with a bin maximum.\n";
+        cout<<"       Maximum is "<<max<<" and bin maximum is "<<upper<<".\n";
+        return false;
+    }
+
+    return bin_max;
+}
+
+
+/**
  * test_range
  * Tests the rang properties of a histogram. 
  * Is the top and bottom energies aligned with bins, for example.
@@ -196,6 +266,16 @@ bool test_range(TH1D* histogram, double min = 0, double max = 0)
     if (max and max != upper) {
         cout<<"Error: Maximum does not align with a bin maximum.\n";
         cout<<"       Maximum is "<<max<<" and bin maximum is "<<upper<<".\n";
+        return false;
+    }
+
+    if (lower < 0) {
+        cout<<"Error: Minimum is negative.\n";
+        return false;
+    }
+
+    if (upper <= lower) {
+        cout<<"Error: Maximum is not greater than minimum.\n";
         return false;
     }
 
@@ -255,6 +335,7 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
 
     int bins = super_ratio_histogram->GetNbinsX();
 	cout<<"Number of bins "<<bins<<endl;
+    // TODO copy other method of bin checking 
     for (int bin = 1; bin < bins; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
@@ -290,12 +371,14 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
     }
 
     int bins = super_sum_histogram->GetNbinsX();
+    int bin_min = test_min(super_sum_histogram, min);
+    int bin_max = test_max(super_sum_histogram, max);
     if (not test_range(super_sum_histogram, min, max)) {
         cout<<"Error: Problem with ranges in super sum histogram.\n";
         exit(1);
     }
 
-    for (int bin=1; bin<=bins; bin++) {
+    for (int bin = bin_min; bin <= bin_max; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
@@ -305,15 +388,15 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
         double error = Sqrt(1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]) * super_sum;
         if (IsNaN(super_sum)) {
             super_sum = 0;
-            cout<<"Warning: Super sum is not a number: "<<super_sum<<".\n";
+            cout<<"Warning: Super sum in bin "<<bin<<" is not a number: "<<super_sum<<".\n";
         } else if (super_sum == 0)
-            cout<<"Warning: Super sum is zero.\n";
+            cout<<"Warning: Super sum in bin "<<bin<<" is zero.\n";
 
         if (IsNaN(error)) {
 			error = 0;
-            cout<<"Warning: Super sum error: division by zero.\n";
+            cout<<"Warning: Super sum error in bin "<<bin<<": division by zero.\n";
         } else if (error <= 0) 
-            cout<<"Warning: Super sum error: error is non positive.\n";
+            cout<<"Warning: Super sum error in bin "<<bin<<": error is non positive.\n";
 
         if (bin % 10 == 0)
             printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
@@ -328,12 +411,19 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
 TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = NULL, double min = 0, double max = 0) 
 {
     if (not test_construction(rate_histogram, asymmetry_histogram)) {
-        cout<<"Error: Bad input histograms for computing asymmetry.\n Aborting.\n";
+        cout<<"Error: Bad input histograms for computing asymmetry.\nAborting.\n";
         exit(1);
     }
 
     int bins = asymmetry_histogram->GetNbinsX();
-    for (int bin=1; bin <= bins; bin++) 
+    int bin_min = test_min(asymmetry_histogram, min);
+    int bin_max = test_max(asymmetry_histogram, max);
+    if (not test_range(asymmetry_histogram, min, max)) {
+        cout<<"Error: Problem with ranges in super sum histogram.\nAborting.\n";
+        exit(1);
+    }
+
+    for (int bin = bin_min; bin <= bin_max; bin++)
 	{
         double r[2][2];
         for (int side = 0; side < 2; side++)
