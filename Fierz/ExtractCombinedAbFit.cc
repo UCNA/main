@@ -810,8 +810,10 @@ int fill_simulation(TString filename, TString title, TString name,
 	}
     #endif
     
-	cout<<"Total number of Monte Carlo entries without cuts: "<<nEvents<<endl;
-	cout<<"Total number of Monte Carlo entries with cuts: "<<nSimmed<<endl;
+	cout<<"Total number of Monte Carlo entries:\n";
+	cout<<"      Entries without cuts:  "<<nEvents<<endl;
+	cout<<"      Entries with cuts:     "<<nSimmed<<endl;
+	cout<<"      Efficiencies of cuts:  "<<(100.0*nSimmed)/double(nEvents)<<"%\n";
 
 	//tntuple->SetDirectory(mc_tfile);
 	//tntuple->Write();
