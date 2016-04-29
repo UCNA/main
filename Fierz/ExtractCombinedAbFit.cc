@@ -399,7 +399,7 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
             cout<<"Warning: Super sum error in bin "<<bin<<": error is non positive.\n";
 
         if (bin % 10 == 0)
-            printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
+            cout<<"Status: Setting bin content for super sum bin "<<bin<<" to "<<super_sum<<".\n";
 
         super_sum_histogram->SetBinContent(bin, super_sum);
         super_sum_histogram->SetBinError(bin, error);
