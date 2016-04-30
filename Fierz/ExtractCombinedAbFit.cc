@@ -31,6 +31,8 @@
 /// name spaces
 using std::setw;
 using std::cout;
+using std::right;
+using std::left;
 using namespace TMath;
 
 /// cuts and settings
@@ -1251,23 +1253,33 @@ int main(int argc, char *argv[])
 
     /// Compute independent standard errors.
 	cout<<"\n FOR UNCOMBINED FITS:\n";
+	cout<<    "    Expected independent statistical sigma and error:\n";
+    cout<<    "    "<<setw(1)<<" " <<setw(16)<<"value" <<setw(16)<<"sigma" <<setw(16)<<"error in %\n";
 	for (int i=0; i<nPar; i++) {
         TString name = asymmetry_func.GetParName(i);
+        double value = asymmetry_func.GetParameter(i);
         double sigma = 1/Sqrt(p_cov_inv[i][i]);
-	    cout<<"    Expected independent statistical error for "<<name<<" is "<<sigma<<".\n";
+        double error = 100*sigma/value;
+        cout<<    "    "<<setw(1)<<name<<setw(16)<<value<<setw(16)<<sigma<<setw(15)<<error<<"%\n";
     }
 
     /// Compare predicted and actual standard errors.
 	cout<<"\n FOR COMBINED FITS:\n";
+    cout<<    "    Actual and expected combined statistical sigmas and errors:\n";
+    cout<<    "     "<<setw(1)<<" "<<setw(8)<<"value" <<setw(20)<<"actual sigma"
+                    <<setw(20)<<"expected sigma" <<setw(16)<<"ratio" <<setw(16)<<"error in %\n";
 	for (int i=0; i<nPar; i++) {
-        TString name = asymmetry_func.GetParName(i);
-        //double param = func.GetParameter(i);
+        TString param = asymmetry_func.GetParName(i);
+        double value = asymmetry_func.GetParameter(i);
 	    double sigma = Sqrt(cov[i][i]);
-	    double expected_sigma = Sqrt(p_cov[i][i]);
-        double factor = sigma/expected_sigma;
-        cout<<"    Expected statistical error for "<<name<<" in this range is "<<expected_sigma<<".\n";
-        cout<<"    Actual statistical error for "<<name<<" in this range is "<<sigma<<".\n";
-        cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n";
+	    double error = 100*sigma/value;
+	    double expec = Sqrt(p_cov[i][i]);
+        double ratio = sigma/expec;
+        cout<<"    "<<setw(1) <<param <<setw(8)<<value <<setw(16)<<sigma
+                    <<setw(16)<<expec <<setw(8)<<ratio <<setw(15)<<error<<"%\n";
+        //cout<<"    Expected statistical error for "<<name<<" in this range is "<<expected_sigma<<".\n";
+        //cout<<"    Actual statistical error for "<<name<<" in this range is "<<sigma<<".\n";
+        //cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n";
     }
 
     /// Compare predicted and actual correlations.
