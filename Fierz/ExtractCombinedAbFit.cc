@@ -1196,16 +1196,6 @@ int main(int argc, char *argv[])
 	/// Actually do the combined fitting.
 	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
 
-	/// Output the data info.
-    cout<<setprecision(5);
-	cout<<" ENERGY RANGE:\n";
-	cout<<"    Full Energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
-	cout<<"    Energy range for A fit is "<<KEmin_A<<" - "<<KEmax_A<<" keV.\n";
-	cout<<"    Energy range for b fit is "<<KEmin_b<<" - "<<KEmax_b<<" keV.\n";
-	cout<<"    Number of counts in full data is "<<(int)entries<<".\n";
-	cout<<"    Number of counts in energy range is "<<(int)N<<".\n";
-	cout<<"    Efficiency energy cut is "<< N/entries*100<<"%.\n";
-
 	/// Set all expectation values for this range.
     double nSpec = 4;
     TMatrixD expected(nSpec,nSpec);
@@ -1213,15 +1203,6 @@ int main(int argc, char *argv[])
 		for (int n=0; n<nSpec; n++)
 			expected[m][n] = evaluate_expected_fierz(m,n,KEmin_b,KEmax_b,5112);
 	
-	/// Output the fit covariance details.
-	cout<<"\n FIT COVARIANCE MATRIX\n";
-	for (int i=0; i<nPar; i++) {
-        cout<<"    ";
-		for (int j=0; j<nPar; j++)
-			cout<<setw(14)<<cov[i][j];
-	    cout<<endl;
-	}
-
 	/// Calculate the predicted inverse covariance matrix for this range.
 	double A = -0.12;
 	TMatrixD p_cov_inv(nPar,nPar);
@@ -1242,42 +1223,95 @@ int main(int argc, char *argv[])
 	double det = 0;
 	TMatrixD p_cov = p_cov_inv.Invert(&det);
 
+    /// PRINT OUT REPORT OF ERRORS
+    int cl = 14;
+
+	/// Output the data info.
+    cout<<setprecision(5);
+	cout<<" ENERGY RANGE:\n";
+	cout<<"    Full Energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
+	cout<<"    Energy range for A fit is "<<KEmin_A<<" - "<<KEmax_A<<" keV.\n";
+	cout<<"    Energy range for b fit is "<<KEmin_b<<" - "<<KEmax_b<<" keV.\n";
+	cout<<"    Number of counts in full data is "<<(int)entries<<".\n";
+	cout<<"    Number of counts in energy range is "<<(int)N<<".\n";
+	cout<<"    Efficiency energy cut is "<< N/entries*100<<"%.\n";
+
+	/// Output the fit covariance details.
+	cout<<"\n FIT COVARIANCE MATRIX\n";
+    cout<<"     ";
+	for (int i=0; i<nPar; i++) {
+        TString param = asymmetry_func.GetParName(i);
+		cout<<setw(cl)<<param;
+    }
+	cout<<"\n";
+	for (int i=0; i<nPar; i++) {
+        TString param = asymmetry_func.GetParName(i);
+        cout<<"    "<<param;
+		for (int j=0; j<nPar; j++)
+			cout<<setw(cl)<<cov[i][j];
+	    cout<<"\n";
+	}
+
 	/// Output the predicted covariance details.
 	cout<<"\n PREDICTED COVARIANCE MATRIX\n";
+    cout<<"     ";
 	for (int i=0; i<nPar; i++) {
-        cout<<"    ";
+        TString param = asymmetry_func.GetParName(i);
+		cout<<setw(cl)<<param;
+    }
+	cout<<"\n";
+	for (int i=0; i<nPar; i++) {
+        TString param = asymmetry_func.GetParName(i);
+        cout<<"    "<<param;
 		for (int j=0; j<nPar; j++)
-			cout<<setw(14)<<p_cov[i][j];
+			cout<<setw(cl)<<p_cov[i][j];
 		cout<<"\n";
 	}
 
     /// Compute independent standard errors.
 	cout<<"\n FOR UNCOMBINED FITS:\n";
 	cout<<    "    Expected independent statistical sigma and error:\n";
-    cout<<    "    "<<setw(1)<<" " <<setw(16)<<"value" <<setw(16)<<"sigma" <<setw(16)<<"error in %\n";
+    cout<<    "    "<<setw(1)<<" " 
+                    <<setw(cl)<<"value"
+                    <<setw(cl)<<"sigma" 
+                    <<setw(cl)<<"error\n";
 	for (int i=0; i<nPar; i++) {
         TString name = asymmetry_func.GetParName(i);
         double value = asymmetry_func.GetParameter(i);
         double sigma = 1/Sqrt(p_cov_inv[i][i]);
         double error = 100*sigma/value;
-        cout<<    "    "<<setw(1)<<name<<setw(16)<<value<<setw(16)<<sigma<<setw(15)<<error<<"%\n";
+        cout<<    "    "<<setw(1) <<name
+                        <<setw(cl)<<value
+                        <<setw(cl)<<sigma
+                        <<setw(cl-2)<<error<<"%\n";
     }
 
     /// Compare predicted and actual standard errors.
 	cout<<"\n FOR COMBINED FITS:\n";
-    cout<<    "    Actual and expected combined statistical sigmas and errors:\n";
-    cout<<    "     "<<setw(1)<<" "<<setw(8)<<"value" <<setw(20)<<"actual sigma"
-                    <<setw(20)<<"expected sigma" <<setw(16)<<"ratio" <<setw(16)<<"error in %\n";
+    cout<<    "    Actual and estimated combined statistical sigmas and errors:\n";
+    cout<<    "    "<<setw(1)<<" "
+                    <<setw(cl)<<"value" 
+                    <<setw(cl)<<"actual sigma"
+                    <<setw(cl)<<"est. sigma" 
+                    <<setw(cl)<<"actual error" 
+                    <<setw(cl)<<"est. error" 
+                    <<setw(cl)<<"ratio\n";
 	for (int i=0; i<nPar; i++) {
         TString param = asymmetry_func.GetParName(i);
         double value = asymmetry_func.GetParameter(i);
 	    double sigma = Sqrt(cov[i][i]);
 	    double error = 100*sigma/value;
-	    double expec = Sqrt(p_cov[i][i]);
-        double ratio = sigma/expec;
-        cout<<"    "<<setw(1) <<param <<setw(8)<<value <<setw(16)<<sigma
-                    <<setw(16)<<expec <<setw(8)<<ratio <<setw(15)<<error<<"%\n";
-        //cout<<"    Expected statistical error for "<<name<<" in this range is "<<expected_sigma<<".\n";
+	    double est_sigma = Sqrt(p_cov[i][i]);
+	    double est_error = 100*est_sigma/value;
+        double ratio = sigma/est_sigma;
+        cout<<"    "<<setw(1)   <<param 
+                    <<setw(cl)  <<value 
+                    <<setw(cl)  <<sigma 
+                    <<setw(cl)  <<est_sigma 
+                    <<setw(cl-1)<<error <<"%" 
+                    <<setw(cl-1)<<est_error<<"%"
+                    <<setw(cl)  <<ratio<<"\n";
+        //cout<<"    Expected statistical error for "<<name<<" in this range is "<<est_sigma<<".\n";
         //cout<<"    Actual statistical error for "<<name<<" in this range is "<<sigma<<".\n";
         //cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n";
     }
