@@ -1274,7 +1274,7 @@ int main(int argc, char *argv[])
     cout<<    "    "<<setw(1)<<" " 
                     <<setw(cl)<<"value"
                     <<setw(cl)<<"sigma" 
-                    <<setw(cl)<<"error\n";
+                    <<setw(cl+1)<<"error\n";
 	for (int i=0; i<nPar; i++) {
         TString name = asymmetry_func.GetParName(i);
         double value = asymmetry_func.GetParameter(i);
@@ -1283,7 +1283,7 @@ int main(int argc, char *argv[])
         cout<<    "    "<<setw(1) <<name
                         <<setw(cl)<<value
                         <<setw(cl)<<sigma
-                        <<setw(cl-2)<<error<<"%\n";
+                        <<setw(cl-1)<<error<<"%\n";
     }
 
     /// Compare predicted and actual standard errors.
@@ -1295,7 +1295,7 @@ int main(int argc, char *argv[])
                     <<setw(cl)<<"est. sigma" 
                     <<setw(cl)<<"actual error" 
                     <<setw(cl)<<"est. error" 
-                    <<setw(cl)<<"ratio\n";
+                    <<setw(cl+1)<<"actual/est.\n";
 	for (int i=0; i<nPar; i++) {
         TString param = asymmetry_func.GetParName(i);
         double value = asymmetry_func.GetParameter(i);
@@ -1318,14 +1318,24 @@ int main(int argc, char *argv[])
 
     /// Compare predicted and actual correlations.
 	cout<<"\n CORRELATIONS FACTORS FOR COMBINED FITS:\n";
+    cout<<    "    "<<setw(8)<<" "
+                    <<setw(cl)<<"actual"
+                    <<setw(cl)<<"estimate" 
+                    <<setw(cl+1)<<"actual/est.\n";
 	for (int i=0; i<nPar; i++) {
         TString name_i = asymmetry_func.GetParName(i);
 	    for (int j = i+1; j<nPar; j++) {
             TString name_j = asymmetry_func.GetParName(j);
-	        double p_cor_ij = p_cov[j][i]/Sqrt(p_cov[i][i]*p_cov[j][j]);
+            TString cor_name = "cor("+name_i+","+name_j+")";
             double cor_ij = cov[j][i]/Sqrt(cov[i][i]*cov[j][j]);
-            cout<<"    Expected cor("<<name_i<<","<<name_j<<") = "<<p_cor_ij<<".\n";
-            cout<<"    Actual cor("<<name_i<<","<<name_j<<") = "<<cor_ij<<".\n";
+	        double p_cor_ij = p_cov[j][i]/Sqrt(p_cov[i][i]*p_cov[j][j]);
+            double ratio = cor_ij/p_cor_ij;
+            cout<<"    "<<setw(8)<<cor_name
+                        <<setw(cl)<<cor_ij
+                        <<setw(cl)<<p_cor_ij
+                        <<setw(cl)<<ratio<<"\n";
+            //cout<<"    Actual cor("<<name_i<<","<<name_j<<") = "<<cor_ij<<".\n";
+            //cout<<"    Expected cor("<<name_i<<","<<name_j<<") = "<<p_cor_ij<<".\n";
         }
     }
 
