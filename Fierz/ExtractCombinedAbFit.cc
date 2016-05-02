@@ -582,9 +582,10 @@ double super_sum_error(double r[2][2]) {
 */
 
 
-void output_histogram(TString filename, TH1D* h, double ax, double ay)
+void output_data_file(TString name, TH1D* h, double ax, double ay)
 {
-	ofstream ofs;
+	TString filename = plots_dir + name + ".dat";
+    ofstream ofs;
 	ofs.open(filename);
 	for (int i = 1; i < h->GetNbinsX(); i++)
 	{
@@ -604,25 +605,6 @@ double random(double min, double max)
     return min + (max-min)*p/RAND_MAX;
 }
 
-
-#if 0
-using namespace std;
-int output_histogram(string filename, TH1D* h, double ax, double ay)
-{
-	ofstream ofs;
-	ofs.open(filename.c_str());
-	for (int i = 1; i < h->GetNbinsX(); i++)
-	{
-		double x = ax * h->GetBinCenter(i);
-		//double sx = h->GetBinWidth(i);
-		double r = ay * h->GetBinContent(i);
-		double sr = ay * h->GetBinError(i);
-		ofs << x << '\t' << r << '\t' << sr << endl;
-	}
-	ofs.close();
-	return 0;
-}
-#endif
 
 
 /// This needs to be static and global for MINUIT to work
@@ -905,10 +887,10 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
     canvas->SaveAs(fierz_ratio_pdf_filename);
 
 	/// output for gnuplot
-	output_histogram("mc/super-sum-data.dat", data_histogram, 1, 1000);
-	output_histogram("mc/super-sum-mc.dat", sm_histogram, 1, 1000);
-	output_histogram("mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
-	output_histogram("mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
+	output_data_file("super-sum-data", data_histogram, 1, 1000);
+	output_data_file("super-sum-mc", sm_histogram, 1, 1000);
+	output_data_file("fierz-ratio", fierz_ratio_histogram, 1, 1);
+	output_data_file("fierz-fit", fierz_fit_histogram, 1, 1);
 
 	TFile* ratio_tfile = new TFile("Fierz/ratio.root", "recreate");
 	if (ratio_tfile->IsZombie())
@@ -980,17 +962,6 @@ int main(int argc, char *argv[])
 
 	//mc_tfile->Close();
 
-    TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
-    if (not canvas) {
-        cout<<"Error: Can't open new canvas.\n";
-        exit(1);
-    }
-
-	ucna.fierz.super_sum.histogram->SetStats(0);
-    ucna.fierz.super_sum.histogram->SetLineColor(3);
-    ucna.fierz.super_sum.histogram->Draw("");
-    ucna.sm.super_sum.histogram->SetLineColor(1);
-    ucna.sm.super_sum.histogram->Draw("Same");
 
     /**
      *  If you want a fast way to get the combined data spectrums for comparison, 
@@ -1125,13 +1096,11 @@ int main(int argc, char *argv[])
     double chisq = fit->GetChisquare();
     double N = fit->GetNDF();
     printf("Chi^2 / ( N - 1) = %f / %f = %f\n",chisq, N-1, chisq/(N-1));
-    */
 
     TString fit_pdf_filename = "mc/fierz_fit_data.pdf";
     canvas->SaveAs(fit_pdf_filename);
 
     // compute and plot the super ratio
-    /*
     TH1D *ucna.data.super_ratio.histogram = compute_super_ratio(ucna.data.raw);
     ucna.data.super_ratio.histogram->Draw();
     TString super_ratio_pdf_filename = "mc/super_ratio_data.pdf";
@@ -1188,15 +1157,15 @@ int main(int argc, char *argv[])
     /// FITTING 
     TMatrixD cov(nPar,nPar);
 	double entries = ucna.data.super_sum.histogram->GetEffectiveEntries();
+	double A = -0.12;
 	double N = GetEntries(ucna.data.super_sum.histogram, KEmin, KEmax);
 
+	/// Actually do the combined fitting.
     TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, KEmin_A, KEmax_A, nPar);
     // TODO TF1 super_sum_func("asymmetry_fit_func", &super_sum_fit_func, KEmin_b, KEmax_b, nPar);
     asymmetry_func.SetParameters(iniParams);
     for (int i=0; i<nPar; i++)
         asymmetry_func.SetParName(i, iniParamNames[i]);
-
-	/// Actually do the combined fitting.
 	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
 
 	/// Set all expectation values for this range.
@@ -1207,7 +1176,6 @@ int main(int argc, char *argv[])
 			expected[m][n] = evaluate_expected_fierz(m,n,KEmin_b,KEmax_b,5112);
 	
 	/// Calculate the predicted inverse covariance matrix for this range.
-	double A = -0.12;
 	TMatrixD p_cov_inv(nPar,nPar);
 	for (int i=0; i<nPar; i++)
 		for (int j=0; j<nPar; j++)
@@ -1273,32 +1241,32 @@ int main(int argc, char *argv[])
 
     /// Compute independent standard errors.
 	cout<<"\n FOR UNCOMBINED FITS:\n";
-	cout<<    "    Expected independent statistical sigma and error:\n";
-    cout<<    "    "<<setw(1)<<" " 
-                    <<setw(cl)<<"value"
-                    <<setw(cl)<<"sigma" 
-                    <<setw(cl+1)<<"error\n";
+	cout<<"    Expected independent statistical sigma and error:\n";
+    cout<<"    "<<setw(1)<<" " 
+                <<setw(cl)<<"value"
+                <<setw(cl)<<"sigma" 
+                <<setw(cl+1)<<"error\n";
 	for (int i=0; i<nPar; i++) {
         TString name = asymmetry_func.GetParName(i);
         double value = asymmetry_func.GetParameter(i);
         double sigma = 1/Sqrt(p_cov_inv[i][i]);
         double error = 100*sigma/value;
-        cout<<    "    "<<setw(1) <<name
-                        <<setw(cl)<<value
-                        <<setw(cl)<<sigma
-                        <<setw(cl-1)<<error<<"%\n";
+        cout<<"    "<<setw(1) <<name
+                    <<setw(cl)<<value
+                    <<setw(cl)<<sigma
+                    <<setw(cl-1)<<error<<"%\n";
     }
 
     /// Compare predicted and actual standard errors.
 	cout<<"\n FOR COMBINED FITS:\n";
-    cout<<    "    Actual and estimated combined statistical sigmas and errors:\n";
-    cout<<    "    "<<setw(1)<<" "
-                    <<setw(cl)<<"value" 
-                    <<setw(cl)<<"actual sigma"
-                    <<setw(cl)<<"est. sigma" 
-                    <<setw(cl)<<"actual error" 
-                    <<setw(cl)<<"est. error" 
-                    <<setw(cl+1)<<"actual/est.\n";
+    cout<<"    Actual and estimated combined statistical sigmas and errors:\n";
+    cout<<"    "<<setw(1)<<" "
+                <<setw(cl)<<"value" 
+                <<setw(cl)<<"actual sigma"
+                <<setw(cl)<<"est. sigma" 
+                <<setw(cl)<<"actual error" 
+                <<setw(cl)<<"est. error" 
+                <<setw(cl+1)<<"actual/est.\n";
 	for (int i=0; i<nPar; i++) {
         TString param = asymmetry_func.GetParName(i);
         double value = asymmetry_func.GetParameter(i);
@@ -1314,17 +1282,14 @@ int main(int argc, char *argv[])
                     <<setw(cl-1)<<error <<"%" 
                     <<setw(cl-1)<<est_error<<"%"
                     <<setw(cl)  <<ratio<<"\n";
-        //cout<<"    Expected statistical error for "<<name<<" in this range is "<<est_sigma<<".\n";
-        //cout<<"    Actual statistical error for "<<name<<" in this range is "<<sigma<<".\n";
-        //cout<<"    Ratio for "<<name<<" error is "<<factor<<".\n";
     }
 
     /// Compare predicted and actual correlations.
 	cout<<"\n CORRELATIONS FACTORS FOR COMBINED FITS:\n";
-    cout<<    "    "<<setw(8)<<" "
-                    <<setw(cl)<<"actual"
-                    <<setw(cl)<<"estimate" 
-                    <<setw(cl+1)<<"actual/est.\n";
+    cout<<"    "<<setw(8)<<" "
+                <<setw(cl)<<"actual"
+                <<setw(cl)<<"estimate" 
+                <<setw(cl+1)<<"actual/est.\n";
 	for (int i=0; i<nPar; i++) {
         TString name_i = asymmetry_func.GetParName(i);
 	    for (int j = i+1; j<nPar; j++) {
@@ -1337,23 +1302,38 @@ int main(int argc, char *argv[])
                         <<setw(cl)<<cor_ij
                         <<setw(cl)<<p_cor_ij
                         <<setw(cl)<<ratio<<"\n";
-            //cout<<"    Actual cor("<<name_i<<","<<name_j<<") = "<<cor_ij<<".\n";
-            //cout<<"    Expected cor("<<name_i<<","<<name_j<<") = "<<p_cor_ij<<".\n";
         }
     }
 
 
     /// DISPLAYING AND OUTPUTTING
+    TCanvas *canvas = new TCanvas("fierz_fitter_canvas",
+                                  "Combined Fierz component of energy spectrum");
+    if (not canvas) {
+        cout<<"Error: Can't open new canvas.\n";
+        exit(1);
+    }
+
+	ucna.fierz.super_sum.histogram->SetStats(0);
+    ucna.fierz.super_sum.histogram->SetLineColor(3);
+    ucna.fierz.super_sum.histogram->Draw("");
+
+    TString fit_pdf_filename = plots_dir + "combined_fierz_fit_data.pdf";
+    ucna.sm.super_sum.histogram->SetLineColor(1);
+    ucna.sm.super_sum.histogram->Draw("Same");
+    canvas->SaveAs(fit_pdf_filename);
+
     TString asymmetry_pdf_filename = plots_dir + "asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
 
-    /// Draw the super sums.
+    /// Draw the data super sums
     ucna.data.super_sum.histogram->Scale(200);
-    ucna.data.super_sum.histogram->SetLineColor(2);
 	ucna.data.super_sum.histogram->SetStats(0);
+    ucna.data.super_sum.histogram->SetLineColor(2);
     ucna.data.super_sum.histogram->Draw("");
 
-    /// Draw Monte Carlo.
+    /// Draw Monte Carlo super sum
+	ucna.data.super_sum.histogram->SetStats(0);
     ucna.sm.super_sum.histogram->SetLineColor(1);
     ucna.sm.super_sum.histogram->SetMarkerStyle(4);
     ucna.sm.super_sum.histogram->Draw("same p0");
@@ -1367,7 +1347,7 @@ int main(int argc, char *argv[])
     legend->Draw();
 
     /// Save the data and Mote Carlo plots.
-    TString super_sum_pdf_filename = "mc/super_sum_data.pdf";
+    TString super_sum_pdf_filename = plots_dir + "super_sum_data.pdf";
     canvas->SaveAs(super_sum_pdf_filename);
 
 
@@ -1383,10 +1363,10 @@ int main(int argc, char *argv[])
     canvas->SaveAs(pdf_filename);
 
 	/// output for gnuplot
-	//output_histogram("/data/kevinh/mc/super-sum-data.dat", ucna.data.super_sum.histogram, 1, 1000);
-	//output_histogram("/data/kevinh/mc/super-sum-mc.dat", ucna.sm.super_sum.histogram, 1, 1000);
-	//output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
-	//output_histogram("/data/kevinh/mc/fierz-fit.dat", fierz_fit_histogram, 1, 1);
+	//output_data_file("/data/kevinh/mc/super-sum-data", ucna.data.super_sum.histogram, 1, 1000);
+	//output_data_file("/data/kevinh/mc/super-sum-mc", ucna.sm.super_sum.histogram, 1, 1000);
+	//output_data_file("/data/kevinh/mc/fierz-ratio", fierz_ratio_histogram, 1, 1);
+	//output_data_file("/data/kevinh/mc/fierz-fit", fierz_fit_histogram, 1, 1);
 
 	*/
 
