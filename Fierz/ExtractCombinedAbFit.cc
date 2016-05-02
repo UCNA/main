@@ -41,7 +41,7 @@ static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron (0
 int KEbins = 150;                           /// number of bins to use fit spectral plots
 
 double KEmin = 50;                          /// min kinetic energy for plots
-double KEmax = 900;                         /// max kinetic range for plots
+double KEmax = 650;                         /// max kinetic range for plots
 double KEmin_A = 120;                       /// min kinetic energy for asymmetry fit
 double KEmax_A = 670;                       /// max kinetic range for asymmetry fit
 double KEmin_b = 120;                       /// min kinetic energy for Fierz fit
@@ -52,13 +52,16 @@ double fidcut2 = 50*50;                     /// mm^2 radial cut
 /// set up free fit parameters with best guess
 static const int nPar = 3;
 TString iniParamNames[3] = {"A", "b", "N"};
-double iniParams[3] = {-0.12, 0, 1e6};
+double iniParams[3] = {-0.12, 0, 1e1};
 
 /// path to experiment data files
 TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
 
 /// path to Monte Carlo files
-TString mc_dir = "/home/xuansun/Documents/SimData_Beta/3mill_beta_SimAndProcessed/";
+TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/1mill_beta/";
+
+/// path to save output plots
+TString plots_dir = "/home/kevinh/Pictures/";
 
 /*
 /// beta spectrum with little b term
@@ -99,10 +102,8 @@ double beta_spectrum(const double *val, const double *par)
 
 	return P;
 }
-*/
 
 
-/*
 unsigned deg = 4;
 double mc_model(double *x, double *p) 
 {
@@ -456,6 +457,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = 
 }
 
 
+/*
 TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction) 
 {
     TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
@@ -476,7 +478,7 @@ TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction)
 		double K = asymmetry_histogram->GetBinCenter(bin);
 		double E = K + m_e;                   /// electron energy
 		double p = Sqrt(E*E - m_e*m_e);       /// electron momentum
-		double beta = p / E;				  /// v/c
+		double beta = p/E;				      /// v/c
         asymmetry_histogram->SetBinContent(bin, -2*asymmetry/beta);
         asymmetry_histogram->SetBinError(bin, 2*asymmetry_error/beta);
         asymmetry_histogram->Multiply(correction);
@@ -484,6 +486,7 @@ TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction)
     }
     return asymmetry_histogram;
 }
+*/
 
 
 TH1D* compute_rate_function(TH1D* rate_histogram[2][2], 
@@ -893,7 +896,7 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
     ratio_legend->Draw();
 
 	/// output for root
-    TString fierz_ratio_pdf_filename = "mc/fierz_ratio.pdf";
+    TString fierz_ratio_pdf_filename = plots_dir + "fierz_ratio.pdf";
     TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
     if (not canvas) {
         cout<<"Can't open new canvas.\n";
@@ -952,14 +955,14 @@ int main(int argc, char *argv[])
               "Total_Events_SuperSum",
               ucna.data.super_sum.histogram);
 
-    fill_simulation("SimAnalyzed_Beta.root",
+    fill_simulation("SimAnalyzed_Beta_0.root",
                     "Monte Carlo Standard Model beta spectrum",
                     "SimAnalyzed",
                     ucna.sm.raw,
 					ucna.sm.super_sum.histogram, 
                     ucna.sm.asymmetry.histogram);
 
-    fill_simulation("SimAnalyzed_Beta_fierz.root",
+    fill_simulation("SimAnalyzed_Beta_fierz_0.root",
                     "Monte Carlo Fierz beta spectrum",
                     "SimAnalyzed",
                     ucna.fierz.raw,
@@ -1068,7 +1071,7 @@ int main(int argc, char *argv[])
             if (entries) 
                 cout<<"Status: Number of entries in "<<sw<<" side with afp "<<a<<" is "<<entries<<".\n";
             else
-                cout<<"Error: found no events in "<<title;
+                cout<<"Error: found no events in "<<title<<".\n";
         }
 
     /* Already background subtracted...
@@ -1341,11 +1344,11 @@ int main(int argc, char *argv[])
 
 
     /// DISPLAYING AND OUTPUTTING
-    TString asymmetry_pdf_filename = "mc/asymmetry_data.pdf";
+    TString asymmetry_pdf_filename = plots_dir + "asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
 
     /// Draw the super sums.
-    ucna.data.super_sum.histogram->Scale(20);
+    ucna.data.super_sum.histogram->Scale(200);
     ucna.data.super_sum.histogram->SetLineColor(2);
 	ucna.data.super_sum.histogram->SetStats(0);
     ucna.data.super_sum.histogram->Draw("");
