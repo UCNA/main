@@ -50,38 +50,40 @@ const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
 using namespace std;
 
 
-struct UCNAhistogram {
-    //int side;
-    //int spin;
+struct UCNAhistogram : TH1D {
+    int side;
+    int spin;
     TString name;
     TString title;
     int bins;
     double min, max;
-    TH1D* histogram;
-    vector<double> energy;        
-    vector<double> values;        
-    vector<double> errors;
+    //TH1D* histogram;
+    //vector<double> energy;        
+    //vector<double> values;        
+    //vector<double> errors;
 
     UCNAhistogram(int bins, double min, double max) 
-      : name(""),
+      : TH1D(name, title, bins, min, max),
+        name(""),
         title(""),
-        bins(bins), min(min), max(max),
-        histogram(NULL),
-        energy(bins),        
-        values(bins),        
-        errors(bins)
+        bins(bins), min(min), max(max)
+        //histogram(NULL),
+        //energy(bins),        
+        //values(bins),        
+        //errors(bins)
     {}
     
     UCNAhistogram(TString name, TString title, int bins, double min, double max) 
-      : name(name),
+      : TH1D(name, title, bins, min, max),
+        name(name),
         title(title),
-        bins(bins), min(min), max(max),
-        histogram(NULL),
-        energy(bins),        
-        values(bins),        
-        errors(bins)
+        bins(bins), min(min), max(max)
+        //histogram(NULL),
+        //energy(bins),        
+        //values(bins),        
+        //errors(bins),
     {
-        histogram = new TH1D(name, title, bins, min, max);
+        //histogram = new TH1D(name, title, bins, min, max);
     }
 
     double normalize();
@@ -108,6 +110,7 @@ struct UCNAhistogram {
     }
     */
 
+    /*
     void fill(TH1D *histogram) {
         TAxis *axis  = histogram->GetXaxis();
         bins = histogram->GetNbinsX(); 
@@ -124,6 +127,7 @@ struct UCNAhistogram {
             }
         }
     }
+    */
 };
 
 
@@ -134,8 +138,8 @@ struct UCNAmodel {
     int     bins;
     double  min, max;
 
-    //UCNAhistogram counts[2][2];
-    TH1D*   raw[2][2];   /// TODO make a UCNAhistogram
+    UCNAhistogram* counts[2][2]; // TODO make member not pointer
+    //TH1D*   raw[2][2];  
     TNtuple* ntuple;     /// another way to store the raw data
 
     UCNAhistogram super_ratio;
@@ -152,7 +156,7 @@ struct UCNAmodel {
         asymmetry(bins, min, max) {
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
-                raw[side][spin] = 0;
+                counts[side][spin] = 0;
         ntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
     }
 
@@ -181,7 +185,7 @@ struct UCNAmodel {
                     sub_name += "_on";
                     sub_title += " AFP On";
                 }
-                raw[side][spin] = new TH1D(sub_name, sub_title, bins, min, max);
+                counts[side][spin] = new TH1D(sub_name, sub_title, bins, min, max);
             }
         }
     }

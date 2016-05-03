@@ -3,23 +3,23 @@
 
 double UCNAhistogram::normalize() 
 {
-	int bin_min = histogram->FindBin(min);
-	int bin_max = histogram->FindBin(max);
+	int bin_min = FindBin(min);
+	int bin_max = FindBin(max);
     double integrand = 1;
-    integrand +=(histogram->GetBinCenter(bin_min) - min)
-               / histogram->GetBinWidth(bin_min)
-               / histogram->GetBinWidth(bin_min)
-               * histogram->GetBinContent(bin_min)
-               +(max - histogram->GetBinCenter(bin_max))
-               / histogram->GetBinWidth(bin_max)
-               / histogram->GetBinWidth(bin_max)
-               * histogram->GetBinContent(bin_max);
+    integrand +=(GetBinCenter(bin_min) - min)
+               / GetBinWidth(bin_min)
+               / GetBinWidth(bin_min)
+               * GetBinContent(bin_min)
+               +(max - GetBinCenter(bin_max))
+               / GetBinWidth(bin_max)
+               / GetBinWidth(bin_max)
+               * GetBinContent(bin_max);
 
     for (int bin=bin_min+1; bin<bin_max; bin++)
-        integrand += histogram->GetBinContent(bin)
-                   / histogram->GetBinWidth(bin);
+        integrand += GetBinContent(bin)
+                   / GetBinWidth(bin);
 
-	histogram->Scale(1/integrand);
+	Scale(1/integrand);
     return integrand;
 }
 
@@ -66,8 +66,8 @@ TMatrixD &cov, TF1 *func,
         func->SetParError(i,error);
 	}
 
-    TH1D* asymmetry = data.asymmetry.histogram; 
-    TH1D* super_sum = data.super_sum.histogram; 
+    TH1D* asymmetry = data.asymmetry; 
+    TH1D* super_sum = data.super_sum; 
 	int ndf = asymmetry->GetNbinsX() + super_sum->GetNbinsX() - nvpar;
 	func->SetNDF(ndf);
     
@@ -89,7 +89,7 @@ double UCNAFierzFitter::asymmetry_chi2(double A, double b)
 
 double UCNAmodel::asymmetry_chi2(double A, double b)
 {
-    if (not asymmetry.histogram) {
+    if (not asymmetry) {
         cout<<"Error: Asymmetry histogram is not constructed.\n";
         exit(1);
     }
@@ -98,11 +98,11 @@ double UCNAmodel::asymmetry_chi2(double A, double b)
     int n = asymmetry.bins;
 	for (int i = 0; i < n; i++)
 	{
-		double E = asymmetry.histogram->GetBinCenter(i);
+		double E = asymmetry->GetBinCenter(i);
         if (E < min or E > max)
             continue;
-		double Y = asymmetry.histogram->GetBinContent(i);
-		double eY = asymmetry.histogram->GetBinError(i);
+		double Y = asymmetry->GetBinContent(i);
+		double eY = asymmetry->GetBinError(i);
         double f = A/(1 + b*m_e/(E+m_e)); 
         //double f = asymmetry_fit_func(&E,p);
         if (eY > 0) {
@@ -120,13 +120,13 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
     int n = data.asymmetry.bins;
 	for (int i = 0; i < n; i++)
 	{
-		double E = data.asymmetry.histogram->GetBinCenter(i);
+		double E = data.asymmetry->GetBinCenter(i);
         if (E < min or E > max)
             continue;
-		double Y = data.asymmetry.histogram->GetBinContent(i);
-		double eY = data.asymmetry.histogram->GetBinError(i);
-        double f  = N*sm.super_sum.histogram->GetBinContent(i) 
-                  + N*b*fierz.super_sum.histogram->GetBinContent(i);
+		double Y = data.asymmetry->GetBinContent(i);
+		double eY = data.asymmetry->GetBinError(i);
+        double f  = N*sm.super_sum->GetBinContent(i) 
+                  + N*b*fierz.super_sum->GetBinContent(i);
         if (eY > 0) {
             double chi = (Y-f)/eY;
             chi2 += chi*chi; 
@@ -158,11 +158,11 @@ void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Doub
 	//double par[3] = {p[0],p[1],p[2]}; // A, b, N
 	for (int i = 0; i < n; i++)
 	{
-		double E = data.asymmetry.histogram->GetBinCenter(i);
-		double Y = data.asymmetry.histogram->GetBinContent(i);
+		double E = data.asymmetry->GetBinCenter(i);
+		double Y = data.asymmetry->GetBinContent(i);
         //double f = asymmetry_fit_func(&E,p);
         double f = A/(1 + b*m_e/(E+m_e));
-		//double eY = data.asymmetry.histogram->GetBinError(i);
+		//double eY = data.asymmetry->GetBinError(i);
 		double eY = 0.1;
         if (eY > 0) {
             chi = (Y-f)/eY;
@@ -178,12 +178,12 @@ void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Doub
         double f = p[1]*sm   .super_sum.values[i] 
                  + p[2]*fierz.super_sum.values[i];
         double eY =     data .super_sum.errors[i];*/
-		//double E      = data .super_sum.histogram->GetBinCenter(i);
+		//double E      = data .super_sum->GetBinCenter(i);
 		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
-		double Y  = data .super_sum.histogram->GetBinContent(i);
-        double eY = data .super_sum.histogram->GetBinError(i);
-        double f  = N*sm .super_sum.histogram->GetBinContent(i) 
-                  + N*b*fierz.super_sum.histogram->GetBinContent(i);
+		double Y  = data .super_sum->GetBinContent(i);
+        double eY = data .super_sum->GetBinError(i);
+        double f  = N*sm .super_sum->GetBinContent(i) 
+                  + N*b*fierz.super_sum->GetBinContent(i);
         if (eY > 0) {
 		    chi = (Y-f)/eY;
 		    chi2 += chi*chi; 

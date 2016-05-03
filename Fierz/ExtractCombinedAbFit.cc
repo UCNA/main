@@ -283,7 +283,7 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2], TH1D* super_ratio_histogra
 /**
  * S := 1/2 Sqrt(r(0,0) r[1,1] + 1/2 Sqrt(r[0,1] r[1,0])
  */
-TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = NULL, double min = 0, double max = 0) 
+TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 0, double min = 0, double max = 0) 
 {
     if (not test_construction(rate_histogram, super_sum_histogram)) {
         cout<<"Error: Problem constructing super sum histogram.\n Aborting.\n";
@@ -333,7 +333,7 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
 }
 
 
-TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = NULL, double min = 0, double max = 0) 
+TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram, double min = 0, double max = 0) 
 {
     if (not test_construction(rate_histogram, asymmetry_histogram)) {
         cout<<"Error: Bad input histograms for computing asymmetry.\nAborting.\n";
