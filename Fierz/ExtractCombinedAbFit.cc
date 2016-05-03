@@ -63,103 +63,29 @@ TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/1mill_beta/";
 /// path to save output plots
 TString plots_dir = "/home/kevinh/Pictures/";
 
-/*
-/// beta spectrum with little b term
-double fierz_beta_spectrum(const double *val, const double *par) 
-{
-	const double K = val[0];                    /// kinetic energy
-	if (K <= 0 or K >= Q)
-		return 0;                               /// zero outside range
-
-	const double b = par[0];                    /// Fierz parameter
-	const int    n = par[1];                    /// Fierz exponent
-	const double E = K + m_e;                   /// electron energy
-	const double e = Q - K;                     /// neutrino energy
-	const double p = Sqrt(E*E - m_e*m_e);       /// electron momentum
-	const double x = pow(m_e/E,n);              /// Fierz term
-	const double f = (1 + b*x)/(1 + b*x_1);     /// Fierz factor
-	const double k = 1.3723803e-11/Q;           /// normalization factor
-	const double P = k*p*e*e*E*f*x;             /// the output PDF value
-
-	return P;
-}
+/// path to save output root structures 
+TString root_output_dir = "/home/kevinh/Documents/";
 
 
-/// beta spectrum with little b term
-double beta_spectrum(const double *val, const double *par) 
-{
-	const double K = val[0];                    /// kinetic energy
-	const int n = par[0];                    	/// Fierz exponent
-	if (K <= 0 or K >= Q)
-		return 0;                               /// zero outside range
-
-	const double E = K + m_e;                   /// electron energy
-	const double p = Sqrt(E*E - m_e*m_e);       /// electron momentum 
-	const double e = (Q - K) / Q;               /// reduced neutrino energy
-	const double x = pow(m_e/E,n);              /// Fierz term
-	const double k = 1.3723803E-11/Q;           /// normalization factor
-	const double P = k*p*e*e*E*x;               /// the output PDF value
-
-	return P;
-}
-
-
-unsigned deg = 4;
-double mc_model(double *x, double *p) 
-{
-    double _exp = 0;
-    double _x = x[0] / m_e;
-    for (int i = deg; i >= 0; i--)
-        _exp = p[i] + _x * _exp;
-    return Exp(_exp);
-}
-
-
-void normalize(TH1D* hist) {
-    hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral()));
-}
-
-
-void normalize(TH1D* hist, double min, double max) 
-{
-	int _min = hist->FindBin(min);
-	int _max = hist->FindBin(max);
-	hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
-}
-*/
-
-
-/*
-double evaluate_expected_fierz(double min, double max) 
-{
-    TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
-    TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
-	for (int i = 0; i < integral_size; i++)
-	{
-		double K = min + double(i)*(max-min)/integral_size;
-		double par1[2] = {0, 1};
-		double par2[2] = {0, 0};
-		double y1 = fierz_beta_spectrum(&K, par1);
-		double y2 = fierz_beta_spectrum(&K, par2);
-		h1->SetBinContent(K, y1);
-		h2->SetBinContent(K, y2);
-	}
-	return h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
-}
-*/
-
+/**
+ * test_rate_histograms
+ * Tests that all histograms are constructed.
+ * 
+ * returns the 2's bit for side ored with 2's bit for spin
+ */
 bool test_rate_histograms(TH1D* rate_histogram[2][2])
 {
+    int rv = 0;
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not rate_histogram[side][spin]) {
                 cout<<"Error: rate histogram on the "
                     <<(side? "west":"east")<<" side with afp "
                     <<(spin? "on":"off")<<" is not constructed.\n";
-                return false;
+                rv |= 2*side + spin;
             }
 
-    return true;
+    return rv;
 }
 
 
@@ -288,7 +214,7 @@ bool test_range(TH1D* histogram, double min = 0, double max = 0)
 
 bool test_construction(TH1D* rate_histogram[2][2], TH1D* out_histogram) 
 {
-    if (not test_rate_histograms(rate_histogram))
+    if (test_rate_histograms(rate_histogram))
         return false;
 
     if (not out_histogram) {
@@ -373,7 +299,7 @@ TH1D* compute_super_sum(TH1D* rate_histogram[2][2], TH1D* super_sum_histogram = 
         super_sum_histogram = new TH1D(*(rate_histogram[0][0]));
     }
 
-    int bins = super_sum_histogram->GetNbinsX();
+    //int bins = super_sum_histogram->GetNbinsX();
     int bin_min = test_min(super_sum_histogram, min);
     int bin_max = test_max(super_sum_histogram, max);
     if (not test_range(super_sum_histogram, min, max)) {
@@ -418,7 +344,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = 
         exit(1);
     }
 
-    int bins = asymmetry_histogram->GetNbinsX();
+    //int bins = asymmetry_histogram->GetNbinsX();
     int bin_min = test_min(asymmetry_histogram, min);
     int bin_max = test_max(asymmetry_histogram, max);
     if (not test_range(asymmetry_histogram, min, max)) {
@@ -457,7 +383,11 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram = 
 }
 
 
-/*
+/**
+ * compute_corrected_asymmetry
+ * 
+ * @param rate_histogram[2][2]
+ * @param correction
 TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction) 
 {
     TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
@@ -609,7 +539,7 @@ double random(double min, double max)
 
 /// This needs to be static and global for MINUIT to work
 UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
-void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
+void combined_chi2(Int_t & n, Double_t * /*grad*/, Double_t &fval, Double_t *p, Int_t /*iflag */  )
 {
     assert(n==3);
     double A=p[0], b=p[1], N=p[2]; // TODO make nPar correct here
@@ -649,33 +579,103 @@ int fill_data(TString filename, TString title,
 
 
 /**
- * Fill in asymmetry and super sums from simulation data
+ * Save root data
+ */
+void save_root_data(TString filename, TString title, TString name, 
+                   TH1D* rates[2][2], TH1D* super_sum, TH1D* asymmetry)
+{
+    TString filepath = root_output_dir + filename;
+	TFile* tfile = new TFile(filepath, "recreate");
+	if (tfile->IsZombie()) {
+		cout<<"Error: Problem saving "<<title<<":\n";
+		cout<<"       Cannot create file "<<filename<<".\n";
+		cout<<"       in path "<<mc_dir<<".\n";
+        cout<<"Aborting...\n";
+		exit(1);
+	}
+
+    if (test_construction(rates, super_sum)) {
+        for (int side=0; side<2; side++)
+            for (int spin=0; spin<2; spin++) {
+                rates[side][spin]->SetDirectory(tfile);
+                rates[side][spin]->Write();
+            }
+    } else {
+        cout<<"Error: Rates or super sum for "<<name<<":\n";
+        cout<<"       Histogram not constructed.\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }
+
+    if (super_sum) {
+        super_sum->SetDirectory(tfile);
+        super_sum->Write();
+    } else {
+        cout<<"Error: Super sum for "<<name<<":\n";
+        cout<<"       Histogram not constructed.\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }
+
+    if (asymmetry) {
+        asymmetry->SetDirectory(tfile);
+        asymmetry->Write();
+    } else {
+        cout<<"Error: Asymmetry for "<<name<<":\n";
+        cout<<"       Histogram not constructed.\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }
+
+/*
+    if (ntuple) {
+        tntuple->SetDirectory(mc_tfile);
+        tntuple->Write();
+    } else {
+        cout<<"Warning: Ntuple not set. Can't save data.\n";
+    }
+*/
+	tfile->Close();
+}
+
+/**
+ * Fill in asymmetry and super_ratio, and super sums from simulation data.
+ * Use wild card * in filename where data is split up over many files
+ * and they get Tchained together.
  */
 int fill_simulation(TString filename, TString title, TString name, 
-                    TH1D* histogram[2][2], TH1D* super_sum, TH1D* asymmetry)
+                    TH1D* rates[2][2], TH1D* super_sum, TH1D* asymmetry)
 {
-    if (not test_construction(histogram, super_sum)) {
-        cout<<"Error with the rates or super sum histogram.\nAborting.\n";
+    if (not test_construction(rates, super_sum)) {
+        cout<<"Error: Rates or super sum for "<<name<<":\n";
+        cout<<"       Histogram not constructed.\n";
+        cout<<"Aborting...\n";
         exit(1);
     }
 
     if (not asymmetry) {
-        cout<<"Error with asymmetry for "<<name<<": histogram not constructed.\nAborting.\n";
+        cout<<"Error: Asymmetry for "<<name<<":\n";
+        cout<<"       Histogram not constructed.\n";
+        cout<<"Aborting...\n";
         exit(1);
     }
 
-	TFile* tfile = new TFile(mc_dir + filename);
+    TString filepath = mc_dir + filename;
+	TFile* tfile = new TFile(filepath);
 	if (tfile->IsZombie()) {
-		cout<<"Error loading "<<title<<":\n";
-		cout<<"File not found: "<<filename<<".\n";
+		cout<<"Error: Problem filling "<<title<<":\n";
+		cout<<"       File "<<filename<<" not found\n";
+		cout<<"       in path "<<mc_dir<<".\n";
+        cout<<"Aborting...\n";
 		exit(1);
 	}
 
     TChain *chain = (TChain*)tfile->Get(name);
     if (not chain) {
-		cout<<"Error in file "<<filename<<":\n";
-		cout<<"Error getting "<<title<<":\n";
-		cout<<"Cannot find chain or tree named "<<name<<".\n";
+		cout<<"Error: In file "<<filename<<":\n";
+		cout<<"       Cannot get "<<title<<":\n";
+		cout<<"       Cannot find chain or tree named "<<name<<".\n";
+        cout<<"Aborting...\n";
         exit(1);
     }
 
@@ -731,7 +731,7 @@ int fill_simulation(TString filename, TString title, TString name,
             bool spin = (afp < 0)? EAST : WEST;
             //cout <<"energy: "<<energy<<" side: "<<"side: "<<side
             //          <<" spin: "<<spin<<" afp: "<<afp<<" p: "<<p<<".\n";
-            histogram[side][spin]->Fill(energy, 1);
+            rates[side][spin]->Fill(energy, 1);
 			//tntuple->Fill(side, spin, energy);
 			nSimmed++;
         }
@@ -784,7 +784,7 @@ int fill_simulation(TString filename, TString title, TString name,
 			/// calculate the energy with a distortion factor
 			/// double energy = scale_x * G2P.getErecon();
             double energy = 0;  /// TODO XXXXXXXX
-            histogram[s][load]->Fill(energy, 1);
+            rates[s][load]->Fill(energy, 1);
 			tntuple->Fill(s, load, energy);
 			nSimmed++;
 		}
@@ -800,19 +800,30 @@ int fill_simulation(TString filename, TString title, TString name,
 	cout<<"      Entries with cuts:     "<<nSimmed<<endl;
 	cout<<"      Efficiencies of cuts:  "<<(100.0*nSimmed)/double(nEvents)<<"%\n";
 
+	/// compute and normalize super sum
+    compute_super_sum(rates, super_sum);
+    compute_asymmetry(rates, asymmetry);
+
+    //normalize(super_sum, min_E, max_E);
+    //for (int side=0; side<2; side++)
+    //    for (int spin=0; spin<2; spin++)
+    //        normalize(rates[side][spin], min_E, max_E);
+
 	//tntuple->SetDirectory(mc_tfile);
 	//tntuple->Write();
 
-	/// compute and normalize super sum
-    compute_super_sum(histogram, super_sum);
-    compute_asymmetry(histogram, asymmetry);
-    //normalize(super_sum, min_E, max_E);
+	//super_sum->SetDirectory(mc_tfile);
+	//super_sum->Write();
 
-    /*
-    for (int side=0; side<2; side++)
-        for (int spin=0; spin<2; spin++)
-            normalize(histogram[side][spin], min_E, max_E);
-            */
+	//asymmetry->SetDirectory(mc_tfile);
+	//asymmetry->Write();
+
+    //for (int side=0; side<2; side++)
+    //    for (int spin=0; spin<2; spin++) {
+	//        rates[side][spin]->SetDirectory(mc_tfile);
+	//        rates[side][spin]->Write();
+
+	//mc_tfile->Close();
 
     return nSimmed;
 }
@@ -909,34 +920,42 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
 int main(int argc, char *argv[])
 {
 	TApplication app("Extract Combined A + b Fitter", &argc, argv);
-	//TH1::AddDirectory(kFALSE);
-	/// Geant4 MC data scanner object
-	/// G4toPMT G2P;
-	/// use data from these MC files (most recent unpolarized beta decay, 
-    /// includes Fermi function spectrum correction)
-	/// note wildcard * in filename; 
-    /// MC output is split up over many files, but G2P will TChain them together
-	//G2P.addFile("/data2/mmendenhall/G4Out/2010/20120823_neutronBetaUnpol/analyzed_*.root");
-	
-	/// PMT Calibrator loads run-specific energy calibrations info for selected run
-	/// and uses default Calibrations DB connection to most up-to-date though possibly unstable "mpm_debug"
-	
-	/// If you really want this to be random, 
-    /// you will need to seed rand() with something 
-    /// other than default.
-	srand( time(NULL) );
+	srand( time(NULL) );    /// set this to make random or repeatable
 
-    /// Load the files that contain data histograms.
+    /// LOAD 2010 UCNA DATA
+
+    /// Load the files that already contain data asymmetry histogram.
     fill_data("Range_0-1000/CorrectAsym/CorrectedAsym.root",
               "2010 final official asymmetry",
               "hAsym_Corrected_C",
               ucna.data.asymmetry.histogram);
 
+    /// Load the files that already contain data super histogram.
     fill_data("OctetAsym_Offic.root",
               "2010 final official supersum",
               "Total_Events_SuperSum",
               ucna.data.super_sum.histogram);
 
+    /// Load the files that already contain data super histogram.
+    for (int side=EAST; side<=WEST; side++)
+        for (int afp=EAST; afp<=WEST; afp++) {
+            TString sw = side? "west":"east", s = side? "W":"E", a = afp? "on":"off";
+            TString title = "2010 final official "+s+" afp "+a;
+            TString cut = "hTotalEvents_"+s+"_"+a+";1";
+            int entries = fill_data("OctetAsym_Offic.root", 
+                                    title, cut, ucna.data.raw[side][afp]);
+            if (entries) 
+                cout<<"Status: Number of entries in "<<sw
+                    <<" side with afp "<<a<<" is "<<entries<<".\n";
+            else
+                cout<<"Error: found no events in "<<title<<".\n";
+                /// TODO figure out where these went.
+        }
+
+
+    /// LOAD MONTE CARLO SIMULATION EVENTS
+
+    /// Load Monte Carlo simulated Standard Model events
     fill_simulation("SimAnalyzed_Beta_0.root",
                     "Monte Carlo Standard Model beta spectrum",
                     "SimAnalyzed",
@@ -944,6 +963,7 @@ int main(int argc, char *argv[])
 					ucna.sm.super_sum.histogram, 
                     ucna.sm.asymmetry.histogram);
 
+    /// Load Monte Carlo simulated Fierz events
     fill_simulation("SimAnalyzed_Beta_fierz_0.root",
                     "Monte Carlo Fierz beta spectrum",
                     "SimAnalyzed",
@@ -951,16 +971,7 @@ int main(int argc, char *argv[])
 					ucna.fierz.super_sum.histogram, 
                     ucna.fierz.asymmetry.histogram);
 
-	//histogram->SetDirectory(mc_tfile);
-	//histogram->Write();
-
-	//ucna.sm.super_sum.histogram->SetDirectory(mc_tfile);
-	//ucna.sm.super_sum.histogram->Write();
-
-	//ucna.fierz.super_sum.histogram->SetDirectory(mc_tfile);
-	//ucna.fierz.super_sum.histogram->Write();
-
-	//mc_tfile->Close();
+    /// SAVE ALL HISTOGRAMS 
 
 
     /**

@@ -197,7 +197,7 @@ double GetEntries(TH1D* histogram, double min, double max)
 }
 
 /*
-void normalize(double min, double max) 
+void normalize(TH1D* hist, double min, double max) 
 {
 	int bin_min = hist->FindBin(min);
 	int bin_max = hist->FindBin(max);

@@ -47,23 +47,7 @@ const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
 
 
 using namespace std;
-#if 0
-int output_histogram(string filename, TH1D* h, double ax, double ay)
-{
-	ofstream ofs;
-	ofs.open(filename.c_str());
-	for (int i = 1; i < h->GetNbinsX(); i++)
-	{
-		double x = ax * h->GetBinCenter(i);
-		//double sx = h->GetBinWidth(i);
-		double r = ay * h->GetBinContent(i);
-		double sr = ay * h->GetBinError(i);
-		ofs << x << '\t' << r << '\t' << sr << endl;
-	}
-	ofs.close();
-	return 0;
-}
-#endif
+
 
 struct UCNAhistogram {
     //int side;
