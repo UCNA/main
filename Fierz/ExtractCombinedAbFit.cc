@@ -939,14 +939,15 @@ int main(int argc, char *argv[])
     /// Load the files that already contain data super histogram.
     for (int side=EAST; side<=WEST; side++)
         for (int afp=EAST; afp<=WEST; afp++) {
-            TString sw = side? "west":"east", s = side? "W":"E", a = afp? "on":"off";
+            TString s = side? "W":"E", a = afp? "on":"off";
             TString title = "2010 final official "+s+" afp "+a;
             TString cut = "hTotalEvents_"+s+"_"+a+";1";
             int entries = fill_data("OctetAsym_Offic.root", 
                                     title, cut, ucna.data.raw[side][afp]);
-            if (entries) 
-                cout<<"Status: Number of entries in "<<sw
+            if (entries) {
+                cout<<"Status: Number of entries in "<<(side? "west":"east")
                     <<" side with afp "<<a<<" is "<<entries<<".\n";
+            }
             else
                 cout<<"Error: found no events in "<<title<<".\n";
                 /// TODO figure out where these went.

@@ -14,6 +14,7 @@
 #include <TList.h>
 #include <TStyle.h>
 #include <TApplication.h>
+#include <TNtuple.h>
 
 // c++ includes
 #include <iostream>
@@ -130,13 +131,15 @@ struct UCNAModel {
     TString title;
     int     bins;
     double  min, max;
-    TH1D*   raw[2][2];
+
+    //UCNAhistogram counts[2][2];
+    TH1D*   raw[2][2];   /// TODO make a UCNAhistogram
+    TNtuple* ntuple;     /// another way to store the raw data
 
     UCNAhistogram super_ratio;
     UCNAhistogram super_sum;
     UCNAhistogram asymmetry;
 
-    //UCNAhistogram counts[2][2];
 
     UCNAModel(int bins, double min, double max) 
       : name(""), title(""), 
@@ -148,14 +151,15 @@ struct UCNAModel {
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
                 raw[side][spin] = 0;
+        ntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
     }
 
     UCNAModel(TString name, TString title, int bins, double min, double max) 
       : name(name), title(title),
         bins(bins), min(min), max(max),
-        super_ratio(name + "_super_ratio", title, bins, min, max),
-        super_sum(name + "_super_sum", title, bins, min, max),
-        asymmetry(name + "_asymmetry", title, bins, min, max)
+        super_ratio(name+"_super_ratio",title+" Super Ratio",bins,min,max),
+        super_sum(name+"_super_sum",title+" Super Sum",bins,min,max),
+        asymmetry(name+"_asymmetry",title+" Asymmetry",bins,min,max)
     {
         for (int side = 0; side < 2; side++) {
             TString sub_name = name;
@@ -170,10 +174,10 @@ struct UCNAModel {
             for (int spin = 0; spin < 2; spin++) {
                 if (not spin) {
                     sub_name += "_off";
-                    sub_title += " AFP off";
+                    sub_title += " AFP Off";
                 } else {
                     sub_name += "_on";
-                    sub_title += " AFP on";
+                    sub_title += " AFP On";
                 }
                 raw[side][spin] = new TH1D(sub_name, sub_title, bins, min, max);
             }
