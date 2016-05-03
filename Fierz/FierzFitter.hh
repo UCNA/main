@@ -126,6 +126,8 @@ struct UCNAhistogram {
     }
 };
 
+
+
 struct UCNAmodel {
     TString name;
     TString title;
@@ -230,9 +232,9 @@ struct UCNAFierzFitter {
     UCNAFierzFitter(int bins, double min, double max)
       : bins(bins), min(min), max(max),
         data("ucna_data_", "UCNA data", bins, min, max),
-        bg("ucna_bg_", "Standard Model Monte Carlo", bins, min, max),
+        bg("ucna_bg_", "UCNA background", bins, min, max),
         sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
-        axial("ucna_axial_", "Standard Model Monte Carlo", bins, min, max),
+        axial("ucna_axial_", "Axial-vector Monte Carlo", bins, min, max),
         fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
         fit("ucna_fit_", "Standard Model + Fierz best fit", bins, min, max) 
     {}
