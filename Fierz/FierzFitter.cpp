@@ -66,9 +66,9 @@ TMatrixD &cov, TF1 *func,
         func->SetParError(i,error);
 	}
 
-    TH1D* asymmetry = data.asymmetry; 
-    TH1D* super_sum = data.super_sum; 
-	int ndf = asymmetry->GetNbinsX() + super_sum->GetNbinsX() - nvpar;
+    //TH1D* asymmetry = data.asymmetry; 
+    //TH1D* super_sum = data.super_sum; 
+	int ndf = data.asymmetry.GetNbinsX() + data.super_sum.GetNbinsX() - nvpar;
 	func->SetNDF(ndf);
     
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
@@ -89,20 +89,20 @@ double UCNAFierzFitter::asymmetry_chi2(double A, double b)
 
 double UCNAmodel::asymmetry_chi2(double A, double b)
 {
-    if (not asymmetry) {
+    /*if (not asymmetry) {
         cout<<"Error: Asymmetry histogram is not constructed.\n";
         exit(1);
-    }
+    }*/
 
 	double chi2 = 0;
     int n = asymmetry.bins;
 	for (int i = 0; i < n; i++)
 	{
-		double E = asymmetry->GetBinCenter(i);
+		double E = asymmetry.GetBinCenter(i);
         if (E < min or E > max)
             continue;
-		double Y = asymmetry->GetBinContent(i);
-		double eY = asymmetry->GetBinError(i);
+		double Y = asymmetry.GetBinContent(i);
+		double eY = asymmetry.GetBinError(i);
         double f = A/(1 + b*m_e/(E+m_e)); 
         //double f = asymmetry_fit_func(&E,p);
         if (eY > 0) {
@@ -120,13 +120,13 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
     int n = data.asymmetry.bins;
 	for (int i = 0; i < n; i++)
 	{
-		double E = data.asymmetry->GetBinCenter(i);
+		double E = data.asymmetry.GetBinCenter(i);
         if (E < min or E > max)
             continue;
-		double Y = data.asymmetry->GetBinContent(i);
-		double eY = data.asymmetry->GetBinError(i);
-        double f  = N*sm.super_sum->GetBinContent(i) 
-                  + N*b*fierz.super_sum->GetBinContent(i);
+		double Y = data.asymmetry.GetBinContent(i);
+		double eY = data.asymmetry.GetBinError(i);
+        double f  = N*sm.super_sum.GetBinContent(i) 
+                  + N*b*fierz.super_sum.GetBinContent(i);
         if (eY > 0) {
             double chi = (Y-f)/eY;
             chi2 += chi*chi; 
@@ -158,11 +158,11 @@ void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Doub
 	//double par[3] = {p[0],p[1],p[2]}; // A, b, N
 	for (int i = 0; i < n; i++)
 	{
-		double E = data.asymmetry->GetBinCenter(i);
-		double Y = data.asymmetry->GetBinContent(i);
+		double E = data.asymmetry.GetBinCenter(i);
+		double Y = data.asymmetry.GetBinContent(i);
         //double f = asymmetry_fit_func(&E,p);
         double f = A/(1 + b*m_e/(E+m_e));
-		//double eY = data.asymmetry->GetBinError(i);
+		//double eY = data.asymmetry.GetBinError(i);
 		double eY = 0.1;
         if (eY > 0) {
             chi = (Y-f)/eY;
@@ -178,12 +178,12 @@ void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Doub
         double f = p[1]*sm   .super_sum.values[i] 
                  + p[2]*fierz.super_sum.values[i];
         double eY =     data .super_sum.errors[i];*/
-		//double E      = data .super_sum->GetBinCenter(i);
+		//double E      = data .super_sum.GetBinCenter(i);
 		//chi = (fierzratio_values[i] - fierzratio_fit_func(&E,par)) / fierzratio_errors[i];
-		double Y  = data .super_sum->GetBinContent(i);
-        double eY = data .super_sum->GetBinError(i);
-        double f  = N*sm .super_sum->GetBinContent(i) 
-                  + N*b*fierz.super_sum->GetBinContent(i);
+		double Y  = data .super_sum.GetBinContent(i);
+        double eY = data .super_sum.GetBinError(i);
+        double f  = N*sm .super_sum.GetBinContent(i) 
+                  + N*b*fierz.super_sum.GetBinContent(i);
         if (eY > 0) {
 		    chi = (Y-f)/eY;
 		    chi2 += chi*chi; 
@@ -277,6 +277,7 @@ double beta_spectrum(const double *val, const double *par)
 
 double evaluate_expected_fierz(double m, double n, double min, double max, double integral_size = 1234)
 {
+    // TODO These don't need to be pointers.
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
     TH1D *h2 = new TH1D("beta_spectrum", "Beta Spectrum", integral_size, min, max);
 	for (int i = 0; i < integral_size; i++)

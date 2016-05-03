@@ -62,6 +62,7 @@ struct UCNAhistogram : TH1D {
     //vector<double> values;        
     //vector<double> errors;
 
+/*
     UCNAhistogram(int bins, double min, double max) 
       : TH1D(name, title, bins, min, max),
         name(""),
@@ -72,6 +73,7 @@ struct UCNAhistogram : TH1D {
         //values(bins),        
         //errors(bins)
     {}
+    */
     
     UCNAhistogram(TString name, TString title, int bins, double min, double max) 
       : TH1D(name, title, bins, min, max),
@@ -138,15 +140,16 @@ struct UCNAmodel {
     int     bins;
     double  min, max;
 
-    UCNAhistogram* counts[2][2]; // TODO make member not pointer
     //TH1D*   raw[2][2];  
     TNtuple* ntuple;     /// another way to store the raw data
 
+    UCNAhistogram* counts[2][2]; // TODO make member not pointer
     UCNAhistogram super_ratio;
     UCNAhistogram super_sum;
     UCNAhistogram asymmetry;
+    // Add Yup and Ydown
 
-
+/*
     UCNAmodel(int bins, double min, double max) 
       : name(""), title(""), 
         bins(bins), min(min), max(max),
@@ -159,6 +162,7 @@ struct UCNAmodel {
                 counts[side][spin] = 0;
         ntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
     }
+    */
 
     UCNAmodel(TString name, TString title, int bins, double min, double max) 
       : name(name), title(title),
@@ -185,9 +189,10 @@ struct UCNAmodel {
                     sub_name += "_on";
                     sub_title += " AFP On";
                 }
-                counts[side][spin] = new TH1D(sub_name, sub_title, bins, min, max);
+                counts[side][spin] = new UCNAhistogram(sub_name, sub_title, bins, min, max);
             }
         }
+        ntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
     }
 
     double asymmetry_chi2(double A, double b);
