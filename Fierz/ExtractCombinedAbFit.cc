@@ -542,8 +542,11 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
 	chi2 = ucna.combined_chi2(A,b,N);
 }
 
-
-/// load the files that contain data histograms
+#if 0 
+/** 
+ *load the files that contain data histograms
+ * XXX MOVED TO UCNAhistogram::fill
+ */
 int fill_data(TString filename, TString title, 
               TString name, TH1D* histogram)
 {
@@ -555,9 +558,9 @@ int fill_data(TString filename, TString title,
 	}
 
     if (histogram) {
-		cout<<"Warning: Histogram "<<title<<" already exists and is being deleted.\n";
-        cout<<histogram<<endl;
-        delete histogram;
+		cout<<"Warning: Histogram "<<title<<" already exists and is being ignored.\n";
+        //cout<<histogram<<endl;
+        //delete histogram;
     }
 
     histogram = (TH1D*)tfile->Get(name);
@@ -576,6 +579,7 @@ int fill_data(TString filename, TString title,
 
 /**
  * Save root data
+ * XXX MOVED TO UCNAhistogram::save() and UCNAmodel::save()
  */
 void save_root_data(TString filename, TString title, TString name, 
                    TH1D* rates[2][2], TH1D* super_sum, TH1D* asymmetry)
@@ -623,14 +627,12 @@ void save_root_data(TString filename, TString title, TString name,
         exit(1);
     }
 
-/*
     if (ntuple) {
         tntuple->SetDirectory(mc_tfile);
         tntuple->Write();
     } else {
         cout<<"Warning: Ntuple not set. Can't save data.\n";
     }
-*/
 	tfile->Close();
 }
 
@@ -638,6 +640,7 @@ void save_root_data(TString filename, TString title, TString name,
  * Fill in asymmetry and super_ratio, and super sums from simulation data.
  * Use wild card * in filename where data is split up over many files
  * and they get Tchained together.
+ * XXX MOVED TO UCNAhistogram::save() and UCNAmodel::save()
  */
 int fill_simulation(TString filename, TString title, TString name, 
                     TH1D* rates[2][2], TH1D* super_sum, TH1D* asymmetry)
@@ -757,6 +760,7 @@ int fill_simulation(TString filename, TString title, TString name,
 
     return nSimmed;
 }
+#endif
 
 
 /// compute little b factor using the Fierz ratio method

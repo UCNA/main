@@ -148,6 +148,228 @@ double asymmetry_fit_func(double *, double *)
     return 0;
 }
 
+/** 
+ * UCNAhistogram::fill
+ *load the files that contain data histograms
+ */
+int UCNAhistogram::fill(TString filename, TString title, 
+                        TString name)
+                        //, TH1D* histogram)
+{
+	TFile* tfile = new TFile(filename);
+	if (tfile->IsZombie()) {
+		cout<<"Error loading "<<title<<":\n";
+		cout<<"File not found: "<<filename<<".\n";
+		return 0;
+	}
+
+    /*if (histogram) {
+		cout<<"Warning: Histogram "<<title<<" already exists and is being ignored.\n";
+        cout<<histogram<<endl;
+        delete histogram;
+    }*/
+    // TODO warn if overwriting data...
+    TH1D* histogram = (TH1D*)tfile->Get(name);
+    if (not histogram) {
+		cout<<"Error: In file "<<filename<<":\n";
+		cout<<"       Error getting "<<title<<".\n";
+		cout<<"       Cannot find histogram named "<<name<<".\n";
+        return 0;
+    }
+    *this = *histogram;
+
+	int entries = GetEntries();
+	cout<<"Number of entries in "<<title<<" is "<<entries<<".\n";
+    return entries;
+}
+
+
+/**
+ * UCNAhistogram::save() and UCNAmodel::save()
+ * Save root data
+ */
+void UCNAmodel::save_root_data(TString filename, TString title, TString name, 
+                   //TH1D* counts[2][2], TH1D* super_sum, TH1D* asymmetry)
+{
+	TFile* tfile = new TFile(filename, "recreate");
+	if (tfile->IsZombie()) {
+		cout<<"Error: Problem saving "<<title<<":\n";
+		cout<<"       Cannot create file "<<filename<<".\n";
+        cout<<"Aborting...\n";
+		exit(1);
+	}
+
+    //if (test_construction(counts, super_sum)) {
+        for (int side=0; side<2; side++)
+            for (int spin=0; spin<2; spin++) {
+                counts[side][spin]->SetDirectory(tfile);
+                counts[side][spin]->Write();
+            }
+    /*} else {
+        cout<<"Error: Rates or super sum for "<<name<<":\n";
+        cout<<"       Histogram not constructed.\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }
+
+    //if (super_sum) {*/
+        super_sum.SetDirectory(tfile);
+        super_sum.Write();
+    /*} else {
+        cout<<"Error: Super sum for "<<name<<":\n";
+        cout<<"       Histogram not constructed.\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }
+
+    if (asymmetry) {*/
+        asymmetry.SetDirectory(tfile);
+        asymmetry.Write();
+    /*} else {
+        cout<<"Error: Asymmetry for "<<name<<":\n";
+        cout<<"       Histogram not constructed.\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }*/
+
+    if (ntuple) {
+        tntuple->SetDirectory(mc_tfile);
+        tntuple->Write();
+    } else {
+        cout<<"Warning: Ntuple not set. Can't save data.\n";
+    }
+
+	tfile->Close();
+}
+
+/**
+ * UCNAhistogram::fill() and UCNAmodel::fill()
+ * Fill in asymmetry and super_ratio, and super sums from simulation data.
+ * Use wild card * in filename where data is split up over many files
+ * and they get Tchained together.
+ */
+int UCNAmodel::fill(TString filename, TString title, TString name)
+        //TH1D* counts[2][2], TH1D* super_sum, TH1D* asymmetry)
+{
+    /*
+    if (not test_construction(counts, super_sum)) {
+        cout<<"Error: Rates or super sum for "<<name<<":\n";
+        cout<<"       Histogram not constructed.\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }
+
+    if (not asymmetry) {
+        cout<<"Error: Asymmetry for "<<name<<":\n";
+        cout<<"       Histogram not constructed.\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }
+    */
+
+	TFile* tfile = new TFile(filename);
+	if (tfile->IsZombie()) {
+		cout<<"Error: Problem filling "<<title<<":\n";
+		cout<<"       File "<<filename<<" not found\n";
+        cout<<"Aborting...\n";
+		exit(1);
+	}
+
+    TChain *chain = (TChain*)tfile->Get(name);
+    if (not chain) {
+		cout<<"Error: In file "<<filename<<":\n";
+		cout<<"       Cannot get "<<title<<":\n";
+		cout<<"       Cannot find chain or tree named "<<name<<".\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }
+
+	int nEvents = chain->GetEntries();
+	chain->SetBranchStatus("*",false);
+	chain->SetBranchStatus("PID",true);
+	chain->SetBranchStatus("side",true);
+	chain->SetBranchStatus("type",true);
+	chain->SetBranchStatus("Erecon",true);
+	chain->SetBranchStatus("primMomentum",true);
+    chain->SetBranchStatus("ScintPosAdjusted",true);
+    chain->SetBranchStatus("ScintPosAdjusted",true);
+
+	//TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy"); */
+	TNtuple* tntuple = 0;
+
+	unsigned int nSimmed = 0;	/// events have been simulated after cuts
+    int PID, side, type;
+    double energy;
+    double mwpcPosW[3], mwpcPosE[3], primMomentum[3];
+
+    chain->SetBranchAddress("PID",&PID);
+    chain->SetBranchAddress("side",&side);
+    chain->SetBranchAddress("type",&type);
+    chain->SetBranchAddress("Erecon",&energy);
+	chain->SetBranchAddress("primMomentum",primMomentum);
+    chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
+    chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
+
+    for (int evt=0; evt<nEvents; evt++) {
+        chain->GetEvent(evt);
+
+        /// cut out bad events
+        if (PID!=1) 
+            continue;
+
+        /// radial fiducial cut
+        double radiusW = mwpcPosW[0]*mwpcPosW[0] + mwpcPosW[1]*mwpcPosW[1]; 
+        double radiusE = mwpcPosE[0]*mwpcPosE[0] + mwpcPosE[1]*mwpcPosE[1]; 
+        if (radiusW > fidcut2 or radiusE > fidcut2) 
+            continue;
+
+        /// Type 0, Type I, Type II/III events 
+        if (type<4) { 
+            /// fill with loading efficiency 
+            double p = random(0,1);
+			double afp = (p < afp_off_prob)? -1 : +1;
+            bool spin = (afp < 0)? EAST : WEST;
+            //cout<<"energy: "<<energy<<" side: "<<"side: "<<side
+            //         <<" spin: "<<spin<<" afp: "<<afp<<" p: "<<p<<".\n";
+            counts[side][spin]->Fill(energy, 1);
+            if (tntuple)
+			    tntuple->Fill(side, spin, energy);
+			nSimmed++;
+        }
+        /*  hEreconALL->Fill(Erecon);
+        if (type==0) 
+            hErecon0->Fill(Erecon);
+        else if (type==1) 
+            hErecon1->Fill(Erecon);
+        else if (type==2 or type==3) 
+            hErecon23->Fill(Erecon); */
+
+		/// break when enough data has been generated.
+		if(nSimmed >= nToSim)
+			break;
+    }    
+     
+	cout<<"Total number of Monte Carlo entries:\n";
+	cout<<"      Entries without cuts:  "<<nEvents<<endl;
+	cout<<"      Entries with cuts:     "<<nSimmed<<endl;
+	cout<<"      Efficiencies of cuts:  "<<(100.0*nSimmed)/double(nEvents)<<"%\n";
+
+	/// compute and normalize super sum
+    super_sum.compute_super_sum(counts);
+    asymmetry.compute_asymmetry(counts);
+
+    //normalize(super_sum, min_E, max_E);
+    //normalize(asymmetry, min_E, max_E);
+    //for (int side=0; side<2; side++)
+    //    for (int spin=0; spin<2; spin++)
+    //        normalize(counts[side][spin], min_E, max_E);
+
+    return nSimmed;
+}
+
+
+/// END UCNAobject codes...
+
 #if 0
 //void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )
 void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */  )

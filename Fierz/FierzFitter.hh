@@ -89,6 +89,7 @@ struct UCNAhistogram : TH1D {
     }
 
     double normalize();
+    int fill(TString filename, TString title, TString name);
 
     /*
     UCNAhistogram(int side, int, spin, int bins, double min, double max) 
