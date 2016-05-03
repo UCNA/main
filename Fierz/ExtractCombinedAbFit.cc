@@ -68,24 +68,20 @@ TString root_output_dir = "/home/kevinh/Documents/";
 
 
 /**
- * test_rate_histograms
+ * test_rates_constructed
  * Tests that all histograms are constructed.
- * 
- * returns the 2's bit for side ored with 2's bit for spin
  */
-bool test_rate_histograms(TH1D* rate_histogram[2][2])
+bool test_rates_constructed(TH1D* rate_histogram[2][2])
 {
-    int rv = 0;
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not rate_histogram[side][spin]) {
                 cout<<"Error: rate histogram on the "
                     <<(side? "west":"east")<<" side with afp "
                     <<(spin? "on":"off")<<" is not constructed.\n";
-                rv |= 2*side + spin;
+                return false;
             }
-
-    return rv;
+    return true;
 }
 
 
@@ -214,7 +210,7 @@ bool test_range(TH1D* histogram, double min = 0, double max = 0)
 
 bool test_construction(TH1D* rate_histogram[2][2], TH1D* out_histogram) 
 {
-    if (test_rate_histograms(rate_histogram))
+    if (not test_rates_constructed(rate_histogram))
         return false;
 
     if (not out_histogram) {
@@ -539,12 +535,11 @@ double random(double min, double max)
 
 /// This needs to be static and global for MINUIT to work
 UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
-void combined_chi2(Int_t & n, Double_t * /*grad*/, Double_t &fval, Double_t *p, Int_t /*iflag */  )
+void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
 {
     assert(n==3);
     double A=p[0], b=p[1], N=p[2]; // TODO make nPar correct here
-	double chi2 = ucna.combined_chi2(A,b,N);
-	fval = chi2; 
+	chi2 = ucna.combined_chi2(A,b,N);
 }
 
 
@@ -560,15 +555,16 @@ int fill_data(TString filename, TString title,
 	}
 
     if (histogram) {
-		cout<<"Warning: histogram "<<title<<" already exists and is being deleted.\n";
+		cout<<"Warning: Histogram "<<title<<" already exists and is being deleted.\n";
+        cout<<histogram<<endl;
         delete histogram;
     }
 
     histogram = (TH1D*)tfile->Get(name);
     if (not histogram) {
-		cout<<"Error in file "<<filename<<":\n";
-		cout<<"Error getting "<<title<<":\n";
-		cout<<"Cannot find histogram named "<<name<<".\n";
+		cout<<"Error: In file "<<filename<<":\n";
+		cout<<"       Error getting "<<title<<".\n";
+		cout<<"       Cannot find histogram named "<<name<<".\n";
         return 0;
     }
 
@@ -954,6 +950,7 @@ int main(int argc, char *argv[])
         }
 
 
+
     /// LOAD MONTE CARLO SIMULATION EVENTS
 
     /// Load Monte Carlo simulated Standard Model events
@@ -1040,11 +1037,9 @@ int main(int argc, char *argv[])
               "2010 final official west afp on spectrum",
               "hTotalEvents_W_on;1",
               ucna.data.raw[1][1]);
-    */
 
 
-    /* TODO figure out where these went.
-        */
+    /// TODO figure out where these went.
     for (int side=EAST; side<=WEST; side++)
         for (int afp=EAST; afp<=WEST; afp++) {
             TString sw = side? "west":"east", s = side? "W":"E", a = afp? "on":"off";
@@ -1057,7 +1052,7 @@ int main(int argc, char *argv[])
                 cout<<"Error: found no events in "<<title<<".\n";
         }
 
-    /* Already background subtracted...
+    Already background subtracted...
         TH1D *background_histogram = (TH1D*)ucna_data_tfile->Get("Combined_Events_E000");
         ucna_data.raw->Add(background_histogram,-1);
         // normalize after background subtraction

@@ -126,7 +126,7 @@ struct UCNAhistogram {
     }
 };
 
-struct UCNAModel {
+struct UCNAmodel {
     TString name;
     TString title;
     int     bins;
@@ -141,7 +141,7 @@ struct UCNAModel {
     UCNAhistogram asymmetry;
 
 
-    UCNAModel(int bins, double min, double max) 
+    UCNAmodel(int bins, double min, double max) 
       : name(""), title(""), 
         bins(bins), min(min), max(max),
         //raw({{NULL,NULL},{NULL,NULL}}),
@@ -154,7 +154,7 @@ struct UCNAModel {
         ntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
     }
 
-    UCNAModel(TString name, TString title, int bins, double min, double max) 
+    UCNAmodel(TString name, TString title, int bins, double min, double max) 
       : name(name), title(title),
         bins(bins), min(min), max(max),
         super_ratio(name+"_super_ratio",title+" Super Ratio",bins,min,max),
@@ -183,6 +183,8 @@ struct UCNAModel {
             }
         }
     }
+
+    double asymmetry_chi2(double A, double b);
 
     /*
     void init(int bins, double min, double max) {
@@ -218,12 +220,12 @@ struct UCNAFierzFitter {
     double min;
     double max;
 
-    UCNAModel data;         /// Measured foreground data to fit
-    UCNAModel bg;           /// Measured background data to remove
-    UCNAModel sm;           /// Standard Model vector Monte Carlo spectrum
-    UCNAModel axial;        /// Axial vector Monte Carlo spectrum
-    UCNAModel fierz;        /// Fierz (Scaler + tensor) Monte Carlo spectrum
-    UCNAModel fit;          /// Vector + axial + Fierz Monte Carlo best fit
+    UCNAmodel data;         /// Measured foreground data to fit
+    UCNAmodel bg;           /// Measured background data to remove
+    UCNAmodel sm;           /// Standard Model vector Monte Carlo spectrum
+    UCNAmodel axial;        /// Axial vector Monte Carlo spectrum
+    UCNAmodel fierz;        /// Fierz (Scaler + tensor) Monte Carlo spectrum
+    UCNAmodel fit;          /// Vector + axial + Fierz Monte Carlo best fit
 
     UCNAFierzFitter(int bins, double min, double max)
       : bins(bins), min(min), max(max),

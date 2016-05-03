@@ -84,15 +84,25 @@ TMatrixD &cov, TF1 *func,
 
 double UCNAFierzFitter::asymmetry_chi2(double A, double b)
 {
+        return data.asymmetry_chi2(A,b);
+}
+
+double UCNAmodel::asymmetry_chi2(double A, double b)
+{
+    if (not asymmetry.histogram) {
+        cout<<"Error: Asymmetry histogram is not constructed.\n";
+        exit(1);
+    }
+
 	double chi2 = 0;
-    int n = data.asymmetry.bins;
+    int n = asymmetry.bins;
 	for (int i = 0; i < n; i++)
 	{
-		double E = data.asymmetry.histogram->GetBinCenter(i);
+		double E = asymmetry.histogram->GetBinCenter(i);
         if (E < min or E > max)
             continue;
-		double Y = data.asymmetry.histogram->GetBinContent(i);
-		double eY = data.asymmetry.histogram->GetBinError(i);
+		double Y = asymmetry.histogram->GetBinContent(i);
+		double eY = asymmetry.histogram->GetBinError(i);
         double f = A/(1 + b*m_e/(E+m_e)); 
         //double f = asymmetry_fit_func(&E,p);
         if (eY > 0) {
