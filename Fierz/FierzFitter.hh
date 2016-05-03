@@ -143,7 +143,7 @@ struct UCNAmodel {
     //TH1D*   raw[2][2];  
     TNtuple* ntuple;     /// another way to store the raw data
 
-    UCNAhistogram* counts[2][2]; // TODO make member not pointer
+    TH1D* counts[2][2]; // TODO make member not pointer
     UCNAhistogram super_ratio;
     UCNAhistogram super_sum;
     UCNAhistogram asymmetry;
