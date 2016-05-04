@@ -1,12 +1,12 @@
 #ifndef FIERZ_FITTER
 #define FIERZ_FITTER
 
-// UCNA includes
+/// UCNA includes
 #include "G4toPMT.hh"
 #include "PenelopeToPMT.hh"
 #include "CalDBSQL.hh"
 
-// ROOT includes
+/// ROOT includes
 #include <TH1.h>
 #include <TLegend.h>
 #include <TF1.h>
@@ -14,14 +14,17 @@
 #include <TList.h>
 #include <TStyle.h>
 #include <TApplication.h>
+#include <TMatrixD.h>
 #include <TNtuple.h>
+#include <TLeaf.h>
+#include <TString.h>
 
-// c++ includes
+/// c++ includes
 #include <iostream>
 #include <fstream>
 #include <string>
 
-// c includes
+/// c includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -53,8 +56,8 @@ using namespace std;
 struct UCNAhistogram : TH1D {
     int side;
     int spin;
-    TString name;
-    TString title;
+    //TString name;
+    //TString title;
     int bins;
     double min, max;
     //TH1D* histogram;
@@ -62,7 +65,7 @@ struct UCNAhistogram : TH1D {
     //vector<double> values;        
     //vector<double> errors;
 
-/*
+    /*
     UCNAhistogram(int bins, double min, double max) 
       : TH1D(name, title, bins, min, max),
         name(""),
@@ -74,11 +77,11 @@ struct UCNAhistogram : TH1D {
         //errors(bins)
     {}
     */
-    
+       
     UCNAhistogram(TString name, TString title, int bins, double min, double max) 
       : TH1D(name, title, bins, min, max),
-        name(name),
-        title(title),
+        //name(name),
+        //title(title),
         bins(bins), min(min), max(max)
         //histogram(NULL),
         //energy(bins),        
@@ -89,7 +92,9 @@ struct UCNAhistogram : TH1D {
     }
 
     double normalize();
-    int fill(TString filename, TString title, TString name);
+    int fill(TString filename, TString name, TString title);
+    void save(TString filename, TString name, TString title);
+    void save(TString filename);
 
     /*
     UCNAhistogram(int side, int, spin, int bins, double min, double max) 
@@ -143,14 +148,32 @@ struct UCNAmodel {
 
     //TH1D*   raw[2][2];  
     TNtuple* ntuple;     /// another way to store the raw data
-
     TH1D* counts[2][2]; // TODO make member not pointer
     UCNAhistogram super_ratio;
     UCNAhistogram super_sum;
     UCNAhistogram asymmetry;
     // Add Yup and Ydown
 
-/*
+    /// cuts and settings
+    unsigned nToSim = 5e7;			/// how many triggering events to simulate
+    double afp_off_prob = 1/1.68; 	/// afp off probability per neutron (0.68/1.68 for on)
+    int KEbins = 150;               /// number of bins to use fit spectral plots
+
+    double KEmin = 50;              /// min kinetic energy for plots
+    double KEmax = 650;             /// max kinetic range for plots
+    double KEmin_A = 120;           /// min kinetic energy for asymmetry fit
+    double KEmax_A = 670;           /// max kinetic range for asymmetry fit
+    double KEmin_b = 120;           /// min kinetic energy for Fierz fit
+    double KEmax_b = 670;           /// max kinetic range for Fierz fit
+    double fedutial_cut = 50;       /// radial cut in millimeters 
+    double fidcut2 = 50*50;         /// mm^2 radial cut
+
+    /// set up free fit parameters with best guess
+    static const int nPar = 3;
+    TString paramNames[3] = {"A", "b", "N"};
+    double paramInits[3] = {-0.12, 0, 1e1};
+
+    /*
     UCNAmodel(int bins, double min, double max) 
       : name(""), title(""), 
         bins(bins), min(min), max(max),
@@ -197,6 +220,9 @@ struct UCNAmodel {
     }
 
     double asymmetry_chi2(double A, double b);
+    int fill(TString filename, TString name, TString title);
+    void save(TString filename, TString title, TString name);
+    void save(TString filename);
 
     /*
     void init(int bins, double min, double max) {
@@ -295,6 +321,12 @@ struct UCNAFierzFitter {
     */
 };
 
+
+double random(double min, double max) 
+{
+    double p = rand();
+    return min + (max-min)*p/RAND_MAX;
+}
 
 
 /// beta spectrum with little b term

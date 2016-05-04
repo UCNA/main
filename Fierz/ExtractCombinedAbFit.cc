@@ -66,7 +66,7 @@ TString plots_dir = "/home/hickerson/Dropbox/";
 /// path to save output root structures 
 TString root_output_dir = "/home/hickerson/Documents/";
 
-
+#if 0
 /**
  * test_rates_constructed
  * Tests that all histograms are constructed.
@@ -377,7 +377,7 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2], TH1D* asymmetry_histogram, d
     }
     return asymmetry_histogram;
 }
-
+#endif
 
 /**
  * compute_corrected_asymmetry
@@ -525,11 +525,6 @@ void output_data_file(TString name, TH1D* h, double ax, double ay)
 }
 
 
-double random(double min, double max) 
-{
-    double p = rand();
-    return min + (max-min)*p/RAND_MAX;
-}
 
 
 

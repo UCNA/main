@@ -66,8 +66,8 @@ TMatrixD &cov, TF1 *func,
         func->SetParError(i,error);
 	}
 
-    //TH1D* asymmetry = data.asymmetry; 
-    //TH1D* super_sum = data.super_sum; 
+    //TH1D& asymmetry = data.asymmetry; 
+    //TH1D& super_sum = data.super_sum; 
 	int ndf = data.asymmetry.GetNbinsX() + data.super_sum.GetNbinsX() - nvpar;
 	func->SetNDF(ndf);
     
@@ -152,9 +152,8 @@ double asymmetry_fit_func(double *, double *)
  * UCNAhistogram::fill
  *load the files that contain data histograms
  */
-int UCNAhistogram::fill(TString filename, TString title, 
-                        TString name)
-                        //, TH1D* histogram)
+int UCNAhistogram::fill(TString filename, TString name, TString title)
+                        //, TH1D& histogram)
 {
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
@@ -176,7 +175,7 @@ int UCNAhistogram::fill(TString filename, TString title,
 		cout<<"       Cannot find histogram named "<<name<<".\n";
         return 0;
     }
-    *this = *histogram;
+    *(TH1D*)this = *histogram;
 
 	int entries = GetEntries();
 	cout<<"Number of entries in "<<title<<" is "<<entries<<".\n";
@@ -188,7 +187,7 @@ int UCNAhistogram::fill(TString filename, TString title,
  * UCNAhistogram::save() and UCNAmodel::save()
  * Save root data
  */
-void UCNAmodel::save_root_data(TString filename, TString title, TString name, 
+void UCNAmodel::save(TString filename)
                    //TH1D* counts[2][2], TH1D* super_sum, TH1D* asymmetry)
 {
 	TFile* tfile = new TFile(filename, "recreate");
@@ -233,8 +232,8 @@ void UCNAmodel::save_root_data(TString filename, TString title, TString name,
     }*/
 
     if (ntuple) {
-        tntuple->SetDirectory(mc_tfile);
-        tntuple->Write();
+        ntuple->SetDirectory(tfile);
+        ntuple->Write();
     } else {
         cout<<"Warning: Ntuple not set. Can't save data.\n";
     }
@@ -248,7 +247,7 @@ void UCNAmodel::save_root_data(TString filename, TString title, TString name,
  * Use wild card * in filename where data is split up over many files
  * and they get Tchained together.
  */
-int UCNAmodel::fill(TString filename, TString title, TString name)
+int UCNAmodel::fill(TString filename, TString name, TString title)
         //TH1D* counts[2][2], TH1D* super_sum, TH1D* asymmetry)
 {
     /*
@@ -365,6 +364,320 @@ int UCNAmodel::fill(TString filename, TString title, TString name)
     //        normalize(counts[side][spin], min_E, max_E);
 
     return nSimmed;
+}
+
+/**
+ * test_counts
+ * Tests that all histograms are constructed.
+ */
+bool test_counts(TH1D* counts[2][2])
+{
+    for (int side=0; side<2; side++)
+        for (int spin=0; spin<2; spin++)
+            if (not counts[side][spin]) {
+                cout<<"Error: rate histogram on the "
+                    <<(side? "west":"east")<<" side with afp "
+                    <<(spin? "on":"off")<<" is not constructed.\n";
+                return false;
+            }
+    return true;
+}
+
+
+/**
+ * test_minimum
+ * Tests the range properties of a histogram. 
+ * Is the top and bottom energies aligned with bins, for example.
+ * 
+ * bin = 0          underflow bin
+ * bin = 1          first bin with low-edge INCLUDED
+ * bin = bins       last bin with upper-edge EXCLUDED
+ * bin = bins + 1   overflow bin
+ */
+int test_min(TH1D* histogram, double min = 0) 
+{
+    if (not histogram) {
+        cout<<"Error: No histogram to test range on.\n";
+        return false;
+    }
+
+    TAxis *axis = histogram->GetXaxis();
+    if (not axis) {
+        cout<<"Error: No axis in histogram to test range on.\n";
+        return false;
+    }
+
+    double bin_min = axis->FindBin(min);
+    double lower = axis->GetBinLowEdge(bin_min);
+    if (min and min != lower) {
+        cout<<"Error: Minimum does not align with a bin minimum.\n";
+        cout<<"       Minimum is "<<min<<" and bin minimum is "<<lower<<".\n";
+        return false;
+    }
+
+    return bin_min;
+}
+
+
+/**
+ * test_maximum
+ * Tests the range properties of a histogram. 
+ * Is the top and bottom energies aligned with bins, for example.
+ * 
+ * bin = 0          underflow bin
+ * bin = 1          first bin with low-edge INCLUDED
+ * bin = bins       last bin with upper-edge EXCLUDED
+ * bin = bins + 1   overflow bin
+ */
+int test_max(TH1D* histogram, double max = 0) 
+{
+    if (not histogram) {
+        cout<<"Error: No histogram to test range on.\n";
+        return false;
+    }
+
+    TAxis *axis = histogram->GetXaxis();
+    if (not axis) {
+        cout<<"Error: No axis in histogram to test range on.\n";
+        return false;
+    }
+
+    double bin_max = axis->FindBin(max);
+    double upper = axis->GetBinUpEdge(bin_max);
+    if (max and max != upper) {
+        cout<<"Error: Maximum does not align with a bin maximum.\n";
+        cout<<"       Maximum is "<<max<<" and bin maximum is "<<upper<<".\n";
+        return false;
+    }
+
+    return bin_max;
+}
+
+
+/**
+ * test_range
+ * Tests the rang properties of a histogram. 
+ * Is the top and bottom energies aligned with bins, for example.
+ * 
+ * bin = 0          underflow bin
+ * bin = 1          first bin with low-edge INCLUDED
+ * bin = bins       last bin with upper-edge EXCLUDED
+ * bin = bins+1     overflow bin
+ */
+bool test_range(TH1D* histogram, double min = 0, double max = 0) 
+{
+    if (not histogram) {
+        cout<<"Error: No histogram to test ranges on.\n";
+        return false;
+    }
+
+    TAxis *axis = histogram->GetXaxis();
+    if (not axis) {
+        cout<<"Error: No axis in histogram to test ranges on.\n";
+        return false;
+    }
+
+    double bin_min = axis->FindBin(min);
+    double lower = axis->GetBinLowEdge(bin_min);
+    if (min and min != lower) {
+        cout<<"Error: Minimum does not align with a bin minimum.\n";
+        cout<<"       Minimum is "<<min<<" and bin minimum is "<<lower<<".\n";
+        return false;
+    }
+
+    double bin_max = axis->FindBin(max);
+    double upper = axis->GetBinUpEdge(bin_max);
+    if (max and max != upper) {
+        cout<<"Error: Maximum does not align with a bin maximum.\n";
+        cout<<"       Maximum is "<<max<<" and bin maximum is "<<upper<<".\n";
+        return false;
+    }
+
+    if (lower < 0) {
+        cout<<"Error: Minimum is negative.\n";
+        return false;
+    }
+
+    if (upper <= lower) {
+        cout<<"Error: Maximum is not greater than minimum.\n";
+        return false;
+    }
+
+    return true;
+}
+
+
+bool test_construction(TH1D* counts[2][2], TH1D* out_histogram) 
+{
+    if (not test_rates_constructed(counts))
+        return false;
+
+    if (not out_histogram) {
+        cout<<"Error: Output histogram is not constructed.\n";
+        return false;
+    }
+
+    int bins = out_histogram->GetNbinsX();
+    for (int side=0; side < 2; side++)
+        for (int spin = 0; spin < 2; spin++) {
+            int rate_bins = counts[side][spin]->GetNbinsX();
+            if (bins != rate_bins) {
+                cout<<"Error: Extracted and side spin histogram sizes don't match.\n";
+                cout<<"       Rate histogram on the "
+                    <<(side? "west":"east")<<" side with afp "
+                    <<(spin? "on":"off")<<" has "<<rate_bins<<".\n";
+                cout<<"       Extracted histogram has "<<bins<<" bins.\n";
+                return false;
+            }
+            if (rate_bins <= 0) {
+                cout<<"Error: Bad bin number.\n";
+                cout<<"       Rate histogram on the "
+                    <<(side? "west":"east")<<" side with afp "
+                    <<(spin? "on":"off")<<" has "<<rate_bins<<".\n";
+                return false;
+            }
+        }
+
+    return true;
+}
+
+
+/**
+ * Si := (r[0,0] r[1,1]) / (r[0,1] r[1,0])
+ */
+//TH1D& compute_super_ratio(TH1D* counts[2][2], TH1D* super_ratio_histogram = 0) 
+TH1D& UCNAmodel::compute_super_ratio()
+{
+    if (not test_construction(counts, super_ratio_histogram)) {
+        cout<<"Error: computing super ratio.\nAborting.\n";
+        exit(1);
+    }
+
+    if (not super_ratio_histogram) {
+        cout<<"Warning: No super ratio histogram. Copying rate[0][0].\n";
+        super_ratio_histogram = new TH1D(*(counts[0][0]));
+    }
+
+    int bins = super_ratio_histogram->GetNbinsX();
+	cout<<"Number of bins "<<bins<<endl;
+    // TODO copy other method of bin checking 
+    for (int bin = 1; bin < bins; bin++) {
+        double r[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                r[side][spin] = counts[side][spin]->GetBinContent(bin);
+        double super_ratio = r[0][0]*r[1][1]/r[0][1]/r[1][0];
+        if (IsNaN(super_ratio)) {
+            cout<<"Warning: Super ratio in bin "<<bin<<" is not a number:\n"
+                <<"         Was "<<super_ratio<<". Setting to zero and continuing.\n";
+            super_ratio = 0;
+        }
+        super_ratio_histogram->SetBinContent(bin, super_ratio);
+        super_ratio_histogram->SetBinError(bin, 0.01);   // TODO compute correctly!!
+        cout<<"Warning: Super ratio is not computed correctly.\n";
+    }
+    return super_ratio_histogram;
+}
+
+
+/**
+ * S := 1/2 Sqrt(r(0,0) r[1,1] + 1/2 Sqrt(r[0,1] r[1,0])
+ */
+//TH1D* compute_super_sum(TH1D* counts[2][2], TH1D* super_sum = 0, double min = 0, double max = 0) 
+TH1D* UCNAmodel::compute_super_sum(double min = 0, double max = 0) 
+{
+    if (not test_construction(counts, super_sum)) {
+        cout<<"Error: Problem constructing super sum histogram.\n Aborting.\n";
+        exit(1);
+    }
+
+    if (not super_sum) {
+        cout<<"Warning: Super sum histogram is not constructed.\n";
+        super_sum = new TH1D(*(counts[0][0]));
+    }
+
+    //int bins = super_sum->GetNbinsX();
+    int bin_min = test_min(super_sum, min);
+    int bin_max = test_max(super_sum, max);
+    if (not test_range(super_sum, min, max)) {
+        cout<<"Error: Problem with ranges in super sum histogram.\n";
+        exit(1);
+    }
+
+    for (int bin = bin_min; bin <= bin_max; bin++) {
+        double r[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                r[side][spin] = counts[side][spin]->GetBinContent(bin);
+
+        double super_sum = Sqrt(r[0][0]*r[1][1]) + Sqrt(r[0][1]*r[1][0]);
+        double error = Sqrt(1/r[0][0] + 1/r[1][0] + 1/r[1][1] + 1/r[0][1]) * super_sum;
+        if (IsNaN(super_sum)) {
+            super_sum = 0;
+            cout<<"Warning: Super sum in bin "<<bin<<" is not a number: "<<super_sum<<".\n";
+        } else if (super_sum == 0)
+            cout<<"Warning: Super sum in bin "<<bin<<" is zero.\n";
+
+        if (IsNaN(error)) {
+			error = 0;
+            cout<<"Warning: Super sum error in bin "<<bin<<": division by zero.\n";
+        } else if (error <= 0) 
+            cout<<"Warning: Super sum error in bin "<<bin<<": error is non positive.\n";
+
+        if (bin % 10 == 0)
+            cout<<"Status: Setting bin content for super sum bin "<<bin<<" to "<<super_sum<<".\n";
+
+        super_sum->SetBinContent(bin, super_sum);
+        super_sum->SetBinError(bin, error);
+    }
+    return super_sum;
+}
+
+
+//TH1D* compute_asymmetry(TH1D* counts[2][2], TH1D* asymmetry, double min = 0, double max = 0) 
+TH1D* UCNAmodel::compute_asymmetry( min = 0, double max = 0) 
+{
+    if (not test_construction(counts, asymmetry)) {
+        cout<<"Error: Bad input histograms for computing asymmetry.\nAborting.\n";
+        exit(1);
+    }
+
+    //int bins = asymmetry->GetNbinsX();
+    int bin_min = test_min(asymmetry, min);
+    int bin_max = test_max(asymmetry, max);
+    if (not test_range(asymmetry, min, max)) {
+        cout<<"Error: Problem with ranges in super sum histogram.\nAborting.\n";
+        exit(1);
+    }
+
+    for (int bin = bin_min; bin <= bin_max; bin++)
+	{
+        double r[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                r[side][spin] = counts[side][spin]->GetBinContent(bin);
+        double super_ratio = Sqrt(r[0][0]*r[1][1]/(r[0][1]*r[1][0]));
+        if (IsNaN(super_ratio)) {
+            cout<<"Warning: While computing asymmetry, super ratio in bin "<<bin<<" is not a number:\n";
+            cout<<"         Was "<<super_ratio<<". Setting to zero and continuing.\n";
+            super_ratio = 0;
+        }
+
+		double norm = 1 + super_ratio;  assert(norm > 0);
+        double asymmetry = (1 - super_ratio) / norm;
+        asymmetry->SetBinContent(bin, asymmetry);
+
+		double inv_sum = Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]) / norm;
+		double asymmetry_error = super_ratio * inv_sum / norm;  
+        if (IsNaN(asymmetry_error) or asymmetry_error <= 0) {
+            cout<<"Warning: Asymmetry error in bin "<<bin<<" is not a number:\n";
+            cout<<"         Was "<<asymmetry_error<<". Setting to 0.01 and continuing.\n";
+            asymmetry_error = 0.01;
+        }
+        asymmetry->SetBinError(bin, asymmetry_error);
+        //printf("Setting bin content for asymmetry bin %d, to %f\n", bin, asymmetry);
+    }
+    return asymmetry;
 }
 
 
@@ -531,16 +844,16 @@ double evaluate_expected_fierz(double min, double max)
 /**
  * Si := (r[0][0] r[1][1]) / (r[0][1] * r[1][0])
  */
-TH1D* compute_super_ratio(TH1D* rate_histogram[2][2] ) 
+TH1D* compute_super_ratio(TH1D* counts[2][2] ) 
 {
-    TH1D *super_ratio_histogram = new TH1D(*(rate_histogram[0][0]));
+    TH1D *super_ratio_histogram = new TH1D(*(counts[0][0]));
     int bins = super_ratio_histogram->GetNbinsX();
 	std::cout << "Number of bins " << bins << std::endl;
     for (int bin = 1; bin < bins+2; bin++) {
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
-                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+                r[side][spin] = counts[side][spin]->GetBinContent(bin);
         double super_ratio = r[0][0]*r[1][1]/r[0][1]/r[1][0];
         super_ratio_histogram->SetBinContent(bin, super_ratio);
         super_ratio_histogram->SetBinError(bin, 0.01);   // TODO compute correctly!!
@@ -552,9 +865,9 @@ TH1D* compute_super_ratio(TH1D* rate_histogram[2][2] )
 /**
  * S := r[0][0] + r[1][1] + r[0][1] + r[1][0]
  */
-TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum_histogram) 
+TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum) 
 {
-    //TH1D *super_sum_histogram = new TH1D(*(rate_histogram[0][0]));
+    //TH1D *super_sum = new TH1D(*(counts[0][0]));
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not histogram[side][spin]) {
@@ -563,12 +876,12 @@ TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum_histogram)
                 exit(1);
             }
 
-    if (not super_sum_histogram) {
+    if (not super_sum) {
         std::cout << "Error: super sum histogram is not constructed.\n";
         exit(1);
     }
 
-    int bins = super_sum_histogram->GetNbinsX();
+    int bins = super_sum->GetNbinsX();
     for (int side = 0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++) {
             int ss_bins = histogram[side][spin]->GetNbinsX();
@@ -600,23 +913,23 @@ TH1D* compute_super_sum(TH1D* histogram[2][2], TH1D* super_sum_histogram)
         if (bin % 10 == 0)
             printf("Setting bin content for super sum bin %d, to %f\n", bin, super_sum);
 
-        super_sum_histogram->SetBinContent(bin, super_sum);
-        super_sum_histogram->SetBinError(bin, super_sum*rel_error);
+        super_sum->SetBinContent(bin, super_sum);
+        super_sum->SetBinError(bin, super_sum*rel_error);
     }
-    return super_sum_histogram;
+    return super_sum;
 }
 
 
-TH1D* compute_asymmetry(TH1D* rate_histogram[2][2]) 
+TH1D& compute_asymmetry(TH1D* counts[2][2]) 
 {
-    TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
-    int bins = asymmetry_histogram->GetNbinsX();
+    TH1D&*asymmetry = new TH1D(*(counts[0][0]));
+    int bins = asymmetry->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) 
 	{
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
-                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+                r[side][spin] = counts[side][spin]->GetBinContent(bin);
         double sqrt_super_ratio = TMath::Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
         if ( TMath::IsNaN(sqrt_super_ratio) ) 
             sqrt_super_ratio = 0;
@@ -624,24 +937,24 @@ TH1D* compute_asymmetry(TH1D* rate_histogram[2][2])
         double asymmetry = (1 - sqrt_super_ratio) / denom;
 		double sqrt_inverse_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]);
 		double asymmetry_error = sqrt_inverse_sum * sqrt_super_ratio / (denom * denom);  
-        asymmetry_histogram->SetBinContent(bin, asymmetry);
-        asymmetry_histogram->SetBinError(bin, asymmetry_error);
+        asymmetry->SetBinContent(bin, asymmetry);
+        asymmetry->SetBinError(bin, asymmetry_error);
         //printf("Setting bin content for asymmetry bin %d, to %f\n", bin, asymmetry);
     }
-    return asymmetry_histogram;
+    return asymmetry;
 }
 
 
-TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction) 
+TH1D& compute_corrected_asymmetry(TH1D* counts[2][2], TH1D& correction) 
 {
-    TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
-    int bins = asymmetry_histogram->GetNbinsX();
+    TH1D&*asymmetry = new TH1D(*(counts[0][0]));
+    int bins = asymmetry->GetNbinsX();
     for (int bin = 1; bin < bins+2; bin++) 
 	{
         double r[2][2];
         for (int side = 0; side < 2; side++)
             for (int spin = 0; spin < 2; spin++)
-                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+                r[side][spin] = counts[side][spin]->GetBinContent(bin);
         double sqrt_super_ratio = TMath::Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
         if ( TMath::IsNaN(sqrt_super_ratio) ) 
             sqrt_super_ratio = 0;
@@ -649,16 +962,16 @@ TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction)
         double asymmetry = (1 - sqrt_super_ratio) / denom;
 		double sqrt_inverse_sum = TMath::Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]);
 		double asymmetry_error = sqrt_inverse_sum * sqrt_super_ratio / (denom * denom);  
-		double K = asymmetry_histogram->GetBinCenter(bin);
+		double K = asymmetry->GetBinCenter(bin);
 		double E = K + m_e;                   /// electron energy
 		double p = sqrt(E*E - m_e*m_e);       /// electron momentum
 		double beta = p / E;				  /// v/c
-        asymmetry_histogram->SetBinContent(bin, -2*asymmetry/beta);
-        asymmetry_histogram->SetBinError(bin, 2*asymmetry_error/beta);
-        asymmetry_histogram->Multiply(correction);
+        asymmetry->SetBinContent(bin, -2*asymmetry/beta);
+        asymmetry->SetBinError(bin, 2*asymmetry_error/beta);
+        asymmetry->Multiply(correction);
         //printf("Setting bin content for corrected asymmetry bin %d, to %f\n", bin, asymmetry);
     }
-    return asymmetry_histogram;
+    return asymmetry;
 }
 
 #endif
