@@ -58,8 +58,8 @@ struct UCNAhistogram : TH1D {
     int spin;
     //TString name;
     //TString title;
-    int bins;
-    double min, max;
+    //int bins;
+    //double min, max;
     //TH1D* histogram;
     //vector<double> energy;        
     //vector<double> values;        
@@ -79,10 +79,10 @@ struct UCNAhistogram : TH1D {
     */
        
     UCNAhistogram(TString name, TString title, int bins, double min, double max) 
-      : TH1D(name, title, bins, min, max),
+      : TH1D(name, title, bins, min, max)
         //name(name),
         //title(title),
-        bins(bins), min(min), max(max)
+        //bins(bins), min(min), max(max)
         //histogram(NULL),
         //energy(bins),        
         //values(bins),        
@@ -148,10 +148,10 @@ struct UCNAmodel {
 
     //TH1D*   raw[2][2];  
     TNtuple* ntuple;     /// another way to store the raw data
-    TH1D* counts[2][2]; // TODO make member not pointer
-    UCNAhistogram super_ratio;
-    UCNAhistogram super_sum;
-    UCNAhistogram asymmetry;
+    UCNAhistogram* counts[2][2]; // TODO make member not pointer
+    UCNAhistogram* super_ratio;
+    UCNAhistogram* super_sum;
+    UCNAhistogram* asymmetry;
     // Add Yup and Ydown
 
     /// cuts and settings
@@ -219,6 +219,9 @@ struct UCNAmodel {
         ntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
     }
 
+    TH1D& compute_super_sum(double, double);
+    TH1D& compute_ratio(double, double);
+    TH1D& compute_asymmetry(double, double);
     double asymmetry_chi2(double A, double b);
     int fill(TString filename, TString name, TString title);
     void save(TString filename, TString title, TString name);
