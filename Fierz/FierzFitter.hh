@@ -30,6 +30,7 @@
 #include <time.h>
 
 using TMath::Sqrt;
+using TMath::IsNaN;
 
 
 ///
@@ -200,8 +201,7 @@ struct UCNAmodel {
     bool test_counts();
     bool test_construction();
     void get_counts(int bin, double n[2][2]);
-    void get_counts_errors(int bin, double e[2][2]);
-    void get_counts_errors(int bin, double n[2][2], double e[2][2]);
+    void get_counts(int bin, double n[2][2], double e[2][2]);
 
     /// compute super sum
     double compute_super_sum(double n[2][2]);
@@ -213,7 +213,7 @@ struct UCNAmodel {
     TH1D& compute_super_sum(double min, double max, 
                             int& min_bin, int& max_bin);
     TH1D& compute_super_sum(int min_bin, int max_bin);
-
+    #if 0
     /// compute super ratio
     double compute_super_ratio(double n[2][2]);
     double compute_super_ratio(double n[2][2], double e[2][2], 
@@ -224,6 +224,7 @@ struct UCNAmodel {
     TH1D& compute_super_ratio(double min, double max, 
                              int& min_bin, int& max_bin);
     TH1D& compute_super_ratio(int min_bin, int max_bin);
+    #endif
 
     /// compute asymmetry (and super ratio)
     double compute_asymmetry(double n[2][2]);

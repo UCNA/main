@@ -69,8 +69,6 @@ TF1* UCNAFierzFitter::combined_fit(
         func->SetParError(i,error);
 	}
 
-    //TH1D& asymmetry = data.asymmetry; 
-    //TH1D& super_sum = data.super_sum; 
 	int ndf = data.asymmetry.GetNbinsX() + data.super_sum.GetNbinsX() - nvpar;
 	func->SetNDF(ndf);
     
@@ -568,7 +566,7 @@ bool UCNAmodel::test_construction() {
 }
 
 
-/// Gets the bin contents counts
+/// Gets the counts in bin
 void UCNAmodel::get_counts(int bin, double n[2][2]) {
     for (int side = 0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++)
@@ -576,16 +574,8 @@ void UCNAmodel::get_counts(int bin, double n[2][2]) {
 }
 
 
-/// Gets the bin error from counts
-void UCNAmodel::get_counts_errors(int bin, double e[2][2]) {
-    for (int side = 0; side < 2; side++)
-        for (int spin = 0; spin < 2; spin++)
-            e[side][spin] = counts[side][spin]->GetBinError(bin);
-}
-
-
-/// Gets the bin error from counts
-void UCNAmodel::get_counts_errors(int bin, double n[2][2], double e[2][2]) {
+/// Gets the counts and errors in bin
+void UCNAmodel::get_counts(int bin, double n[2][2], double e[2][2]) {
     for (int side = 0; side < 2; side++)
         for (int spin = 0; spin < 2; spin++) {
             n[side][spin] = counts[side][spin]->GetBinContent(bin);
@@ -675,29 +665,28 @@ double UCNAmodel::compute_super_sum(double n[2][2]) {
 }
 
 double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, double& error) {
-    double S = compute_super_sum(n);
+    S = compute_super_sum(n);
     double V = Sqrt(1/n[0][0] + 1/n[1][0] + 1/n[1][1] + 1/n[0][1]);
-    double error = S * V;
     if (IsNaN(V)) {
         cout<<"Warning: Super sum error multiplier is not a number.\n";
+        error = e[0][0];
         error = -1;
-    }
+    } else
+        error = S * V;
     return S;
 }
 
-double UCNAmodel::compute_super_sum(int bin, double& count, double& error) {
+double UCNAmodel::compute_super_sum(int bin, double& S, double& sigmaS) {
     double n[2][2], e[2][2];
-
     get_counts(bin,n,e);
-    get_super_sum(bin,n,e,count,error);
-
-    super_sum->SetBinContent(bin, count);
-    super_sum->SetBinError(bin, error);
+    compute_super_sum(n,e,S,sigmaS);
+    super_sum.SetBinContent(bin,S);
+    super_sum.SetBinError(bin,sigmaS);
 
     if (bin % 10 == 0)
-        cout<<"Status: Setting bin content for super sum bin "<<bin<<" to "<<super_sum<<".\n";
+        cout<<"Status: Setting bin content for asymmetry bin "<<bin<<" to "<<S<<"("<<sigmaS<<").\n";
 
-    return count;
+    return S;
 }
 
 double UCNAmodel::compute_super_sum(int bin) {
@@ -757,28 +746,27 @@ double UCNAmodel::compute_asymmetry(double n[2][2]) {
     return S;
 }
 
-double UCNAmodel::compute_asymmetry(double n[2][2], double e[2][2], double& S, double& error) {
-    double A = compute_asymmetry(n);
+double UCNAmodel::compute_asymmetry(double n[2][2], double e[2][2], double& A, double& error) {
+    A = compute_asymmetry(n);
     double V = Sqrt(1/n[0][0] + 1/n[1][0] + 1/n[1][1] + 1/n[0][1]); // TODO
-    double error = A;
+    error = -1; // TODO
     if (IsNaN(V)) {
         cout<<"Warning: Asymmetry error multiplier is not a number.\n";
+        error = e[0][0];
         error = -1;
     }
-    return S;
+    return A;
 }
 
-double UCNAmodel::compute_asymmetry(int bin, double& A, double& error) {
+double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
     double n[2][2], e[2][2];
-
     get_counts(bin,n,e);
-    get_asymmetry(bin,n,e,A,error);
-
-    asymmetry.SetBinContent(bin, count);
-    asymmetry.SetBinError(bin, error);
+    compute_asymmetry(n,e,A,sigmaA);
+    asymmetry.SetBinContent(bin,A);
+    asymmetry.SetBinError(bin,sigmaA);
 
     if (bin % 10 == 0)
-        cout<<"Status: Setting bin content for asymmetry bin "<<bin<<" to "<<A<<".\n";
+        cout<<"Status: Setting bin content for asymmetry bin "<<bin<<" to "<<A<<"("<<sigmaA<<").\n";
 
     return A;
 }
@@ -854,7 +842,7 @@ TH1D& UCNAmodel::compute_asymmetry(double min, double max)
     }
     return asymmetry;
 }
-*/
+#endif
 
 
 /// END UCNAobject codes...
