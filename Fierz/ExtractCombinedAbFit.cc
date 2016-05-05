@@ -918,13 +918,13 @@ int main(int argc, char *argv[])
     #endif
     /// Load the files that already contain data asymmetry histogram.
     ucna.data.asymmetry.fill(
-        "Range_0-1000/CorrectAsym/CorrectedAsym.root",
+        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
         "2010 final official asymmetry",
         "hAsym_Corrected_C");
 
     /// Load the files that already contain data super histogram.
     ucna.data.super_sum.fill(
-        "OctetAsym_Offic.root",
+        data_dir+"OctetAsym_Offic.root",
         "2010 final official supersum",
         "Total_Events_SuperSum");
 
@@ -934,7 +934,7 @@ int main(int argc, char *argv[])
             TString s = side? "W":"E", a = afp? "on":"off";
             TString title = "2010 final official "+s+" afp "+a;
             TString cut = "hTotalEvents_"+s+"_"+a+";1";
-            int entries = ucna.data.counts[side][afp]->fill("OctetAsym_Offic.root", title, cut);
+            int entries = ucna.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", title, cut);
             if (entries) {
                 cout<<"Status: Number of entries in "<<(side? "west":"east")
                     <<" side with afp "<<a<<" is "<<entries<<".\n";
@@ -966,12 +966,12 @@ int main(int argc, char *argv[])
     #endif
 
     /// Load Monte Carlo simulated Standard Model events
-    ucna.sm.fill("SimAnalyzed_Beta_0.root",
+    ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_0.root",
                  "Monte Carlo Standard Model beta spectrum",
                  "SimAnalyzed");
 
     /// Load Monte Carlo simulated Fierz events
-    ucna.fierz.fill("SimAnalyzed_Beta_fierz_0.root",
+    ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_0.root",
                     "Monte Carlo Fierz beta spectrum",
                     "SimAnalyzed");
 
