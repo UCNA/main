@@ -29,6 +29,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+using TMath::Sqrt;
+
+
 ///
 /// physical constants
 ///
@@ -96,13 +99,12 @@ struct UCNAhistogram : TH1D {
     void save(TString filename, TString name, TString title);
     void save(TString filename);
 
-    bool test_counts() {
-    bool test_range() {
-    int test_min(double min) {
-    int test_max()  {
-    int test_max(double max) 
-    bool test_range() {
-    bool test_range(double min, double max) 
+    bool test_min();
+    bool test_min(double min);
+    bool test_max();
+    bool test_max(double max);
+    bool test_range();
+    bool test_range(double min, double max);
 
     double normalize(double min, double max);
     double normalize();
@@ -193,6 +195,13 @@ struct UCNAmodel {
     int fill(TString filename, TString name, TString title);
     void save(TString filename, TString title, TString name);
     void save(TString filename);
+
+    /// accessing data
+    bool test_counts();
+    bool test_construction();
+    void get_counts(int bin, double n[2][2]);
+    void get_counts_errors(int bin, double e[2][2]);
+    void get_counts_errors(int bin, double n[2][2], double e[2][2]);
 
     /// compute super sum
     double compute_super_sum(double n[2][2]);
