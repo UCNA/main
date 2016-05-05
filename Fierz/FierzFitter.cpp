@@ -460,7 +460,7 @@ bool UCNAhistogram::test_max(double max) {
     }
 
     double bin_max = axis->FindBin(max);
-    double upper = axis->GetBinUpEdge(bin_max);
+    double upper = axis->GetBinUpEdge(bin_max-1); // TODO check this works in all cases
     if (max and max != upper) {
         cout<<"Error: Maximum does not align with a bin maximum.\n";
         cout<<"       Maximum is "<<max<<" and bin maximum is "<<upper<<".\n";
@@ -510,7 +510,7 @@ bool UCNAhistogram::test_range(double min, double max) {
     }
 
     double bin_max = axis->FindBin(max);
-    double upper = axis->GetBinUpEdge(bin_max);
+    double upper = axis->GetBinUpEdge(bin_max-1);
     if (max and max != upper) {
         cout<<"Error: Maximum does not align with a bin maximum.\n";
         cout<<"       Maximum is "<<max<<" and bin maximum is "<<upper<<".\n";
