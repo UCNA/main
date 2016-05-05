@@ -919,22 +919,22 @@ int main(int argc, char *argv[])
     /// Load the files that already contain data asymmetry histogram.
     ucna.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
-        "2010 final official asymmetry",
-        "hAsym_Corrected_C");
+        "hAsym_Corrected_C",
+        "2010 final official asymmetry");
 
     /// Load the files that already contain data super histogram.
     ucna.data.super_sum.fill(
         data_dir+"OctetAsym_Offic.root",
-        "2010 final official supersum",
-        "Total_Events_SuperSum");
+        "Total_Events_SuperSum",
+        "2010 final official supersum");
 
     /// Load the files that already contain data super histogram.
     for (int side=EAST; side<=WEST; side++)
         for (int afp=EAST; afp<=WEST; afp++) {
             TString s = side? "W":"E", a = afp? "on":"off";
             TString title = "2010 final official "+s+" afp "+a;
-            TString cut = "hTotalEvents_"+s+"_"+a+";1";
-            int entries = ucna.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", title, cut);
+            TString name = "hTotalEvents_"+s+"_"+a+";1";
+            int entries = ucna.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
             if (entries) {
                 cout<<"Status: Number of entries in "<<(side? "west":"east")
                     <<" side with afp "<<a<<" is "<<entries<<".\n";
@@ -967,13 +967,13 @@ int main(int argc, char *argv[])
 
     /// Load Monte Carlo simulated Standard Model events
     ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_0.root",
-                 "Monte Carlo Standard Model beta spectrum",
-                 "SimAnalyzed");
+                 "SimAnalyzed",
+                 "Monte Carlo Standard Model beta spectrum");
 
     /// Load Monte Carlo simulated Fierz events
     ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_0.root",
-                    "Monte Carlo Fierz beta spectrum",
-                    "SimAnalyzed");
+                    "SimAnalyzed",
+                    "Monte Carlo Fierz beta spectrum");
 
     /// SAVE ALL HISTOGRAMS 
 
