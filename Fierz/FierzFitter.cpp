@@ -608,7 +608,6 @@ void UCNAmodel::get_counts_errors(int bin, double n[2][2], double e[2][2]) {
             cout<<"Warning: No super ratio histogram. Copying rate[0][0].\n";
             super_ratio_histogram = new TH1D(*(counts[0][0]));
         }
- */
 double UCNAmodel::compute_super_ratio(double n[2][2]) {
     double Y0 = Sqrt(n[0][0]*n[1][1]);
     double Y1 = Sqrt(n[0][1]*n[1][0]);
@@ -643,10 +642,14 @@ TH1D& UCNAmodel::compute_super_ratio() {
     }
     return super_ratio
 }
+ */
 
 
 /**
- * S := 1/2 Sqrt(r(0,0) n[1,1] + 1/2 Sqrt(n[0,1] n[1,0])
+ * Y+ := Sqrt(r[0,0] n[1,1])
+ * Y- := Sqrt(n[0,1] n[1,0])
+ * D := (Y+ - Y-)/2
+ * S := (Y+ + Y-)/2
  *
     TH1D* compute_super_sum(TH1D* counts[2][2], TH1D* super_sum = 0, double min = 0, double max = 0) 
         if (not test_construction(counts, super_sum)) {
@@ -698,30 +701,19 @@ double UCNAmodel::compute_super_sum(int bin, double& count, double& error) {
 }
 
 double UCNAmodel::compute_super_sum(int bin) {
-    double n[2][2], e[2][2];
-
-    get_counts(bin,n,e);
-    get_super_sum(bin,n,e,count,error);
-
-    super_sum->SetBinContent(bin, count);
-    super_sum->SetBinError(bin, error);
-
-    if (bin % 10 == 0)
-        cout<<"Status: Setting bin content for super sum bin "<<bin<<" to "<<super_sum<<".\n";
-
-    return count;
+    double count, error;
+    return compute_super_sum(bin,count,error);
 }
 
 TH1D& UCNAmodel::compute_super_sum() {
     int min_bin, max_bin;
-    return compute_super_sum(min_bin, max_bin);
+    return compute_super_sum(min, max, min_bin, max_bin);
 }
-
 
 TH1D& UCNAmodel::compute_super_sum(double min, double max, 
                                    int& min_bin, int& max_bin) {
-    min_bin = FindMinimumBin(min);
-    max_bin = FindMaximumBin(max);
+    min_bin = super_sum.FindBin(min);
+    max_bin = super_sum.FindBin(max);
     if (not super_sum.test_range(min, max)) {
         cout<<"Error: Problem with ranges in super sum histogram.\n";
         exit(1);
@@ -738,9 +730,11 @@ TH1D& UCNAmodel::compute_super_sum(int min_bin, int max_bin)
 
 
 /**
- * L := r(0,0) n[1,1] / n[0,1] n[1,0]
- * S := Sqrt(L)
- * A := (1 - S) / (1 + S)
+ * Y+ := Sqrt(r[0,0] n[1,1])
+ * Y- := Sqrt(n[0,1] n[1,0])
+ * D := (Y+ - Y-)/2
+ * S := (Y+ + Y-)/2
+ * A := D / S
  *
     TH1D* compute_asymmetry(TH1D* counts[2][2], TH1D* asymmetry, double min = 0, double max = 0) 
     {
@@ -749,7 +743,77 @@ TH1D& UCNAmodel::compute_super_sum(int min_bin, int max_bin)
             exit(1);
         }
  */
-TH1D* UCNAmodel::compute_asymmetry(double min, double max) 
+double UCNAmodel::compute_asymmetry(double n[2][2]) {
+    double Y0 = Sqrt(n[0][0]*n[1][1]);
+    double Y1 = Sqrt(n[0][1]*n[1][0]);
+    // TODO check if these are numbers.
+    double D = (Y0 - Y1)/2;
+    double S = (Y0 + Y1)/2;
+    double A = D / S;
+    if (IsNaN(A)) {
+        cout<<"Warning: Asymmetry is not a number.\n";
+        S = -1;
+    }
+    return S;
+}
+
+double UCNAmodel::compute_asymmetry(double n[2][2], double e[2][2], double& S, double& error) {
+    double A = compute_asymmetry(n);
+    double V = Sqrt(1/n[0][0] + 1/n[1][0] + 1/n[1][1] + 1/n[0][1]); // TODO
+    double error = A;
+    if (IsNaN(V)) {
+        cout<<"Warning: Asymmetry error multiplier is not a number.\n";
+        error = -1;
+    }
+    return S;
+}
+
+double UCNAmodel::compute_asymmetry(int bin, double& A, double& error) {
+    double n[2][2], e[2][2];
+
+    get_counts(bin,n,e);
+    get_asymmetry(bin,n,e,A,error);
+
+    asymmetry.SetBinContent(bin, count);
+    asymmetry.SetBinError(bin, error);
+
+    if (bin % 10 == 0)
+        cout<<"Status: Setting bin content for asymmetry bin "<<bin<<" to "<<A<<".\n";
+
+    return A;
+}
+
+double UCNAmodel::compute_asymmetry(int bin) {
+    double count, error;
+    return compute_asymmetry(bin,count,error);
+}
+
+TH1D& UCNAmodel::compute_asymmetry() {
+    int min_bin, max_bin;
+    return compute_asymmetry(min, max, min_bin, max_bin);
+}
+
+
+TH1D& UCNAmodel::compute_asymmetry(double min, double max, 
+                                   int& min_bin, int& max_bin) {
+    min_bin = asymmetry.FindBin(min);
+    max_bin = asymmetry.FindBin(max);
+    if (not asymmetry.test_range(min, max)) {
+        cout<<"Error: Problem with ranges in asymmetry histogram.\n";
+        exit(1);
+    }
+    return compute_asymmetry(min_bin, max_bin);
+}
+
+TH1D& UCNAmodel::compute_asymmetry(int min_bin, int max_bin) 
+{
+    for (int bin = min_bin; bin <= max_bin; bin++)
+        compute_asymmetry(bin);
+    return asymmetry;
+}
+
+#if 0
+TH1D& UCNAmodel::compute_asymmetry(double min, double max) 
 {
     int bin_min = test_min(asymmetry, min);
     int bin_max = test_max(asymmetry, max);
@@ -790,6 +854,7 @@ TH1D* UCNAmodel::compute_asymmetry(double min, double max)
     }
     return asymmetry;
 }
+*/
 
 
 /// END UCNAobject codes...
