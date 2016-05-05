@@ -31,13 +31,11 @@
 /// name spaces
 using std::setw;
 using std::cout;
-using std::right;
-using std::left;
 using namespace TMath;
 
 /// cuts and settings
-static unsigned nToSim = 5e7;				/// how many triggering events to simulate
-static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron (0.68/1.68 for on)
+//static unsigned nToSim = 5e7;				/// how many triggering events to simulate
+//static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron (0.68/1.68 for on)
 int KEbins = 150;                           /// number of bins to use fit spectral plots
 
 double KEmin = 50;                          /// min kinetic energy for plots
@@ -757,7 +755,8 @@ int fill_simulation(TString filename, TString title, TString name,
 }
 #endif
 
-
+#if 0
+// TODO move to UCNAmodel
 /// compute little b factor using the Fierz ratio method
 TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
     TH1D *fierz_ratio_histogram = new TH1D(*data_histogram);
@@ -845,6 +844,7 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
     return fierz_ratio_histogram;
 }
     
+#endif
 
 /// DISPLAYING AND OUTPUTTING
 void draw_histogram(TH1D* histogram, TString name, TString title,
@@ -886,6 +886,7 @@ int main(int argc, char *argv[])
 
     /// LOAD 2010 UCNA DATA
 
+    #if 0
     /// Load the files that already contain data asymmetry histogram.
     fill_data("Range_0-1000/CorrectAsym/CorrectedAsym.root",
               "2010 final official asymmetry",
@@ -914,11 +915,39 @@ int main(int argc, char *argv[])
                 cout<<"Error: found no events in "<<title<<".\n";
                 /// TODO figure out where these went.
         }
+    #endif
+    /// Load the files that already contain data asymmetry histogram.
+    ucna.data.asymmetry.fill(
+        "Range_0-1000/CorrectAsym/CorrectedAsym.root",
+        "2010 final official asymmetry",
+        "hAsym_Corrected_C");
 
+    /// Load the files that already contain data super histogram.
+    ucna.data.super_sum.fill(
+        "OctetAsym_Offic.root",
+        "2010 final official supersum",
+        "Total_Events_SuperSum");
+
+    /// Load the files that already contain data super histogram.
+    for (int side=EAST; side<=WEST; side++)
+        for (int afp=EAST; afp<=WEST; afp++) {
+            TString s = side? "W":"E", a = afp? "on":"off";
+            TString title = "2010 final official "+s+" afp "+a;
+            TString cut = "hTotalEvents_"+s+"_"+a+";1";
+            int entries = ucna.data.counts[side][afp]->fill("OctetAsym_Offic.root", title, cut);
+            if (entries) {
+                cout<<"Status: Number of entries in "<<(side? "west":"east")
+                    <<" side with afp "<<a<<" is "<<entries<<".\n";
+            }
+            else
+                cout<<"Error: found no events in "<<title<<".\n";
+                /// TODO figure out where these went.
+        }
 
 
     /// LOAD MONTE CARLO SIMULATION EVENTS
 
+    #if 0
     /// Load Monte Carlo simulated Standard Model events
     fill_simulation("SimAnalyzed_Beta_0.root",
                     "Monte Carlo Standard Model beta spectrum",
@@ -934,7 +963,17 @@ int main(int argc, char *argv[])
                     ucna.fierz.counts,
 					&ucna.fierz.super_sum, 
                     &ucna.fierz.asymmetry);
+    #endif
 
+    /// Load Monte Carlo simulated Standard Model events
+    ucna.sm.fill("SimAnalyzed_Beta_0.root",
+                 "Monte Carlo Standard Model beta spectrum",
+                 "SimAnalyzed");
+
+    /// Load Monte Carlo simulated Fierz events
+    ucna.fierz.fill("SimAnalyzed_Beta_fierz_0.root",
+                    "Monte Carlo Fierz beta spectrum",
+                    "SimAnalyzed");
 
     /// SAVE ALL HISTOGRAMS 
 

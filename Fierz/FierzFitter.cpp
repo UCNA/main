@@ -330,7 +330,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
         /// Type 0, Type I, Type II/III events 
         if (type<4) { 
             /// fill with loading efficiency 
-            double p = random(0,1);
+            double p = rand.Uniform(1);
 			double afp = (p < afp_off_prob)? -1 : +1;
             bool spin = (afp < 0)? EAST : WEST;
             //cout<<"energy: "<<energy<<" side: "<<"side: "<<side

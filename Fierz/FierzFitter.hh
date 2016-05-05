@@ -18,6 +18,7 @@
 #include <TNtuple.h>
 #include <TLeaf.h>
 #include <TString.h>
+#include <TRandom2.h>
 
 /// c++ includes
 #include <iostream>
@@ -118,6 +119,7 @@ struct UCNAmodel {
     TString title;
     int     bins;
     double  min, max;
+    TRandom2 rand;
 
     //TH1D*   raw[2][2];  
     TNtuple* ntuple;     /// another way to store the raw data
@@ -164,6 +166,7 @@ struct UCNAmodel {
     UCNAmodel(TString name, TString title, int bins, double min, double max) 
       : name(name), title(title),
         bins(bins), min(min), max(max),
+        rand(0),
         super_ratio(name+"_super_ratio",title+" Super Ratio",bins,min,max),
         super_sum(name+"_super_sum",title+" Super Sum",bins,min,max),
         asymmetry(name+"_asymmetry",title+" Asymmetry",bins,min,max)
@@ -318,11 +321,13 @@ struct UCNAFierzFitter {
 };
 
 
+/*
 double random(double min, double max) 
 {
     double p = rand();
     return min + (max-min)*p/RAND_MAX;
 }
+*/
 
 
 /// beta spectrum with little b term
