@@ -1,11 +1,15 @@
 #include "FierzFitter.hh"
 
 
-double UCNAhistogram::normalize() 
+double UCNAhistogram::normalize() {
+    return normalize(GetMinimum(), GetMaximum());
+}
+
+double UCNAhistogram::normalize(double min, double max)
 {
-	int bin_min = FindBin(min);
-	int bin_max = FindBin(max);
-    double integrand = 1;
+	int bin_min = GetMinimumBin();
+	int bin_max = GetMaximumBin();
+    double integrand = 0;
     integrand +=(GetBinCenter(bin_min) - min)
                / GetBinWidth(bin_min)
                / GetBinWidth(bin_min)
@@ -92,7 +96,7 @@ double UCNAmodel::asymmetry_chi2(double A, double b) {
     }*/
 
 	double chi2 = 0;
-    int n = asymmetry.bins;
+    int n = asymmetry.GetNbinsX();
 	for (int i = 0; i < n; i++)
 	{
 		double E = asymmetry.GetBinCenter(i);
@@ -114,7 +118,7 @@ double UCNAmodel::asymmetry_chi2(double A, double b) {
 double UCNAFierzFitter::supersum_chi2(double b, double N)
 {
 	double chi2 = 0;
-    int n = data.asymmetry.bins;
+    int n = data.asymmetry.GetNbinsX();
 	for (int i = 0; i < n; i++)
 	{
 		double E = data.asymmetry.GetBinCenter(i);
@@ -149,9 +153,13 @@ double asymmetry_fit_func(double *, double *)
  * UCNAhistogram::fill
  * load the files that contain data histograms
  */
+int UCNAhistogram::fill(TString filename) {
+    return fill(filename, GetName(), GetTitle());
+}
+
 int UCNAhistogram::fill(TString filename, 
-                        TString name = this->GetName(), 
-                        TString title = this-.GetTitle()) {
+                        TString name, 
+                        TString title) {
     //, TH1D* histogram)
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
@@ -353,8 +361,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
 	cout<<"      Efficiencies of cuts:  "<<(100.0*nSimmed)/double(nEvents)<<"%\n";
 
 	/// compute and normalize super sum
-    super_sum.compute_super_sum(counts);
-    asymmetry.compute_asymmetry(counts);
+    compute_super_sum();
+    compute_asymmetry();
 
     //normalize(super_sum, min_E, max_E);
     //normalize(asymmetry, min_E, max_E);
@@ -365,12 +373,13 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
     return nSimmed;
 }
 
+
 /**
  * test_counts
  * Tests that all histograms are constructed.
+    bool test_counts(TH1D* counts[2][2])
  */
-bool test_counts(TH1D* counts[2][2])
-{
+bool test_counts() {
     for (int side=0; side<2; side++)
         for (int spin=0; spin<2; spin++)
             if (not counts[side][spin]) {
@@ -399,8 +408,13 @@ bool test_counts(TH1D* counts[2][2])
             return false;
         }
  */
-int UCNAhistogram::test_min(TH1D* histogram, double min) {
-    TAxis *axis = histogram->GetXaxis();
+bool UCNAhistogram::test_range() {
+    double min = GetMinimum();
+    return test_min(min);
+}
+
+int UCNAhistogram::test_min(double min) {
+    TAxis *axis = GetXaxis();
     if (not axis) {
         cout<<"Error: No axis in histogram to test range on.\n";
         return false;
@@ -435,7 +449,12 @@ int UCNAhistogram::test_min(TH1D* histogram, double min) {
             return false;
         }
  */
-int UCNAhistogram::test_max(double max = this->max) 
+int UCNAhistogram::test_max()  {
+    double max = GetMaximum();
+    return test_max(max);
+}
+
+int UCNAhistogram::test_max(double max) 
     double bin_max = axis->FindBin(max);
     double upper = axis->GetBinUpEdge(bin_max);
     if (max and max != upper) {
@@ -465,8 +484,13 @@ int UCNAhistogram::test_max(double max = this->max)
             return false;
         }
  */
-bool UCNAhistogram::test_range(double min = this->GetMinimum(), double max = this->GetMaximum()) 
-{
+bool UCNAhistogram::test_range() {
+    double min = GetMinimum();
+    double max = GetMaximum();
+    return test_range;
+}
+
+bool UCNAhistogram::test_range(double min, double max) {
     TAxis *axis = GetXaxis();
     if (not axis) {
         cout<<"Error: No axis in histogram to test ranges on.\n";
@@ -565,6 +589,12 @@ void UCNAmodel::get_counts_errors(bin, n[2][2], e[2][2]) {
 }
 
 
+bool UCNAmodel::test_construction() {
+bool UCNAmodel::test_construction() {
+void UCNAmodel::get_counts(bin, n[2][2]) {
+void UCNAmodel::get_counts_errors(bin, e[2][2]) {
+void UCNAmodel::get_counts_errors(bin, n[2][2], e[2][2]) {
+
 /**
  * S := (n[0,0] n[1,1]) / (n[0,1] n[1,0])
  *
@@ -581,12 +611,13 @@ void UCNAmodel::get_counts_errors(bin, n[2][2], e[2][2]) {
  */
 double UCNAmodel::compute_super_ratio(double n[2][2]) {
     double Y0 = Sqrt(n[0][0]*n[1][1]);
-    double Y1 = n[0][1]*n[1][0];
-
+    double Y1 = Sqrt(n[0][1]*n[1][0]);
+    // TODO fix 
     double S = Y02/Y12;
 }
 
 double UCNAmodel::compute_super_ratio_error(double e[2][2]) {
+    // TODO fix 
     double SE = n[0][0]*n[1][1] / n[0][1]/n[1][0];
 }
 
@@ -639,7 +670,6 @@ double UCNAmodel::compute_super_sum(double n[2][2]) {
     return S;
 }
 
-
 double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, double& error) {
     double S = compute_super_sum(n);
     double V = Sqrt(1/n[0][0] + 1/n[1][0] + 1/n[1][1] + 1/n[0][1]);
@@ -651,10 +681,9 @@ double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, d
     return S;
 }
 
-
-double UCNAmodel::compute_super_sum(int bin) {
+double UCNAmodel::compute_super_sum(int bin, double& count, double& error) {
     double n[2][2], e[2][2];
-    double count, error;
+
     get_counts(bin,n,e);
     get_super_sum(bin,n,e,count,error);
 
@@ -667,38 +696,42 @@ double UCNAmodel::compute_super_sum(int bin) {
     return count;
 }
 
-TH1D& UCNAmodel::compute_super_sum(double min = this->min, double max = this->max) 
-{
-    int bin_min = test_min(super_sum, min);
-    int bin_max = test_max(super_sum, max);
+double UCNAmodel::compute_super_sum(int bin) {
+    double n[2][2], e[2][2];
+
+    get_counts(bin,n,e);
+    get_super_sum(bin,n,e,count,error);
+
+    super_sum->SetBinContent(bin, count);
+    super_sum->SetBinError(bin, error);
+
+    if (bin % 10 == 0)
+        cout<<"Status: Setting bin content for super sum bin "<<bin<<" to "<<super_sum<<".\n";
+
+    return count;
+}
+
+TH1D& UCNAmodel::compute_super_sum() {
+    int min_bin, max_bin;
+    return compute_super_sum(min_bin, max_bin);
+}
+
+
+TH1D& UCNAmodel::compute_super_sum(double min, double max, 
+                                   int& min_bin, int& max_bin) {
+    min_bin = FindMinimumBin(min);
+    max_bin = FindMaximumBin(max);
     if (not test_range(super_sum, min, max)) {
         cout<<"Error: Problem with ranges in super sum histogram.\n";
         exit(1);
     }
+    return compute_super_sum(min_bin, max_bin);
+}
 
-    for (int bin = bin_min; bin <= bin_max; bin++) {
-        double n[2][2], e[2][2];
-        get_counts(bin, r, e);
-        double super_sum = Sqrt(n[0][0]*n[1][1]) + Sqrt(n[0][1]*n[1][0]);
-        double error = Sqrt(1/n[0][0] + 1/n[1][0] + 1/n[1][1] + 1/n[0][1]) * super_sum;
-        if (IsNaN(super_sum)) {
-            super_sum = 0;
-            cout<<"Warning: Super sum in bin "<<bin<<" is not a number: "<<super_sum<<".\n";
-        } else if (super_sum == 0)
-            cout<<"Warning: Super sum in bin "<<bin<<" is zero.\n";
-
-        if (IsNaN(error)) {
-			error = 0;
-            cout<<"Warning: Super sum error in bin "<<bin<<": division by zero.\n";
-        } else if (error <= 0) 
-            cout<<"Warning: Super sum error in bin "<<bin<<": error is non positive.\n";
-
-        if (bin % 10 == 0)
-            cout<<"Status: Setting bin content for super sum bin "<<bin<<" to "<<super_sum<<".\n";
-
-        super_sum->SetBinContent(bin, super_sum);
-        super_sum->SetBinError(bin, error);
-    }
+TH1D& UCNAmodel::compute_super_sum(int min_bin, int max_bin) 
+{
+    for (int bin = min_bin; bin <= max_bin; bin++)
+        compute_super_sum(bin);
     return super_sum;
 }
 

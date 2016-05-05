@@ -91,51 +91,21 @@ struct UCNAhistogram : TH1D {
         //histogram = new TH1D(name, title, bins, min, max);
     }
 
-    double normalize();
     int fill(TString filename, TString name, TString title);
+    int fill(TString filename);
     void save(TString filename, TString name, TString title);
     void save(TString filename);
 
-    /*
-    UCNAhistogram(int side, int, spin, int bins, double min, double max) 
-      : side(side),
-        spin(spin),
-        bins(bins),
-        min(min), max(max),
-        histogram(NULL),
-        energy(bins),        
-        values(bins),        
-        errors(bins)
-    {}
+    bool test_counts() {
+    bool test_range() {
+    int test_min(double min) {
+    int test_max()  {
+    int test_max(double max) 
+    bool test_range() {
+    bool test_range(double min, double max) 
 
-    void init(int bins, double min, double max) {
-        this->bins = bins;
-        this->min = min;
-        this->max = max;
-        energy = vector<double>(bins);
-	    values = vector<double>(bins);
-	    errors = vector<double>(bins);
-    }
-    */
-
-    /*
-    void fill(TH1D *histogram) {
-        TAxis *axis  = histogram->GetXaxis();
-        bins = histogram->GetNbinsX(); 
-        for (int ix = 1; ix <= bins + 1; ix++)
-        {
-            double E = axis->GetBinCenter(ix);
-            if (min < E and E < max)
-            {
-                double Y = histogram->GetBinContent(ix);
-                double eY = histogram->GetBinError(ix);
-                energy.push_back(E);
-                values.push_back(Y);
-                errors.push_back(eY);
-            }
-        }
-    }
-    */
+    double normalize(double min, double max);
+    double normalize();
 };
 
 
@@ -149,9 +119,9 @@ struct UCNAmodel {
     //TH1D*   raw[2][2];  
     TNtuple* ntuple;     /// another way to store the raw data
     UCNAhistogram* counts[2][2]; // TODO make member not pointer
-    UCNAhistogram* super_ratio;
-    UCNAhistogram* super_sum;
-    UCNAhistogram* asymmetry;
+    UCNAhistogram super_ratio;
+    UCNAhistogram super_sum;
+    UCNAhistogram asymmetry;
     // Add Yup and Ydown
 
     /// cuts and settings
@@ -219,30 +189,43 @@ struct UCNAmodel {
         ntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
     }
 
-    TH1D& compute_super_sum(double, double);
-    TH1D& compute_ratio(double, double);
-    TH1D& compute_asymmetry(double, double);
     double asymmetry_chi2(double A, double b);
     int fill(TString filename, TString name, TString title);
     void save(TString filename, TString title, TString name);
     void save(TString filename);
 
-    /*
-    void init(int bins, double min, double max) {
-        this->bins = bins;
-        this->min = min;
-        this->max = max;
-        // TODO init TH1Ds
-        for (int side = 0; side < 2; side++)
-            for (int spin = 0; spin < 2; spin++) {
-                //raw[side][spin].init(bins, min, max);
-                raw[side][spin] = 0;
-            }
-        super_ratio.init(bins, min, max);
-        super_sum.init(bins, min, max);
-        asymmetry.init(bins, min, max);
-   }
-   */
+    /// compute super sum
+    double compute_super_sum(double n[2][2]);
+    double compute_super_sum(double n[2][2], double e[2][2], 
+                             double& S, double& error);
+    double compute_super_sum(int bin, double& count, double& error);
+    double compute_super_sum(int bin);
+    TH1D& compute_super_sum();
+    TH1D& compute_super_sum(double min, double max, 
+                            int& min_bin, int& max_bin);
+    TH1D& compute_super_sum(int min_bin, int max_bin);
+
+    /// compute super ratio
+    double compute_super_ratio(double n[2][2]);
+    double compute_super_ratio(double n[2][2], double e[2][2], 
+                               double& S, double& error);
+    double compute_super_ratio(int bin, double& count, double& error);
+    double compute_super_ratio(int bin);
+    TH1D& compute_super_ratio();
+    TH1D& compute_super_ratio(double min, double max, 
+                             int& min_bin, int& max_bin);
+    TH1D& compute_super_ratio(int min_bin, int max_bin);
+
+    /// compute asymmetry (and super ratio)
+    double compute_asymmetry(double n[2][2]);
+    double compute_asymmetry(double n[2][2], double e[2][2], 
+                             double& S, double& error);
+    double compute_asymmetry(int bin, double& count, double& error);
+    double compute_asymmetry(int bin);
+    TH1D& compute_asymmetry();
+    TH1D& compute_asymmetry(double min, double max, 
+                            int& min_bin, int& max_bin);
+    TH1D& compute_asymmetry(int min_bin, int max_bin);
 };
 
 
