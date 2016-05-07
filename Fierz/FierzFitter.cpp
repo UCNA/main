@@ -664,15 +664,30 @@ double UCNAmodel::compute_super_sum(double n[2][2]) {
     return S;
 }
 
-double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, double& error) {
+double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, double& sigmaS) {
+    double varS = 0;
     S = compute_super_sum(n);
-    double V = Sqrt(1/n[0][0] + 1/n[1][0] + 1/n[1][1] + 1/n[0][1]);
-    if (IsNaN(V)) {
+    for (int side=0; side<2; side++) {
+        for (int spin=0; spin<2; spin++) {
+            double counts = n[side][spin];
+            double sigma = e[side][spin];
+            if (sigma > 0) {
+                double alter = n[side?0:1][spin?0:1];   
+                if (counts > 0) {
+                    double var = sigma*sigma;
+                    varS += var*alter/counts;  /// errors already set
+                }
+                else
+                    varS += alter;             /// using Poisson stats
+            }
+        }
+    }
+
+    sigmaS = Sqrt(varS);
+    if (IsNaN(sigmaS)) {
         cout<<"Warning: Super sum error multiplier is not a number.\n";
-        error = e[0][0];
-        error = -1;
-    } else
-        error = S * V;
+        sigmaS = -1;
+    }
     return S;
 }
 
