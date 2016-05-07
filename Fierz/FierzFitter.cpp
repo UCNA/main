@@ -698,8 +698,10 @@ double UCNAmodel::compute_super_sum(int bin, double& S, double& sigmaS) {
     super_sum.SetBinContent(bin,S);
     super_sum.SetBinError(bin,sigmaS);
 
-    if (bin % 10 == 0)
-        cout<<"Status: Setting bin content for asymmetry bin "<<bin<<" to "<<S<<"("<<sigmaS<<").\n";
+    if (bin % 10 == 0) {
+        double KE = super_sum.GetBinCenter(bin);
+        cout<<"Status: Super sum bin "<<bin<<" and KE "<<KE<<" to "<<S<<"("<<sigmaS<<").\n";
+    }
 
     return S;
 }
@@ -750,7 +752,6 @@ TH1D& UCNAmodel::compute_super_sum(int min_bin, int max_bin)
 double UCNAmodel::compute_asymmetry(double n[2][2]) {
     double Y0 = Sqrt(n[0][0]*n[1][1]);
     double Y1 = Sqrt(n[0][1]*n[1][0]);
-    // TODO check if these are numbers.
     double D = (Y0 - Y1)/2;
     double S = (Y0 + Y1)/2;
     double A = D / S;
@@ -761,14 +762,14 @@ double UCNAmodel::compute_asymmetry(double n[2][2]) {
     return S;
 }
 
-double UCNAmodel::compute_asymmetry(double n[2][2], double e[2][2], double& A, double& error) {
+double UCNAmodel::compute_asymmetry(double n[2][2], double e[2][2], double& A, double& sigmaA) {
+    double S, sigmaS;
+    compute_super_sum(n,e,S,sigmaS);
     A = compute_asymmetry(n);
-    double V = Sqrt(1/n[0][0] + 1/n[1][0] + 1/n[1][1] + 1/n[0][1]); // TODO
-    error = -1; // TODO
-    if (IsNaN(V)) {
+    sigmaA = Sqrt(1 + A*A) * sigmaS/S;
+    if (IsNaN(sigmaA)) {
         cout<<"Warning: Asymmetry error multiplier is not a number.\n";
-        error = e[0][0];
-        error = -1;
+        sigmaA = -1;
     }
     return A;
 }
@@ -780,8 +781,10 @@ double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
     asymmetry.SetBinContent(bin,A);
     asymmetry.SetBinError(bin,sigmaA);
 
-    if (bin % 10 == 0)
-        cout<<"Status: Setting bin content for asymmetry bin "<<bin<<" to "<<A<<"("<<sigmaA<<").\n";
+    if (bin % 10 == 0) {
+        double KE = super_sum.GetBinCenter(bin);
+        cout<<"Status: Asymmetry bin "<<bin<<" and KE "<<KE<<" set to "<<A<<"("<<sigmaA<<").\n";
+    }
 
     return A;
 }
