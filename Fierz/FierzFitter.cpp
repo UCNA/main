@@ -683,7 +683,7 @@ double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, d
         }
     }
 
-    sigmaS = Sqrt(varS);
+    sigmaS = Sqrt(varS)/2;
     if (IsNaN(sigmaS)) {
         cout<<"Warning: Super sum error multiplier is not a number.\n";
         sigmaS = -1;
