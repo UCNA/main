@@ -362,7 +362,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
     compute_super_sum();
     compute_asymmetry();
 
-    //normalize(super_sum, min_E, max_E);
+    super_sum.normalize();
     //normalize(asymmetry, min_E, max_E);
     //for (int side=0; side<2; side++)
     //    for (int spin=0; spin<2; spin++)

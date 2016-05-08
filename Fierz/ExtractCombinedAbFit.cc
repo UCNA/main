@@ -745,7 +745,7 @@ int fill_simulation(TString filename, TString title, TString name,
     compute_super_sum(rates, super_sum);
     compute_asymmetry(rates, asymmetry);
 
-    //normalize(super_sum, min_E, max_E);
+    super_sum.normalize(min_E, max_E);
     //normalize(asymmetry, min_E, max_E);
     //for (int side=0; side<2; side++)
     //    for (int spin=0; spin<2; spin++)
@@ -1125,7 +1125,7 @@ int main(int argc, char *argv[])
 	for (int i=0; i<nPar; i++) {
         TString name_i = paramNames[i];
 	    for (int j = i+1; j<nPar; j++) {
-            TString name_j = paramNames[i];
+            TString name_j = paramNames[j];
             TString cor_name = "cor("+name_i+","+name_j+")";
             double cor_ij = cov[j][i]/Sqrt(cov[i][i]*cov[j][j]);
 	        double p_cor_ij = p_cov[j][i]/Sqrt(p_cov[i][i]*p_cov[j][j]);
