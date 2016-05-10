@@ -59,7 +59,7 @@ TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/";
 TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/1mill_beta/";
 
 /// path to save output plots
-TString plots_dir = "/home/hickerson/Dropbox/";
+TString plots_dir = "/home/hickerson/Dropbox/Root/";
 
 /// path to save output root structures 
 TString root_output_dir = "/home/hickerson/Documents/";
@@ -1146,6 +1146,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+/*
 	ucna.fierz.super_sum.SetStats(0);
     ucna.fierz.super_sum.SetLineColor(3);
     ucna.fierz.super_sum.Draw("");
@@ -1154,6 +1155,16 @@ int main(int argc, char *argv[])
     ucna.sm.super_sum.SetLineColor(1);
     ucna.sm.super_sum.Draw("Same");
     canvas->SaveAs(fit_pdf_filename);
+*/
+
+    draw_histogram(&ucna.sm.asymmetry, 
+                   "sm_supersum", 
+                   "Standard Model Monte Carlo super sum", 
+                   canvas, "", 3, 0);
+    draw_histogram(&ucna.data.super_sum, 
+                   "fierz_supersum", 
+                   "Fierz Monte Carlo super sum", 
+                   canvas, "Same", 1, 0);
 
     TString asymmetry_pdf_filename = plots_dir + "asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
@@ -1166,6 +1177,11 @@ int main(int argc, char *argv[])
                    "fierz_supersum", 
                    "Fierz Monte Carlo super sum", 
                    canvas, "Same", 1, 0);
+    draw_histogram(&ucna.data.super_sum, 
+                   "data_supersum", 
+                   "Data super sum", 
+                   canvas, "Same", 2, 0);
+
 
 /*
     /// Draw the data super sums

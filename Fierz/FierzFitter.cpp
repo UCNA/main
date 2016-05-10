@@ -791,10 +791,12 @@ double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
     return A;
 }
 
+
 double UCNAmodel::compute_asymmetry(int bin) {
     double count, error;
     return compute_asymmetry(bin,count,error);
 }
+
 
 TH1D& UCNAmodel::compute_asymmetry() {
     int min_bin, max_bin;
