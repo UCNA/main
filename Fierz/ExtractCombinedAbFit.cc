@@ -848,7 +848,7 @@ TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
 
 /// DISPLAYING AND OUTPUTTING
 void draw_histogram(TH1D* histogram, TString name, TString title,
-                    TCanvas* canvas = 0, TString draw = "", int color = 0, int marker = 0)
+                    TCanvas* canvas = 0, /*TLegend* legend,*/ TString draw = "", int color = 0, int marker = 0)
 {
     if (not canvas)
         canvas = new TCanvas(name + "_canvas", title + " Canvas");
@@ -864,12 +864,17 @@ void draw_histogram(TH1D* histogram, TString name, TString title,
     histogram->Draw(draw);
 
     /// Make a pretty legend.
-    TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
-    legend->AddEntry(&ucna.data.super_sum, "Type 0 super sum", "l");
-    legend->AddEntry(&ucna.sm.super_sum, "Monte Carlo super sum", "p");
-    legend->SetTextSize(0.03);
-    legend->SetBorderSize(0);
+    /*
+    if (not legend) {
+        TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
+        //legend->AddEntry(&ucna.data.super_sum, "Type 0 super sum", "l");
+        //legend->AddEntry(&ucna.sm.super_sum, "Monte Carlo super sum", "p");
+        legend->SetTextSize(0.03);
+        legend->SetBorderSize(0);
+    }
+    legend->AddEntry(histogram, title, "p");
     legend->Draw();
+    */
 
     /// Save the data and Mote Carlo plots.
     TString filename = plots_dir + name + ".pdf";
@@ -985,8 +990,8 @@ int main(int argc, char *argv[])
     /// Set up constants and vars
     TMatrixD cov(nPar,nPar);
 	double entries = ucna.data.super_sum.GetEffectiveEntries();
-	double A = -0.12;
-	double N = GetEntries(&ucna.data.super_sum, KEmin, KEmax);
+	//double A = -0.12;
+	//double N = GetEntries(&ucna.data.super_sum, KEmin, KEmax);
 
     /// Set up the fit parameters.
     TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, KEmin_A, KEmax_A, nPar);
@@ -1003,6 +1008,11 @@ int main(int argc, char *argv[])
 	/// Actually do the combined fitting.
 	//ucna.combined_fit(cov, &asymmetry_func, &supersum_func, &combined_chi2);
 	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
+
+    double A = asymmetry_func.GetParameter(0);
+    double b = asymmetry_func.GetParameter(1);
+    double N = asymmetry_func.GetParameter(2);
+	ucna.compute_fit(b,N);
 
 	/// Set all expectation values for this range.
     double nSpec = 4;
@@ -1155,7 +1165,7 @@ int main(int argc, char *argv[])
     ucna.sm.super_sum.SetLineColor(1);
     ucna.sm.super_sum.Draw("Same");
     canvas->SaveAs(fit_pdf_filename);
-*/
+    */
 
     /*
     draw_histogram(&ucna.sm.asymmetry, 
@@ -1166,32 +1176,37 @@ int main(int argc, char *argv[])
     draw_histogram(&ucna.data.asymmetry, 
                    "data_asymmetry", 
                    "UCNA 2010 Asymmetry", 
-                   canvas, "", 1, 0);
+                   canvas,"",1,0);
 
-    TString asymmetry_pdf_filename = plots_dir + "asymmetry_data.pdf";
+    TString asymmetry_pdf_filename = plots_dir + "data_asymmetry.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
 
     draw_histogram(&ucna.sm.super_sum, 
                    "sm_supersum", 
                    "Standard Model Monte Carlo super sum", 
-                   canvas, "", 4, 0);
+                   canvas,"",4,0);
     draw_histogram(&ucna.fierz.super_sum, 
                    "fierz_supersum", 
                    "Fierz Monte Carlo super sum", 
-                   canvas, "Same", 1, 0);
+                   canvas,"Same",1,0);
 
-    TString monte_carlo_pdf_filename = plots_dir + "monte_carlo_data.pdf";
-    canvas->SaveAs(asymmetry_pdf_filename);
+    TString monte_carlo_pdf_filename = plots_dir + "monte_carlo.pdf";
+    canvas->SaveAs(monte_carlo_pdf_filename);
 
     draw_histogram(&ucna.data.super_sum, 
                    "data_supersum", 
                    "Data super sum", 
-                   canvas, "", 2, 0);
+                   canvas,"",2,0);
 
-    TString super_sum_data_pdf_filename = plots_dir + "supersum_data.pdf";
-    canvas->SaveAs(asymmetry_pdf_filename);
+    draw_histogram(&ucna.fit.super_sum, 
+                   "fit_supersum", 
+                   "Fit super sum", 
+                   canvas,"Same",6,0);
 
-/*
+    TString data_supersum_pdf_filename = plots_dir + "data_supersum.pdf";
+    canvas->SaveAs(data_supersum_pdf_filename);
+
+    /*
     /// Draw the data super sums
     ucna.data.super_sum.Scale(200);
 	ucna.data.super_sum.SetStats(0);
