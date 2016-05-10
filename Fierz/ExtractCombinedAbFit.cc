@@ -1157,14 +1157,16 @@ int main(int argc, char *argv[])
     canvas->SaveAs(fit_pdf_filename);
 */
 
+    /*
     draw_histogram(&ucna.sm.asymmetry, 
-                   "sm_supersum", 
-                   "Standard Model Monte Carlo super sum", 
+                   "sm_asymmetry", 
+                   "Combined Asymmetry", 
                    canvas, "", 3, 0);
-    draw_histogram(&ucna.data.super_sum, 
-                   "fierz_supersum", 
-                   "Fierz Monte Carlo super sum", 
-                   canvas, "Same", 1, 0);
+    */
+    draw_histogram(&ucna.data.asymmetry, 
+                   "data_asymmetry", 
+                   "UCNA 2010 Asymmetry", 
+                   canvas, "", 1, 0);
 
     TString asymmetry_pdf_filename = plots_dir + "asymmetry_data.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
@@ -1172,16 +1174,22 @@ int main(int argc, char *argv[])
     draw_histogram(&ucna.sm.super_sum, 
                    "sm_supersum", 
                    "Standard Model Monte Carlo super sum", 
-                   canvas, "", 3, 0);
+                   canvas, "", 4, 0);
     draw_histogram(&ucna.fierz.super_sum, 
                    "fierz_supersum", 
                    "Fierz Monte Carlo super sum", 
                    canvas, "Same", 1, 0);
+
+    TString monte_carlo_pdf_filename = plots_dir + "monte_carlo_data.pdf";
+    canvas->SaveAs(asymmetry_pdf_filename);
+
     draw_histogram(&ucna.data.super_sum, 
                    "data_supersum", 
                    "Data super sum", 
-                   canvas, "Same", 2, 0);
+                   canvas, "", 2, 0);
 
+    TString super_sum_data_pdf_filename = plots_dir + "supersum_data.pdf";
+    canvas->SaveAs(asymmetry_pdf_filename);
 
 /*
     /// Draw the data super sums

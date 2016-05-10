@@ -122,8 +122,8 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
 		double E = data.asymmetry.GetBinCenter(i);
         if (E < min or E > max)
             continue;
-		double Y = data.asymmetry.GetBinContent(i);
-		double eY = data.asymmetry.GetBinError(i);
+		double Y = data.super_sum.GetBinContent(i);
+		double eY = data.super_sum.GetBinError(i);
         double f  = N*sm.super_sum.GetBinContent(i) 
                   + N*b*fierz.super_sum.GetBinContent(i);
         if (eY > 0) {
@@ -134,11 +134,27 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
     return chi2;
 }
 
-
 double UCNAFierzFitter::combined_chi2(double A, double b, double N)
 {
 	double chi2 = asymmetry_chi2(A,b) + supersum_chi2(b,N);
     return chi2;
+}
+
+double UCNAFierzFitter::compute_fit(double A, double b, double N)
+{
+	double chi2 = 0;
+    int n = data.asymmetry.GetNbinsX();
+	for (int i = 0; i < n; i++)
+	{
+		double E = data.asymmetry.GetBinCenter(i);
+        if (E < min or E > max)
+            continue;
+		double Y = data.super_sum.GetBinContent(i);
+		double eY = data.super_sum.GetBinError(i);
+        double f  = N*sm.super_sum.GetBinContent(i) 
+                  + N*b*fierz.super_sum.GetBinContent(i);
+        fit.super_sum.SetBinError(i,f);
+	}
 }
 
 double asymmetry_fit_func(double *, double *)
