@@ -775,11 +775,9 @@ double UCNAmodel::compute_asymmetry(double n[2][2]) {
     double D = (Y0 - Y1)/2;
     double S = (Y0 + Y1)/2;
     double A = D / S;
-    if (IsNaN(A)) {
+    if (IsNaN(A))
         cout<<"Warning: Asymmetry is not a number.\n";
-        S = -1;
-    }
-    return S;
+    return A;
 }
 
 double UCNAmodel::compute_asymmetry(double n[2][2], double e[2][2], double& A, double& sigmaA) {
@@ -788,7 +786,7 @@ double UCNAmodel::compute_asymmetry(double n[2][2], double e[2][2], double& A, d
     A = compute_asymmetry(n);
     sigmaA = Sqrt(1 + A*A) * sigmaS/S;
     if (IsNaN(sigmaA)) {
-        cout<<"Warning: Asymmetry error multiplier is not a number.\n";
+        cout<<"Warning: Asymmetry error is not a number.\n";
         sigmaA = -1;
     }
     return A;
@@ -802,7 +800,7 @@ double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
     asymmetry.SetBinError(bin,sigmaA);
 
     if (bin % 10 == 0) {
-        double KE = super_sum.GetBinCenter(bin);
+        double KE = asymmetry.GetBinCenter(bin);
         cout<<"Status: Asymmetry bin "<<bin<<" and KE "
             <<KE<<" set to "<<A<<"("<<sigmaA<<").\n";
     }

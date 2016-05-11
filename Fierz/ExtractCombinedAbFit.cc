@@ -41,9 +41,9 @@ int KEbins = 150;                           /// number of bins to use fit spectr
 double KEmin = 50;                          /// min kinetic energy for plots
 double KEmax = 650;                         /// max kinetic range for plots
 double KEmin_A = 120;                       /// min kinetic energy for asymmetry fit
-double KEmax_A = 670;                       /// max kinetic range for asymmetry fit
+double KEmax_A = 650;                       /// max kinetic range for asymmetry fit
 double KEmin_b = 120;                       /// min kinetic energy for Fierz fit
-double KEmax_b = 670;                       /// max kinetic range for Fierz fit
+double KEmax_b = 650;                       /// max kinetic range for Fierz fit
 double fedutial_cut = 50;                   /// radial cut in millimeters 
 double fidcut2 = 50*50;                     /// mm^2 radial cut
 
@@ -628,13 +628,14 @@ void save_root_data(TString filename, TString title, TString name,
     }
 	tfile->Close();
 }
-
+#endif
 /**
  * Fill in asymmetry and super_ratio, and super sums from simulation data.
  * Use wild card * in filename where data is split up over many files
  * and they get Tchained together.
  * XXX MOVED TO UCNAhistogram::save() and UCNAmodel::save()
  */
+#if 0
 int fill_simulation(TString filename, TString title, TString name, 
                     TH1D* rates[2][2], TH1D* super_sum, TH1D* asymmetry)
 {
@@ -742,8 +743,8 @@ int fill_simulation(TString filename, TString title, TString name,
 	cout<<"      Efficiencies of cuts:  "<<(100.0*nSimmed)/double(nEvents)<<"%\n";
 
 	/// compute and normalize super sum
-    compute_super_sum(rates, super_sum);
-    compute_asymmetry(rates, asymmetry);
+    //compute_super_sum(rates, super_sum);
+    //compute_asymmetry(rates, asymmetry);
 
     super_sum.normalize(min_E, max_E);
     //normalize(asymmetry, min_E, max_E);
@@ -1008,7 +1009,6 @@ int main(int argc, char *argv[])
 	/// Actually do the combined fitting.
 	//ucna.combined_fit(cov, &asymmetry_func, &supersum_func, &combined_chi2);
 	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
-
     double A = asymmetry_func.GetParameter(0);
     double b = asymmetry_func.GetParameter(1);
     double N = asymmetry_func.GetParameter(2);
