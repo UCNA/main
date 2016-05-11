@@ -937,7 +937,7 @@ int main(int argc, char *argv[])
     /// Load the files that already contain data super histogram.
     for (int side=EAST; side<=WEST; side++)
         for (int afp=EAST; afp<=WEST; afp++) {
-            TString s = side? "W":"E", a = afp? "on":"off";
+            TString s = side? "W":"E", a = afp? "On":"Off";
             TString title = "2010 final official "+s+" afp "+a;
             TString name = "hTotalEvents_"+s+"_"+a+";1";
             int entries = ucna.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
