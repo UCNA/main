@@ -447,4 +447,132 @@ double GetEntries(TH1D* histogram, double min, double max);
 
 
 
+/**
+ * compute_corrected_asymmetry
+ * 
+ * @param rate_histogram[2][2]
+ * @param correction
+TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction) 
+{
+    TH1D *asymmetry_histogram = new TH1D(*(rate_histogram[0][0]));
+    int bins = asymmetry_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins; bin++) 
+	{
+        double r[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+        double sqrt_super_ratio = Sqrt((r[0][0] * r[1][1]) / (r[0][1] * r[1][0]));
+        if ( IsNaN(sqrt_super_ratio) ) 
+            sqrt_super_ratio = 0;
+		double denom = 1 + sqrt_super_ratio;
+        double asymmetry = (1 - sqrt_super_ratio) / denom;
+		double sqrt_inverse_sum = Sqrt(1/r[0][0] + 1/r[1][1] + 1/r[0][1] + 1/r[1][0]);
+		double asymmetry_error = sqrt_inverse_sum * sqrt_super_ratio / (denom * denom);  
+		double K = asymmetry_histogram->GetBinCenter(bin);
+		double E = K + m_e;                   /// electron energy
+		double p = Sqrt(E*E - m_e*m_e);       /// electron momentum
+		double beta = p/E;				      /// v/c
+        asymmetry_histogram->SetBinContent(bin, -2*asymmetry/beta);
+        asymmetry_histogram->SetBinError(bin, 2*asymmetry_error/beta);
+        asymmetry_histogram->Multiply(correction);
+        //printf("Setting bin content for corrected asymmetry bin %d, to %f\n", bin, asymmetry);
+    }
+    return asymmetry_histogram;
+}
+*/
+
+
+TH1D* compute_rate_function(TH1D* rate_histogram[2][2], 
+                            double (*rate_function)(double r[2][2]))
+{
+    TH1D *out_histogram = new TH1D(*(rate_histogram[0][0]));
+    int bins = out_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+1; bin++) {
+        double r[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+
+        double value = rate_function(r);
+        out_histogram->SetBinContent(bin, value);
+    }
+    return out_histogram;
+}
+
+
+TH1D* compute_rate_function(TH1D* rate_histogram[2][2], 
+                            double (*rate_function)(double r[2][2]),
+                            double (*error_function)(double r[2][2])) 
+{
+    TH1D *out_histogram = new TH1D(*(rate_histogram[0][0]));
+    int bins = out_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+2; bin++) {
+        double r[2][2];
+        double e[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++) {
+                r[side][spin] = rate_histogram[side][spin]->GetBinContent(bin);
+                e[side][spin] = rate_histogram[side][spin]->GetBinError(bin);
+            }
+
+        double value = 0;
+        if (rate_function)
+            value = rate_function(r);
+
+        double error = 0; 
+        if (error_function)
+            error = error_function(e);
+
+        out_histogram->SetBinContent(bin, value);
+        out_histogram->SetBinError(bin, error);
+    }
+    return out_histogram;
+}
+
+
+/*
+TH1D* compute_rate_error_function(TH1D* rate_histogram[2][2], 
+                                  double (*rate_error_function)(double r[2][2])) 
+{
+    TH1D *out_histogram = new TH1D(*(rate_histogram[0][0]));
+    int bins = out_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+2; bin++) {
+        double sr[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                sr[side][spin] = rate_histogram[side][spin]->GetBinError(bin);
+    }
+    return out_histogram;
+}
+*/
+
+
+double bonehead_sum(double r[2][2]) {
+    return r[0][0]+r[0][1]+r[1][0]+r[1][1];
+}
+
+double bonehead_asymmetry(double r[2][2]) {
+    return (r[0][0]-r[0][1])/(r[1][0]+r[1][1]);
+}
+
+double super_ratio_asymmetry(double r[2][2]) {
+    double super_ratio = (r[0][0]*r[1][1])/(r[0][1]*r[1][0]);
+    double sqrt_super_ratio = Sqrt(super_ratio);
+    if ( IsNaN(sqrt_super_ratio) ) 
+        sqrt_super_ratio = 0;
+    return (1-sqrt_super_ratio)/(1+sqrt_super_ratio);
+}
+
+
+/*
+double super_sum_error(double r[2][2]) {
+    double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
+    double sqrt_super_ratio = Sqrt(super_ratio);
+    if ( IsNaN(sqrt_super_ratio) ) 
+        sqrt_super_ratio = 0;
+    //return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
+}
+*/
+
 #endif // FIERZ_FITTER
