@@ -115,7 +115,7 @@ void draw_histogram(TH1D* histogram, TString name, TString title,
 
     /// Make a pretty legend.
     if (not legend) {
-        TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
+        legend = new TLegend(0.6,0.8,0.7,0.6);
         legend->SetTextSize(0.03);
         legend->SetBorderSize(0);
     }
