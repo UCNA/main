@@ -95,321 +95,10 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
 	chi2 = ucna.combined_chi2(A,b,N);
 }
 
-#if 0 
-/** 
- *load the files that contain data histograms
- * XXX MOVED TO UCNAhistogram::fill
- */
-int fill_data(TString filename, TString title, 
-              TString name, TH1D* histogram)
-{
-	TFile* tfile = new TFile(data_dir + filename);
-	if (tfile->IsZombie()) {
-		cout<<"Error loading "<<title<<":\n";
-		cout<<"File not found: "<<filename<<".\n";
-		return 0;
-	}
-
-    if (histogram) {
-		cout<<"Warning: Histogram "<<title<<" already exists and is being ignored.\n";
-        //cout<<histogram<<endl;
-        //delete histogram;
-    }
-
-    histogram = (TH1D*)tfile->Get(name);
-    if (not histogram) {
-		cout<<"Error: In file "<<filename<<":\n";
-		cout<<"       Error getting "<<title<<".\n";
-		cout<<"       Cannot find histogram named "<<name<<".\n";
-        return 0;
-    }
-
-	int entries=histogram->GetEntries();
-	cout<<"Number of entries in "<<title<<" is "<<entries<<".\n";
-    return entries;
-}
-
-
-/**
- * Save root data
- * XXX MOVED TO UCNAhistogram::save() and UCNAmodel::save()
- */
-void save_root_data(TString filename, TString title, TString name, 
-                   TH1D* rates[2][2], TH1D* super_sum, TH1D* asymmetry)
-{
-    TString filepath = root_output_dir + filename;
-	TFile* tfile = new TFile(filepath, "recreate");
-	if (tfile->IsZombie()) {
-		cout<<"Error: Problem saving "<<title<<":\n";
-		cout<<"       Cannot create file "<<filename<<".\n";
-		cout<<"       in path "<<mc_dir<<".\n";
-        cout<<"Aborting...\n";
-		exit(1);
-	}
-
-    if (test_construction(rates, super_sum)) {
-        for (int side=0; side<2; side++)
-            for (int spin=0; spin<2; spin++) {
-                rates[side][spin]->SetDirectory(tfile);
-                rates[side][spin]->Write();
-            }
-    } else {
-        cout<<"Error: Rates or super sum for "<<name<<":\n";
-        cout<<"       Histogram not constructed.\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }
-
-    if (super_sum) {
-        super_sum->SetDirectory(tfile);
-        super_sum->Write();
-    } else {
-        cout<<"Error: Super sum for "<<name<<":\n";
-        cout<<"       Histogram not constructed.\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }
-
-    if (asymmetry) {
-        asymmetry->SetDirectory(tfile);
-        asymmetry->Write();
-    } else {
-        cout<<"Error: Asymmetry for "<<name<<":\n";
-        cout<<"       Histogram not constructed.\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }
-
-    if (ntuple) {
-        tntuple->SetDirectory(mc_tfile);
-        tntuple->Write();
-    } else {
-        cout<<"Warning: Ntuple not set. Can't save data.\n";
-    }
-	tfile->Close();
-}
-#endif
-/**
- * Fill in asymmetry and super_ratio, and super sums from simulation data.
- * Use wild card * in filename where data is split up over many files
- * and they get Tchained together.
- * XXX MOVED TO UCNAhistogram::save() and UCNAmodel::save()
- */
-#if 0
-int fill_simulation(TString filename, TString title, TString name, 
-                    TH1D* rates[2][2], TH1D* super_sum, TH1D* asymmetry)
-{
-    if (not test_construction(rates, super_sum)) {
-        cout<<"Error: Rates or super sum for "<<name<<":\n";
-        cout<<"       Histogram not constructed.\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }
-
-    if (not asymmetry) {
-        cout<<"Error: Asymmetry for "<<name<<":\n";
-        cout<<"       Histogram not constructed.\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }
-
-    TString filepath = mc_dir + filename;
-	TFile* tfile = new TFile(filepath);
-	if (tfile->IsZombie()) {
-		cout<<"Error: Problem filling "<<title<<":\n";
-		cout<<"       File "<<filename<<" not found\n";
-		cout<<"       in path "<<mc_dir<<".\n";
-        cout<<"Aborting...\n";
-		exit(1);
-	}
-
-    TChain *chain = (TChain*)tfile->Get(name);
-    if (not chain) {
-		cout<<"Error: In file "<<filename<<":\n";
-		cout<<"       Cannot get "<<title<<":\n";
-		cout<<"       Cannot find chain or tree named "<<name<<".\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }
-
-	int nEvents = chain->GetEntries();
-	chain->SetBranchStatus("*",false);
-	chain->SetBranchStatus("PID",true);
-	chain->SetBranchStatus("side",true);
-	chain->SetBranchStatus("type",true);
-	chain->SetBranchStatus("Erecon",true);
-	chain->SetBranchStatus("primMomentum",true);
-    chain->SetBranchStatus("ScintPosAdjusted",true);
-    chain->SetBranchStatus("ScintPosAdjusted",true);
-
-	//TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy"); */
-	TNtuple* tntuple = 0;
-
-	unsigned int nSimmed = 0;	/// events have been simulated after cuts
-    int PID, side, type;
-    double energy;
-    double mwpcPosW[3], mwpcPosE[3], primMomentum[3];
-
-    chain->SetBranchAddress("PID",&PID);
-    chain->SetBranchAddress("side",&side);
-    chain->SetBranchAddress("type",&type);
-    chain->SetBranchAddress("Erecon",&energy);
-	chain->SetBranchAddress("primMomentum",primMomentum);
-    chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
-    chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
-
-    for (int evt=0; evt<nEvents; evt++) {
-        chain->GetEvent(evt);
-
-        /// cut out bad events
-        if (PID!=1) 
-            continue;
-
-        /// radial fiducial cut
-        double radiusW = mwpcPosW[0]*mwpcPosW[0] + mwpcPosW[1]*mwpcPosW[1]; 
-        double radiusE = mwpcPosE[0]*mwpcPosE[0] + mwpcPosE[1]*mwpcPosE[1]; 
-        if (radiusW > fidcut2 or radiusE > fidcut2) 
-            continue;
-
-        /// Type 0, Type I, Type II/III events 
-        if (type<4) { 
-            /// fill with loading efficiency 
-            double p = random(0,1);
-			double afp = (p < afp_off_prob)? -1 : +1;
-            bool spin = (afp < 0)? EAST : WEST;
-            //cout<<"energy: "<<energy<<" side: "<<"side: "<<side
-            //         <<" spin: "<<spin<<" afp: "<<afp<<" p: "<<p<<".\n";
-            rates[side][spin]->Fill(energy, 1);
-            if (tntuple)
-			    tntuple->Fill(side, spin, energy);
-			nSimmed++;
-        }
-        /*  hEreconALL->Fill(Erecon);
-        if (type==0) 
-            hErecon0->Fill(Erecon);
-        else if (type==1) 
-            hErecon1->Fill(Erecon);
-        else if (type==2 or type==3) 
-            hErecon23->Fill(Erecon); */
-
-		/// break when enough data has been generated.
-		if(nSimmed >= nToSim)
-			break;
-    }    
-     
-	cout<<"Total number of Monte Carlo entries:\n";
-	cout<<"      Entries without cuts:  "<<nEvents<<endl;
-	cout<<"      Entries with cuts:     "<<nSimmed<<endl;
-	cout<<"      Efficiencies of cuts:  "<<(100.0*nSimmed)/double(nEvents)<<"%\n";
-
-	/// compute and normalize super sum
-    compute_super_sum(rates, super_sum);
-    compute_asymmetry(rates, asymmetry);
-
-    //super_sum.normalize(min_E, max_E);
-    //normalize(asymmetry, min_E, max_E);
-    //for (int side=0; side<2; side++)
-    //    for (int spin=0; spin<2; spin++)
-    //        normalize(rates[side][spin], min_E, max_E);
-
-    return nSimmed;
-}
-#endif
-
-#if 0
-// TODO move to UCNAmodel
-/// compute little b factor using the Fierz ratio method
-TH1D* compute_fierz_ratio(TH1D* data_histogram, TH1D* sm_histogram) {
-    TH1D *fierz_ratio_histogram = new TH1D(*data_histogram);
-	fierz_ratio_histogram->SetName("fierz_ratio_histogram");
-    //fierz_ratio_histogram->Divide(ucna.data.super_sum, ucna.sm.super_sum);
-    int bins = data_histogram->GetNbinsX();
-    for (int bin = 1; bin < bins+1; bin++) {
-		double X = data_histogram->GetBinContent(bin);
-		double Y = sm_histogram->GetBinContent(bin);
-		double Z = Y>0? X/Y : 0;
-
-		fierz_ratio_histogram->SetBinContent(bin, Z);
-
-		double x = data_histogram->GetBinError(bin);
-		double y = sm_histogram->GetBinError(bin);
-		fierz_ratio_histogram->SetBinError(bin, Z*Sqrt(x*x/X/X + y*y/Y/Y));
-	}
-    fierz_ratio_histogram->GetYaxis()->SetRangeUser(0.9,1.1); // Set the range
-    fierz_ratio_histogram->SetTitle("Ratio of UCNA data to Monte Carlo");
-	cout<<data_histogram->GetNbinsX()<<endl;
-	cout<<sm_histogram->GetNbinsX()<<endl;
-
-    /// fit the Fierz ratio 
-	char fit_str[1024];
-	double expected_fierz = evaluate_expected_fierz(0,0,KEmin,KEmax,18112); /// TODO I'm not sure the 0,0 is right!
-    sprintf(fit_str, "1+[0]*(%f/(%f+x)-%f)", m_e, m_e, expected_fierz);
-    TF1 *fierz_fit = new TF1("fierz_fit", fit_str, KEmin_b, KEmax_b);
-    fierz_fit->SetParameter(0,0);
-	fierz_ratio_histogram->Fit(fierz_fit, "Sr");
-
-	/// A fit histogram for output to gnuplot
-    TH1D *fierz_fit_histogram = new TH1D(ucna.data.super_sum);
-	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
-		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
-
-	/// compute chi squared
-    double chisq = fierz_fit->GetChisquare();
-    double NDF = fierz_fit->GetNDF();
-	char b_str[1024];
-	sprintf(b_str, "b = %1.3f #pm %1.3f", fierz_fit->GetParameter(0), fierz_fit->GetParError(0));
-	char chisq_str[1024];
-    printf("Chi^2 / (NDF-1) = %f / %f = %f\n", chisq, NDF-1, chisq/(NDF-1));
-	sprintf(chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(NDF-1));
-
-	/// draw the ratio plot
-	fierz_ratio_histogram->SetStats(0);
-    fierz_ratio_histogram->Draw();
-
-	/// draw a legend on the plot
-    TLegend* ratio_legend = new TLegend(0.3,0.85,0.6,0.65);
-    ratio_legend->AddEntry(fierz_ratio_histogram, "Data ratio to Monte Carlo (Type 0)", "l");
-    ratio_legend->AddEntry(fierz_fit, "Fierz term fit", "l");
-    ratio_legend->AddEntry((TObject*)0, "1+b(#frac{m_{e}}{E} - #LT #frac{m_{e}}{E} #GT)", "");
-    ratio_legend->AddEntry((TObject*)0, b_str, "");
-    ratio_legend->AddEntry((TObject*)0, chisq_str, "");
-    ratio_legend->SetTextSize(0.03);
-    ratio_legend->SetBorderSize(0);
-    ratio_legend->Draw();
-
-	/// output for root
-    TString fierz_ratio_pdf_filename = plots_dir + "fierz_ratio.pdf";
-    TCanvas *canvas = new TCanvas("fierz_canvas", "Fierz component of energy spectrum");
-    if (not canvas) {
-        cout<<"Can't open new canvas.\n";
-        exit(0);
-    }
-    canvas->SaveAs(fierz_ratio_pdf_filename);
-
-	/// output for gnuplot
-	output_data_file("super-sum-data", data_histogram, 1, 1000);
-	output_data_file("super-sum-mc", sm_histogram, 1, 1000);
-	output_data_file("fierz-ratio", fierz_ratio_histogram, 1, 1);
-	output_data_file("fierz-fit", fierz_fit_histogram, 1, 1);
-
-	TFile* ratio_tfile = new TFile("Fierz/ratio.root", "recreate");
-	if (ratio_tfile->IsZombie())
-    {
-		cout<<"Can't recreate MC file.\n";
-		exit(1);
-	}
-	fierz_ratio_histogram->SetDirectory(ratio_tfile);
-	fierz_ratio_histogram->Write();
-	ratio_tfile->Close();
-
-    return fierz_ratio_histogram;
-}
-    
-#endif
 
 /// DISPLAYING AND OUTPUTTING
 void draw_histogram(TH1D* histogram, TString name, TString title,
-                    TCanvas* canvas = 0, /*TLegend* legend,*/ TString draw = "", int color = 0, int marker = 0)
+                    TCanvas* canvas = 0, TLegend* legend = 0, TString draw = "", int color = 0, int marker = 0)
 {
     if (not canvas)
         canvas = new TCanvas(name + "_canvas", title + " Canvas");
@@ -425,21 +114,17 @@ void draw_histogram(TH1D* histogram, TString name, TString title,
     histogram->Draw(draw);
 
     /// Make a pretty legend.
-    /*
     if (not legend) {
         TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
-        //legend->AddEntry(&ucna.data.super_sum, "Type 0 super sum", "l");
-        //legend->AddEntry(&ucna.sm.super_sum, "Monte Carlo super sum", "p");
         legend->SetTextSize(0.03);
         legend->SetBorderSize(0);
     }
     legend->AddEntry(histogram, title, "p");
     legend->Draw();
-    */
 
     /// Save the data and Mote Carlo plots.
-    TString filename = plots_dir + name + ".pdf";
-    canvas->SaveAs(filename);
+    //TString filename = plots_dir + name + ".pdf";
+    //canvas->SaveAs(filename);
 }
 
 
@@ -452,36 +137,6 @@ int main(int argc, char *argv[])
 
     /// LOAD 2010 UCNA DATA
 
-    #if 0
-    /// Load the files that already contain data asymmetry histogram.
-    fill_data("Range_0-1000/CorrectAsym/CorrectedAsym.root",
-              "2010 final official asymmetry",
-              "hAsym_Corrected_C",
-              &ucna.data.asymmetry);
-
-    /// Load the files that already contain data super histogram.
-    fill_data("OctetAsym_Offic.root",
-              "2010 final official supersum",
-              "Total_Events_SuperSum",
-              &ucna.data.super_sum);
-
-    /// Load the files that already contain data super histogram.
-    for (int side=EAST; side<=WEST; side++)
-        for (int afp=EAST; afp<=WEST; afp++) {
-            TString s = side? "W":"E", a = afp? "on":"off";
-            TString title = "2010 final official "+s+" afp "+a;
-            TString cut = "hTotalEvents_"+s+"_"+a+";1";
-            int entries = fill_data("OctetAsym_Offic.root", 
-                                    title, cut, ucna.data.counts[side][afp]);
-            if (entries) {
-                cout<<"Status: Number of entries in "<<(side? "west":"east")
-                    <<" side with afp "<<a<<" is "<<entries<<".\n";
-            }
-            else
-                cout<<"Error: found no events in "<<title<<".\n";
-                /// TODO figure out where these went.
-        }
-    #endif
     /// Load the files that already contain data asymmetry histogram.
     ucna.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
@@ -512,24 +167,6 @@ int main(int argc, char *argv[])
 
 
     /// LOAD MONTE CARLO SIMULATION EVENTS
-
-    #if 0
-    /// Load Monte Carlo simulated Standard Model events
-    fill_simulation("SimAnalyzed_Beta_0.root",
-                    "Monte Carlo Standard Model beta spectrum",
-                    "SimAnalyzed",
-                    ucna.sm.counts,
-					&ucna.sm.super_sum, 
-                    &ucna.sm.asymmetry);
-
-    /// Load Monte Carlo simulated Fierz events
-    fill_simulation("SimAnalyzed_Beta_fierz_0.root",
-                    "Monte Carlo Fierz beta spectrum",
-                    "SimAnalyzed",
-                    ucna.fierz.counts,
-					&ucna.fierz.super_sum, 
-                    &ucna.fierz.asymmetry);
-    #endif
 
     /// Load Monte Carlo simulated Standard Model events
     ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_0.root",
@@ -710,34 +347,21 @@ int main(int argc, char *argv[])
 
 
     /// DISPLAYING AND OUTPUTTING
+    /*
     TCanvas *canvas = new TCanvas("fierz_fitter_canvas",
                                   "Combined Fierz component of energy spectrum");
     if (not canvas) {
         cout<<"Error: Can't open new canvas.\n";
         exit(1);
     }
-
-/*
-	ucna.fierz.super_sum.SetStats(0);
-    ucna.fierz.super_sum.SetLineColor(3);
-    ucna.fierz.super_sum.Draw("");
-
-    TString fit_pdf_filename = plots_dir + "combined_fierz_fit_data.pdf";
-    ucna.sm.super_sum.SetLineColor(1);
-    ucna.sm.super_sum.Draw("Same");
-    canvas->SaveAs(fit_pdf_filename);
     */
+    TCanvas* canvas = 0;
+    TLegend* legend = 0;
 
-    /*
-    draw_histogram(&ucna.sm.asymmetry, 
-                   "sm_asymmetry", 
-                   "Combined Asymmetry", 
-                   canvas, "", 3, 0);
-    */
     draw_histogram(&ucna.data.asymmetry, 
                    "data_asymmetry", 
                    "UCNA 2010 Asymmetry", 
-                   canvas,"",1,0);
+                   canvas,legend,"",1,0);
 
     TString asymmetry_pdf_filename = plots_dir + "data_asymmetry.pdf";
     canvas->SaveAs(asymmetry_pdf_filename);
@@ -745,11 +369,11 @@ int main(int argc, char *argv[])
     draw_histogram(&ucna.sm.super_sum, 
                    "sm_supersum", 
                    "Standard Model Monte Carlo super sum", 
-                   canvas,"",4,0);
+                   canvas,legend,"",4,0);
     draw_histogram(&ucna.fierz.super_sum, 
                    "fierz_supersum", 
                    "Fierz Monte Carlo super sum", 
-                   canvas,"Same",1,0);
+                   canvas,legend,"Same",1,0);
 
     TString monte_carlo_pdf_filename = plots_dir + "monte_carlo.pdf";
     canvas->SaveAs(monte_carlo_pdf_filename);
@@ -757,12 +381,12 @@ int main(int argc, char *argv[])
     draw_histogram(&ucna.data.super_sum, 
                    "data_supersum", 
                    "Data super sum", 
-                   canvas,"",2,0);
+                   canvas,legend,"",2,0);
 
     draw_histogram(&ucna.fit.super_sum, 
                    "fit_supersum", 
                    "Fit super sum", 
-                   canvas,"Same",6,0);
+                   canvas,legend,"Same",6,0);
 
     TString data_supersum_pdf_filename = plots_dir + "data_supersum.pdf";
     canvas->SaveAs(data_supersum_pdf_filename);
