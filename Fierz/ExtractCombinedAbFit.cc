@@ -98,7 +98,8 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
 
 /// DISPLAYING AND OUTPUTTING
 void draw_histogram(TH1D* histogram, TString name, TString title,
-                    TCanvas* canvas = 0, TLegend* legend = 0, TString draw = "", int color = 0, int marker = 0)
+                    TCanvas* canvas, TLegend* legend, 
+                    TString draw = "", int color = 0, int marker = 0)
 {
     if (not canvas)
         canvas = new TCanvas(name + "_canvas", title + " Canvas");
@@ -114,13 +115,13 @@ void draw_histogram(TH1D* histogram, TString name, TString title,
     histogram->Draw(draw);
 
     /// Make a pretty legend.
-    if (not legend) {
-        legend = new TLegend(0.6,0.8,0.7,0.6);
+    if (legend) {
         legend->SetTextSize(0.03);
         legend->SetBorderSize(0);
+        legend->SetFillColor(0);
+        legend->AddEntry(histogram, title, "lep");
+        legend->Draw();
     }
-    legend->AddEntry(histogram, title, "p");
-    legend->Draw();
 
     /// Save the data and Mote Carlo plots.
     //TString filename = plots_dir + name + ".pdf";
@@ -347,49 +348,36 @@ int main(int argc, char *argv[])
 
 
     /// DISPLAYING AND OUTPUTTING
-    /*
-    TCanvas *canvas = new TCanvas("fierz_fitter_canvas",
-                                  "Combined Fierz component of energy spectrum");
-    if (not canvas) {
-        cout<<"Error: Can't open new canvas.\n";
-        exit(1);
-    }
-    */
-    TCanvas* canvas = 0;
-    TLegend* legend = 0;
+    TCanvas canvas("fierz_fitter_canvas",
+                   "Combined Fierz component of energy spectrum");
+    TLegend legend(0.55,0.65,0.85,0.85);
 
     draw_histogram(&ucna.data.asymmetry, 
                    "data_asymmetry", 
                    "UCNA 2010 Asymmetry", 
-                   canvas,legend,"",1,0);
-
-    TString asymmetry_pdf_filename = plots_dir + "data_asymmetry.pdf";
-    canvas->SaveAs(asymmetry_pdf_filename);
+                   &canvas,&legend,"",1,0);
+    canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
 
     draw_histogram(&ucna.sm.super_sum, 
                    "sm_supersum", 
                    "Standard Model Monte Carlo super sum", 
-                   canvas,legend,"",4,0);
+                   &canvas,&legend,"",4,0);
     draw_histogram(&ucna.fierz.super_sum, 
                    "fierz_supersum", 
                    "Fierz Monte Carlo super sum", 
-                   canvas,legend,"Same",1,0);
-
-    TString monte_carlo_pdf_filename = plots_dir + "monte_carlo.pdf";
-    canvas->SaveAs(monte_carlo_pdf_filename);
+                   &canvas,&legend,"Same",1,0);
+    canvas.SaveAs(plots_dir+"monte_carlo.pdf");
 
     draw_histogram(&ucna.data.super_sum, 
                    "data_supersum", 
                    "Data super sum", 
-                   canvas,legend,"",2,0);
+                   &canvas,&legend,"",2,0);
 
     draw_histogram(&ucna.fit.super_sum, 
                    "fit_supersum", 
                    "Fit super sum", 
-                   canvas,legend,"Same",6,0);
-
-    TString data_supersum_pdf_filename = plots_dir + "data_supersum.pdf";
-    canvas->SaveAs(data_supersum_pdf_filename);
+                   &canvas,&legend,"Same",6,0);
+    canvas.SaveAs(plots_dir+"data_supersum.pdf");
 
     /*
     /// Draw the data super sums
@@ -413,7 +401,7 @@ int main(int argc, char *argv[])
     legend->Draw();
 
     /// Save the data and Mote Carlo plots.
-    TString super_sum_pdf_filename = plots_dir + "super_sum_data.pdf";
+    TString super_sum_pdf_filename = plots_dir+"super_sum_data.pdf";
     canvas->SaveAs(super_sum_pdf_filename);
 */
 
