@@ -111,8 +111,8 @@ TF1* UCNAFierzFitter::combined_fit(
 	minuit->ExecuteCommand("SET PRINT", arglist, 1);
 
 	/// minimize
-	arglist[0] = 50;            /// number of function calls
-	arglist[1] = 0.1;           /// tolerance
+	arglist[0] = 5000;            /// number of function calls
+	arglist[1] = 0.001;           /// tolerance
 	minuit->ExecuteCommand("MIGRAD", arglist, nPar);
 
 	/// extract results from Minuit
@@ -739,16 +739,23 @@ double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, d
         for (int spin=0; spin<2; spin++) {
             double counts = n[side][spin];
             double sigma = e[side][spin];
-            if (sigma > 0) {
+            if (counts > 0) {
                 double alter = n[side?0:1][spin?0:1];   
-                if (counts > 0) {
+                if (sigma > 0) {
                     double var = sigma*sigma;
                     varS += var*alter/counts;  /// errors already set
                 }
                 else
                     varS += alter;             /// using Poisson stats
-            } else 
+            }        /*
+            } else {
                 cout<<"Warning: Negative number in super sum error.\n";
+                cout<<"         Counts for side "<<side<<" and spin "<<spin
+                    <<" are "<<counts<<" and sigma is "<<sigma<<".\n";
+                sigma = 0.3;
+                cout<<"         Setting to "<<sigma<<".\n";
+            }
+            */
         }
     }
 
@@ -981,6 +988,7 @@ void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Doub
 #endif
 
 
+/*
 double GetEntries(TH1D* histogram, double min, double max)
 {
 	double entries = histogram->GetEffectiveEntries();
@@ -992,8 +1000,10 @@ double GetEntries(TH1D* histogram, double min, double max)
 
 	return N;
 }
+*/
 
 
+/*
 double evaluate_expected_fierz(double min, double max, double integral_size = 1234) 
 {
     TH1D *h1 = new TH1D("beta_spectrum_fierz", 
@@ -1014,6 +1024,7 @@ double evaluate_expected_fierz(double min, double max, double integral_size = 12
 	}
 	return h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
 }
+*/
 
 
 /// beta spectrum with little b term
@@ -1058,18 +1069,24 @@ double beta_spectrum(const double *val, const double *par)
 }
 
 
-double evaluate_expected_fierz(double m, double n, double min, double max, double integral_size = 1234)
+double evaluate_expected_fierz(double _min, double _max) {
+    return evaluate_expected_fierz(0,1,_min,_max);
+}
+
+double evaluate_expected_fierz(double m, double n, double _min, double _max)
 {
+    int integral_size = 5512;
     // TODO These don't need to be pointers.
+    /*
     TH1D *h1 = new TH1D("beta_spectrum_fierz", 
                         "Beta spectrum with Fierz term", 
-                        integral_size, min, max);
+                        integral_size, _min, _max);
     TH1D *h2 = new TH1D("beta_spectrum", 
                         "Beta Spectrum", 
-                        integral_size, min, max);
-	for (int i = 0; i < integral_size; i++)
+                        integral_size, _min, _max);
+	for (int i = 1; i <= integral_size; i++)
 	{
-		double K = min + double(i)*(max-min)/integral_size;
+		double K = _min + double(i)*(_max-_min)/integral_size;
 		double par1[2] = {m, n};
 		double par2[2] = {0, 0};
 		double y1 = beta_spectrum(&K, par1);
@@ -1081,13 +1098,34 @@ double evaluate_expected_fierz(double m, double n, double min, double max, doubl
     delete h1;
     delete h2;
     return rv;
+    */
+    TH1D hmn("beta_spectrum_fierz", 
+             "Beta spectrum with Fierz term", 
+             integral_size, _min, _max);
+    TH1D h10("beta_spectrum", 
+             "Beta Spectrum", 
+             integral_size, _min, _max);
+	for (int bin = 1; bin <= integral_size; bin++)
+	{
+		//double K = _min + double(i)*(_max-_min)/integral_size;
+		double KE = hmn.GetBinCenter(bin);
+		double parmn[2] = {m, n};
+		double par10[2] = {0, 1};
+		double ymn = beta_spectrum(&KE, parmn);
+		double y10 = beta_spectrum(&KE, par10);
+		hmn.SetBinContent(bin, ymn);
+		h10.SetBinContent(bin, y10);
+	}
+	 return hmn.Integral(0, integral_size) / h10.Integral(0, integral_size);
 }
 
 
-double evaluate_expected_fierz(double min, double max)
+/*
+double evaluate_expected_fierz(double _min, double _max)
 {
-	return evaluate_expected_fierz(0, 1, min, max, 1234);
+	return evaluate_expected_fierz(0, 1, _min, _max);
 }
+*/
 
 
 TH1D* compute_rate_function(TH1D* rate_histogram[2][2], 

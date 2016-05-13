@@ -188,13 +188,13 @@ int main(int argc, char *argv[])
 
     /// Set up constants and vars
     TMatrixD cov(nPar,nPar);
-	double entries = ucna.data.super_sum.GetEffectiveEntries();
+	double full_entries = ucna.data.super_sum.GetEffectiveEntries();
 	//double A = -0.12;
 	//double N = GetEntries(&ucna.data.super_sum, KEmin, KEmax);
-    //double N = ucna.data.super_sum.GetEntries();
+    double cut_entries = ucna.data.super_sum.GetEntries();
 
     /// Set up the fit parameters.
-    TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, ucna.fit_min, ucna.fit_max, nPar);
+    TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, fit_min, fit_max, nPar);
     //TF1 supersum_func("asymmetry_fit_func", &supersum_fit_func, KEmin_b, KEmax_b, nPar);
     
     /// Setup the parameters.
@@ -210,18 +210,19 @@ int main(int argc, char *argv[])
 	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
     double A = asymmetry_func.GetParameter(0);
     double b = asymmetry_func.GetParameter(1);
-    double N = asymmetry_func.GetParameter(2);
-	ucna.compute_fit(b,N);
+    double C = asymmetry_func.GetParameter(2);
+	ucna.compute_fit(b,C);
 
 	/// Set all expectation values for this range.
     double nSpec = 4;
     TMatrixD expected(nSpec,nSpec);
 	for (int m=0; m<nSpec; m++)
 		for (int n=0; n<nSpec; n++)
-			expected[m][n] = evaluate_expected_fierz(m,n,ucna.fit_min,ucna.fit_max,5112);
+			expected[m][n] = evaluate_expected_fierz(m,n,fit_min,fit_max);
 	
 	/// Calculate the predicted inverse covariance matrix for this range.
 	TMatrixD p_cov_inv(nPar,nPar);
+    double N = cut_entries;
 	for (int i=0; i<nPar; i++)
 		for (int j=0; j<nPar; j++)
 	        p_cov_inv[i][j] = 0;
@@ -247,13 +248,14 @@ int main(int argc, char *argv[])
     int cl = 14;
     cout<<setprecision(5);
 	cout<<" ENERGY RANGE:\n";
-	cout<<"    Full Energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
-	cout<<"    Full Energy range is "<<fit_min<<" - "<<fit_max<<" keV.\n";
+	cout<<"    Full energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
+	cout<<"    Fit energy range is "<<fit_min<<" - "<<fit_max<<" keV.\n";
 	//cout<<"    Energy range for A fit is "<<KEmin_A<<" - "<<KEmax_A<<" keV.\n";
 	//cout<<"    Energy range for b fit is "<<KEmin_b<<" - "<<KEmax_b<<" keV.\n";
-	cout<<"    Number of counts in full data is "<<(int)entries<<".\n";
-	cout<<"    Number of counts in energy range is "<<(int)N<<".\n";
-	cout<<"    Efficiency energy cut is "<< N/entries*100<<"%.\n";
+	cout<<"    Number of counts in full data is "<<(int)full_entries<<".\n";
+	cout<<"    Number of counts in energy range is "<<(int)cut_entries<<".\n";
+	cout<<"    Number of fit counts in full range is "<<N<<".\n";
+	cout<<"    Efficiency energy cut is "<< cut_entries/full_entries*100<<"%.\n";
 
 	/// Output the fit covariance details.
 	cout<<"\n FIT COVARIANCE MATRIX\n";
@@ -355,8 +357,12 @@ int main(int argc, char *argv[])
 
     draw_histogram(&ucna.data.asymmetry, 
                    "data_asymmetry", 
-                   "UCNA 2010 Asymmetry", 
+                   "UCNA 2010 #Lambda", 
                    &canvas,&legend,"",1,0);
+    draw_histogram(&ucna.fit.asymmetry, 
+                   "fit_asymmetry", 
+                   "Fit asymmetry", 
+                   &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
 
     draw_histogram(&ucna.sm.super_sum, 
@@ -366,14 +372,13 @@ int main(int argc, char *argv[])
     draw_histogram(&ucna.fierz.super_sum, 
                    "fierz_supersum", 
                    "Fierz Monte Carlo #Sigma", 
-                   &canvas,&legend,"Same",1,0);
+                   &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"monte_carlo.pdf");
 
     draw_histogram(&ucna.data.super_sum, 
                    "data_supersum", 
                    "UCNA 2010 #Sigma", 
-                   &canvas,&legend,"",2,0);
-
+                   &canvas,&legend,"",1,0);
     draw_histogram(&ucna.fit.super_sum, 
                    "fit_supersum", 
                    "Fit super sum", 

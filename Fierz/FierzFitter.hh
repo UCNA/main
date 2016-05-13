@@ -411,7 +411,7 @@ double fierz_beta_spectrum(const double *val, const double *par) ;
 
 
 /// beta spectrum with expected x^-n and beta^m
-double beta_spectrum(const double *val, const double *par) ;
+double beta_spectrum(const double *val, const double *par);
 /*
 {
 	const double K = val[0];                    	///< kinetic energy
@@ -433,7 +433,7 @@ double beta_spectrum(const double *val, const double *par) ;
 */
 
 
-double evaluate_expected_fierz(double m, double n, double min, double max, double) ;
+double evaluate_expected_fierz(double m, double n, double min, double max);
 /*
 {
     TH1D *h1 = new TH1D("beta_spectrum_fierz", "Beta spectrum with Fierz term", integral_size, min, max);
@@ -456,7 +456,7 @@ double evaluate_expected_fierz(double m, double n, double min, double max, doubl
 */
 
 
-double evaluate_expected_fierz(double min, double max, double) ;
+double evaluate_expected_fierz(double min, double max);
 /*
 {
 	return evaluate_expected_fierz(0, 1, min, max, integral_size);
