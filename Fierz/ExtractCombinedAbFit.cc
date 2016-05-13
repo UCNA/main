@@ -82,8 +82,8 @@ void output_data_file(TString name, TH1D* h, double ax, double ay)
 
 
 /// This needs to be static and global for MINUIT to work
-//UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
-UCNAFierzFitter ucna(KEbins,KEmin,KEmax,fit_bins, fit_min, fit_max);
+UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
+//UCNAFierzFitter ucna(KEbins,KEmin,KEmax,fit_bins, fit_min, fit_max);
 //ucna.fidcut2 = fedutial_cut*fedutial_cut;
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
 {

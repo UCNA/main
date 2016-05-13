@@ -176,10 +176,10 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
 {
     data.super_sum.test_compatable(sm.super_sum);
 	double chi2 = 0;
-    int n = data.asymmetry.GetNbinsX();
+    int n = data.super_sum.GetNbinsX();
 	for (int i = 0; i < n; i++)
 	{
-		double E = data.asymmetry.GetBinCenter(i);
+		double E = data.super_sum.GetBinCenter(i);
         if (E < min or E > max)
             continue;
 		double Y = data.super_sum.GetBinContent(i);
