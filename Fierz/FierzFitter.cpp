@@ -1,14 +1,15 @@
 #include "FierzFitter.hh"
 
 
-//bool UCNAhistogram::compatable(UCNAHistogram* other) {
-
+//bool UCNAhistogram::compatable(const UCNAHistogram& other) {
+    
 //}
 
 /// Normalize to units of probability per MeV over default range
 double UCNAhistogram::normalize() {
     double min = GetXaxis()->GetXmin();
     double max = GetXaxis()->GetXmax();
+    test_range();
     return normalize(min,max);
 }
 
@@ -37,7 +38,7 @@ double UCNAhistogram::normalize(double min, double max)
     for (int bin=bin_min; bin<bin_max; bin++)
     {
         double differential = GetBinContent(bin)
-                            * GetBinWidth(bin);
+               ;   //             * GetBinWidth(bin);
         if (IsNaN(differential))
             cout<<"Warning: differential is not a number.\n";
         else
@@ -177,9 +178,9 @@ void UCNAFierzFitter::compute_fit(/*double A,*/ double b, double N)
         double f  = N*(pSM + b*pF);
         fit.super_sum.SetBinContent(i,f);
 
-        double eSM = sm.super_sum.GetBinContent(i);
-        double eF = fierz.super_sum.GetBinContent(i);
-        double ef = N*Sqrt(eSM*eSM + b*b+eF*eF);
+        double eSM = sm.super_sum.GetBinError(i);
+        double eF = fierz.super_sum.GetBinError(i);
+        double ef = N*Sqrt(eSM*eSM + b*b*eF*eF);
         fit.super_sum.SetBinError(i,ef);
 	}
 }
