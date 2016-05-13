@@ -153,8 +153,7 @@ struct UCNAmodel {
     double KEmin_b;            /// min kinetic energy for Fierz fit
     double KEmax_b;            /// max kinetic range for Fierz fit
     */
-    double fedutial_cut = 50;  /// radial cut in millimeters 
-    double fidcut2 = 50*50;    /// mm^2 radial cut
+    //double fedutial_cut = 50;  /// radial cut in millimeters 
 
     /// set up free fit parameters with best guess
     static const int nPar = 3;
@@ -182,13 +181,13 @@ struct UCNAmodel {
         rand(0),
         super_ratio(name+"_super_ratio",title+" Super Ratio",bins,min,max),
         super_sum(name+"_super_sum",title+" Super Sum",bins,min,max),
-        asymmetry(name+"_asymmetry",title+" Asymmetry",bins,min,max),
+        asymmetry(name+"_asymmetry",title+" Asymmetry",bins,min,max)
         /*
         KEbins(0), KEmin(min), KEmax(max),
         KEbins_A(0), KEmin_A(min), KEmax_A(max),
         KEbins_b(0), KEmin_b(min), KEmax_b(max),
         */
-        fedutial_cut(0), fidcut2(0)//, bin_resolution(0)
+        //fedutial_cut(0), fidcut2(0)//, bin_resolution(0)
     {
         assert(min < max);
         for (int side = 0; side < 2; side++) {
@@ -293,6 +292,8 @@ struct UCNAFierzFitter {
     UCNAmodel fierz;        /// Fierz (Scaler + tensor) Monte Carlo spectrum
     UCNAmodel fit;          /// Vector + axial + Fierz Monte Carlo best fit
 
+    double fidcut2;         /// mm^2 radial cut
+
     UCNAFierzFitter(int bins, double min, double max)
       : bins(bins), min(min), max(max),
         fit_bins(bins), fit_min(min), fit_max(max),
@@ -313,7 +314,8 @@ struct UCNAFierzFitter {
         sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
         axial("ucna_axial_", "Axial-vector Monte Carlo", bins, min, max),
         fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
-        fit("ucna_fit_", "Standard Model + Fierz best fit", fit_bins, fit_min, fit_max) 
+        fit("ucna_fit_", "Standard Model + Fierz best fit", fit_bins, fit_min, fit_max),
+        fidcut2(0)
     { assert(min < max); }
 /*
     UCNAFierzFitter(double min, double max, double fit_min, double fit_max)

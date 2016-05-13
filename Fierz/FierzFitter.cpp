@@ -385,6 +385,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
             continue;
 
         /// radial fiducial cut
+        double fidcut2 = 50 * 50; // TODO !!!! VERY HARD CODED 
+        assert(fidcut2 > 0);
         double radiusW = mwpcPosW[0]*mwpcPosW[0] + mwpcPosW[1]*mwpcPosW[1]; 
         double radiusE = mwpcPosE[0]*mwpcPosE[0] + mwpcPosE[1]*mwpcPosE[1]; 
         if (radiusW > fidcut2 or radiusE > fidcut2) 

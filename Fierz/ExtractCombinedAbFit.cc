@@ -34,20 +34,13 @@ using std::cout;
 using namespace TMath;
 
 /// cuts and settings
-double KEmin = 200;               /// min kinetic energy for plots
-double KEmax = 700;               /// max kinetic range for plots
+double KEmin = 0;               /// min kinetic energy for plots
+double KEmax = 800;               /// max kinetic range for plots
 int KEbins=(KEmax-KEmin)/10;      /// number of bins to use fit spectral plots
 double fit_min = 200;             /// min kinetic energy for plots
 double fit_max = 700;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
-/*
-double KEmin_A = KEmin;           /// min kinetic energy for asymmetry fit
-double KEmax_A = KEmax;           /// max kinetic range for asymmetry fit
-double KEmin_b = KEmin;           /// min kinetic energy for Fierz fit
-double KEmax_b = KEmax;           /// max kinetic range for Fierz fit
-*/
-double fedutial_cut = 50;         /// radial cut in millimeters 
-double fidcut2 = 50*50;           /// mm^2 radial cut
+///double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
 
 
 /// set up free fit parameters with best guess
@@ -91,6 +84,7 @@ void output_data_file(TString name, TH1D* h, double ax, double ay)
 /// This needs to be static and global for MINUIT to work
 //UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
 UCNAFierzFitter ucna(KEbins,KEmin,KEmax,fit_bins, fit_min, fit_max);
+//ucna.fidcut2 = fedutial_cut*fedutial_cut;
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
 {
     assert(n==3);
