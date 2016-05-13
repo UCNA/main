@@ -34,18 +34,21 @@ using std::cout;
 using namespace TMath;
 
 /// cuts and settings
-//static unsigned nToSim = 5e7;				/// how many triggering events to simulate
-//static double afp_off_prob = 1/1.68; 	    /// afp off probability per neutron (0.68/1.68 for on)
-int KEbins = 150;                           /// number of bins to use fit spectral plots
+double KEmin = 200;               /// min kinetic energy for plots
+double KEmax = 700;               /// max kinetic range for plots
+int KEbins=(KEmax-KEmin)/10;      /// number of bins to use fit spectral plots
+double fit_min = 200;             /// min kinetic energy for plots
+double fit_max = 700;             /// max kinetic range for plots
+int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
+/*
+double KEmin_A = KEmin;           /// min kinetic energy for asymmetry fit
+double KEmax_A = KEmax;           /// max kinetic range for asymmetry fit
+double KEmin_b = KEmin;           /// min kinetic energy for Fierz fit
+double KEmax_b = KEmax;           /// max kinetic range for Fierz fit
+*/
+double fedutial_cut = 50;         /// radial cut in millimeters 
+double fidcut2 = 50*50;           /// mm^2 radial cut
 
-double KEmin = 120;                         /// min kinetic energy for plots
-double KEmax = 650;                         /// max kinetic range for plots
-double KEmin_A = 120;                       /// min kinetic energy for asymmetry fit
-double KEmax_A = 650;                       /// max kinetic range for asymmetry fit
-double KEmin_b = 120;                       /// min kinetic energy for Fierz fit
-double KEmax_b = 650;                       /// max kinetic range for Fierz fit
-double fedutial_cut = 50;                   /// radial cut in millimeters 
-double fidcut2 = 50*50;                     /// mm^2 radial cut
 
 /// set up free fit parameters with best guess
 static const int nPar = 3;
@@ -86,7 +89,8 @@ void output_data_file(TString name, TH1D* h, double ax, double ay)
 
 
 /// This needs to be static and global for MINUIT to work
-UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
+//UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
+UCNAFierzFitter ucna(KEbins,KEmin,KEmax,fit_bins, fit_min, fit_max);
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
 {
     assert(n==3);
@@ -196,7 +200,7 @@ int main(int argc, char *argv[])
     //double N = ucna.data.super_sum.GetEntries();
 
     /// Set up the fit parameters.
-    TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, KEmin_A, KEmax_A, nPar);
+    TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, ucna.fit_min, ucna.fit_max, nPar);
     //TF1 supersum_func("asymmetry_fit_func", &supersum_fit_func, KEmin_b, KEmax_b, nPar);
     
     /// Setup the parameters.
@@ -220,7 +224,7 @@ int main(int argc, char *argv[])
     TMatrixD expected(nSpec,nSpec);
 	for (int m=0; m<nSpec; m++)
 		for (int n=0; n<nSpec; n++)
-			expected[m][n] = evaluate_expected_fierz(m,n,KEmin_b,KEmax_b,5112);
+			expected[m][n] = evaluate_expected_fierz(m,n,ucna.fit_min,ucna.fit_max,5112);
 	
 	/// Calculate the predicted inverse covariance matrix for this range.
 	TMatrixD p_cov_inv(nPar,nPar);
@@ -250,8 +254,9 @@ int main(int argc, char *argv[])
     cout<<setprecision(5);
 	cout<<" ENERGY RANGE:\n";
 	cout<<"    Full Energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
-	cout<<"    Energy range for A fit is "<<KEmin_A<<" - "<<KEmax_A<<" keV.\n";
-	cout<<"    Energy range for b fit is "<<KEmin_b<<" - "<<KEmax_b<<" keV.\n";
+	cout<<"    Full Energy range is "<<fit_min<<" - "<<fit_max<<" keV.\n";
+	//cout<<"    Energy range for A fit is "<<KEmin_A<<" - "<<KEmax_A<<" keV.\n";
+	//cout<<"    Energy range for b fit is "<<KEmin_b<<" - "<<KEmax_b<<" keV.\n";
 	cout<<"    Number of counts in full data is "<<(int)entries<<".\n";
 	cout<<"    Number of counts in energy range is "<<(int)N<<".\n";
 	cout<<"    Efficiency energy cut is "<< N/entries*100<<"%.\n";

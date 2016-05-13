@@ -1,9 +1,44 @@
 #include "FierzFitter.hh"
 
 
-//bool UCNAhistogram::compatable(const UCNAHistogram& other) {
-    
-//}
+bool UCNAhistogram::test_compatable(UCNAhistogram & other)
+{
+    int error = 0;
+    double min = GetXaxis()->GetXmin();
+    double max = GetXaxis()->GetXmax();
+    double other_min = other.GetXaxis()->GetXmin();
+    double other_max = other.GetXaxis()->GetXmax();
+    double inner_min = min > other_min? min : other_min;
+    double inner_max = max < other_max? max : other_max;
+    int bin_min = FindBin(inner_min);
+    int bin_max = FindBin(inner_max);
+    if (min != other_min or max != other_max) {
+        cout<<"Warning: Overall bins are not identical. They still might be compatable.\n";
+        cout<<"         This min is "<<min<<" and the other min is "<<other_min<<".\n";
+        cout<<"         This max is "<<max<<" and the other max is "<<other_max<<".\n";
+    }
+    int other_bin_min = other.FindBin(inner_min);
+    //int other_bin_max = other.FindBin(inner_max);
+    for (int bin=bin_min; bin<bin_max; bin++) {
+        int other_bin = bin - bin_min + other_bin_min;
+        double center = GetBinCenter(bin);
+        double other_center = other.GetBinCenter(other_bin);
+        if (center != other_center) {
+            cout<<"Error: Centers in bin "<<bin<<" do not match.\n";
+            cout<<"       This center is "<<center<<" and the other's is "<<other_center<<".\n";
+            error++;
+        }
+
+        double width = GetBinWidth(bin);
+        double other_width = other.GetBinWidth(bin);
+        if (width != other_width) {
+            cout<<"Error: Bin widths in bin "<<bin<<" do not match.\n";
+            cout<<"       This width is "<<width<<" and the other's is "<<other_width<<".\n";
+            error++;
+        }
+    }
+    return (error > 0);
+}
 
 /// Normalize to units of probability per MeV over default range
 double UCNAhistogram::normalize() {
@@ -20,7 +55,6 @@ double UCNAhistogram::normalize(double min, double max)
     assert(min < max);
 	int bin_min = FindBin(min);
 	int bin_max = FindBin(max);
-    cout<< bin_min<<"    "<<bin_max<<endl;
     assert(bin_min < bin_max);
     double integrand = 0;
     /* TODO ???
@@ -37,15 +71,15 @@ double UCNAhistogram::normalize(double min, double max)
     //for (int bin=bin_min+1; bin<bin_max; bin++)
     for (int bin=bin_min; bin<bin_max; bin++)
     {
-        double differential = GetBinContent(bin)
-               ;   //             * GetBinWidth(bin);
-        if (IsNaN(differential))
-            cout<<"Warning: differential is not a number.\n";
+        double area = GetBinContent(bin)
+                    * GetBinWidth(bin);
+        if (IsNaN(area))
+            cout<<"Warning: differential area is not a number.\n";
         else
-            integrand += differential;
+            integrand += area;
     }
     if (integrand > 0)
-	    Scale(1/integrand);
+	    Scale(GetEntries()/integrand);
     else 
         cout<<"Warning: Integrand is zero. Leaving unscaled.\n";
 
@@ -140,6 +174,7 @@ double UCNAmodel::asymmetry_chi2(double A, double b) {
 
 double UCNAFierzFitter::supersum_chi2(double b, double N)
 {
+    data.super_sum.test_compatable(sm.super_sum);
 	double chi2 = 0;
     int n = data.asymmetry.GetNbinsX();
 	for (int i = 0; i < n; i++)
@@ -179,14 +214,15 @@ void UCNAFierzFitter::compute_fit(/*double A,*/ double b, double N)
         fit.super_sum.SetBinContent(i,f);
 
         double eSM = sm.super_sum.GetBinError(i);
-        double eF = fierz.super_sum.GetBinError(i);
-        double ef = N*Sqrt(eSM*eSM + b*b*eF*eF);
+        double beF = b*fierz.super_sum.GetBinError(i);
+        double ef = N*Sqrt(eSM*eSM + beF*beF);
         fit.super_sum.SetBinError(i,ef);
 	}
 }
 
-double asymmetry_fit_func(double *, double *)
+double asymmetry_fit_func(double *x, double *p)
 {
+    exit(0);
     //return f = A/(1 + b*m_e/(E+m_e)); 
     return 0;
 }
@@ -355,8 +391,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
             continue;
 
         /// Type 0, Type I, Type II/III events 
-        //if (type<4) { 
-        if (type==0) { 
+        if (type<4) { 
+        //if (type==0) { 
             /// fill with loading efficiency 
             double p = rand.Uniform(1);
 			double afp = (p < afp_off_prob)? -1 : +1;
@@ -377,8 +413,10 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
             hErecon23->Fill(Erecon); */
 
 		/// break when enough data has been generated.
+        /*
 		if(nSimmed >= nToSim)
 			break;
+            */
     }    
      
 	cout<<"Total number of Monte Carlo entries:\n";

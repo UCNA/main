@@ -108,6 +108,8 @@ struct UCNAhistogram : TH1D {
     bool test_max(double max);
     bool test_range();
     bool test_range(double min, double max);
+    bool test_match(const UCNAhistogram & other);
+    bool test_compatable(UCNAhistogram & other);
 
     double normalize(double min, double max);
     double normalize();
@@ -133,16 +135,26 @@ struct UCNAmodel {
     /// cuts and settings
     unsigned nToSim = 5e7;			/// how many triggering events to simulate
     double afp_off_prob = 1/1.68; 	/// afp off probability per neutron (0.68/1.68 for on)
-    int KEbins = 150;               /// number of bins to use fit spectral plots
 
+/*
     double KEmin = 50;              /// min kinetic energy for plots
-    double KEmax = 650;             /// max kinetic range for plots
+    double KEmax = 670;             /// max kinetic range for plots
     double KEmin_A = 120;           /// min kinetic energy for asymmetry fit
     double KEmax_A = 670;           /// max kinetic range for asymmetry fit
     double KEmin_b = 120;           /// min kinetic energy for Fierz fit
     double KEmax_b = 670;           /// max kinetic range for Fierz fit
-    double fedutial_cut = 50;       /// radial cut in millimeters 
-    double fidcut2 = 50*50;         /// mm^2 radial cut
+    int KEbins = (KEmax-KEmin)/10;  /// number of bins to use fit spectral plots
+    */
+    /*
+    double KEmin;              /// min kinetic energy for plots
+    double KEmax;              /// max kinetic range for plots
+    double KEmin_A;            /// min kinetic energy for asymmetry fit
+    double KEmax_A;            /// max kinetic range for asymmetry fit
+    double KEmin_b;            /// min kinetic energy for Fierz fit
+    double KEmax_b;            /// max kinetic range for Fierz fit
+    */
+    double fedutial_cut = 50;  /// radial cut in millimeters 
+    double fidcut2 = 50*50;    /// mm^2 radial cut
 
     /// set up free fit parameters with best guess
     static const int nPar = 3;
@@ -170,7 +182,13 @@ struct UCNAmodel {
         rand(0),
         super_ratio(name+"_super_ratio",title+" Super Ratio",bins,min,max),
         super_sum(name+"_super_sum",title+" Super Sum",bins,min,max),
-        asymmetry(name+"_asymmetry",title+" Asymmetry",bins,min,max)
+        asymmetry(name+"_asymmetry",title+" Asymmetry",bins,min,max),
+        /*
+        KEbins(0), KEmin(min), KEmax(max),
+        KEbins_A(0), KEmin_A(min), KEmax_A(max),
+        KEbins_b(0), KEmin_b(min), KEmax_b(max),
+        */
+        fedutial_cut(0), fidcut2(0)//, bin_resolution(0)
     {
         assert(min < max);
         for (int side = 0; side < 2; side++) {
@@ -195,6 +213,11 @@ struct UCNAmodel {
             }
         }
         ntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
+        /*
+        KEbins = (KEmax - KEmin)/bin_resolution;
+        KEbins_A = (KEmax_A - KEmin_A)/bin_resolution;
+        KEbins_b = (KEmax_b - KEmin_b)/bin_resolution;
+        */
     }
 
     double asymmetry_chi2(double A, double b);
@@ -259,6 +282,10 @@ struct UCNAFierzFitter {
     double min;
     double max;
 
+    int fit_bins;
+    double fit_min;
+    double fit_max;
+
     UCNAmodel data;         /// Measured foreground data to fit
     UCNAmodel bg;           /// Measured background data to remove
     UCNAmodel sm;           /// Standard Model vector Monte Carlo spectrum
@@ -268,6 +295,7 @@ struct UCNAFierzFitter {
 
     UCNAFierzFitter(int bins, double min, double max)
       : bins(bins), min(min), max(max),
+        fit_bins(bins), fit_min(min), fit_max(max),
         data("ucna_data_", "UCNA data", bins, min, max),
         bg("ucna_bg_", "UCNA background", bins, min, max),
         sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
@@ -275,6 +303,30 @@ struct UCNAFierzFitter {
         fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
         fit("ucna_fit_", "Standard Model + Fierz best fit", bins, min, max) 
     { assert(min < max); }
+
+    UCNAFierzFitter(int bins, double min, double max, 
+                    int fit_bins, double fit_min, double fit_max)
+      : bins(bins), min(min), max(max),
+        fit_bins(fit_bins), fit_min(fit_min), fit_max(fit_max),
+        data("ucna_data_", "UCNA data", bins, min, max),
+        bg("ucna_bg_", "UCNA background", bins, min, max),
+        sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
+        axial("ucna_axial_", "Axial-vector Monte Carlo", bins, min, max),
+        fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
+        fit("ucna_fit_", "Standard Model + Fierz best fit", fit_bins, fit_min, fit_max) 
+    { assert(min < max); }
+/*
+    UCNAFierzFitter(double min, double max, double fit_min, double fit_max)
+      : bins((max-min)/resolution), min(min), max(max),
+        bins((fit_max-fit_min)/resolution), fit_min(fit_min), fit_max(fit_max),
+        data("ucna_data_", "UCNA data", bins, min, max),
+        bg("ucna_bg_", "UCNA background", bins, min, max),
+        sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
+        axial("ucna_axial_", "Axial-vector Monte Carlo", bins, min, max),
+        fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
+        fit("ucna_fit_", "Standard Model + Fierz best fit", bins, min, max) 
+    { assert(min < max); }
+    */
 
     //void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */);
     double asymmetry_chi2(double A, double b);
