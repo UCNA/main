@@ -85,7 +85,6 @@ void output_data_file(TString name, TH1D* h, double ax, double ay)
 
 
 
-
 /// This needs to be static and global for MINUIT to work
 UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
@@ -101,6 +100,7 @@ void draw_histogram(TH1D* histogram, TString name, TString title,
                     TCanvas* canvas, TLegend* legend, 
                     TString draw = "", int color = 0, int marker = 0)
 {
+    // TODO no point in making this a pointer , make a reference 
     if (not canvas)
         canvas = new TCanvas(name + "_canvas", title + " Canvas");
     if (not canvas) {
@@ -116,7 +116,9 @@ void draw_histogram(TH1D* histogram, TString name, TString title,
 
     /// Make a pretty legend.
     if (legend) {
-        legend->SetTextSize(0.03);
+        if (draw == "")
+            legend->Clear();
+        legend->SetTextSize(0.033);
         legend->SetBorderSize(0);
         legend->SetFillColor(0);
         legend->AddEntry(histogram, title, "lep");
@@ -179,7 +181,7 @@ int main(int argc, char *argv[])
                     "SimAnalyzed",
                     "Monte Carlo Fierz beta spectrum");
 
-    /// SAVE ALL HISTOGRAMS 
+    /// SAVE ALL PROCESSED HISTOGRAMS 
 
     // TODO ???
 
@@ -360,17 +362,17 @@ int main(int argc, char *argv[])
 
     draw_histogram(&ucna.sm.super_sum, 
                    "sm_supersum", 
-                   "Standard Model Monte Carlo super sum", 
+                   "Standard Model Monte Carlo #Sigma", 
                    &canvas,&legend,"",4,0);
     draw_histogram(&ucna.fierz.super_sum, 
                    "fierz_supersum", 
-                   "Fierz Monte Carlo super sum", 
+                   "Fierz Monte Carlo #Sigma", 
                    &canvas,&legend,"Same",1,0);
     canvas.SaveAs(plots_dir+"monte_carlo.pdf");
 
     draw_histogram(&ucna.data.super_sum, 
                    "data_supersum", 
-                   "Data super sum", 
+                   "UCNA 2010 #Sigma", 
                    &canvas,&legend,"",2,0);
 
     draw_histogram(&ucna.fit.super_sum, 

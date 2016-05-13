@@ -93,6 +93,7 @@ struct UCNAhistogram : TH1D {
         //values(bins),        
         //errors(bins),
     {
+        assert(min < max);
         //histogram = new TH1D(name, title, bins, min, max);
     }
 
@@ -171,6 +172,7 @@ struct UCNAmodel {
         super_sum(name+"_super_sum",title+" Super Sum",bins,min,max),
         asymmetry(name+"_asymmetry",title+" Asymmetry",bins,min,max)
     {
+        assert(min < max);
         for (int side = 0; side < 2; side++) {
             TString sub_name = name;
             TString sub_title = title;
@@ -272,7 +274,7 @@ struct UCNAFierzFitter {
         axial("ucna_axial_", "Axial-vector Monte Carlo", bins, min, max),
         fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
         fit("ucna_fit_", "Standard Model + Fierz best fit", bins, min, max) 
-    {}
+    { assert(min < max); }
 
     //void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */);
     double asymmetry_chi2(double A, double b);
@@ -482,7 +484,8 @@ TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction)
 }
 */
 
-
+#if 0    
+/// this causes a linking error but I don't know why. I would like to use these at some point so dont errase.
 TH1D* compute_rate_function(TH1D* rate_histogram[2][2], 
                             double (*rate_function)(double r[2][2]))
 {
@@ -574,5 +577,6 @@ double super_sum_error(double r[2][2]) {
     //return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
 }
 */
+#endif
 
 #endif // FIERZ_FITTER

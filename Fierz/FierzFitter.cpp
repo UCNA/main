@@ -1,15 +1,28 @@
 #include "FierzFitter.hh"
 
 
+//bool UCNAhistogram::compatable(UCNAHistogram* other) {
+
+//}
+
+/// Normalize to units of probability per MeV over default range
 double UCNAhistogram::normalize() {
-    return normalize(GetMinimum(), GetMaximum());
+    double min = GetXaxis()->GetXmin();
+    double max = GetXaxis()->GetXmax();
+    return normalize(min,max);
 }
 
+/// Normalize to units of probability per MeV
 double UCNAhistogram::normalize(double min, double max)
 {
-	int bin_min = GetMinimumBin();
-	int bin_max = GetMaximumBin();
+    Sumw2();    /// needed to set up sum of squares structure.
+    assert(min < max);
+	int bin_min = FindBin(min);
+	int bin_max = FindBin(max);
+    cout<< bin_min<<"    "<<bin_max<<endl;
+    assert(bin_min < bin_max);
     double integrand = 0;
+    /* TODO ???
     integrand +=(GetBinCenter(bin_min) - min)
                / GetBinWidth(bin_min)
                / GetBinWidth(bin_min)
@@ -18,12 +31,23 @@ double UCNAhistogram::normalize(double min, double max)
                / GetBinWidth(bin_max)
                / GetBinWidth(bin_max)
                * GetBinContent(bin_max);
+               */
 
-    for (int bin=bin_min+1; bin<bin_max; bin++)
-        integrand += GetBinContent(bin)
-                   / GetBinWidth(bin);
+    //for (int bin=bin_min+1; bin<bin_max; bin++)
+    for (int bin=bin_min; bin<bin_max; bin++)
+    {
+        double differential = GetBinContent(bin)
+                            * GetBinWidth(bin);
+        if (IsNaN(differential))
+            cout<<"Warning: differential is not a number.\n";
+        else
+            integrand += differential;
+    }
+    if (integrand > 0)
+	    Scale(1/integrand);
+    else 
+        cout<<"Warning: Integrand is zero. Leaving unscaled.\n";
 
-	Scale(1/integrand);
     return integrand;
 }
 
@@ -272,24 +296,7 @@ void UCNAmodel::save(TString filename)
  * and they get Tchained together.
  */
 int UCNAmodel::fill(TString filename, TString name, TString title)
-        //TH1D* counts[2][2], TH1D* super_sum, TH1D* asymmetry)
 {
-    /*
-    if (not test_construction(counts, super_sum)) {
-        cout<<"Error: Rates or super sum for "<<name<<":\n";
-        cout<<"       Histogram not constructed.\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }
-
-    if (not asymmetry) {
-        cout<<"Error: Asymmetry for "<<name<<":\n";
-        cout<<"       Histogram not constructed.\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }
-    */
-
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
 		cout<<"Error: Problem filling "<<title<<":\n";
@@ -347,7 +354,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
             continue;
 
         /// Type 0, Type I, Type II/III events 
-        if (type<4) { 
+        //if (type<4) { 
+        if (type==0) { 
             /// fill with loading efficiency 
             double p = rand.Uniform(1);
 			double afp = (p < afp_off_prob)? -1 : +1;
@@ -426,7 +434,7 @@ bool UCNAmodel::test_counts() {
         }
  */
 bool UCNAhistogram::test_min() {
-    double min = GetMinimum();
+    double min = GetXaxis()->GetXmin();
     return test_min(min);
 }
 
@@ -467,7 +475,7 @@ bool UCNAhistogram::test_min(double min) {
         }
  */
 bool UCNAhistogram::test_max() {
-    double max = GetMaximum();
+    double max = GetXaxis()->GetXmax();
     return test_max(max);
 }
 
@@ -508,8 +516,8 @@ bool UCNAhistogram::test_max(double max) {
         }
  */
 bool UCNAhistogram::test_range() {
-    double min = GetMinimum();
-    double max = GetMaximum();
+    double min = GetXaxis()->GetXmin();
+    double max = GetXaxis()->GetXmax();
     return test_range(min, max);
 }
 
@@ -1039,3 +1047,40 @@ double evaluate_expected_fierz(double min, double max)
 {
 	return evaluate_expected_fierz(0, 1, min, max, 1234);
 }
+
+
+TH1D* compute_rate_function(TH1D* rate_histogram[2][2], 
+                            double (*rate_function)(double r[2][2]));
+TH1D* compute_rate_function(TH1D* rate_histogram[2][2], 
+                            double (*rate_function)(double r[2][2]),
+                            double (*error_function)(double r[2][2]));
+
+/*
+TH1D* compute_rate_error_function(TH1D* rate_histogram[2][2], 
+                                  double (*rate_error_function)(double r[2][2])) 
+{
+    TH1D *out_histogram = new TH1D(*(rate_histogram[0][0]));
+    int bins = out_histogram->GetNbinsX();
+    for (int bin = 1; bin < bins+2; bin++) {
+        double sr[2][2];
+        for (int side = 0; side < 2; side++)
+            for (int spin = 0; spin < 2; spin++)
+                sr[side][spin] = rate_histogram[side][spin]->GetBinError(bin);
+    }
+    return out_histogram;
+}
+*/
+double bonehead_sum(double r[2][2]);
+double bonehead_asymmetry(double r[2][2]);
+double super_ratio_asymmetry(double r[2][2]);
+
+
+/*
+double super_sum_error(double r[2][2]) {
+    double super_ratio = (r[0][0] * r[1][1]) / (r[0][1] * r[1][0]);
+    double sqrt_super_ratio = Sqrt(super_ratio);
+    if ( IsNaN(sqrt_super_ratio) ) 
+        sqrt_super_ratio = 0;
+    //return (1 - sqrt_super_ratio) / (1 + sqrt_super_ratio);
+}
+*/
