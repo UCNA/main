@@ -12,11 +12,13 @@ bool UCNAhistogram::test_compatable(UCNAhistogram & other)
     double inner_max = max < other_max? max : other_max;
     int bin_min = FindBin(inner_min);
     int bin_max = FindBin(inner_max);
+    /*
     if (min != other_min or max != other_max) {
         cout<<"Warning: Overall bins are not identical. They still might be compatable.\n";
         cout<<"         This min is "<<min<<" and the other min is "<<other_min<<".\n";
         cout<<"         This max is "<<max<<" and the other max is "<<other_max<<".\n";
     }
+    */
     int other_bin_min = other.FindBin(inner_min);
     //int other_bin_max = other.FindBin(inner_max);
     for (int bin=bin_min; bin<bin_max; bin++) {
@@ -111,8 +113,8 @@ TF1* UCNAFierzFitter::combined_fit(
 	minuit->ExecuteCommand("SET PRINT", arglist, 1);
 
 	/// minimize
-	arglist[0] = 5000;            /// number of function calls
-	arglist[1] = 0.001;           /// tolerance
+	arglist[0] = 1000;    /// number of function calls
+	arglist[1] = 0.01;    /// tolerance
 	minuit->ExecuteCommand("MIGRAD", arglist, nPar);
 
 	/// extract results from Minuit
@@ -176,16 +178,15 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
 {
     data.super_sum.test_compatable(sm.super_sum);
 	double chi2 = 0;
-    int n = data.super_sum.GetNbinsX();
-	for (int i = 0; i < n; i++)
+	for (int bin = fit_min; bin <= fit_max; bin++)
 	{
-		double E = data.super_sum.GetBinCenter(i);
+		double E = data.super_sum.GetBinCenter(bin);
         if (E < min or E > max)
             continue;
-		double Y = data.super_sum.GetBinContent(i);
-		double eY = data.super_sum.GetBinError(i);
-        double f  = N*sm.super_sum.GetBinContent(i) 
-                  + N*b*fierz.super_sum.GetBinContent(i);
+		double Y = data.super_sum.GetBinContent(bin);
+		double eY = data.super_sum.GetBinError(bin);
+        double f  = N*sm.super_sum.GetBinContent(bin) 
+                  + N*b*0.654*fierz.super_sum.GetBinContent(bin);
         if (eY > 0) {
             double chi = (Y-f)/eY;
             chi2 += chi*chi; 
@@ -200,23 +201,29 @@ double UCNAFierzFitter::combined_chi2(double A, double b, double N)
     return chi2;
 }
 
-void UCNAFierzFitter::compute_fit(/*double A,*/ double b, double N)
+void UCNAFierzFitter::compute_fit(double A, double b, double N)
 {
-    int n = data.asymmetry.GetNbinsX();
-	for (int i = 0; i < n; i++)
+    int n = fit.super_sum.GetNbinsX();
+	for (int i = 1; i < n; i++)
 	{
-		double E = data.asymmetry.GetBinCenter(i);
-        if (E < min or E > max)
+		double KE = fit.super_sum.GetBinCenter(i);
+        if (KE < min or KE > max)
             continue;
+        double E = KE + m_e;
         double pSM = sm.super_sum.GetBinContent(i);
-        double pF = fierz.super_sum.GetBinContent(i);
+        double pF = 0.6543*fierz.super_sum.GetBinContent(i);
         double f  = N*(pSM + b*pF);
         fit.super_sum.SetBinContent(i,f);
 
         double eSM = sm.super_sum.GetBinError(i);
-        double beF = b*fierz.super_sum.GetBinError(i);
+        double beF = b*0.6543*fierz.super_sum.GetBinError(i);
         double ef = N*Sqrt(eSM*eSM + beF*beF);
         fit.super_sum.SetBinError(i,ef);
+
+        double AE = A/(1 + b*(m_e/E));
+        cout << AE << "\n";
+        fit.asymmetry.SetBinContent(i,AE);
+        fit.asymmetry.SetBinContent(i,0);   // TODO get from MC asymmetry (for 2011-2013 data)
 	}
 }
 
@@ -351,7 +358,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
         exit(1);
     }
 
-	int nEvents = chain->GetEntries();
+	double nEvents = chain->GetEntries();
 	chain->SetBranchStatus("*",false);
 	chain->SetBranchStatus("PID",true);
 	chain->SetBranchStatus("side",true);
@@ -364,7 +371,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
 	//TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy"); */
 	TNtuple* tntuple = 0;
 
-	unsigned int nSimmed = 0;	/// events have been simulated after cuts
+	double nSimmed = 0;	/// events have been simulated after cuts
     int PID, side, type;
     double energy;
     double mwpcPosW[3], mwpcPosE[3], primMomentum[3];
@@ -385,11 +392,11 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
             continue;
 
         /// radial fiducial cut
-        double fidcut2 = 50 * 50; // TODO !!!! VERY HARD CODED 
+        double fidcut2 = 50*50; // TODO !!!! VERY HARD CODED 
         assert(fidcut2 > 0);
-        double radiusW = mwpcPosW[0]*mwpcPosW[0] + mwpcPosW[1]*mwpcPosW[1]; 
-        double radiusE = mwpcPosE[0]*mwpcPosE[0] + mwpcPosE[1]*mwpcPosE[1]; 
-        if (radiusW > fidcut2 or radiusE > fidcut2) 
+        double radius2W = mwpcPosW[0]*mwpcPosW[0] + mwpcPosW[1]*mwpcPosW[1]; 
+        double radius2E = mwpcPosE[0]*mwpcPosE[0] + mwpcPosE[1]*mwpcPosE[1]; 
+        if (radius2W > fidcut2 or radius2E > fidcut2) 
             continue;
 
         /// Type 0, Type I, Type II/III events 
@@ -422,8 +429,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
     }    
      
 	cout<<"Total number of Monte Carlo entries:\n";
-	cout<<"      Entries without cuts:  "<<nEvents<<endl;
-	cout<<"      Entries with cuts:     "<<nSimmed<<endl;
+	cout<<"      Entries without cuts:  "<<int(nEvents)<<endl;
+	cout<<"      Entries with cuts:     "<<int(nSimmed)<<endl;
 	cout<<"      Efficiencies of cuts:  "<<(100.0*nSimmed)/double(nEvents)<<"%\n";
 
 	/// compute and normalize super sum
@@ -431,6 +438,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
     compute_asymmetry();
 
     super_sum.normalize();
+    //super_sum.Scale(double(nSimmed)/double(nEvents));
     //normalize(asymmetry, min_E, max_E);
     //for (int side=0; side<2; side++)
     //    for (int spin=0; spin<2; spin++)
