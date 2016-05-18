@@ -355,11 +355,11 @@ int main(int argc, char *argv[])
 
     draw_histogram(&ucna.data.asymmetry, 
                    "data_asymmetry", 
-                   "UCNA 2010 #Lambda", 
+                   "UCNA 2010 #Lambda(E)", 
                    &canvas,&legend,"",1,0);
     draw_histogram(&ucna.fit.asymmetry, 
                    "fit_asymmetry", 
-                   "Fit asymmetry", 
+                   "Fit #Lambda(E)", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
 

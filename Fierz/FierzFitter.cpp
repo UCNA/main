@@ -223,7 +223,7 @@ void UCNAFierzFitter::compute_fit(double A, double b, double N)
         double AE = A/(1 + b*(m_e/E));
         cout << AE << "\n";
         fit.asymmetry.SetBinContent(i,AE);
-        fit.asymmetry.SetBinContent(i,0);   // TODO get from MC asymmetry (for 2011-2013 data)
+        fit.asymmetry.SetBinError(i,0);   // TODO get from MC asymmetry (for 2011-2013 data)
 	}
 }
 
