@@ -34,7 +34,7 @@ using std::cout;
 using namespace TMath;
 
 /// cuts and settings
-double KEmin = 0;               /// min kinetic energy for plots
+double KEmin = 0;                 /// min kinetic energy for plots
 double KEmax = 800;               /// max kinetic range for plots
 int KEbins=(KEmax-KEmin)/10;      /// number of bins to use fit spectral plots
 double fit_min = 150;             /// min kinetic energy for plots
@@ -46,7 +46,7 @@ int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 /// set up free fit parameters with best guess
 static const int nPar = 3;
 TString paramNames[3] = {"A", "b", "N"};
-double paramInits[3] = {-0.12, 0, 2};
+double paramInits[3] = {-0.12, 0, 1};
 
 /// path to experiment data files
 TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
 
     /// Set up the fit parameters.
     TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, fit_min, fit_max, nPar);
-    //TF1 supersum_func("asymmetry_fit_func", &supersum_fit_func, KEmin_b, KEmax_b, nPar);
+    //TF1 supersum_func("supersum_fit_func", &supersum_fit_func, KEmin_b, KEmax_b, nPar);
     
     /// Setup the parameters.
     asymmetry_func.SetParameters(paramInits);
@@ -208,10 +208,10 @@ int main(int argc, char *argv[])
 	/// Actually do the combined fitting.
 	//ucna.combined_fit(cov, &asymmetry_func, &supersum_func, &combined_chi2);
 	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
-    double A = asymmetry_func.GetParameter(0);
-    double b = asymmetry_func.GetParameter(1);
-    double N = asymmetry_func.GetParameter(2);
-	ucna.compute_fit(A,b,N);
+	ucna.compute_fit(&asymmetry_func);
+    double A = -0.12;
+    double b = 0;
+    double N = cut_entries;
 
 	/// Set all expectation values for this range.
     double nSpec = 4;
@@ -222,19 +222,18 @@ int main(int argc, char *argv[])
 	
 	/// Calculate the predicted inverse covariance matrix for this range.
 	TMatrixD p_cov_inv(nPar,nPar);
-    double Neff = N;
 	for (int i=0; i<nPar; i++)
 		for (int j=0; j<nPar; j++)
 	        p_cov_inv[i][j] = 0;
     if (nPar > 0)
-	    p_cov_inv[0][0] =  0.25*Neff*expected[2][0];
+	    p_cov_inv[0][0] =  N*A*expected[2][0]/4;
     if (nPar > 1) {
         p_cov_inv[1][0] = 
-        p_cov_inv[0][1] = -0.25*Neff*A*expected[2][1];
-        p_cov_inv[1][1] =  Neff*(expected[0][2] - expected[0][1]*expected[0][1]);
+        p_cov_inv[0][1] = -N*A*expected[2][1]/4;
+        p_cov_inv[1][1] =  N*(expected[0][2] - expected[0][1]*expected[0][1]);
     }
     if (nPar > 2)
-	    p_cov_inv[2][2] =  Neff;
+	    p_cov_inv[2][2] =  N;
 
 	/// Compute the predicted covariance matrix by inverse.
 	double det = 0;

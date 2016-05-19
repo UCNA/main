@@ -145,18 +145,31 @@ TF1* UCNAFierzFitter::combined_fit(
 
 
 double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
-        return data.asymmetry_chi2(A,b);
+    compute_asymmetry_fit(A,b);
+	double chi2 = 0;
+    int n = fit.asymmetry.GetNbinsX();
+	for (int bin=1; bin<=n; bin++)
+	{
+		double Y = data.asymmetry.GetBinContent(bin);
+		double eY = data.asymmetry.GetBinError(bin);
+        double F = fit.asymmetry.GetBinContent(bin);
+        double eF = fit.asymmetry.GetBinError(bin);
+        double eFY2 = eF*eF + eY*eY;
+        if (eYF2 > 0) {
+            double chi = Y-F;
+            chi2 += chie*chie/eFY2; 
+        }
+	}
+    return chi2;
+    //return data.asymmetry_chi2(A,b);
 }
 
 double UCNAmodel::asymmetry_chi2(double A, double b) {
-    /*if (not asymmetry) {
-        cout<<"Error: Asymmetry histogram is not constructed.\n";
-        exit(1);
-    }*/
-
+    exit(1);
+    /*
 	double chi2 = 0;
     int n = asymmetry.GetNbinsX();
-	for (int i = 0; i < n; i++)
+	for (int i=1; i<=n; i++)
 	{
 		double E = asymmetry.GetBinCenter(i);
         if (E < min or E > max)
@@ -171,28 +184,53 @@ double UCNAmodel::asymmetry_chi2(double A, double b) {
         }
 	}
     return chi2;
+    */
 }
 
 
 double UCNAFierzFitter::supersum_chi2(double b, double N)
 {
+   #if 0
     data.super_sum.test_compatable(sm.super_sum);
 	double chi2 = 0;
-	for (int bin = fit_min; bin <= fit_max; bin++)
+    int n = fit.super_sum.GetNbinsX();
+	for (int bin=1; bin<=n; bin++)
 	{
-		double E = data.super_sum.GetBinCenter(bin);
-        if (E < min or E > max)
+		double KE = data.super_sum.GetBinCenter(bin);
+        if (KE < min or KE > max)
             continue;
 		double Y = data.super_sum.GetBinContent(bin);
 		double eY = data.super_sum.GetBinError(bin);
-        double f  = N*sm.super_sum.GetBinContent(bin) 
-                  + N*b*0.654*fierz.super_sum.GetBinContent(bin);
-        if (eY > 0) {
-            double chi = (Y-f)/eY;
+        double smF = N*sm.super_sum.GetBinContent(bin);
+        double esmF = N*sm.super_sum.GetBinError(bin);
+        double bF = N*b*0.654*fierz.super_sum.GetBinContent(bin);
+        double ebF = N*b*0.654*fierz.super_sum.GetBinError(bin);
+        double F = smF + bF;
+        double eYF = Sqrt(esmF*esmF + ebF*ebF + eY*eY);
+        if (eYF > 0) {
+            double chi = (Y-F)/eYF;
             chi2 += chi*chi; 
         }
 	}
     return chi2;
+#else
+    compute_supersum_fit(b,N);
+	double chi2 = 0;
+    int n = fit.super_sum.GetNbinsX();
+	for (int bin=1; bin<=n; bin++)
+	{
+		double Y = data.super_sum.GetBinContent(bin);
+		double eY = data.super_sum.GetBinError(bin);
+        double F = fit.super_sum.GetBinContent(bin);
+        double eF = fit.super_sum.GetBinError(bin);
+        double eYF2 = eF*eF + ebF*ebF + eY*eY;
+        if (eYF2 > 0) {
+            double chie = Y-F;
+            chi2 += chie*chie/eYF2; 
+        }
+	}
+    return chi2;
+#endif
 }
 
 double UCNAFierzFitter::combined_chi2(double A, double b, double N)
@@ -201,32 +239,59 @@ double UCNAFierzFitter::combined_chi2(double A, double b, double N)
     return chi2;
 }
 
+void UCNAFierzFitter::compute_fit(/*MatrixD &cov,*/ TF1 *func) {
+    double A = func->GetParameter(0);
+    double b = func->GetParameter(1);
+    double N = func->GetParameter(2);
+    compute_fit(A,b,N);
+}
+
 void UCNAFierzFitter::compute_fit(double A, double b, double N)
 {
+     compute_supersum_fit(b,N);
+     compute_asymmetry_fit(A,b);
+}
+
+void UCNAFierzFitter::compute_supersum_fit(double b, double N)
+{
     int n = fit.super_sum.GetNbinsX();
-	for (int i = 1; i < n; i++)
+	for (int bin=1; bin<=n; bin++)
 	{
-		double KE = fit.super_sum.GetBinCenter(i);
-        if (KE < min or KE > max)
+		double KE = fit.super_sum.GetBinCenter(bin);
+        if (KE < fit_min or KE > fit_max)
             continue;
-        double E = KE + m_e;
-        double pSM = sm.super_sum.GetBinContent(i);
-        double pF = 0.6543*fierz.super_sum.GetBinContent(i);
+        double pSM = sm.super_sum.GetBinContent(bin);
+        double pF = fierz.super_sum.GetBinContent(bin);
         double f  = N*(pSM + b*pF);
-        fit.super_sum.SetBinContent(i,f);
+        fit.super_sum.SetBinContent(bin,f);
 
-        double eSM = sm.super_sum.GetBinError(i);
-        double beF = b*0.6543*fierz.super_sum.GetBinError(i);
+        double eSM = sm.super_sum.GetBinError(bin);
+        double beF = b*fierz.super_sum.GetBinError(bin);
         double ef = N*Sqrt(eSM*eSM + beF*beF);
-        fit.super_sum.SetBinError(i,ef);
+        fit.super_sum.SetBinError(bin,ef);
 
-        double AE = A/(1 + b*(m_e/E));
-        cout << AE << "\n";
-        fit.asymmetry.SetBinContent(i,AE);
-        fit.asymmetry.SetBinError(i,0);   // TODO get from MC asymmetry (for 2011-2013 data)
+        cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
 	}
 }
 
+void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
+{
+    int n = fit.asymmetry.GetNbinsX();
+	for (int bin=1; bin<=n; bin++)
+	{
+		double KE = fit.asymmetry.GetBinCenter(bin);
+        if (KE < fit_min or KE > fit_max) {
+            cout<<"Error: Found energy out of bounds in fit\n";
+            break;
+        }
+        double E = KE + m_e;
+        double f = A/(1 + b*(m_e/E));
+        double ef = 0;  // TODO get from MC asymmetry (for 2011-2013 data)
+        fit.asymmetry.SetBinContent(bin,f);
+        fit.asymmetry.SetBinError(bin,ef); 
+        cout<<"Asymmetry fit bin: "<<bin<<"\tKE: "<<KE<<"\tAE: "<<AE<<"("<<ef<<")\n";
+	}
+}
 double asymmetry_fit_func(double *x, double *p)
 {
     exit(0);
