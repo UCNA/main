@@ -154,10 +154,10 @@ double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
 		double eY = data.asymmetry.GetBinError(bin);
         double F = fit.asymmetry.GetBinContent(bin);
         double eF = fit.asymmetry.GetBinError(bin);
-        double eFY2 = eF*eF + eY*eY;
+        double eYF2 = eY*eY + eF*eF;
         if (eYF2 > 0) {
-            double chi = Y-F;
-            chi2 += chie*chie/eFY2; 
+            double chie = Y - F;
+            chi2 += chie*chie/eYF2; 
         }
 	}
     return chi2;
@@ -223,7 +223,7 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
 		double eY = data.super_sum.GetBinError(bin);
         double F = fit.super_sum.GetBinContent(bin);
         double eF = fit.super_sum.GetBinError(bin);
-        double eYF2 = eF*eF + ebF*ebF + eY*eY;
+        double eYF2 = eF*eF + eY*eY;
         if (eYF2 > 0) {
             double chie = Y-F;
             chi2 += chie*chie/eYF2; 
@@ -289,7 +289,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
         double ef = 0;  // TODO get from MC asymmetry (for 2011-2013 data)
         fit.asymmetry.SetBinContent(bin,f);
         fit.asymmetry.SetBinError(bin,ef); 
-        cout<<"Asymmetry fit bin: "<<bin<<"\tKE: "<<KE<<"\tAE: "<<AE<<"("<<ef<<")\n";
+        cout<<"Asymmetry fit bin: "<<bin<<"\tKE: "<<KE<<"\tAE: "<<f<<"("<<ef<<")\n";
 	}
 }
 double asymmetry_fit_func(double *x, double *p)

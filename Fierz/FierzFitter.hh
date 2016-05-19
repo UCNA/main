@@ -334,6 +334,8 @@ struct UCNAFierzFitter {
     double asymmetry_chi2(double A, double b);
     double supersum_chi2(double b, double N);
     double combined_chi2(double A, double b, double N);
+    void compute_asymmetry_fit(double A, double b);
+    void compute_supersum_fit(double b, double N);
     void compute_fit(double A, double b, double N);
     void compute_fit(TF1* func);
 
