@@ -37,8 +37,8 @@ using namespace TMath;
 double KEmin = 0;                 /// min kinetic energy for plots
 double KEmax = 800;               /// max kinetic range for plots
 int KEbins=(KEmax-KEmin)/10;      /// number of bins to use fit spectral plots
-double fit_min = 150;             /// min kinetic energy for plots
-double fit_max = 700;             /// max kinetic range for plots
+double fit_min = 70;             /// min kinetic energy for plots
+double fit_max = 650;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 ///double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
 
