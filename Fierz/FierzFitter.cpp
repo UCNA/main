@@ -1,6 +1,5 @@
 #include "FierzFitter.hh"
 
-
 bool UCNAhistogram::test_compatable(UCNAhistogram & other)
 {
     int error = 0;
@@ -191,30 +190,6 @@ double UCNAmodel::asymmetry_chi2(double A, double b) {
 
 double UCNAFierzFitter::supersum_chi2(double b, double N)
 {
-   #if 0
-    data.super_sum.test_compatable(sm.super_sum);
-	double chi2 = 0;
-    int n = fit.super_sum.GetNbinsX();
-	for (int bin=1; bin<=n; bin++)
-	{
-		double KE = data.super_sum.GetBinCenter(bin);
-        if (KE < min or KE > max)
-            continue;
-		double Y = data.super_sum.GetBinContent(bin);
-		double eY = data.super_sum.GetBinError(bin);
-        double smF = N*sm.super_sum.GetBinContent(bin);
-        double esmF = N*sm.super_sum.GetBinError(bin);
-        double bF = N*b*0.654*fierz.super_sum.GetBinContent(bin);
-        double ebF = N*b*0.654*fierz.super_sum.GetBinError(bin);
-        double F = smF + bF;
-        double eYF = Sqrt(esmF*esmF + ebF*ebF + eY*eY);
-        if (eYF > 0) {
-            double chi = (Y-F)/eYF;
-            chi2 += chi*chi; 
-        }
-	}
-    return chi2;
-#else
     compute_supersum_fit(b,N);
 	double chi2 = 0;
     int n = fit.super_sum.GetNbinsX();
@@ -232,7 +207,6 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
         }
 	}
     return chi2;
-#endif
 }
 
 double UCNAFierzFitter::combined_chi2(double A, double b, double N)
@@ -276,7 +250,7 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
         double ef = N*Sqrt(eSM*eSM + beF*beF);
         fit.super_sum.SetBinError(bin,ef);
 
-        cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
+        //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
 	}
 }
 
@@ -295,7 +269,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
         double ef = 0;  // TODO get from MC asymmetry (for 2011-2013 data)
         fit.asymmetry.SetBinContent(bin,f);
         fit.asymmetry.SetBinError(bin,ef); 
-        cout<<"Asymmetry fit bin: "<<bin<<"\tKE: "<<KE<<"\tAE: "<<f<<"("<<ef<<")\n";
+        //cout<<"Asymmetry fit bin: "<<bin<<"\tKE: "<<KE<<"\tAE: "<<f<<"("<<ef<<")\n";
 	}
 }
 
@@ -1021,6 +995,33 @@ TH1D& UCNAmodel::compute_asymmetry(double min, double max)
 }
 #endif
 
+double UCNAhistogram::GetEffectiveEntries(double min, double max)
+{
+    /*
+	double eff_ent = GetEffectiveEntries();
+    double min_bin = FindBin(min);
+	double max_bin = FindBin(max);
+	double part_int = Integral(min_bin, max_bin);
+	double full_int = Integral();
+	double N = eff_ent * part_int / full_int;
+
+	return N;*/
+	double Neff = 0;
+    double min_bin = FindBin(min);
+	double max_bin = FindBin(max);
+	for (int bin=min_bin; bin<=max_bin; bin++)
+	{
+		double Y = GetBinContent(bin);
+		double eY = GetBinError(bin);
+        if (eY > 0) {
+            double sqrtn = Y/eY;
+            Neff += sqrtn*sqrtn;
+        }
+	}
+    return Neff;
+}
+
+
 
 /// END UCNAobject codes...
 
@@ -1070,19 +1071,6 @@ void UCNAFierzFitter::combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Doub
 #endif
 
 
-/*
-double GetEntries(TH1D* histogram, double min, double max)
-{
-	double entries = histogram->GetEffectiveEntries();
-	double part_int = histogram->Integral(
-					  histogram->FindBin(min),
-					  histogram->FindBin(max));
-	double full_int = histogram->Integral();
-	double N = entries * part_int / full_int;
-
-	return N;
-}
-*/
 
 
 /*

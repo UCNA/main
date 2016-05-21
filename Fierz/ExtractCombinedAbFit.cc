@@ -37,8 +37,8 @@ using namespace TMath;
 double KEmin = 0;                 /// min kinetic energy for plots
 double KEmax = 800;               /// max kinetic range for plots
 int KEbins=(KEmax-KEmin)/10;      /// number of bins to use fit spectral plots
-double fit_min = 70;             /// min kinetic energy for plots
-double fit_max = 650;             /// max kinetic range for plots
+double fit_min = 100;             /// min kinetic energy for plots
+double fit_max = 620;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 ///double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
 
@@ -188,10 +188,9 @@ int main(int argc, char *argv[])
 
     /// Set up constants and vars
     TMatrixD cov(nPar,nPar);
-	//double A = -0.12;
-	//double N = GetEntries(&ucna.data.super_sum, KEmin, KEmax);
     double full_entries = ucna.data.super_sum.GetEntries();
-	double cut_entries = ucna.data.super_sum.GetEffectiveEntries();
+	//double eff_entries = ucna.data.super_sum.GetEffectiveEntries();
+	double cut_entries = ucna.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
 
     /// Set up the fit parameters.
     TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, fit_min, fit_max, nPar);
@@ -210,15 +209,15 @@ int main(int argc, char *argv[])
 	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
 	ucna.compute_fit(&asymmetry_func);
     double A = -0.12;
-    double b = 0;
+    //double b = 0;
     double N = cut_entries;
 
 	/// Set all expectation values for this range.
     double nSpec = 4;
-    TMatrixD expected(nSpec,nSpec);
+    TMatrixD ex(nSpec,nSpec);
 	for (int m=0; m<nSpec; m++)
 		for (int n=0; n<nSpec; n++)
-			expected[m][n] = evaluate_expected_fierz(m,n,fit_min,fit_max);
+			ex[m][n] = evaluate_expected_fierz(m,n,fit_min,fit_max);
 	
 	/// Calculate the predicted inverse covariance matrix for this range.
 	TMatrixD p_cov_inv(nPar,nPar);
@@ -226,11 +225,11 @@ int main(int argc, char *argv[])
 		for (int j=0; j<nPar; j++)
 	        p_cov_inv[i][j] = 0;
     if (nPar > 0)
-	    p_cov_inv[0][0] =  N*A*expected[2][0]/4;
+	    p_cov_inv[0][0] =  N*ex[2][0]/4;
     if (nPar > 1) {
         p_cov_inv[1][0] = 
-        p_cov_inv[0][1] = -N*A*expected[2][1]/4;
-        p_cov_inv[1][1] =  N*(expected[0][2] - expected[0][1]*expected[0][1]);
+        p_cov_inv[0][1] = -N*A*ex[2][1]/4;
+        p_cov_inv[1][1] =  N*(A*A*ex[2][2]/4 + ex[0][2] - ex[0][1]*ex[0][1]);
     }
     if (nPar > 2)
 	    p_cov_inv[2][2] =  N;
@@ -248,9 +247,9 @@ int main(int argc, char *argv[])
     cout<<setprecision(5);
 	cout<<" ENERGY RANGE:\n";
 	cout<<"    Full energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
-	cout<<"    Fit energy range is "<<fit_min<<" - "<<fit_max<<" keV.\n";
+	cout<<"    Fit energy range cut is "<<fit_min<<" - "<<fit_max<<" keV.\n";
 	cout<<"    Number of counts in full data is "<<(int)full_entries<<".\n";
-	cout<<"    Number of counts in energy range is "<<(int)cut_entries<<".\n";
+	cout<<"    Number of counts in energy cut range is "<<(int)cut_entries<<".\n";
 	cout<<"    Number of fit counts in full range is "<<N<<".\n";
 	cout<<"    Efficiency energy cut is "<< cut_entries/full_entries*100<<"%.\n";
 
@@ -280,6 +279,7 @@ int main(int argc, char *argv[])
 		cout<<"\n";
 	}
 
+#if 0
     /// Compute independent standard errors.
 	cout<<"\n FOR UNCOMBINED FITS:\n";
 	cout<<"    Expected independent statistical sigma and error:\n";
@@ -297,6 +297,7 @@ int main(int argc, char *argv[])
                     <<setw(cl)<<sigma
                     <<setw(cl-1)<<error<<"%\n";
     }
+#endif
 
     /// Compare predicted and actual standard errors.
 	cout<<"\n FOR COMBINED FITS:\n";
@@ -374,11 +375,11 @@ int main(int argc, char *argv[])
 
     draw_histogram(&ucna.data.super_sum, 
                    "data_supersum", 
-                   "UCNA 2010 #Sigma", 
+                   "UCNA 2010 #Sigma(E)", 
                    &canvas,&legend,"",1,0);
     draw_histogram(&ucna.fit.super_sum, 
                    "fit_supersum", 
-                   "Fit super sum", 
+                   "Fit #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"data_supersum.pdf");
 
