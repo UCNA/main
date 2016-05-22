@@ -37,10 +37,10 @@ using namespace TMath;
 double KEmin = 0;                 /// min kinetic energy for plots
 double KEmax = 800;               /// max kinetic range for plots
 int KEbins=(KEmax-KEmin)/10;      /// number of bins to use fit spectral plots
-double fit_min = 100;             /// min kinetic energy for plots
-double fit_max = 620;             /// max kinetic range for plots
+double fit_min = 120;             /// min kinetic energy for plots
+double fit_max = 630;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
-///double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
+double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
 
 
 /// set up free fit parameters with best guess
@@ -70,7 +70,7 @@ void output_data_file(TString name, TH1D* h, double ax, double ay)
 	for (int i = 1; i < h->GetNbinsX(); i++)
 	{
 		double x = ax * h->GetBinCenter(i);
-		//double sx = h->GetBinWidth(i);
+		double sx = h->GetBinWidth(i);
 		double r = ay * h->GetBinContent(i);
 		double sr = ay * h->GetBinError(i);
 		ofs<<x<<'\t'<<r<<'\t'<<sr<<endl;
@@ -208,9 +208,12 @@ int main(int argc, char *argv[])
 	//ucna.combined_fit(cov, &asymmetry_func, &supersum_func, &combined_chi2);
 	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
 	ucna.compute_fit(&asymmetry_func);
+
+    /// Set up reasonable guesses 
     double A = -0.12;
     //double b = 0;
     double N = cut_entries;
+    double exC = 0.25; //evaluate_expected_cos_theta(fit_min,fit_max);
 
 	/// Set all expectation values for this range.
     double nSpec = 4;
@@ -225,14 +228,15 @@ int main(int argc, char *argv[])
 		for (int j=0; j<nPar; j++)
 	        p_cov_inv[i][j] = 0;
     if (nPar > 0)
-	    p_cov_inv[0][0] =  N*ex[2][0]/4;
+	    p_cov_inv[0][0] = N*exC*ex[2][0];
     if (nPar > 1) {
         p_cov_inv[1][0] = 
-        p_cov_inv[0][1] = -N*A*ex[2][1]/4;
-        p_cov_inv[1][1] =  N*(A*A*ex[2][2]/4 + ex[0][2] - ex[0][1]*ex[0][1]);
+        p_cov_inv[0][1] = -N*A*exC*ex[2][1];
+        //p_cov_inv[1][1] =  N*(A*A*ex[2][2]/4 + ex[0][2] - ex[0][1]*ex[0][1]);
+        p_cov_inv[1][1] = N*(A*A*exC*ex[2][2] + ex[0][2] - ex[0][1]*ex[0][1]);
     }
     if (nPar > 2)
-	    p_cov_inv[2][2] =  N;
+	    p_cov_inv[2][2] = N;
 
 	/// Compute the predicted covariance matrix by inverse.
 	double det = 0;

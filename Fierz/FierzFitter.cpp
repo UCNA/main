@@ -75,7 +75,7 @@ double UCNAhistogram::normalize(double min, double max)
         double area = GetBinContent(bin)
                     * GetBinWidth(bin);
         if (IsNaN(area))
-            cout<<"Warning: differential area is not a number.\n";
+            cout<<"Warning: Differential area is not a number.\n";
         else
             integrand += area;
     }
@@ -129,7 +129,8 @@ TF1* UCNAFierzFitter::combined_fit(
         func->SetParError(i,error);
 	}
 
-	int ndf = data.asymmetry.GetNbinsX() + data.super_sum.GetNbinsX() - nvpar;
+    /// find degrees of freedom in fit
+	int ndf = fit.asymmetry.GetNbinsX() + fit.super_sum.GetNbinsX() - nvpar;
 	func->SetNDF(ndf);
     
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
@@ -1175,14 +1176,14 @@ double evaluate_expected_fierz(double m, double n, double _min, double _max)
     TH1D h10("beta_spectrum", 
              "Beta Spectrum", 
              integral_size, _min, _max);
+    double parmn[2] = {m, n};
+    double par10[2] = {0, 0};
 	for (int bin = 1; bin <= integral_size; bin++)
 	{
 		//double K = _min + double(i)*(_max-_min)/integral_size;
-		double KE = hmn.GetBinCenter(bin);
-		double parmn[2] = {m, n};
-		double par10[2] = {0, 1};
-		double ymn = beta_spectrum(&KE, parmn);
-		double y10 = beta_spectrum(&KE, par10);
+		double KE[1] = {hmn.GetBinCenter(bin)};
+		double ymn = beta_spectrum(KE, parmn);
+		double y10 = beta_spectrum(KE, par10);
 		hmn.SetBinContent(bin, ymn);
 		h10.SetBinContent(bin, y10);
 	}
