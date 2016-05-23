@@ -88,7 +88,6 @@ double UCNAhistogram::normalize(double min, double max)
 }
 
 
-//TF1* UCNAFierzFitter::combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1* func)
 TF1* UCNAFierzFitter::combined_fit(
         TMatrixD &cov, TF1 *func, 
         void (*global_fcn_ptr)(Int_t&, Double_t*, Double_t&, Double_t*, Int_t) ) { 
@@ -143,6 +142,25 @@ TF1* UCNAFierzFitter::combined_fit(
 	return func; 
 }
 
+/* TODO
+double UCNAhistogram::chi2(const UCNAhistogram & fit_histogram) {
+	double chi2 = 0;
+    int n = fit_histogram.FindBin(min);
+    int delta = data.asymmetry.FindBin(fit_min) - 1;
+	for (int bin=1; bin<n; bin++)
+	{
+		double Y = data.asymmetry.GetBinContent(bin + delta);
+		double eY = data.asymmetry.GetBinError(bin + delta);
+        double F = fit.asymmetry.GetBinContent(bin);
+        double eF = fit.asymmetry.GetBinError(bin);
+        double eYF2 = eY*eY + eF*eF;
+        if (eYF2 > 0)
+            chi2 += (Y-F)*(Y-F)/eYF2; 
+	}
+    return chi2;
+}
+*/
+
 
 double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
     compute_asymmetry_fit(A,b);
@@ -156,13 +174,10 @@ double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
         double F = fit.asymmetry.GetBinContent(bin);
         double eF = fit.asymmetry.GetBinError(bin);
         double eYF2 = eY*eY + eF*eF;
-        if (eYF2 > 0) {
-            double chie = Y - F;
-            chi2 += chie*chie/eYF2; 
-        }
+        if (eYF2 > 0)
+            chi2 += (Y-F)*(Y-F)/eYF2; 
 	}
     return chi2;
-    //return data.asymmetry_chi2(A,b);
 }
 
 double UCNAmodel::asymmetry_chi2(double A, double b) {
@@ -202,10 +217,8 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
         double F = fit.super_sum.GetBinContent(bin);
         double eF = fit.super_sum.GetBinError(bin);
         double eYF2 = eF*eF + eY*eY;
-        if (eYF2 > 0) {
-            double chie = Y-F;
-            chi2 += chie*chie/eYF2; 
-        }
+        if (eYF2 > 0)
+            chi2 += (Y-F)*(Y-F)/eYF2; 
 	}
     return chi2;
 }
@@ -243,12 +256,12 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
         }
         double pSM = sm.super_sum.GetBinContent(bin + deltaSM);
         double pF = fierz.super_sum.GetBinContent(bin + deltaF);
-        double f  = N*(pSM + b*pF);
+        double f  = N*(pSM + 0.654*b*pF);
         fit.super_sum.SetBinContent(bin,f);
 
         double eSM = sm.super_sum.GetBinError(bin + deltaSM);
         double beF = b*fierz.super_sum.GetBinError(bin + deltaF);
-        double ef = N*Sqrt(eSM*eSM + beF*beF);
+        double ef = N*Sqrt(eSM*eSM + 0.654*0.654*beF*beF);
         fit.super_sum.SetBinError(bin,ef);
 
         //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
@@ -796,9 +809,10 @@ double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, d
         }
     }
 
-    sigmaS = Sqrt(varS)/4; // TODO CHECK THIS DENOMINATOR!!
+    /// The 1/4 factor comes from the definition of S=(Y0+Y1)/2
+    sigmaS = Sqrt(varS)/4;
     if (IsNaN(sigmaS)) {
-        cout<<"Warning: Super sum error multiplier is not a number.\n";
+        cout<<"Warning: Super sum error is not a number.\n";
         sigmaS = -1;
     }
     return S;
@@ -874,8 +888,11 @@ double UCNAmodel::compute_asymmetry(double n[2][2]) {
     double D = (Y0 - Y1)/2;
     double S = (Y0 + Y1)/2;
     double A = D / S;
-    if (IsNaN(A))
+    if (IsNaN(A)) {
         cout<<"Warning: Asymmetry is not a number.\n";
+        if (S == 0)
+            cout<<"         Division by zero super sum.\n"; 
+    }
     return A;
 }
 
@@ -897,6 +914,15 @@ double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
     compute_asymmetry(n,e,A,sigmaA);
     asymmetry.SetBinContent(bin,A);
     asymmetry.SetBinError(bin,sigmaA);
+    if (IsNaN(A) or IsNaN(sigmaA)) {
+        cout<<"Warning: Asymmetry error in bin "<<bin<<" where\n";
+        for (int side=0; side<2; side++) {
+            for (int spin=0; spin<2; spin++) {
+                double counts = n[side][spin];
+        cout<<"         n["<<side<<","<<spin<<"] = "<<counts<<".\n";
+            }
+        }
+    }
 
     if (bin % 10 == 0) {
         double KE = asymmetry.GetBinCenter(bin);
