@@ -188,9 +188,9 @@ int main(int argc, char *argv[])
 
     /// Set up constants and vars
     TMatrixD cov(nPar,nPar);
-    double full_entries = ucna.data.super_sum.GetEntries();
-	//double eff_entries = ucna.data.super_sum.GetEffectiveEntries();
-	double cut_entries = ucna.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    double all_entries = ucna.data.super_sum.GetEntries();
+	double eff_entries = ucna.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
+	double fit_entries = ucna.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
 
     /// Set up the fit parameters.
     TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, fit_min, fit_max, nPar);
@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
     /// Set up reasonable guesses 
     double A = -0.12;
     //double b = 0;
-    double N = cut_entries;
+    double N = fit_entries;
     double exC = 0.25; //evaluate_expected_cos_theta(fit_min,fit_max);
 
 	/// Set all expectation values for this range.
@@ -252,10 +252,11 @@ int main(int argc, char *argv[])
 	cout<<" ENERGY RANGE:\n";
 	cout<<"    Full energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
 	cout<<"    Fit energy range cut is "<<fit_min<<" - "<<fit_max<<" keV.\n";
-	cout<<"    Number of counts in full data is "<<(int)full_entries<<".\n";
-	cout<<"    Number of counts in energy cut range is "<<(int)cut_entries<<".\n";
-	cout<<"    Number of fit counts in full range is "<<N<<".\n";
-	cout<<"    Efficiency energy cut is "<< cut_entries/full_entries*100<<"%.\n";
+	cout<<"    Number of counts in data is "<<int(all_entries)<<".\n";
+	cout<<"    Effective number of counts in full energy range is "<<int(eff_entries)<<".\n";
+	cout<<"    Effective number of counts in fit energy range cut is "<<int(fit_entries)<<".\n";
+	cout<<"    Efficiency of energy cut is "<< int(fit_entries/eff_entries*1000)/10<<"%.\n";
+	cout<<"    Number of fit counts in full range is "<<int(N)<<".\n";
 
 	/// Output the fit covariance details.
 	cout<<"\n FIT COVARIANCE MATRIX\n";

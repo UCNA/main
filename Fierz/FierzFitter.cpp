@@ -52,7 +52,7 @@ double UCNAhistogram::normalize() {
 /// Normalize to units of probability per MeV
 double UCNAhistogram::normalize(double min, double max)
 {
-    Sumw2();    /// needed to set up sum of squares structure.
+    //Sumw2();    /// set up sum of squares structure.
     assert(min < max);
 	int bin_min = FindBin(min);
 	int bin_max = FindBin(max);
@@ -149,7 +149,7 @@ double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
 	double chi2 = 0;
     int n = fit.asymmetry.GetNbinsX();
     int delta = data.asymmetry.FindBin(fit_min) - 1;
-	for (int bin=1; bin<=n; bin++)
+	for (int bin=1; bin<n; bin++)
 	{
 		double Y = data.asymmetry.GetBinContent(bin + delta);
 		double eY = data.asymmetry.GetBinError(bin + delta);
@@ -170,7 +170,7 @@ double UCNAmodel::asymmetry_chi2(double A, double b) {
     /*
 	double chi2 = 0;
     int n = asymmetry.GetNbinsX();
-	for (int i=1; i<=n; i++)
+	for (int i=1; i<n; i++)
 	{
 		double E = asymmetry.GetBinCenter(i);
         if (E < min or E > max)
@@ -195,7 +195,7 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
 	double chi2 = 0;
     int n = fit.super_sum.GetNbinsX();
     int delta = data.super_sum.FindBin(fit_min) - 1;
-	for (int bin=1; bin<=n; bin++)
+	for (int bin=1; bin<n; bin++)
 	{
 		double Y = data.super_sum.GetBinContent(bin + delta);
 		double eY = data.super_sum.GetBinError(bin + delta);
@@ -234,7 +234,7 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
     int n = fit.super_sum.GetNbinsX();
     int deltaSM = sm.super_sum.FindBin(fit_min) - 1;
     int deltaF = fierz.super_sum.FindBin(fit_min) - 1;
-	for (int bin=1; bin<=n; bin++)
+	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.super_sum.GetBinCenter(bin);
         if (KE < fit_min or KE > fit_max) {
@@ -258,7 +258,7 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
 {
     int n = fit.asymmetry.GetNbinsX();
-	for (int bin=1; bin<=n; bin++)
+	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.asymmetry.GetBinCenter(bin);
         if (KE < fit_min or KE > fit_max) {
@@ -329,7 +329,6 @@ int UCNAhistogram::fill(TString filename,
  * Save root data
  */
 void UCNAmodel::save(TString filename)
-     //TH1D* counts[2][2], TH1D* super_sum, TH1D* asymmetry)
 {
 	TFile* tfile = new TFile(filename, "recreate");
 	if (tfile->IsZombie()) {
@@ -339,45 +338,26 @@ void UCNAmodel::save(TString filename)
 		exit(1);
 	}
 
-    //if (test_construction(counts, super_sum)) {
-        for (int side=0; side<2; side++)
-            for (int spin=0; spin<2; spin++) {
-                counts[side][spin]->SetDirectory(tfile);
-                counts[side][spin]->Write();
-            }
-    /*} else {
-        cout<<"Error: Rates or super sum for "<<name<<":\n";
-        cout<<"       Histogram not constructed.\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }
+    for (int side=0; side<2; side++)
+        for (int spin=0; spin<2; spin++) {
+            counts[side][spin]->SetDirectory(tfile);
+            counts[side][spin]->Write();
+        }
 
-    //if (super_sum) {*/
-        super_sum.SetDirectory(tfile);
-        super_sum.Write();
-    /*} else {
-        cout<<"Error: Super sum for "<<name<<":\n";
-        cout<<"       Histogram not constructed.\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }
+    super_sum.SetDirectory(tfile);
+    super_sum.Write();
 
-    if (asymmetry) {*/
-        asymmetry.SetDirectory(tfile);
-        asymmetry.Write();
-    /*} else {
-        cout<<"Error: Asymmetry for "<<name<<":\n";
-        cout<<"       Histogram not constructed.\n";
-        cout<<"Aborting...\n";
-        exit(1);
-    }*/
+    asymmetry.SetDirectory(tfile);
+    asymmetry.Write();
 
+    /*
     if (ntuple) {
         ntuple->SetDirectory(tfile);
         ntuple->Write();
     } else {
         cout<<"Warning: Ntuple not set. Can't save data.\n";
     }
+    */
 
 	tfile->Close();
 }
@@ -647,7 +627,7 @@ bool UCNAhistogram::test_range(double min, double max) {
         return false;
     }
 
-    if (upper <= lower) {
+    if (upper < lower) {
         cout<<"Error: Maximum is not greater than minimum.\n";
         return false;
     }
@@ -816,7 +796,7 @@ double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, d
         }
     }
 
-    sigmaS = Sqrt(varS)/2;
+    sigmaS = Sqrt(varS)/4; // TODO CHECK THIS DENOMINATOR!!
     if (IsNaN(sigmaS)) {
         cout<<"Warning: Super sum error multiplier is not a number.\n";
         sigmaS = -1;
@@ -845,24 +825,30 @@ double UCNAmodel::compute_super_sum(int bin) {
 }
 
 TH1D& UCNAmodel::compute_super_sum() {
-    int min_bin, max_bin;
-    return compute_super_sum(min, max, min_bin, max_bin);
+    int bin_min, bin_max;
+    return compute_super_sum(min, max, bin_min, bin_max);
 }
 
 TH1D& UCNAmodel::compute_super_sum(double min, double max, 
-                                   int& min_bin, int& max_bin) {
-    min_bin = super_sum.FindBin(min);
-    max_bin = super_sum.FindBin(max);
+                                   int& bin_min, int& bin_max) {
+    bin_min = super_sum.FindBin(min);
+    bin_max = super_sum.FindBin(max);
     if (not super_sum.test_range(min, max)) {
         cout<<"Error: Problem with ranges in super sum histogram.\n";
         exit(1);
     }
-    return compute_super_sum(min_bin, max_bin);
+
+/*  double lower = super_sum.GetXaxis()->GetBinLowEdge(bin_max);
+    double bin_max_epsi = super_sum.FindBin(max+0.0001);
+    cout<<"max="<<max<<" bin_max="<<bin_max<<" lower edge="<<lower<<" epsi="<<bin_max_epsi<<".\n";
+    exit(1); */
+
+    return compute_super_sum(bin_min, bin_max);
 }
 
-TH1D& UCNAmodel::compute_super_sum(int min_bin, int max_bin) 
+TH1D& UCNAmodel::compute_super_sum(int bin_min, int bin_max) 
 {
-    for (int bin = min_bin; bin <= max_bin; bin++)
+    for (int bin = bin_min; bin < bin_max; bin++)
         compute_super_sum(bin);
     return super_sum;
 }
@@ -929,25 +915,25 @@ double UCNAmodel::compute_asymmetry(int bin) {
 
 
 TH1D& UCNAmodel::compute_asymmetry() {
-    int min_bin, max_bin;
-    return compute_asymmetry(min, max, min_bin, max_bin);
+    int bin_min, bin_max;
+    return compute_asymmetry(min, max, bin_min, bin_max);
 }
 
 
 TH1D& UCNAmodel::compute_asymmetry(double min, double max, 
-                                   int& min_bin, int& max_bin) {
-    min_bin = asymmetry.FindBin(min);
-    max_bin = asymmetry.FindBin(max);
+                                   int& bin_min, int& bin_max) {
+    bin_min = asymmetry.FindBin(min);
+    bin_max = asymmetry.FindBin(max);
     if (not asymmetry.test_range(min, max)) {
         cout<<"Error: Problem with ranges in asymmetry histogram.\n";
         exit(1);
     }
-    return compute_asymmetry(min_bin, max_bin);
+    return compute_asymmetry(bin_min, bin_max);
 }
 
-TH1D& UCNAmodel::compute_asymmetry(int min_bin, int max_bin) 
+TH1D& UCNAmodel::compute_asymmetry(int bin_min, int bin_max) 
 {
-    for (int bin = min_bin; bin <= max_bin; bin++)
+    for (int bin=bin_min; bin<bin_max; bin++)
         compute_asymmetry(bin);
     return asymmetry;
 }
@@ -962,7 +948,7 @@ TH1D& UCNAmodel::compute_asymmetry(double min, double max)
         exit(1);
     }
 
-    for (int bin = bin_min; bin <= bin_max; bin++)
+    for (int bin=bin_min; bin<bin_max; bin++)
 	{
         double n[2][2];
         for (int side = 0; side < 2; side++)
@@ -1000,17 +986,17 @@ double UCNAhistogram::GetEffectiveEntries(double min, double max)
 {
     /*
 	double eff_ent = GetEffectiveEntries();
-    double min_bin = FindBin(min);
-	double max_bin = FindBin(max);
-	double part_int = Integral(min_bin, max_bin);
+    double bin_min = FindBin(min);
+	double bin_max = FindBin(max);
+	double part_int = Integral(bin_min, bin_max);
 	double full_int = Integral();
 	double N = eff_ent * part_int / full_int;
 
 	return N;*/
 	double Neff = 0;
-    double min_bin = FindBin(min);
-	double max_bin = FindBin(max);
-	for (int bin=min_bin; bin<=max_bin; bin++)
+    double bin_min = FindBin(min);
+	double bin_max = FindBin(max);
+	for (int bin=bin_min; bin<bin_max; bin++)
 	{
 		double Y = GetBinContent(bin);
 		double eY = GetBinError(bin);
@@ -1155,7 +1141,7 @@ double evaluate_expected_fierz(double m, double n, double _min, double _max)
     TH1D *h2 = new TH1D("beta_spectrum", 
                         "Beta Spectrum", 
                         integral_size, _min, _max);
-	for (int i = 1; i <= integral_size; i++)
+	for (int i = 1; i < integral_size; i++)
 	{
 		double K = _min + double(i)*(_max-_min)/integral_size;
 		double par1[2] = {m, n};
@@ -1178,7 +1164,7 @@ double evaluate_expected_fierz(double m, double n, double _min, double _max)
              integral_size, _min, _max);
     double parmn[2] = {m, n};
     double par10[2] = {0, 0};
-	for (int bin = 1; bin <= integral_size; bin++)
+	for (int bin = 1; bin < integral_size; bin++)
 	{
 		//double K = _min + double(i)*(_max-_min)/integral_size;
 		double KE[1] = {hmn.GetBinCenter(bin)};
