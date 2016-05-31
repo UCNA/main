@@ -52,7 +52,8 @@ double paramInits[3] = {-0.12, 0, 1};
 TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
 
 /// path to Monte Carlo files
-TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/1mill_beta/";
+//TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta/";
+TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_both_twiddled/";
 
 /// path to save output plots
 TString plots_dir = "/home/hickerson/Dropbox/Root/";
@@ -84,6 +85,7 @@ void output_data_file(TString name, TH1D* h, double ax, double ay)
 /// This needs to be static and global for MINUIT to work
 //UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
 UCNAFierzFitter ucna(KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+UCNAFierzFitter fake(KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 //ucna.fidcut2 = fedutial_cut*fedutial_cut;
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
 {
@@ -133,10 +135,27 @@ void draw_histogram(TH1D* histogram, TString name, TString title,
 /// MAIN APPLICATION
 int main(int argc, char *argv[])
 {
-	TApplication app("Extract Combined A + b Fitter", &argc, argv);
+	TApplication app("Extract Combined A+b Fitter", &argc, argv);
 	srand( time(NULL) );    /// set this to make random or repeatable
 
     /// LOAD 2010 UCNA DATA
+
+    /// Load the files that already contain data super histogram.
+    /*
+    for (int side=EAST; side<=WEST; side++)
+        for (int afp=EAST; afp<=WEST; afp++) {
+            TString s = side? "W":"E", a = afp? "On":"Off";
+            TString title = "2010 final official "+s+" afp "+a;
+            TString name = "hTotalEvents_"+s+"_"+a+";1";
+            int entries = ucna.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
+            if (entries) {
+                cout<<"Status: Number of entries in "<<(side? "west":"east")
+                    <<" side with afp "<<a<<" is "<<entries<<".\n";
+            }
+            else
+                cout<<"Error: found no events in "<<title<<".\n";
+        }
+        */
 
     /// Load the files that already contain data asymmetry histogram.
     ucna.data.asymmetry.fill(
@@ -150,32 +169,39 @@ int main(int argc, char *argv[])
         "Total_Events_SuperSum",
         "2010 final official supersum");
 
-    /// Load the files that already contain data super histogram.
-    for (int side=EAST; side<=WEST; side++)
-        for (int afp=EAST; afp<=WEST; afp++) {
-            TString s = side? "W":"E", a = afp? "On":"Off";
-            TString title = "2010 final official "+s+" afp "+a;
-            TString name = "hTotalEvents_"+s+"_"+a+";1";
-            int entries = ucna.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
-            if (entries) {
-                cout<<"Status: Number of entries in "<<(side? "west":"east")
-                    <<" side with afp "<<a<<" is "<<entries<<".\n";
-            }
-            else
-                cout<<"Error: found no events in "<<title<<".\n";
-                /// TODO figure out where these went.
-        }
 
-
-    /// LOAD MONTE CARLO SIMULATION EVENTS
+    /// LOAD FAKE DATA FROM MONTE CARLO
 
     /// Load Monte Carlo simulated Standard Model events
-    ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_0.root",
+    fake.sm.fill(mc_dir+"SimAnalyzed_Beta_0.root",
                  "SimAnalyzed",
                  "Monte Carlo Standard Model beta spectrum");
 
     /// Load Monte Carlo simulated Fierz events
-    ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_0.root",
+    fake.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_0.root",
+                    "SimAnalyzed",
+                    "Monte Carlo Fierz beta spectrum");
+
+    /// For now load real asymmetry data as fake histogram.
+    fake.data.asymmetry.fill(
+        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
+        "hAsym_Corrected_C",
+        "2010 final official asymmetry");
+
+    /// Just overwrite
+    //fake
+
+    /// LOAD MONTE CARLO SIMULATION EVENTS
+
+    /// Load Monte Carlo simulated Standard Model events
+    //ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_7.root",
+    ucna.sm.fill(mc_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+                 "SimAnalyzed",
+                 "Monte Carlo Standard Model beta spectrum");
+
+    /// Load Monte Carlo simulated Fierz events
+    //ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_7.root",
+    ucna.fierz.fill(mc_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
                     "SimAnalyzed",
                     "Monte Carlo Fierz beta spectrum");
 

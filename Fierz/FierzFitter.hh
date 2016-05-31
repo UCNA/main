@@ -24,6 +24,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <map>
 
 /// c includes
 #include <stdio.h>
@@ -93,7 +94,7 @@ struct UCNAhistogram : TH1D {
         //values(bins),        
         //errors(bins),
     {
-        assert(min < max);
+        assert(min <= max);
         //histogram = new TH1D(name, title, bins, min, max);
     }
 
@@ -177,6 +178,11 @@ struct UCNAmodel {
     }
     */
 
+    /// default constructor needed by stl map.
+    UCNAmodel() : UCNAmodel("","",0,0,0) {
+        exit(1);
+    }
+
     UCNAmodel(TString name, TString title, int bins, double min, double max) 
       : name(name), title(title),
         bins(bins), min(min), max(max),
@@ -191,7 +197,7 @@ struct UCNAmodel {
         */
         //fedutial_cut(0), fidcut2(0)//, bin_resolution(0)
     {
-        assert(min < max);
+        assert(min <= max);
         for (int side = 0; side < 2; side++) {
             TString sub_name = name;
             TString sub_title = title;
@@ -287,14 +293,14 @@ struct UCNAFierzFitter {
     double fit_min;
     double fit_max;
 
-    UCNAmodel data;         /// Measured foreground data to fit
-    UCNAmodel bg;           /// Measured background data to remove
-    UCNAmodel sm;           /// Standard Model vector Monte Carlo spectrum
-    UCNAmodel axial;        /// Axial vector Monte Carlo spectrum
-    UCNAmodel fierz;        /// Fierz (Scaler + tensor) Monte Carlo spectrum
-    UCNAmodel fit;          /// Vector + axial + Fierz Monte Carlo best fit
+    UCNAmodel data;             /// Measured foreground data to fit.
+    UCNAmodel bg;               /// Measured background data to remove.
+    UCNAmodel sm;               /// Standard Model vector Monte Carlo spectrum.
+    UCNAmodel axial;            /// Axial vector Monte Carlo spectrum.
+    UCNAmodel fierz;            /// Fierz (Scaler + tensor) Monte Carlo spectrum.
+    UCNAmodel fit;              /// Vector + axial + Fierz Monte Carlo best fit.
 
-    double fidcut2;         /// mm^2 radial cut
+    double fidcut2;             /// mm^2 radial cut.
 
     UCNAFierzFitter(int bins, double min, double max)
       : bins(bins), min(min), max(max),

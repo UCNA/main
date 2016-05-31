@@ -310,8 +310,8 @@ int UCNAhistogram::fill(TString filename,
     //, TH1D* histogram)
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
-		cout<<"Error loading "<<title<<":\n";
-		cout<<"File not found: "<<filename<<".\n";
+		cout<<"Error: While loading "<<title<<":\n";
+		cout<<"       File "<<filename<<" not found.\n";
 		return 0;
 	}
 
@@ -325,7 +325,7 @@ int UCNAhistogram::fill(TString filename,
     TH1D* histogram = (TH1D*)tfile->Get(name);
     if (not histogram) {
 		cout<<"Error: In file "<<filename<<":\n";
-		cout<<"       Error getting "<<title<<".\n";
+		cout<<"       Problem getting "<<title<<".\n";
 		cout<<"       Cannot find histogram named "<<name<<".\n";
         return 0;
     }
