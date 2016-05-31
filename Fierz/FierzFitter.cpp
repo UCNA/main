@@ -337,6 +337,45 @@ int UCNAhistogram::fill(TString filename,
 }
 
 
+/** 
+ * UCNAhistogram::draw
+ * overload TH1's draw to set up certain features
+ */
+void UCNAhistogram::draw(TString name, TString title,
+          TCanvas* canvas, TLegend* legend, 
+          TString draw = "", int color = 0, int marker = 0)
+{
+    if (not canvas)
+        canvas = new TCanvas(name + "_canvas", title + " Canvas");
+    if (not canvas) {
+        cout<<"Error: Can't construct a new canvas for "<<name<<".\n";
+        exit(1);
+    }
+
+    /// Draw a histogram.
+	SetStats(0);
+    SetLineColor(color);
+    SetMarkerStyle(marker);
+    Draw(draw);
+
+    /// Make a pretty legend.
+    if (legend) {
+        if (draw == "")
+            legend->Clear();
+        legend->SetTextSize(0.033);
+        legend->SetBorderSize(0);
+        legend->SetFillColor(0);
+        legend->AddEntry(this, title, "lep");
+        legend->Draw();
+    }
+
+    /// Save the data and Mote Carlo plots.
+    //TString filename = plots_dir + name + ".pdf";
+    //canvas->SaveAs(filename);
+}
+
+
+
 /**
  * UCNAhistogram::save() and UCNAmodel::save()
  * Save root data

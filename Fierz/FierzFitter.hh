@@ -116,6 +116,10 @@ struct UCNAhistogram : TH1D {
     double normalize();
 
     double GetEffectiveEntries(double min, double max);
+
+    void draw(TString name, TString title,
+              TCanvas* canvas, TLegend* legend, 
+              TString draw, int color, int marker);
 };
 
 

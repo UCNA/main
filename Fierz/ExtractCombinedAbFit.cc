@@ -386,31 +386,37 @@ int main(int argc, char *argv[])
                    "Combined Fierz component of energy spectrum");
     TLegend legend(0.55,0.65,0.85,0.85);
 
-    draw_histogram(&ucna.data.asymmetry, 
+    //draw_histogram(&ucna.data.asymmetry, 
+    ucna.data.asymmetry.draw(
                    "data_asymmetry", 
                    "UCNA 2010 #Lambda(E)", 
                    &canvas,&legend,"",1,0);
-    draw_histogram(&ucna.fit.asymmetry, 
+    //draw_histogram(&ucna.fit.asymmetry, 
+    ucna.fit.asymmetry.draw(
                    "fit_asymmetry", 
                    "Fit #Lambda(E)", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
 
-    draw_histogram(&ucna.sm.super_sum, 
+    //draw_histogram(&ucna.sm.super_sum, 
+    ucna.sm.super_sum.draw(
                    "sm_supersum", 
                    "Standard Model Monte Carlo #Sigma", 
                    &canvas,&legend,"",4,0);
-    draw_histogram(&ucna.fierz.super_sum, 
+    //draw_histogram(&ucna.fierz.super_sum, 
+    ucna.fierz.super_sum.draw(
                    "fierz_supersum", 
                    "Fierz Monte Carlo #Sigma", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"monte_carlo.pdf");
 
-    draw_histogram(&ucna.data.super_sum, 
+    //draw_histogram(&ucna.data.super_sum, 
+    ucna.data.super_sum.draw(
                    "data_supersum", 
                    "UCNA 2010 #Sigma(E)", 
                    &canvas,&legend,"",1,0);
-    draw_histogram(&ucna.fit.super_sum, 
+    //draw_histogram(&ucna.fit.super_sum, 
+    ucna.fit.super_sum.draw(
                    "fit_supersum", 
                    "Fit #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
