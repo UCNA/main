@@ -102,6 +102,10 @@ struct UCNAhistogram : TH1D {
     int fill(TString filename);
     void save(TString filename, TString name, TString title);
     void save(TString filename);
+    void draw(TString name, TString title,
+              TCanvas* canvas, TLegend* legend, 
+              TString draw, int color, int marker);
+    void save_data(TString filename, double ax, double ay);
 
     bool test_min();
     bool test_min(double min);
@@ -114,12 +118,7 @@ struct UCNAhistogram : TH1D {
 
     double normalize(double min, double max);
     double normalize();
-
     double GetEffectiveEntries(double min, double max);
-
-    void draw(TString name, TString title,
-              TCanvas* canvas, TLegend* legend, 
-              TString draw, int color, int marker);
 };
 
 

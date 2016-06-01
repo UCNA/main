@@ -376,6 +376,27 @@ void UCNAhistogram::draw(TString name, TString title,
 
 
 
+
+/// DISPLAYING AND OUTPUTTING
+/**
+ *
+ */
+void UCNAhistogram::save_data(TString filename, double ax, double ay)
+{
+    ofstream ofs;
+	ofs.open(filename);
+	for (int i=1; i<=GetNbinsX(); i++)
+	{
+		double x = ax * GetBinCenter(i);
+		double sx = GetBinWidth(i);
+		double r = ay * GetBinContent(i);
+		double sr = ay * GetBinError(i);
+		ofs<<x<<'\t'<<r<<'\t'<<sr<<endl;
+	}
+	ofs.close();
+}
+
+
 /**
  * UCNAhistogram::save() and UCNAmodel::save()
  * Save root data

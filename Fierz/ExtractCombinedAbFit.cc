@@ -52,8 +52,8 @@ double paramInits[3] = {-0.12, 0, 1};
 TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
 
 /// path to Monte Carlo files
-//TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta/";
-TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_both_twiddled/";
+TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta/";
+TString mc_syst_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_both_twiddled/";
 
 /// path to save output plots
 TString plots_dir = "/home/hickerson/Dropbox/Root/";
@@ -63,30 +63,15 @@ TString root_output_dir = "/home/hickerson/Documents/";
 
 
 
-void output_data_file(TString name, TH1D* h, double ax, double ay)
-{
-	TString filename = plots_dir + name + ".dat";
-    ofstream ofs;
-	ofs.open(filename);
-	for (int i = 1; i < h->GetNbinsX(); i++)
-	{
-		double x = ax * h->GetBinCenter(i);
-		double sx = h->GetBinWidth(i);
-		double r = ay * h->GetBinContent(i);
-		double sr = ay * h->GetBinError(i);
-		ofs<<x<<'\t'<<r<<'\t'<<sr<<endl;
-	}
-	ofs.close();
-}
 
 
 
+/// GLOBAL MODELS
+UCNAFierzFitter ucna(KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+UCNAFierzFitter fake(KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+//ucna.fidcut2 = fedutial_cut*fedutial_cut;
 
 /// This needs to be static and global for MINUIT to work
-//UCNAFierzFitter ucna(KEbins, KEmin, KEmax);
-UCNAFierzFitter ucna(KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-//UCNAFierzFitter fake(KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-//ucna.fidcut2 = fedutial_cut*fedutial_cut;
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
 {
     assert(n==3);
@@ -95,40 +80,6 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
 }
 
 
-/// DISPLAYING AND OUTPUTTING
-void draw_histogram(TH1D* histogram, TString name, TString title,
-                    TCanvas* canvas, TLegend* legend, 
-                    TString draw = "", int color = 0, int marker = 0)
-{
-    // TODO no point in making this a pointer , make a reference 
-    if (not canvas)
-        canvas = new TCanvas(name + "_canvas", title + " Canvas");
-    if (not canvas) {
-        cout<<"Error: Can't construct a new canvas for "<<name<<".\n";
-        exit(1);
-    }
-
-    /// Draw a histogram.
-	histogram->SetStats(0);
-    histogram->SetLineColor(color);
-    histogram->SetMarkerStyle(marker);
-    histogram->Draw(draw);
-
-    /// Make a pretty legend.
-    if (legend) {
-        if (draw == "")
-            legend->Clear();
-        legend->SetTextSize(0.033);
-        legend->SetBorderSize(0);
-        legend->SetFillColor(0);
-        legend->AddEntry(histogram, title, "lep");
-        legend->Draw();
-    }
-
-    /// Save the data and Mote Carlo plots.
-    //TString filename = plots_dir + name + ".pdf";
-    //canvas->SaveAs(filename);
-}
 
 
 
@@ -172,14 +123,13 @@ int main(int argc, char *argv[])
 
     /// LOAD FAKE DATA FROM MONTE CARLO
 
-    /*
     /// Load Monte Carlo simulated Standard Model events
-    fake.sm.fill(mc_dir+"SimAnalyzed_Beta_0.root",
+    fake.sm.fill(mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
                  "SimAnalyzed",
                  "Monte Carlo Standard Model beta spectrum");
 
     /// Load Monte Carlo simulated Fierz events
-    fake.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_0.root",
+    fake.fierz.fill(mc_syst_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
                     "SimAnalyzed",
                     "Monte Carlo Fierz beta spectrum");
 
@@ -188,7 +138,6 @@ int main(int argc, char *argv[])
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
         "hAsym_Corrected_C",
         "2010 final official asymmetry");
-    */
 
     /// Just overwrite
     //fake
@@ -196,14 +145,12 @@ int main(int argc, char *argv[])
     /// LOAD MONTE CARLO SIMULATION EVENTS
 
     /// Load Monte Carlo simulated Standard Model events
-    //ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_7.root",
-    ucna.sm.fill(mc_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+    ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_7.root",
                  "SimAnalyzed",
                  "Monte Carlo Standard Model beta spectrum");
 
     /// Load Monte Carlo simulated Fierz events
-    //ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_7.root",
-    ucna.fierz.fill(mc_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
+    ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_7.root",
                     "SimAnalyzed",
                     "Monte Carlo Fierz beta spectrum");
 
@@ -214,23 +161,21 @@ int main(int argc, char *argv[])
 
     /// FITTING 
 
-    /// Set up constants and vars
-    TMatrixD cov(nPar,nPar);
-    double all_entries = ucna.data.super_sum.GetEntries();
-	double eff_entries = ucna.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
-	double fit_entries = ucna.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
-
     /// Set up the fit parameters.
     TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, fit_min, fit_max, nPar);
     //TF1 supersum_func("supersum_fit_func", &supersum_fit_func, KEmin_b, KEmax_b, nPar);
-    
-    /// Setup the parameters.
     asymmetry_func.SetParameters(paramInits);
     //super_sum_func.SetParameters(paramInits);
     for (int i=0; i<nPar; i++) {
         asymmetry_func.SetParName(i, paramNames[i]);
         //super_sum_func.SetParName(i, paramNames[i]);
     }
+
+    /// Set up constants and vars
+    TMatrixD cov(nPar,nPar);
+    double all_entries = ucna.data.super_sum.GetEntries();
+	double eff_entries = ucna.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
+	double fit_entries = ucna.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
 
 	/// Actually do the combined fitting.
 	//ucna.combined_fit(cov, &asymmetry_func, &supersum_func, &combined_chi2);
@@ -241,7 +186,7 @@ int main(int argc, char *argv[])
     double A = -0.12;
     //double b = 0;
     double N = fit_entries;
-    double exC = 0.25; //evaluate_expected_cos_theta(fit_min,fit_max);
+    double exCos = 0.25; //evaluate_expected_cos_theta(fit_min,fit_max);
 
 	/// Set all expectation values for this range.
     double nSpec = 4;
@@ -256,12 +201,12 @@ int main(int argc, char *argv[])
 		for (int j=0; j<nPar; j++)
 	        p_cov_inv[i][j] = 0;
     if (nPar > 0)
-	    p_cov_inv[0][0] = N*exC*ex[2][0];
+	    p_cov_inv[0][0] = N*exCos*ex[2][0];
     if (nPar > 1) {
         p_cov_inv[1][0] = 
-        p_cov_inv[0][1] = -N*A*exC*ex[2][1];
+        p_cov_inv[0][1] = -N*A*exCos*ex[2][1];
         //p_cov_inv[1][1] =  N*(A*A*ex[2][2]/4 + ex[0][2] - ex[0][1]*ex[0][1]);
-        p_cov_inv[1][1] = N*(A*A*exC*ex[2][2] + ex[0][2] - ex[0][1]*ex[0][1]);
+        p_cov_inv[1][1] = N*(A*A*exCos*ex[2][2] + ex[0][2] - ex[0][1]*ex[0][1]);
     }
     if (nPar > 2)
 	    p_cov_inv[2][2] = N;
@@ -386,36 +331,30 @@ int main(int argc, char *argv[])
                    "Combined Fierz component of energy spectrum");
     TLegend legend(0.55,0.65,0.85,0.85);
 
-    //draw_histogram(&ucna.data.asymmetry, 
     ucna.data.asymmetry.draw(
                    "data_asymmetry", 
                    "UCNA 2010 #Lambda(E)", 
                    &canvas,&legend,"",1,0);
-    //draw_histogram(&ucna.fit.asymmetry, 
     ucna.fit.asymmetry.draw(
                    "fit_asymmetry", 
                    "Fit #Lambda(E)", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
 
-    //draw_histogram(&ucna.sm.super_sum, 
     ucna.sm.super_sum.draw(
                    "sm_supersum", 
                    "Standard Model Monte Carlo #Sigma", 
                    &canvas,&legend,"",4,0);
-    //draw_histogram(&ucna.fierz.super_sum, 
     ucna.fierz.super_sum.draw(
                    "fierz_supersum", 
                    "Fierz Monte Carlo #Sigma", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"monte_carlo.pdf");
 
-    //draw_histogram(&ucna.data.super_sum, 
     ucna.data.super_sum.draw(
                    "data_supersum", 
                    "UCNA 2010 #Sigma(E)", 
                    &canvas,&legend,"",1,0);
-    //draw_histogram(&ucna.fit.super_sum, 
     ucna.fit.super_sum.draw(
                    "fit_supersum", 
                    "Fit #Sigma(E)", 
@@ -423,77 +362,14 @@ int main(int argc, char *argv[])
     canvas.SaveAs(plots_dir+"data_supersum.pdf");
 
     /*
-    /// Draw the data super sums
-    ucna.data.super_sum.Scale(200);
-	ucna.data.super_sum.SetStats(0);
-    ucna.data.super_sum.SetLineColor(2);
-    ucna.data.super_sum.Draw("");
-
-    /// Draw Monte Carlo super sum
-	ucna.data.super_sum.SetStats(0);
-    ucna.sm.super_sum.SetLineColor(1);
-    ucna.sm.super_sum.SetMarkerStyle(4);
-    ucna.sm.super_sum.Draw("same p0");
-
-    /// Make a pretty legend.
-    TLegend * legend = new TLegend(0.6,0.8,0.7,0.6);
-    legend->AddEntry(ucna.data.super_sum, "Type 0 super sum", "l");
-    legend->AddEntry(ucna.sm.super_sum, "Monte Carlo super sum", "p");
-    legend->SetTextSize(0.03);
-    legend->SetBorderSize(0);
-    legend->Draw();
-
-    /// Save the data and Mote Carlo plots.
-    TString super_sum_pdf_filename = plots_dir+"super_sum_data.pdf";
-    canvas->SaveAs(super_sum_pdf_filename);
-*/
-
-	/*
-	/// A fit histogram for output to gnuplot
-    TH1D *fierz_fit_histogram = new TH1D(*asymmetry_histogram);
-	for (int i = 0; i < fierz_fit_histogram->GetNbinsX(); i++)
-		fierz_fit_histogram->SetBinContent(i, fierz_fit->Eval(fierz_fit_histogram->GetBinCenter(i)));
-	
-
-	/// output for root
-    TString pdf_filename = "/data/kevinh/mc/asymmetry_fierz_term_fit.pdf";
-    canvas->SaveAs(pdf_filename);
-
-	/// output for gnuplot
-	//output_data_file("/data/kevinh/mc/super-sum-data", ucna.data.super_sum, 1, 1000);
-	//output_data_file("/data/kevinh/mc/super-sum-mc", ucna.sm.super_sum, 1, 1000);
-	//output_data_file("/data/kevinh/mc/fierz-ratio", fierz_ratio_histogram, 1, 1);
-	//output_data_file("/data/kevinh/mc/fierz-fit", fierz_fit_histogram, 1, 1);
+	/// Output for gnuplot
+	//save_data(plots_dir+"super-sum-data.dat", ucna.data.super_sum, 1, 1000);
+	//save_data(plots_dir+"super-sum-mc.dat", ucna.sm.super_sum, 1, 1000);
+	//save_data(plots_dir+"fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
+	//save_data(plots_dir+"fierz-fit.dat", fierz_fit_histogram, 1, 1);
 
 	*/
 
-#if 0
-	// Create a new canvas.
-	TCanvas * c1 = new TCanvas("c1","Two Histogram Fit example",100,10,900,800);
-	c1->Divide(2,2);
-	gStyle->SetOptFit();
-	gStyle->SetStatY(0.6);
-
-	c1->cd(1);
-	ucna.data.asymmetry.Draw();
-	func.SetRange(min_E, max_E);
-	func.DrawCopy("cont1 same");
-	/*
-	c1->cd(2);
-	asymmetry->Draw("lego");
-	func.DrawCopy("surf1 same");
-	*/
-	c1->cd(3);
-	func.SetRange(min_E, max_E);
-	///TODO fierzratio_histogram->Draw();
-	func.DrawCopy("cont1 same");
-	/*
-	c1->cd(4);
-	fierzratio->Draw("lego");
-	gPad->SetLogz();
-	func.Draw("surf1 same");
-	*/
-#endif
 	app.Run();
 
 	return 0;
