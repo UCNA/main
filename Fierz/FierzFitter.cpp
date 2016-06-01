@@ -1,5 +1,6 @@
 #include "FierzFitter.hh"
 
+
 bool UCNAhistogram::test_compatable(UCNAhistogram & other)
 {
     int error = 0;
@@ -441,7 +442,13 @@ void UCNAmodel::save(TString filename)
  * Use wild card * in filename where data is split up over many files
  * and they get Tchained together.
  */
-int UCNAmodel::fill(TString filename, TString name, TString title)
+int UCNAmodel::fill(TString filename, TString name, TString title) {
+    return fill(filename, name, title, 0.68/1.68, -0.12, 0);
+}
+
+int UCNAmodel::fill(TString filename, TString name, TString title, 
+                    double flip, double A, double b)
+                    //double flip = 0.68/1.68, double A = -0.12, double b = 0)
 {
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
@@ -506,7 +513,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title)
         //if (type==0) { 
             /// fill with loading efficiency 
             double p = rand.Uniform(1);
-			double afp = (p < afp_off_prob)? -1 : +1;
+			//double afp = (p < afp_off_prob)? -1 : +1;
+			double afp = (p < flip)? +1 : -1;
             bool spin = (afp < 0)? EAST : WEST;
             //cout<<"energy: "<<energy<<" side: "<<"side: "<<side
             //         <<" spin: "<<spin<<" afp: "<<afp<<" p: "<<p<<".\n";

@@ -128,6 +128,8 @@ struct UCNAmodel {
     TString title;
     int     bins;
     double  min, max;
+    double  Neff;
+
     TRandom2 rand;
 
     //TH1D*   raw[2][2];  
@@ -136,55 +138,10 @@ struct UCNAmodel {
     UCNAhistogram super_ratio;
     UCNAhistogram super_sum;
     UCNAhistogram asymmetry;
-    // Add Yup and Ydown
+    // Add Yup and Ydown ?
 
-    /// cuts and settings
-    unsigned nToSim = 5e7;			/// how many triggering events to simulate
-    double afp_off_prob = 1/1.68; 	/// afp off probability per neutron (0.68/1.68 for on)
 
-/*
-    double KEmin = 50;              /// min kinetic energy for plots
-    double KEmax = 670;             /// max kinetic range for plots
-    double KEmin_A = 120;           /// min kinetic energy for asymmetry fit
-    double KEmax_A = 670;           /// max kinetic range for asymmetry fit
-    double KEmin_b = 120;           /// min kinetic energy for Fierz fit
-    double KEmax_b = 670;           /// max kinetic range for Fierz fit
-    int KEbins = (KEmax-KEmin)/10;  /// number of bins to use fit spectral plots
-    */
-    /*
-    double KEmin;              /// min kinetic energy for plots
-    double KEmax;              /// max kinetic range for plots
-    double KEmin_A;            /// min kinetic energy for asymmetry fit
-    double KEmax_A;            /// max kinetic range for asymmetry fit
-    double KEmin_b;            /// min kinetic energy for Fierz fit
-    double KEmax_b;            /// max kinetic range for Fierz fit
-    */
-    //double fedutial_cut = 50;  /// radial cut in millimeters 
-
-    /// set up free fit parameters with best guess
-    static const int nPar = 3;
-    TString paramNames[3] = {"A", "b", "N"};
-    double paramInits[3] = {-0.12, 0, 1e1};
-
-    /*
-    UCNAmodel(int bins, double min, double max) 
-      : name(""), title(""), 
-        bins(bins), min(min), max(max),
-        //raw({{NULL,NULL},{NULL,NULL}}),
-        super_ratio(bins, min, max),
-        super_sum(bins, min, max),
-        asymmetry(bins, min, max) {
-        for (int side = 0; side < 2; side++)
-            for (int spin = 0; spin < 2; spin++)
-                counts[side][spin] = 0;
-        ntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
-    }
-    */
-
-    /// default constructor needed by stl map.
-    UCNAmodel() : UCNAmodel("","",0,0,0) {
-        exit(1);
-    }
+    //UCNAmodel():UCNAmodel("","",0,0,0) {exit(1);} /// default constructor needed by stl map.
 
     UCNAmodel(TString name, TString title, int bins, double min, double max) 
       : name(name), title(title),
@@ -232,6 +189,7 @@ struct UCNAmodel {
 
     double asymmetry_chi2(double A, double b);
     int fill(TString filename, TString name, TString title);
+    int fill(TString filename, TString name, TString title, double flip, double A, double b);
     void save(TString filename, TString name, TString title);
     void save(TString filename);
 
@@ -288,56 +246,71 @@ struct UCNAEvent {
 };
 
 struct UCNAFierzFitter {
-    int bins;
-    double min;
-    double max;
+    TString name;
+    TString title;
+    int bins;                       /// number of bins to use fit spectral plots
+    double min;                     /// min kinetic energy for plots
+    double max;                     /// max kinetic range for plots
 
-    int fit_bins;
-    double fit_min;
-    double fit_max;
+    int fit_bins;                   /// number of bins to use fit spectral plots
+    double fit_min;                 /// min kinetic energy for asymmetry fit
+    double fit_max;                 /// max kinetic range for asymmetry fit
 
-    UCNAmodel data;             /// Measured foreground data to fit.
-    UCNAmodel bg;               /// Measured background data to remove.
-    UCNAmodel sm;               /// Standard Model vector Monte Carlo spectrum.
-    UCNAmodel axial;            /// Axial vector Monte Carlo spectrum.
-    UCNAmodel fierz;            /// Fierz (Scaler + tensor) Monte Carlo spectrum.
-    UCNAmodel fit;              /// Vector + axial + Fierz Monte Carlo best fit.
+    UCNAmodel data;                 /// Measured foreground data to fit.
+    UCNAmodel bg;                   /// Measured background data to remove.
+    UCNAmodel sm;                   /// Standard Model vector Monte Carlo spectrum.
+    UCNAmodel axial;                /// Axial vector Monte Carlo spectrum.
+    UCNAmodel fierz;                /// Fierz (Scaler + tensor) Monte Carlo spectrum.
+    UCNAmodel fit;                  /// Vector + axial + Fierz Monte Carlo best fit.
 
-    double fidcut2;             /// mm^2 radial cut.
+    /// cuts and settings
+    unsigned nToSim = 5e7;			/// how many triggering events to simulate
+    double afp_off_prob = 1/1.68; 	/// afp off probability per neutron (0.68/1.68 for on)
+    double fedutial_cut = 50;       /// radial cut in millimeters 
+    double fidcut2;                 /// mm^2 radial cut.
 
-    UCNAFierzFitter(int bins, double min, double max)
-      : bins(bins), min(min), max(max),
+    /// set up free fit parameters with best guess
+    static const int nPar = 3;
+    TString paramNames[3] = {"A", "b", "N"};
+    double paramInits[3] = {-0.12, 0, 1e1};
+
+    UCNAFierzFitter(TString name, TString title, 
+                    int bins, double min, double max)
+      : name(name), title(title),
+        bins(bins), min(min), max(max),
         fit_bins(bins), fit_min(min), fit_max(max),
-        data("ucna_data_", "UCNA data", bins, min, max),
-        bg("ucna_bg_", "UCNA background", bins, min, max),
-        sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
-        axial("ucna_axial_", "Axial-vector Monte Carlo", bins, min, max),
-        fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
-        fit("ucna_fit_", "Standard Model + Fierz best fit", bins, min, max) 
+        data(name+"_data", title+" data", bins, min, max),
+        bg(name+"_bg", title+" background", bins, min, max),
+        sm(name+"_sm", title+" Standard Model Monte Carlo", bins, min, max),
+        axial(name+"_axial", title+" Axial-vector Monte Carlo", bins, min, max),
+        fierz(name+"_fierz", title+" Fierz Monte Carlo", bins, min, max),
+        fit(name+"_fit", title+" Standard Model + Fierz best fit", bins, min, max) 
     { assert(min < max); }
 
-    UCNAFierzFitter(int bins, double min, double max, 
+    UCNAFierzFitter(TString name, TString title,
+                    int bins, double min, double max, 
                     int fit_bins, double fit_min, double fit_max)
-      : bins(bins), min(min), max(max),
+      : name(name), title(title),
+        bins(bins), min(min), max(max),
         fit_bins(fit_bins), fit_min(fit_min), fit_max(fit_max),
-        data("ucna_data_", "UCNA data", bins, min, max),
-        bg("ucna_bg_", "UCNA background", bins, min, max),
-        sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
-        axial("ucna_axial_", "Axial-vector Monte Carlo", bins, min, max),
-        fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
-        fit("ucna_fit_", "Standard Model + Fierz best fit", fit_bins, fit_min, fit_max),
+        data(name+"_data", title+" data", bins, min, max),
+        bg(name+"_bg", title+" background", bins, min, max),
+        sm(name+"_sm", title+" Standard Model Monte Carlo", bins, min, max),
+        axial(name+"_axial", title+" Axial-vector Monte Carlo", bins, min, max),
+        fierz(name+"_fierz", title+" Fierz Monte Carlo", bins, min, max),
+        fit(name+"_fit", title+" Standard Model + Fierz best fit", fit_bins, fit_min, fit_max),
         fidcut2(0)
     { assert(min < max); }
 /*
     UCNAFierzFitter(double min, double max, double fit_min, double fit_max)
       : bins((max-min)/resolution), min(min), max(max),
         bins((fit_max-fit_min)/resolution), fit_min(fit_min), fit_max(fit_max),
-        data("ucna_data_", "UCNA data", bins, min, max),
-        bg("ucna_bg_", "UCNA background", bins, min, max),
-        sm("ucna_sm_", "Standard Model Monte Carlo", bins, min, max),
-        axial("ucna_axial_", "Axial-vector Monte Carlo", bins, min, max),
-        fierz("ucna_fierz_", "Fierz Monte Carlo", bins, min, max),
-        fit("ucna_fit_", "Standard Model + Fierz best fit", bins, min, max) 
+        data(name+"_data_", "UCNA data", bins, min, max),
+        bg(name+"_bg_", "UCNA background", bins, min, max),
+        sm(name+"_sm_", "Standard Model Monte Carlo", bins, min, max),
+        axial(name+"_axial_", "Axial-vector Monte Carlo", bins, min, max),
+        fierz(name+"_fierz_", "Fierz Monte Carlo", bins, min, max),
+        fit(name+"_fit_", "Standard Model + Fierz best fit", bins, min, max) 
     { assert(min < max); }
     */
 

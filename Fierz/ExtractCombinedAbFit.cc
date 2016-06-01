@@ -42,7 +42,6 @@ double fit_max = 630;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
 
-
 /// set up free fit parameters with best guess
 static const int nPar = 3;
 TString paramNames[3] = {"A", "b", "N"};
@@ -64,11 +63,9 @@ TString root_output_dir = "/home/hickerson/Documents/";
 
 
 
-
-
 /// GLOBAL MODELS
-UCNAFierzFitter ucna(KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-UCNAFierzFitter fake(KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+UCNAFierzFitter ucna("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+UCNAFierzFitter fake("fake", "Fake UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 //ucna.fidcut2 = fedutial_cut*fedutial_cut;
 
 /// This needs to be static and global for MINUIT to work
@@ -78,7 +75,6 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
     double A=p[0], b=p[1], N=p[2]; // TODO make nPar correct here
 	chi2 = ucna.combined_chi2(A,b,N);
 }
-
 
 
 
@@ -154,7 +150,7 @@ int main(int argc, char *argv[])
                     "SimAnalyzed",
                     "Monte Carlo Fierz beta spectrum");
 
-    /// SAVE ALL PROCESSED HISTOGRAMS 
+    /// SAVE AND CACHE ALL PROCESSED HISTOGRAMS 
 
     // TODO ???
 
@@ -163,13 +159,14 @@ int main(int argc, char *argv[])
 
     /// Set up the fit parameters.
     TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, fit_min, fit_max, nPar);
-    //TF1 supersum_func("supersum_fit_func", &supersum_fit_func, KEmin_b, KEmax_b, nPar);
     asymmetry_func.SetParameters(paramInits);
-    //super_sum_func.SetParameters(paramInits);
-    for (int i=0; i<nPar; i++) {
+    for (int i=0; i<nPar; i++)
         asymmetry_func.SetParName(i, paramNames[i]);
-        //super_sum_func.SetParName(i, paramNames[i]);
-    }
+
+/*  TF1 supersum_func("supersum_fit_func", &supersum_fit_func, KEmin_b, KEmax_b, nPar);
+    super_sum_func.SetParameters(paramInits);
+    for (int i=0; i<nPar; i++)
+        super_sum_func.SetParName(i, paramNames[i]); */
 
     /// Set up constants and vars
     TMatrixD cov(nPar,nPar);
@@ -219,7 +216,7 @@ int main(int argc, char *argv[])
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
 
-	/// Output the data info.
+	/// Output the data and cut info.
     int cl = 14;
     cout<<setprecision(5);
 	cout<<" ENERGY RANGE:\n";
