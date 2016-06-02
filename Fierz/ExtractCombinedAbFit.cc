@@ -76,151 +76,28 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
 	chi2 = ucna.combined_chi2(A,b,N);
 }
 
-
-/// DISPLAYING AND OUTPUTTING
-void display(UCNAFierzFitter &ff) {
-    TCanvas canvas("fierz_fitter_canvas",
-                   "Combined Fierz component of energy spectrum");
-    TLegend legend(0.55,0.65,0.85,0.85);
-
-    ff.data.asymmetry.draw(
-                   "data_asymmetry", 
-                   "UCNA 2010 #Lambda(E)", 
-                   &canvas,&legend,"",1,0);
-    ff.fit.asymmetry.draw(
-                   "fit_asymmetry", 
-                   "Fit #Lambda(E)", 
-                   &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
-
-    ff.sm.super_sum.draw(
-                   "sm_supersum", 
-                   "Standard Model Monte Carlo #Sigma", 
-                   &canvas,&legend,"",4,0);
-    ff.fierz.super_sum.draw(
-                   "fierz_supersum", 
-                   "Fierz Monte Carlo #Sigma", 
-                   &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"monte_carlo.pdf");
-
-    ff.data.super_sum.draw(
-                   "data_supersum", 
-                   "UCNA 2010 #Sigma(E)", 
-                   &canvas,&legend,"",1,0);
-    ff.fit.super_sum.draw(
-                   "fit_supersum", 
-                   "Fit #Sigma(E)", 
-                   &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"data_supersum.pdf");
-}
-
-
-/// MAIN APPLICATION
-int main(int argc, char *argv[])
-{
-	TApplication app("Extract Combined A+b Fitter", &argc, argv);
-	srand( time(NULL) );    /// set this to make random or repeatable
-
-    /// LOAD 2010 UCNA DATA
-
-    /// Load the files that already contain data super histogram.
-    /*
-    for (int side=EAST; side<=WEST; side++)
-        for (int afp=EAST; afp<=WEST; afp++) {
-            TString s = side? "W":"E", a = afp? "On":"Off";
-            TString title = "2010 final official "+s+" afp "+a;
-            TString name = "hTotalEvents_"+s+"_"+a+";1";
-            int entries = ucna.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
-            if (entries) {
-                cout<<"Status: Number of entries in "<<(side? "west":"east")
-                    <<" side with afp "<<a<<" is "<<entries<<".\n";
-            }
-            else
-                cout<<"Error: found no events in "<<title<<".\n";
-        }
-        */
-
-    /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
-
-    /// Load the files that already contain data asymmetry histogram.
-    ucna.data.asymmetry.fill(
-        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
-        "hAsym_Corrected_C",
-        "2010 final official asymmetry");
-
-    /// Load the files that already contain data super histogram.
-    ucna.data.super_sum.fill(
-        data_dir+"OctetAsym_Offic.root",
-        "Total_Events_SuperSum",
-        "2010 final official supersum");
-
-
-    /// LOAD FAKE DATA FROM MONTE CARLO
-
-    /// Load Monte Carlo simulated Standard Model events
-    fake.sm.fill(mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
-                 "SimAnalyzed",
-                 "Monte Carlo Standard Model beta spectrum");
-
-    /// Load Monte Carlo simulated Fierz events
-    fake.fierz.fill(mc_syst_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
-                    "SimAnalyzed",
-                    "Monte Carlo Fierz beta spectrum");
-
-    /// For now load real asymmetry data as fake histogram.
-    fake.data.asymmetry.fill(
-        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
-        "hAsym_Corrected_C",
-        "2010 final official asymmetry");
-
-    /// Just overwrite
-    //fake
-
-    /// LOAD MONTE CARLO SIMULATION EVENTS
-
-    /// Load Monte Carlo simulated Standard Model events
-    ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_7.root",
-                 "SimAnalyzed",
-                 "Monte Carlo Standard Model beta spectrum");
-
-    /// Load Monte Carlo simulated Fierz events
-    ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_7.root",
-                    "SimAnalyzed",
-                    "Monte Carlo Fierz beta spectrum");
-
-    /// SAVE AND CACHE ALL PROCESSED HISTOGRAMS 
-
-    // TODO ???
-
-
-    /// FITTING 
-
-    /// Set up the fit parameters.
+/// FITTING 
+void fit(UCNAFierzFitter &ff) {
+    /// Set up the fit functions parameters.
     TF1 asymmetry_func("asymmetry_fit_func", &asymmetry_fit_func, fit_min, fit_max, nPar);
     asymmetry_func.SetParameters(paramInits);
     for (int i=0; i<nPar; i++)
         asymmetry_func.SetParName(i, paramNames[i]);
 
-/*  TF1 supersum_func("supersum_fit_func", &supersum_fit_func, KEmin_b, KEmax_b, nPar);
-    super_sum_func.SetParameters(paramInits);
+    /*TF1 supersum_func("supersum_fit_func", &supersum_fit_func, fit_min, fit_max, nPar);
+    supersum_func.SetParameters(paramInits);
     for (int i=0; i<nPar; i++)
-        super_sum_func.SetParName(i, paramNames[i]); */
-
-    /// Set up constants and vars
-    TMatrixD cov(nPar,nPar);
-    double all_entries = ucna.data.super_sum.GetEntries();
-	double eff_entries = ucna.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
-	double fit_entries = ucna.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
+        supersum_func.SetParName(i, paramNames[i]);*/
 
 	/// Actually do the combined fitting.
-	//ucna.combined_fit(cov, &asymmetry_func, &supersum_func, &combined_chi2);
-	ucna.combined_fit(cov, &asymmetry_func, &combined_chi2);
-	ucna.compute_fit(&asymmetry_func);
+    TMatrixD cov(nPar,nPar);
+	ff.combined_fit(cov, &asymmetry_func, /*supersum_func,*/ &combined_chi2);
+	ff.compute_fit(&asymmetry_func);
 
     /// Set up reasonable guesses 
     double A = -0.12;
     //double b = 0;
-    double N = fit_entries;
+    double N = 2;
     double exCos = 0.25; //evaluate_expected_cos_theta(fit_min,fit_max);
 
 	/// Set all expectation values for this range.
@@ -251,8 +128,12 @@ int main(int argc, char *argv[])
 	TMatrixD p_cov = p_cov_inv.Invert(&det);
 
 
-
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
+
+    /// Look up sizes
+    double all_entries = ff.data.super_sum.GetEntries();
+	double eff_entries = ff.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
+	double fit_entries = ff.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
 
 	/// Output the data and cut info.
     int cl = 14;
@@ -291,7 +172,6 @@ int main(int argc, char *argv[])
 			cout<<setw(cl)<<p_cov[i][j];
 		cout<<"\n";
 	}
-
 #if 0
     /// Compute independent standard errors.
 	cout<<"\n FOR UNCOMBINED FITS:\n";
@@ -359,20 +239,132 @@ int main(int argc, char *argv[])
                         <<setw(cl)<<ratio<<"\n";
         }
     }
+}
 
-    display(ucna);
+
+/// DISPLAYING AND OUTPUTTING
+void display(UCNAFierzFitter &ff) {
+    TCanvas canvas("fierz_fitter_canvas",
+                   "Combined Fierz component of energy spectrum");
+    TLegend legend(0.55,0.65,0.85,0.85);
+
+    ff.data.asymmetry.draw(
+                   "data_asymmetry", 
+                   "UCNA 2010 #Lambda(E)", 
+                   &canvas,&legend,"",1,0);
+    ff.fit.asymmetry.draw(
+                   "fit_asymmetry", 
+                   "Fit #Lambda(E)", 
+                   &canvas,&legend,"Same",6,0);
+    canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
+
+    ff.sm.super_sum.draw(
+                   "sm_supersum", 
+                   "Standard Model Monte Carlo #Sigma", 
+                   &canvas,&legend,"",4,0);
+    ff.fierz.super_sum.draw(
+                   "fierz_supersum", 
+                   "Fierz Monte Carlo #Sigma", 
+                   &canvas,&legend,"Same",6,0);
+    canvas.SaveAs(plots_dir+"monte_carlo.pdf");
+
+    ff.data.super_sum.draw(
+                   "data_supersum", 
+                   "UCNA 2010 #Sigma(E)", 
+                   &canvas,&legend,"",1,0);
+    ff.fit.super_sum.draw(
+                   "fit_supersum", 
+                   "Fit #Sigma(E)", 
+                   &canvas,&legend,"Same",6,0);
+    canvas.SaveAs(plots_dir+"data_supersum.pdf");
 
     /*
 	/// Output for gnuplot
-	//save_data(plots_dir+"super-sum-data.dat", ucna.data.super_sum, 1, 1000);
-	//save_data(plots_dir+"super-sum-mc.dat", ucna.sm.super_sum, 1, 1000);
+	//save_data(plots_dir+"super-sum-data.dat", ff.data.super_sum, 1, 1000);
+	//save_data(plots_dir+"super-sum-mc.dat", ff.sm.super_sum, 1, 1000);
 	//save_data(plots_dir+"fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
 	//save_data(plots_dir+"fierz-fit.dat", fierz_fit_histogram, 1, 1);
-
 	*/
+}
+
+
+/// MAIN APPLICATION
+int main(int argc, char *argv[])
+{
+	TApplication app("Extract Combined A+b Fitter", &argc, argv);
+	srand( time(NULL) );    /// set this to make random or repeatable
+
+    /// LOAD 2010 UCNA DATA
+
+    /// Load the files that already contain data super histogram.
+    /*
+    for (int side=EAST; side<=WEST; side++)
+        for (int afp=EAST; afp<=WEST; afp++) {
+            TString s = side? "W":"E", a = afp? "On":"Off";
+            TString title = "2010 final official "+s+" afp "+a;
+            TString name = "hTotalEvents_"+s+"_"+a+";1";
+            int entries = ff.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
+            if (entries) {
+                cout<<"Status: Number of entries in "<<(side? "west":"east")
+                    <<" side with afp "<<a<<" is "<<entries<<".\n";
+            }
+            else
+                cout<<"Error: found no events in "<<title<<".\n";
+        }
+        */
+
+    /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
+
+    /// Load the files that already contain data asymmetry histogram.
+    ucna.data.asymmetry.fill(
+        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
+        "hAsym_Corrected_C",
+        "2010 final official asymmetry");
+
+    /// Load the files that already contain data super histogram.
+    ucna.data.super_sum.fill(
+        data_dir+"OctetAsym_Offic.root",
+        "Total_Events_SuperSum",
+        "2010 final official supersum");
+
+
+    /// LOAD FAKE DATA FROM MONTE CARLO
+
+    /// Load Monte Carlo simulated Standard Model events
+    fake.sm.fill(mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+                 "SimAnalyzed",
+                 "Monte Carlo Standard Model beta spectrum");
+
+    /// Load Monte Carlo simulated Fierz events
+    fake.fierz.fill(mc_syst_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
+                    "SimAnalyzed",
+                    "Monte Carlo Fierz beta spectrum");
+
+    /// For now load real asymmetry data as fake histogram.
+    fake.data.asymmetry.fill(
+        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
+        "hAsym_Corrected_C",
+        "2010 final official asymmetry");
+
+    /// Just overwrite
+    //fake
+
+    /// LOAD MONTE CARLO SIMULATION EVENTS
+
+    /// Load Monte Carlo simulated Standard Model events
+    ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_7.root",
+               "SimAnalyzed",
+               "Monte Carlo Standard Model beta spectrum");
+
+    /// Load Monte Carlo simulated Fierz events
+    ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_7.root",
+                  "SimAnalyzed",
+                  "Monte Carlo Fierz beta spectrum");
+
+    fit(ucna);
+    display(ucna);
 
 	app.Run();
-
 	return 0;
 }
 
