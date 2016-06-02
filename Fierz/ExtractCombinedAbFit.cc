@@ -77,6 +77,42 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
 }
 
 
+/// DISPLAYING AND OUTPUTTING
+void display(UCNAFierzFitter &ff) {
+    TCanvas canvas("fierz_fitter_canvas",
+                   "Combined Fierz component of energy spectrum");
+    TLegend legend(0.55,0.65,0.85,0.85);
+
+    ff.data.asymmetry.draw(
+                   "data_asymmetry", 
+                   "UCNA 2010 #Lambda(E)", 
+                   &canvas,&legend,"",1,0);
+    ff.fit.asymmetry.draw(
+                   "fit_asymmetry", 
+                   "Fit #Lambda(E)", 
+                   &canvas,&legend,"Same",6,0);
+    canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
+
+    ff.sm.super_sum.draw(
+                   "sm_supersum", 
+                   "Standard Model Monte Carlo #Sigma", 
+                   &canvas,&legend,"",4,0);
+    ff.fierz.super_sum.draw(
+                   "fierz_supersum", 
+                   "Fierz Monte Carlo #Sigma", 
+                   &canvas,&legend,"Same",6,0);
+    canvas.SaveAs(plots_dir+"monte_carlo.pdf");
+
+    ff.data.super_sum.draw(
+                   "data_supersum", 
+                   "UCNA 2010 #Sigma(E)", 
+                   &canvas,&legend,"",1,0);
+    ff.fit.super_sum.draw(
+                   "fit_supersum", 
+                   "Fit #Sigma(E)", 
+                   &canvas,&legend,"Same",6,0);
+    canvas.SaveAs(plots_dir+"data_supersum.pdf");
+}
 
 
 /// MAIN APPLICATION
@@ -103,6 +139,8 @@ int main(int argc, char *argv[])
                 cout<<"Error: found no events in "<<title<<".\n";
         }
         */
+
+    /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
 
     /// Load the files that already contain data asymmetry histogram.
     ucna.data.asymmetry.fill(
@@ -322,41 +360,7 @@ int main(int argc, char *argv[])
         }
     }
 
-
-    /// DISPLAYING AND OUTPUTTING
-    TCanvas canvas("fierz_fitter_canvas",
-                   "Combined Fierz component of energy spectrum");
-    TLegend legend(0.55,0.65,0.85,0.85);
-
-    ucna.data.asymmetry.draw(
-                   "data_asymmetry", 
-                   "UCNA 2010 #Lambda(E)", 
-                   &canvas,&legend,"",1,0);
-    ucna.fit.asymmetry.draw(
-                   "fit_asymmetry", 
-                   "Fit #Lambda(E)", 
-                   &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
-
-    ucna.sm.super_sum.draw(
-                   "sm_supersum", 
-                   "Standard Model Monte Carlo #Sigma", 
-                   &canvas,&legend,"",4,0);
-    ucna.fierz.super_sum.draw(
-                   "fierz_supersum", 
-                   "Fierz Monte Carlo #Sigma", 
-                   &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"monte_carlo.pdf");
-
-    ucna.data.super_sum.draw(
-                   "data_supersum", 
-                   "UCNA 2010 #Sigma(E)", 
-                   &canvas,&legend,"",1,0);
-    ucna.fit.super_sum.draw(
-                   "fit_supersum", 
-                   "Fit #Sigma(E)", 
-                   &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"data_supersum.pdf");
+    display(ucna);
 
     /*
 	/// Output for gnuplot
