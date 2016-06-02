@@ -64,16 +64,17 @@ TString root_output_dir = "/home/hickerson/Documents/";
 
 
 /// GLOBAL MODELS
-UCNAFierzFitter ucna("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-UCNAFierzFitter fake("fake", "Fake UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 //ucna.fidcut2 = fedutial_cut*fedutial_cut;
 
 /// This needs to be static and global for MINUIT to work
+UCNAFierzFitter* global_ff = 0;
+
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
 {
     assert(n==3);
+    assert(global_ff);
     double A=p[0], b=p[1], N=p[2]; // TODO make nPar correct here
-	chi2 = ucna.combined_chi2(A,b,N);
+	chi2 = global_ff->combined_chi2(A,b,N);
 }
 
 /// FITTING 
@@ -90,14 +91,21 @@ void fit(UCNAFierzFitter &ff) {
         supersum_func.SetParName(i, paramNames[i]);*/
 
 	/// Actually do the combined fitting.
+    global_ff = &ff; /// TODO cannot be called in a member
     TMatrixD cov(nPar,nPar);
-	ff.combined_fit(cov, &asymmetry_func, /*supersum_func,*/ &combined_chi2);
+	ff.combined_fit(cov, &asymmetry_func, /*supersum_func,*/ &combined_chi2); /// TODO no member
 	ff.compute_fit(&asymmetry_func);
+    global_ff = 0;
+
+    /// Look up sizes
+    double all_entries = ff.data.super_sum.GetEntries();
+	double eff_entries = ff.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
+	double fit_entries = ff.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
 
     /// Set up reasonable guesses 
     double A = -0.12;
     //double b = 0;
-    double N = 2;
+    double N = fit_entries;
     double exCos = 0.25; //evaluate_expected_cos_theta(fit_min,fit_max);
 
 	/// Set all expectation values for this range.
@@ -129,11 +137,6 @@ void fit(UCNAFierzFitter &ff) {
 
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
-
-    /// Look up sizes
-    double all_entries = ff.data.super_sum.GetEntries();
-	double eff_entries = ff.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
-	double fit_entries = ff.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
 
 	/// Output the data and cut info.
     int cl = 14;
@@ -294,6 +297,9 @@ int main(int argc, char *argv[])
 	TApplication app("Extract Combined A+b Fitter", &argc, argv);
 	srand( time(NULL) );    /// set this to make random or repeatable
 
+    UCNAFierzFitter ucna("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+    UCNAFierzFitter fake("fake", "Fake UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+
     /// LOAD 2010 UCNA DATA
 
     /// Load the files that already contain data super histogram.
@@ -327,30 +333,6 @@ int main(int argc, char *argv[])
         "Total_Events_SuperSum",
         "2010 final official supersum");
 
-
-    /// LOAD FAKE DATA FROM MONTE CARLO
-
-    /// Load Monte Carlo simulated Standard Model events
-    fake.sm.fill(mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
-                 "SimAnalyzed",
-                 "Monte Carlo Standard Model beta spectrum");
-
-    /// Load Monte Carlo simulated Fierz events
-    fake.fierz.fill(mc_syst_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
-                    "SimAnalyzed",
-                    "Monte Carlo Fierz beta spectrum");
-
-    /// For now load real asymmetry data as fake histogram.
-    fake.data.asymmetry.fill(
-        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
-        "hAsym_Corrected_C",
-        "2010 final official asymmetry");
-
-    /// Just overwrite
-    //fake
-
-    /// LOAD MONTE CARLO SIMULATION EVENTS
-
     /// Load Monte Carlo simulated Standard Model events
     ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_7.root",
                "SimAnalyzed",
@@ -361,8 +343,37 @@ int main(int argc, char *argv[])
                   "SimAnalyzed",
                   "Monte Carlo Fierz beta spectrum");
 
-    fit(ucna);
-    display(ucna);
+    //fit(ucna);
+    //display(ucna);
+
+
+    /// LOAD FAKE DATA FROM MONTE CARLO
+    /// Load Monte Carlo simulated Standard Model events
+    fake.sm.fill(
+        mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+        "SimAnalyzed",
+        "Monte Carlo Standard Model beta spectrum");
+
+    /// Load Monte Carlo simulated Fierz events
+    fake.fierz.fill(
+        mc_syst_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
+        "SimAnalyzed",
+        "Monte Carlo Fierz beta spectrum");
+
+    /// For now load real asymmetry data as fake histogram.
+    fake.data.asymmetry.fill(
+        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
+        "hAsym_Corrected_C",
+        "2010 final official asymmetry");
+
+    /// Load Monte Carlo simulated Standard Model events
+    fake.data.super_sum.fill(
+        mc_dir+"SimAnalyzed_Beta_7.root",
+        "SimAnalyzed",
+        "Monte Carlo Standard Model beta spectrum");
+
+    fit(fake);
+    display(fake);
 
 	app.Run();
 	return 0;
