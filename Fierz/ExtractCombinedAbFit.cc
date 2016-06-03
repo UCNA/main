@@ -108,6 +108,19 @@ void fit(UCNAFierzFitter &ff) {
     double N = fit_entries;
     double exCos = 0.25; //evaluate_expected_cos_theta(fit_min,fit_max);
 
+    /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
+
+	/// Output the data and cut info.
+    int cl = 14;
+    cout<<setprecision(5);
+	cout<<" ENERGY RANGE:\n";
+	cout<<"    Full energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
+	cout<<"    Fit energy range cut is "<<fit_min<<" - "<<fit_max<<" keV.\n";
+	cout<<"    Number of counts in data is "<<int(all_entries)<<".\n";
+	cout<<"    Effective number of counts in full energy range is "<<int(eff_entries)<<".\n";
+	cout<<"    Effective number of counts in fit energy range cut is "<<int(fit_entries)<<".\n";
+	cout<<"    Efficiency of energy cut is "<< int(fit_entries/eff_entries*1000)/10<<"%.\n";
+
 	/// Set all expectation values for this range.
     double nSpec = 4;
     TMatrixD ex(nSpec,nSpec);
@@ -128,27 +141,16 @@ void fit(UCNAFierzFitter &ff) {
         //est_cov_inv[1][1] =  N*(A*A*ex[2][2]/4 + ex[0][2] - ex[0][1]*ex[0][1]);
         est_cov_inv[1][1] = N*(A*A*exCos*ex[2][2] + ex[0][2] - ex[0][1]*ex[0][1]);
     }
-    if (nPar > 2)
+    if (nPar > 2) {
+	    est_cov_inv[1][2] =
+	    est_cov_inv[2][1] = ex[0][1];
 	    est_cov_inv[2][2] = N;
+    }
 
 	/// Compute the predicted covariance matrix by inverse.
 	double det = 0;
 	TMatrixD est_cov = est_cov_inv.Invert(&det);
 
-
-    /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
-
-	/// Output the data and cut info.
-    int cl = 14;
-    cout<<setprecision(5);
-	cout<<" ENERGY RANGE:\n";
-	cout<<"    Full energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
-	cout<<"    Fit energy range cut is "<<fit_min<<" - "<<fit_max<<" keV.\n";
-	cout<<"    Number of counts in data is "<<int(all_entries)<<".\n";
-	cout<<"    Effective number of counts in full energy range is "<<int(eff_entries)<<".\n";
-	cout<<"    Effective number of counts in fit energy range cut is "<<int(fit_entries)<<".\n";
-	cout<<"    Efficiency of energy cut is "<< int(fit_entries/eff_entries*1000)/10<<"%.\n";
-	cout<<"    Number of fit counts in full range is "<<int(N)<<".\n";
 
 	/// Output the fit covariance details.
 	cout<<"\n FIT COVARIANCE MATRIX\n";
