@@ -546,7 +546,6 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
 	/// compute and normalize super sum
     compute_super_sum();
     compute_asymmetry();
-
     super_sum.normalize();
     //super_sum.Scale(double(nSimmed)/double(nEvents));
     //normalize(asymmetry, min_E, max_E);

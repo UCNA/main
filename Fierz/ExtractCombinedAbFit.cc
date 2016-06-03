@@ -116,24 +116,24 @@ void fit(UCNAFierzFitter &ff) {
 			ex[m][n] = evaluate_expected_fierz(m,n,fit_min,fit_max);
 	
 	/// Calculate the predicted inverse covariance matrix for this range.
-	TMatrixD p_cov_inv(nPar,nPar);
+	TMatrixD est_cov_inv(nPar,nPar);
 	for (int i=0; i<nPar; i++)
 		for (int j=0; j<nPar; j++)
-	        p_cov_inv[i][j] = 0;
+	        est_cov_inv[i][j] = 0;
     if (nPar > 0)
-	    p_cov_inv[0][0] = N*exCos*ex[2][0];
+	    est_cov_inv[0][0] = N*exCos*ex[2][0];
     if (nPar > 1) {
-        p_cov_inv[1][0] = 
-        p_cov_inv[0][1] = -N*A*exCos*ex[2][1];
-        //p_cov_inv[1][1] =  N*(A*A*ex[2][2]/4 + ex[0][2] - ex[0][1]*ex[0][1]);
-        p_cov_inv[1][1] = N*(A*A*exCos*ex[2][2] + ex[0][2] - ex[0][1]*ex[0][1]);
+        est_cov_inv[1][0] = 
+        est_cov_inv[0][1] = -N*A*exCos*ex[2][1];
+        //est_cov_inv[1][1] =  N*(A*A*ex[2][2]/4 + ex[0][2] - ex[0][1]*ex[0][1]);
+        est_cov_inv[1][1] = N*(A*A*exCos*ex[2][2] + ex[0][2] - ex[0][1]*ex[0][1]);
     }
     if (nPar > 2)
-	    p_cov_inv[2][2] = N;
+	    est_cov_inv[2][2] = N;
 
 	/// Compute the predicted covariance matrix by inverse.
 	double det = 0;
-	TMatrixD p_cov = p_cov_inv.Invert(&det);
+	TMatrixD est_cov = est_cov_inv.Invert(&det);
 
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
@@ -163,8 +163,8 @@ void fit(UCNAFierzFitter &ff) {
 	    cout<<"\n";
 	}
 
-	/// Output the predicted covariance details.
-	cout<<"\n PREDICTED COVARIANCE MATRIX\n";
+	/// Output the estimated covariance details.
+	cout<<"\n ESTIMATED COVARIANCE MATRIX\n";
     cout<<"     ";
 	for (int i=0; i<nPar; i++)
 		cout<<setw(cl)<<paramNames[i];
@@ -172,9 +172,23 @@ void fit(UCNAFierzFitter &ff) {
 	for (int i=0; i<nPar; i++) {
         cout<<"    "<<paramNames[i];
 		for (int j=0; j<nPar; j++)
-			cout<<setw(cl)<<p_cov[i][j];
+			cout<<setw(cl)<<est_cov[i][j];
 		cout<<"\n";
 	}
+
+	/// Output the estimated covariance details.
+	cout<<"\n ESTIMATED/ACTUAL COVARIANCE RATIOS\n";
+    cout<<"     ";
+	for (int i=0; i<nPar; i++)
+		cout<<setw(cl)<<paramNames[i];
+	cout<<"\n";
+	for (int i=0; i<nPar; i++) {
+        cout<<"    "<<paramNames[i];
+		for (int j=0; j<nPar; j++)
+			cout<<setw(cl)<<est_cov[i][j]/cov[i][j];
+		cout<<"\n";
+	}
+
 #if 0
     /// Compute independent standard errors.
 	cout<<"\n FOR UNCOMBINED FITS:\n";
@@ -186,7 +200,7 @@ void fit(UCNAFierzFitter &ff) {
 	for (int i=0; i<nPar; i++) {
         TString name = paramNames[i];
         double value = asymmetry_func.GetParameter(i);
-        double sigma = 1/Sqrt(p_cov_inv[i][i]);
+        double sigma = 1/Sqrt(est_cov_inv[i][i]);
         double error = 100*sigma/value;
         cout<<"    "<<setw(1) <<name
                     <<setw(cl)<<value
@@ -204,15 +218,15 @@ void fit(UCNAFierzFitter &ff) {
                 <<setw(cl)<<"est. sigma" 
                 <<setw(cl)<<"actual error" 
                 <<setw(cl)<<"est. error" 
-                <<setw(cl+1)<<"actual/est.\n";
+                <<setw(cl+1)<<"est./actual\n";
 	for (int i=0; i<nPar; i++) {
         TString param = paramNames[i];
         double value = asymmetry_func.GetParameter(i);
 	    double sigma = Sqrt(cov[i][i]);
 	    double error = 100*sigma/value;
-	    double est_sigma = Sqrt(p_cov[i][i]);
+	    double est_sigma = Sqrt(est_cov[i][i]);
 	    double est_error = 100*est_sigma/value;
-        double ratio = sigma/est_sigma;
+        double ratio = est_sigma/sigma;
         cout<<"    "<<setw(1)   <<param 
                     <<setw(cl)  <<value 
                     <<setw(cl)  <<sigma 
@@ -227,18 +241,18 @@ void fit(UCNAFierzFitter &ff) {
     cout<<"    "<<setw(8)<<" "
                 <<setw(cl)<<"actual"
                 <<setw(cl)<<"estimate" 
-                <<setw(cl+1)<<"actual/est.\n";
+                <<setw(cl+1)<<"est./actual\n";
 	for (int i=0; i<nPar; i++) {
         TString name_i = paramNames[i];
 	    for (int j = i+1; j<nPar; j++) {
             TString name_j = paramNames[j];
             TString cor_name = "cor("+name_i+","+name_j+")";
             double cor_ij = cov[j][i]/Sqrt(cov[i][i]*cov[j][j]);
-	        double p_cor_ij = p_cov[j][i]/Sqrt(p_cov[i][i]*p_cov[j][j]);
-            double ratio = cor_ij/p_cor_ij;
+	        double est_cor_ij = est_cov[j][i]/Sqrt(est_cov[i][i]*est_cov[j][j]);
+            double ratio = est_cor_ij/cor_ij;
             cout<<"    "<<setw(8)<<cor_name
                         <<setw(cl)<<cor_ij
-                        <<setw(cl)<<p_cor_ij
+                        <<setw(cl)<<est_cor_ij
                         <<setw(cl)<<ratio<<"\n";
         }
     }
@@ -361,16 +375,17 @@ int main(int argc, char *argv[])
         "Monte Carlo Fierz beta spectrum");
 
     /// For now load real asymmetry data as fake histogram.
+    /// Load Monte Carlo simulated Standard Model events
+    fake.data.fill(
+        mc_dir+"SimAnalyzed_Beta_7.root",
+        "SimAnalyzed",
+        "Monte Carlo Standard Model beta spectrum");
+
     fake.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
         "hAsym_Corrected_C",
         "2010 final official asymmetry");
 
-    /// Load Monte Carlo simulated Standard Model events
-    fake.data.super_sum.fill(
-        mc_dir+"SimAnalyzed_Beta_7.root",
-        "SimAnalyzed",
-        "Monte Carlo Standard Model beta spectrum");
 
     fit(fake);
     display(fake);
@@ -382,376 +397,3 @@ int main(int argc, char *argv[])
 
 
 
-/// OLD BUT USEFUL... LIKE SANTA
-    /**
-     *  If you want a fast way to get the combined data spectrums for comparison, 
-     *  I already have it extracted as a ROOT histogram for my own data/MC comparisons.
-     *  You can read the ROOT TFile at:
-     *      /media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/OctetAsym_Offic.root
-     *  and get the TH1D histograms named:
-     *  Combined_Events_<S><afp><fg/bg><type> where 
-     *      <S>='E' or 'W' is the side, 
-     *      <afp>='0' or '1' for AFP Off/On, 
-     *      <fg/bg>='0' for background or '1' for foreground data
-     *      <type>='0','1','2' for type 0, I, or II/III backscatter events.
-     */
-#if 0
-    TFile *ucna_data_tfile = new TFile(
-        //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
-	    //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined.root");
-        //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
-		//"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/OctetAsym_10keV_Bins.root");
-		//"/home/mmendenhall/UCNA/PostPlots/OctetAsym_Offic/OctetAsym_Offic.root");
-		//"/home/mmendenhall/Plots/OctetAsym_Offic/OctetAsym_Offic.root");
-        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/OctetAsym_Offic.root");
-
-	#define EVENT_TYPE -1 
-    TH1D *ucna.data_raw[2][2] = {
-	#if EVENT_TYPE == 0
-        {   (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_E_Off"),
-            (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_E_On")
-        },{ (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_W_Off"),
-            (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_W_On") }};
-	#endif
-	#if EVENT_TYPE == -1
-        {   //(TH1D*)ucna_data_tfile->Get("Combined_Events_E010"),
-            //(TH1D*)ucna_data_tfile->Get("Combined_Events_E110")
-            (TH1D*)ucna_data_tfile->Get("hTotalEvents_E_Off;1"),
-            (TH1D*)ucna_data_tfile->Get("hTotalEvents_E_On;1"),
-        },{ //(TH1D*)ucna_data_tfile->Get("Combined_Events_W010"),
-            //(TH1D*)ucna_data_tfile->Get("Combined_Events_W110")
-            (TH1D*)ucna_data_tfile->Get("hTotalEvents_W_Off;1"),
-            (TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1") }};
-	#endif
-#endif
-    /*
-    ucna.data.counts[0][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_Off;1");
-    ucna.data.counts[0][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_On;1");
-    ucna.data.counts[1][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_Off;1");
-    ucna.data.counts[1][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1");
-    */
-
-    /* TODO figure out where these went.
-    fill_data("OctetAsym_Offic.root",
-              "2010 final official east afp off spectrum",
-              "hTotalEvents_E_off;1",
-              ucna.data.counts[0][0]);
-    fill_data("OctetAsym_Offic.root",
-              "2010 final official east afp on spectrum",
-              "hTotalEvents_E_on;1",
-              ucna.data.counts[0][1]);
-    fill_data("OctetAsym_Offic.root",
-              "2010 final official west afp off spectrum",
-              "hTotalEvents_W_off;1",
-              ucna.data.counts[1][0]);
-    fill_data( "OctetAsym_Offic.root",
-              "2010 final official west afp on spectrum",
-              "hTotalEvents_W_on;1",
-              ucna.data.counts[1][1]);
-
-
-    /// TODO figure out where these went.
-    for (int side=EAST; side<=WEST; side++)
-        for (int afp=EAST; afp<=WEST; afp++) {
-            TString sw = side? "west":"east", s = side? "W":"E", a = afp? "on":"off";
-            TString title = "2010 final official "+s+" afp "+a;
-            TString cut = "hTotalEvents_"+s+"_"+a+";1";
-            int entries = fill_data("OctetAsym_Offic.root", title, cut, ucna.data.counts[side][afp]);
-            if (entries) 
-                cout<<"Status: Number of entries in "<<sw<<" side with afp "<<a<<" is "<<entries<<".\n";
-            else
-                cout<<"Error: found no events in "<<title<<".\n";
-        }
-
-    Already background subtracted...
-        TH1D *background_histogram = (TH1D*)ucna_data_tfile->Get("Combined_Events_E000");
-        ucna_data.counts->Add(background_histogram,-1);
-        // normalize after background subtraction
-        background_histogram->Draw("");
-    */
-
-    /*
-	for (int side = 0; side < 2; side++)
-		for (int spin = 0; spin < 2; spin++)
-		{
-			cout << "Number of entries in (" 
-					  << side << ", " << spin << ") is "
-					  << (int)ucna.data.counts[side][spin]->GetEntries() << endl;
-			if (ucna.data.counts[side][spin] == NULL)
-			{
-				puts("histogram is null. Aborting...");
-				exit(1);
-			}
-		}
-        */
-
-	/*
-    TH1D *ucna.correction_histogram = (TH1D*)ucna.correction_histogram->Get("Delta_3_C");
-	if (not ucna.correction_histogram)
-	{
-		puts("Correction histogram is null. Aborting...");
-		exit(1);
-	}
-	*/
-    //TH1D *ucna.correction_histogram = new TH1D(*ucna.data.counts[0][0]);
-	/*
-	while (tfile has more entries)
-	{
-        double bin = (ucna.correction_file->GetBinContent(bin);
-        double correction = ucna.correction_histogram->GetBinContent(bin);
-        printf("Setting bin content for correction bin %d, to %f\n", bin, correction);
-        ucna.data.super_sum.SetBinContent(bin, correction);
-        ucna.data.super_sum.SetBinError(bin, correction_error);
-    }
-	*/
-
-    /*
-    TF1 *fit = new TF1("fierz_fit", theoretical_fierz_spectrum, 0, 1000, 3);
-    fit->SetParameter(0,0.0);
-    fit->SetParameter(1,0.0);
-    fit->SetParameter(2,1.0);
-    ucna.data.counts[0][0]->Fit("fierz_fit");
-    double chisq = fit->GetChisquare();
-    double N = fit->GetNDF();
-    printf("Chi^2 / ( N - 1) = %f / %f = %f\n",chisq, N-1, chisq/(N-1));
-
-    TString fit_pdf_filename = "mc/fierz_fit_data.pdf";
-    canvas->SaveAs(fit_pdf_filename);
-
-    // compute and plot the super ratio
-    TH1D *ucna.data.super_ratio = compute_super_ratio(ucna.data.counts);
-    ucna.data.super_ratio.Draw();
-    TString super_ratio_pdf_filename = "mc/super_ratio_data.pdf";
-    canvas->SaveAs(super_ratio_pdf_filename);
-    */
-
-    // compute and plot the super ratio asymmetry 
-    //TH1D *asymmetry_histogram = compute_corrected_asymmetry(ucna.data.counts, ucna.correction_histogram);
-
-	// fit the Fierz term from the asymmetry
-	/*
-	char A_fit_str[1024];
-    sprintf(A_fit_str, "[0]/(1+[1]*(%f/(%f+x)))", m_e, m_e);
-    TF1 *A_fierz_fit = new TF1("A_fierz_fit", A_fit_str, min_E, max_E);
-    A_fierz_fit->SetParameter(-.12,0);
-    A_fierz_fit->SetParameter(1,0);
-	asymmetry_histogram->Fit(A_fierz_fit, "Sr");
-	asymmetry_histogram->SetMaximum(0);
-	asymmetry_histogram->SetMinimum(-0.2);
-	*/
-
-	// compute chi squared
-	/*
-    double chisq = A_fierz_fit->GetChisquare();
-    double NDF = A_fierz_fit->GetNDF();
-	char A_str[1024];
-	sprintf(A_str, "A = %1.3f #pm %1.3f", A_fierz_fit->GetParameter(0), A_fierz_fit->GetParError(0));
-	char A_b_str[1024];
-	sprintf(A_b_str, "b = %1.3f #pm %1.3f", A_fierz_fit->GetParameter(1), A_fierz_fit->GetParError(1));
-	char A_b_chisq_str[1024];
-    printf("Chi^2 / ( NDF - 1) = %f / %f = %f\n", chisq, NDF-1, chisq/(NDF-1));
-	sprintf(A_b_chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(NDF-1));
-	*/
-
-	// draw the ratio plot
-	//asymmetry_histogram->SetStats(0);
-    //asymmetry_histogram->Draw();
-
-	// draw a legend on the plot
-	/*
-    TLegend* asym_legend = new TLegend(0.3,0.85,0.6,0.65);
-    asym_legend->AddEntry(asymmetry_histogram, "Asymmetry data", "l");
-    asym_legend->AddEntry(A_fierz_fit, "Fierz term fit", "l");
-    asym_legend->AddEntry((TObject*)0, A_str, "");
-    asym_legend->AddEntry((TObject*)0, A_b_str, "");
-    asym_legend->AddEntry((TObject*)0, A_b_chisq_str, "");
-    asym_legend->SetTextSize(0.03);
-    asym_legend->SetBorderSize(0);
-    asym_legend->Draw();
-	*/
-    /*/*
-     *  If you want a fast way to get the combined data spectrums for comparison, 
-     *  I already have it extracted as a ROOT histogram for my own data/MC comparisons.
-     *  You can read the ROOT TFile at:
-     *      /media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/OctetAsym_Offic.root
-     *  and get the TH1D histograms named:
-     *  Combined_Events_<S><afp><fg/bg><type> where 
-     *      <S>='E' or 'W' is the side, 
-     *      <afp>='0' or '1' for AFP Off/On, 
-     *      <fg/bg>='0' for background or '1' for foreground data
-     *      <type>='0','1','2' for type 0, I, or II/III backscatter events.
-     */
-#if 0
-    TFile *ucna_data_tfile = new TFile(
-        //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_div0/Combined/Combined.root");
-	    //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_Offic_10keV_bins/Combined.root");
-        //"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/Combined");
-		//"/home/mmendenhall/mpmAnalyzer/PostPlots/OctetAsym_10keV_Bins/OctetAsym_10keV_Bins.root");
-		//"/home/mmendenhall/UCNA/PostPlots/OctetAsym_Offic/OctetAsym_Offic.root");
-		//"/home/mmendenhall/Plots/OctetAsym_Offic/OctetAsym_Offic.root");
-        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/OctetAsym_Offic.root");
-
-	#define EVENT_TYPE -1 
-    TH1D *ucna.data_raw[2][2] = {
-	#if EVENT_TYPE == 0
-        {   (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_E_Off"),
-            (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_E_On")
-        },{ (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_W_Off"),
-            (TH1D*)ucna_data_tfile->Get("hEnergy_Type_0_W_On") }};
-	#endif
-	#if EVENT_TYPE == -1
-        {   //(TH1D*)ucna_data_tfile->Get("Combined_Events_E010"),
-            //(TH1D*)ucna_data_tfile->Get("Combined_Events_E110")
-            (TH1D*)ucna_data_tfile->Get("hTotalEvents_E_Off;1"),
-            (TH1D*)ucna_data_tfile->Get("hTotalEvents_E_On;1"),
-        },{ //(TH1D*)ucna_data_tfile->Get("Combined_Events_W010"),
-            //(TH1D*)ucna_data_tfile->Get("Combined_Events_W110")
-            (TH1D*)ucna_data_tfile->Get("hTotalEvents_W_Off;1"),
-            (TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1") }};
-	#endif
-#endif
-    /*
-    ucna.data.counts[0][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_Off;1");
-    ucna.data.counts[0][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_E_On;1");
-    ucna.data.counts[1][0]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_Off;1");
-    ucna.data.counts[1][1]=(TH1D*)ucna_data_tfile->Get("hTotalEvents_W_On;1");
-    */
-
-    /* TODO figure out where these went.
-    fill_data("OctetAsym_Offic.root",
-              "2010 final official east afp off spectrum",
-              "hTotalEvents_E_off;1",
-              ucna.data.counts[0][0]);
-    fill_data("OctetAsym_Offic.root",
-              "2010 final official east afp on spectrum",
-              "hTotalEvents_E_on;1",
-              ucna.data.counts[0][1]);
-    fill_data("OctetAsym_Offic.root",
-              "2010 final official west afp off spectrum",
-              "hTotalEvents_W_off;1",
-              ucna.data.counts[1][0]);
-    fill_data( "OctetAsym_Offic.root",
-              "2010 final official west afp on spectrum",
-              "hTotalEvents_W_on;1",
-              ucna.data.counts[1][1]);
-
-
-    /// TODO figure out where these went.
-    for (int side=EAST; side<=WEST; side++)
-        for (int afp=EAST; afp<=WEST; afp++) {
-            TString sw = side? "west":"east", s = side? "W":"E", a = afp? "on":"off";
-            TString title = "2010 final official "+s+" afp "+a;
-            TString cut = "hTotalEvents_"+s+"_"+a+";1";
-            int entries = fill_data("OctetAsym_Offic.root", title, cut, ucna.data.counts[side][afp]);
-            if (entries) 
-                cout<<"Status: Number of entries in "<<sw<<" side with afp "<<a<<" is "<<entries<<".\n";
-            else
-                cout<<"Error: found no events in "<<title<<".\n";
-        }
-
-    Already background subtracted...
-        TH1D *background_histogram = (TH1D*)ucna_data_tfile->Get("Combined_Events_E000");
-        ucna_data.counts->Add(background_histogram,-1);
-        // normalize after background subtraction
-        background_histogram->Draw("");
-    */
-
-    /*
-	for (int side = 0; side < 2; side++)
-		for (int spin = 0; spin < 2; spin++)
-		{
-			cout << "Number of entries in (" 
-					  << side << ", " << spin << ") is "
-					  << (int)ucna.data.counts[side][spin]->GetEntries() << endl;
-			if (ucna.data.counts[side][spin] == NULL)
-			{
-				puts("histogram is null. Aborting...");
-				exit(1);
-			}
-		}
-        */
-
-	/*
-    TH1D *ucna.correction_histogram = (TH1D*)ucna.correction_histogram->Get("Delta_3_C");
-	if (not ucna.correction_histogram)
-	{
-		puts("Correction histogram is null. Aborting...");
-		exit(1);
-	}
-	*/
-    //TH1D *ucna.correction_histogram = new TH1D(*ucna.data.counts[0][0]);
-	/*
-	while (tfile has more entries)
-	{
-        double bin = (ucna.correction_file->GetBinContent(bin);
-        double correction = ucna.correction_histogram->GetBinContent(bin);
-        printf("Setting bin content for correction bin %d, to %f\n", bin, correction);
-        ucna.data.super_sum.SetBinContent(bin, correction);
-        ucna.data.super_sum.SetBinError(bin, correction_error);
-    }
-	*/
-
-    /*
-    TF1 *fit = new TF1("fierz_fit", theoretical_fierz_spectrum, 0, 1000, 3);
-    fit->SetParameter(0,0.0);
-    fit->SetParameter(1,0.0);
-    fit->SetParameter(2,1.0);
-    ucna.data.counts[0][0]->Fit("fierz_fit");
-    double chisq = fit->GetChisquare();
-    double N = fit->GetNDF();
-    printf("Chi^2 / ( N - 1) = %f / %f = %f\n",chisq, N-1, chisq/(N-1));
-
-    TString fit_pdf_filename = "mc/fierz_fit_data.pdf";
-    canvas->SaveAs(fit_pdf_filename);
-
-    // compute and plot the super ratio
-    TH1D *ucna.data.super_ratio = compute_super_ratio(ucna.data.counts);
-    ucna.data.super_ratio.Draw();
-    TString super_ratio_pdf_filename = "mc/super_ratio_data.pdf";
-    canvas->SaveAs(super_ratio_pdf_filename);
-    */
-
-    // compute and plot the super ratio asymmetry 
-    //TH1D *asymmetry_histogram = compute_corrected_asymmetry(ucna.data.counts, ucna.correction_histogram);
-
-	// fit the Fierz term from the asymmetry
-	/*
-	char A_fit_str[1024];
-    sprintf(A_fit_str, "[0]/(1+[1]*(%f/(%f+x)))", m_e, m_e);
-    TF1 *A_fierz_fit = new TF1("A_fierz_fit", A_fit_str, min_E, max_E);
-    A_fierz_fit->SetParameter(-.12,0);
-    A_fierz_fit->SetParameter(1,0);
-	asymmetry_histogram->Fit(A_fierz_fit, "Sr");
-	asymmetry_histogram->SetMaximum(0);
-	asymmetry_histogram->SetMinimum(-0.2);
-	*/
-
-	// compute chi squared
-	/*
-    double chisq = A_fierz_fit->GetChisquare();
-    double NDF = A_fierz_fit->GetNDF();
-	char A_str[1024];
-	sprintf(A_str, "A = %1.3f #pm %1.3f", A_fierz_fit->GetParameter(0), A_fierz_fit->GetParError(0));
-	char A_b_str[1024];
-	sprintf(A_b_str, "b = %1.3f #pm %1.3f", A_fierz_fit->GetParameter(1), A_fierz_fit->GetParError(1));
-	char A_b_chisq_str[1024];
-    printf("Chi^2 / ( NDF - 1) = %f / %f = %f\n", chisq, NDF-1, chisq/(NDF-1));
-	sprintf(A_b_chisq_str, "#frac{#chi^{2}}{n-1} = %f", chisq/(NDF-1));
-	*/
-
-	// draw the ratio plot
-	//asymmetry_histogram->SetStats(0);
-    //asymmetry_histogram->Draw();
-
-	// draw a legend on the plot
-	/*
-    TLegend* asym_legend = new TLegend(0.3,0.85,0.6,0.65);
-    asym_legend->AddEntry(asymmetry_histogram, "Asymmetry data", "l");
-    asym_legend->AddEntry(A_fierz_fit, "Fierz term fit", "l");
-    asym_legend->AddEntry((TObject*)0, A_str, "");
-    asym_legend->AddEntry((TObject*)0, A_b_str, "");
-    asym_legend->AddEntry((TObject*)0, A_b_chisq_str, "");
-    asym_legend->SetTextSize(0.03);
-    asym_legend->SetBorderSize(0);
-    asym_legend->Draw();
-	*/
