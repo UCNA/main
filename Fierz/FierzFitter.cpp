@@ -251,18 +251,19 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.super_sum.GetBinCenter(bin);
+        double e_x = evaluate_expected_fierz(fit_min,fit_max);
         if (KE < fit_min or KE > fit_max) {
             cout<<"Error: Found energy out of bounds in fit\n";
             exit(1);
         }
         double pSM = sm.super_sum.GetBinContent(bin + deltaSM);
         double pF = fierz.super_sum.GetBinContent(bin + deltaF);
-        double f  = N*(pSM + 0.654*b*pF);
+        double f  = N*(pSM + e_x*b*pF);
         fit.super_sum.SetBinContent(bin,f);
 
         double eSM = sm.super_sum.GetBinError(bin + deltaSM);
         double beF = b*fierz.super_sum.GetBinError(bin + deltaF);
-        double ef = N*Sqrt(eSM*eSM + 0.654*0.654*beF*beF);
+        double ef = N*Sqrt(eSM*eSM + e_x*e_x*beF*beF);
         fit.super_sum.SetBinError(bin,ef);
 
         //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
