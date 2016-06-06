@@ -164,27 +164,13 @@ void fit(UCNAFierzFitter &ff) {
 	    est_cov_inv[2][2] = N;
     }
 
-	/// Compute the predicted covariance matrix by inverse.
-	double det = 0;
-	TMatrixD est_cov = est_cov_inv.Invert(&det);
-
-
-	/// Output the fit covariance details.
+	/// Output the fit covariance matrix from the fit.
 	output_matrix("FIT COVARIANCE MATRIX", cov);
 
-	/// Output the estimated covariance details.
-	output_matrix("ESTIMATED COVARIANCE MATRIX", est_cov);
-	cout<<"\n ESTIMATED COVARIANCE MATRIX\n";
-    cout<<"     ";
-	for (int i=0; i<nPar; i++)
-		cout<<setw(cl)<<paramNames[i];
-	cout<<"\n";
-	for (int i=0; i<nPar; i++) {
-        cout<<"    "<<paramNames[i];
-		for (int j=0; j<nPar; j++)
-			cout<<setw(cl)<<est_cov[i][j];
-		cout<<"\n";
-	}
+	/// Compute the estimated covariance matrix by inverse.
+	double det = 0;
+	TMatrixD est_cov = est_cov_inv;
+	output_matrix("ESTIMATED COVARIANCE MATRIX", est_cov.Invert(&det));
 
 	/// Output the estimated covariance details.
     TMatrixD ratio_cov(nPar,nPar);
@@ -192,17 +178,20 @@ void fit(UCNAFierzFitter &ff) {
 		for (int j=0; j<nPar; j++)
 			ratio_cov[i][j] = est_cov[i][j]/cov[i][j];
 	output_matrix("ESTIMATED/ACTUAL COVARIANCE RATIOS", ratio_cov);
-	cout<<"\n ESTIMATED/ACTUAL COVARIANCE RATIOS\n";
-    cout<<"     ";
+
+	/// Output the fit covariance inverse matrix time 2.
+	TMatrixD cov_inv = cov;
+	output_matrix("FIT HALF CHI^2 DERIVATIVE MATRIX", cov_inv.Invert(&det));
+
+	/// Compute the estimated covariance matrix by inverse.
+	output_matrix("ESTIMATED HALF CHI^2 DERIVATIVE MATRIX", est_cov_inv);
+
+	/// Output the estimated covariance details.
+    TMatrixD ratio_cov_inv(nPar,nPar);
 	for (int i=0; i<nPar; i++)
-		cout<<setw(cl)<<paramNames[i];
-	cout<<"\n";
-	for (int i=0; i<nPar; i++) {
-        cout<<"    "<<paramNames[i];
 		for (int j=0; j<nPar; j++)
-			cout<<setw(cl)<<est_cov[i][j]/cov[i][j];
-		cout<<"\n";
-	}
+			ratio_cov_inv[i][j] = est_cov_inv[i][j]/cov_inv[i][j];
+	output_matrix("ESTIMATED/ACTUAL HALF CHI^2 DERIVATIVE RATIOS", ratio_cov_inv);
 
 #if 0
     /// Compute independent standard errors.
