@@ -77,6 +77,24 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
 	chi2 = global_ff->combined_chi2(A,b,N);
 }
 
+
+int cl = 14;
+void output_matrix(TString title, TMatrixD matrix)
+{
+	cout<<"\n "<<title<<"\n";
+    cout<<"     ";
+	for (int i=0; i<nPar; i++)
+		cout<<setw(cl)<<paramNames[i];
+	cout<<"\n";
+	for (int i=0; i<nPar; i++) {
+        cout<<"    "<<paramNames[i];
+		for (int j=0; j<nPar; j++)
+			cout<<setw(cl)<<matrix[i][j];
+	    cout<<"\n";
+	}
+}
+
+
 /// FITTING 
 void fit(UCNAFierzFitter &ff) {
     /// Set up the fit functions parameters.
@@ -111,7 +129,6 @@ void fit(UCNAFierzFitter &ff) {
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
 
 	/// Output the data and cut info.
-    int cl = 14;
     cout<<setprecision(5);
 	cout<<" ENERGY RANGE:\n";
 	cout<<"    Full energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
@@ -153,19 +170,10 @@ void fit(UCNAFierzFitter &ff) {
 
 
 	/// Output the fit covariance details.
-	cout<<"\n FIT COVARIANCE MATRIX\n";
-    cout<<"     ";
-	for (int i=0; i<nPar; i++)
-		cout<<setw(cl)<<paramNames[i];
-	cout<<"\n";
-	for (int i=0; i<nPar; i++) {
-        cout<<"    "<<paramNames[i];
-		for (int j=0; j<nPar; j++)
-			cout<<setw(cl)<<cov[i][j];
-	    cout<<"\n";
-	}
+	output_matrix("FIT COVARIANCE MATRIX", cov);
 
 	/// Output the estimated covariance details.
+	output_matrix("ESTIMATED COVARIANCE MATRIX", est_cov);
 	cout<<"\n ESTIMATED COVARIANCE MATRIX\n";
     cout<<"     ";
 	for (int i=0; i<nPar; i++)
@@ -179,6 +187,11 @@ void fit(UCNAFierzFitter &ff) {
 	}
 
 	/// Output the estimated covariance details.
+    TMatrixD ratio_cov(nPar,nPar);
+	for (int i=0; i<nPar; i++)
+		for (int j=0; j<nPar; j++)
+			ratio_cov[i][j] = est_cov[i][j]/cov[i][j];
+	output_matrix("ESTIMATED/ACTUAL COVARIANCE RATIOS", ratio_cov);
 	cout<<"\n ESTIMATED/ACTUAL COVARIANCE RATIOS\n";
     cout<<"     ";
 	for (int i=0; i<nPar; i++)
