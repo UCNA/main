@@ -339,6 +339,7 @@ int main(int argc, char *argv[])
 
     /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
 
+/*
     /// Load the files that already contain data asymmetry histogram.
     ucna.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
@@ -363,6 +364,7 @@ int main(int argc, char *argv[])
 
     //fit(ucna);
     //display(ucna);
+    */
 
 
     /// LOAD FAKE DATA FROM MONTE CARLO
@@ -378,18 +380,19 @@ int main(int argc, char *argv[])
         "SimAnalyzed",
         "Monte Carlo Fierz beta spectrum");
 
-    /// For now load real asymmetry data as fake histogram.
+    /// For now load real asymmetry data as fake histogram. TODO Fix.
     /// Load Monte Carlo simulated Standard Model events
     fake.data.fill(
         mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
-        "Monte Carlo Standard Model beta spectrum");
+        "Monte Carlo Standard Model beta spectrum",0.40, -0.12, 0);
 
+    /*
     fake.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
         "hAsym_Corrected_C",
         "2010 final official asymmetry");
-
+    */
 
     fit(fake);
     display(fake);

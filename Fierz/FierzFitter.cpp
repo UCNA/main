@@ -143,17 +143,18 @@ TF1* UCNAFierzFitter::combined_fit(
 	return func; 
 }
 
-/* TODO
-double UCNAhistogram::chi2(const UCNAhistogram & fit_histogram) {
+
+/* TODO some of the details of this are still wrong...
+double UCNAhistogram::chi2(const UCNAhistogram & fit) {
 	double chi2 = 0;
-    int n = fit_histogram.FindBin(min);
-    int delta = data.asymmetry.FindBin(fit_min) - 1;
+    int n = fit.FindBin(min);
+    int delta = FindBin(fit_min) - 1;
 	for (int bin=1; bin<n; bin++)
 	{
-		double Y = data.asymmetry.GetBinContent(bin + delta);
-		double eY = data.asymmetry.GetBinError(bin + delta);
-        double F = fit.asymmetry.GetBinContent(bin);
-        double eF = fit.asymmetry.GetBinError(bin);
+		double Y = GetBinContent(bin + delta);
+		double eY = GetBinError(bin + delta);
+        double F = fit.GetBinContent(bin);
+        double eF = fit.GetBinError(bin);
         double eYF2 = eY*eY + eF*eF;
         if (eYF2 > 0)
             chi2 += (Y-F)*(Y-F)/eYF2; 
@@ -248,10 +249,10 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
     int n = fit.super_sum.GetNbinsX();
     int deltaSM = sm.super_sum.FindBin(fit_min) - 1;
     int deltaF = fierz.super_sum.FindBin(fit_min) - 1;
+    double e_x = evaluate_expected_fierz(fit_min,fit_max);
 	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.super_sum.GetBinCenter(bin);
-        double e_x = evaluate_expected_fierz(fit_min,fit_max);
         if (KE < fit_min or KE > fit_max) {
             cout<<"Error: Found energy out of bounds in fit\n";
             exit(1);
@@ -484,13 +485,14 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
 	double nSimmed = 0;	/// events have been simulated after cuts
     int PID, side, type;
     double energy;
-    double mwpcPosW[3], mwpcPosE[3], primMomentum[3];
+    double mwpcPosW[3], mwpcPosE[3], p[3];
+    //double mwpcPos[2][3], p[3];
 
     chain->SetBranchAddress("PID",&PID);
     chain->SetBranchAddress("side",&side);
     chain->SetBranchAddress("type",&type);
     chain->SetBranchAddress("Erecon",&energy);
-	chain->SetBranchAddress("primMomentum",primMomentum);
+	chain->SetBranchAddress("primMomentum",p);
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
 
@@ -513,12 +515,12 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         if (type<4) { 
         //if (type==0) { 
             /// fill with loading efficiency 
-            double p = rand.Uniform(1);
-			//double afp = (p < afp_off_prob)? -1 : +1;
-			double afp = (p < flip)? +1 : -1;
-            bool spin = (afp < 0)? EAST : WEST;
+            double load = rand.Uniform(1);
+            double cos = p[2]/Sqrt(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]);
+			double afp = (load < flip)? +1 : -1;
+            bool spin = (afp < 0) xor (cos < A) ? EAST : WEST;
             //cout<<"energy: "<<energy<<" side: "<<"side: "<<side
-            //         <<" spin: "<<spin<<" afp: "<<afp<<" p: "<<p<<".\n";
+            //    <<" spin: "<<spin<<" afp: "<<afp<<" p: "<<p<<".\n";
             counts[side][spin]->Fill(energy, 1);
             if (tntuple)
 			    tntuple->Fill(side, spin, energy);
@@ -1174,6 +1176,36 @@ double evaluate_expected_fierz(double min, double max, double integral_size = 12
 		h2->SetBinContent(K, y2);
 	}
 	return h1->Integral(0, integral_size) / h2->Integral(0, integral_size);
+}
+*/
+
+
+/// relativistic beta factor
+double beta_factor(const double KE)
+{
+	if (KE <= 0 or KE >= Q)                     ///< kinetic energy
+		return 0;                               ///< zero beyond endpoint
+
+	const double E = KE + m_e;                  ///< electron energy
+	const double x = m_e / E;                   ///< reduced electron energy
+	const double B = sqrt(1 - x*x);  	        ///< beta power factor
+
+	return B;
+}
+
+
+/// relativistic beta factor
+/*
+double cos_theta(const double p[3])
+{
+	if (KE <= 0 or KE >= Q)                     ///< kinetic energy
+		return 0;                               ///< zero beyond endpoint
+
+	const double E = KE + m_e;                  ///< electron energy
+	const double x = m_e / E;                   ///< reduced electron energy
+	const double B = sqrt(1 - x*x);  	        ///< beta power factor
+
+	return B;
 }
 */
 
