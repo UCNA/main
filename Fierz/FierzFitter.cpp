@@ -273,6 +273,7 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 	}
 }
 
+/* XXX old formula method
 void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
 {
     int n = fit.asymmetry.GetNbinsX();
@@ -289,6 +290,40 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
         fit.asymmetry.SetBinContent(bin,f);
         fit.asymmetry.SetBinError(bin,ef); 
         //cout<<"Asymmetry fit bin: "<<bin<<"\tKE: "<<KE<<"\tAE: "<<f<<"("<<ef<<")\n";
+	}
+}
+*/
+
+void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
+{
+    int n = fit.asymmetry.GetNbinsX();
+    int deltaAE = sm.asymmetry.FindBin(fit_min) - 1;
+    int deltaSM = sm.asymmetry.FindBin(fit_min) - 1;
+    int deltaF = fierz.asymmetry.FindBin(fit_min) - 1;
+    //double e_cos = evaluate_expected_fierz(fit_min,fit_max);
+    double e_x = evaluate_expected_fierz(fit_min,fit_max);
+	for (int bin=1; bin<n; bin++)
+	{
+		double KE = fit.asymmetry.GetBinCenter(bin);
+        if (KE < fit_min or KE > fit_max) {
+            cout<<"Error: Found energy out of bounds in fit.\n";
+            exit(1);
+        }
+        double AE = sm.asymmetry.GetBinContent(bin + deltaAE);
+        double pSM = sm.super_sum.GetBinContent(bin + deltaSM);
+        double bpF = b*fierz.super_sum.GetBinContent(bin + deltaF);
+        double xFRMC = bpF/pSM;
+        double f = AE/(1 + xFRMC);
+        fit.asymmetry.SetBinContent(bin,f);
+
+        double eAE = sm.asymmetry.GetBinError(bin + deltaAE);
+        double beF = b*fierz.super.GetBinError(bin + deltaF);
+        //double ef = N*Sqrt(eSM*eSM + e_x*e_x*beF*beF);
+        double eFRMC = Sqrt(beF*beF + eSM*eSM);
+        double ef = eAE; // TODO include eFRMC
+        fit.asymmetry.SetBinError(bin,ef);
+
+        //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
 	}
 }
 
@@ -520,7 +555,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             double load = rand.Uniform(1);
             double cos = p[2]/Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
 			double afp = (load < flip)? +1 : -1;
-            bool spin = ((afp < 0) xor (cos < 2*A)) ? EAST : WEST;
+            bool spin = ((afp < 0) xor (cos < 2*A)) ? EAST : WEST; // TODO compute ex+cos correctly
             /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin
                 <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")"
                 <<" cos: "<<cos<<" load: "<<load<<".\n";*/
