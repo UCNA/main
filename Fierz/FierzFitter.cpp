@@ -311,15 +311,16 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
         }
         double AE = sm.asymmetry.GetBinContent(bin + deltaAE);
         double pSM = sm.super_sum.GetBinContent(bin + deltaSM);
-        double bpF = b*fierz.super_sum.GetBinContent(bin + deltaF);
-        double xFRMC = bpF/pSM;
+        double pbF = b*fierz.super_sum.GetBinContent(bin + deltaF);
+        double xFRMC = pbF/pSM;
         double f = AE/(1 + xFRMC);
         fit.asymmetry.SetBinContent(bin,f);
 
         double eAE = sm.asymmetry.GetBinError(bin + deltaAE);
-        double beF = b*fierz.super.GetBinError(bin + deltaF);
+        double eSM = sm.super_sum.GetBinError(bin + deltaF);
+        double ebF = b*fierz.super_sum.GetBinError(bin + deltaF);
         //double ef = N*Sqrt(eSM*eSM + e_x*e_x*beF*beF);
-        double eFRMC = Sqrt(beF*beF + eSM*eSM);
+        double eFRMC = Sqrt(ebF*ebF + eSM*eSM);
         double ef = eAE; // TODO include eFRMC
         fit.asymmetry.SetBinError(bin,ef);
 
