@@ -273,6 +273,8 @@ void display(UCNAFierzFitter &ff) {
                    "data_asymmetry", 
                    "UCNA 2010 #Lambda(E)", 
                    &canvas,&legend,"",1,0);
+    canvas.SaveAs(plots_dir+"asymmetry.pdf");
+    exit(0);
     ff.fit.asymmetry.draw(
                    "fit_asymmetry", 
                    "Fit #Lambda(E)", 
@@ -297,7 +299,7 @@ void display(UCNAFierzFitter &ff) {
                    "fit_supersum", 
                    "Fit #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"data_supersum.pdf");
+    canvas.SaveAs(plots_dir+"supersum.pdf");
 
     /*
 	/// Output for gnuplot

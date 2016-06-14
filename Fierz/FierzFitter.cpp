@@ -101,8 +101,10 @@ TF1* UCNAFierzFitter::combined_fit(
 	/// set up the Minuit fitter
 	TVirtualFitter::SetDefaultFitter("Minuit");
 	TVirtualFitter *minuit = TVirtualFitter::Fitter(0,nPar);
-	for (int i=0; i<nPar; ++i)
+	for (int i=0; i<nPar; i++)
 		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1, 0, 0);
+
+    /// set up chi^2 function to minimize
 	minuit->SetFCN(global_fcn_ptr);
 	minuit->SetErrorDef(1);	    /// 1 for chi^2
 
@@ -111,7 +113,7 @@ TF1* UCNAFierzFitter::combined_fit(
 	arglist[0] = 0;
 	minuit->ExecuteCommand("SET PRINT", arglist, 1);
 
-	/// minimize
+	/// minimization parameters
 	arglist[0] = 1000;    /// number of function calls
 	arglist[1] = 0.01;    /// tolerance
 	minuit->ExecuteCommand("MIGRAD", arglist, nPar);
@@ -492,7 +494,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
     chain->SetBranchAddress("side",&side);
     chain->SetBranchAddress("type",&type);
     chain->SetBranchAddress("Erecon",&energy);
-	chain->SetBranchAddress("primMomentum",p);
+	chain->SetBranchAddress("primMomentum",p); /// TODO not really momentum, normalized
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
 
@@ -516,11 +518,12 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         //if (type==0) { 
             /// fill with loading efficiency 
             double load = rand.Uniform(1);
-            double cos = p[2]/Sqrt(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]);
+            double cos = p[2]/Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
 			double afp = (load < flip)? +1 : -1;
-            bool spin = (afp < 0) xor (cos < A) ? EAST : WEST;
-            //cout<<"energy: "<<energy<<" side: "<<"side: "<<side
-            //    <<" spin: "<<spin<<" afp: "<<afp<<" p: "<<p<<".\n";
+            bool spin = ((afp < 0) xor (cos < A)) ? EAST : WEST;
+            /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin
+                <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")"
+                <<" cos: "<<cos<<" load: "<<load<<".\n";*/
             counts[side][spin]->Fill(energy, 1);
             if (tntuple)
 			    tntuple->Fill(side, spin, energy);
@@ -1183,12 +1186,12 @@ double evaluate_expected_fierz(double min, double max, double integral_size = 12
 /// relativistic beta factor
 double beta_factor(const double KE)
 {
-	if (KE <= 0 or KE >= Q)                     ///< kinetic energy
-		return 0;                               ///< zero beyond endpoint
+	if (KE <= 0 or KE >= Q)             ///< kinetic energy
+		return 0;                       ///< zero beyond endpoint
 
-	const double E = KE + m_e;                  ///< electron energy
-	const double x = m_e / E;                   ///< reduced electron energy
-	const double B = sqrt(1 - x*x);  	        ///< beta power factor
+	double E = KE + m_e;                ///< electron energy
+	double x = m_e / E;                 ///< reduced electron energy
+	double B = sqrt(1 - x*x);  	        ///< beta power factor
 
 	return B;
 }
