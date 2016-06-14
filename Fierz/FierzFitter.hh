@@ -119,6 +119,8 @@ struct UCNAhistogram : TH1D {
     double normalize(double min, double max);
     double normalize();
     double GetEffectiveEntries(double min, double max);
+
+    double chi2(const UCNAhistogram & other);
 };
 
 

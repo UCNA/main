@@ -98,15 +98,16 @@ TF1* UCNAFierzFitter::combined_fit(
         exit(1);
     }
 
-	/// set up the Minuit fitter
+	/// initialize the Minuit fitter
 	TVirtualFitter::SetDefaultFitter("Minuit");
 	TVirtualFitter *minuit = TVirtualFitter::Fitter(0,nPar);
-	for (int i=0; i<nPar; i++)
-		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1, 0, 0);
+	for (int i=0; i<nPar; i++) {
+		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1e-5, 0, 0);
+    }
 
     /// set up chi^2 function to minimize
-	minuit->SetFCN(global_fcn_ptr);
-	minuit->SetErrorDef(1);	    /// 1 for chi^2
+	minuit->SetErrorDef(1);	        /// 1 for chi^2
+	minuit->SetFCN(global_fcn_ptr); /// needs to be a global function
 
 	/// set print level
 	double arglist[100];
@@ -114,8 +115,10 @@ TF1* UCNAFierzFitter::combined_fit(
 	minuit->ExecuteCommand("SET PRINT", arglist, 1);
 
 	/// minimization parameters
-	arglist[0] = 1000;    /// number of function calls
-	arglist[1] = 0.01;    /// tolerance
+	arglist[0] = 5000;     /// number of function calls
+	arglist[1] = 0.001;    /// tolerance
+
+    /// execute minimization.
 	minuit->ExecuteCommand("MIGRAD", arglist, nPar);
 
 	/// extract results from Minuit
@@ -168,6 +171,8 @@ double UCNAhistogram::chi2(const UCNAhistogram & fit) {
 
 double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
     compute_asymmetry_fit(A,b);
+    return data.asymmetry.chi2(fit.asymmetry);
+    /*
 	double chi2 = 0;
     int n = fit.asymmetry.GetNbinsX();
     int delta = data.asymmetry.FindBin(fit_min) - 1;
@@ -180,7 +185,35 @@ double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
         double eYF2 = eY*eY + eF*eF;
         if (eYF2 > 0)
             chi2 += (Y-F)*(Y-F)/eYF2; 
+        else
+            cout<<"Warning: Encountered non-positive error in asymmetry fit.\n";
 	}
+    if (chi2 <= 0)
+        cout<<"Error: Non-positive total chi^2 in asymmetry fit.\n";
+    return chi2;
+    */
+}
+
+
+double UCNAhistogram::chi2(const UCNAhistogram &fitted) {
+	double chi2 = 0;
+    int n = fitted.GetNbinsX();
+    double fit_min = fitted
+    int delta = FindBin(fit_min) - 1;
+	for (int bin=1; bin<n; bin++)
+	{
+		double Y = GetBinContent(bin + delta);
+		double eY = GetBinError(bin + delta);
+        double F = fitted.GetBinContent(bin);
+        double eF = fitted.GetBinError(bin);
+        double eYF2 = eY*eY + eF*eF;
+        if (eYF2 > 0)
+            chi2 += (Y-F)*(Y-F)/eYF2; 
+        else
+            cout<<"Warning: Encountered non-positive error in asymmetry fit.\n";
+	}
+    if (chi2 <= 0)
+        cout<<"Error: Non-positive total chi^2 fitting "<<fitted.title<<" to "<<title<<".\n";
     return chi2;
 }
 
@@ -242,8 +275,8 @@ void UCNAFierzFitter::compute_fit(/*MatrixD &cov,*/ TF1 *func) {
 
 void UCNAFierzFitter::compute_fit(double A, double b, double N)
 {
-     compute_supersum_fit(b,N);
      compute_asymmetry_fit(A,b);
+     compute_supersum_fit(b,N);
 }
 
 void UCNAFierzFitter::compute_supersum_fit(double b, double N)
@@ -294,7 +327,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
 }
 */
 
-void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
+void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
 {
     int n = fit.asymmetry.GetNbinsX();
     int deltaAE = sm.asymmetry.FindBin(fit_min) - 1;
@@ -524,7 +557,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
     int PID, side, type;
     double energy;
     double mwpcPosW[3], mwpcPosE[3], p[3];
-    //double mwpcPos[2][3], p[3];
+    //double mwpcPos[2][3], p[3]; 
+    double ex_cos = 4;  // TODO compute ex+cos correctly
 
     chain->SetBranchAddress("PID",&PID);
     chain->SetBranchAddress("side",&side);
@@ -556,7 +590,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             double load = rand.Uniform(1);
             double cos = p[2]/Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
 			double afp = (load < flip)? +1 : -1;
-            bool spin = ((afp < 0) xor (cos < 2*A)) ? EAST : WEST; // TODO compute ex+cos correctly
+            bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
             /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin
                 <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")"
                 <<" cos: "<<cos<<" load: "<<load<<".\n";*/
@@ -1030,7 +1064,7 @@ double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
         cout<<"         n["<<side<<","<<spin<<"] = "<<counts<<".\n";
             }
         }
-        cout<<"Warning: Skipping this data point.\n";
+        cout<<"         Skipping this data point.\n";
     }
     else {
         asymmetry.SetBinContent(bin,A);
