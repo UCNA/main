@@ -988,7 +988,8 @@ double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
     asymmetry.SetBinContent(bin,A);
     asymmetry.SetBinError(bin,sigmaA);
     if (IsNaN(A) or IsNaN(sigmaA)) {
-        cout<<"Warning: Asymmetry error in bin "<<bin<<" where\n";
+        double KE = asymmetry.GetBinCenter(bin);
+        cout<<"Warning: Asymmetry error in bin "<<bin<<" and KE "<<KE<<" where\n";
         for (int side=0; side<2; side++) {
             for (int spin=0; spin<2; spin++) {
                 double counts = n[side][spin];
