@@ -273,13 +273,12 @@ void display(UCNAFierzFitter &ff) {
                    "data_asymmetry", 
                    "UCNA 2010 #Lambda(E)", 
                    &canvas,&legend,"",1,0);
-    canvas.SaveAs(plots_dir+"asymmetry.pdf");
-    exit(0);
+    canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
     ff.fit.asymmetry.draw(
                    "fit_asymmetry", 
                    "Fit #Lambda(E)", 
                    &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
+    canvas.SaveAs(plots_dir+"data_fit_asymmetry.pdf");
 
     ff.sm.super_sum.draw(
                    "sm_supersum", 
@@ -295,11 +294,12 @@ void display(UCNAFierzFitter &ff) {
                    "data_supersum", 
                    "UCNA 2010 #Sigma(E)", 
                    &canvas,&legend,"",1,0);
+    canvas.SaveAs(plots_dir+"data_supersum.pdf");
     ff.fit.super_sum.draw(
                    "fit_supersum", 
                    "Fit #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"supersum.pdf");
+    canvas.SaveAs(plots_dir+"data_fit_supersum.pdf");
 
     /*
 	/// Output for gnuplot
@@ -389,12 +389,10 @@ int main(int argc, char *argv[])
         "SimAnalyzed",
         "Monte Carlo Standard Model beta spectrum",0.40, -0.12, 0);
 
-    /*
     fake.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
         "hAsym_Corrected_C",
         "2010 final official asymmetry");
-    */
 
     fit(fake);
     display(fake);

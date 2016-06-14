@@ -985,9 +985,7 @@ double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
     double n[2][2], e[2][2];
     get_counts(bin,n,e);
     compute_asymmetry(n,e,A,sigmaA);
-    asymmetry.SetBinContent(bin,A);
-    asymmetry.SetBinError(bin,sigmaA);
-    if (IsNaN(A) or IsNaN(sigmaA)) {
+    if (IsNaN(A) or IsNaN(sigmaA) or sigmaA < 0) {
         double KE = asymmetry.GetBinCenter(bin);
         cout<<"Warning: Asymmetry error in bin "<<bin<<" and KE "<<KE<<" where\n";
         for (int side=0; side<2; side++) {
@@ -996,6 +994,11 @@ double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
         cout<<"         n["<<side<<","<<spin<<"] = "<<counts<<".\n";
             }
         }
+        cout<<"Warning: Skipping this data point.\n";
+    }
+    else {
+        asymmetry.SetBinContent(bin,A);
+        asymmetry.SetBinError(bin,sigmaA);
     }
 
     if (bin % 10 == 0) {
@@ -1024,11 +1027,13 @@ TH1D& UCNAmodel::compute_asymmetry(double min, double max,
                                    int& bin_min, int& bin_max) {
     bin_min = asymmetry.FindBin(min);
     bin_max = asymmetry.FindBin(max);
-    if (not asymmetry.test_range(min, max)) {
+    if (not asymmetry.test_range(min,max)) {
         cout<<"Error: Problem with ranges in asymmetry histogram.\n";
+        cout<<"       Computing asymmetry in bin range "<<bin_min<<"-"<<bin_max<<"\n";
+        cout<<"       and energy range "<<min<<" keV - "<<max<<" keV.\n";
         exit(1);
     }
-    return compute_asymmetry(bin_min, bin_max);
+    return compute_asymmetry(bin_min,bin_max);
 }
 
 TH1D& UCNAmodel::compute_asymmetry(int bin_min, int bin_max) 
