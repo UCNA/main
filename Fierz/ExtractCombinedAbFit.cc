@@ -271,33 +271,33 @@ void display(UCNAFierzFitter &ff) {
 
     ff.data.asymmetry.draw(
                    "data_asymmetry", 
-                   "UCNA 2010 #Lambda(E)", 
+                   ff.title+" #Lambda(E)", 
                    &canvas,&legend,"",1,0);
     canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
     ff.fit.asymmetry.draw(
                    "fit_asymmetry", 
-                   "Fit #Lambda(E)", 
+                   ff.title+" #Lambda(E)", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"data_fit_asymmetry.pdf");
 
     ff.sm.super_sum.draw(
                    "sm_supersum", 
-                   "Standard Model Monte Carlo #Sigma", 
+                   ff.title+" Monte Carlo #Sigma(E)", 
                    &canvas,&legend,"",4,0);
     ff.fierz.super_sum.draw(
                    "fierz_supersum", 
-                   "Fierz Monte Carlo #Sigma", 
+                   ff.title+" Monte Carlo #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"monte_carlo.pdf");
 
     ff.data.super_sum.draw(
                    "data_supersum", 
-                   "UCNA 2010 #Sigma(E)", 
+                   ff.title+" #Sigma(E)", 
                    &canvas,&legend,"",1,0);
     canvas.SaveAs(plots_dir+"data_supersum.pdf");
     ff.fit.super_sum.draw(
                    "fit_supersum", 
-                   "Fit #Sigma(E)", 
+                   ff.title+" fit #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"data_fit_supersum.pdf");
 
@@ -389,10 +389,12 @@ int main(int argc, char *argv[])
         "SimAnalyzed",
         "Monte Carlo Standard Model beta spectrum",0.40, -0.12, 0);
 
+/*
     fake.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
         "hAsym_Corrected_C",
         "2010 final official asymmetry");
+    */
 
     fit(fake);
     display(fake);

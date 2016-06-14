@@ -520,7 +520,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             double load = rand.Uniform(1);
             double cos = p[2]/Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
 			double afp = (load < flip)? +1 : -1;
-            bool spin = ((afp < 0) xor (cos < A)) ? EAST : WEST;
+            bool spin = ((afp < 0) xor (cos < 2*A)) ? EAST : WEST;
             /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin
                 <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")"
                 <<" cos: "<<cos<<" load: "<<load<<".\n";*/
