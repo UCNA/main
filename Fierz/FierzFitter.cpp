@@ -169,6 +169,29 @@ double UCNAhistogram::chi2(const UCNAhistogram & fit) {
 */
 
 
+double UCNAhistogram::chi2(const UCNAhistogram &fit) {
+	double chi2 = 0;
+    int n = fit.GetNbinsX();
+    double min = fit.GetXaxis()->GetXmin();
+    int delta = FindBin(min) - 1;
+	for (int bin=1; bin<n; bin++)
+	{
+		double Y = GetBinContent(bin+delta);
+		double eY = GetBinError(bin+delta);
+        double F = fit.GetBinContent(bin);
+        double eF = fit.GetBinError(bin);
+        double eYF2 = eY*eY + eF*eF;
+        if (eYF2 > 0)
+            chi2 += (Y-F)*(Y-F)/eYF2; 
+        else
+            cout<<"Warning: Encountered non-positive error in asymmetry fit.\n";
+	}
+    if (chi2 <= 0)
+        cout<<"Error: Non-positive total chi^2 fitting "<<fit.GetTitle()<<" to "<<GetTitle()<<".\n";
+    return chi2;
+}
+
+
 double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
     compute_asymmetry_fit(A,b);
     return data.asymmetry.chi2(fit.asymmetry);
@@ -194,28 +217,6 @@ double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
     */
 }
 
-
-double UCNAhistogram::chi2(const UCNAhistogram &fitted) {
-	double chi2 = 0;
-    int n = fitted.GetNbinsX();
-    double fit_min = fitted
-    int delta = FindBin(fit_min) - 1;
-	for (int bin=1; bin<n; bin++)
-	{
-		double Y = GetBinContent(bin + delta);
-		double eY = GetBinError(bin + delta);
-        double F = fitted.GetBinContent(bin);
-        double eF = fitted.GetBinError(bin);
-        double eYF2 = eY*eY + eF*eF;
-        if (eYF2 > 0)
-            chi2 += (Y-F)*(Y-F)/eYF2; 
-        else
-            cout<<"Warning: Encountered non-positive error in asymmetry fit.\n";
-	}
-    if (chi2 <= 0)
-        cout<<"Error: Non-positive total chi^2 fitting "<<fitted.title<<" to "<<title<<".\n";
-    return chi2;
-}
 
 double UCNAmodel::asymmetry_chi2(double A, double b) {
     exit(1);
