@@ -299,8 +299,8 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
         fit.super_sum.SetBinContent(bin,f);
 
         double eSM = sm.super_sum.GetBinError(bin + deltaSM);
-        double beF = b*fierz.super_sum.GetBinError(bin + deltaF);
-        double ef = N*Sqrt(eSM*eSM + e_x*e_x*beF*beF);
+        double bxeF = b*e_x*fierz.super_sum.GetBinError(bin + deltaF);
+        double ef = N*Sqrt(eSM*eSM + bxeF*bxeF);
         fit.super_sum.SetBinError(bin,ef);
 
         //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
@@ -343,22 +343,22 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
             cout<<"Error: Found energy out of bounds in fit.\n";
             exit(1);
         }
-        double AE = sm.asymmetry.GetBinContent(bin + deltaAE);
+        //double AE = sm.asymmetry.GetBinContent(bin + deltaAE);
         double pSM = sm.super_sum.GetBinContent(bin + deltaSM);
         double pbF = b*fierz.super_sum.GetBinContent(bin + deltaF);
         double xFRMC = pbF/pSM;
-        double f = AE/(1 + xFRMC);
+        double f = A/(1 + b*xFRMC);
         fit.asymmetry.SetBinContent(bin,f);
 
         double eAE = sm.asymmetry.GetBinError(bin + deltaAE);
-        double eSM = sm.super_sum.GetBinError(bin + deltaF);
+        double eSM = sm.super_sum.GetBinError(bin + deltaSM);
         double ebF = b*fierz.super_sum.GetBinError(bin + deltaF);
         //double ef = N*Sqrt(eSM*eSM + e_x*e_x*beF*beF);
         double eFRMC = Sqrt(ebF*ebF + eSM*eSM);
         double ef = eAE; // TODO include eFRMC
         fit.asymmetry.SetBinError(bin,ef);
 
-        //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
+        cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tAE: "<<f<<"("<<ef<<")\n";
 	}
 }
 
@@ -599,8 +599,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             if (tntuple)
 			    tntuple->Fill(side, spin, energy);
 			nSimmed++;
-        }
-        /*  hEreconALL->Fill(Erecon);
+        } /*  
+            hEreconALL->Fill(Erecon);
         if (type==0) 
             hErecon0->Fill(Erecon);
         else if (type==1) 

@@ -45,7 +45,7 @@ double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODE
 /// set up free fit parameters with best guess
 static const int nPar = 3;
 TString paramNames[3] = {"A", "b", "N"};
-double paramInits[3] = {-0.12, 0, 1};
+double paramInits[3] = {-0.12, 0.1, 1};
 
 /// path to experiment data files
 TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
