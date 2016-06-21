@@ -102,7 +102,7 @@ TF1* UCNAFierzFitter::combined_fit(
 	TVirtualFitter::SetDefaultFitter("Minuit");
 	TVirtualFitter *minuit = TVirtualFitter::Fitter(0,nPar);
 	for (int i=0; i<nPar; i++) {
-		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1e-5, 0, 0);
+		minuit->SetParameter(i, func->GetParName(i), func->GetParameter(i), 1e-3, 0, 0);
     }
 
     /// set up chi^2 function to minimize
@@ -116,7 +116,7 @@ TF1* UCNAFierzFitter::combined_fit(
 
 	/// minimization parameters
 	arglist[0] = 5000;     /// number of function calls
-	arglist[1] = 0.001;    /// tolerance
+	arglist[1] = 0.01;     /// tolerance
 
     /// execute minimization.
 	minuit->ExecuteCommand("MIGRAD", arglist, nPar);
@@ -144,7 +144,6 @@ TF1* UCNAFierzFitter::combined_fit(
 			cov[i][j] = minuit->GetCovarianceMatrixElement(i,j);
 	
 	cout<<"\n    chi^2 = "<<chi2<<", ndf = "<<ndf<<", chi^2/ndf = "<<chi2/ndf<<".\n\n";
-
 	return func; 
 }
 
@@ -343,11 +342,11 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
             cout<<"Error: Found energy out of bounds in fit.\n";
             exit(1);
         }
-        //double AE = sm.asymmetry.GetBinContent(bin + deltaAE);
+        double pA = sm.asymmetry.GetBinContent(bin + deltaAE);
         double pSM = sm.super_sum.GetBinContent(bin + deltaSM);
         double pbF = b*fierz.super_sum.GetBinContent(bin + deltaF);
         double xFRMC = pbF/pSM;
-        double f = A/(1 + b*xFRMC);
+        double f = A*pA/(1 + b*xFRMC);
         fit.asymmetry.SetBinContent(bin,f);
 
         double eAE = sm.asymmetry.GetBinError(bin + deltaAE);
@@ -517,7 +516,7 @@ void UCNAmodel::save(TString filename)
  * and they get Tchained together.
  */
 int UCNAmodel::fill(TString filename, TString name, TString title) {
-    return fill(filename, name, title, 0.68/1.68, -0.12, 0);
+    return fill(filename, name, title, 0.68/1.68, -0.12, 0.0);
 }
 
 int UCNAmodel::fill(TString filename, TString name, TString title, 
@@ -565,7 +564,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
     chain->SetBranchAddress("side",&side);
     chain->SetBranchAddress("type",&type);
     chain->SetBranchAddress("Erecon",&energy);
-	chain->SetBranchAddress("primMomentum",p); /// TODO not really momentum, normalized
+	chain->SetBranchAddress("primMomentum",p); /// not momentum; normalized direction!
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
 
@@ -589,12 +588,26 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         //if (type==0) { 
             /// fill with loading efficiency 
             double load = rand.Uniform(1);
+			double afp = (load < flip)? +1 : -1; // TODO don't need load as var..
+            double axial = rand.Uniform(2)-1;
             double cos = p[2]/Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
-			double afp = (load < flip)? +1 : -1;
-            bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
-            /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin
-                <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")"
-                <<" cos: "<<cos<<" load: "<<load<<".\n";*/
+            assert(cos = p[2]);
+            //bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
+            double E = energy + m_e;        /// relativistic energy
+            double x = m_e/E;
+            double norm = 1 + b*x;
+            double beta = Sqrt(1 - x*x);
+            bool spin = (afp < 0)? EAST : WEST;
+            if (afp < 0 ) 
+                if (axial > (1 + A*beta*cos/norm)/2)
+                    spin = WEST;
+            if (afp > 0 ) 
+                if (axial > (1 - A*beta*cos/norm)/2)
+                    spin = EAST;
+
+            //cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin \
+                <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" \
+                <<" cos: "<<cos<<" load: "<<load<<".\n";
             counts[side][spin]->Fill(energy, 1);
             if (tntuple)
 			    tntuple->Fill(side, spin, energy);
@@ -624,6 +637,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
     compute_super_sum();
     compute_asymmetry();
     super_sum.normalize();
+    asymmetry.Scale(1/A);
     //super_sum.Scale(double(nSimmed)/double(nEvents));
     //normalize(asymmetry, min_E, max_E);
     //for (int side=0; side<2; side++)
