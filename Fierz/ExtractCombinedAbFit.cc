@@ -387,7 +387,7 @@ int main(int argc, char *argv[])
     fake.data.fill(
         mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
-        "Monte Carlo Standard Model beta spectrum",0.40, -0.12, 0);
+        "Monte Carlo Standard Model beta spectrum",0.40, -0.12, 0.0);
 
 /*
     fake.data.asymmetry.fill(

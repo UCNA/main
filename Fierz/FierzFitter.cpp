@@ -342,11 +342,14 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
             cout<<"Error: Found energy out of bounds in fit.\n";
             exit(1);
         }
+        double E = KE + m_e;
+        double x = m_e/E;
+        double beta_cos = Sqrt(1 - x*x)/2;
         double pA = sm.asymmetry.GetBinContent(bin + deltaAE);
-        double pSM = sm.super_sum.GetBinContent(bin + deltaSM);
-        double pbF = b*fierz.super_sum.GetBinContent(bin + deltaF);
-        double xFRMC = pbF/pSM;
-        double f = A*pA/(1 + b*xFRMC);
+        //double pSM = sm.super_sum.GetBinContent(bin + deltaSM);
+        //double pbF = b*fierz.super_sum.GetBinContent(bin + deltaF);
+        //double xFRMC = pbF/pSM;
+        double f = A*pA*beta_cos/(1 + b*x);
         fit.asymmetry.SetBinContent(bin,f);
 
         double eAE = sm.asymmetry.GetBinError(bin + deltaAE);
@@ -595,14 +598,18 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             //bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
             double E = energy + m_e;        /// relativistic energy
             double x = m_e/E;
-            double norm = 1 + b*x;
+            double d = 1 + b*x;
             double beta = Sqrt(1 - x*x);
             bool spin = (afp < 0)? EAST : WEST;
             if (afp < 0 ) 
-                if (axial > (1 + A*beta*cos/norm)/2)
+                if (axial > (1 + b*x + A*beta*cos/d))
+                    spin = EAST;
+                else 
                     spin = WEST;
-            if (afp > 0 ) 
-                if (axial > (1 - A*beta*cos/norm)/2)
+            else 
+                if (axial > (1 + b*x - A*beta*cos/d))
+                    spin = WEST;
+                else
                     spin = EAST;
 
             //cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin \
