@@ -218,6 +218,7 @@ double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
 
 
 double UCNAmodel::asymmetry_chi2(double A, double b) {
+    cout<<"Error: called function asymmetry_chi2("<<A<<","<<b<<")\n";
     exit(1);
     /*
 	double chi2 = 0;
@@ -334,7 +335,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
     int deltaV = sm.asymmetry.FindBin(fit_min) - 1;
     int deltaF = fierz.asymmetry.FindBin(fit_min) - 1;
     //double e_cos = evaluate_expected_fierz(fit_min,fit_max);
-    double e_x = evaluate_expected_fierz(fit_min,fit_max);
+    //double e_x = evaluate_expected_fierz(fit_min,fit_max);
 	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.asymmetry.GetBinCenter(bin);
@@ -342,9 +343,9 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
             cout<<"Error: Found energy out of bounds in fit.\n";
             exit(1);
         }
-        double E = KE + m_e;
-        double x = m_e/E;
-        double beta_cos = Sqrt(1 - x*x)/2;
+        //double E = KE + m_e;
+        //double x = m_e/E;
+        //double beta_cos = Sqrt(1 - x*x)/2;
         double pA = sm.asymmetry.GetBinContent(bin + deltaA);
         double pV = sm.super_sum.GetBinContent(bin + deltaV);
         double pF = fierz.super_sum.GetBinContent(bin + deltaF);
@@ -359,8 +360,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
         double eF = fierz.super_sum.GetBinError(bin + deltaF);
         //double ef = N*Sqrt(eV*eV + e_x*e_x*beF*beF);
         //double eFRMC = Sqrt(ebF*ebF + eV*eV);
-        //double ef = A*eA; // TODO include eFRMC
-        double ef = A*pF/pA*Sqrt(eA*eA + eV*eV + b*b*eF*eF); // TODO include eFRMC
+        double ef = A*pF/pA*Sqrt(eA*eA + eV*eV + b*b*eF*eF);
         fit.asymmetry.SetBinError(bin,ef);
 
         cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tA: "<<f<<"("<<ef<<")\n";
@@ -387,19 +387,12 @@ int UCNAhistogram::fill(TString filename) {
 int UCNAhistogram::fill(TString filename, 
                         TString name, 
                         TString title) {
-    //, TH1D* histogram)
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
 		cout<<"Error: While loading "<<title<<":\n";
 		cout<<"       File "<<filename<<" not found.\n";
 		return 0;
 	}
-
-    /*if (histogram) {
-		cout<<"Warning: Histogram "<<title<<" already exists and is being ignored.\n";
-        cout<<histogram<<endl;
-        delete histogram;
-    }*/
 
     // TODO warn if overwriting data...
     TH1D* histogram = (TH1D*)tfile->Get(name);
@@ -471,7 +464,7 @@ void UCNAhistogram::save_data(TString filename, double ax, double ay)
 		double sx = GetBinWidth(i);
 		double r = ay * GetBinContent(i);
 		double sr = ay * GetBinError(i);
-		ofs<<x<<'\t'<<r<<'\t'<<sr<<endl;
+		ofs<<x<<'\t'<<r<<'\t'<<sx<<'\t'<<sr<<endl;
 	}
 	ofs.close();
 }
@@ -564,7 +557,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
     double energy;
     double mwpcPosW[3], mwpcPosE[3], p[3];
     //double mwpcPos[2][3], p[3]; 
-    double ex_cos = 4;  // TODO compute ex+cos correctly
+    //double ex_cos = 4;  // TODO compute ex+cos correctly
 
     chain->SetBranchAddress("PID",&PID);
     chain->SetBranchAddress("side",&side);
@@ -606,22 +599,22 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             bool spin = (afp < 0)? EAST : WEST;
             if (afp < 0 ) {
 			    Noff++;
-                if (axial > (1 + b*x + A*beta*cos/d))
+                if (axial > (d + A*beta*cos/d))
                     spin = EAST;
                 else 
                     spin = WEST;
             }
             else {
 			    Non++;
-                if (axial > (1 + b*x - A*beta*cos/d))
+                if (axial > (1 - A*beta*cos/d))
                     spin = WEST;
                 else
                     spin = EAST;
             }
 
-            //cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin \
-                <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" \
-                <<" cos: "<<cos<<" load: "<<load<<".\n";
+            /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin 
+                <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" 
+                <<" cos: "<<cos<<" load: "<<load<<".\n";*/
             counts[side][spin]->Fill(energy, 1);
             if (tntuple)
 			    tntuple->Fill(side, spin, energy);
@@ -643,16 +636,20 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
      
     int Nsim = Noff + Non;
 	cout<<"Total number of Monte Carlo entries:\n";
-	cout<<"      Entries without cuts:  "<<int(Nevents)<<endl;
-	cout<<"      Entries with cuts:     "<<Nsim<<endl;
-	cout<<"      Efficiencies of cuts:  "<<(100.0*Nsim)/double(Nevents)<<"%\n";
+	cout<<"      Entries without cuts:      "<<int(Nevents)<<endl;
+	cout<<"      Entries with cuts:         "<<Nsim<<endl;
+	cout<<"      Efficiencies of cuts:      "<<(100.0*Nsim)/double(Nevents)<<"%\n";
+	cout<<"      Entries with AFP off cut:  "<<Noff<<endl<<" ("<<(100.0*Noff)/double(Nsim)<<"%)\n";
+	cout<<"      Entries with AFP on cut:   "<<Non<<endl<<" ("<<(100.0*Non)/double(Nsim)<<"%)\n";
 
 	/// compute and normalize super sum
     compute_super_sum();
     compute_asymmetry();
+    //compute_super_diff();
     super_sum.normalize();
     //super_sum.Scale(1/Nsim);
     asymmetry.Scale(1/A);
+    //super_sum.Scale(1/double(Nevents));
     //super_sum.Scale(double(nSimmed)/double(Nevents));
     //normalize(asymmetry, min_E, max_E);
     //for (int side=0; side<2; side++)
