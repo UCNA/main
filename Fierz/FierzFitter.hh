@@ -260,7 +260,9 @@ struct UCNAFierzFitter {
 
     UCNAmodel data;                 /// Measured foreground data to fit.
     UCNAmodel bg;                   /// Measured background data to remove.
-    UCNAmodel sm;                   /// Standard Model vector Monte Carlo spectrum.
+
+    UCNAmodel sm;  // TODO change to vector  
+                                    /// Standard Model vector Monte Carlo spectrum.
     UCNAmodel axial;                /// Axial vector Monte Carlo spectrum.
     UCNAmodel fierz;                /// Fierz (Scaler + tensor) Monte Carlo spectrum.
     UCNAmodel fit;                  /// Vector + axial + Fierz Monte Carlo best fit.

@@ -282,7 +282,7 @@ void UCNAFierzFitter::compute_fit(double A, double b, double N)
 void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 {
     int n = fit.super_sum.GetNbinsX();
-    int deltaSM = sm.super_sum.FindBin(fit_min) - 1;
+    int deltaV = sm.super_sum.FindBin(fit_min) - 1;
     int deltaF = fierz.super_sum.FindBin(fit_min) - 1;
     double e_x = evaluate_expected_fierz(fit_min,fit_max);
 	for (int bin=1; bin<n; bin++)
@@ -292,14 +292,14 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
             cout<<"Error: Found energy out of bounds in fit\n";
             exit(1);
         }
-        double pSM = sm.super_sum.GetBinContent(bin + deltaSM);
-        double pF = fierz.super_sum.GetBinContent(bin + deltaF);
-        double f  = N*(pSM + e_x*b*pF);
+        double pV = sm.super_sum.GetBinContent(bin + deltaV);
+        double pbxF = b*e_x*fierz.super_sum.GetBinContent(bin + deltaF);
+        double f  = N*(pV + pbxF);
         fit.super_sum.SetBinContent(bin,f);
 
-        double eSM = sm.super_sum.GetBinError(bin + deltaSM);
-        double bxeF = b*e_x*fierz.super_sum.GetBinError(bin + deltaF);
-        double ef = N*Sqrt(eSM*eSM + bxeF*bxeF);
+        double eV = sm.super_sum.GetBinError(bin + deltaV);
+        double ebxF = b*e_x*fierz.super_sum.GetBinError(bin + deltaF);
+        double ef = N*Sqrt(eV*eV + ebxF*ebxF);
         fit.super_sum.SetBinError(bin,ef);
 
         //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
@@ -322,7 +322,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
         double ef = 0;  // TODO get from MC asymmetry (for 2011-2013 data)
         fit.asymmetry.SetBinContent(bin,f);
         fit.asymmetry.SetBinError(bin,ef); 
-        //cout<<"Asymmetry fit bin: "<<bin<<"\tKE: "<<KE<<"\tAE: "<<f<<"("<<ef<<")\n";
+        //cout<<"Asymmetry fit bin: "<<bin<<"\tKE: "<<KE<<"\tA: "<<f<<"("<<ef<<")\n";
 	}
 }
 */
@@ -330,8 +330,8 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
 void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
 {
     int n = fit.asymmetry.GetNbinsX();
-    int deltaAE = sm.asymmetry.FindBin(fit_min) - 1;
-    int deltaSM = sm.asymmetry.FindBin(fit_min) - 1;
+    int deltaA = sm.asymmetry.FindBin(fit_min) - 1;
+    int deltaV = sm.asymmetry.FindBin(fit_min) - 1;
     int deltaF = fierz.asymmetry.FindBin(fit_min) - 1;
     //double e_cos = evaluate_expected_fierz(fit_min,fit_max);
     double e_x = evaluate_expected_fierz(fit_min,fit_max);
@@ -345,22 +345,25 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
         double E = KE + m_e;
         double x = m_e/E;
         double beta_cos = Sqrt(1 - x*x)/2;
-        double pA = sm.asymmetry.GetBinContent(bin + deltaAE);
-        //double pSM = sm.super_sum.GetBinContent(bin + deltaSM);
-        //double pbF = b*fierz.super_sum.GetBinContent(bin + deltaF);
-        //double xFRMC = pbF/pSM;
-        double f = A*pA*beta_cos/(1 + b*x);
+        double pA = sm.asymmetry.GetBinContent(bin + deltaA);
+        double pV = sm.super_sum.GetBinContent(bin + deltaV);
+        double pF = fierz.super_sum.GetBinContent(bin + deltaF);
+        //double xFR = pF/pV;
+        //double f = A*pA*beta_cos/(1 + b*x);
+        //double f = A*pA/(1 + xFRMC);
+        double f = A*pA/(pV + b*pF);
         fit.asymmetry.SetBinContent(bin,f);
 
-        double eAE = sm.asymmetry.GetBinError(bin + deltaAE);
-        double eSM = sm.super_sum.GetBinError(bin + deltaSM);
-        double ebF = b*fierz.super_sum.GetBinError(bin + deltaF);
-        //double ef = N*Sqrt(eSM*eSM + e_x*e_x*beF*beF);
-        double eFRMC = Sqrt(ebF*ebF + eSM*eSM);
-        double ef = eAE; // TODO include eFRMC
+        double eA = sm.asymmetry.GetBinError(bin + deltaA);
+        double eV = sm.super_sum.GetBinError(bin + deltaV);
+        double eF = fierz.super_sum.GetBinError(bin + deltaF);
+        //double ef = N*Sqrt(eV*eV + e_x*e_x*beF*beF);
+        //double eFRMC = Sqrt(ebF*ebF + eV*eV);
+        //double ef = A*eA; // TODO include eFRMC
+        double ef = A*pF/pA*Sqrt(eA*eA + eV*eV + b*b*eF*eF); // TODO include eFRMC
         fit.asymmetry.SetBinError(bin,ef);
 
-        cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tAE: "<<f<<"("<<ef<<")\n";
+        cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tA: "<<f<<"("<<ef<<")\n";
 	}
 }
 
@@ -543,7 +546,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         exit(1);
     }
 
-	double nEvents = chain->GetEntries();
+	double Nevents = chain->GetEntries();
 	chain->SetBranchStatus("*",false);
 	chain->SetBranchStatus("PID",true);
 	chain->SetBranchStatus("side",true);
@@ -556,7 +559,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
 	//TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy"); */
 	TNtuple* tntuple = 0;
 
-	double nSimmed = 0;	/// events have been simulated after cuts
+	int Noff=0, Non=0;	/// events have been simulated after cuts
     int PID, side, type;
     double energy;
     double mwpcPosW[3], mwpcPosE[3], p[3];
@@ -571,7 +574,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
 
-    for (int evt=0; evt<nEvents; evt++) {
+    for (int evt=0; evt<Nevents; evt++) {
         chain->GetEvent(evt);
 
         /// cut out bad events
@@ -601,16 +604,20 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             double d = 1 + b*x;
             double beta = Sqrt(1 - x*x);
             bool spin = (afp < 0)? EAST : WEST;
-            if (afp < 0 ) 
+            if (afp < 0 ) {
+			    Noff++;
                 if (axial > (1 + b*x + A*beta*cos/d))
                     spin = EAST;
                 else 
                     spin = WEST;
-            else 
+            }
+            else {
+			    Non++;
                 if (axial > (1 + b*x - A*beta*cos/d))
                     spin = WEST;
                 else
                     spin = EAST;
+            }
 
             //cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin \
                 <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" \
@@ -618,7 +625,6 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             counts[side][spin]->Fill(energy, 1);
             if (tntuple)
 			    tntuple->Fill(side, spin, energy);
-			nSimmed++;
         } /*  
             hEreconALL->Fill(Erecon);
         if (type==0) 
@@ -635,23 +641,25 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             */
     }    
      
+    int Nsim = Noff + Non;
 	cout<<"Total number of Monte Carlo entries:\n";
-	cout<<"      Entries without cuts:  "<<int(nEvents)<<endl;
-	cout<<"      Entries with cuts:     "<<int(nSimmed)<<endl;
-	cout<<"      Efficiencies of cuts:  "<<(100.0*nSimmed)/double(nEvents)<<"%\n";
+	cout<<"      Entries without cuts:  "<<int(Nevents)<<endl;
+	cout<<"      Entries with cuts:     "<<Nsim<<endl;
+	cout<<"      Efficiencies of cuts:  "<<(100.0*Nsim)/double(Nevents)<<"%\n";
 
 	/// compute and normalize super sum
     compute_super_sum();
     compute_asymmetry();
     super_sum.normalize();
+    //super_sum.Scale(1/Nsim);
     asymmetry.Scale(1/A);
-    //super_sum.Scale(double(nSimmed)/double(nEvents));
+    //super_sum.Scale(double(nSimmed)/double(Nevents));
     //normalize(asymmetry, min_E, max_E);
     //for (int side=0; side<2; side++)
     //    for (int spin=0; spin<2; spin++)
     //        normalize(counts[side][spin], min_E, max_E);
 
-    return nSimmed;
+    return Nsim;
 }
 
 
