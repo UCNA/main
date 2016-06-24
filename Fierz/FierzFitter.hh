@@ -261,9 +261,8 @@ struct UCNAFierzFitter {
     UCNAmodel data;                 /// Measured foreground data to fit.
     UCNAmodel bg;                   /// Measured background data to remove.
 
-    UCNAmodel sm;  // TODO change to vector  
-                                    /// Standard Model vector Monte Carlo spectrum.
-    UCNAmodel axial;                /// Axial vector Monte Carlo spectrum.
+    UCNAmodel vector;               /// Standard Model vector Monte Carlo spectrum.
+    UCNAmodel axial;                /// Standard Model axial-vector Monte Carlo spectrum.
     UCNAmodel fierz;                /// Fierz (Scaler + tensor) Monte Carlo spectrum.
     UCNAmodel fit;                  /// Vector + axial + Fierz Monte Carlo best fit.
 
@@ -285,8 +284,9 @@ struct UCNAFierzFitter {
         fit_bins(bins), fit_min(min), fit_max(max),
         data(name+"_data", title+" data", bins, min, max),
         bg(name+"_bg", title+" background", bins, min, max),
-        sm(name+"_sm", title+" Standard Model Monte Carlo", bins, min, max),
-        axial(name+"_axial", title+" Axial-vector Monte Carlo", bins, min, max),
+        //sm(name+"_sm", title+" Standard Model Monte Carlo", bins, min, max),
+        vector(name+"_vector", title+" Standard Model vector Monte Carlo", bins, min, max),
+        axial(name+"_axial", title+" axial-vector Monte Carlo", bins, min, max),
         fierz(name+"_fierz", title+" Fierz Monte Carlo", bins, min, max),
         fit(name+"_fit", title+" Standard Model + Fierz best fit", bins, min, max) 
     { assert(min < max); }
@@ -299,7 +299,7 @@ struct UCNAFierzFitter {
         fit_bins(fit_bins), fit_min(fit_min), fit_max(fit_max),
         data(name+"_data", title+" data", bins, min, max),
         bg(name+"_bg", title+" background", bins, min, max),
-        sm(name+"_sm", title+" Standard Model Monte Carlo", bins, min, max),
+        vector(name+"_vector", title+" Standard Model Monte Carlo", bins, min, max),
         axial(name+"_axial", title+" Axial-vector Monte Carlo", bins, min, max),
         fierz(name+"_fierz", title+" Fierz Monte Carlo", bins, min, max),
         fit(name+"_fit", title+" Standard Model + Fierz best fit", fit_bins, fit_min, fit_max),

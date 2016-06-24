@@ -183,7 +183,7 @@ double UCNAhistogram::chi2(const UCNAhistogram &fit) {
         if (eYF2 > 0)
             chi2 += (Y-F)*(Y-F)/eYF2; 
         else
-            cout<<"Warning: Encountered non-positive error in asymmetry fit.\n";
+            cout<<"Warning: Encountered non-positive error in asymmetry it.\n";
 	}
     if (chi2 <= 0)
         cout<<"Error: Non-positive total chi^2 fitting "<<fit.GetTitle()<<" to "<<GetTitle()<<".\n";
@@ -283,7 +283,8 @@ void UCNAFierzFitter::compute_fit(double A, double b, double N)
 void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 {
     int n = fit.super_sum.GetNbinsX();
-    int deltaV = sm.super_sum.FindBin(fit_min) - 1;
+    // TODO add axial supersum?
+    int deltaV = vector.super_sum.FindBin(fit_min) - 1;
     int deltaF = fierz.super_sum.FindBin(fit_min) - 1;
     double e_x = evaluate_expected_fierz(fit_min,fit_max);
 	for (int bin=1; bin<n; bin++)
@@ -293,14 +294,14 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
             cout<<"Error: Found energy out of bounds in fit\n";
             exit(1);
         }
-        double pV = sm.super_sum.GetBinContent(bin + deltaV);
-        double pbxF = b*e_x*fierz.super_sum.GetBinContent(bin + deltaF);
-        double f  = N*(pV + pbxF);
+        double pV = vector.super_sum.GetBinContent(bin + deltaV);
+        double pF = fierz.super_sum.GetBinContent(bin + deltaF);
+        double f  = N*(pV + b*pF);
         fit.super_sum.SetBinContent(bin,f);
 
-        double eV = sm.super_sum.GetBinError(bin + deltaV);
-        double ebxF = b*e_x*fierz.super_sum.GetBinError(bin + deltaF);
-        double ef = N*Sqrt(eV*eV + ebxF*ebxF);
+        double eV = vector.super_sum.GetBinError(bin + deltaV);
+        double eF = fierz.super_sum.GetBinError(bin + deltaF);
+        double ef = N*Sqrt(eV*eV + b*b*eF*eF);
         fit.super_sum.SetBinError(bin,ef);
 
         //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
@@ -331,11 +332,12 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
 void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
 {
     int n = fit.asymmetry.GetNbinsX();
-    int deltaA = sm.asymmetry.FindBin(fit_min) - 1;
-    int deltaV = sm.asymmetry.FindBin(fit_min) - 1;
+    int deltaA = axial.asymmetry.FindBin(fit_min) - 1;
+    int deltaV = vector.asymmetry.FindBin(fit_min) - 1;
     int deltaF = fierz.asymmetry.FindBin(fit_min) - 1;
     //double e_cos = evaluate_expected_fierz(fit_min,fit_max);
     //double e_x = evaluate_expected_fierz(fit_min,fit_max);
+    double e_cos = 1/2;
 	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.asymmetry.GetBinCenter(bin);
@@ -346,8 +348,8 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
         //double E = KE + m_e;
         //double x = m_e/E;
         //double beta_cos = Sqrt(1 - x*x)/2;
-        double pA = sm.asymmetry.GetBinContent(bin + deltaA);
-        double pV = sm.super_sum.GetBinContent(bin + deltaV);
+        double pA = axial.asymmetry.GetBinContent(bin + deltaA);
+        double pV = vector.super_sum.GetBinContent(bin + deltaV);
         double pF = fierz.super_sum.GetBinContent(bin + deltaF);
         //double xFR = pF/pV;
         //double f = A*pA*beta_cos/(1 + b*x);
@@ -355,8 +357,8 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
         double f = A*pA/(pV + b*pF);
         fit.asymmetry.SetBinContent(bin,f);
 
-        double eA = sm.asymmetry.GetBinError(bin + deltaA);
-        double eV = sm.super_sum.GetBinError(bin + deltaV);
+        double eA = axial.asymmetry.GetBinError(bin + deltaA);
+        double eV = vector.super_sum.GetBinError(bin + deltaV);
         double eF = fierz.super_sum.GetBinError(bin + deltaF);
         //double ef = N*Sqrt(eV*eV + e_x*e_x*beF*beF);
         //double eFRMC = Sqrt(ebF*ebF + eV*eV);
