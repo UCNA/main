@@ -22,6 +22,8 @@
 #include <iomanip>
 #include <fstream>
 #include <string>
+#include <limits>
+
 
 /// C includes
 #include <stdio.h>
@@ -32,6 +34,7 @@
 using std::setw;
 using std::cout;
 using namespace TMath;
+double infity = std::numeric_limits<double>::infinity();
 
 /// cuts and settings
 double KEmin = 0;                 /// min kinetic energy for plots
@@ -271,22 +274,26 @@ void display(UCNAFierzFitter &ff) {
 
     ff.data.asymmetry.draw(
                    "data_asymmetry", 
-                   ff.title+" #Lambda(E)", 
+                   ff.title+" fit #Lambda(E)", 
                    &canvas,&legend,"",1,0);
     canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
     ff.fit.asymmetry.draw(
                    "fit_asymmetry", 
-                   ff.title+" #Lambda(E)", 
+                   ff.title+" fit #Lambda(E)", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"data_fit_asymmetry.pdf");
 
-    ff.sm.super_sum.draw(
+    /*ff.sm.super_sum.draw(
                    "sm_supersum", 
                    ff.title+" Monte Carlo #Sigma(E)", 
+                   &canvas,&legend,"",4,0);*/
+    ff.vector.super_sum.draw(
+                   "vector_supersum", 
+                   ff.title+" vector Monte Carlo #Sigma(E)", 
                    &canvas,&legend,"",4,0);
     ff.fierz.super_sum.draw(
                    "fierz_supersum", 
-                   ff.title+" Monte Carlo #Sigma(E)", 
+                   ff.title+" Fierz Monte Carlo #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"monte_carlo.pdf");
 
@@ -371,23 +378,33 @@ int main(int argc, char *argv[])
 
     /// LOAD FAKE DATA FROM MONTE CARLO
     /// Load Monte Carlo simulated Standard Model events
-    fake.sm.fill(
+    /*fake.sm.fill(
         mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
         "SimAnalyzed",
-        "Monte Carlo Standard Model beta spectrum");
+        "Monte Carlo Standard Model beta spectrum");*/
+
+    fake.vector.fill(
+        mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+        "SimAnalyzed",
+        "Vector Standard Model Monte Carlo beta spectrum", 0.40, 0, 0);
+
+    fake.axial.fill(
+        mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+        "SimAnalyzed",
+        "Vector Standard Model Monte Carlo beta spectrum", 0.40, 1, 0);
 
     /// Load Monte Carlo simulated Fierz events
     fake.fierz.fill(
         mc_syst_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
         "SimAnalyzed",
-        "Monte Carlo Fierz beta spectrum");
+        "Fierz Monte Carlo beta spectrum", 0.40, 0, infity);
 
     /// For now load real asymmetry data as fake histogram. TODO Fix.
     /// Load Monte Carlo simulated Standard Model events
     fake.data.fill(
         mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
-        "Monte Carlo Standard Model beta spectrum",0.40, -0.12, 0.0);
+        "Monte Carlo Standard Model beta spectrum", 0.40, -0.12, 0.0);
 
 /*
     fake.data.asymmetry.fill(
