@@ -389,9 +389,9 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
     int deltaA = axial.asymmetry.FindBin(fit_min) - 1;
     int deltaV = vector.asymmetry.FindBin(fit_min) - 1;
     int deltaF = fierz.asymmetry.FindBin(fit_min) - 1;
-    //double e_cos = evaluate_expected_fierz(fit_min,fit_max);
-    //double e_x = evaluate_expected_fierz(fit_min,fit_max);
-    double e_cos = 1/2;
+    //double ex_cos = evaluate_expected_fierz(fit_min,fit_max);
+    //double ex_x = evaluate_expected_fierz(fit_min,fit_max);
+    double ex_cos = 1/2;
 	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.asymmetry.GetBinCenter(bin);
@@ -408,7 +408,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
         //double xFR = pF/pV;
         //double f = A*pA*beta_cos/(1 + b*x);
         //double f = A*pA/(1 + xFRMC);
-        double f = A*pA/(pV + b*pF);
+        double f = A*pA/(pV + b*pF)/ex_cos;
         fit.asymmetry.SetBinContent(bin,f);
 
         double eA = axial.asymmetry.GetBinError(bin + deltaA);
@@ -416,7 +416,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
         double eF = fierz.super_sum.GetBinError(bin + deltaF);
         //double ef = N*Sqrt(eV*eV + e_x*e_x*beF*beF);
         //double eFRMC = Sqrt(ebF*ebF + eV*eV);
-        double ef = A*pF/pA*Sqrt(eA*eA + eV*eV + b*b*eF*eF);
+        double ef = A*pF/pA*Sqrt(eA*eA + eV*eV + b*b*eF*eF)/ex_cos;
         fit.asymmetry.SetBinError(bin,ef);
 
         cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tA: "<<f<<"("<<ef<<")\n";
@@ -608,7 +608,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
 	//TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy"); */
 	TNtuple* tntuple = 0;
 
-	int Noff=0, Non=0;	/// events have been simulated after cuts
+	//int Noff=0, Non=0;	/// events have been simulated after cuts
+	int Nspin[]={0,0};	    /// events have been simulated after cuts
     int PID, side, type;
     double energy;
     double mwpcPosW[3], mwpcPosE[3], p[3];
@@ -650,24 +651,26 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             //bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
             double E = energy + m_e;        /// relativistic energy
             double x = m_e/E;
-            double d = 1 + b*x;
-            double beta = Sqrt(1 - x*x);
             bool spin = (afp < 0)? EAST : WEST;
-            if (afp < 0 ) {
-			    Noff++;
-                if (axial > (d + A*beta*cos/d))
-                    spin = EAST;
-                else 
-                    spin = WEST;
+            Nspin[spin]++;
+            if (b > 0.5) {
+                double d = 1 + b*x;
+                double beta = Sqrt(1 - x*x);
+                if (afp < 0 ) {
+                    //Noff++;
+                    if (axial > (1 + A*beta*cos/d))
+                        spin = EAST;
+                    else 
+                        spin = WEST;
+                }
+                else {
+                    //Non++;
+                    if (axial > (1 - A*beta*cos/d))
+                        spin = WEST;
+                    else
+                        spin = EAST;
+                }
             }
-            else {
-			    Non++;
-                if (axial > (1 - A*beta*cos/d))
-                    spin = WEST;
-                else
-                    spin = EAST;
-            }
-
             /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin 
                 <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" 
                 <<" cos: "<<cos<<" load: "<<load<<".\n";*/
@@ -686,17 +689,17 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
 		/// break when enough data has been generated.
         /*
 		if(nSimmed >= nToSim)
-			break;
-            */
+		break;
+        */
     }    
      
-    int Nsim = Noff + Non;
+    int Nsim = Nspin[0] + Nspin[0];
 	cout<<"Total number of Monte Carlo entries:\n";
 	cout<<"      Entries without cuts:      "<<int(Nevents)<<endl;
 	cout<<"      Entries with cuts:         "<<Nsim<<endl;
 	cout<<"      Efficiencies of cuts:      "<<(100.0*Nsim)/double(Nevents)<<"%\n";
-	cout<<"      Entries with AFP off cut:  "<<Noff<<endl<<" ("<<(100.0*Noff)/double(Nsim)<<"%)\n";
-	cout<<"      Entries with AFP on cut:   "<<Non<<endl<<" ("<<(100.0*Non)/double(Nsim)<<"%)\n";
+	cout<<"      Entries with AFP off cut:  "<<Nspin[0]<<" ("<<(100.0*Nspin[0])/double(Nsim)<<"%)\n";
+	cout<<"      Entries with AFP on cut:   "<<Nspin[1]<<" ("<<(100.0*Nspin[1])/double(Nsim)<<"%)\n";
 
 	/// compute and normalize super sum
     compute_super_sum();
