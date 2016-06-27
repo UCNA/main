@@ -366,6 +366,7 @@ struct UCNAFierzFitter {
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
     }
     */
+    void display(TString &plots_dir);
 };
 
 

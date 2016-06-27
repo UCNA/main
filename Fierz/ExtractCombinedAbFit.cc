@@ -266,56 +266,6 @@ void fit(UCNAFierzFitter &ff) {
 }
 
 
-/// DISPLAYING AND OUTPUTTING
-void display(UCNAFierzFitter &ff) {
-    TCanvas canvas("fierz_fitter_canvas",
-                   "Combined Fierz component of energy spectrum");
-    TLegend legend(0.55,0.65,0.85,0.85);
-
-    ff.data.asymmetry.draw(
-                   "data_asymmetry", 
-                   ff.title+" fit #Lambda(E)", 
-                   &canvas,&legend,"",1,0);
-    canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
-    ff.fit.asymmetry.draw(
-                   "fit_asymmetry", 
-                   ff.title+" fit #Lambda(E)", 
-                   &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"data_fit_asymmetry.pdf");
-
-    /*ff.sm.super_sum.draw(
-                   "sm_supersum", 
-                   ff.title+" Monte Carlo #Sigma(E)", 
-                   &canvas,&legend,"",4,0);*/
-    ff.vector.super_sum.draw(
-                   "vector_supersum", 
-                   ff.title+" vector Monte Carlo #Sigma(E)", 
-                   &canvas,&legend,"",4,0);
-    ff.fierz.super_sum.draw(
-                   "fierz_supersum", 
-                   ff.title+" Fierz Monte Carlo #Sigma(E)", 
-                   &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"monte_carlo.pdf");
-
-    ff.data.super_sum.draw(
-                   "data_supersum", 
-                   ff.title+" #Sigma(E)", 
-                   &canvas,&legend,"",1,0);
-    canvas.SaveAs(plots_dir+"data_supersum.pdf");
-    ff.fit.super_sum.draw(
-                   "fit_supersum", 
-                   ff.title+" fit #Sigma(E)", 
-                   &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"data_fit_supersum.pdf");
-
-    /*
-	/// Output for gnuplot
-	//save_data(plots_dir+"super-sum-data.dat", ff.data.super_sum, 1, 1000);
-	//save_data(plots_dir+"super-sum-mc.dat", ff.sm.super_sum, 1, 1000);
-	//save_data(plots_dir+"fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
-	//save_data(plots_dir+"fierz-fit.dat", fierz_fit_histogram, 1, 1);
-	*/
-}
 
 
 /// MAIN APPLICATION
@@ -378,11 +328,6 @@ int main(int argc, char *argv[])
 
     /// LOAD FAKE DATA FROM MONTE CARLO
     /// Load Monte Carlo simulated Standard Model events
-    /*fake.sm.fill(
-        mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
-        "SimAnalyzed",
-        "Monte Carlo Standard Model beta spectrum");*/
-
     fake.vector.fill(
         mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
         "SimAnalyzed",
@@ -391,20 +336,20 @@ int main(int argc, char *argv[])
     fake.axial.fill(
         mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
         "SimAnalyzed",
-        "Vector Standard Model Monte Carlo beta spectrum", 0.40, 1, 0);
+        "Axial-vector Standard Model Monte Carlo beta spectrum", 0.40, 1, 0);
 
     /// Load Monte Carlo simulated Fierz events
     fake.fierz.fill(
         mc_syst_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
         "SimAnalyzed",
-        "Fierz Monte Carlo beta spectrum", 0.40, 0, infity);
+        "Fierz Monte Carlo beta spectrum", 0.40, 0, infity); // TODO this is supressing the errors
 
     /// For now load real asymmetry data as fake histogram. TODO Fix.
     /// Load Monte Carlo simulated Standard Model events
     fake.data.fill(
         mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
-        "Monte Carlo Standard Model beta spectrum", 0.40, -0.12, 0.0);
+        "Monte Carlo Standard Model beta spectrum", 0.40, -0.12, 0.1);
 
 /*
     fake.data.asymmetry.fill(
@@ -414,7 +359,7 @@ int main(int argc, char *argv[])
     */
 
     fit(fake);
-    display(fake);
+    fake.display(plots_dir);
 
 	app.Run();
 	return 0;

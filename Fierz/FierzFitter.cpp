@@ -308,6 +308,60 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 	}
 }
 
+
+/// DISPLAYING AND OUTPUTTING
+void UCNAFierzFitter::display(TString &plots_dir) {
+    TCanvas canvas("fierz_fitter_canvas",
+                   "Combined Fierz component of energy spectrum");
+    TLegend legend(0.55,0.65,0.85,0.85);
+
+    data.asymmetry.draw(
+                   "data_asymmetry", 
+                   title+" fit #Lambda(E)", 
+                   &canvas,&legend,"",1,0);
+    canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
+    fit.asymmetry.draw(
+                   "fit_asymmetry", 
+                   title+" fit #Lambda(E)", 
+                   &canvas,&legend,"Same",6,0);
+    canvas.SaveAs(plots_dir+"data_fit_asymmetry.pdf");
+
+    vector.super_sum.draw(
+                   "vector_supersum", 
+                   title+" vector Monte Carlo #Sigma(E)", 
+                   &canvas,&legend,"",4,0);
+    axial.super_sum.draw(
+                   "axial_supersum", 
+                   title+" axial-vector Monte Carlo #Sigma(E)", 
+                   &canvas,&legend,"Same",8,0);
+    fierz.super_sum.draw(
+                   "fierz_supersum", 
+                   title+" Fierz Monte Carlo #Sigma(E)", 
+                   &canvas,&legend,"Same",6,0);
+    canvas.SaveAs(plots_dir+"monte_carlo.pdf");
+
+    data.super_sum.draw(
+                   "data_supersum", 
+                   title+" #Sigma(E)", 
+                   &canvas,&legend,"",1,0);
+    canvas.SaveAs(plots_dir+"data_supersum.pdf");
+    fit.super_sum.draw(
+                   "fit_supersum", 
+                   title+" fit #Sigma(E)", 
+                   &canvas,&legend,"Same",6,0);
+    canvas.SaveAs(plots_dir+"data_fit_supersum.pdf");
+
+    /*
+	/// Output for gnuplot
+	//save_data(plots_dir+"super-sum-data.dat", data.super_sum, 1, 1000);
+	//save_data(plots_dir+"super-sum-mc.dat", sm.super_sum, 1, 1000);
+	//save_data(plots_dir+"fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
+	//save_data(plots_dir+"fierz-fit.dat", fierz_fit_histogram, 1, 1);
+	*/
+}
+
+
+
 /* XXX old formula method
 void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
 {
