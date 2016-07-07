@@ -46,9 +46,17 @@ int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
 
 /// set up free fit parameters with best guess
+/*
 static const int nPar = 3;
+double afp_ratio = 0.40;
 TString paramNames[3] = {"A", "b", "N"};
 double paramInits[3] = {-0.12, 0.0, 1};
+*/
+
+static const int nPar = 2;
+double afp_ratio = 0.40;
+TString paramNames[2] = {"b", "N"};
+double paramInits[2] = {0.0, 1};
 
 /// path to experiment data files
 TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
@@ -74,9 +82,9 @@ UCNAFierzFitter* global_ff = 0;
 
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
 {
-    assert(n==3);
     assert(global_ff);
-    double A=p[0], b=p[1], N=p[2]; // TODO make nPar correct here
+    double A=p[0], b=p[1], N = nPar>2? p[2]:1;
+	//chi2 = global_ff->combined_chi2(A,b,N);
 	chi2 = global_ff->combined_chi2(A,b,N);
 }
 
@@ -125,9 +133,9 @@ void fit(UCNAFierzFitter &ff) {
 
     /// Set up reasonable guesses 
     double A = -0.12;
-    //double b = 0;
+    double b = 0;
     double N = fit_entries;
-    double exCos = 0.25; //evaluate_expected_cos_theta(fit_min,fit_max);
+    double ex_cos = 0.5; //evaluate_expected_cos_theta(fit_min,fit_max);
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
 
@@ -154,16 +162,16 @@ void fit(UCNAFierzFitter &ff) {
 		for (int j=0; j<nPar; j++)
 	        est_cov_inv[i][j] = 0;
     if (nPar > 0)
-	    est_cov_inv[0][0] = N*exCos*ex[2][0];
+	    est_cov_inv[0][0] = N*ex_cos*ex[2][0];
     if (nPar > 1) {
         est_cov_inv[1][0] = 
-        est_cov_inv[0][1] = -N*A*exCos*ex[2][1];
+        est_cov_inv[0][1] = -N*A*ex_cos*ex[2][1];
         //est_cov_inv[1][1] =  N*(A*A*ex[2][2]/4 + ex[0][2] - ex[0][1]*ex[0][1]);
-        est_cov_inv[1][1] = N*(A*A*exCos*ex[2][2] + ex[0][2] - ex[0][1]*ex[0][1]);
+        est_cov_inv[1][1] = N*(A*A*ex_cos*ex[2][2] + ex[0][2] - ex[0][1]*ex[0][1]);
     }
     if (nPar > 2) {
 	    est_cov_inv[1][2] =
-	    est_cov_inv[2][1] = ex[0][1];
+	    est_cov_inv[2][1] = N*ex[0][1];
 	    est_cov_inv[2][2] = N;
     }
 
@@ -331,25 +339,27 @@ int main(int argc, char *argv[])
     fake.vector.fill(
         mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
         "SimAnalyzed",
-        "Vector Standard Model Monte Carlo beta spectrum", 0.40, 0, 0);
+        "Vector Standard Model Monte Carlo beta spectrum", afp_ratio, 0, 0);
 
     fake.axial.fill(
         mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
         "SimAnalyzed",
-        "Axial-vector Standard Model Monte Carlo beta spectrum", 0.40, 1, 0);
+        "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio, 1, 0);
 
     /// Load Monte Carlo simulated Fierz events
     fake.fierz.fill(
         mc_syst_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
         "SimAnalyzed",
-        "Fierz Monte Carlo beta spectrum", 0.40, 0, infity); // TODO this is supressing the errors
+        "Fierz Monte Carlo beta spectrum", afp_ratio, 0, 1); // TODO this is supressing the errors
 
     /// For now load real asymmetry data as fake histogram. TODO Fix.
     /// Load Monte Carlo simulated Standard Model events
+    double A = -0.12;
+    double b = 0;
     fake.data.fill(
         mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
-        "Monte Carlo Standard Model beta spectrum", 0.40, -0.12, 0.1);
+        "Monte Carlo Standard Model beta spectrum", afp_ratio, A, b);
 
 /*
     fake.data.asymmetry.fill(

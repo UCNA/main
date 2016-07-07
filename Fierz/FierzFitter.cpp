@@ -183,7 +183,20 @@ double UCNAhistogram::chi2(const UCNAhistogram &fit) {
         if (eYF2 > 0)
             chi2 += (Y-F)*(Y-F)/eYF2; 
         else
-            cout<<"Warning: Encountered non-positive error in asymmetry it.\n";
+        {
+            if (eYF2 == 0) {
+                cout<<"Error: division-by-zero while summing chi2.\n";
+                exit(0);
+            }
+            if (eYF2 < 0) {
+                cout<<"Error: negative square error while summing chi2: "<<eYF2<<".\n";
+                exit(0);
+            }
+            if (IsNaN(eYF2)) {
+                cout<<"Error: error is not a number while summing chi2.\n";
+                exit(0);
+            }
+        }
 	}
     if (chi2 <= 0)
         cout<<"Error: Non-positive total chi^2 fitting "<<fit.GetTitle()<<" to "<<GetTitle()<<".\n";
