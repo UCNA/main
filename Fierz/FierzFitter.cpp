@@ -185,17 +185,15 @@ double UCNAhistogram::chi2(const UCNAhistogram &fit) {
         else
         {
             if (eYF2 == 0) {
-                cout<<"Error: division-by-zero while summing chi2.\n";
-                exit(0);
+                cout<<"Warning: division-by-zero while summing chi2.\n";
             }
             if (eYF2 < 0) {
-                cout<<"Error: negative square error while summing chi2: "<<eYF2<<".\n";
-                exit(0);
+                cout<<"Warning: negative square error while summing chi2: "<<eYF2<<".\n";
             }
             if (IsNaN(eYF2)) {
-                cout<<"Error: error is not a number while summing chi2.\n";
-                exit(0);
+                cout<<"Warning: error is not a number while summing chi2.\n";
             }
+            //exit(0);
         }
 	}
     if (chi2 <= 0)
@@ -432,7 +430,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
         double ef = A*pF/pA*Sqrt(eA*eA + eV*eV + b*b*eF*eF)/ex_cos;
         fit.asymmetry.SetBinError(bin,ef);
 
-        cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tA: "<<f<<"("<<ef<<")\n";
+        cout<<"Asymmetry fit: bin: "<<bin<<"\tKE: "<<KE<<"\tA: "<<f<<"("<<ef<<")\n";
 	}
 }
 
@@ -1134,6 +1132,8 @@ double UCNAmodel::compute_asymmetry(double n[2][2]) {
         cout<<"Warning: Asymmetry is not a number.\n";
         if (S == 0)
             cout<<"         Division by zero super sum.\n"; 
+        cout<<"         Setting asymmetry to zero.\n";
+
     }
     return A;
 }
@@ -1144,8 +1144,9 @@ double UCNAmodel::compute_asymmetry(double n[2][2], double e[2][2], double& A, d
     A = compute_asymmetry(n);
     sigmaA = Sqrt(1 + A*A) * sigmaS/S;
     if (IsNaN(sigmaA)) {
-        cout<<"Warning: Asymmetry error is not a number.\n";
-        sigmaA = -1;
+        cout<<"Warning: Asymmetry error is not a number.\n"
+            <<"         Setting asymmetry error to 1.\n";
+        sigmaA = 1;
     }
     return A;
 }

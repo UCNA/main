@@ -46,17 +46,20 @@ int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
 
 /// set up free fit parameters with best guess
-/*
+
+#if 0
+static TString FIT_TYPE = "AbN";
 static const int nPar = 3;
 double afp_ratio = 0.40;
 TString paramNames[3] = {"A", "b", "N"};
 double paramInits[3] = {-0.12, 0.0, 1};
-*/
-
+#else
+static TString FIT_TYPE = "bN";
 static const int nPar = 2;
 double afp_ratio = 0.40;
 TString paramNames[2] = {"b", "N"};
 double paramInits[2] = {0.0, 1};
+#endif
 
 /// path to experiment data files
 TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
@@ -83,9 +86,14 @@ UCNAFierzFitter* global_ff = 0;
 void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
 {
     assert(global_ff);
-    double A=p[0], b=p[1], N = nPar>2? p[2]:1;
-	//chi2 = global_ff->combined_chi2(A,b,N);
-	chi2 = global_ff->combined_chi2(A,b,N);
+    if (FIT_TYPE=="AbN") {
+        double A=p[0], b=p[1], N=p[2];
+	    chi2 = global_ff->combined_chi2(A,b,N);
+    }
+    else if (FIT_TYPE=="bN") {
+        double b=p[0], N=p[1];
+        chi2 = global_ff->supersum_chi2(b,N);
+    }
 }
 
 
