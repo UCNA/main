@@ -59,6 +59,7 @@ static const int nPar = 2;
 double afp_ratio = 0.40;
 TString paramNames[2] = {"b", "N"};
 double paramInits[2] = {0.0, 1};
+int A_index=-1, b_index=0, N_index=1;
 #endif
 
 /// path to experiment data files
@@ -169,7 +170,26 @@ void fit(UCNAFierzFitter &ff) {
 	for (int i=0; i<nPar; i++)
 		for (int j=0; j<nPar; j++)
 	        est_cov_inv[i][j] = 0;
-    if (nPar > 0)
+
+    if (A_index >= 0)
+        est_cov_inv[A_index][A_index] += N*(A*A*ex_cos*ex[2][2]);
+    if (b_index >= 0) {
+	    est_cov_inv[b_index][b_index] = N*ex_cos*ex[2][0];
+        if (A_index >= 0) {
+            est_cov_inv[A_index][b_index] = 
+            est_cov_inv[b_index][A_index] = -N*A*ex_cos*ex[2][1];
+            est_cov_inv[A_index][A_index] += N*(ex[0][2] - ex[0][1]*ex[0][1]);
+        }
+    }
+    if (N_index >= 0) {
+	    est_cov_inv[N_index][N_index] = N;
+        if (A_index >= 0) {
+            est_cov_inv[A_index][N_index] =
+            est_cov_inv[N_index][A_index] = N*ex[0][1];
+        }
+    }
+
+/*  if (b_index > -1)
 	    est_cov_inv[0][0] = N*ex_cos*ex[2][0];
     if (nPar > 1) {
         est_cov_inv[1][0] = 
@@ -181,7 +201,7 @@ void fit(UCNAFierzFitter &ff) {
 	    est_cov_inv[1][2] =
 	    est_cov_inv[2][1] = N*ex[0][1];
 	    est_cov_inv[2][2] = N;
-    }
+    } */
 
 	/// Output the fit covariance matrix from the fit.
 	output_matrix("FIT COVARIANCE MATRIX", cov);
@@ -369,7 +389,7 @@ int main(int argc, char *argv[])
         "SimAnalyzed",
         "Monte Carlo Standard Model beta spectrum", afp_ratio, A, b);
 
-/*
+    /*
     fake.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
         "hAsym_Corrected_C",
