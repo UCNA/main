@@ -62,13 +62,21 @@ TString paramNames[2] = {"b", "N"};
 double paramInits[2] = {0.0, 1};
 int A_index=-1, b_index=0, N_index=1;
 #endif
-#if 1
+#if 0
 static TString FIT_TYPE = "b";
 static const int nPar = 1;
 double afp_ratio = 0.40;
 TString paramNames[2] = {"b"};
 double paramInits[2] = {0, 1};
 int A_index=-1, b_index=0, N_index=-1;
+#endif
+#if 1
+static TString FIT_TYPE = "Ab";
+static const int nPar = 2;
+double afp_ratio = 0.40;
+TString paramNames[2] = {"A", "b"};
+double paramInits[2] = {1, 0};
+int A_index=0, b_index=1, N_index=-1;
 #endif
 
 /// path to experiment data files
@@ -112,21 +120,25 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
 
 
 int cl = 14;
-void output_matrix(TString title, TMatrixD matrix)
+void output_matrix(TString title, TMatrixD matrix, TString colNames[], TString rowNames[])
 {
 	cout<<"\n "<<title<<"\n";
     cout<<"     ";
-	for (int i=0; i<nPar; i++)
-		cout<<setw(cl)<<paramNames[i];
+	for (int i=0; i<matrix.GetNcols(); i++)
+		cout<<setw(cl)<<colNames[i];
 	cout<<"\n";
-	for (int i=0; i<nPar; i++) {
-        cout<<"    "<<paramNames[i];
-		for (int j=0; j<nPar; j++)
+	for (int i=0; i<matrix.GetNcols(); i++) {
+        cout<<"    "<<rowNames[i];
+		for (int j=0; j<matrix.GetNrows(); j++)
 			cout<<setw(cl)<<matrix[i][j];
 	    cout<<"\n";
 	}
 }
 
+void output_matrix(TString title, TMatrixD matrix)
+{
+    output_matrix(title, matrix, paramNames, paramNames);
+}
 
 /// FITTING 
 void fit(UCNAFierzFitter &ff) {
@@ -158,6 +170,7 @@ void fit(UCNAFierzFitter &ff) {
     double b = 0;
     double N = 1/(1/fit_entries + 1/eff_entries);
     double ex_cos = 0.5; //evaluate_expected_cos_theta(fit_min,fit_max);
+    double ec2 = ex_cos*ex_cos; //evaluate_expected_cos_theta(fit_min,fit_max);
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
 
@@ -169,14 +182,23 @@ void fit(UCNAFierzFitter &ff) {
 	cout<<"    Number of counts in data is "<<int(all_entries)<<".\n";
 	cout<<"    Effective number of counts in full energy range is "<<int(eff_entries)<<".\n";
 	cout<<"    Effective number of counts in fit energy range cut is "<<int(fit_entries)<<".\n";
-	cout<<"    Efficiency of energy cut is "<< int(fit_entries/eff_entries*1000)/10<<"%.\n";
-
+	cout<<"    Efficiency of energy cut is "<<int(fit_entries/eff_entries*1000)/10<<"%.\n";
+    
 	/// Set all expectation values for this range.
-    double nSpec = 4;
+    const int nSpec = 4;
     TMatrixD ex(nSpec,nSpec);
-	for (int m=0; m<nSpec; m++)
-		for (int n=0; n<nSpec; n++)
+    TString colNames[nSpec], rowNames[nSpec];
+	for (int m=0; m<nSpec; m++) {       /// beta exponent
+        colNames[m].Form("(v/c)^%d",m);
+		for (int n=0; n<nSpec; n++) {  /// m_e/E exponent
+            rowNames[n].Form("(m/E)^%d",n); 
 			ex[m][n] = evaluate_expected_fierz(m,n,fit_min,fit_max);
+            //cout<<"Expected value for beta exponent: "<<m
+            //    <<" and m/E exponent "<<n<<" is "<<ex[m][n]<<".\n";
+        }
+    }
+
+	output_matrix("EXPECTATION MATRIX", ex, colNames, rowNames);
 	
 	/// Calculate the predicted inverse covariance matrix for this range.
 	TMatrixD est_cov_inv(nPar,nPar);
@@ -185,15 +207,17 @@ void fit(UCNAFierzFitter &ff) {
 	        est_cov_inv[i][j] = 0;
 
     if (A_index >= 0)
-        est_cov_inv[A_index][A_index] += N*(A*A*ex_cos*ex[2][2]);
+	    est_cov_inv[A_index][A_index] += N*ec2*ex[2][0];
+
     if (b_index >= 0) {
-	    est_cov_inv[b_index][b_index] = N*ex_cos*ex[2][0];
+        est_cov_inv[b_index][b_index] += N*(ex[0][2] - ex[0][1]*ex[0][1]);
         if (A_index >= 0) {
             est_cov_inv[A_index][b_index] = 
-            est_cov_inv[b_index][A_index] = -N*A*ex_cos*ex[2][1];
-            est_cov_inv[A_index][A_index] += N*(ex[0][2] - ex[0][1]*ex[0][1]);
+            est_cov_inv[b_index][A_index] = -N*A*ec2*ex[2][1];
+            est_cov_inv[b_index][b_index] += N*A*A*ec2*ex[2][2];
         }
     }
+
     if (N_index >= 0) {
 	    est_cov_inv[N_index][N_index] = N;
         if (A_index >= 0) {

@@ -1435,7 +1435,7 @@ double evaluate_expected_fierz(double _min, double _max) {
     return evaluate_expected_fierz(0,1,_min,_max);
 }
 
-double evaluate_expected_fierz(double m, double n, double _min, double _max)
+double evaluate_expected_fierz(double ym, double xn, double _min, double _max)
 {
     int integral_size = 5512;
     // TODO These don't need to be pointers.
@@ -1467,7 +1467,7 @@ double evaluate_expected_fierz(double m, double n, double _min, double _max)
     TH1D h10("beta_spectrum", 
              "Beta Spectrum", 
              integral_size, _min, _max);
-    double parmn[2] = {m, n};
+    double parmn[2] = {ym, xn};
     double par10[2] = {0, 0};
 	for (int bin = 1; bin < integral_size; bin++)
 	{
