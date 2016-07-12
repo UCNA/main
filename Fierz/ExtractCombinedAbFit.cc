@@ -53,13 +53,22 @@ static const int nPar = 3;
 double afp_ratio = 0.40;
 TString paramNames[3] = {"A", "b", "N"};
 double paramInits[3] = {-0.12, 0.0, 1};
-#else
+#endif
+#if 0
 static TString FIT_TYPE = "bN";
 static const int nPar = 2;
 double afp_ratio = 0.40;
 TString paramNames[2] = {"b", "N"};
 double paramInits[2] = {0.0, 1};
 int A_index=-1, b_index=0, N_index=1;
+#endif
+#if 1
+static TString FIT_TYPE = "b";
+static const int nPar = 1;
+double afp_ratio = 0.40;
+TString paramNames[2] = {"b"};
+double paramInits[2] = {0, 1};
+int A_index=-1, b_index=0, N_index=-1;
 #endif
 
 /// path to experiment data files
@@ -94,6 +103,10 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
     else if (FIT_TYPE=="bN") {
         double b=p[0], N=p[1];
         chi2 = global_ff->supersum_chi2(b,N);
+    }
+    else if (FIT_TYPE=="b") {
+        double b=p[0];
+        chi2 = global_ff->supersum_chi2(b,1-0.6*b);
     }
 }
 
@@ -143,7 +156,7 @@ void fit(UCNAFierzFitter &ff) {
     /// Set up reasonable guesses 
     double A = -0.12;
     double b = 0;
-    double N = fit_entries;
+    double N = 1/(1/fit_entries + 1/eff_entries);
     double ex_cos = 0.5; //evaluate_expected_cos_theta(fit_min,fit_max);
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
