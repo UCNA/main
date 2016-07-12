@@ -62,7 +62,7 @@ TString paramNames[2] = {"b", "N"};
 double paramInits[2] = {0.0, 1};
 int A_index=-1, b_index=0, N_index=1;
 #endif
-#if 0
+#if 1
 static TString FIT_TYPE = "b";
 static const int nPar = 1;
 double afp_ratio = 0.40;
@@ -70,7 +70,7 @@ TString paramNames[2] = {"b"};
 double paramInits[2] = {0, 1};
 int A_index=-1, b_index=0, N_index=-1;
 #endif
-#if 1
+#if 0
 static TString FIT_TYPE = "Ab";
 static const int nPar = 2;
 double afp_ratio = 0.40;
@@ -122,14 +122,18 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
 int cl = 14;
 void output_matrix(TString title, TMatrixD matrix, TString colNames[], TString rowNames[])
 {
-	cout<<"\n "<<title<<"\n";
-    cout<<"     ";
-	for (int i=0; i<matrix.GetNcols(); i++)
-		cout<<setw(cl)<<colNames[i];
+	cout<<"\n "<<title;
+	int cols = matrix.GetNcols();
+	int rows = matrix.GetNrows();
+    if (cols>1) {
+        cout<<"\n     ";
+        for (int i=0; i<cols; i++)
+            cout<<setw(cl)<<colNames[i];
+    }
 	cout<<"\n";
-	for (int i=0; i<matrix.GetNcols(); i++) {
+	for (int i=0; i<cols; i++) {
         cout<<"    "<<rowNames[i];
-		for (int j=0; j<matrix.GetNrows(); j++)
+		for (int j=0; j<rows; j++)
 			cout<<setw(cl)<<matrix[i][j];
 	    cout<<"\n";
 	}
@@ -168,7 +172,8 @@ void fit(UCNAFierzFitter &ff) {
     /// Set up reasonable guesses 
     double A = -0.12;
     double b = 0;
-    double N = 1/(1/fit_entries + 1/eff_entries);
+    //double N = 1/(1/fit_entries + 1/eff_entries);
+    double N = fit_entries;
     double ex_cos = 0.5; //evaluate_expected_cos_theta(fit_min,fit_max);
     double ec2 = ex_cos*ex_cos; //evaluate_expected_cos_theta(fit_min,fit_max);
 
@@ -183,6 +188,7 @@ void fit(UCNAFierzFitter &ff) {
 	cout<<"    Effective number of counts in full energy range is "<<int(eff_entries)<<".\n";
 	cout<<"    Effective number of counts in fit energy range cut is "<<int(fit_entries)<<".\n";
 	cout<<"    Efficiency of energy cut is "<<int(fit_entries/eff_entries*1000)/10<<"%.\n";
+	cout<<"    Effective N "<<int(N*100)/100<<".\n";
     
 	/// Set all expectation values for this range.
     const int nSpec = 4;
@@ -294,34 +300,57 @@ void fit(UCNAFierzFitter &ff) {
     cout<<"    Actual and estimated combined statistical sigmas and errors:\n";
     cout<<"    "<<setw(1)<<" "
                 <<setw(cl)<<"value" 
-                <<setw(cl)<<"actual sigma"
+                /*
+                <<setw(cl)<<"act. sigma"
                 <<setw(cl)<<"est. sigma" 
-                <<setw(cl)<<"actual error" 
+                <<setw(cl)<<"act. factor"
+                <<setw(cl)<<"est. factor" 
+                <<setw(cl)<<"act. error" 
                 <<setw(cl)<<"est. error" 
+                */
+                <<setw(3*cl/2)<<"sigma (act./est)"
+                <<setw(3*cl/2)<<"factor (act./est.)"
+                <<setw(3*cl/2)<<"error (act./est.)" 
                 <<setw(cl+1)<<"est./actual\n";
 	for (int i=0; i<nPar; i++) {
         TString param = paramNames[i];
+        double scale = Sqrt(N);
         double value = asymmetry_func.GetParameter(i);
 	    double sigma = Sqrt(cov[i][i]);
-	    double error = 100*sigma/value;
+	    double error = sigma*100/value;
+	    double factor = scale*sigma;
 	    double est_sigma = Sqrt(est_cov[i][i]);
-	    double est_error = 100*est_sigma/value;
+	    double est_error = est_sigma*100/value;
+	    double est_factor = scale*est_sigma;
         double ratio = est_sigma/sigma;
         cout<<"    "<<setw(1)   <<param 
                     <<setw(cl)  <<value 
+                    <<setw(cl-1)<<sigma<<"/"
+                    <<setw(cl/2)<<est_sigma 
+                    <<setw(cl-1)<<factor<<"/"
+                    <<setw(cl/2)<<est_factor 
+                    <<setw(cl-2)<<error <<"%/"
+                    <<setw(cl/2-1)<<est_error<<"%"
+                    /*
                     <<setw(cl)  <<sigma 
                     <<setw(cl)  <<est_sigma 
+                    <<setw(cl)  <<factor 
+                    <<setw(cl)  <<est_factor 
                     <<setw(cl-1)<<error <<"%" 
                     <<setw(cl-1)<<est_error<<"%"
+                    */
                     <<setw(cl)  <<ratio<<"\n";
     }
 
     /// Compare predicted and actual correlations.
-	cout<<"\n CORRELATIONS FACTORS FOR COMBINED FITS:\n";
-    cout<<"    "<<setw(8)<<" "
-                <<setw(cl)<<"actual"
-                <<setw(cl)<<"estimate" 
-                <<setw(cl+1)<<"est./actual\n";
+    if (nPar > 1)
+        cout<<"\n CORRELATIONS FACTORS FOR COMBINED FITS:\n"
+            <<"    "<<setw(8)<<" "
+                    <<setw(cl)<<"actual"
+                    <<setw(cl)<<"estimate" 
+                    <<setw(cl)<<"act. sq(N)"
+                    <<setw(cl)<<"est. sq(N)" 
+                    <<setw(cl+1)<<"est./actual\n";
 	for (int i=0; i<nPar; i++) {
         TString name_i = paramNames[i];
 	    for (int j = i+1; j<nPar; j++) {
@@ -333,6 +362,8 @@ void fit(UCNAFierzFitter &ff) {
             cout<<"    "<<setw(8)<<cor_name
                         <<setw(cl)<<cor_ij
                         <<setw(cl)<<est_cor_ij
+                        <<setw(cl)<<cor_ij*Sqrt(N)
+                        <<setw(cl)<<est_cor_ij*Sqrt(N)
                         <<setw(cl)<<ratio<<"\n";
         }
     }
