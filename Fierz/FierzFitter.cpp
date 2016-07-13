@@ -572,9 +572,9 @@ void UCNAmodel::save(TString filename)
         cout<<"Warning: Ntuple not set. Can't save data.\n";
     }
     */
-
 	tfile->Close();
 }
+
 
 /**
  * UCNAhistogram::fill() and UCNAmodel::fill()
@@ -597,7 +597,6 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         cout<<"Aborting...\n";
 		exit(1);
 	}
-
     TChain *chain = (TChain*)tfile->Get(name);
     if (not chain) {
 		cout<<"Error: In file "<<filename<<":\n";
@@ -606,7 +605,17 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         cout<<"Aborting...\n";
         exit(1);
     }
+    else
+        return fill(chain, flip, A, b);
+}
 
+
+int UCNAmodel::fill(TChain *chain,
+                    double flip, double A, double b)
+{
+    if (not chain) {
+		cout<<"Error: Null TChain pointer.\n";
+    }
 	double Nevents = chain->GetEntries();
 	chain->SetBranchStatus("*",false);
 	chain->SetBranchStatus("PID",true);
@@ -705,6 +714,147 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         */
     }    
      
+    int Nsim = Nspin[0] + Nspin[1];
+	cout<<"Total number of Monte Carlo entries:\n";
+	cout<<"      Entries without cuts:      "<<int(Nevents)<<endl;
+	cout<<"      Entries with cuts:         "<<Nsim<<endl;
+	cout<<"      Efficiencies of cuts:      "<<(100.0*Nsim)/double(Nevents)<<"%\n";
+	cout<<"      Entries with AFP off cut:  "<<Nspin[0]<<" ("<<(100.0*Nspin[0])/double(Nsim)<<"%)\n";
+	cout<<"      Entries with AFP on cut:   "<<Nspin[1]<<" ("<<(100.0*Nspin[1])/double(Nsim)<<"%)\n";
+
+	/// compute and normalize super sum
+    compute_super_sum();
+    compute_asymmetry();
+    //compute_super_diff();
+    super_sum.normalize();
+    //super_sum.Scale(1/Nsim);
+    asymmetry.Scale(1/A);
+    //super_sum.Scale(1/double(Nevents));
+    //super_sum.Scale(double(nSimmed)/double(Nevents));
+    //normalize(asymmetry, min_E, max_E);
+    //for (int side=0; side<2; side++)
+    //    for (int spin=0; spin<2; spin++)
+    //        normalize(counts[side][spin], min_E, max_E);
+
+    return Nsim;
+}
+
+/*
+int UCNAmodel::fill(TString filename, TString name, TString title, 
+                    double flip, double A, double b)
+                    //double flip = 0.68/1.68, double A = -0.12, double b = 0)
+{
+	TFile* tfile = new TFile(filename);
+	if (tfile->IsZombie()) {
+		cout<<"Error: Problem filling "<<title<<":\n";
+		cout<<"       File "<<filename<<" not found\n";
+        cout<<"Aborting...\n";
+		exit(1);
+	}
+
+    TChain *chain = (TChain*)tfile->Get(name);
+    if (not chain) {
+		cout<<"Error: In file "<<filename<<":\n";
+		cout<<"       Cannot get "<<title<<":\n";
+		cout<<"       Cannot find chain or tree named "<<name<<".\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }
+
+	double Nevents = chain->GetEntries();
+	chain->SetBranchStatus("*",false);
+	chain->SetBranchStatus("PID",true);
+	chain->SetBranchStatus("side",true);
+	chain->SetBranchStatus("type",true);
+	chain->SetBranchStatus("Erecon",true);
+	chain->SetBranchStatus("primMomentum",true);
+    chain->SetBranchStatus("ScintPosAdjusted",true);
+    chain->SetBranchStatus("ScintPosAdjusted",true);
+
+	//TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy");
+	TNtuple* tntuple = 0;
+
+	//int Noff=0, Non=0;	/// events have been simulated after cuts
+	int Nspin[]={0,0};	    /// events have been simulated after cuts
+    int PID, side, type;
+    double energy;
+    double mwpcPosW[3], mwpcPosE[3], p[3];
+    //double mwpcPos[2][3], p[3]; 
+    //double ex_cos = 4;  // TODO compute ex+cos correctly
+
+    chain->SetBranchAddress("PID",&PID);
+    chain->SetBranchAddress("side",&side);
+    chain->SetBranchAddress("type",&type);
+    chain->SetBranchAddress("Erecon",&energy);
+	chain->SetBranchAddress("primMomentum",p); /// not momentum; normalized direction!
+    chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
+    chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
+
+    for (int evt=0; evt<Nevents; evt++) {
+        chain->GetEvent(evt);
+
+        /// cut out bad events
+        if (PID!=1) 
+            continue;
+
+        /// radial fiducial cut
+        double fidcut2 = 50*50; // TODO !!!! VERY HARD CODED 
+        assert(fidcut2 > 0);
+        double radius2W = mwpcPosW[0]*mwpcPosW[0] + mwpcPosW[1]*mwpcPosW[1]; 
+        double radius2E = mwpcPosE[0]*mwpcPosE[0] + mwpcPosE[1]*mwpcPosE[1]; 
+        if (radius2W > fidcut2 or radius2E > fidcut2) 
+            continue;
+
+        /// Type 0, Type I, Type II/III events 
+        if (type<4) { 
+        //if (type==0) { 
+            /// fill with loading efficiency 
+            double load = rand.Uniform(1);
+			double afp = (load < flip)? +1 : -1; // TODO don't need load as var..
+            double axial = rand.Uniform(2)-1;
+            double cos = p[2]/Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
+            assert(cos = p[2]);
+            //bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
+            double E = energy + m_e;        /// relativistic energy
+            double x = m_e/E;
+            bool spin = (afp < 0)? EAST : WEST;
+            Nspin[spin]++;
+            if (b > 0.5) {
+                double d = 1 + b*x;
+                double beta = Sqrt(1 - x*x);
+                if (afp < 0 ) {
+                    //Noff++;
+                    if (axial > (1 + A*beta*cos/d))
+                        spin = EAST;
+                    else 
+                        spin = WEST;
+                }
+                else {
+                    //Non++;
+                    if (axial > (1 - A*beta*cos/d))
+                        spin = WEST;
+                    else
+                        spin = EAST;
+                }
+            }
+            //cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin 
+                <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" 
+                <<" cos: "<<cos<<" load: "<<load<<".\n";
+            counts[side][spin]->Fill(energy, 1);
+            if (tntuple)
+			    tntuple->Fill(side, spin, energy);
+        }
+            hEreconALL->Fill(Erecon);
+        if (type==0) 
+            hErecon0->Fill(Erecon);
+        else if (type==1) 
+            hErecon1->Fill(Erecon);
+        else if (type==2 or type==3) 
+            hErecon23->Fill(Erecon); 
+
+		/// break when enough data has been generated.
+    }    
+     
     int Nsim = Nspin[0] + Nspin[0];
 	cout<<"Total number of Monte Carlo entries:\n";
 	cout<<"      Entries without cuts:      "<<int(Nevents)<<endl;
@@ -729,6 +879,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
 
     return Nsim;
 }
+*/
 
 
 /**

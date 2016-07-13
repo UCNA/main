@@ -24,7 +24,6 @@
 #include <string>
 #include <limits>
 
-
 /// C includes
 #include <stdio.h>
 #include <stdlib.h>
@@ -114,7 +113,7 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
     }
     else if (FIT_TYPE=="b") {
         double b=p[0];
-        chi2 = global_ff->supersum_chi2(b,1/(1+b*0.6));
+        chi2 = global_ff->supersum_chi2(b,1/(1+b*0.584));
     }
 }
 
@@ -176,7 +175,8 @@ void fit(UCNAFierzFitter &ff) {
     double A = -0.12;
     double b = 0;
     //double N = fit_entries;
-    double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
+    //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
+    double N = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
     double ex_cos = 0.5; //evaluate_expected_cos_theta(fit_min,fit_max);
     double ec2 = ex_cos*ex_cos; //evaluate_expected_cos_theta(fit_min,fit_max);
 
@@ -303,14 +303,6 @@ void fit(UCNAFierzFitter &ff) {
     cout<<"    Actual and estimated combined statistical sigmas and errors:\n";
     cout<<"    "<<setw(1)<<" "
                 <<setw(cl)<<"value" 
-                /*
-                <<setw(cl)<<"act. sigma"
-                <<setw(cl)<<"est. sigma" 
-                <<setw(cl)<<"act. factor"
-                <<setw(cl)<<"est. factor" 
-                <<setw(cl)<<"act. error" 
-                <<setw(cl)<<"est. error" 
-                */
                 <<setw(3*cl/2)<<"sigma (act./est)"
                 <<setw(3*cl/2)<<"factor (act./est.)"
                 <<setw(3*cl/2)<<"error (act./est.)" 
@@ -334,14 +326,6 @@ void fit(UCNAFierzFitter &ff) {
                     <<setw(cl/2)<<est_factor 
                     <<setw(cl-2)<<error <<"%/"
                     <<setw(cl/2-1)<<est_error<<"%"
-                    /*
-                    <<setw(cl)  <<sigma 
-                    <<setw(cl)  <<est_sigma 
-                    <<setw(cl)  <<factor 
-                    <<setw(cl)  <<est_factor 
-                    <<setw(cl-1)<<error <<"%" 
-                    <<setw(cl-1)<<est_error<<"%"
-                    */
                     <<setw(cl)  <<ratio<<"\n";
     }
 
@@ -436,20 +420,20 @@ int main(int argc, char *argv[])
     /// LOAD FAKE DATA FROM MONTE CARLO
     /// Load Monte Carlo simulated Standard Model events
     fake.vector.fill(
-        mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+        mc_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
         "SimAnalyzed",
         "Vector Standard Model Monte Carlo beta spectrum", afp_ratio, 0, 0);
 
     fake.axial.fill(
-        mc_syst_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+        mc_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
         "SimAnalyzed",
         "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio, 1, 0);
 
     /// Load Monte Carlo simulated Fierz events
     fake.fierz.fill(
-        mc_syst_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
+        mc_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
         "SimAnalyzed",
-        "Fierz Monte Carlo beta spectrum", afp_ratio, 0, 1); // TODO this is supressing the errors
+        "Fierz Monte Carlo beta spectrum", afp_ratio, 0, 1); // TODO this is suppressing the errors
 
     /// For now load real asymmetry data as fake histogram. TODO Fix.
     /// Load Monte Carlo simulated Standard Model events
