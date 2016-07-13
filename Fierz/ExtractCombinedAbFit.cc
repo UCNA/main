@@ -114,7 +114,7 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
     }
     else if (FIT_TYPE=="b") {
         double b=p[0];
-        chi2 = global_ff->supersum_chi2(b,1-0.6*b);
+        chi2 = global_ff->supersum_chi2(b,1/(1+b*0.6));
     }
 }
 
@@ -165,15 +165,18 @@ void fit(UCNAFierzFitter &ff) {
     global_ff = 0;
 
     /// Look up sizes
-    double all_entries = ff.data.super_sum.GetEntries();
-	double eff_entries = ff.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
-	double fit_entries = ff.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    double Nsim_data = ff.data.super_sum.GetEntries();
+	double Nall_data = ff.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
+	double Nfit_data = ff.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
+	double Nfit_vector = ff.vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
+	double Nfit_axial = ff.axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
+	double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
 
     /// Set up reasonable guesses 
     double A = -0.12;
     double b = 0;
-    //double N = 1/(1/fit_entries + 1/eff_entries);
-    double N = fit_entries;
+    //double N = fit_entries;
+    double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
     double ex_cos = 0.5; //evaluate_expected_cos_theta(fit_min,fit_max);
     double ec2 = ex_cos*ex_cos; //evaluate_expected_cos_theta(fit_min,fit_max);
 
@@ -184,10 +187,10 @@ void fit(UCNAFierzFitter &ff) {
 	cout<<" ENERGY RANGE:\n";
 	cout<<"    Full energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
 	cout<<"    Fit energy range cut is "<<fit_min<<" - "<<fit_max<<" keV.\n";
-	cout<<"    Number of counts in data is "<<int(all_entries)<<".\n";
-	cout<<"    Effective number of counts in full energy range is "<<int(eff_entries)<<".\n";
-	cout<<"    Effective number of counts in fit energy range cut is "<<int(fit_entries)<<".\n";
-	cout<<"    Efficiency of energy cut is "<<int(fit_entries/eff_entries*1000)/10<<"%.\n";
+	cout<<"    Number of actual counts in data is "<<int(Nsim_data)<<".\n";
+	cout<<"    Effective number of counts in full energy range is "<<int(Nall_data)<<".\n";
+	cout<<"    Effective number of counts in fit energy range cut is "<<int(Nfit_data)<<".\n";
+	cout<<"    Efficiency of energy cut is "<<int(Nfit_data/Nall_data*1000)/10<<"%.\n";
 	cout<<"    Effective N "<<int(N*100)/100<<".\n";
     
 	/// Set all expectation values for this range.
@@ -204,7 +207,7 @@ void fit(UCNAFierzFitter &ff) {
         }
     }
 
-	output_matrix("EXPECTATION MATRIX", ex, colNames, rowNames);
+	output_matrix("APPROXIMATE ANALYTICAL EXPECTATION MATRIX", ex, colNames, rowNames);
 	
 	/// Calculate the predicted inverse covariance matrix for this range.
 	TMatrixD est_cov_inv(nPar,nPar);

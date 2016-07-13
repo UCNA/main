@@ -297,7 +297,8 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
     // TODO add axial supersum?
     int deltaV = vector.super_sum.FindBin(fit_min) - 1;
     int deltaF = fierz.super_sum.FindBin(fit_min) - 1;
-    double e_x = evaluate_expected_fierz(fit_min,fit_max);
+    //double e_x = evaluate_expected_fierz(fit_min,fit_max); // not in the right range
+    double m_E = evaluate_expected_fierz(0,Q); // not in the right range
 	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.super_sum.GetBinCenter(bin);
@@ -307,12 +308,12 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
         }
         double pV = vector.super_sum.GetBinContent(bin + deltaV);
         double pF = fierz.super_sum.GetBinContent(bin + deltaF);
-        double f  = N*(pV + b*pF);
+        double f  = N*(pV + b*m_E*pF);
         fit.super_sum.SetBinContent(bin,f);
 
         double eV = vector.super_sum.GetBinError(bin + deltaV);
         double eF = fierz.super_sum.GetBinError(bin + deltaF);
-        double ef = N*Sqrt(eV*eV + b*b*eF*eF);
+        double ef = N*Sqrt(eV*eV + b*b*m_E*m_E*eF*eF);
         fit.super_sum.SetBinError(bin,ef);
 
         //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
