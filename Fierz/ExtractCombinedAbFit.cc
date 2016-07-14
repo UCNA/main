@@ -419,19 +419,23 @@ int main(int argc, char *argv[])
 
     /// LOAD FAKE DATA FROM MONTE CARLO
     /// Load Monte Carlo simulated Standard Model events
+    TString fake_dir = mc_syst_dir;
     fake.vector.fill(
-        mc_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+        //fake_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+        mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
         "Vector Standard Model Monte Carlo beta spectrum", afp_ratio, 0, 0);
 
     fake.axial.fill(
-        mc_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+        //fake_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
+        mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
         "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio, 1, 0);
 
     /// Load Monte Carlo simulated Fierz events
     fake.fierz.fill(
-        mc_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
+        //fake_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
+        mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
         "Fierz Monte Carlo beta spectrum", afp_ratio, 0, 1); // TODO this is suppressing the errors
 
@@ -440,7 +444,7 @@ int main(int argc, char *argv[])
     double A = -0.12;
     double b = 0;
     fake.data.fill(
-        mc_dir+"SimAnalyzed_Beta_7.root",
+        mc_dir+"SimAnalyzed_Beta_8.root",
         "SimAnalyzed",
         "Monte Carlo Standard Model beta spectrum", afp_ratio, A, b);
 

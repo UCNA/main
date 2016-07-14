@@ -191,7 +191,8 @@ struct UCNAmodel {
 
     double asymmetry_chi2(double A, double b);
     int fill(TString filename, TString name, TString title);
-    int fill(TString filename, TString name, TString title, double flip, double A, double b);
+    int fill(TString filename, TString name, TString title, 
+             double flip, double A, double b);
     int fill(TChain *chain, double flip, double A, double b);
     void save(TString filename, TString name, TString title);
     void save(TString filename);
