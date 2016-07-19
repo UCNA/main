@@ -460,18 +460,18 @@ int main(int argc, char *argv[])
     double b = -0.03;
     double N = 1;
     ucna.compute_data(A,b,N);
-    ucna.data.snapshot();
-    fake.data.snapshot();
+    ucna.data.super_sum.snapshot();
+    fake.data.super_sum.snapshot();
     fake.data = ucna.data;
-    ucna.data.snapshot();
-    fake.data.snapshot();
+    ucna.data.super_sum.snapshot();
+    fake.data.super_sum.snapshot();
 
-    ucna.vector.snapshot();
-    ucna.axial.snapshot();
-    ucna.fierz.snapshot();
-    fake.vector.snapshot();
-    fake.axial.snapshot();
-    fake.fierz.snapshot();
+    ucna.vector.super_sum.snapshot();
+    ucna.axial.super_sum.snapshot();
+    ucna.fierz.super_sum.snapshot();
+    fake.vector.super_sum.snapshot();
+    fake.axial.super_sum.snapshot();
+    fake.fierz.super_sum.snapshot();
 
     /*
     fake.data.fill(
