@@ -134,7 +134,6 @@ struct UCNAmodel {
 
     TRandom2 rand;
 
-    //TH1D*   raw[2][2];  
     TNtuple* ntuple;     /// another way to store the raw data
     UCNAhistogram* counts[2][2]; // TODO make member not pointer
     UCNAhistogram super_ratio;
@@ -189,11 +188,53 @@ struct UCNAmodel {
         */
     }
 
+    UCNAmodel & operator=(const UCNAmodel & other)
+    {
+        /** TODO check that if name and title are already assigned, to NOT copy them
+        name(other.name), title(other.title),
+        bins(other.bins), min(other.min), max(other.max),
+        rand(0)
+        super_ratio(other.super_ratio),
+        super_sum(other.super_sum),
+        asymmetry(other.asymmetry) */
+        name = other.name;
+        title = other.title;
+        bins = other.bins;
+        min = other.min;
+        max = other.max;
+        super_ratio = other.super_ratio;
+        super_sum = other.super_sum;
+        asymmetry = other.asymmetry;
+        for (int side = 0; side < 2; side++) {
+            TString sub_name = name;    /// keep name the same
+            TString sub_title = title;  /// keep title the same
+            if (not side) {
+                sub_name += "_E";
+                sub_title += " East";
+            } else {
+                sub_name += "_W";
+                sub_title += " West";
+            }
+            for (int spin = 0; spin < 2; spin++) {
+                if (not spin) {
+                    sub_name += "_off";
+                    sub_title += " AFP Off";
+                } else {
+                    sub_name += "_on";
+                    sub_title += " AFP On";
+                }
+                counts[side][spin] = other.counts[side][spin];
+                //new UCNAhistogram(sub_name, sub_title, bins, min, max);
+            }
+        }
+        ntuple = other.ntuple;
+        return *this;
+    }
+
     double asymmetry_chi2(double A, double b);
-    int fill(TString filename, TString name, TString title);
-    int fill(TString filename, TString name, TString title, 
-             double flip, double A, double b);
-    int fill(TChain *chain, double flip, double A, double b);
+    //int fill(TString filename, TString name, TString title);
+    int fill(TString filename, TString name, TString title, double flip);
+    int fill(TChain *chain, double flip);
     void save(TString filename, TString name, TString title);
     void save(TString filename);
 
@@ -275,9 +316,9 @@ struct UCNAFierzFitter {
     double fidcut2;                 /// mm^2 radial cut.
 
     /// set up free fit parameters with best guess
-    static const int nPar = 3;
-    TString paramNames[3] = {"A", "b", "N"};
-    double paramInits[3] = {-0.12, 0, 1e1};
+    //static const int nPar = 3;
+    //TString paramNames[3] = {"A", "b", "N"};
+    //double paramInits[3] = {-0.12, 0, 1e1};
 
     UCNAFierzFitter(TString name, TString title, 
                     int bins, double min, double max)
@@ -327,6 +368,7 @@ struct UCNAFierzFitter {
     void compute_asymmetry_fit(double A, double b);
     void compute_supersum_fit(double b, double N);
     void compute_fit(double A, double b, double N);
+    void compute_data(double A, double b, double N);
     void compute_fit(TF1* func);
 
     //TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1 *func);

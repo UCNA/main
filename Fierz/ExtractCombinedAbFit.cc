@@ -288,6 +288,7 @@ void fit(UCNAFierzFitter &ff) {
                 <<setw(cl+1)<<"error\n";
 	for (int i=0; i<nPar; i++) {
         TString name = paramNames[i];
+        mc_dir+"SimAnalyzed_Beta_7.root",
         double value = asymmetry_func.GetParameter(i);
         double sigma = 1/Sqrt(est_cov_inv[i][i]);
         double error = 100*sigma/value;
@@ -416,6 +417,21 @@ int main(int argc, char *argv[])
     //display(ucna);
     */
 
+    ucna.vector.fill(
+        mc_dir+"SimAnalyzed_Beta_9.root",
+        "SimAnalyzed",
+        "Vector Standard Model Monte Carlo beta spectrum", afp_ratio);
+
+    ucna.axial.fill(
+        mc_dir+"SimAnalyzed_Beta_9.root",
+        "SimAnalyzed",
+        "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio);
+
+    /// Load Monte Carlo simulated Fierz events
+    ucna.fierz.fill(
+        mc_dir+"SimAnalyzed_Beta_9.root",
+        "SimAnalyzed",
+        "Fierz Monte Carlo beta spectrum", afp_ratio); // TODO this is suppressing the errors
 
     /// LOAD FAKE DATA FROM MONTE CARLO
     /// Load Monte Carlo simulated Standard Model events
@@ -424,31 +440,32 @@ int main(int argc, char *argv[])
         //fake_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
         mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
-        "Vector Standard Model Monte Carlo beta spectrum", afp_ratio, 0, 0);
+        "Vector Standard Model Monte Carlo beta spectrum", afp_ratio);
 
     fake.axial.fill(
         //fake_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
         mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
-        "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio, 1, 0);
+        "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio);
 
     /// Load Monte Carlo simulated Fierz events
     fake.fierz.fill(
         //fake_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
         mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
-        "Fierz Monte Carlo beta spectrum", afp_ratio, 0, 1); // TODO this is suppressing the errors
+        "Fierz Monte Carlo beta spectrum", afp_ratio); // TODO this is suppressing the errors
 
     /// For now load real asymmetry data as fake histogram. TODO Fix.
     /// Load Monte Carlo simulated Standard Model events
     double A = -0.12;
     double b = 0;
+    fake.data.fill(A,b);
+    /*
     fake.data.fill(
-        mc_dir+"SimAnalyzed_Beta_8.root",
+        mc_dir+"SimAnalyzed_Beta_9.root",
         "SimAnalyzed",
         "Monte Carlo Standard Model beta spectrum", afp_ratio, A, b);
 
-    /*
     fake.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
         "hAsym_Corrected_C",

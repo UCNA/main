@@ -91,7 +91,8 @@ double UCNAhistogram::normalize(double min, double max)
 
 TF1* UCNAFierzFitter::combined_fit(
         TMatrixD &cov, TF1 *func, 
-        void (*global_fcn_ptr)(Int_t&, Double_t*, Double_t&, Double_t*, Int_t) ) { 
+        void (*global_fcn_ptr)(Int_t&, Double_t*, Double_t&, Double_t*, Int_t) )
+{
     int nPar = func->GetNpar();
     if (not func) {
         cout<<"Fit function not set.\n";
@@ -291,6 +292,15 @@ void UCNAFierzFitter::compute_fit(double A, double b, double N)
      compute_supersum_fit(b,N);
 }
 
+void UCNAFierzFitter::compute_data(double A, double b, double N)
+{
+     compute_asymmetry_fit(A,b);
+     compute_supersum_fit(b,N);
+     data = fit;
+}
+
+
+// TODO TODO TODO make this able to compute fake data!!!
 void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 {
     int n = fit.super_sum.GetNbinsX();
@@ -395,7 +405,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
 }
 */
 
-void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
+ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
 {
     int n = fit.asymmetry.GetNbinsX();
     int deltaA = axial.asymmetry.FindBin(fit_min) - 1;
@@ -576,19 +586,20 @@ void UCNAmodel::save(TString filename)
 }
 
 
-/**
+/** DEPRECATED *******
  * UCNAhistogram::fill() and UCNAmodel::fill()
  * Fill in asymmetry and super_ratio, and super sums from simulation data.
  * Use wild card * in filename where data is split up over many files
  * and they get Tchained together.
- */
 int UCNAmodel::fill(TString filename, TString name, TString title) {
     return fill(filename, name, title, 0.68/1.68, -0.12, 0.0);
 }
+ */
 
-int UCNAmodel::fill(TString filename, TString name, TString title, 
-                    double flip, double A, double b)
-                    //double flip = 0.68/1.68, double A = -0.12, double b = 0)
+
+int UCNAmodel::fill(TString filename, TString name, TString title, double flip)
+    //double flip, double A, double b)
+    //double flip = 0.68/1.68, double A = -0.12, double b = 0)
 {
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
@@ -606,12 +617,11 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         exit(1);
     }
     else
-        return fill(chain, flip, A, b);
+        return fill(chain, flip);
 }
 
 
-int UCNAmodel::fill(TChain *chain,
-                    double flip, double A, double b)
+int UCNAmodel::fill(TChain *chain, double flip)
 {
     if (not chain) {
 		cout<<"Error: Null TChain pointer.\n";
@@ -660,52 +670,48 @@ int UCNAmodel::fill(TChain *chain,
         if (radius2W > fidcut2 or radius2E > fidcut2) 
             continue;
 
-        /// Type 0, Type I, Type II/III events 
-        if (type<4) { 
-        //if (type==0) { 
-            /// fill with loading efficiency 
-            double load = rand.Uniform(1);
-			double afp = (load < flip)? +1 : -1; // TODO don't need load as var..
-            double axial = rand.Uniform(2)-1;
-            double cos = p[2]/Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
-            assert(cos = p[2]);
-            //bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
-            double E = energy + m_e;        /// relativistic energy
-            double x = m_e/E;
-            bool spin = (afp < 0)? EAST : WEST;
-            Nspin[spin]++;
-            if (b > 0.5) {
-                double d = 1 + b*x;
-                double beta = Sqrt(1 - x*x);
-                if (afp < 0 ) {
-                    //Noff++;
-                    if (axial > (1 + A*beta*cos/d))
-                        spin = EAST;
-                    else 
-                        spin = WEST;
-                }
-                else {
-                    //Non++;
-                    if (axial > (1 - A*beta*cos/d))
-                        spin = WEST;
-                    else
-                        spin = EAST;
-                }
+        /// fill with loading efficiency 
+        double load = rand.Uniform(1);
+        double afp = (load < flip)? +1 : -1; // TODO don't need load as var..
+        //double axial = rand.Uniform(2)-1;
+        double cos = p[2]/Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
+        assert(cos = p[2]);
+        //bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
+        double E = energy + m_e;        /// relativistic energy
+        double x = m_e/E;
+        bool spin = (afp < 0)? EAST : WEST;
+        Nspin[spin]++;
+        /*
+        if (b > 0.5) {
+            double d = 1 + b*x;
+            double beta = Sqrt(1 - x*x);
+            if (afp < 0 ) {
+                //Noff++;
+                if (axial > (1 + A*beta*cos/d))
+                    spin = EAST;
+                else 
+                    spin = WEST;
             }
-            /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin 
-                <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" 
-                <<" cos: "<<cos<<" load: "<<load<<".\n";*/
+            else {
+                //Non++;
+                if (axial > (1 - A*beta*cos/d))
+                    spin = WEST;
+                else
+                    spin = EAST;
+            }
+        } */
+        /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin 
+            <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" 
+            <<" cos: "<<cos<<" load: "<<load<<".\n";*/
+        if (type<4) 
             counts[side][spin]->Fill(energy, 1);
-            if (tntuple)
-			    tntuple->Fill(side, spin, energy);
-        } /*  
-            hEreconALL->Fill(Erecon);
-        if (type==0) 
-            hErecon0->Fill(Erecon);
-        else if (type==1) 
-            hErecon1->Fill(Erecon);
-        else if (type==2 or type==3) 
-            hErecon23->Fill(Erecon); */
+            /*
+        if (type==2 or type==3)
+            counts[side][spin]->Fill(energy, 1);
+        counts[side][spin]->Fill(energy, 1);
+        */
+        if (tntuple)
+            tntuple->Fill(side, spin, energy);
 
 		/// break when enough data has been generated.
         /*
@@ -726,9 +732,9 @@ int UCNAmodel::fill(TChain *chain,
     compute_super_sum();
     compute_asymmetry();
     //compute_super_diff();
-    super_sum.normalize();
-    //super_sum.Scale(1/Nsim);
-    asymmetry.Scale(1/A);
+    //super_sum.normalize();
+    super_sum.Scale(1/Nsim);
+    //asymmetry.Scale(1/A);
     //super_sum.Scale(1/double(Nevents));
     //super_sum.Scale(double(nSimmed)/double(Nevents));
     //normalize(asymmetry, min_E, max_E);
@@ -1179,13 +1185,13 @@ double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, d
     S = compute_super_sum(n);
     for (int side=0; side<2; side++) {
         for (int spin=0; spin<2; spin++) {
-            double counts = n[side][spin];
+            double count = n[side][spin];
             double sigma = e[side][spin];
-            if (counts > 0) {
+            if (count > 0) {
                 double alter = n[side?0:1][spin?0:1];   
                 if (sigma > 0) {
                     double var = sigma*sigma;
-                    varS += var*alter/counts;  /// errors already set
+                    varS += var*alter/count;  /// errors already set
                 }
                 else
                     varS += alter;             /// using Poisson stats
@@ -1193,7 +1199,7 @@ double UCNAmodel::compute_super_sum(double n[2][2], double e[2][2], double& S, d
             } else {
                 cout<<"Warning: Negative number in super sum error.\n";
                 cout<<"         Counts for side "<<side<<" and spin "<<spin
-                    <<" are "<<counts<<" and sigma is "<<sigma<<".\n";
+                    <<" are "<<count<<" and sigma is "<<sigma<<".\n";
                 sigma = 0.3;
                 cout<<"         Setting to "<<sigma<<".\n";
             }
@@ -1312,8 +1318,8 @@ double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
         cout<<"Warning: Asymmetry error in bin "<<bin<<" and KE "<<KE<<" where\n";
         for (int side=0; side<2; side++) {
             for (int spin=0; spin<2; spin++) {
-                double counts = n[side][spin];
-        cout<<"         n["<<side<<","<<spin<<"] = "<<counts<<".\n";
+                double count = n[side][spin];
+        cout<<"         n["<<side<<","<<spin<<"] = "<<count<<".\n";
             }
         }
         cout<<"         Skipping this data point.\n";
