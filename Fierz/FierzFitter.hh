@@ -106,6 +106,7 @@ struct UCNAhistogram : TH1D {
               TCanvas* canvas, TLegend* legend, 
               TString draw, int color, int marker);
     void save_data(TString filename, double ax, double ay);
+    void snapshot(int every);
 
     bool test_min();
     bool test_min(double min);

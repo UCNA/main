@@ -1231,6 +1231,20 @@ double UCNAmodel::compute_super_sum(int bin, double& S, double& sigmaS) {
     return S;
 }
 
+void UCNAhistogram::snapshot(int every)
+{
+    double min = GetXaxis()->GetXmin();
+    double max = GetXaxis()->GetXmax();
+    int bin_min = FindBin(min);
+    int bin_max = FindBin(max);
+    for (int bin = bin_min; bin < bin_max; bin += every) {
+        double KE = GetBinCenter(bin);
+        double S = GetBinContent(bin);
+        double sigmaS = GetBinError(bin);
+        cout<<"Status: Super sum bin "<<bin<<" and KE "<<KE<<" to "<<S<<"("<<sigmaS<<").\n";
+    }
+}
+
 double UCNAmodel::compute_super_sum(int bin) {
     double count, error;
     return compute_super_sum(bin,count,error);

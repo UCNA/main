@@ -458,7 +458,7 @@ int main(int argc, char *argv[])
     /// For now load real asymmetry data as fake histogram. TODO Fix.
     /// Load Monte Carlo simulated Standard Model events
     double A = -0.12;
-    double b = 0;
+    double b = -0.03;
     double N = 1;
     ucna.compute_data(A,b,N);
     fake.data = ucna.data;
