@@ -210,12 +210,12 @@ struct UCNAmodel {
         super_ratio = other.super_ratio;
         super_sum = other.super_sum;
         asymmetry = other.asymmetry;
-        super_ratio.name = name+"_super_ratio";
-        super_ratiotitle = title+" Super Ratio";
-        super_sum.name = name+"_super_sum";
-        super_ratio.title = title+" Super Sum";
-        asymmetry.name = name+"_asymmetry";
-        super_ratio.title = title+" Asymmetry";
+        super_ratio.SetName(name+"_super_ratio");
+        super_ratio.SetTitle(title+" Super Ratio");
+        super_sum.SetName(name+"_super_sum");
+        super_ratio.SetTitle(title+" Super Sum");
+        asymmetry.SetName(name+"_asymmetry");
+        super_ratio.SetTitle(title+" Asymmetry");
         for (int side = 0; side < 2; side++) {
             TString sub_name = name;    /// keep name the same
             TString sub_title = title;  /// keep title the same
@@ -234,9 +234,9 @@ struct UCNAmodel {
                     sub_name += "_on";
                     sub_title += " AFP On";
                 }
-                counts[side][spin] = other.counts[side][spin];
-                counts[side][spin].name = sub_name;
-                counts[side][spin].title = sub_title;
+                *counts[side][spin] = *other.counts[side][spin];
+                counts[side][spin]->SetName(sub_name);
+                counts[side][spin]->SetTitle(sub_title);
             }
         }
         ntuple = other.ntuple;
