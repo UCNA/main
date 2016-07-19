@@ -20,10 +20,17 @@ import sys
 import matplotlib.dates as dates
 
 sys.path.append('../../') # find RunPlotter.py
-from RunPlotter import getTimeForRunlist
+from RunPlotter import getTimeForRunlist, findMinMaxTime
+sys.path.append('../BetaSpectrumFitting') # find RunLogUtilities.py
+from RunLogUtilities import catSourceSegments
 
 def makeQualityCuts(data):
-    cutruns = [18746, 18751, 18760, 18761, 
+    cutruns = [18424, # explicit bimodal change in the middle of the run (only E?)
+               18429, 18430, 18520, 18559, 18644, 18646, 18648, 18787,  # LEDs swapped, bad cycle finding
+               18456,  # bad fits
+               18505, 18506, 18524, 18532, 18533, # no data 
+               18577, 18969, 19322, # bad cylce finding
+               18746, 18751, 18760, 18761, 
                21186, 22647, # just a bad run
                21288, 21295, 21298, 21312, 21318, 
                21378,  # bad run
@@ -32,7 +39,7 @@ def makeQualityCuts(data):
                21792, # refuses to fit
                21903, 21932, 21933, 
                21777, 21891, 21948, 21911, #runs including a bad cycle
-               21429, 21430, 21431, 21342, 22261, # no PMT data
+               21429, 21430, 21431, 21432, 22261, # no PMT data
                20782, 20889, 20685, 20287]  # haven't/should investigate by eye
 
     
@@ -46,8 +53,11 @@ def makeQualityCuts(data):
 #    bimodalranges = [bimodalrange1, bimodalrange2, bimodalrange3,
 #                     bimodalrange4, bimodalrange5, bimodalrange6, bimodalrange7]
  
-    bimodalranges = [range(20988, 20934), 
-                     range(20944, 21041), # no PMT data
+    bimodalranges = [range(18462, 18477), 
+                     range(18539, 18544),
+                     [18731], 
+                     range(20988, 20994), 
+                     range(20994, 21041), # no PMT data
                      range(21045, 21048),
                      range(21053, 21056), range(21070, 21114), range(21127, 21166),
                      range(21170, 21192), range(21194, 21232), range(21238, 21253),
@@ -73,13 +83,29 @@ def makeQualityCuts(data):
 #    ledcullrange4 = range(20901, 20918) # cull 20901-20817
 #    ledcullrange4 = [21690, 21694, 21703] # covered in bimodal range 1
 #    ledcullrange5 = [21707, 21708]
+
+    ledcullrange0 = range(0, 17544) # cull runs before 17544, the first run with linear ramp
+    # not implying 17544-17646 are useful, but are not obviously cullable
+    ledcullrange1 = range(17647, 18422) # cull runs 17647-18421, LEDs swapped, bad cycle finding
+    ledcullrange2 = range(18651, 18661) # cull 18651-18660, no sweep data?
+    ledcullrange3 = range(18684, 18711) # cull 18684-18710, no or little data
+    ledcullrange4 = range(18769, 18781) # cull 18769-18780, 
+    ledcullrange4a = range(18794, 18801) # cull 18794-18800, no sweep data or bad data
+    ledcullrange4b = range(19002, 19024 ) # cull 19002-19023, no sweep data
+    ledcullrange4c = range(19047, 19317 ) # cull 19047-19316, no sweep data
+
 #########    # 20970 seems to be first good run, runs before it have confusingly large offset (p0)
-    ledcullrange0 = range(18000, 20970) 
+    ledcullrange5 = range(20254, 20970) 
+    
 ###############################
     ledcullrange6 = [22222, 22301, 22302, 22448, 22450]
     ledcullrange7 = range(22453, 22463) # cull 22453-22462
     ledcullrange8 = [22778]
-    ledcullranges = [ledcullrange0, ledcullrange6,
+    ledcullranges = [ledcullrange0, ledcullrange1, 
+                     ledcullrange2, ledcullrange3, 
+                     ledcullrange4, ledcullrange4a,
+                     ledcullrange4b,ledcullrange4c,
+                     ledcullrange5, ledcullrange6,
                      ledcullrange7, ledcullrange8 ]
     for lcr in ledcullranges:
         for k in lcr:
@@ -147,17 +173,114 @@ def getLEDdata(basedir):
                          dtype = "int, int, S12, float, float, float" )
     return data
 
+
+def takeAverages(dataarray):
+    segments = catSourceSegments() # find run segment boundaries; use for averaging data
+    
+    dataruns = dataarray['Run']
+    datadata = dataarray['ParVal']
+
+    avglist = list()
+#    seglist = list()
+    for i, segrun in enumerate(segments):
+        segavg = 0
+#       counter = 0
+        segdatalist = list()
+        print "SEGMENT RUN " + str(segrun)
+        for j, drun in enumerate(dataruns):
+            if i == len(segments) - 1: #special case for end of array   #            if drun > segments[-1]: #special case for runs after end of array
+                if drun > segrun:
+                    print "data RUN " +  str(drun)
+                    if drun == dataruns[j-1]:
+                        print "Duplicate Run. Skipping."  # wierd duplication in 20254-23173 fits
+                        continue
+                    print datadata[j]
+                    #segavg += datadata[j]
+                    segdatalist.append(datadata[j])
+#                    counter = j + 1 
+            elif i < len(segments) - 1:
+                if drun > segrun and drun < segments[i+1]: # start with initial segment 
+                    print "data RUN " +  str(drun)
+                    if drun == dataruns[j-1]:
+                        print "Duplicate Run. Skipping."  # wierd duplication in 20254-23173 fits
+                        continue
+                    print datadata[j]
+                    #segavg += datadata[j]
+                    segdatalist.append(datadata[j])
+#                    counter = j + 1 
+                # elif drun < segrun or drun > segments[i+1]:
+                    # print "Run not in segment."
+            else:
+                print "Waaah? That shouldn't happen."    
+         
+#        print counter
+#        print segdatalist
+#        if counter != len(segdatalist):
+#            print "Data List not commensurate"
+#            return 0 
+         #segavg = segavg/counter
+        stripsegdatalist = stripOutlier(segdatalist) # see below
+        if len(segdatalist) != 0:
+            segavg = np.mean(stripsegdatalist)
+        else:
+            segavg = 0
+        print segavg
+        avglist.append(segavg)
+ #   print avglist, seglist
+    print avglist, segments
+
+#    return runlist, avglist # convert avglist and runlist to an array
+#    return segments, avglist # convert avglist and runlist to an array
+
+    dataarray = np.array(segments, avglist)
+    dataarray = dataarray.T
+
+
+def stripOutlier(array, thresh1 = 2, thresh2 = 4):  # strip values more than thresh*stddev from mean
+    print "Stripping array " 
+    print array
+
+    astddev = np.std(array)
+    amean = np.mean(array)
+
+    # check for outliers
+    candidateoutliers = [a for a in array if abs(a - amean) > thresh1*astddev]
+    print candidateoutliers
+    # make subarray of values that are not potentially outliers
+    trimarray1 = [a for a in array if abs(a - amean) < thresh1*astddev]
+
+    astddev_trim = np.std(trimarray1)
+    amean_trim = np.std(trimarray1)
+    
+    # strip outliers far from trimmed mean
+    trimarray2 = [a for a in array if abs(a - amean_trim) < thresh2*astddev_trim]
+    outliers2 = [a for a in array if abs(a - amean_trim) > thresh2*astddev_trim]
+    print "Cutting Outliers"
+    print outliers2
+
+    print "Returning array " 
+    print trimarray2
+    return trimarray2
+
 if __name__ == "__main__":
     
+    if len(sys.argv) < 4:
+        print "\n Usage: python pd_led_linearity_combinedfit.py <showbool> <savebool> <datebool> <averagebool>"
+        print " Please set flags\n"
+        sys.exit()
+
     showbool = int(sys.argv[1]) # boolean to control plotting
     savebool = int(sys.argv[2]) # boolean to control saving
-    datebool = int(sys.argv[3]) # boolean to toggle run#/date for x-axis # DOESN'T WORK
+    datebool = int(sys.argv[3]) # boolean to toggle run#/date for x-axis
+    avgebool = int(sys.argv[4]) # boolean to average data points over a run segment
 
     rcParams['figure.figsize'] = 10, 10     #Set default fig size
     plt.rc('axes', color_cycle=['r', 'g', 'b', 'y'])
 
 #    basedir = "/data1/saslutsky/LEDPulser/images_05_26_2015_16way_separate_wavelength_coeff_residuals_21650_21950/"
     basedir = "/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/"
+#    basedir = "/data1/saslutsky/LEDPulser/images_06_23_2015_16way_separate_wavelength_coeff_16306_19316/"
+
     data = getLEDdata(basedir)
 
     runlist = data['Run']
@@ -234,6 +357,14 @@ if __name__ == "__main__":
             cutCond = cutChannel & cutParm & cutErr
             #cutCond = cutChannel & cutParm
             _data_cut = data[cutCond]    
+###################
+            if avgebool: # average the data now if requested
+               print _data_cut['ParVal']
+               _data_cut = takeAverages(_data_cut)
+               print _data_cut
+               sys.exit()
+####################
+
             #            print _data_cut
             data_cut.append(_data_cut) # npars arrays of ParName (for all runs)    return _data_cut
 
@@ -275,33 +406,36 @@ if __name__ == "__main__":
                                  markersize=marks, label=_chan, color = 'Black')
                 axes[j].xaxis_date()
                 axes[3].set_xlabel('Time')
-        
+                mintime, maxtime = findMinMaxTime(timelist) # from RunPlotter.py
+                axes[3].set_xlim(mintime, maxtime)
+
             axes[j].set_ylabel("p" + str(j))
 
         if not datebool:
-            p1Ax.errorbar(data_cut[1]['Run'], 
-                          data_cut[1]['ParVal'], 
-                          yerr=data_cut[1]['ParErr'], 
+            p1Ax.errorbar(data_cut[2]['Run'], 
+                          data_cut[2]['ParVal'], 
+                          yerr=data_cut[2]['ParErr'], 
                           linestyle='None', marker='^',
                           markersize=marks, label=_chan, color = 'Black')
             p1Ax.set_xlabel('Run Number')
             
         if datebool:
-            timelist = getTimeForRunlist(data_cut[1]['Run'])
+            timelist = getTimeForRunlist(data_cut[2]['Run'])
             p1Ax.errorbar(timelist, 
-                          data_cut[1]['ParVal'], 
-                          yerr=data_cut[1]['ParErr'], 
+                          data_cut[2]['ParVal'], 
+                          yerr=data_cut[2]['ParErr'], 
                           linestyle='None', marker='^',
                           markersize=marks, label=_chan, color = 'Black')
             p1Ax.xaxis_date()
             p1Ax.set_xlabel('Time')
-
-
+            mintime, maxtime = findMinMaxTime(timelist) # from RunPlotter.py
+            p1Ax.set_xlim(mintime, maxtime)
+            
         axes[3].set_ylabel("$\eta_{\lambda}$")        
         axes[0].set_title(_chan)
         
 
-        p1Ax.set_ylabel("p" + str(1))
+        p1Ax.set_ylabel("p2")
         p1Ax.set_title(_chan)
         
 

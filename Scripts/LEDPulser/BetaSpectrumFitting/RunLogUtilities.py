@@ -1,7 +1,8 @@
 # Some helper functions for parsing the run log that might
 # have general applicability
 
-def identifySourceSegments(use_empirical_list_bool=0, runlogname = "/home/saslutsky/UCNA/UCNAReplay_052214/UCNA/Aux/UCNA Run Log 2012.txt"):
+#def identifySourceSegments(use_empirical_list_bool=0, runlogname = "/home/saslutsky/UCNA/UCNAReplay_052214/UCNA/Aux/UCNA Run Log 2012.txt"):
+def identifySourceSegments(use_empirical_list_bool=0, runlogname = "/home/saslutsky/UCNA/main/Aux/UCNA Run Log 2012.txt"):
     if use_empirical_list_bool == 0:
         newcycle = 0
         runlist = list()
@@ -9,11 +10,12 @@ def identifySourceSegments(use_empirical_list_bool=0, runlogname = "/home/saslut
         for line in f:
             # Reset cycle if found first run of cycle
             if newcycle:
-                if line.find("*2") > -1:
-                    print "First Run: " + line[1:6]
-                    print "----"
-                    newcycle = 0
-                    runlist.append(int(line[1:6]))
+                if line.find("*1") > -1 or line.find("*2") > -1 or line.find("*3") > -1:
+                    if not line[0] == "#":
+                        print "First Run: " + line[1:6]
+                        print "----"
+                        newcycle = 0
+                        runlist.append(int(line[1:6]))
                 
             # identify new cycle
             if line.find("@cycle") > -1:
@@ -38,6 +40,18 @@ def identifySourceSegments(use_empirical_list_bool=0, runlogname = "/home/saslut
                    22924] # -22930
 
     return runlist
+
+def catSourceSegments(runlognamearray = ["/home/saslutsky/UCNA/main/Aux/UCNA Run Log.txt",
+                                       "/home/saslutsky/UCNA/main/Aux/UCNA Run Log 2012.txt"],
+                              use_empirical_list_bool=0):
+    allsegments = list()
+    for runlog in runlognamearray:
+        segments = identifySourceSegments(use_empirical_list_bool, runlog)
+        allsegments.append(segments)
+
+    allsegmentsflat = [run for segment in allsegments for run in segment]
+
+    return allsegmentsflat
 
 def makeVLinesforSegments(axisIn, startrun = 0):
     segmentlist = identifySourceSegments()

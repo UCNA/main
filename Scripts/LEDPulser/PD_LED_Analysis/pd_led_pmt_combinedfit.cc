@@ -65,7 +65,7 @@ using namespace std;
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_06_10_2015_16way_separate_wavelength_coeff_20254_23173/"  // DON'T OMIT THE TRAILING SLASH
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_08_26_2015_newPDGainFits_20970_23173/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
 #define LINEARIZE false
 #define ORDER 2                 /// power law fit (Kevin had 3)
@@ -88,7 +88,7 @@ using namespace std;
 #define COMBINEDLED 1           /// replace later with a loop
 #define USEBETAOFFSETS false
 #define RANGE_EXTENSION 3.0
-#define SWAPLEDS false          /// Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
+#define SWAPLEDS false        /// Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
 #define PMT_THRESHOLD_LOW 1e-5  /// Only affect Minuit Fit
 #define PMT_THRESHOLD_HIGH 5000 /// Only affect Minuit Fit
 
@@ -158,7 +158,7 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
         }
         chisq += _chisq_temp;
     }
-    cout << "Chi^2 = " << chisq << endl;
+    //    cout << "Chi^2 = " << chisq << endl;
     return chisq;
 }
 
@@ -535,9 +535,12 @@ int main (int argc, char **argv)
 
     time_his2D[GAIN] = new TH2F("H2F_time_gain_name", time_title, 
             3600*10, 0, 3600,
-            1<<8, -pd_pedestal, 500-pd_pedestal);
+//            1<<8, -pd_pedestal, 500-pd_pedestal);
+            1<<8, -pd_pedestal, 750);
+
     time_his1D = new TH1F("H1F_time_gain_name_1D", time_title,
-            100, 200, 300);
+//            100, 200, 300);
+            550, 200, 750);
 
     // prepare a file to store linearity fit parameters
     //  double * fitpars = 0; 
@@ -651,7 +654,7 @@ int main (int argc, char **argv)
         time_gain_his2D_name += detector[i];
 
         pmt_gain_his1D[i] = new TH1F (time_gain_his1D_name, "", 
-                300, 0, 3000);
+                300, 0, 6000);
         pmt_gain_his2D[i] = new TH2F (time_gain_his2D_name, "", 
                 3600*10, 0, 3600,
                 300, 0, 3000);
@@ -1500,12 +1503,20 @@ int main (int argc, char **argv)
 
 
     std::cout << "Fitting Gain Parameters" << std::endl;
-    TF1 * mygaus = new TF1("mygaus", "gaus", 0, 1000);
-    time_his1D->Fit("mygaus");
+    TF1 * mygaus = new TF1("mygaus", "gaus", 0, 300);
+    TF1 * mygausbimodal = new TF1("mygausbimodal", "gaus", 300, 1000);
+    mygausbimodal->SetLineColor(2);
+    time_his1D->Fit("mygaus", "R");
+    time_his1D->Fit("mygausbimodal", "R+");
+
     double * projfit_pars = mygaus->GetParameters();
     double * projfit_errs = mygaus->GetParErrors();
     int projfit_Npars = mygaus->GetNpar();
     double projfit_chisq = mygaus->GetChisquare()/mygaus->GetNDF();
+
+    double * projfitbimodal_pars = mygausbimodal->GetParameters();
+    double * projfitbimodal_errs = mygausbimodal->GetParErrors();
+    double projfitbimodal_chisq = mygausbimodal->GetChisquare()/mygausbimodal->GetNDF();
 
     std::cout << "Writing gain parameters" << std::endl;
     TString gainfilename = "GainResults.txt";
@@ -1517,6 +1528,10 @@ int main (int argc, char **argv)
     for (int q = 0; q < projfit_Npars; q++){
         out_gain_string += projfit_pars[q];          out_gain_string += "\t";
         out_gain_string += projfit_errs[q];          out_gain_string += "\t";
+    }
+    for (int q = 0; q < projfit_Npars; q++){
+        out_gain_string += projfitbimodal_pars[q];          out_gain_string += "\t";
+        out_gain_string += projfitbimodal_errs[q];          out_gain_string += "\t";
     }
     out_gain_string += projfit_chisq;              out_gain_string += "\t";
     out_gain_string += "\n";
@@ -1600,15 +1615,23 @@ int main (int argc, char **argv)
 #endif
 
 #if NUM_CHANNELS == 8
-    TCanvas *ew_canvas = new TCanvas("all_pmt_linearity_canvas", 
-            "PMT linearity scans for all tubes", 1280, 720);
-    TCanvas *ew_canvas_scaled = new TCanvas("all_pmt_linearity_canvas_scaled", 
-            "PMT linearity scans for all tubes", 1280, 720);
+    TCanvas *ew_canvas = 
+      new TCanvas("all_pmt_linearity_canvas", 
+		  "PMT linearity scans for all tubes", 1280, 720);
+    TCanvas *ew_canvas_scaled = 
+      new TCanvas("all_pmt_linearity_canvas_scaled", 
+		  "PMT linearity scans for all tubes", 1280, 720);
+    TCanvas *ew_canvas_full = 
+      new TCanvas("all_pmt_full_canvas",
+		  "PMT/LED data", 1280, 720); 
+    
     ew_canvas->Divide(2,1);
     ew_canvas_scaled->Divide(2,1);
+    ew_canvas_full->Divide(2,1);
     for (int ew = 0; ew < 2; ew++) {
         ew_canvas->GetPad(ew+1)->Divide(2,2);
         ew_canvas_scaled->GetPad(ew+1)->Divide(2,2);
+	ew_canvas_full->GetPad(ew+1)->Divide(2,2);
         for (int tx = 0; tx < 2; tx++) {
             for (int ty = 0; ty < 2; ty++) {
                 int i = 4*ew+tx+2*ty;
@@ -1624,8 +1647,8 @@ int main (int argc, char **argv)
                 title += wavelength[UP];
 #endif
                 title += " nm)";
-                //pd_pmt_his2D[UP][i]->SetTitle(title);
-                //pd_pmt_his2D[DOWN][i]->SetTitle(title);
+                pd_pmt_his2D[UP][i]->SetTitle(title);
+                pd_pmt_his2D[DOWN][i]->SetTitle(title);
                 //pd_pmt_his2D[DOWN][i]->Draw("colz");
                 //graph[DOWN][i]->Draw("SameP");
                 gStyle->SetOptFit(0);
@@ -1693,6 +1716,12 @@ int main (int argc, char **argv)
                 PMT_keV_graph[UP][i]->Draw("sameP");
                 PMT_keV_graph[UP][i]->SetName("ScaledGraphUP");
 #endif
+		
+		ew_canvas_full->GetPad(ew+1)->cd(tx+2*ty+1);
+		pd_pmt_his2D[DOWN][i]->Draw("colz");
+                pd_pmt_his2D[UP][i]->Draw("Samecolz");  
+		graph[DOWN][i]->Draw("SameP");
+		graph[UP][i]->Draw("SameP");
                 //	pd_pmt_his2D[DOWN][i]->GetYaxis()->SetRangeUser(0, 2000);
             }
         }
@@ -1752,11 +1781,20 @@ int main (int argc, char **argv)
     pd_led_pmt_scaled_filename +=  "pd_led_pmt_scaled_";
     pd_led_pmt_scaled_filename +=  argv[1];
     pd_led_pmt_scaled_filename += ".gif";
+    TString pd_led_pmt_full_filename = OUTPUT_IMAGE_DIR;
+    pd_led_pmt_full_filename +=  "pd_led_pmt_full_";
+    pd_led_pmt_full_filename +=  argv[1];
+    TString pd_led_pmt_full_rootfilename = pd_led_pmt_full_filename;
+    pd_led_pmt_full_rootfilename += ".root";
+    pd_led_pmt_full_filename +=  ".gif";
+    
     ew_canvas->SaveAs(pd_led_pmt_filename,"9");
     // ew_constr_canvas->SaveAs(pd_led_pmt_constr_filename, "9");
     ew_canvas->SaveAs(pd_led_pmt_rootfilename,"9");
     //ew_constr_canvas->SaveAs(pd_led_pmt_constr_rootfilename, "9");
     ew_canvas_scaled->SaveAs(pd_led_pmt_scaled_filename, "9");
+    ew_canvas_full->SaveAs(pd_led_pmt_full_filename, "9");
+    ew_canvas_full->SaveAs(pd_led_pmt_full_rootfilename, "9");
 
 #endif
 #endif
@@ -1770,7 +1808,9 @@ int main (int argc, char **argv)
     //    gain_his_pol1->Draw("scat");
     //gain_canvas->cd(3); 
     time_his1D->Draw();
-
+    //    mygaus->Draw("same");
+    //mygausbimodal->Draw("same");
+      
 
 #if OUTPUT_IMAGE
     TString pd_gain_filename = "pd_gain_";
@@ -1778,9 +1818,9 @@ int main (int argc, char **argv)
     pd_gain_filename += argv[1];
     TString pd_gain_rootfilename = pd_gain_filename;
     pd_gain_filename += ".gif";
-    //	   pd_gain_rootfilename += ".root";
+    pd_gain_rootfilename += ".root";
     gain_canvas->SaveAs(pd_gain_filename, "9");
-    //	   gain_canvas->SaveAs(pd_gain_rootfilename, "9");
+    gain_canvas->SaveAs(pd_gain_rootfilename, "9");
 #endif
 
     TCanvas * pmt_gain_canvas = new TCanvas("pmt_gain_canvas", "Fitted ADC gains", 1000, 800);

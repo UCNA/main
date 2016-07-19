@@ -47,7 +47,7 @@ if __name__ == "__main__":
     datebool = sys.argv[2]
 
     plt.ion() #turn on interactive mode
-    rcParams['figure.figsize'] = 10, 10     #Set default fig size
+    rcParams['figure.figsize'] = 10, 10     #Set default fig siz
 
     data, outputpath = ReadLEDFile()
     
@@ -122,17 +122,25 @@ if __name__ == "__main__":
     sepaxes = list()
     for i in range(0,8):
         tmpfig, (tmpax) = plt.subplots()
-        tmpax.set_title("PMT Response to LED Gain Pulse (ADC)")
-        sepfigs.apped(tmpfig)
+        if i < 4:
+            chan = "E" + str(i)
+        else: 
+            chan = "W" + str(i%4)
+        tmpax.set_title("PMT Response to LED Gain Pulse: " + chan)
+        tmpax.set_ylabel("PMT (ADC)")
+        sepfigs.append(tmpfig)
         sepaxes.append(tmpax)
 
+        data_cut = data[[data['tube']  == i]]
+#        print data_cut
+
         if not datebool:
-            tmpax.errorbar(data['Run'], data['Mu'], yerr=data['MuErr'],
+            tmpax.errorbar(data_cut['Run'], data_cut['Mu'], yerr=data_cut['MuErr'],
                            linestyle='None', marker='o', markersize=marks)
             tmpax.set_xlabel('Run Number')
         if datebool:
-            timelist = getTimeForRunlist(data['Run'])
-            tmpax.errorbar(timelist, data['Mu'], yerr=data['MuErr'],
+            timelist = getTimeForRunlist(data_cut['Run'])
+            tmpax.errorbar(timelist, data_cut['Mu'], yerr=data_cut['MuErr'],
                            linestyle='None', marker='o', markersize=marks)
             tmpax.set_xlabel('Time')
 
