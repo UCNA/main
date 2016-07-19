@@ -198,14 +198,24 @@ struct UCNAmodel {
         super_ratio(other.super_ratio),
         super_sum(other.super_sum),
         asymmetry(other.asymmetry) */
-        //name = other.name;
-        //title = other.title;
+        if (name == "")
+            name = other.name;
+        if (title == "")
+            title = other.title;
         bins = other.bins;
-        min = other.min;
-        max = other.max;
+        if (min > other.min)
+            min = other.min;
+        if (max < other.max)
+            max = other.max;
         super_ratio = other.super_ratio;
         super_sum = other.super_sum;
         asymmetry = other.asymmetry;
+        super_ratio.name = name+"_super_ratio";
+        super_ratiotitle = title+" Super Ratio";
+        super_sum.name = name+"_super_sum";
+        super_ratio.title = title+" Super Sum";
+        asymmetry.name = name+"_asymmetry";
+        super_ratio.title = title+" Asymmetry";
         for (int side = 0; side < 2; side++) {
             TString sub_name = name;    /// keep name the same
             TString sub_title = title;  /// keep title the same
@@ -225,7 +235,8 @@ struct UCNAmodel {
                     sub_title += " AFP On";
                 }
                 counts[side][spin] = other.counts[side][spin];
-                //new UCNAhistogram(sub_name, sub_title, bins, min, max);
+                counts[side][spin].name = sub_name;
+                counts[side][spin].title = sub_title;
             }
         }
         ntuple = other.ntuple;

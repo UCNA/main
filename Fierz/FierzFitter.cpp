@@ -204,7 +204,7 @@ double UCNAhistogram::chi2(const UCNAhistogram &fit) {
 
 
 double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
-    cout<<"Error: called function asymmetry_chi2("<<A<<","<<b<<")\n";
+    assert(false);
     compute_asymmetry_fit(A,b);
     return data.asymmetry.chi2(fit.asymmetry);
     /*
@@ -231,9 +231,7 @@ double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
 
 
 double UCNAmodel::asymmetry_chi2(double A, double b) {
-    cout<<"Error: called function asymmetry_chi2("<<A<<","<<b<<")\n";
-    exit(1);
-    /*
+    assert(false); /*
 	double chi2 = 0;
     int n = asymmetry.GetNbinsX();
 	for (int i=1; i<n; i++)
@@ -257,6 +255,7 @@ double UCNAmodel::asymmetry_chi2(double A, double b) {
 
 double UCNAFierzFitter::supersum_chi2(double b, double N)
 {
+    assert(N > 0);
     compute_supersum_fit(b,N);
 	double chi2 = 0;
     int n = fit.super_sum.GetNbinsX();
@@ -282,29 +281,31 @@ double UCNAFierzFitter::combined_chi2(double A, double b, double N)
 }
 
 void UCNAFierzFitter::compute_fit(/*MatrixD &cov,*/ TF1 *func) {
+    assert(false);
     double A = func->GetParameter(0);
     double b = func->GetParameter(1);
     double N = func->GetParameter(2);
     compute_fit(A,b,N);
 }
 
-void UCNAFierzFitter::compute_fit(double A, double b, double N)
-{
-     //compute_asymmetry_fit(A,b);
-     compute_supersum_fit(b,N);
+void UCNAFierzFitter::compute_fit(double A, double b, double N) {
+    assert(N > 0);
+    //compute_asymmetry_fit(A,b);
+    compute_supersum_fit(b,N);
 }
 
-void UCNAFierzFitter::compute_data(double A, double b, double N)
-{
-     //compute_asymmetry_fit(A,b);
-     compute_supersum_fit(b,N);
-     data = fit;
+void UCNAFierzFitter::compute_data(double A, double b, double N) {
+    assert(N > 0);
+    //compute_asymmetry_fit(A,b);
+    compute_supersum_fit(b,N);
+    data.super_sum = fit.super_sum;
 }
 
 
 // TODO TODO TODO make this able to compute fake data!!!
 void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 {
+    assert(N > 0);
     int n = fit.super_sum.GetNbinsX();
     // TODO add axial supersum?
     int deltaV = vector.super_sum.FindBin(fit_min) - 1;
@@ -319,8 +320,11 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
             exit(1);
         }
         double pV = vector.super_sum.GetBinContent(bin + deltaV);
+        assert(pV >= 0);
         double pF = fierz.super_sum.GetBinContent(bin + deltaF);
+        assert(pF >= 0);
         double f  = N*(pV + b*m_E*pF);
+        assert(f >= 0);
         fit.super_sum.SetBinContent(bin,f);
 
         double eV = vector.super_sum.GetBinError(bin + deltaV);
@@ -339,6 +343,7 @@ void UCNAFierzFitter::display(TString &plots_dir) {
                    "Combined Fierz component of energy spectrum");
     TLegend legend(0.55,0.65,0.85,0.85);
 
+    /* TODO Uncomment when ready for fitting asymmetry
     data.asymmetry.draw(
                    "data_asymmetry", 
                    title+" fit #Lambda(E)", 
@@ -349,15 +354,18 @@ void UCNAFierzFitter::display(TString &plots_dir) {
                    title+" fit #Lambda(E)", 
                    &canvas,&legend,"Same",6,0);
     canvas.SaveAs(plots_dir+"data_fit_asymmetry.pdf");
+    */
 
     vector.super_sum.draw(
                    "vector_supersum", 
                    title+" vector Monte Carlo #Sigma(E)", 
                    &canvas,&legend,"",4,0);
+    /* TODO Uncomment when ready for fitting asymmetry
     axial.super_sum.draw(
                    "axial_supersum", 
                    title+" axial-vector Monte Carlo #Sigma(E)", 
                    &canvas,&legend,"Same",8,0);
+    */
     fierz.super_sum.draw(
                    "fierz_supersum", 
                    title+" Fierz Monte Carlo #Sigma(E)", 
@@ -736,8 +744,8 @@ int UCNAmodel::fill(TChain *chain, double flip)
     compute_super_sum();
     compute_asymmetry();
     //compute_super_diff();
-    super_sum.normalize();
-    //super_sum.Scale(1/Nsim);
+    //super_sum.normalize();
+    super_sum.Scale(1/Nsim);
     //asymmetry.Scale(1/A);
     //super_sum.Scale(1/double(Nevents));
     //super_sum.Scale(double(nSimmed)/double(Nevents));
@@ -1321,6 +1329,8 @@ double UCNAmodel::compute_asymmetry(double n[2][2]) {
 }
 
 double UCNAmodel::compute_asymmetry(double n[2][2], double e[2][2], double& A, double& sigmaA) {
+    //cout<<"Error: Called compute_asymmetry()\n";
+    //exit(1);
     double S, sigmaS;
     compute_super_sum(n,e,S,sigmaS);
     A = compute_asymmetry(n);
@@ -1337,26 +1347,21 @@ double UCNAmodel::compute_asymmetry(int bin, double& A, double& sigmaA) {
     double n[2][2], e[2][2];
     get_counts(bin,n,e);
     compute_asymmetry(n,e,A,sigmaA);
-    if (IsNaN(A) or IsNaN(sigmaA) or sigmaA < 0) {
+    if (A != 0 and (IsNaN(A) or IsNaN(sigmaA) or sigmaA < 0)) {
         double KE = asymmetry.GetBinCenter(bin);
-        cout<<"Warning: Asymmetry error in bin "<<bin<<" and KE "<<KE<<" where\n";
+        cout<<"Warning: Asymmetry error in bin "<<bin<<" and KE "<<KE<<" where\n         ";
         for (int side=0; side<2; side++) {
             for (int spin=0; spin<2; spin++) {
                 double count = n[side][spin];
-        cout<<"         n["<<side<<","<<spin<<"] = "<<count<<".\n";
+                cout<<"n["<<side<<","<<spin<<"] = "<<count<<";    ";
             }
         }
-        cout<<"         Skipping this data point.\n";
+        cout<<"\n";
+        //cout<<"\n         Skipping this data point.\n";
     }
     else {
         asymmetry.SetBinContent(bin,A);
         asymmetry.SetBinError(bin,sigmaA);
-    }
-
-    if (bin % 10 == 0) {
-        double KE = asymmetry.GetBinCenter(bin);
-        cout<<"Status: Asymmetry bin "<<bin<<" and KE "
-            <<KE<<" set to "<<A<<"("<<sigmaA<<").\n";
     }
 
     return A;

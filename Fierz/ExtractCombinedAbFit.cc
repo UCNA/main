@@ -65,8 +65,8 @@ int A_index=-1, b_index=0, N_index=1;
 static TString FIT_TYPE = "b";
 static const int nPar = 1;
 double afp_ratio = 0.40;
-TString paramNames[2] = {"b"};
-double paramInits[2] = {0, 1};
+TString paramNames[1] = {"b"};
+double paramInits[1] = {0};
 int A_index=-1, b_index=0, N_index=-1;
 #endif
 #if 0
@@ -160,8 +160,25 @@ void fit(UCNAFierzFitter &ff) {
     global_ff = &ff; /// TODO cannot be called in a member
     TMatrixD cov(nPar,nPar);
 	ff.combined_fit(cov, &asymmetry_func, /*supersum_func,*/ &combined_chi2); /// TODO no member
-	ff.compute_fit(&asymmetry_func);
+	//ff.compute_fit(&asymmetry_func);
     global_ff = 0;
+
+    double *p = asymmetry_func.GetParameters();
+    if (FIT_TYPE=="AbN") {
+        assert(nPar == 3);
+        double A=p[0], b=p[1], N=p[2];
+	    ff.compute_fit(A,b,N);
+    }
+    else if (FIT_TYPE=="bN") {
+        assert(nPar == 2);
+        double b=p[0], N=p[1];
+        ff.compute_fit(-0.12,b,N);
+    }
+    else if (FIT_TYPE=="b") {
+        assert(nPar == 1);
+        double b=p[0];
+        ff.compute_fit(-0.12,b,1/(1+b*0.584));
+    }
 
     /// Look up sizes
     double Nsim_data = ff.data.super_sum.GetEntries();
@@ -170,7 +187,7 @@ void fit(UCNAFierzFitter &ff) {
 	double Nfit_vector = ff.vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
 	double Nfit_axial = ff.axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
 	double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
-
+  
     /// Set up reasonable guesses 
     double A = -0.12;
     double b = 0;
@@ -421,14 +438,16 @@ int main(int argc, char *argv[])
         "SimAnalyzed",
         "Vector Standard Model Monte Carlo beta spectrum", afp_ratio);
 
+    /*
     ucna.axial.fill(
         mc_dir+"SimAnalyzed_Beta_9.root",
         "SimAnalyzed",
         "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio);
+    */
 
     /// Load Monte Carlo simulated Fierz events
     ucna.fierz.fill(
-        mc_dir+"SimAnalyzed_Beta_9.root",
+        mc_dir+"SimAnalyzed_Beta_fierz_9.root",
         "SimAnalyzed",
         "Fierz Monte Carlo beta spectrum", afp_ratio); // TODO this is suppressing the errors
 
@@ -441,36 +460,40 @@ int main(int argc, char *argv[])
         "SimAnalyzed",
         "Vector Standard Model Monte Carlo beta spectrum", afp_ratio);
 
+    /*
     fake.axial.fill(
         //fake_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
         mc_dir+"SimAnalyzed_Beta_7.root",
         "SimAnalyzed",
         "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio);
+    */
 
     /// Load Monte Carlo simulated Fierz events
     fake.fierz.fill(
         //fake_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
-        mc_dir+"SimAnalyzed_Beta_7.root",
+        mc_dir+"SimAnalyzed_Beta_fierz_7.root",
         "SimAnalyzed",
         "Fierz Monte Carlo beta spectrum", afp_ratio); // TODO this is suppressing the errors
 
     /// For now load real asymmetry data as fake histogram. TODO Fix.
     /// Load Monte Carlo simulated Standard Model events
     double A = -0.12;
-    double b = -0.03;
+    double b = -0.0;
     double N = 1;
-    ucna.compute_data(A,b,N);
-    ucna.data.super_sum.snapshot();
-    fake.data.super_sum.snapshot();
-    fake.data = ucna.data;
+    cout<<"Computing ucna mc data and copying to fake.\n";
+    //ucna.compute_data(A,b,N);
+    //fake.data = ucna.data;
+    ucna.compute_fit(A,b,N);
+    fake.data.super_sum = ucna.fit.super_sum;
+    cout<<"After '=' :\n";
     ucna.data.super_sum.snapshot();
     fake.data.super_sum.snapshot();
 
     ucna.vector.super_sum.snapshot();
-    ucna.axial.super_sum.snapshot();
+    // ucna.axial.super_sum.snapshot();
     ucna.fierz.super_sum.snapshot();
     fake.vector.super_sum.snapshot();
-    fake.axial.super_sum.snapshot();
+    //fake.axial.super_sum.snapshot();
     fake.fierz.super_sum.snapshot();
 
     /*
@@ -485,7 +508,11 @@ int main(int argc, char *argv[])
         "2010 final official asymmetry");
     */
 
+    fake.fit.super_sum.snapshot();
     fit(fake);
+
+    fake.fit.super_sum.snapshot();
+    fake.data.super_sum.snapshot();
     fake.display(plots_dir);
 
 	app.Run();
