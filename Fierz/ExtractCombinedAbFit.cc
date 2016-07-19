@@ -459,7 +459,7 @@ int main(int argc, char *argv[])
     /// Load Monte Carlo simulated Standard Model events
     double A = -0.12;
     double b = 0;
-    double N = 10000;
+    double N = 1;
     ucna.compute_data(A,b,N);
     fake.data = ucna.data;
     /*

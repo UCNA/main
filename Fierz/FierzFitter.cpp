@@ -732,8 +732,8 @@ int UCNAmodel::fill(TChain *chain, double flip)
     compute_super_sum();
     compute_asymmetry();
     //compute_super_diff();
-    //super_sum.normalize();
-    super_sum.Scale(1/Nsim);
+    super_sum.normalize();
+    //super_sum.Scale(1/Nsim);
     //asymmetry.Scale(1/A);
     //super_sum.Scale(1/double(Nevents));
     //super_sum.Scale(double(nSimmed)/double(Nevents));

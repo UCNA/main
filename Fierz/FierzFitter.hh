@@ -197,8 +197,8 @@ struct UCNAmodel {
         super_ratio(other.super_ratio),
         super_sum(other.super_sum),
         asymmetry(other.asymmetry) */
-        name = other.name;
-        title = other.title;
+        //name = other.name;
+        //title = other.title;
         bins = other.bins;
         min = other.min;
         max = other.max;
