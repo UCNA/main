@@ -113,7 +113,7 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
     }
     else if (FIT_TYPE=="b") {
         double b=p[0];
-        chi2 = global_ff->supersum_chi2(b,1/(1+b*0.584));
+        chi2 = global_ff->supersum_chi2(b,1/(1+b*x_1));
     }
 }
 
