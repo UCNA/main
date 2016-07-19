@@ -117,7 +117,6 @@ void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p,
     }
 }
 
-
 int cl = 14;
 void output_matrix(TString title, TMatrixD matrix, TString colNames[], TString rowNames[])
 {
@@ -177,7 +176,7 @@ void fit(UCNAFierzFitter &ff) {
     else if (FIT_TYPE=="b") {
         assert(nPar == 1);
         double b=p[0];
-        ff.compute_fit(-0.12,b,1/(1+b*0.584));
+        ff.compute_fit(-0.12,b,1/(1+b*x_1));
     }
 
     /// Look up sizes
@@ -478,13 +477,13 @@ int main(int argc, char *argv[])
     /// For now load real asymmetry data as fake histogram. TODO Fix.
     /// Load Monte Carlo simulated Standard Model events
     double A = -0.12;
-    double b = -0.0;
+    double b = -0.1;
     double N = 1;
     cout<<"Computing ucna mc data and copying to fake.\n";
     //ucna.compute_data(A,b,N);
     //fake.data = ucna.data;
     ucna.compute_fit(A,b,N);
-    fake.data.super_sum = ucna.fit.super_sum;
+    fake.data = ucna.fit;
     cout<<"After '=' :\n";
     ucna.data.super_sum.snapshot();
     fake.data.super_sum.snapshot();
