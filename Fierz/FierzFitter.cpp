@@ -204,6 +204,7 @@ double UCNAhistogram::chi2(const UCNAhistogram &fit) {
 
 
 double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
+    cout<<"Error: called function asymmetry_chi2("<<A<<","<<b<<")\n";
     compute_asymmetry_fit(A,b);
     return data.asymmetry.chi2(fit.asymmetry);
     /*
@@ -275,7 +276,8 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
 
 double UCNAFierzFitter::combined_chi2(double A, double b, double N)
 {
-	double chi2 = asymmetry_chi2(A,b) + supersum_chi2(b,N);
+	double chi2 = //asymmetry_chi2(A,b) + 
+    supersum_chi2(b,N);
     return chi2;
 }
 
@@ -288,13 +290,13 @@ void UCNAFierzFitter::compute_fit(/*MatrixD &cov,*/ TF1 *func) {
 
 void UCNAFierzFitter::compute_fit(double A, double b, double N)
 {
-     compute_asymmetry_fit(A,b);
+     //compute_asymmetry_fit(A,b);
      compute_supersum_fit(b,N);
 }
 
 void UCNAFierzFitter::compute_data(double A, double b, double N)
 {
-     compute_asymmetry_fit(A,b);
+     //compute_asymmetry_fit(A,b);
      compute_supersum_fit(b,N);
      data = fit;
 }
@@ -407,6 +409,8 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
 
  void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
 {
+    cout<<"Function compute_asymmetry_fit.\n";
+    exit(0);
     int n = fit.asymmetry.GetNbinsX();
     int deltaA = axial.asymmetry.FindBin(fit_min) - 1;
     int deltaV = vector.asymmetry.FindBin(fit_min) - 1;
@@ -441,7 +445,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
         double ef = A*pF/pA*Sqrt(eA*eA + eV*eV + b*b*eF*eF)/ex_cos;
         fit.asymmetry.SetBinError(bin,ef);
 
-        cout<<"Asymmetry fit: bin: "<<bin<<"\tKE: "<<KE<<"\tA: "<<f<<"("<<ef<<")\n";
+        //cout<<"Asymmetry fit: bin: "<<bin<<"\tKE: "<<KE<<"\tA: "<<f<<"("<<ef<<")\n";
 	}
 }
 
