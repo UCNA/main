@@ -1223,10 +1223,12 @@ double UCNAmodel::compute_super_sum(int bin, double& S, double& sigmaS) {
     super_sum.SetBinContent(bin,S);
     super_sum.SetBinError(bin,sigmaS);
 
+    /*
     if (bin % 10 == 0) {
         double KE = super_sum.GetBinCenter(bin);
         cout<<"Status: Super sum bin "<<bin<<" and KE "<<KE<<" to "<<S<<"("<<sigmaS<<").\n";
     }
+    */
 
     return S;
 }
@@ -1237,11 +1239,15 @@ void UCNAhistogram::snapshot(int every)
     double max = GetXaxis()->GetXmax();
     int bin_min = FindBin(min);
     int bin_max = FindBin(max);
+    TString name = GetName();
+    TString title = GetTitle();
+    cout<<" HISTOGRAM SNAPSHOT:\n"
+        <<"    Name: "<<name<<"   Title: "<<title<<"\n";
     for (int bin = bin_min; bin < bin_max; bin += every) {
         double KE = GetBinCenter(bin);
-        double S = GetBinContent(bin);
-        double sigmaS = GetBinError(bin);
-        cout<<"Status: Super sum bin "<<bin<<" and KE "<<KE<<" to "<<S<<"("<<sigmaS<<").\n";
+        double H = GetBinContent(bin);
+        double sigmaH = GetBinError(bin);
+        cout<<"     bin: "<<bin<<" KE: "<<KE<<" is "<<H<<"("<<sigmaH<<").\n";
     }
 }
 

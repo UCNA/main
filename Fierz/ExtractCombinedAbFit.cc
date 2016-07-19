@@ -389,7 +389,6 @@ int main(int argc, char *argv[])
         */
 
     /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
-
 /*
     /// Load the files that already contain data asymmetry histogram.
     ucna.data.asymmetry.fill(
@@ -461,7 +460,19 @@ int main(int argc, char *argv[])
     double b = -0.03;
     double N = 1;
     ucna.compute_data(A,b,N);
+    ucna.data.snapshot();
+    fake.data.snapshot();
     fake.data = ucna.data;
+    ucna.data.snapshot();
+    fake.data.snapshot();
+
+    ucna.vector.snapshot();
+    ucna.axial.snapshot();
+    ucna.fierz.snapshot();
+    fake.vector.snapshot();
+    fake.axial.snapshot();
+    fake.fierz.snapshot();
+
     /*
     fake.data.fill(
         mc_dir+"SimAnalyzed_Beta_9.root",
