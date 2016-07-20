@@ -1,6 +1,64 @@
 #include "FierzFitter.hh"
 
 
+UCNAmodel & UCNAmodel::operator=(const UCNAmodel & other)
+{
+    /** TODO check that if name and title are already assigned, to NOT copy them
+    name(other.name), title(other.title),
+    bins(other.bins), min(other.min), max(other.max),
+    rand(0)
+    super_ratio(other.super_ratio),
+    super_sum(other.super_sum),
+    asymmetry(other.asymmetry) */
+    if (name == "")
+        name = other.name + "_copy";
+    if (title == "")
+        title = other.title + " Copy";
+    if (min > other.min)
+        min = other.min;
+    if (max < other.max)
+        max = other.max;
+    // TODO check if bins are bigger
+        bins = other.bins;
+    super_ratio = other.super_ratio;
+    super_ratio.SetName(name+"_super_ratio");
+    super_ratio.SetTitle(title+" Super Ratio");
+
+    super_sum = other.super_sum;
+    super_sum.SetName(name+"_super_sum");
+    super_sum.SetTitle(title+" Super Sum");
+
+    asymmetry = other.asymmetry;
+    asymmetry.SetName(name+"_asymmetry");
+    asymmetry.SetTitle(title+" Asymmetry");
+
+    for (int side = 0; side < 2; side++) {
+        TString sub_name = name;    /// keep name the same
+        TString sub_title = title;  /// keep title the same
+        if (not side) {
+            sub_name += "_E";
+            sub_title += " East";
+        } else {
+            sub_name += "_W";
+            sub_title += " West";
+        }
+        for (int spin = 0; spin < 2; spin++) {
+            if (not spin) {
+                sub_name += "_off";
+                sub_title += " AFP Off";
+            } else {
+                sub_name += "_on";
+                sub_title += " AFP On";
+            }
+            *counts[side][spin] = *other.counts[side][spin];
+            counts[side][spin]->SetName(sub_name);
+            counts[side][spin]->SetTitle(sub_title);
+        }
+    }
+    ntuple = other.ntuple;
+    return *this;
+}
+
 bool UCNAhistogram::test_compatable(UCNAhistogram & other)
 {
     int error = 0;
@@ -302,7 +360,6 @@ void UCNAFierzFitter::compute_data(double A, double b, double N) {
 }
 
 
-// TODO TODO TODO make this able to compute fake data!!!
 void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 {
     assert(N > 0);
@@ -310,8 +367,11 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
     // TODO add axial supersum?
     int deltaV = vector.super_sum.FindBin(fit_min) - 1;
     int deltaF = fierz.super_sum.FindBin(fit_min) - 1;
+    double exV = vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    double exF = fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
     //double e_x = evaluate_expected_fierz(fit_min,fit_max); // not in the right range
     //double m_E = evaluate_expected_fierz(0,Q); // not in the right range
+    double norm = exV + b*x_1*exF;
 	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.super_sum.GetBinCenter(bin);
@@ -323,13 +383,13 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
         assert(pV >= 0);
         double pF = fierz.super_sum.GetBinContent(bin + deltaF);
         assert(pF >= 0);
-        double f  = N*(pV + b*x_1*pF);
+        double f  = N*(pV + b*x_1*pF)/norm;
         assert(f >= 0);
         fit.super_sum.SetBinContent(bin,f);
 
         double eV = vector.super_sum.GetBinError(bin + deltaV);
         double eF = fierz.super_sum.GetBinError(bin + deltaF);
-        double ef = N*Sqrt(eV*eV + b*b*x_1*x_1*eF*eF);
+        double ef = N*Sqrt(eV*eV + b*b*x_1*x_1*eF*eF)/norm;
         fit.super_sum.SetBinError(bin,ef);
 
         //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";

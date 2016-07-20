@@ -189,59 +189,7 @@ struct UCNAmodel {
         */
     }
 
-    UCNAmodel & operator=(const UCNAmodel & other)
-    {
-        /** TODO check that if name and title are already assigned, to NOT copy them
-        name(other.name), title(other.title),
-        bins(other.bins), min(other.min), max(other.max),
-        rand(0)
-        super_ratio(other.super_ratio),
-        super_sum(other.super_sum),
-        asymmetry(other.asymmetry) */
-        if (name == "")
-            name = other.name;
-        if (title == "")
-            title = other.title;
-        bins = other.bins;
-        if (min > other.min)
-            min = other.min;
-        if (max < other.max)
-            max = other.max;
-        super_ratio = other.super_ratio;
-        super_sum = other.super_sum;
-        asymmetry = other.asymmetry;
-        super_ratio.SetName(name+"_super_ratio");
-        super_ratio.SetTitle(title+" Super Ratio");
-        super_sum.SetName(name+"_super_sum");
-        super_ratio.SetTitle(title+" Super Sum");
-        asymmetry.SetName(name+"_asymmetry");
-        super_ratio.SetTitle(title+" Asymmetry");
-        for (int side = 0; side < 2; side++) {
-            TString sub_name = name;    /// keep name the same
-            TString sub_title = title;  /// keep title the same
-            if (not side) {
-                sub_name += "_E";
-                sub_title += " East";
-            } else {
-                sub_name += "_W";
-                sub_title += " West";
-            }
-            for (int spin = 0; spin < 2; spin++) {
-                if (not spin) {
-                    sub_name += "_off";
-                    sub_title += " AFP Off";
-                } else {
-                    sub_name += "_on";
-                    sub_title += " AFP On";
-                }
-                *counts[side][spin] = *other.counts[side][spin];
-                counts[side][spin]->SetName(sub_name);
-                counts[side][spin]->SetTitle(sub_title);
-            }
-        }
-        ntuple = other.ntuple;
-        return *this;
-    }
+    UCNAmodel & operator=(const UCNAmodel & other);
 
     double asymmetry_chi2(double A, double b);
     //int fill(TString filename, TString name, TString title);
