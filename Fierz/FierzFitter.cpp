@@ -676,8 +676,9 @@ int UCNAmodel::fill(TString pattern, int first, int last,
     int added = 0;
     for (int i = first; i <= last; i++) {
         TString filename(pattern);
-        filename.ReplaceAll("*",TString(i));
-        cout<<"Loading filename "<<filename<<" from pattern "<<pattern<<"./n";
+        TString number; number.Form("%d",i); 
+        filename.ReplaceAll("*",number);
+        cout<<"Loading filename "<<filename<<" from pattern "<<pattern<<".\n";
         TFile* tfile = new TFile(filename);
         if (tfile->IsZombie()) {
             cout<<"Error: Problem filling "<<title<<":\n";
