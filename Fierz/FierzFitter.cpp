@@ -387,9 +387,9 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
         assert(f >= 0);
         fit.super_sum.SetBinContent(bin,f);
 
-        double eV = vector.super_sum.GetBinError(bin + deltaV);
-        double eF = fierz.super_sum.GetBinError(bin + deltaF);
-        double ef = N*Sqrt(eV*eV + b*b*x_1*x_1*eF*eF)/norm;
+        double eV = vector.super_sum.GetBinError(bin + deltaV)/norm;
+        double eF = fierz.super_sum.GetBinError(bin + deltaF)/norm;
+        double ef = N*Sqrt(eV*eV + b*b*x_1*x_1*eF*eF);
         fit.super_sum.SetBinError(bin,ef);
 
         //cout<<"Super sum fit bin: "<<bin<<"\tKE: "<<KE<<"\tSS: "<<f<<"("<<ef<<")\n";
@@ -669,9 +669,44 @@ int UCNAmodel::fill(TString filename, TString name, TString title) {
  */
 
 
+int UCNAmodel::fill(TString filename, int first, int last, TString name, TString title, double flip)
+{
+    TChain *chains = 0;
+    int added = 0;
+    for (int i = first; i <= last; i++) {
+        TFile* tfile = new TFile(filename);
+        if (tfile->IsZombie()) {
+            cout<<"Error: Problem filling "<<title<<":\n";
+            cout<<"       File "<<filename<<" not found\n";
+            cout<<"Aborting...\n";
+            exit(1);
+        }
+        TChain *chain = (TChain*)tfile->Get(name);
+        if (not chain) {
+            cout<<"Error: In file "<<filename<<":\n";
+            cout<<"       Cannot get "<<title<<":\n";
+            cout<<"       Cannot find chain or tree named "<<name<<".\n";
+            cout<<"Skipping...\n";
+        }
+        else {
+            chains->Add(chain);
+            added++;
+        }
+    }
+    if (added > 0)
+        return fill(chain, flip);
+    else
+    {
+		cout<<"Error: In file pattern "<<filename<<":\n";
+		cout<<"       Cannot get "<<title<<":\n";
+		cout<<"       Cannot find any chain or tree named "<<name<<" in all files.\n";
+        cout<<"Aborting...\n";
+        exit(1);
+    }
+}
+
+
 int UCNAmodel::fill(TString filename, TString name, TString title, double flip)
-    //double flip, double A, double b)
-    //double flip = 0.68/1.68, double A = -0.12, double b = 0)
 {
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
