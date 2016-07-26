@@ -686,16 +686,18 @@ int UCNAmodel::fill(TString pattern, int first, int last,
             cout<<"Aborting...\n";
             exit(1);
         }
-        TChain *chain = (TChain*)tfile->Get(name);
-        if (not chain) {
+        TChain *chain;
+        if (not chains)
+            chains = (TChain*)tfile->Get(name);
+        if (chain and chains) {
+            chains->Add(chain);
+            added++;
+        }
+        else {
             cout<<"Error: In file "<<filename<<":\n";
             cout<<"       Cannot get "<<title<<":\n";
             cout<<"       Cannot find chain or tree named "<<name<<".\n";
             cout<<"Skipping...\n";
-        }
-        else {
-            chains->Add(chain);
-            added++;
         }
     }
     if (added > 0 and chains)
