@@ -435,7 +435,7 @@ int main(int argc, char *argv[])
     */
 
     ucna.vector.fill(
-        mc_dir+"SimAnalyzed_Beta_9.root",
+        mc_dir+"SimAnalyzed_Beta_*.root", 7, 9,
         "SimAnalyzed",
         "Vector Standard Model Monte Carlo beta spectrum", afp_ratio);
 

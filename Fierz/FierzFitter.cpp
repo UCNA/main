@@ -665,16 +665,19 @@ void UCNAmodel::save(TString filename)
  * and they get Tchained together.
 int UCNAmodel::fill(TString filename, TString name, TString title) {
     return fill(filename, name, title, 0.68/1.68, -0.12, 0.0);
-}
- */
+} */
 
 
-int UCNAmodel::fill(TString filename, int first, int last, 
+
+int UCNAmodel::fill(TString pattern, int first, int last, 
                     TString name, TString title, double flip)
 {
     TChain *chains = 0;
     int added = 0;
     for (int i = first; i <= last; i++) {
+        TString filename(pattern);
+        filename.ReplaceAll("*",TString(i));
+        cout<<"Loading filename "<<filename<<" from pattern "<<pattern<<"./n";
         TFile* tfile = new TFile(filename);
         if (tfile->IsZombie()) {
             cout<<"Error: Problem filling "<<title<<":\n";
@@ -698,7 +701,7 @@ int UCNAmodel::fill(TString filename, int first, int last,
         return fill(chains, flip);
     else
     {
-		cout<<"Error: In file pattern "<<filename<<":\n";
+		cout<<"Error: In file pattern "<<pattern<<":\n";
 		cout<<"       Cannot get "<<title<<":\n";
 		cout<<"       Cannot find any chain or tree named "<<name<<" in all files.\n";
         cout<<"Aborting...\n";
