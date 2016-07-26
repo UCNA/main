@@ -669,7 +669,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title) {
  */
 
 
-int UCNAmodel::fill(TString filename, int first, int last, TString name, TString title, double flip)
+int UCNAmodel::fill(TString filename, int first, int last, 
+                    TString name, TString title, double flip)
 {
     TChain *chains = 0;
     int added = 0;
@@ -693,8 +694,8 @@ int UCNAmodel::fill(TString filename, int first, int last, TString name, TString
             added++;
         }
     }
-    if (added > 0)
-        return fill(chain, flip);
+    if (added > 0 and chains)
+        return fill(chains, flip);
     else
     {
 		cout<<"Error: In file pattern "<<filename<<":\n";
