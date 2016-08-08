@@ -683,27 +683,20 @@ int UCNAmodel::fill(TString pattern, int first, int last,
         if (tfile->IsZombie()) {
             cout<<"Error: Problem filling "<<title<<":\n";
             cout<<"       File "<<filename<<" not found\n";
-            cout<<"Aborting...\n";
-            exit(1);
+            break;
         }
-        TChain *chain;
-        if (not chains)
-            chains = (TChain*)tfile->Get(name);
-        if (chain and chains) {
-            chains->Add(chain);
-            added++;
+        if (not chains) {
+            assert(added==0);
+            chains = new TChain(name, title);
         }
-        else {
-            cout<<"Error: In file "<<filename<<":\n";
-            cout<<"       Cannot get "<<title<<":\n";
-            cout<<"       Cannot find chain or tree named "<<name<<".\n";
-            cout<<"Skipping...\n";
-        }
+        chains->Add(filename);
+        added++;
     }
-    if (added > 0 and chains)
+    if (added > 0 and chains) {
+       // TChain *chain = (TChain*)chains->Get(name);
         return fill(chains, flip);
-    else
-    {
+    }
+    else {
 		cout<<"Error: In file pattern "<<pattern<<":\n";
 		cout<<"       Cannot get "<<title<<":\n";
 		cout<<"       Cannot find any chain or tree named "<<name<<" in all files.\n";
@@ -798,7 +791,6 @@ int UCNAmodel::fill(TChain *chain, double flip)
         /*
         if (b > 0.5) {
             double d = 1 + b*x;
-            double beta = Sqrt(1 - x*x);
             if (afp < 0 ) {
                 //Noff++;
                 if (axial > (1 + A*beta*cos/d))
