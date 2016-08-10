@@ -727,13 +727,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title, double flip)
         return fill(chain, flip);
 }
 
-
-int UCNAmodel::fill(TChain *chain, double flip)
+int UCNAmodel::SetAllBranches(TChain *chain)
 {
-    if (not chain) {
-		cout<<"Error: Null TChain pointer.\n";
-    }
-	double Nevents = chain->GetEntries();
 	chain->SetBranchStatus("*",false);
 	chain->SetBranchStatus("PID",true);
 	chain->SetBranchStatus("side",true);
@@ -742,6 +737,15 @@ int UCNAmodel::fill(TChain *chain, double flip)
 	chain->SetBranchStatus("primMomentum",true);
     chain->SetBranchStatus("ScintPosAdjusted",true);
     chain->SetBranchStatus("ScintPosAdjusted",true);
+}
+
+int UCNAmodel::fill(TChain *chain, double flip)
+{
+    if (not chain) {
+		cout<<"Error: Null TChain pointer.\n";
+    }
+	double Nevents = chain->GetEntries();
+    SetAllBranches(chain);
 
 	//TNtuple* tntuple = new TNtuple("mc_ntuple", "MC NTuple", "s:load:energy"); */
 	TNtuple* tntuple = 0;
