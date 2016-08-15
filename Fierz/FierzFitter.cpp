@@ -715,7 +715,9 @@ int UCNAmodel::fill(TString filename, TString name, TString title, double flip)
         cout<<"Aborting...\n";
 		exit(1);
 	}
-    TChain *chain = (TChain*)tfile->Get(name);
+    TChain *chain = new TChain(name, title);
+    chain->Add(filename);
+    //TChain *chain = (TChain*)tfile->Get(name);
     if (not chain) {
 		cout<<"Error: In file "<<filename<<":\n";
 		cout<<"       Cannot get "<<title<<":\n";
@@ -723,8 +725,17 @@ int UCNAmodel::fill(TString filename, TString name, TString title, double flip)
         cout<<"Aborting...\n";
         exit(1);
     }
-    else
-        return fill(chain, flip);
+    else {
+        SetAllBranches(chain);
+        int Nsim = fill(chain, flip);
+        if (Nsim <= 0) {
+            cout<<"Error: No events were filled.\n";
+            cout<<"Aborting...\n";
+            exit(1);
+        }
+        else
+            return Nsim;
+    }
 }
 
 int UCNAmodel::SetAllBranches(TChain *chain)
@@ -843,7 +854,8 @@ int UCNAmodel::fill(TChain *chain, double flip)
     //compute_asymmetry();
     //compute_super_diff();
     //super_sum.normalize();
-    super_sum.Scale(1/double(Nsim));
+    if (Nsim > 0)
+        super_sum.Scale(1/double(Nsim));
     //asymmetry.Scale(1/A);
     //super_sum.Scale(1/double(Nevents));
     //super_sum.Scale(double(nSimmed)/double(Nevents));

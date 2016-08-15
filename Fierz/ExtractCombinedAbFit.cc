@@ -384,7 +384,7 @@ int main(int argc, char *argv[])
 	TApplication app("Extract Combined A+b Fitter", &argc, argv);
 	srand( time(NULL) );    /// set this to make random or repeatable
 
-    UCNAFierzFitter ucna("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+    UCNAFierzFitter ucna("monte_carlo", "Monte Carlo UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
     UCNAFierzFitter fake("fake", "Fake UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 
     /// LOAD 2010 UCNA DATA
@@ -435,8 +435,10 @@ int main(int argc, char *argv[])
     */
 
     ucna.vector.fill(
-        mc_dir+"SimAnalyzed_Beta_*.root", 7, 8,
-        //mc_dir+"SimAnalyzed_Beta_7.root", 
+        //mc_dir+"SimAnalyzed_Beta_*.root", 10, 11,
+        //mc_dir+"SimAnalyzed_Beta_10.root", 10, 11,
+        //mc_dir+"SimAnalyzed_Beta_*.root",
+        mc_dir+"SimAnalyzed_Beta_10.root",
         "SimAnalyzed",
         "Vector Standard Model Monte Carlo beta spectrum", afp_ratio);
 
