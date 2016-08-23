@@ -86,7 +86,8 @@ TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta/";
 TString mc_syst_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_both_twiddled/";
 
 /// path to save output plots
-TString plots_dir = "/home/hickerson/Dropbox/Root/";
+//TString plots_dir = "~/Dropbox/Root/";
+TString plots_dir = "~/Desktop/";
 
 /// path to save output root structures 
 TString root_output_dir = "/home/hickerson/Documents/";
@@ -435,10 +436,9 @@ int main(int argc, char *argv[])
     */
 
     ucna.vector.fill(
-        //mc_dir+"SimAnalyzed_Beta_*.root", 10, 11,
-        //mc_dir+"SimAnalyzed_Beta_10.root", 10, 11,
+        mc_dir+"SimAnalyzed_Beta_*.root", 10, 11,
         //mc_dir+"SimAnalyzed_Beta_*.root",
-        mc_dir+"SimAnalyzed_Beta_10.root",
+        //mc_dir+"SimAnalyzed_Beta_10.root",
         "SimAnalyzed",
         "Vector Standard Model Monte Carlo beta spectrum", afp_ratio);
 
@@ -512,7 +512,7 @@ int main(int argc, char *argv[])
         "2010 final official asymmetry");
     */
 
-    fake.fit.super_sum.snapshot();
+    //fake.fit.super_sum.snapshot();
     fit(fake);
 
     fake.fit.super_sum.snapshot();

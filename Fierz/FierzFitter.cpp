@@ -194,7 +194,8 @@ TF1* UCNAFierzFitter::combined_fit(
 	}
 
     /// find degrees of freedom in fit
-	int ndf = fit.asymmetry.GetNbinsX() + fit.super_sum.GetNbinsX() - nvpar;
+	//int ndf = fit.asymmetry.GetNbinsX() + fit.super_sum.GetNbinsX() - nvpar;
+	int ndf = fit.super_sum.GetNbinsX() - nvpar;
 	func->SetNDF(ndf);
     
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
