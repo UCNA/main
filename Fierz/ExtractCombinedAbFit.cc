@@ -405,10 +405,10 @@ int main(int argc, char *argv[])
             else
                 cout<<"Error: found no events in "<<title<<".\n";
         }
-        */
+    */
 
     /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
-/*
+    /*
     /// Load the files that already contain data asymmetry histogram.
     ucna.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
@@ -435,25 +435,32 @@ int main(int argc, char *argv[])
     //display(ucna);
     */
 
+    TString vector_filename = mc_dir+"SimAnalyzed_Beta_12.root";
+    TString fierz_filename = mc_dir+"SimAnalyzed_Beta_fierz_12.root";
+    //TString axial_file = mc_dir+"SimAnalyzed_Beta_Axial_12.root";
+    if (argc == 3) {
+        vector_filename = argv[1];
+        fierz_filename = argv[2];
+    }
+
     ucna.vector.fill(
-        mc_dir+"SimAnalyzed_Beta_*.root", 10, 11,
-        //mc_dir+"SimAnalyzed_Beta_*.root",
-        //mc_dir+"SimAnalyzed_Beta_10.root",
+        //mc_dir+"SimAnalyzed_Beta_*.root", 10, 11,
+        vector_filename,
         "SimAnalyzed",
-        "Vector Standard Model Monte Carlo beta spectrum", afp_ratio);
+        "Standard Model Monte Carlo beta vector current", afp_ratio);
 
     /*
     ucna.axial.fill(
         mc_dir+"SimAnalyzed_Beta_9.root",
         "SimAnalyzed",
-        "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio);
+        "Standard Model Monte Carlo beta axial-vector current", afp_ratio);
     */
 
     /// Load Monte Carlo simulated Fierz events
     ucna.fierz.fill(
-        mc_dir+"SimAnalyzed_Beta_fierz_9.root",
+        fierz_filename,
         "SimAnalyzed",
-        "Fierz Monte Carlo beta spectrum", afp_ratio); // TODO this is suppressing the errors
+        "Fierz Monte Carlo spectrum", afp_ratio); // TODO this is suppressing the errors
 
     /// LOAD FAKE DATA FROM MONTE CARLO
     /// Load Monte Carlo simulated Standard Model events
@@ -482,7 +489,7 @@ int main(int argc, char *argv[])
     /// For now load real asymmetry data as fake histogram. TODO Fix.
     /// Load Monte Carlo simulated Standard Model events
     double A = -0.12;
-    double b = 0.0;
+    double b = 0.00;
     double N = 1;
     cout<<"Computing ucna mc data and copying to fake.\n";
     //ucna.compute_data(A,b,N);
