@@ -38,7 +38,7 @@ double infity = std::numeric_limits<double>::infinity();
 /// cuts and settings
 double KEmin = 0;                 /// min kinetic energy for plots
 double KEmax = 800;               /// max kinetic range for plots
-int KEbins=(KEmax-KEmin)/10;      /// number of bins to use fit spectral plots
+int    KEbins=(KEmax-KEmin)/10;   /// number of bins to use fit spectral plots
 double fit_min = 120;             /// min kinetic energy for plots
 double fit_max = 630;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
@@ -86,8 +86,7 @@ TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta/";
 TString mc_sys_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_both_twiddled/";
 
 /// path to save output plots
-//TString plots_dir = "~/Dropbox/Root/";
-TString plots_dir = "~/Desktop/";
+TString plots_dir = "/home/hickerson/Dropbox/Root/";
 
 /// path to save output root structures 
 TString root_output_dir = "/home/hickerson/Documents/";
@@ -446,17 +445,23 @@ int main(int argc, char *argv[])
     TString ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_12.root";
     TString ucna_fierz_filename = mc_dir+"SimAnalyzed_Beta_fierz_12.root";
     //TString ucna_axial_filename = mc_dir+"SimAnalyzed_Beta_Axial_12.root";
-    TString fake_vector_filename = mc_dir+"SimAnalyzed_Beta_13.root";
-    TString fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_fierz_13.root";
+    TString fake_vector_filename = mc_dir+"SimAnalyzed_Beta_14.root";
+    TString fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_fierz_14.root";
     //TString fake_axial_filename = mc_dir+"SimAnalyzed_Beta_Axial_13.root";
+    TString plot_filebase = plots_dir;
     if (nPar == 1) {
-        if (argc >= 3) {
-            ucna_vector_filename = mc_dir+argv[1];
-            ucna_fierz_filename = mc_dir+argv[2];
+        if (argc == 5) {
+            ucna_vector_filename = mc_dir+argv[1]+".root";
+            ucna_fierz_filename = mc_dir+argv[2]+".root";
+            fake_vector_filename = mc_dir+argv[3]+".root";
+            fake_fierz_filename = mc_dir+argv[4]+".root";
         }
-        if (argc >= 5) {
-            fake_vector_filename = mc_dir+argv[3];
-            fake_fierz_filename = mc_dir+argv[4];
+        if (argc == 3) {
+            ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[1]+".root";
+            ucna_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[1]+".root";
+            fake_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[2]+".root";
+            fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[2]+".root";
+            plot_filebase = plots_dir+"SimAnalyzed_"+argv[2]+"_";
         }
     }
 
@@ -488,21 +493,27 @@ int main(int argc, char *argv[])
         "SimAnalyzed",
         "Standard Model vector current", afp_ratio);
 
-    /*
     /// Load Monte Carlo simulated Standard Model axial-vector current as fake events
-    fake.axial.fill(
-        //fake_dir+"SimAnalyzed_2010_Beta_paramSet_100_0.root",
-        mc_dir+"SimAnalyzed_Beta_7.root",
+    /* fake.axial.fill(
+        fake_axial_filename,
         "SimAnalyzed",
-        "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio);
-    */
+        "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio); */
 
     /// Load Monte Carlo simulated Fierz as fake events
     fake.fierz.fill(
-        //fake_dir+"SimAnalyzed_2010_Beta_fierz_paramSet_100_0.root",
         fake_fierz_filename,
         "SimAnalyzed",
         "Fierz current", afp_ratio); // TODO this is suppressing the errors
+
+    /* fake.data.fill(
+        mc_dir+"SimAnalyzed_Beta_9.root",
+        "SimAnalyzed",
+        "Monte Carlo Standard Model beta spectrum", afp_ratio, A, b);
+
+    fake.data.asymmetry.fill(
+        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
+        "hAsym_Corrected_C",
+        "2010 final official asymmetry"); */
 
     /// Pick fake values of asymmetry and Fierz terms
     double A = -0.12;
@@ -511,63 +522,62 @@ int main(int argc, char *argv[])
 
     /// generate fake signal curve from different simulated spectra
     fake.compute_fit(A,b,N);
-
-    cout<<"Computing ucna mc data and copying to fake.\n";
-    //ucna.compute_fit(A,b,N);
-    //fake.data = ucna.fit;
     ucna.data = fake.fit;
-    cout<<"After '=' :\n";
     ucna.data.super_sum.snapshot();
-    fake.data.super_sum.snapshot();
 
     ucna.vector.super_sum.snapshot();
-    // ucna.axial.super_sum.snapshot();
+    //ucna.axial.super_sum.snapshot();
     ucna.fierz.super_sum.snapshot();
+
     fake.vector.super_sum.snapshot();
     //fake.axial.super_sum.snapshot();
     fake.fierz.super_sum.snapshot();
 
-    /*
-    fake.data.fill(
-        mc_dir+"SimAnalyzed_Beta_9.root",
-        "SimAnalyzed",
-        "Monte Carlo Standard Model beta spectrum", afp_ratio, A, b);
-
-    fake.data.asymmetry.fill(
-        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
-        "hAsym_Corrected_C",
-        "2010 final official asymmetry");
-    */
-
-    //fake.fit.super_sum.snapshot();
     TF1* fit_func = fit(ucna);
     if (not fit_func) {
-        cout<<" Error: No fitting fucntion returned.\n";
+        cout<<" Error: No fitting function returned.\n";
         exit(1);
     }
 
     ucna.data.super_sum.snapshot();
     ucna.fit.super_sum.snapshot();
-    ucna.display(plots_dir);
+    ucna.display(plot_filebase);
 
-	/// extract results from Minuit
+	/// extract most critical results from fit functions and report
+    ofstream rofs;
+    rofs.open(plots_dir+"report.dat", std::fstream::app | std::fstream::out);
+    //rofs.open(plots_dir+"report.dat");
     cout << " FINAL REPORT\n";
+	cout<<setw(cl)<<"chi^2"<<setw(cl)<<"ndf"<<setw(cl)<<"chi^2/ndf"<<setw(cl)<<"p(chi2,ndf)";
 	for (int i=0; i<nPar; ++i) {  
         TString par_name = fit_func->GetParName(i);
-        cout<<par_name<<"\t"<<par_name<<" err.\t";
+        cout<<setw(cl)<<par_name
+            <<setw(cl-5)<<par_name<<" err."
+            <<setw(cl-3)<<par_name<<" ex"
+            <<setw(cl-8)<<par_name<<" ex err.";
 	}
-	cout<<"chi^2\tndf\tchi^2/ndf\n";
+    cout<<"\n";
+
+	double chi2 = fit_func->GetChisquare(); /// Get the chi squared for this fit
+	double ndf = fit_func->GetNDF();        /// Get the degrees of freedom in fit
+    double prob = Prob(chi2,ndf);           /// Get the probability of this chi2 with this ndf
+    
+	cout<<setw(cl)<<chi2<<setw(cl)<<ndf
+        <<setw(cl)<<chi2/ndf<<setw(cl)<<prob;
+	rofs<<setw(cl)<<chi2<<setw(cl)<<ndf
+        <<setw(cl)<<chi2/ndf<<setw(cl)<<prob;
 
 	for (int i=0; i<nPar; ++i) {  
         double param = fit_func->GetParameter(i);
         double error = fit_func->GetParError(i);
-        cout<<param<<"\t"<<error<<"\t";
+        cout<<setw(cl)<<param<<setw(cl)<<error
+            <<setw(cl)<<param*prob<<setw(cl)<<error*prob;
+        rofs<<setw(cl)<<param<<setw(cl)<<error
+            <<setw(cl)<<param*prob<<setw(cl)<<error*prob;
 	}
-
-	double chi2 = fit_func->GetChisquare(); /// Get the chi squared for this fit
-	double ndf = fit_func->GetNDF();        /// Get the degrees of freedom in fit
-    
-	cout<<chi2<<"\t"<<ndf<<"\t"<<chi2/ndf<<"\n";
+    cout<<"\n";
+    rofs<<"\n";
+    rofs.close();
 
 	//app.Run();
 	return 0;

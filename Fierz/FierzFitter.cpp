@@ -399,7 +399,7 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 
 
 /// DISPLAYING AND OUTPUTTING
-void UCNAFierzFitter::display(TString &plots_dir) {
+void UCNAFierzFitter::display(TString &plots_base) {
     TCanvas canvas("fierz_fitter_canvas",
                    "Combined Fierz component of energy spectrum");
     TLegend legend(0.55,0.65,0.85,0.85);
@@ -409,13 +409,12 @@ void UCNAFierzFitter::display(TString &plots_dir) {
                    "data_asymmetry", 
                    title+" fit #Lambda(E)", 
                    &canvas,&legend,"",1,0);
-    canvas.SaveAs(plots_dir+"data_asymmetry.pdf");
+    canvas.SaveAs(plots_base+"data_asymmetry.pdf");
     fit.asymmetry.draw(
                    "fit_asymmetry", 
                    title+" fit #Lambda(E)", 
                    &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"data_fit_asymmetry.pdf");
-    */
+    canvas.SaveAs(plots_base+"data_fit_asymmetry.pdf"); */
 
     vector.super_sum.draw(
                    "vector_supersum", 
@@ -425,32 +424,29 @@ void UCNAFierzFitter::display(TString &plots_dir) {
     axial.super_sum.draw(
                    "axial_supersum", 
                    title+" axial-vector Monte Carlo #Sigma(E)", 
-                   &canvas,&legend,"Same",8,0);
-    */
+                   &canvas,&legend,"Same",8,0); */
     fierz.super_sum.draw(
                    "fierz_supersum", 
                    title+" Fierz Monte Carlo #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"monte_carlo.pdf");
+    canvas.SaveAs(plots_base+"monte_carlo.pdf");
 
     data.super_sum.draw(
                    "data_supersum", 
                    title+" #Sigma(E)", 
                    &canvas,&legend,"",1,0);
-    canvas.SaveAs(plots_dir+"data_supersum.pdf");
+    canvas.SaveAs(plots_base+"data_supersum.pdf");
     fit.super_sum.draw(
                    "fit_supersum", 
                    title+" fit #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_dir+"data_fit_supersum.pdf");
+    canvas.SaveAs(plots_base+"data_fit_supersum.pdf");
 
-    /*
-	/// Output for gnuplot
-	//save_data(plots_dir+"super-sum-data.dat", data.super_sum, 1, 1000);
-	//save_data(plots_dir+"super-sum-mc.dat", sm.super_sum, 1, 1000);
-	//save_data(plots_dir+"fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
-	//save_data(plots_dir+"fierz-fit.dat", fierz_fit_histogram, 1, 1);
-	*/
+    /* /// Output for gnuplot
+	//save_data(plots_base+"super-sum-data.dat", data.super_sum, 1, 1000);
+	//save_data(plots_base+"super-sum-mc.dat", sm.super_sum, 1, 1000);
+	//save_data(plots_base+"fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
+	//save_data(plots_base+"fierz-fit.dat", fierz_fit_histogram, 1, 1); */
 }
 
 
@@ -594,7 +590,7 @@ void UCNAhistogram::draw(TString name, TString title,
     }
 
     /// Save the data and Mote Carlo plots.
-    //TString filename = plots_dir + name + ".pdf";
+    //TString filename = plots_base + name + ".pdf";
     //canvas->SaveAs(filename);
 }
 
@@ -647,14 +643,12 @@ void UCNAmodel::save(TString filename)
     asymmetry.SetDirectory(tfile);
     asymmetry.Write();
 
-    /*
-    if (ntuple) {
+    /* if (ntuple) {
         ntuple->SetDirectory(tfile);
         ntuple->Write();
     } else {
         cout<<"Warning: Ntuple not set. Can't save data.\n";
-    }
-    */
+    } */
 	tfile->Close();
 }
 
