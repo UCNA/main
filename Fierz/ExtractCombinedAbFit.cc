@@ -23,6 +23,7 @@
 #include <fstream>
 #include <string>
 #include <limits>
+#include <ctime>
 
 /// C includes
 #include <stdio.h>
@@ -545,8 +546,20 @@ int main(int argc, char *argv[])
 
 	/// extract most critical results from fit functions and report
     ofstream rofs;
-    rofs.open(plots_dir+"report.dat", std::fstream::app | std::fstream::out);
-    //rofs.open(plots_dir+"report.dat");
+    // time_t t = time(0);   // get time now
+    // struct tm * now = localtime(&t);
+    //tm = *localtime(&t);
+    // char buffer[256];
+    // strftime(buffer, sizeof(buffer), "-%a-%b-%d-%H:%M:%S-%Y-", tm);
+    //string time = put_time(&tm, "-%a-%b-%d-%H:%M:%S-%Y-");
+    //filename+="report-"+(now->tm_year + 1900)+"-"
+    //        +(now->tm_mon+1)+"-"+now->tm_mday+"-"+now->tm_hour+":"+now->tm_min;
+    string outfilename;
+    if (argc == 1)
+        outfilename = plots_dir+"report.dat";
+    else
+        outfilename = plots_dir+argv[1];
+    rofs.open(outfilename, std::fstream::app | std::fstream::out);
     cout << " FINAL REPORT\n";
 	cout<<setw(cl)<<"chi^2"<<setw(cl)<<"ndf"<<setw(cl)<<"chi^2/ndf"<<setw(cl)<<"p(chi2,ndf)";
 	for (int i=0; i<nPar; ++i) {  
