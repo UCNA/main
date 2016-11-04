@@ -101,7 +101,7 @@ TString root_output_dir = "/home/hickerson/Documents/";
 /// This needs to be static and global for MINUIT to work
 UCNAFierzFitter* global_ff = 0;
 
-void combined_chi2(Int_t & n, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
+void combined_chi2(Int_t & /*n*/, Double_t * /*grad*/ , Double_t &chi2, Double_t *p, Int_t /*iflag */  )
 {
     assert(global_ff);
     if (FIT_TYPE=="AbN") {
@@ -187,12 +187,12 @@ TF1* fit(UCNAFierzFitter &ff) {
     double Nall_data = ff.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
     double Nfit_data = ff.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
     double Nfit_vector = ff.vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    double Nfit_axial = ff.axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    //double Nfit_axial = ff.axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    //double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
   
     /// Set up reasonable guesses 
     double A = -0.12;
-    double b = 0;
+    //double b = 0;
     //double N = fit_entries;
     //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
     double N = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
