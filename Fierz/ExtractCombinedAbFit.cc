@@ -447,19 +447,35 @@ int main(int argc, char *argv[])
     //TString fake_axial_filename = mc_dir+"SimAnalyzed_Beta_Axial_13.root";
     TString plot_filebase = plots_dir;
     if (nPar == 1) {
+        if (argc == 3) {
+            ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[1]+".root";
+            ucna_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[1]+".root";
+            fake_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[2]+".root";
+            fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[2]+".root";
+            plot_filebase = plots_dir+"ouput_"+argv[1]+"_";
+        }
+        if (argc == 4) {
+            ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[1]+".root";
+            ucna_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[1]+".root";
+            fake_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[2]+".root";
+            fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[2]+".root";
+            plot_filebase = plots_dir+"ouput_"+argv[3]+"_";
+        }
         if (argc == 5) {
             ucna_vector_filename = mc_dir+argv[1]+".root";
             ucna_fierz_filename = mc_dir+argv[2]+".root";
             fake_vector_filename = mc_dir+argv[3]+".root";
             fake_fierz_filename = mc_dir+argv[4]+".root";
         }
-        if (argc == 3) {
-            ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[1]+".root";
-            ucna_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[1]+".root";
-            fake_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[2]+".root";
-            fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[2]+".root";
-            plot_filebase = plots_dir+"SimAnalyzed_"+argv[2]+"_";
-        }
+        cout<<"MC vector file: "<<ucna_vector_filename<<".\n";
+        cout<<"MC Fierz file: "<<ucna_fierz_filename<<".\n";
+        cout<<"Fake vector file: "<<fake_vector_filename<<".\n";
+        cout<<"Fake Fierz file: "<<fake_fierz_filename<<".\n";
+        cout<<"Plot files: "<<plot_filebase<<".\n";
+    }
+    else {
+        cout<<"Can't run with more than one parameter right now.\n";
+        exit(1);
     }
 
     ucna.vector.fill(
@@ -552,8 +568,8 @@ int main(int argc, char *argv[])
     string outfilename;
     if (argc == 1)
         outfilename = plots_dir+"report.dat";
-    else
-        outfilename = plots_dir+argv[1];
+    else 
+        outfilename = plot_filebase+"report.dat";
     rofs.open(outfilename, std::fstream::app | std::fstream::out);
     cout << " FINAL REPORT\n";
     cout<<setw(cl)<<"chi^2"<<setw(cl)<<"ndf"<<setw(cl)<<"chi^2/ndf"<<setw(cl)<<"p(chi2,ndf)";
