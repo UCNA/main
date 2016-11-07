@@ -447,19 +447,19 @@ int main(int argc, char *argv[])
     //TString fake_axial_filename = mc_dir+"SimAnalyzed_Beta_Axial_13.root";
     TString plot_filebase = plots_dir;
     if (nPar == 1) {
-        if (argc == 3) {
+        if (argc < 5) {
             ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[1]+".root";
             ucna_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[1]+".root";
             fake_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[2]+".root";
             fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[2]+".root";
-            plot_filebase = plots_dir+"ouput_"+argv[1]+"_";
         }
-        if (argc == 4) {
-            ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[1]+".root";
-            ucna_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[1]+".root";
-            fake_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[2]+".root";
-            fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[2]+".root";
-            plot_filebase = plots_dir+"ouput_"+argv[3]+"_";
+        if (argc == 3)
+            plot_filebase = plots_dir+"ouput_"+argv[2]+"_";
+        if (argc == 4)
+            plot_filebase = plots_dir+argv[3];
+        else {
+            cout<<"Only 3 args is supported right now.\n";
+            exit(1);
         }
         if (argc == 5) {
             ucna_vector_filename = mc_dir+argv[1]+".root";
@@ -569,7 +569,7 @@ int main(int argc, char *argv[])
     if (argc == 1)
         outfilename = plots_dir+"report.dat";
     else 
-        outfilename = plot_filebase+"report.dat";
+        outfilename = plot_filebase;
     rofs.open(outfilename, std::fstream::app | std::fstream::out);
     cout << " FINAL REPORT\n";
     cout<<setw(cl)<<"chi^2"<<setw(cl)<<"ndf"<<setw(cl)<<"chi^2/ndf"<<setw(cl)<<"p(chi2,ndf)";
