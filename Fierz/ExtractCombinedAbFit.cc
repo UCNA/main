@@ -87,11 +87,12 @@ TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta/";
 TString mc_sys_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_both_twiddled/";
 
 /// path to save output plots
-TString plots_dir = "/home/hickerson/Dropbox/Root/";
+//TString plots_dir = "/home/hickerson/Dropbox/Root/";
+TString plots_dir = "/home/hickerson/Root/";
 
 /// path to save output root structures 
-TString root_output_dir = "/home/hickerson/Documents/";
-
+//TString root_output_dir = "/home/hickerson/Documents/";
+TString root_output_dir = "/home/hickerson/Root/";
 
 
 
@@ -188,14 +189,16 @@ TF1* fit(UCNAFierzFitter &ff) {
     double Nfit_data = ff.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
     double Nfit_vector = ff.vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
     //double Nfit_axial = ff.axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    //double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
   
     /// Set up reasonable guesses 
     double A = -0.12;
-    //double b = 0;
+    double b = p[0];
     //double N = fit_entries;
     //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
-    double N = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
+    double N = 0.5*Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
+    //double N = Nfit_data + Nfit_vector;
+    //double N = Nfit_data;
     double ex_cos = 0.5; //evaluate_expected_cos_theta(fit_min,fit_max);
     double ec2 = ex_cos*ex_cos; //evaluate_expected_cos_theta(fit_min,fit_max);
 
@@ -254,7 +257,8 @@ TF1* fit(UCNAFierzFitter &ff) {
         }
     }
 
-/*  if (b_index > -1)
+    /*  
+    if (b_index > -1)
         est_cov_inv[0][0] = N*ex_cos*ex[2][0];
     if (nPar > 1) {
         est_cov_inv[1][0] = 
@@ -388,25 +392,28 @@ int main(int argc, char *argv[])
 
     UCNAFierzFitter ucna("monte_carlo", "Monte Carlo UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
     UCNAFierzFitter fake("fake", "Fake", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+    UCNAFierzFitter real("real", "2010 Data", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 
     /// LOAD 2010 UCNA DATA
 
     /// Load the files that already contain data super histogram.
-    /*
-    for (int side=EAST; side<=WEST; side++)
-        for (int afp=EAST; afp<=WEST; afp++) {
-            TString s = side? "W":"E", a = afp? "On":"Off";
-            TString title = "2010 final official "+s+" afp "+a;
-            TString name = "hTotalEvents_"+s+"_"+a+";1";
-            int entries = ff.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
-            if (entries) {
-                cout<<"Status: Number of entries in "<<(side? "west":"east")
-                    <<" side with afp "<<a<<" is "<<entries<<".\n";
+    bool use_real_data = false;
+    if (use_real_data) {
+        for (int side=EAST; side<=WEST; side++) {
+            for (int afp=EAST; afp<=WEST; afp++) {
+                TString s = side? "W":"E", a = afp? "On":"Off";
+                TString title = "2010 final official "+s+" afp "+a;
+                TString name = "hTotalEvents_"+s+"_"+a+";1";
+                int entries = real.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
+                if (entries) {
+                    cout<<"Status: Number of entries in "<<(side? "west":"east")
+                        <<" side with afp "<<a<<" is "<<entries<<".\n";
+                }
+                else
+                    cout<<"Error: found no events in "<<title<<".\n";
             }
-            else
-                cout<<"Error: found no events in "<<title<<".\n";
         }
-    */
+    }
 
     /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
     /*
@@ -433,10 +440,14 @@ int main(int argc, char *argv[])
     */
 
     /// Find file paths from environment
-    if (getenv("SIM_PROC_MC_DIR"))
-        mc_dir = getenv("SIM_PROC_MC_DIR");
-    if (getenv("SIM_PROC_MC_SYS_DIR"))
-        mc_sys_dir = getenv("SIM_PROC_MC_SYS_DIR");
+    //if (getenv("SIM_PROC_MC_DIR"))
+    //    mc_dir = getenv("SIM_PROC_MC_DIR");
+    if (getenv("SIM_MC_DIR"))
+        mc_dir = getenv("SIM_MC_DIR");
+    //if (getenv("SIM_PROC_SYS_DIR"))
+    //    mc_sys_dir = getenv("SIM_PROC_SYS_DIR");
+    if (getenv("SIM_PROC_DIR"))
+        mc_sys_dir = getenv("SIM_PROC_DIR");
 
     /// Default filenames.
     TString ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_12.root";
@@ -454,11 +465,12 @@ int main(int argc, char *argv[])
             fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[2]+".root";
         }
         if (argc == 3)
-            plot_filebase = plots_dir+"ouput_"+argv[2]+"_";
+            plot_filebase = plots_dir+"output_"+argv[2]+"_";
         if (argc == 4)
             plot_filebase = plots_dir+argv[3];
         else {
             cout<<"Only 3 args is supported right now.\n";
+            cout<<"Usage: "<<argv[0]<<" <ucna file number | base> <fake file number | twiddled-n> <output plot dir>\n";
             exit(1);
         }
         if (argc == 5) {
@@ -478,9 +490,10 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    int min1 = 11, max1 = 20, min2 = 21, max2 = 30;
     ucna.vector.fill(
         //mc_dir+"SimAnalyzed_Beta_*.root", 10, 11,
-        ucna_vector_filename,
+        ucna_vector_filename, min1, max1,
         "SimAnalyzed",
         "Standard Model vector current", afp_ratio);
 
@@ -494,7 +507,8 @@ int main(int argc, char *argv[])
 
     /// Load Monte Carlo simulated Fierz events
     ucna.fierz.fill(
-        ucna_fierz_filename,
+        ucna_fierz_filename, 
+        min1, max1,
         "SimAnalyzed",
         "Fierz current", afp_ratio); // TODO this is suppressing the errors
 
@@ -502,7 +516,8 @@ int main(int argc, char *argv[])
     /// Load Monte Carlo simulated Standard Model vector current as fake events
     //TString fake_dir = mc_sys_dir;
     fake.vector.fill(
-        fake_vector_filename,
+        fake_vector_filename, 
+        min2, max2,
         "SimAnalyzed",
         "Standard Model vector current", afp_ratio);
 
@@ -514,7 +529,8 @@ int main(int argc, char *argv[])
 
     /// Load Monte Carlo simulated Fierz as fake events
     fake.fierz.fill(
-        fake_fierz_filename,
+        fake_fierz_filename, 
+        min2, max2,
         "SimAnalyzed",
         "Fierz current", afp_ratio); // TODO this is suppressing the errors
 
@@ -544,6 +560,10 @@ int main(int argc, char *argv[])
     fake.vector.super_sum.snapshot();
     //fake.axial.super_sum.snapshot();
     fake.fierz.super_sum.snapshot();
+
+    real.vector.super_sum.snapshot();
+    //real.axial.super_sum.snapshot();
+    real.fierz.super_sum.snapshot();
 
     TF1* fit_func = fit(ucna);
     if (not fit_func) {
