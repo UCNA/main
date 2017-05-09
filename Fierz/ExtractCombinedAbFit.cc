@@ -59,7 +59,7 @@ static TString FIT_TYPE = "bN";
 static const int nPar = 2;
 double afp_ratio = 0.40;
 TString paramNames[2] = {"b", "N"};
-double paramInits[2] = {0.0, 1};
+double paramInits[2] = {0.0, 1000000};
 int A_index=-1, b_index=0, N_index=1;
 #endif
 #if 1
@@ -193,14 +193,15 @@ TF1* fit(UCNAFierzFitter &ff) {
   
     /// Set up reasonable guesses 
     double A = -0.12;
-    double b = p[0];
+    double b = 0;
     //double N = fit_entries;
     //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
-    double N = 0.5*Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
+    double N = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
     //double N = Nfit_data + Nfit_vector;
     //double N = Nfit_data;
     double ex_cos = 0.5; //evaluate_expected_cos_theta(fit_min,fit_max);
     double ec2 = ex_cos*ex_cos; //evaluate_expected_cos_theta(fit_min,fit_max);
+
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
 
@@ -415,8 +416,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
     /*
+    /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
     /// Load the files that already contain data asymmetry histogram.
     ucna.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
@@ -457,7 +458,7 @@ int main(int argc, char *argv[])
     TString fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_fierz_14.root";
     //TString fake_axial_filename = mc_dir+"SimAnalyzed_Beta_Axial_13.root";
     TString plot_filebase = plots_dir;
-    if (nPar == 1) {
+    if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
         if (argc < 5) {
             ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[1]+".root";
             ucna_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[1]+".root";
@@ -552,6 +553,12 @@ int main(int argc, char *argv[])
     fake.compute_fit(A,b,N);
     ucna.data = fake.fit;
     ucna.data.super_sum.snapshot();
+
+    /// Load the files that already contain data super histogram.
+    ucna.data.super_sum.fill(
+        data_dir+"OctetAsym_Offic.root",
+        "Total_Events_SuperSum",
+        "2010 final official supersum");
 
     ucna.vector.super_sum.snapshot();
     //ucna.axial.super_sum.snapshot();

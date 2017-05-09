@@ -373,6 +373,7 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
     //double e_x = evaluate_expected_fierz(fit_min,fit_max); // not in the right range
     //double m_E = evaluate_expected_fierz(0,Q); // not in the right range
     double norm = exV + b*x_1*exF;
+    cout <<"norm = exV + b*x_1*exF : "<<norm<<" = "<<exV<<"+"<<b<<"*"<<x_1<<"*"<<exF<<".\n";
 	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.super_sum.GetBinCenter(bin);
@@ -733,7 +734,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title, double flip)
     }
 }
 
-int UCNAmodel::SetAllBranches(TChain *chain)
+void UCNAmodel::SetAllBranches(TChain *chain)
 {
 	chain->SetBranchStatus("*",false);
 	chain->SetBranchStatus("PID",true);
@@ -795,7 +796,7 @@ int UCNAmodel::fill(TChain *chain, double flip)
         assert(cos = p[2]);
         //bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
         double E = energy + m_e;        /// relativistic energy
-        double x = m_e/E;
+        //double x = m_e/E;
         bool spin = (afp < 0)? EAST : WEST;
         Nspin[spin]++;
         /*
@@ -1366,6 +1367,22 @@ void UCNAhistogram::snapshot(int every)
         double sigmaH = GetBinError(bin);
         cout<<"     bin: "<<bin<<" KE: "<<KE<<" is "<<H<<"("<<sigmaH<<").\n";
     }
+    cout<<"\n FULL HISTOGRAM:\n";
+    for (int bin = bin_min; bin < bin_max; bin++) {
+        double KE = GetBinCenter(bin);
+        cout<<"\t"<<KE;
+    }
+    cout<<"\n";
+    for (int bin = bin_min; bin < bin_max; bin++) {
+        double H = GetBinContent(bin);
+        cout<<"\t"<<H;
+    }
+    cout<<"\n";
+    for (int bin = bin_min; bin < bin_max; bin++) {
+        double sigmaH = GetBinError(bin);
+        cout<<"\t"<<sigmaH;
+    }
+    cout<<"\n";
 }
 
 double UCNAmodel::compute_super_sum(int bin) {

@@ -191,7 +191,7 @@ struct UCNAmodel {
 
     UCNAmodel & operator=(const UCNAmodel & other);
 
-    int SetAllBranches(TChain *chain);
+    void SetAllBranches(TChain *chain);
     double asymmetry_chi2(double A, double b);
     //int fill(TString filename, TString name, TString title);
     int fill(TString filename, int first, int last, 
