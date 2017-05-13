@@ -1,4 +1,5 @@
 #include "FierzFitter.hh"
+#include <regex>
 
 
 UCNAmodel & UCNAmodel::operator=(const UCNAmodel & other)
@@ -398,6 +399,49 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 	}
 }
 
+void UCNAFierzFitter::fill(TString vector_filnames, 
+                           TString axial_filnames, 
+                           // TODO TString axial_up_pattern, 
+                           // TODO TString axial_down_pattern, 
+                           TString fierz_filnames,
+                           int min, int max, /// TODO read filename pattern
+                           TString name) 
+                           //double flip = spin_ratio) /// find a better way to pass this
+{
+    assert(spin_ratio > 0);
+    double flip = spin_ratio;
+
+    /// Fill Standard Model vector events.
+    if (vector_filnames != "")
+        vector.fill(
+            vector_filnames, 
+            min, max,     /// TODO read from filename pattern
+            name,
+            "Standard Model vector current", flip);
+
+    /// Fill Standard Model axial-vector events
+    /// 
+    /// TODO fill A+ and A- axial vector events 
+    /// axial[0].fill( ...
+    /// axial[1].fill( ...
+    /// -- or --
+    /// for (i;1,2) axial[i].fill( ...
+    if (axial_filnames != "")
+        axial.fill(
+            axial_filnames,
+            min, max,     /// TODO read from filename pattern
+            name,
+            "Standard Model axial-vector current", flip);
+
+    /// Fill BSM Fierz events
+    if (fierz_filnames != "")
+        fierz.fill(
+            axial_filnames,
+            min, max,     /// TODO read from filename pattern
+            name,
+            "BSM Fierz current", flip);
+}
+
 
 /// DISPLAYING AND OUTPUTTING
 void UCNAFierzFitter::display(TString &plots_base) {
@@ -602,7 +646,7 @@ void UCNAhistogram::draw(TString name, TString title,
 /**
  *
  */
-void UCNAhistogram::save_data(TString filename, double ax, double ay)
+void UCNAhistogram::save_data(TString filename, double ax = 1, double ay = 1)
 {
     ofstream ofs;
 	ofs.open(filename);
@@ -615,6 +659,15 @@ void UCNAhistogram::save_data(TString filename, double ax, double ay)
 		ofs<<x<<'\t'<<r<<'\t'<<sx<<'\t'<<sr<<endl;
 	}
 	ofs.close();
+}
+
+
+void UCNAFierzFitter::save(TString filename)
+{
+    vector.super_sum.save_data(filename+"-vector.dat");
+    fierz.super_sum.save_data(filename+"-fierz.dat");
+    data.super_sum.save_data(filename+"-data.dat");
+    fit.super_sum.save_data(filename+"-fit.dat");
 }
 
 
@@ -664,10 +717,17 @@ int UCNAmodel::fill(TString filename, TString name, TString title) {
 } */
 
 
-
 int UCNAmodel::fill(TString pattern, int first, int last, 
                     TString name, TString title, double flip)
 {
+    /*
+    cout <<pattern.SubString("[",3)<<"\n";
+    cout <<pattern.SubString("[]",0)<<"\n";
+    //cout <<pattern.Contains("[7771234]")<<"\n";
+    cout <<pattern(TRegexp("[*]"))<<"\n";
+    static regex ex(pattern);
+    sregex_iterator next(ex
+    */
     TChain *chains = 0;
     int added = 0;
     for (int i = first; i <= last; i++) {
@@ -685,11 +745,10 @@ int UCNAmodel::fill(TString pattern, int first, int last,
             assert(added==0);
             chains = new TChain(name, title);
         }
-        chains->Add(filename);
+        chains->Add(filename);  // may include * whildcard
         added++;
     }
     if (added > 0 and chains) {
-       // TChain *chain = (TChain*)chains->Get(name);
         return fill(chains, flip);
     }
     else {
@@ -704,6 +763,13 @@ int UCNAmodel::fill(TString pattern, int first, int last,
 
 int UCNAmodel::fill(TString filename, TString name, TString title, double flip)
 {
+    /// TODO check if filename is a pattern, and if so call chain version above
+    if (filename.MaybeWildcard()) {
+        /// find * wild card 
+        cout << filename.SubString("*",1);
+        // TODO call chain version
+        //fill(filename,1,1,name,title,flip);
+    }
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
 		cout<<"Error: Problem filling "<<title<<":\n";

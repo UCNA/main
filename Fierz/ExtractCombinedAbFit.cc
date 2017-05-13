@@ -398,6 +398,7 @@ int main(int argc, char *argv[])
     /// LOAD 2010 UCNA DATA
 
     /// Load the files that already contain data super histogram.
+    /*
     bool use_real_data = false;
     if (use_real_data) {
         for (int side=EAST; side<=WEST; side++) {
@@ -415,6 +416,7 @@ int main(int argc, char *argv[])
             }
         }
     }
+    */
 
     /*
     /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
@@ -491,27 +493,34 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    int min1 = 11, max1 = 20, min2 = 21, max2 = 30;
+    /// Load Monte Carlo Standard Model vector events
+    int min1 = 1, max1 = 9, min2 = 1, max2 = 9;
+    //int min1 = 11, max1 = 20, min2 = 21, max2 = 30;
     ucna.vector.fill(
-        //mc_dir+"SimAnalyzed_Beta_*.root", 10, 11,
-        ucna_vector_filename, min1, max1,
+        ucna_vector_filename, 
+        min1, max1,     /// TODO read from filename pattern
         "SimAnalyzed",
         "Standard Model vector current", afp_ratio);
 
-    /*
-    ucna.axial.fill(
-        mc_dir+"SimAnalyzed_Beta_9.root",
+    /// Load Monte Carlo Standard Model axial-vector events
+    /// TODO load A+ and A- axial vector events 
+    /// 
+    /// ucna.axial[0].fill( ...
+    /// ucna.axial[1].fill( ...
+    /* ucna.axial.fill(
         ucna_axial_filename,
+        min1, max1,     /// TODO read from filename pattern
         "SimAnalyzed",
-        "Standard Model axial-vector current", afp_ratio);
-    */
+        "Standard Model axial-vector current", afp_ratio); */
 
-    /// Load Monte Carlo simulated Fierz events
+    /// Load Monte Carlo simulated BSM Fierz events
     ucna.fierz.fill(
         ucna_fierz_filename, 
-        min1, max1,
+        min1, max1,     /// TODO read from filename pattern
         "SimAnalyzed",
         "Fierz current", afp_ratio); // TODO this is suppressing the errors
+
+    ucna.save("~/Desktop/monte_carlo");
 
     /// LOAD FAKE DATA FROM MONTE CARLO
     /// Load Monte Carlo simulated Standard Model vector current as fake events
@@ -560,6 +569,11 @@ int main(int argc, char *argv[])
         "Total_Events_SuperSum",
         "2010 final official supersum");
 
+    ucna.back.super_sum.fill(
+        data_dir+"OctetAsym_Offic.root",
+        "Total_Events_SuperSum",
+        "2010 final official supersum");
+
     ucna.vector.super_sum.snapshot();
     //ucna.axial.super_sum.snapshot();
     ucna.fierz.super_sum.snapshot();
@@ -568,9 +582,9 @@ int main(int argc, char *argv[])
     //fake.axial.super_sum.snapshot();
     fake.fierz.super_sum.snapshot();
 
-    real.vector.super_sum.snapshot();
+    //real.vector.super_sum.snapshot();
     //real.axial.super_sum.snapshot();
-    real.fierz.super_sum.snapshot();
+    //real.fierz.super_sum.snapshot();
 
     TF1* fit_func = fit(ucna);
     if (not fit_func) {

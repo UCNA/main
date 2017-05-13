@@ -19,6 +19,7 @@
 #include <TLeaf.h>
 #include <TString.h>
 #include <TRandom2.h>
+#include <TRegexp.h>
 
 /// c++ includes
 #include <iostream>
@@ -194,7 +195,7 @@ struct UCNAmodel {
     void SetAllBranches(TChain *chain);
     double asymmetry_chi2(double A, double b);
     //int fill(TString filename, TString name, TString title);
-    int fill(TString filename, int first, int last, 
+    int fill(TString pattern, int first, int last, 
              TString name, TString title, double flip);
     int fill(TString filename, TString name, TString title, double flip);
     int fill(TChain *chain, double flip);
@@ -265,18 +266,19 @@ struct UCNAFierzFitter {
     double fit_max;                 /// max kinetic range for asymmetry fit
 
     UCNAmodel data;                 /// Measured foreground data to fit.
-    UCNAmodel bg;                   /// Measured background data to remove.
+    UCNAmodel back;                 /// Measured background data to remove.
 
     UCNAmodel vector;               /// Standard Model vector Monte Carlo spectrum.
     UCNAmodel axial;                /// Standard Model axial-vector Monte Carlo spectrum.
+    /// TODO UCNAmodel axial[2];    /// Standard Model axial-vector Monte Carlo spectrum.
     UCNAmodel fierz;                /// Fierz (Scaler + tensor) Monte Carlo spectrum.
     UCNAmodel fit;                  /// Vector + axial + Fierz Monte Carlo best fit.
 
     /// cuts and settings
     unsigned nToSim = 5e7;			/// how many triggering events to simulate
-    double afp_off_prob = 1/1.68; 	/// afp off probability per neutron (0.68/1.68 for on)
-    double fedutial_cut = 50;       /// radial cut in millimeters 
-    double fidcut2;                 /// mm^2 radial cut.
+    double spin_ratio = 1/1.68; 	/// afp off probability per neutron (0.68/1.68 for on)
+    double fedutial_radius = 50;    /// radial cut in millimeters 
+    //double fidrad2;               /// mm^2 radial cut.
 
     /// set up free fit parameters with best guess
     //static const int nPar = 3;
@@ -289,12 +291,12 @@ struct UCNAFierzFitter {
         bins(bins), min(min), max(max),
         fit_bins(bins), fit_min(min), fit_max(max),
         data(name+"_data", title+" data", bins, min, max),
-        bg(name+"_bg", title+" background", bins, min, max),
+        back(name+"_back", title+" background", bins, min, max),
         //sm(name+"_sm", title+" Standard Model Monte Carlo", bins, min, max),
-        vector(name+"_vector", title+" Standard Model vector Monte Carlo", bins, min, max),
-        axial(name+"_axial", title+" axial-vector Monte Carlo", bins, min, max),
-        fierz(name+"_fierz", title+" Fierz Monte Carlo", bins, min, max),
-        fit(name+"_fit", title+" Standard Model + Fierz best fit", bins, min, max) 
+        vector(name+"_vector", title+" Standard Model vector current", bins, min, max),
+        axial(name+"_axial", title+" Standard Model axial-vector current", bins, min, max),
+        fierz(name+"_fierz", title+"BSM  Fierz current", bins, min, max),
+        fit(name+"_fit", title+" fit", bins, min, max) 
     { assert(min < max); }
 
     UCNAFierzFitter(TString name, TString title,
@@ -304,25 +306,34 @@ struct UCNAFierzFitter {
         bins(bins), min(min), max(max),
         fit_bins(fit_bins), fit_min(fit_min), fit_max(fit_max),
         data(name+"_data", title+" data", bins, min, max),
-        bg(name+"_bg", title+" background", bins, min, max),
-        vector(name+"_vector", title+" Standard Model Monte Carlo", bins, min, max),
-        axial(name+"_axial", title+" Axial-vector Monte Carlo", bins, min, max),
-        fierz(name+"_fierz", title+" Fierz Monte Carlo", bins, min, max),
-        fit(name+"_fit", title+" Standard Model + Fierz best fit", fit_bins, fit_min, fit_max),
-        fidcut2(0)
+        back(name+"_back", title+" background", bins, min, max),
+        vector(name+"_vector", title+" Standard Model vector current", bins, min, max),
+        axial(name+"_axial", title+" Standard Model axial-vector vector current", bins, min, max),
+        fierz(name+"_fierz", title+" BSM Fierz vector current", bins, min, max),
+        fit(name+"_fit", title+" fit", fit_bins, fit_min, fit_max),
+        fedutial_radius(50)
     { assert(min < max); }
 /*
     UCNAFierzFitter(double min, double max, double fit_min, double fit_max)
       : bins((max-min)/resolution), min(min), max(max),
         bins((fit_max-fit_min)/resolution), fit_min(fit_min), fit_max(fit_max),
         data(name+"_data_", "UCNA data", bins, min, max),
-        bg(name+"_bg_", "UCNA background", bins, min, max),
+        back(name+"_back_", "UCNA background", bins, min, max),
         sm(name+"_sm_", "Standard Model Monte Carlo", bins, min, max),
         axial(name+"_axial_", "Axial-vector Monte Carlo", bins, min, max),
         fierz(name+"_fierz_", "Fierz Monte Carlo", bins, min, max),
         fit(name+"_fit_", "Standard Model + Fierz best fit", bins, min, max) 
     { assert(min < max); }
     */
+    void fill(TString vector_filnames, 
+       TString axial_filnames, 
+       // TODO TString axial_up_pattern, 
+       // TODO TString axial_down_pattern, 
+       TString fierz_filnames,
+       int min, int max, /// TODO read filename pattern
+       TString name);    /// not sure if this is needed (or wanted) if the FF was constructed correctly
+
+    void save(TString filename);
 
     //void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */);
     double asymmetry_chi2(double A, double b);
@@ -333,6 +344,10 @@ struct UCNAFierzFitter {
     void compute_fit(double A, double b, double N);
     void compute_data(double A, double b, double N);
     void compute_fit(TF1* func);
+    void set_spin_ratio(double flip) { spin_ratio = flip; }
+    double get_spin_ratio() { return spin_ratio; }
+    void set_fedutial_radius(double r) { fedutial_radius = r; }
+    double get_fedutial_radius() { return fedutial_radius; }
 
     //TF1* combined_fit(TH1D* asymmetry, TH1D* super_sum, TMatrixD &cov, TF1 *func);
     TF1* combined_fit(TMatrixD &cov, TF1 *func,  
@@ -538,7 +553,7 @@ TH1D* compute_corrected_asymmetry(TH1D* rate_histogram[2][2], TH1D* correction)
 */
 
 #if 0    
-/// this causes a linking error but I don't know why. I would like to use these at some point so dont errase.
+/// this causes a linking error but I don't know why. I would like to use these at some point so don't erase.
 TH1D* compute_rate_function(TH1D* rate_histogram[2][2], 
                             double (*rate_function)(double r[2][2]))
 {
