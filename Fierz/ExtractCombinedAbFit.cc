@@ -453,12 +453,10 @@ int main(int argc, char *argv[])
         mc_sys_dir = getenv("SIM_PROC_DIR");
 
     /// Default filenames.
-    //TString ucna_vector_filename = "";
-    //TString ucna_fierz_filename = "";
-    //TString ucna_axial_filename = "";
     TString ucna_filebase = "";
-    TString fake_vector_filename = "";
-    TString fake_fierz_filename = "";
+    TString fake_filebase = "";
+    //TString fake_vector_filename = "";
+    //TString fake_fierz_filename = "";
     //TString fake_axial_filename = "";
     TString plot_filebase = plots_dir;
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
@@ -467,12 +465,16 @@ int main(int argc, char *argv[])
             ucna.fill(ucna_filebase+argv[1]+".root",
                       "", //ucna_filebase+"Axial_"+argv[1]+".root",
                       ucna_filebase+"Fierz_"+argv[1]+".root",
-                      1, 3, "SimAnalyzed");
-            //ucna.fill(ucna_filebase+"[b]"+argv[1]+".root", 1, 3, "SimAnalyzed");
+                      1, 4, "SimAnalyzed");
+            //ucna.fill(ucna_filebase+"[VF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
+            //ucna.fill(ucna_filebase+"[VAF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
+            //ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[1]+".root", 1, 3, "SimAnalyzed");
         }
         if (argc > 2) {
-            fake_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[2]+".root";
-            fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[2]+".root";
+            fake_filebase = mc_dir+"SimAnalyzed_Beta_";
+            fake.fill(ucna_filebase+argv[2]+".root", "",
+                      ucna_filebase+"Fierz_"+argv[2]+".root",
+                      1, 4, "SimAnalyzed");
         }
         if (argc > 3) {
             cout<<"Only 2 args is supported right now.\n";
@@ -492,76 +494,26 @@ int main(int argc, char *argv[])
         } */
         //cout<<"MC vector file: "<<ucna_vector_filename<<".\n";
         //cout<<"MC Fierz file: "<<ucna_fierz_filename<<".\n";
-        cout<<"Fake vector file: "<<fake_vector_filename<<".\n";
-        cout<<"Fake Fierz file: "<<fake_fierz_filename<<".\n";
-        cout<<"Plot files: "<<plot_filebase<<".\n";
+        //cout<<"Fake vector file: "<<fake_vector_filename<<".\n";
+        //cout<<"Fake Fierz file: "<<fake_fierz_filename<<".\n";
+        //cout<<"Plot files: "<<plot_filebase<<".\n";
     }
     else {
         cout<<"Can run b or bN mode right now.\n";
         exit(1);
     }
 
-    /// Load Monte Carlo Standard Model vector events
-    int min1 = 1, max1 = 99, min2 = 1, max2 = 99;
-    /*ucna.vector.fill(
-        ucna_vector_filename, 
-        min1, max1,     /// TODO read from filename pattern
-        "SimAnalyzed",
-        "Standard Model vector current", afp_ratio); */
-
-    /// Load Monte Carlo Standard Model axial-vector events
-    /// TODO load A+ and A- axial vector events 
-    /// 
-    /// ucna.axial[0].fill( ...
-    /// ucna.axial[1].fill( ...
-    /* ucna.axial.fill(
-        ucna_axial_filename,
-        min1, max1,     /// TODO read from filename pattern
-        "SimAnalyzed",
-        "Standard Model axial-vector current", afp_ratio); */
-
-    /// Load Monte Carlo simulated BSM Fierz events
-    /*ucna.fierz.fill(
-        ucna_fierz_filename, 
-        min1, max1,     /// TODO read from filename pattern
-        "SimAnalyzed",
-        "Fierz current", afp_ratio); // TODO this is suppressing the errors */
-
-    /* TODO  ucna.fill(
-        ucna_filenames,   /// TODO read from filename pattern
-        min1, max1,   
-        "SimAnalyzed",
-        "Fierz current", afp_ratio); */
     ucna.save(plots_dir+"monte_carlo");
 
-    if(fake_vector_filename == "") {
-        cout << "Nothing to compare to.\nEnding.\n";
+    if(fake_filebase == "") {
+        cout << "Nothing to compare to... Done.\n";
         exit(0);
     }
 
-
     /// LOAD FAKE DATA FROM MONTE CARLO
     /// Load Monte Carlo simulated Standard Model vector current as fake events
-    //TString fake_dir = mc_sys_dir;
-    fake.vector.fill(
-        fake_vector_filename, 
-        min2, max2,
-        "SimAnalyzed",
-        "Standard Model vector current", afp_ratio);
-
     /// Load Monte Carlo simulated Standard Model axial-vector current as fake events
-    /* fake.axial.fill(
-        fake_axial_filename,
-        "SimAnalyzed",
-        "Axial-vector Standard Model Monte Carlo beta spectrum", afp_ratio); */
-
     /// Load Monte Carlo simulated Fierz as fake events
-    fake.fierz.fill(
-        fake_fierz_filename, 
-        min2, max2,
-        "SimAnalyzed",
-        "Fierz current", afp_ratio); // TODO this is suppressing the errors
-
     /* fake.data.fill(
         mc_dir+"SimAnalyzed_Beta_9.root",
         "SimAnalyzed",

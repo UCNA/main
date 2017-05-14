@@ -399,11 +399,11 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 	}
 }
 
-void UCNAFierzFitter::fill(TString vector_filnames, 
-                           TString axial_filnames, 
+void UCNAFierzFitter::fill(TString vector_pattern, 
+                           TString axial_pattern, 
                            // TODO TString axial_up_pattern, 
                            // TODO TString axial_down_pattern, 
-                           TString fierz_filnames,
+                           TString fierz_pattern,
                            int min, int max, /// TODO read filename pattern
                            TString name) 
                            //double flip = spin_ratio) /// find a better way to pass this
@@ -412,9 +412,9 @@ void UCNAFierzFitter::fill(TString vector_filnames,
     double flip = spin_ratio;
 
     /// Fill Standard Model vector events.
-    if (vector_filnames != "")
+    if (vector_pattern != "")
         vector.fill(
-            vector_filnames, 
+            vector_pattern, 
             min, max,     /// TODO read from filename pattern
             name,
             "Standard Model vector current", flip);
@@ -426,17 +426,17 @@ void UCNAFierzFitter::fill(TString vector_filnames,
     /// axial[1].fill( ...
     /// -- or --
     /// for (i;1,2) axial[i].fill( ...
-    if (axial_filnames != "")
+    if (axial_pattern != "")
         axial.fill(
-            axial_filnames,
+            axial_pattern,
             min, max,     /// TODO read from filename pattern
             name,
             "Standard Model axial-vector current", flip);
 
     /// Fill BSM Fierz events
-    if (fierz_filnames != "")
+    if (fierz_pattern != "")
         fierz.fill(
-            axial_filnames,
+            fierz_pattern,
             min, max,     /// TODO read from filename pattern
             name,
             "BSM Fierz current", flip);
