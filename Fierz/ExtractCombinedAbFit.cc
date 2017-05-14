@@ -455,9 +455,6 @@ int main(int argc, char *argv[])
     /// Default filenames.
     TString ucna_filebase = "";
     TString fake_filebase = "";
-    //TString fake_vector_filename = "";
-    //TString fake_fierz_filename = "";
-    //TString fake_axial_filename = "";
     TString plot_filebase = plots_dir;
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
         if (argc > 1) {
@@ -465,7 +462,7 @@ int main(int argc, char *argv[])
             ucna.fill(ucna_filebase+argv[1]+".root",
                       "", //ucna_filebase+"Axial_"+argv[1]+".root",
                       ucna_filebase+"Fierz_"+argv[1]+".root",
-                      1, 4, "SimAnalyzed");
+                      1, 99, "SimAnalyzed");
             //ucna.fill(ucna_filebase+"[VF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
             //ucna.fill(ucna_filebase+"[VAF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
             //ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[1]+".root", 1, 3, "SimAnalyzed");
@@ -474,7 +471,7 @@ int main(int argc, char *argv[])
             fake_filebase = mc_dir+"SimAnalyzed_Beta_";
             fake.fill(ucna_filebase+argv[2]+".root", "",
                       ucna_filebase+"Fierz_"+argv[2]+".root",
-                      1, 4, "SimAnalyzed");
+                      1, 99, "SimAnalyzed");
         }
         if (argc > 3) {
             cout<<"Only 2 args is supported right now.\n";
