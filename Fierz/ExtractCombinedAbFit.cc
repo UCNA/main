@@ -453,54 +453,61 @@ int main(int argc, char *argv[])
         mc_sys_dir = getenv("SIM_PROC_DIR");
 
     /// Default filenames.
-    TString ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_12.root";
-    TString ucna_fierz_filename = mc_dir+"SimAnalyzed_Beta_fierz_12.root";
-    //TString ucna_axial_filename = mc_dir+"SimAnalyzed_Beta_Axial_12.root";
-    TString fake_vector_filename = mc_dir+"SimAnalyzed_Beta_14.root";
-    TString fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_fierz_14.root";
-    //TString fake_axial_filename = mc_dir+"SimAnalyzed_Beta_Axial_13.root";
+    //TString ucna_vector_filename = "";
+    //TString ucna_fierz_filename = "";
+    //TString ucna_axial_filename = "";
+    TString ucna_filebase = "";
+    TString fake_vector_filename = "";
+    TString fake_fierz_filename = "";
+    //TString fake_axial_filename = "";
     TString plot_filebase = plots_dir;
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
-        if (argc < 5) {
-            ucna_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[1]+".root";
-            ucna_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[1]+".root";
+        if (argc > 1) {
+            ucna_filebase = mc_dir+"SimAnalyzed_Beta_";
+            ucna.fill(ucna_filebase+argv[1]+".root",
+                      "", //ucna_filebase+"Axial_"+argv[1]+".root",
+                      ucna_filebase+"Fierz_"+argv[1]+".root",
+                      1, 3, "SimAnalyzed");
+            //ucna.fill(ucna_filebase+"[b]"+argv[1]+".root", 1, 3, "SimAnalyzed");
+        }
+        if (argc > 2) {
             fake_vector_filename = mc_dir+"SimAnalyzed_Beta_"+argv[2]+".root";
             fake_fierz_filename = mc_dir+"SimAnalyzed_Beta_Fierz_"+argv[2]+".root";
         }
-        if (argc == 3)
-            plot_filebase = plots_dir+"output_"+argv[2]+"_";
-        if (argc == 4)
-            plot_filebase = plots_dir+argv[3];
-        else {
+        if (argc > 3) {
+            cout<<"Only 2 args is supported right now.\n";
+            cout<<"Usage: "<<argv[0]<<" <file number | twiddled | base> [<file number | twiddled-n>]\n";
+            exit(1);
+        }
+        /* if (argc > 4)
             cout<<"Only 3 args is supported right now.\n";
             cout<<"Usage: "<<argv[0]<<" <ucna file number | base> <fake file number | twiddled-n> <output plot dir>\n";
             exit(1);
         }
-        if (argc == 5) {
+        if (argc > 5) {
             ucna_vector_filename = mc_dir+argv[1]+".root";
             ucna_fierz_filename = mc_dir+argv[2]+".root";
             fake_vector_filename = mc_dir+argv[3]+".root";
             fake_fierz_filename = mc_dir+argv[4]+".root";
-        }
-        cout<<"MC vector file: "<<ucna_vector_filename<<".\n";
-        cout<<"MC Fierz file: "<<ucna_fierz_filename<<".\n";
+        } */
+        //cout<<"MC vector file: "<<ucna_vector_filename<<".\n";
+        //cout<<"MC Fierz file: "<<ucna_fierz_filename<<".\n";
         cout<<"Fake vector file: "<<fake_vector_filename<<".\n";
         cout<<"Fake Fierz file: "<<fake_fierz_filename<<".\n";
         cout<<"Plot files: "<<plot_filebase<<".\n";
     }
     else {
-        cout<<"Can't run with more than one parameter right now.\n";
+        cout<<"Can run b or bN mode right now.\n";
         exit(1);
     }
 
     /// Load Monte Carlo Standard Model vector events
-    int min1 = 1, max1 = 9, min2 = 1, max2 = 9;
-    //int min1 = 11, max1 = 20, min2 = 21, max2 = 30;
-    ucna.vector.fill(
+    int min1 = 1, max1 = 99, min2 = 1, max2 = 99;
+    /*ucna.vector.fill(
         ucna_vector_filename, 
         min1, max1,     /// TODO read from filename pattern
         "SimAnalyzed",
-        "Standard Model vector current", afp_ratio);
+        "Standard Model vector current", afp_ratio); */
 
     /// Load Monte Carlo Standard Model axial-vector events
     /// TODO load A+ and A- axial vector events 
@@ -514,13 +521,24 @@ int main(int argc, char *argv[])
         "Standard Model axial-vector current", afp_ratio); */
 
     /// Load Monte Carlo simulated BSM Fierz events
-    ucna.fierz.fill(
+    /*ucna.fierz.fill(
         ucna_fierz_filename, 
         min1, max1,     /// TODO read from filename pattern
         "SimAnalyzed",
-        "Fierz current", afp_ratio); // TODO this is suppressing the errors
+        "Fierz current", afp_ratio); // TODO this is suppressing the errors */
 
-    ucna.save("~/Desktop/monte_carlo");
+    /* TODO  ucna.fill(
+        ucna_filenames,   /// TODO read from filename pattern
+        min1, max1,   
+        "SimAnalyzed",
+        "Fierz current", afp_ratio); */
+    ucna.save(plots_dir+"monte_carlo");
+
+    if(fake_vector_filename == "") {
+        cout << "Nothing to compare to.\nEnding.\n";
+        exit(0);
+    }
+
 
     /// LOAD FAKE DATA FROM MONTE CARLO
     /// Load Monte Carlo simulated Standard Model vector current as fake events

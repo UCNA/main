@@ -325,13 +325,13 @@ struct UCNAFierzFitter {
         fit(name+"_fit_", "Standard Model + Fierz best fit", bins, min, max) 
     { assert(min < max); }
     */
-    void fill(TString vector_filnames, 
-       TString axial_filnames, 
-       // TODO TString axial_up_pattern, 
-       // TODO TString axial_down_pattern, 
-       TString fierz_filnames,
-       int min, int max, /// TODO read filename pattern
-       TString name);    /// not sure if this is needed (or wanted) if the FF was constructed correctly
+    void fill(TString vector_pattern, 
+              TString axial_pattern, 
+              // TODO TString axial_up_pattern, 
+              // TODO TString axial_down_pattern, 
+              TString fierz_pattern,
+              int min, int max, /// TODO read filename pattern
+              TString name);    /// not sure if this is needed (or wanted) if the FF was constructed correctly
 
     void save(TString filename);
 
