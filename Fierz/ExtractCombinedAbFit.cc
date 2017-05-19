@@ -40,7 +40,7 @@ double infity = std::numeric_limits<double>::infinity();
 double KEmin = 0;                 /// min kinetic energy for plots
 double KEmax = 800;               /// max kinetic range for plots
 int    KEbins=(KEmax-KEmin)/10;   /// number of bins to use fit spectral plots
-double fit_min = 120;             /// min kinetic energy for plots
+double fit_min = 150;             /// min kinetic energy for plots
 double fit_max = 630;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
@@ -418,29 +418,6 @@ int main(int argc, char *argv[])
     }
     */
 
-    /*
-    /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
-    /// Load the files that already contain data asymmetry histogram.
-    ucna.data.asymmetry.fill(
-        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
-        "hAsym_Corrected_C",
-        "2010 final official asymmetry");
-    /// Load the files that already contain data super histogram.
-    ucna.data.super_sum.fill(
-        data_dir+"OctetAsym_Offic.root",
-        "Total_Events_SuperSum",
-        "2010 final official supersum");
-    /// Load Monte Carlo simulated Standard Model events
-    ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_7.root",
-               "SimAnalyzed",
-               "Monte Carlo Standard Model beta spectrum");
-    /// Load Monte Carlo simulated Fierz events
-    ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_7.root",
-                  "SimAnalyzed",
-                  "Monte Carlo Fierz beta spectrum");
-    //fit(ucna);
-    //display(ucna);
-    */
 
     /// Find file paths from environment
     //if (getenv("SIM_PROC_MC_DIR"))
@@ -466,6 +443,7 @@ int main(int argc, char *argv[])
             //ucna.fill(ucna_filebase+"[VF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
             //ucna.fill(ucna_filebase+"[VAF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
             //ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[1]+".root", 1, 3, "SimAnalyzed");
+            ucna.save(plots_dir+"monte_carlo");
         }
         if (argc > 2) {
             fake_filebase = mc_dir+"SimAnalyzed_Beta_";
@@ -500,11 +478,26 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    ucna.save(plots_dir+"monte_carlo");
-
     if(fake_filebase == "") {
+        /// Load the files that already contain data super histogram.
+        ucna.data.super_sum.fill(
+            data_dir+"OctetAsym_Offic.root",
+            "SuperSum_Type_0",
+            "2010 final official supersum - Type 0");
+        ucna.data.super_sum.save(plots_dir+"2010_data_supersum_type_0.dat");
+        /*
+        ucna.data.super_sum.fill(
+            data_dir+"OctetAsym_Offic.root",
+            "Total_Events_SuperSum",
+            "2010 final official supersum");
+
+        ucna.back.super_sum.fill(
+            data_dir+"OctetAsym_Offic.root",
+            "Total_Events_SuperSum",
+            "2010 final official supersum");
+        */
         cout << "Nothing to compare to... Done.\n";
-        exit(0);
+        exit(0);    /// TODO temp hack
     }
 
     /// LOAD FAKE DATA FROM MONTE CARLO
@@ -527,19 +520,10 @@ int main(int argc, char *argv[])
 
     /// generate fake signal curve from different simulated spectra
     fake.compute_fit(A,b,N);
-    ucna.data = fake.fit;
+    //ucna.data = fake.fit;
     ucna.data.super_sum.snapshot();
 
-    /// Load the files that already contain data super histogram.
-    ucna.data.super_sum.fill(
-        data_dir+"OctetAsym_Offic.root",
-        "Total_Events_SuperSum",
-        "2010 final official supersum");
-
-    ucna.back.super_sum.fill(
-        data_dir+"OctetAsym_Offic.root",
-        "Total_Events_SuperSum",
-        "2010 final official supersum");
+    ucna.data.super_sum.snapshot();
 
     ucna.vector.super_sum.snapshot();
     //ucna.axial.super_sum.snapshot();
@@ -617,3 +601,26 @@ int main(int argc, char *argv[])
 
 
 
+    /*
+    /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
+    /// Load the files that already contain data asymmetry histogram.
+    ucna.data.asymmetry.fill(
+        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
+        "hAsym_Corrected_C",
+        "2010 final official asymmetry");
+    /// Load the files that already contain data super histogram.
+    ucna.data.super_sum.fill(
+        data_dir+"OctetAsym_Offic.root",
+        "Total_Events_SuperSum",
+        "2010 final official supersum");
+    /// Load Monte Carlo simulated Standard Model events
+    ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_7.root",
+               "SimAnalyzed",
+               "Monte Carlo Standard Model beta spectrum");
+    /// Load Monte Carlo simulated Fierz events
+    ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_7.root",
+                  "SimAnalyzed",
+                  "Monte Carlo Fierz beta spectrum");
+    //fit(ucna);
+    //display(ucna);
+    */

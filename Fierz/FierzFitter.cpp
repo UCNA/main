@@ -488,10 +488,10 @@ void UCNAFierzFitter::display(TString &plots_base) {
     canvas.SaveAs(plots_base+"data_fit_supersum.pdf");
 
     /* /// Output for gnuplot
-	//save_data(plots_base+"super-sum-data.dat", data.super_sum, 1, 1000);
-	//save_data(plots_base+"super-sum-mc.dat", sm.super_sum, 1, 1000);
-	//save_data(plots_base+"fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
-	//save_data(plots_base+"fierz-fit.dat", fierz_fit_histogram, 1, 1); */
+	//save(plots_base+"super-sum-data.dat", data.super_sum, 1, 1000);
+	//save(plots_base+"super-sum-mc.dat", sm.super_sum, 1, 1000);
+	//save(plots_base+"fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
+	//save(plots_base+"fierz-fit.dat", fierz_fit_histogram, 1, 1); */
 }
 
 
@@ -646,7 +646,7 @@ void UCNAhistogram::draw(TString name, TString title,
 /**
  *
  */
-void UCNAhistogram::save_data(TString filename, double ax = 1, double ay = 1)
+void UCNAhistogram::save(TString filename, double ax = 1, double ay = 1)
 {
     ofstream ofs;
 	ofs.open(filename);
@@ -664,10 +664,10 @@ void UCNAhistogram::save_data(TString filename, double ax = 1, double ay = 1)
 
 void UCNAFierzFitter::save(TString filename)
 {
-    vector.super_sum.save_data(filename+"-vector.dat");
-    fierz.super_sum.save_data(filename+"-fierz.dat");
-    data.super_sum.save_data(filename+"-data.dat");
-    fit.super_sum.save_data(filename+"-fit.dat");
+    vector.super_sum.save(filename+"-vector.dat");
+    fierz.super_sum.save(filename+"-fierz.dat");
+    data.super_sum.save(filename+"-data.dat");
+    fit.super_sum.save(filename+"-fit.dat");
 }
 
 
