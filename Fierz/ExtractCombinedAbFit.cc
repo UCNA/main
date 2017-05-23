@@ -391,12 +391,10 @@ int main(int argc, char *argv[])
     //TApplication app("Extract Combined A+b Fitter", &argc, argv);
     srand( time(NULL) );    /// set this to make random or repeatable
 
+    //UCNAFierzFitter ucna[TYPES][MAXRUNS];
     UCNAFierzFitter ucna("monte_carlo", "Monte Carlo UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-    UCNAFierzFitter fake("fake", "Fake", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-    UCNAFierzFitter real("real", "2010 Data", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-
-    /// LOAD 2010 UCNA DATA
-
+    //UCNAFierzFitter fake("fake", "Fake", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+    //UCNAFierzFitter real("real", "2010 Data", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 
 
     /// Find file paths from environment
@@ -407,13 +405,13 @@ int main(int argc, char *argv[])
 
     /// Default filenames.
     TString ucna_filebase = "";
-    TString fake_filebase = "";
+    //TString fake_filebase = "";
     TString plot_filebase = plots_dir;
     TString type_name[] = {"Type 0", "Type 1", "Type 2", "Type 3", "All"};
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
         if (argc > 1) {
-            if (argv[1] == "2010" or argv[1] == "2011")
-            {
+            int arg = 1;
+            if (argv[1] == "2010" or argv[1] == "2011") {
                 TString year = argv[1];
 
                 /// loops through types
@@ -425,7 +423,7 @@ int main(int argc, char *argv[])
                     ucna.data.super_sum.fill(
                         data_dir+"OctetAsym_Offic.root",
                         "SuperSum_"+type,
-                        year+" final official supersum - "+type;
+                        year+" final official supersum - "+type);
                     ucna.data.super_sum.save(plots_dir+year+"_data_supersum_"+TString(type).ToLower()+".dat");
                     //ucna.back.super_sum.fill(
                     //    data_dir+"OctetAsym_Offic.root",
@@ -433,17 +431,18 @@ int main(int argc, char *argv[])
                     //    year+" final official supersum");
                 }
             }
-            else {
+            for (int arg=2; arg<=argc; arg++) {
                 ucna_filebase = mc_dir+"SimAnalyzed_Beta_";
                 for (int type=0; type<=4; type++) {
-                    ucna.fill(ucna_filebase+argv[1]+".root",
-                              "", //ucna_filebase+"Axial_"+argv[1]+".root",
-                              ucna_filebase+"Fierz_"+argv[1]+".root",
+                    cout<< " Loading Monte Carlo files - "+type+".\n";
+                    ucna.fill(ucna_filebase+argv[arg]+".root",
+                              "", //ucna_filebase+"Axial_"+argv[arg]+".root",
+                              ucna_filebase+"Fierz_"+argv[arg]+".root",
                               0, 99, "SimAnalyzed", type);
-                    //ucna.fill(ucna_filebase+"[VF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
-                    //ucna.fill(ucna_filebase+"[VAF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
-                    //ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[1]+".root", 1, 3, "SimAnalyzed");
-                    ucna.save(plots_dir+"monte_carlo");
+                    //ucna.fill(ucna_filebase+"[VF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
+                    //ucna.fill(ucna_filebase+"[VAF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
+                    //ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
+                    ucna.save(plots_dir+"monte_carlo_"+argc[arg]+"/");
                 }
             }
         }
