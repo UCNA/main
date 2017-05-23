@@ -84,7 +84,7 @@ TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/";
 
 /// path to Monte Carlo files
 TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta/";
-TString mc_sys_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_both_twiddled/";
+TString mc_sys_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta/";
 
 /// path to save output plots
 //TString plots_dir = "/home/hickerson/Dropbox/Root/";
@@ -192,7 +192,7 @@ TF1* fit(UCNAFierzFitter &ff) {
     double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
   
     /// Set up reasonable guesses 
-    double A = -0.12;
+    //double A = -0.12;
     double b = 0;
     //double N = fit_entries;
     //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
@@ -397,54 +397,57 @@ int main(int argc, char *argv[])
 
     /// LOAD 2010 UCNA DATA
 
-    /// Load the files that already contain data super histogram.
-    /*
-    bool use_real_data = false;
-    if (use_real_data) {
-        for (int side=EAST; side<=WEST; side++) {
-            for (int afp=EAST; afp<=WEST; afp++) {
-                TString s = side? "W":"E", a = afp? "On":"Off";
-                TString title = "2010 final official "+s+" afp "+a;
-                TString name = "hTotalEvents_"+s+"_"+a+";1";
-                int entries = real.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
-                if (entries) {
-                    cout<<"Status: Number of entries in "<<(side? "west":"east")
-                        <<" side with afp "<<a<<" is "<<entries<<".\n";
-                }
-                else
-                    cout<<"Error: found no events in "<<title<<".\n";
-            }
-        }
-    }
-    */
 
 
     /// Find file paths from environment
-    //if (getenv("SIM_PROC_MC_DIR"))
-    //    mc_dir = getenv("SIM_PROC_MC_DIR");
-    if (getenv("SIM_MC_DIR"))
-        mc_dir = getenv("SIM_MC_DIR");
-    //if (getenv("SIM_PROC_SYS_DIR"))
-    //    mc_sys_dir = getenv("SIM_PROC_SYS_DIR");
-    if (getenv("SIM_PROC_DIR"))
-        mc_sys_dir = getenv("SIM_PROC_DIR");
+    if (getenv("UCNA_MONTE_CARLO_DIR"))
+        mc_dir = getenv("UCNA_MONTE_CARLO_DIR");
+    if (getenv("UCNA_SYSTEMATICS_DIR"))
+        mc_sys_dir = getenv("UCNA_SYSTEMATICS_DIR");
 
     /// Default filenames.
     TString ucna_filebase = "";
     TString fake_filebase = "";
     TString plot_filebase = plots_dir;
+    TString type_name[] = {"Type 0", "Type 1", "Type 2", "Type 3", "All"};
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
         if (argc > 1) {
-            ucna_filebase = mc_dir+"SimAnalyzed_Beta_";
-            ucna.fill(ucna_filebase+argv[1]+".root",
-                      "", //ucna_filebase+"Axial_"+argv[1]+".root",
-                      ucna_filebase+"Fierz_"+argv[1]+".root",
-                      1, 99, "SimAnalyzed");
-            //ucna.fill(ucna_filebase+"[VF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
-            //ucna.fill(ucna_filebase+"[VAF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
-            //ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[1]+".root", 1, 3, "SimAnalyzed");
-            ucna.save(plots_dir+"monte_carlo");
+            if (argv[1] == "2010" or argv[1] == "2011")
+            {
+                TString year = argv[1];
+
+                /// loops through types
+                for (int i=0; i<=4; i++) {
+                    TString type = type_name[i];
+
+                    /// Load the files that already contain data super sum histograms.
+                    cout<< " Loading data files from "+year+" UCNA data - "+type+".\n";
+                    ucna.data.super_sum.fill(
+                        data_dir+"OctetAsym_Offic.root",
+                        "SuperSum_"+type,
+                        year+" final official supersum - "+type;
+                    ucna.data.super_sum.save(plots_dir+year+"_data_supersum_"+TString(type).ToLower()+".dat");
+                    //ucna.back.super_sum.fill(
+                    //    data_dir+"OctetAsym_Offic.root",
+                    //    "Total_Events_SuperSum",
+                    //    year+" final official supersum");
+                }
+            }
+            else {
+                ucna_filebase = mc_dir+"SimAnalyzed_Beta_";
+                for (int type=0; type<=4; type++) {
+                    ucna.fill(ucna_filebase+argv[1]+".root",
+                              "", //ucna_filebase+"Axial_"+argv[1]+".root",
+                              ucna_filebase+"Fierz_"+argv[1]+".root",
+                              0, 99, "SimAnalyzed", type);
+                    //ucna.fill(ucna_filebase+"[VF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
+                    //ucna.fill(ucna_filebase+"[VAF]"+argv[1]+".root", 1, 3, "SimAnalyzed");
+                    //ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[1]+".root", 1, 3, "SimAnalyzed");
+                    ucna.save(plots_dir+"monte_carlo");
+                }
+            }
         }
+        /*
         if (argc > 2) {
             fake_filebase = mc_dir+"SimAnalyzed_Beta_";
             fake.fill(ucna_filebase+argv[2]+".root", "",
@@ -456,7 +459,7 @@ int main(int argc, char *argv[])
             cout<<"Usage: "<<argv[0]<<" <file number | twiddled | base> [<file number | twiddled-n>]\n";
             exit(1);
         }
-        /* if (argc > 4)
+        if (argc > 4)
             cout<<"Only 3 args is supported right now.\n";
             cout<<"Usage: "<<argv[0]<<" <ucna file number | base> <fake file number | twiddled-n> <output plot dir>\n";
             exit(1);
@@ -479,23 +482,6 @@ int main(int argc, char *argv[])
     }
 
     if(fake_filebase == "") {
-        /// Load the files that already contain data super histogram.
-        ucna.data.super_sum.fill(
-            data_dir+"OctetAsym_Offic.root",
-            "SuperSum_Type_0",
-            "2010 final official supersum - Type 0");
-        ucna.data.super_sum.save(plots_dir+"2010_data_supersum_type_0.dat");
-        /*
-        ucna.data.super_sum.fill(
-            data_dir+"OctetAsym_Offic.root",
-            "Total_Events_SuperSum",
-            "2010 final official supersum");
-
-        ucna.back.super_sum.fill(
-            data_dir+"OctetAsym_Offic.root",
-            "Total_Events_SuperSum",
-            "2010 final official supersum");
-        */
         cout << "Nothing to compare to... Done.\n";
         exit(0);    /// TODO temp hack
     }
@@ -519,31 +505,25 @@ int main(int argc, char *argv[])
     double N = 1;
 
     /// generate fake signal curve from different simulated spectra
-    fake.compute_fit(A,b,N);
+    //fake.compute_fit(A,b,N);
     //ucna.data = fake.fit;
-    ucna.data.super_sum.snapshot();
+    //fake.vector.super_sum.snapshot();
+    //fake.axial.super_sum.snapshot();
+    //fake.fierz.super_sum.snapshot();
 
+    /// Take a look at the state of the fits
     ucna.data.super_sum.snapshot();
-
     ucna.vector.super_sum.snapshot();
     //ucna.axial.super_sum.snapshot();
     ucna.fierz.super_sum.snapshot();
 
-    fake.vector.super_sum.snapshot();
-    //fake.axial.super_sum.snapshot();
-    fake.fierz.super_sum.snapshot();
-
-    //real.vector.super_sum.snapshot();
-    //real.axial.super_sum.snapshot();
-    //real.fierz.super_sum.snapshot();
-
+    /// fitting the data using the Monte Carlo spectra
     TF1* fit_func = fit(ucna);
     if (not fit_func) {
         cout<<" Error: No fitting function returned.\n";
         exit(1);
     }
-
-    ucna.data.super_sum.snapshot();
+    cout<<" Successfully fit the Monte Carlo to the data.\n";
     ucna.fit.super_sum.snapshot();
     ucna.display(plot_filebase);
 
@@ -623,4 +603,25 @@ int main(int argc, char *argv[])
                   "Monte Carlo Fierz beta spectrum");
     //fit(ucna);
     //display(ucna);
+    */
+
+    /*
+    /// Load the files that already contain data super histogram.
+    bool use_real_data = false;
+    if (use_real_data) {
+        for (int side=EAST; side<=WEST; side++) {
+            for (int afp=EAST; afp<=WEST; afp++) {
+                TString s = side? "W":"E", a = afp? "On":"Off";
+                TString title = "2010 final official "+s+" afp "+a;
+                TString name = "hTotalEvents_"+s+"_"+a+";1";
+                int entries = real.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
+                if (entries) {
+                    cout<<"Status: Number of entries in "<<(side? "west":"east")
+                        <<" side with afp "<<a<<" is "<<entries<<".\n";
+                }
+                else
+                    cout<<"Error: found no events in "<<title<<".\n";
+            }
+        }
+    }
     */

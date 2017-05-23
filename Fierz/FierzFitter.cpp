@@ -646,7 +646,7 @@ void UCNAhistogram::draw(TString name, TString title,
 /**
  *
  */
-void UCNAhistogram::save(TString filename, double ax = 1, double ay = 1)
+void UCNAhistogram::save(TString filename, double ax, double ay)
 {
     ofstream ofs;
 	ofs.open(filename);
@@ -861,7 +861,7 @@ int UCNAmodel::fill(TChain *chain, double flip)
         double cos = p[2]/Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
         assert(cos = p[2]);
         //bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
-        double E = energy + m_e;        /// relativistic energy
+        //double E = energy + m_e;        /// relativistic energy
         //double x = m_e/E;
         bool spin = (afp < 0)? EAST : WEST;
         Nspin[spin]++;
@@ -886,13 +886,13 @@ int UCNAmodel::fill(TChain *chain, double flip)
         /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin 
             <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" 
             <<" cos: "<<cos<<" load: "<<load<<".\n";*/
-        if (type<4) 
+        if (type==0) 
             counts[side][spin]->Fill(energy, 1);
-            /*
+        /*
+        if (type<4) 
         if (type==2 or type==3)
             counts[side][spin]->Fill(energy, 1);
-        counts[side][spin]->Fill(energy, 1);
-        */
+        counts[side][spin]->Fill(energy, 1); */
         if (tntuple)
             tntuple->Fill(side, spin, energy);
 

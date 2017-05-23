@@ -102,11 +102,11 @@ struct UCNAhistogram : TH1D {
     int fill(TString filename, TString name, TString title);
     int fill(TString filename);
     void save(TString filename, TString name, TString title);
-    //void save(TString filename);
+    void save(TString filename) {save(filename,1,1);}
     void draw(TString name, TString title,
               TCanvas* canvas, TLegend* legend, 
               TString draw, int color, int marker);
-    void save(TString filename, double ax=1, double ay=1);
+    void save(TString filename, double ax, double ay);
     void snapshot(int every = 10);
 
     bool test_min();
