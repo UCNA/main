@@ -51,7 +51,9 @@ const double    muV         = mu_p - mu_n;          /// nucleon moment      (9)
 const double    Q           = 782.344;              /// end point KE        (30)
 const double    E0          = m_e + Q;              /// end point E         (30)
 const double    lambda      = -1.27590;             /// gA/gV               (450)
-const double    M           = 1 + 3*lambda*lambda;  /// matrix element
+const double    M_F         = 1;                    /// Fermi matrix element
+const double    M_GT        = 3*lambda*lambda;      /// Gamow-Teller matrix element
+const double    M_n         = M_F + M_GT;           /// neutron matrix element (was M)
 const double    I_0         = 1.63632;              /// 0th moment          (25)
 const double    I_1         = 1.07017;              /// 1st moment          (15)
 const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
@@ -102,11 +104,11 @@ struct UCNAhistogram : TH1D {
     int fill(TString filename, TString name, TString title);
     int fill(TString filename);
     void save(TString filename, TString name, TString title);
-    void save(TString filename) {save(filename,1,1);}
+    //void save(TString filename) {save(filename,1,1);}
     void draw(TString name, TString title,
               TCanvas* canvas, TLegend* legend, 
               TString draw, int color, int marker);
-    void save(TString filename, double ax, double ay);
+    void save(TString filename, double ax = 1, double ay = 1);
     void snapshot(int every = 10);
 
     bool test_min();
@@ -196,9 +198,11 @@ struct UCNAmodel {
     double asymmetry_chi2(double A, double b);
     //int fill(TString filename, TString name, TString title);
     int fill(TString pattern, int first, int last, 
-             TString name, TString title, double flip);
-    int fill(TString filename, TString name, TString title, double flip);
-    int fill(TChain *chain, double flip);
+             TString name, TString title, 
+             double flip = spin_ratio, int type = 0);
+    int fill(TString filename, TString name, TString title, 
+             double flip = spin_ratio, int type = 0);
+    int fill(TChain *chain, double flip = spin_ratio);
     void save(TString filename, TString name, TString title);
     void save(TString filename);
 
@@ -331,7 +335,8 @@ struct UCNAFierzFitter {
               // TODO TString axial_down_pattern, 
               TString fierz_pattern,
               int min, int max, /// TODO read filename pattern
-              TString name);    /// not sure if this is needed (or wanted) if the FF was constructed correctly
+              TString name, /// not sure if this is needed (or wanted) if the FF was constructed correctly
+              int type = 0);    
 
     void save(TString filename);
 

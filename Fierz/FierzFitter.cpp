@@ -405,11 +405,12 @@ void UCNAFierzFitter::fill(TString vector_pattern,
                            // TODO TString axial_down_pattern, 
                            TString fierz_pattern,
                            int min, int max, /// TODO read filename pattern
-                           TString name) 
-                           //double flip = spin_ratio) /// find a better way to pass this
+                           TString name,
+                           double flip,
+                           int type)
 {
     assert(spin_ratio > 0);
-    double flip = spin_ratio;
+    //double flip = spin_ratio;
 
     /// Fill Standard Model vector events.
     if (vector_pattern != "")
@@ -417,7 +418,8 @@ void UCNAFierzFitter::fill(TString vector_pattern,
             vector_pattern, 
             min, max,     /// TODO read from filename pattern
             name,
-            "Standard Model vector current", flip);
+            "Standard Model vector current", 
+            flip, type);
 
     /// Fill Standard Model axial-vector events
     /// 
@@ -431,7 +433,8 @@ void UCNAFierzFitter::fill(TString vector_pattern,
             axial_pattern,
             min, max,     /// TODO read from filename pattern
             name,
-            "Standard Model axial-vector current", flip);
+            "Standard Model axial-vector current", 
+            flip, type);
 
     /// Fill BSM Fierz events
     if (fierz_pattern != "")
@@ -439,7 +442,8 @@ void UCNAFierzFitter::fill(TString vector_pattern,
             fierz_pattern,
             min, max,     /// TODO read from filename pattern
             name,
-            "BSM Fierz current", flip);
+            "BSM Fierz current", 
+            flip, type);
 }
 
 
@@ -718,7 +722,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title) {
 
 
 int UCNAmodel::fill(TString pattern, int first, int last, 
-                    TString name, TString title, double flip)
+                    TString name, TString title, double flip, int type)
 {
     /*
     cout <<pattern.SubString("[",3)<<"\n";
@@ -761,7 +765,7 @@ int UCNAmodel::fill(TString pattern, int first, int last,
 }
 
 
-int UCNAmodel::fill(TString filename, TString name, TString title, double flip)
+int UCNAmodel::fill(TString filename, TString name, TString title, double flip, int type)
 {
     /// TODO check if filename is a pattern, and if so call chain version above
     if (filename.MaybeWildcard()) {
@@ -812,7 +816,7 @@ void UCNAmodel::SetAllBranches(TChain *chain)
     chain->SetBranchStatus("ScintPosAdjusted",true);
 }
 
-int UCNAmodel::fill(TChain *chain, double flip)
+int UCNAmodel::fill(TChain *chain, double flip, int type)
 {
     if (not chain) {
 		cout<<"Error: Null TChain pointer.\n";
@@ -825,7 +829,7 @@ int UCNAmodel::fill(TChain *chain, double flip)
 
 	//int Noff=0, Non=0;	/// events have been simulated after cuts
 	int Nspin[]={0,0};	    /// events have been simulated after cuts
-    int PID, side, type;
+    int PID, side, event_type;
     double energy;
     double mwpcPosW[3], mwpcPosE[3], p[3];
     //double mwpcPos[2][3], p[3]; 
@@ -833,7 +837,7 @@ int UCNAmodel::fill(TChain *chain, double flip)
 
     chain->SetBranchAddress("PID",&PID);
     chain->SetBranchAddress("side",&side);
-    chain->SetBranchAddress("type",&type);
+    chain->SetBranchAddress("type",&event_type);
     chain->SetBranchAddress("Erecon",&energy);
 	chain->SetBranchAddress("primMomentum",p); /// not momentum; normalized direction!
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
@@ -886,7 +890,7 @@ int UCNAmodel::fill(TChain *chain, double flip)
         /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin 
             <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" 
             <<" cos: "<<cos<<" load: "<<load<<".\n";*/
-        if (type==0) 
+        if (event_type==type) 
             counts[side][spin]->Fill(energy, 1);
         /*
         if (type<4) 
