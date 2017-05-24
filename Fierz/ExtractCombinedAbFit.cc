@@ -384,7 +384,6 @@ TF1* fit(UCNAFierzFitter &ff) {
 
 
 
-
 /// MAIN APPLICATION
 int main(int argc, char *argv[])
 {
