@@ -521,7 +521,7 @@ double UCNAFierzFitter::print_sizes() {
     cout<<"    Number of actual counts in data is "<<int(Nsim_data)<<".\n";
     cout<<"    Effective number of counts in full energy range is "<<int(Nall_data)<<".\n";
     cout<<"    Effective number of counts in fit energy range cut is "<<int(Nfit_data)<<".\n";
-    cout<<"    Efficiency of energy cut is "<<int(Nfit_data/Nall_data*1000)/10<<"%.\n";
+    cout<<"    Efficiency of energy cut is "<<int(Nfit_data/Nall_data*10000)/100<<"%.\n";
     cout<<"    Effective N "<<int(Neff*100)/100<<".\n";
     return Neff;
 }
