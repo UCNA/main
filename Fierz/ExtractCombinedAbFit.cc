@@ -165,38 +165,41 @@ TF1* fit(UCNAFierzFitter &ff) {
     //ff.compute_fit(&asymmetry_func);
     global_ff = 0;
 
+    /// Set up reasonable guesses 
+    double A = -0.12;
+    double b = 0;
+    double N = 1;
+
     double *p = asymmetry_func->GetParameters();
     if (FIT_TYPE=="AbN") {
         assert(nPar == 3);
-        double A=p[0], b=p[1], N=p[2];
-        ff.compute_fit(A,b,N);
+        A = p[0]; b = p[1]; N = p[2];
     }
     else if (FIT_TYPE=="bN") {
         assert(nPar == 2);
-        double b=p[0], N=p[1];
-        ff.compute_fit(-0.12,b,N);
+        b = p[0]; N = p[1];
     }
     else if (FIT_TYPE=="b") {
         assert(nPar == 1);
-        double b=p[0];
-        //ff.compute_fit(-0.12,b,1/(1+b*x_1));
-        ff.compute_fit(-0.12,b,1);
+        b = p[0];
+        //N = 1/(1+b*x_1));
     }
+
+    /// Compute a fit from the parameters
+    ff.compute_fit(A,b,N);
 
     /// Look up sizes
     double Nsim_data = ff.data.super_sum.GetEntries();
     double Nall_data = ff.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
     double Nfit_data = ff.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
     double Nfit_vector = ff.vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    //double Nfit_axial = ff.axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    // TODO double Nfit_axial = ff.axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    // TODO double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
   
-    /// Set up reasonable guesses 
-    double A = -0.12;
-    double b = 0;
     //double N = fit_entries;
     //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
-    double N = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
+    double Neff = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
+    N = Neff;
     //double N = Nfit_data + Nfit_vector;
     //double N = Nfit_data;
     double ex_cos = 0.5; //evaluate_expected_cos_theta(fit_min,fit_max);
@@ -498,6 +501,7 @@ int main(int argc, char *argv[])
         "hAsym_Corrected_C",
         "2010 final official asymmetry"); */
 
+    /*
     /// Pick fake values of asymmetry and Fierz terms
     double A = -0.12;
     double b = 0.00;
@@ -509,6 +513,7 @@ int main(int argc, char *argv[])
     //fake.vector.super_sum.snapshot();
     //fake.axial.super_sum.snapshot();
     //fake.fierz.super_sum.snapshot();
+    */
 
     /// Take a look at the state of the fits
     ucna.data.super_sum.snapshot();
