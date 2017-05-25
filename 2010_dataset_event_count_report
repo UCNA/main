@@ -1,0 +1,38 @@
+ LOADING REAL DATA FROM 2010 UCNA DATASET:
+ LOADING REAL EVENTS FROM 2010 UCNA DATASET - TYPE 0:
+    Number of entries in 2010 final official supersum - TYPE 0 is 19019634.
+    Full energy range is 0 - 800 keV.
+    Fit energy range cut is 150 - 630 keV.
+    Number of actual counts in data is 19019634.
+    Effective number of counts in full energy range is 81392477.
+    Effective number of counts in fit energy range cut is 69799588.
+    Efficiency of energy cut is 85%.
+    Effective N 0.
+ LOADING REAL EVENTS FROM 2010 UCNA DATASET - TYPE 1:
+    Number of entries in 2010 final official supersum - TYPE 1 is 398943.
+    Full energy range is 0 - 800 keV.
+    Fit energy range cut is 150 - 630 keV.
+    Number of actual counts in data is 398943.
+    Effective number of counts in full energy range is 1686004.
+    Effective number of counts in fit energy range cut is 1640400.
+    Efficiency of energy cut is 97%.
+    Effective N 0.
+ LOADING REAL EVENTS FROM 2010 UCNA DATASET - TYPE 2:
+    Number of entries in 2010 final official supersum - TYPE 2 is 111018.
+    Full energy range is 0 - 800 keV.
+    Fit energy range cut is 150 - 630 keV.
+    Number of actual counts in data is 111018.
+    Effective number of counts in full energy range is 492639.
+    Effective number of counts in fit energy range cut is 405947.
+    Efficiency of energy cut is 82%.
+    Effective N 0.
+ LOADING REAL EVENTS FROM 2010 UCNA DATASET - TYPE 3:
+    Number of entries in 2010 final official supersum - TYPE 3 is 210003.
+    Full energy range is 0 - 800 keV.
+    Fit energy range cut is 150 - 630 keV.
+    Number of actual counts in data is 210003.
+    Effective number of counts in full energy range is 942639.
+    Effective number of counts in fit energy range cut is 805342.
+    Efficiency of energy cut is 85%.
+    Effective N 0.
+Nothing to compare to... Done.
