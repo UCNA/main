@@ -135,6 +135,7 @@ struct UCNAmodel {
     int     bins;
     double  min, max;
     double  Neff;
+    double spin_ratio;
 
     TRandom2 rand;
 
@@ -199,10 +200,10 @@ struct UCNAmodel {
     //int fill(TString filename, TString name, TString title);
     int fill(TString pattern, int first, int last, 
              TString name, TString title, 
-             double flip = spin_ratio, int type = 0);
+             double flip = 0, int type = 0);
     int fill(TString filename, TString name, TString title, 
-             double flip = spin_ratio, int type = 0);
-    int fill(TChain *chain, double flip = spin_ratio);
+             double flip = 0, int type = 0);
+    int fill(TChain *chain, double flip = 0);
     void save(TString filename, TString name, TString title);
     void save(TString filename);
 
@@ -256,6 +257,8 @@ struct UCNAEvent {
     double MWPCPos;
     double time;
     double primMomentum;
+    double spin;
+    int type;
 };
 
 struct UCNAFierzFitter {
@@ -282,6 +285,7 @@ struct UCNAFierzFitter {
     unsigned nToSim = 5e7;			/// how many triggering events to simulate
     double spin_ratio = 1/1.68; 	/// afp off probability per neutron (0.68/1.68 for on)
     double fedutial_radius = 50;    /// radial cut in millimeters 
+    int type = 0;
     //double fidrad2;               /// mm^2 radial cut.
 
     /// set up free fit parameters with best guess

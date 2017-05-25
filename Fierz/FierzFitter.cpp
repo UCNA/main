@@ -409,8 +409,8 @@ void UCNAFierzFitter::fill(TString vector_pattern,
                            double flip,
                            int type)
 {
-    assert(spin_ratio > 0);
-    //double flip = spin_ratio;
+    if (flip == -1)
+        flip = spin_ratio;
 
     /// Fill Standard Model vector events.
     if (vector_pattern != "")
