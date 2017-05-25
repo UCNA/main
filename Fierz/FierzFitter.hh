@@ -25,7 +25,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <map>
+#include <limits>
+#include <iomanip>
 
 /// c includes
 #include <stdio.h>
@@ -273,6 +274,14 @@ struct UCNAFierzFitter {
     double fit_min;                 /// min kinetic energy for asymmetry fit
     double fit_max;                 /// max kinetic range for asymmetry fit
 
+    double Nsim_data;               /// = data.super_sum.GetEntries();
+    double Nall_data;               /// = data.super_sum.GetEffectiveEntries(KEmin, KEmax);
+    double Nfit_data;               /// = data.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    double Nfit_vector;             /// = vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    double Nfit_axial;              /// = axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    double Nfit_fierz;              /// = fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    double Neff;                    /// = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
+
     UCNAmodel data;                 /// Measured foreground data to fit.
     UCNAmodel back;                 /// Measured background data to remove.
 
@@ -400,6 +409,8 @@ struct UCNAFierzFitter {
     }
     */
     void display(TString &plots_dir);
+    double comupte_sizes();         /// compute effective size
+    double print_sizes();           /// Output the number of events for data, mcs and fits and with cut info.
 };
 
 

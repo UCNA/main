@@ -498,6 +498,34 @@ void UCNAFierzFitter::display(TString &plots_base) {
 	//save(plots_base+"fierz-fit.dat", fierz_fit_histogram, 1, 1); */
 }
 
+/// compute effective size
+double UCNAFierzFitter::comupte_sizes() {
+    Nsim_data = data.super_sum.GetEntries();
+    Nall_data = data.super_sum.GetEffectiveEntries(min, max);
+    Nfit_data = data.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    Nfit_vector = vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    // TODO Nfit_axial = axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    // TODO Nfit_fierz = fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
+    Neff = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
+    return Neff;
+}
+
+
+/// Output the number of events for data, mcs and fits and with cut info.
+double UCNAFierzFitter::print_sizes() {
+    cout<<setprecision(5);
+    cout<<" ENERGY RANGE:\n";
+    cout<<"    Full energy range is "<<min<<" - "<<max<<" keV.\n";
+    cout<<"    Fit energy range cut is "<<fit_min<<" - "<<fit_max<<" keV.\n";
+    cout<<"    Number of actual counts in data is "<<int(Nsim_data)<<".\n";
+    cout<<"    Effective number of counts in full energy range is "<<int(Nall_data)<<".\n";
+    cout<<"    Effective number of counts in fit energy range cut is "<<int(Nfit_data)<<".\n";
+    cout<<"    Efficiency of energy cut is "<<int(Nfit_data/Nall_data*1000)/10<<"%.\n";
+    cout<<"    Effective N "<<int(Neff*100)/100<<".\n";
+    return Neff;
+}
+
 
 
 /* XXX old formula method
