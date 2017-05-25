@@ -431,10 +431,11 @@ int main(int argc, char *argv[])
                     //ucna.back.super_sum.fill(
                     //    data_dir+"OctetAsym_Offic.root",
                     //    "Total_Events_SuperSum",
-                    //    year+" final official supersum");
+                    //    year+" final official supersum background");
                 }
+                arg++;
             }
-            for (int arg=2; arg<=argc; arg++) {
+            for (; arg<=argc; arg++) {
                 ucna_filebase = mc_dir+"SimAnalyzed_Beta_";
                 for (int type=0; type<=4; type++) {
                     cout<< " Loading Monte Carlo files - "<<type<<".\n";
