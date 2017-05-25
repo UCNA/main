@@ -418,10 +418,11 @@ int main(int argc, char *argv[])
             int arg = 1;
             TString year(argv[arg]);
             if (year == "2010" or year == "2011") {
+                cout<<" LOADING REAL DATA FROM "<<year<<" UCNA DATASET:\n";
                 /// loops through types
                 for (int i=0; i<=3; i++) {
                     /// Load the files that already contain data super sum histograms.
-                    cout<< " Loading real data from "<<year<<" UCNA data - "<<type_name[i]<<".\n";
+                    cout<< "    Loading real data from "<<year<<" UCNA data - "<<type_name[i]<<".\n";
                     ucna.data.super_sum.fill(
                         data_dir+"OctetAsym_Offic.root",
                         "SuperSum_"+type_upr[i],
@@ -440,7 +441,7 @@ int main(int argc, char *argv[])
                 ucna_filebase = mc_dir+"SimAnalyzed_Beta_";
                 for (int type=0; type<=3; type++) {
                     /// Load the files that already contain data super sum histograms.
-                    cout<< " Loading Monte Carlo files - "<<type_name[type]<<".\n";
+                    cout<< "    Loading Monte Carlo files - "<<type_name[type]<<".\n";
                     ucna.fill(ucna_filebase+argv[arg]+".root",
                               "", //ucna_filebase+"Axial_"+argv[arg]+".root",
                               ucna_filebase+"Fierz_"+argv[arg]+".root",
@@ -454,12 +455,6 @@ int main(int argc, char *argv[])
             }
         }
         /*
-        if (argc > 2) {
-            fake_filebase = mc_dir+"SimAnalyzed_Beta_";
-            fake.fill(ucna_filebase+argv[2]+".root", "",
-                      ucna_filebase+"Fierz_"+argv[2]+".root",
-                      1, 99, "SimAnalyzed");
-        }
         if (argc > 3) {
             cout<<"Only 2 args is supported right now.\n";
             cout<<"Usage: "<<argv[0]<<" <file number | twiddled | base> [<file number | twiddled-n>]\n";
@@ -470,11 +465,6 @@ int main(int argc, char *argv[])
             cout<<"Usage: "<<argv[0]<<" <ucna file number | base> <fake file number | twiddled-n> <output plot dir>\n";
             exit(1);
         }
-        if (argc > 5) {
-            ucna_vector_filename = mc_dir+argv[1]+".root";
-            ucna_fierz_filename = mc_dir+argv[2]+".root";
-            fake_vector_filename = mc_dir+argv[3]+".root";
-            fake_fierz_filename = mc_dir+argv[4]+".root";
         } */
         //cout<<"MC vector file: "<<ucna_vector_filename<<".\n";
         //cout<<"MC Fierz file: "<<ucna_fierz_filename<<".\n";
@@ -496,11 +486,7 @@ int main(int argc, char *argv[])
     /// Load Monte Carlo simulated Standard Model vector current as fake events
     /// Load Monte Carlo simulated Standard Model axial-vector current as fake events
     /// Load Monte Carlo simulated Fierz as fake events
-    /* fake.data.fill(
-        mc_dir+"SimAnalyzed_Beta_9.root",
-        "SimAnalyzed",
-        "Monte Carlo Standard Model beta spectrum", afp_ratio, A, b);
-    fake.data.asymmetry.fill(
+    /* fake.data.asymmetry.fill(
         data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
         "hAsym_Corrected_C",
         "2010 final official asymmetry"); */

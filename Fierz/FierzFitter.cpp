@@ -629,7 +629,7 @@ int UCNAhistogram::fill(TString filename,
     *(TH1D*)this = *histogram;
 
 	int entries = GetEntries();
-	cout<<"Number of entries in "<<title<<" is "<<entries<<".\n";
+	cout<<"    Number of entries in "<<title<<" is "<<entries<<".\n";
     return entries;
 }
 
