@@ -44,6 +44,9 @@ double fit_min = 150;             /// min kinetic energy for plots
 double fit_max = 630;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
+int file_number_start = 0;
+int file_number_stop = 3;//99;
+int file_number_batch = 1;//10;
 
 /// set up free fit parameters with best guess
 
@@ -398,9 +401,6 @@ int main(int argc, char *argv[])
 
     //UCNAFierzFitter ucna[TYPES][MAXRUNS];
     UCNAFierzFitter ucna("monte_carlo", "Monte Carlo UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-    //UCNAFierzFitter fake("fake", "Fake", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-    //UCNAFierzFitter real("real", "2010 Data", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-
 
     /// Find file paths from environment
     if (getenv("UCNA_MONTE_CARLO_DIR"))
@@ -430,9 +430,8 @@ int main(int argc, char *argv[])
                         data_dir+"OctetAsym_Offic.root",
                         "SuperSum_"+type_upr[i],
                         year+" final official supersum - "+type_name[i]);
-                    //type_str.ToLower();
                     ucna.data.super_sum.save(plots_dir+year+"_data_supersum_"+type_lwr[i]+".dat");
-                    //ucna.back.super_sum.fill(
+                    // TODO ucna.back.super_sum.fill(
                     //    data_dir+"OctetAsym_Offic.root",
                     //    "Total_Events_SuperSum",
                     //    year+" final official supersum background");
@@ -448,34 +447,23 @@ int main(int argc, char *argv[])
                     /// Load the files that already contain data super sum histograms.
                     cout<< "    Loading Monte Carlo files - "<<type_name[type]<<".\n";
                     ucna.fill(ucna_filebase+argv[arg]+".root",
-                              "", //ucna_filebase+"Axial_"+argv[arg]+".root",
+                              "", // TODO ucna_filebase+"Axial_"+argv[arg]+".root",
                               ucna_filebase+"Fierz_"+argv[arg]+".root",
-                              0, 99, "SimAnalyzed", type, spin_ratio);
-                    //ucna.fill(ucna_filebase+"[VF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
-                    //ucna.fill(ucna_filebase+"[VAF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
-                    //ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
+                              file_number_start, file_number_stop, 
+                              "SimAnalyzed", type, spin_ratio);
+                    // TODO ucna.fill(ucna_filebase+"[VF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
+                    // TODO ucna.fill(ucna_filebase+"[VAF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
+                    // TODO ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
                     ucna.save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
                 }
                 arg++;
             }
         }
-        /*
-        if (argc > 3) {
-            cout<<"Only 2 args is supported right now.\n";
-            cout<<"Usage: "<<argv[0]<<" <file number | twiddled | base> [<file number | twiddled-n>]\n";
+        else {
+            cout<<"Requires at least on argument.\n";
+            cout<<"Usage: "<<argv[0]<<" <file number | file pattern | year> [<file number | twiddled-n | file pattern>]\n";
             exit(1);
         }
-        if (argc > 4)
-            cout<<"Only 3 args is supported right now.\n";
-            cout<<"Usage: "<<argv[0]<<" <ucna file number | base> <fake file number | twiddled-n> <output plot dir>\n";
-            exit(1);
-        }
-        } */
-        //cout<<"MC vector file: "<<ucna_vector_filename<<".\n";
-        //cout<<"MC Fierz file: "<<ucna_fierz_filename<<".\n";
-        //cout<<"Fake vector file: "<<fake_vector_filename<<".\n";
-        //cout<<"Fake Fierz file: "<<fake_fierz_filename<<".\n";
-        //cout<<"Plot files: "<<plot_filebase<<".\n";
     }
     else {
         cout<<"Can run b or bN mode right now.\n";
@@ -496,19 +484,15 @@ int main(int argc, char *argv[])
         "hAsym_Corrected_C",
         "2010 final official asymmetry"); */
 
-    /*
+/*
     /// Pick fake values of asymmetry and Fierz terms
     double A = -0.12;
     double b = 0.00;
     double N = 1;
-
+*/
     /// generate fake signal curve from different simulated spectra
     //fake.compute_fit(A,b,N);
     //ucna.data = fake.fit;
-    //fake.vector.super_sum.snapshot();
-    //fake.axial.super_sum.snapshot();
-    //fake.fierz.super_sum.snapshot();
-    */
 
     /// Take a look at the state of the fits
     ucna.data.super_sum.snapshot();
