@@ -202,15 +202,16 @@ TF1* fit(UCNAFierzFitter &ff) {
     N = Neff;
     //double N = Nfit_data + Nfit_vector;
     //double N = Nfit_data;
-    double ex_cos = 0.5; //evaluate_expected_cos_theta(fit_min,fit_max);
-    double ec2 = ex_cos*ex_cos; //evaluate_expected_cos_theta(fit_min,fit_max);
+    N = ff.comupte_sizes();
 
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
+    cout<<" NUMBER OF EVENTS WITH ENERGY RANGE CUTS:\n";
+    ff.print_sizes();
 
     /// Output the data and cut info.
     cout<<setprecision(5);
-    cout<<" ENERGY RANGE:\n";
+    cout<<" NUMBER OF EVENTS WITH ENERGY RANGE CUTS:\n";
     cout<<"    Full energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
     cout<<"    Fit energy range cut is "<<fit_min<<" - "<<fit_max<<" keV.\n";
     cout<<"    Number of actual counts in data is "<<int(Nsim_data)<<".\n";
@@ -220,6 +221,8 @@ TF1* fit(UCNAFierzFitter &ff) {
     cout<<"    Effective N "<<int(N*100)/100<<".\n";
     
     /// Set all expectation values for this range.
+    double ex_cos = 0.5; // TODO evaluate_expected_cos_theta(fit_min,fit_max);
+    double ec2 = ex_cos*ex_cos; // TODO evaluate_expected_cos_theta(fit_min,fit_max);
     const int nSpec = 4;
     TMatrixD ex(nSpec,nSpec);
     TString colNames[nSpec], rowNames[nSpec];
@@ -409,7 +412,7 @@ int main(int argc, char *argv[])
     TString ucna_filebase = "";
     //TString fake_filebase = "";
     TString plot_filebase = plots_dir;
-    TString type_name[] = {"Type 0", "Type 1", "Type 2", "Type 3", "All"};
+    TString type_name[] = {"TYPE 0", "TYPE 1", "TYPE 2", "TYPE 3", "All"};
     TString type_upr[] = {"Type_0", "Type_1", "Type_2", "Type_3", "All"};
     TString type_lwr[] = {"type_0", "type_1", "type_2", "type_3", "all"};
     double spin_ratio = 0.60;
@@ -422,7 +425,7 @@ int main(int argc, char *argv[])
                 /// loops through types
                 for (int i=0; i<=3; i++) {
                     /// Load the files that already contain data super sum histograms.
-                    cout<< "    Loading real data from "<<year<<" UCNA data - "<<type_name[i]<<".\n";
+                    cout<< " LOADING REAL EVENTS FROM "<<year<<" UCNA DATASET - "<<type_name[i]<<":\n";
                     ucna.data.super_sum.fill(
                         data_dir+"OctetAsym_Offic.root",
                         "SuperSum_"+type_upr[i],
@@ -434,6 +437,8 @@ int main(int argc, char *argv[])
                     //    "Total_Events_SuperSum",
                     //    year+" final official supersum background");
                     // TODO read and set spin_ratio to match data.
+                    ucna.comupte_sizes();
+                    ucna.print_sizes();
                 }
                 arg++;
             }

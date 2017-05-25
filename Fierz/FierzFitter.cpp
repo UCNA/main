@@ -515,7 +515,7 @@ double UCNAFierzFitter::comupte_sizes() {
 /// Output the number of events for data, mcs and fits and with cut info.
 double UCNAFierzFitter::print_sizes() {
     cout<<setprecision(5);
-    cout<<" ENERGY RANGE:\n";
+    //cout<<" NUMBER OF EVENTS WITH ENERGY RANGE CUTS:\n";
     cout<<"    Full energy range is "<<min<<" - "<<max<<" keV.\n";
     cout<<"    Fit energy range cut is "<<fit_min<<" - "<<fit_max<<" keV.\n";
     cout<<"    Number of actual counts in data is "<<int(Nsim_data)<<".\n";
