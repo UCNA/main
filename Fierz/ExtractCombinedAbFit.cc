@@ -415,14 +415,15 @@ int main(int argc, char *argv[])
 
                 /// loops through types
                 for (int type=0; type<=4; type++) {
-                    TString type_str = type_name[i];
+                    TString type_str = type_name[type];
 
                     /// Load the files that already contain data super sum histograms.
                     cout<< " Loading data files from "+year+" UCNA data - "+type_str+".\n";
+                    type_str.ToLower();
                     ucna.data.super_sum.fill(
                         data_dir+"OctetAsym_Offic.root",
                         "SuperSum_"+type_str,
-                        year+" final official supersum - "+type_str.ToLower());
+                        year+" final official supersum - "+type_str);
                     ucna.data.super_sum.save(plots_dir+year+"_data_supersum_"+type_str+".dat");
                     //ucna.back.super_sum.fill(
                     //    data_dir+"OctetAsym_Offic.root",
@@ -479,7 +480,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if(argc <3)
+    if(argc <3) {
         cout << "Nothing to compare to... Done.\n";
         exit(0);    /// TODO temp hack
     }
