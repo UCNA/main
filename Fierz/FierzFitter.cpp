@@ -406,8 +406,8 @@ void UCNAFierzFitter::fill(TString vector_pattern,
                            TString fierz_pattern,
                            int min, int max, /// TODO read filename pattern
                            TString name,
-                           double flip,
-                           int type)
+                           int type,
+                           double flip)
 {
     if (flip == -1)
         flip = spin_ratio;
@@ -419,7 +419,7 @@ void UCNAFierzFitter::fill(TString vector_pattern,
             min, max,     /// TODO read from filename pattern
             name,
             "Standard Model vector current", 
-            flip, type);
+            type, flip);
 
     /// Fill Standard Model axial-vector events
     /// 
@@ -434,7 +434,7 @@ void UCNAFierzFitter::fill(TString vector_pattern,
             min, max,     /// TODO read from filename pattern
             name,
             "Standard Model axial-vector current", 
-            flip, type);
+            type, flip);
 
     /// Fill BSM Fierz events
     if (fierz_pattern != "")
@@ -443,7 +443,7 @@ void UCNAFierzFitter::fill(TString vector_pattern,
             min, max,     /// TODO read from filename pattern
             name,
             "BSM Fierz current", 
-            flip, type);
+            type, flip);
 }
 
 
@@ -722,8 +722,10 @@ int UCNAmodel::fill(TString filename, TString name, TString title) {
 
 
 int UCNAmodel::fill(TString pattern, int first, int last, 
-                    TString name, TString title, double flip, int type)
+                    TString name, TString title, 
+                    int type, double flip)
 {
+    assert(flip > 0);
     /*
     cout <<pattern.SubString("[",3)<<"\n";
     cout <<pattern.SubString("[]",0)<<"\n";
@@ -753,7 +755,7 @@ int UCNAmodel::fill(TString pattern, int first, int last,
         added++;
     }
     if (added > 0 and chains) {
-        return fill(chains, flip);
+        return fill(chains, type, flip); 
     }
     else {
 		cout<<"Error: In file pattern "<<pattern<<":\n";
@@ -765,14 +767,15 @@ int UCNAmodel::fill(TString pattern, int first, int last,
 }
 
 
-int UCNAmodel::fill(TString filename, TString name, TString title, double flip, int type)
+int UCNAmodel::fill(TString filename, TString name, TString title, 
+                    int type, double flip)
 {
     /// TODO check if filename is a pattern, and if so call chain version above
     if (filename.MaybeWildcard()) {
         /// find * wild card 
         cout << filename.SubString("*",1);
         // TODO call chain version
-        //fill(filename,1,1,name,title,flip);
+        //fill(filename,1,1,name,title,type,flip);
     }
 	TFile* tfile = new TFile(filename);
 	if (tfile->IsZombie()) {
@@ -793,7 +796,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title, double flip, 
     }
     else {
         SetAllBranches(chain);
-        int Nsim = fill(chain, flip);
+        int Nsim = fill(chain, type, flip);
         if (Nsim <= 0) {
             cout<<"Error: No events were filled.\n";
             cout<<"Aborting...\n";
@@ -816,8 +819,10 @@ void UCNAmodel::SetAllBranches(TChain *chain)
     chain->SetBranchStatus("ScintPosAdjusted",true);
 }
 
-int UCNAmodel::fill(TChain *chain, double flip, int type)
+int UCNAmodel::fill(TChain *chain, int type, double flip)
 {
+    assert(flip > 0);
+
     if (not chain) {
 		cout<<"Error: Null TChain pointer.\n";
     }
@@ -908,7 +913,7 @@ int UCNAmodel::fill(TChain *chain, double flip, int type)
     }    
      
     int Nsim = Nspin[0] + Nspin[1];
-	cout<<"Total number of Monte Carlo entries:\n";
+	cout<<"Total number of entries in "<<name<<":\n";
 	cout<<"      Entries without cuts:      "<<int(Nevents)<<endl;
 	cout<<"      Entries with cuts:         "<<Nsim<<endl;
 	cout<<"      Efficiencies of cuts:      "<<(100.0*Nsim)/double(Nevents)<<"%\n";

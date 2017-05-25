@@ -192,7 +192,7 @@ TF1* fit(UCNAFierzFitter &ff) {
     double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
   
     /// Set up reasonable guesses 
-    //double A = -0.12;
+    double A = -0.12;
     double b = 0;
     //double N = fit_entries;
     //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
@@ -414,16 +414,16 @@ int main(int argc, char *argv[])
                 TString year = argv[1];
 
                 /// loops through types
-                for (int i=0; i<=4; i++) {
-                    TString type = type_name[i];
+                for (int type=0; type<=4; type++) {
+                    TString type_str = type_name[i];
 
                     /// Load the files that already contain data super sum histograms.
-                    cout<< " Loading data files from "+year+" UCNA data - "+type+".\n";
+                    cout<< " Loading data files from "+year+" UCNA data - "+type_str+".\n";
                     ucna.data.super_sum.fill(
                         data_dir+"OctetAsym_Offic.root",
-                        "SuperSum_"+type,
-                        year+" final official supersum - "+type);
-                    ucna.data.super_sum.save(plots_dir+year+"_data_supersum_"+TString(type).ToLower()+".dat");
+                        "SuperSum_"+type_str,
+                        year+" final official supersum - "+type_str.ToLower());
+                    ucna.data.super_sum.save(plots_dir+year+"_data_supersum_"+type_str+".dat");
                     //ucna.back.super_sum.fill(
                     //    data_dir+"OctetAsym_Offic.root",
                     //    "Total_Events_SuperSum",
@@ -433,7 +433,7 @@ int main(int argc, char *argv[])
             for (int arg=2; arg<=argc; arg++) {
                 ucna_filebase = mc_dir+"SimAnalyzed_Beta_";
                 for (int type=0; type<=4; type++) {
-                    cout<< " Loading Monte Carlo files - "+type+".\n";
+                    cout<< " Loading Monte Carlo files - "<<type<<".\n";
                     ucna.fill(ucna_filebase+argv[arg]+".root",
                               "", //ucna_filebase+"Axial_"+argv[arg]+".root",
                               ucna_filebase+"Fierz_"+argv[arg]+".root",
@@ -441,7 +441,7 @@ int main(int argc, char *argv[])
                     //ucna.fill(ucna_filebase+"[VF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
                     //ucna.fill(ucna_filebase+"[VAF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
                     //ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
-                    ucna.save(plots_dir+"monte_carlo_"+argc[arg]+"/");
+                    ucna.save(plots_dir+"monte_carlo_"+argv[arg]+"/");
                 }
             }
         }
@@ -479,7 +479,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if(fake_filebase == "") {
+    if(argc <3)
         cout << "Nothing to compare to... Done.\n";
         exit(0);    /// TODO temp hack
     }
