@@ -410,44 +410,47 @@ int main(int argc, char *argv[])
     //TString fake_filebase = "";
     TString plot_filebase = plots_dir;
     TString type_name[] = {"Type 0", "Type 1", "Type 2", "Type 3", "All"};
+    TString type_upr[] = {"Type_0", "Type_1", "Type_2", "Type_3", "All"};
+    TString type_lwr[] = {"type_0", "type_1", "type_2", "type_3", "all"};
+    double spin_ratio = 0.60;
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
         if (argc > 1) {
             int arg = 1;
-            if (argv[1] == "2010" or argv[1] == "2011") {
-                TString year = argv[1];
-
+            TString year(argv[arg]);
+            if (year == "2010" or year == "2011") {
                 /// loops through types
-                for (int type=0; type<=4; type++) {
-                    TString type_str = type_name[type];
-
+                for (int i=0; i<=3; i++) {
                     /// Load the files that already contain data super sum histograms.
-                    cout<< " Loading data files from "+year+" UCNA data - "+type_str+".\n";
-                    type_str.ToLower();
+                    cout<< " Loading real data from "<<year<<" UCNA data - "<<type_name[i]<<".\n";
                     ucna.data.super_sum.fill(
                         data_dir+"OctetAsym_Offic.root",
-                        "SuperSum_"+type_str,
-                        year+" final official supersum - "+type_str);
-                    ucna.data.super_sum.save(plots_dir+year+"_data_supersum_"+type_str+".dat");
+                        "SuperSum_"+type_upr[i],
+                        year+" final official supersum - "+type_name[i]);
+                    //type_str.ToLower();
+                    ucna.data.super_sum.save(plots_dir+year+"_data_supersum_"+type_lwr[i]+".dat");
                     //ucna.back.super_sum.fill(
                     //    data_dir+"OctetAsym_Offic.root",
                     //    "Total_Events_SuperSum",
                     //    year+" final official supersum background");
+                    // TODO read and set spin_ratio to match data.
                 }
                 arg++;
             }
-            for (; arg<=argc; arg++) {
+            while (arg <= argc) {
                 ucna_filebase = mc_dir+"SimAnalyzed_Beta_";
-                for (int type=0; type<=4; type++) {
-                    cout<< " Loading Monte Carlo files - "<<type<<".\n";
+                for (int type=0; type<=3; type++) {
+                    /// Load the files that already contain data super sum histograms.
+                    cout<< " Loading Monte Carlo files - "<<type_name[type]<<".\n";
                     ucna.fill(ucna_filebase+argv[arg]+".root",
                               "", //ucna_filebase+"Axial_"+argv[arg]+".root",
                               ucna_filebase+"Fierz_"+argv[arg]+".root",
-                              0, 99, "SimAnalyzed", type);
+                              0, 99, "SimAnalyzed", type, spin_ratio);
                     //ucna.fill(ucna_filebase+"[VF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
                     //ucna.fill(ucna_filebase+"[VAF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
                     //ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
-                    ucna.save(plots_dir+"monte_carlo_"+argv[arg]+"/");
+                    ucna.save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
                 }
+                arg++;
             }
         }
         /*
