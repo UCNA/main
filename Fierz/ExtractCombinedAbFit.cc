@@ -436,7 +436,7 @@ int main(int argc, char *argv[])
                 }
                 arg++;
             }
-            while (arg <= argc) {
+            while (arg < argc) {
                 ucna_filebase = mc_dir+"SimAnalyzed_Beta_";
                 for (int type=0; type<=3; type++) {
                     /// Load the files that already contain data super sum histograms.
