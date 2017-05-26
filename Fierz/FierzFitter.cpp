@@ -519,10 +519,11 @@ double UCNAFierzFitter::print_sizes() {
     cout<<"    Full energy range is "<<min<<" - "<<max<<" keV.\n";
     cout<<"    Fit energy range cut is "<<fit_min<<" - "<<fit_max<<" keV.\n";
     cout<<"    Number of actual counts in data is "<<int(Nsim_data)<<".\n";
+    cout<<"    Entries full energy range is "<<int(Nsim_data)<<".\n";
     cout<<"    Effective number of counts in full energy range is "<<int(Nall_data)<<".\n";
     cout<<"    Effective number of counts in fit energy range cut is "<<int(Nfit_data)<<".\n";
     cout<<"    Efficiency of energy cut is "<<int(Nfit_data/Nall_data*10000)/100<<"%.\n";
-    cout<<"    Effective N "<<int(Neff*100)/100<<".\n";
+    //cout<<"    Effective N "<<int(Neff*100)/100<<".\n";
     return Neff;
 }
 
@@ -768,19 +769,22 @@ int UCNAmodel::fill(TString pattern, int first, int last,
         TString filename(pattern);
         TString number; number.Form("%d",i); 
         filename.ReplaceAll("*",number);
-        cout<<"Loading filename "<<filename<<" from pattern "<<pattern<<".\n";
+        cout<<"Loading filename "<<filename<<"\n"
+            <<"    from pattern "<<pattern<<".\n";
         TFile* tfile = new TFile(filename);
         if (tfile->IsZombie()) {
             cout<<"Error: Problem filling "<<title<<":\n";
-            cout<<"       File "<<filename<<" not found\n";
-            break;
+            cout<<"       File "<<filename<<" not found.\n";
+            cout<<"Skipping...\n";
         }
-        if (not chains) {
-            assert(added==0);
-            chains = new TChain(name, title);
+        else {
+            if (not chains) {
+                assert(added==0);
+                chains = new TChain(name, title);
+            }
+            chains->Add(filename);
+            added++;
         }
-        chains->Add(filename);  // may include * whildcard
-        added++;
     }
     if (added > 0 and chains) {
         return fill(chains, type, flip); 
@@ -788,7 +792,7 @@ int UCNAmodel::fill(TString pattern, int first, int last,
     else {
 		cout<<"Error: In file pattern "<<pattern<<":\n";
 		cout<<"       Cannot get "<<title<<":\n";
-		cout<<"       Cannot find any chain or tree named "<<name<<" in all files.\n";
+		cout<<"       Cannot find any chain or tree named "<<name<<" in any file with pattern "<<pattern<<".\n";
         cout<<"Aborting...\n";
         exit(1);
     }
@@ -809,6 +813,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
 	if (tfile->IsZombie()) {
 		cout<<"Error: Problem filling "<<title<<":\n";
 		cout<<"       File "<<filename<<" not found\n";
+        return 0;
         cout<<"Aborting...\n";
 		exit(1);
 	}
@@ -819,6 +824,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
 		cout<<"Error: In file "<<filename<<":\n";
 		cout<<"       Cannot get "<<title<<":\n";
 		cout<<"       Cannot find chain or tree named "<<name<<".\n";
+        return 0;
         cout<<"Aborting...\n";
         exit(1);
     }
@@ -827,6 +833,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         int Nsim = fill(chain, type, flip);
         if (Nsim <= 0) {
             cout<<"Error: No events were filled.\n";
+            return Nsim;
             cout<<"Aborting...\n";
             exit(1);
         }

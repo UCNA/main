@@ -203,10 +203,8 @@ TF1* fit(UCNAFierzFitter &ff) {
     //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
     double Neff = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
     N = Neff;
-    //double N = Nfit_data + Nfit_vector;
     //double N = Nfit_data;
     N = ff.comupte_sizes();
-
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
     cout<<" NUMBER OF EVENTS WITH ENERGY RANGE CUTS:\n";
@@ -220,8 +218,8 @@ TF1* fit(UCNAFierzFitter &ff) {
     cout<<"    Number of actual counts in data is "<<int(Nsim_data)<<".\n";
     cout<<"    Effective number of counts in full energy range is "<<int(Nall_data)<<".\n";
     cout<<"    Effective number of counts in fit energy range cut is "<<int(Nfit_data)<<".\n";
-    cout<<"    Efficiency of energy cut is "<<int(Nfit_data/Nall_data*1000)/10<<"%.\n";
-    cout<<"    Effective N "<<int(N*100)/100<<".\n";
+    cout<<"    Efficiency of energy cut is "<<int(1000*Nfit_data/Nall_data)/10<<"%.\n";
+    cout<<"    Effective N "<<int(100*N)/100<<".\n";
     
     /// Set all expectation values for this range.
     double ex_cos = 0.5; // TODO evaluate_expected_cos_theta(fit_min,fit_max);
@@ -267,8 +265,7 @@ TF1* fit(UCNAFierzFitter &ff) {
         }
     }
 
-    /*  
-    if (b_index > -1)
+    /* if (b_index > -1)
         est_cov_inv[0][0] = N*ex_cos*ex[2][0];
     if (nPar > 1) {
         est_cov_inv[1][0] = 
@@ -405,12 +402,17 @@ int main(int argc, char *argv[])
     /// Find file paths from environment
     if (getenv("UCNA_MONTE_CARLO_DIR"))
         mc_dir = getenv("UCNA_MONTE_CARLO_DIR");
+    else 
+        cout<<"Warning: Environmental variable UCNA_MONTE_CARLO_DIR is not set.\n"
+            <<"Using default "<<mc_dir<<" instead.\n";
     if (getenv("UCNA_SYSTEMATICS_DIR"))
         mc_sys_dir = getenv("UCNA_SYSTEMATICS_DIR");
+    else 
+        cout<<"Warning: Environmental variable UCNA_SYSTEMATICS_DIR is not set.\n"
+            <<"Using default "<<mc_sys_dir<<" instead.\n";
 
     /// Default filenames.
     TString ucna_filebase = "";
-    //TString fake_filebase = "";
     TString plot_filebase = plots_dir;
     TString type_name[] = {"TYPE 0", "TYPE 1", "TYPE 2", "TYPE 3", "All"};
     TString type_upr[] = {"Type_0", "Type_1", "Type_2", "Type_3", "All"};
@@ -461,7 +463,7 @@ int main(int argc, char *argv[])
         }
         else {
             cout<<"Requires at least on argument.\n";
-            cout<<"Usage: "<<argv[0]<<" <file number | file pattern | year> [<file number | twiddled-n | file pattern>]\n";
+            cout<<"Usage: "<<argv[0]<<" <filename | file pattern | year> [<filename | twiddled-n | file pattern>]\n";
             exit(1);
         }
     }
