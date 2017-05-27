@@ -528,7 +528,6 @@ double UCNAFierzFitter::print_sizes() {
 }
 
 
-
 /* XXX old formula method
 void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
 {
@@ -755,7 +754,7 @@ int UCNAmodel::fill(TString pattern, int first, int last,
                     int type, double flip)
 {
     assert(flip > 0);
-    /*
+    /* TODO add pattern matching for file numbers
     cout <<pattern.SubString("[",3)<<"\n";
     cout <<pattern.SubString("[]",0)<<"\n";
     //cout <<pattern.Contains("[7771234]")<<"\n";
@@ -768,22 +767,22 @@ int UCNAmodel::fill(TString pattern, int first, int last,
     for (int i = first; i <= last; i++) {
         TString filename(pattern);
         TString number; number.Form("%d",i); 
-        filename.ReplaceAll("*",number);
-        cout<<"Loading filename "<<filename<<"\n"
-            <<"    from pattern "<<pattern<<".\n";
+        filename.ReplaceAll("[*]",number);
         TFile* tfile = new TFile(filename);
-        if (tfile->IsZombie()) {
-            cout<<"Error: Problem filling "<<title<<":\n";
-            cout<<"       File "<<filename<<" not found.\n";
-            cout<<"Skipping...\n";
-        }
-        else {
+        if (not tfile->IsZombie()) {
+            cout<<"Loading filename "<<filename<<".\n";
             if (not chains) {
                 assert(added==0);
                 chains = new TChain(name, title);
             }
             chains->Add(filename);
             added++;
+        }
+        else {
+            cout<<"Error: Problem filling "<<title<<":\n";
+            cout<<"       File "<<filename<<" not found\n";
+            cout<<"       from "<<pattern<<".\n";
+            cout<<"Skipping...\n";
         }
     }
     if (added > 0 and chains) {
