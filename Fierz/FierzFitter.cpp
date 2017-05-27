@@ -766,7 +766,7 @@ int UCNAmodel::fill(TString pattern, int first, int last,
     int added = 0;
     for (int i = first; i <= last; i++) {
         TString filename(pattern);
-        TString number; number.Form("%d",i); 
+        TString number; number.Form("%04d",i); 
         filename.ReplaceAll("[*]",number);
         TFile* tfile = new TFile(filename);
         if (not tfile->IsZombie()) {

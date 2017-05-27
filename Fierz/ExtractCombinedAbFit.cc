@@ -83,19 +83,19 @@ int A_index=0, b_index=1, N_index=-1;
 #endif
 
 /// path to experiment data files
-TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"; 
+TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL"; 
 
 /// path to Monte Carlo files
-TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta/";
-TString mc_sys_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta/";
+TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta";
+TString mc_sys_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta";
 
 /// path to save output plots
-//TString plots_dir = "/home/hickerson/Dropbox/Root/";
-TString plots_dir = "/home/hickerson/Root/";
+//TString plots_dir = "/home/hickerson/Dropbox/Root";
+TString plots_dir = "/home/hickerson/Root";
 
 /// path to save output root structures 
-//TString root_output_dir = "/home/hickerson/Documents/";
-TString root_output_dir = "/home/hickerson/Root/";
+//TString root_output_dir = "/home/hickerson/Documents";
+TString root_output_dir = "/home/hickerson/Root";
 
 
 
@@ -318,7 +318,7 @@ TF1* fit(UCNAFierzFitter &ff) {
                 <<setw(cl+1)<<"error\n";
     for (int i=0; i<nPar; i++) {
         TString name = paramNames[i];
-        mc_dir+"SimAnalyzed_Beta_7.root",
+        mc_dir+"/SimAnalyzed_Beta_7.root",
         double value = asymmetry_func->GetParameter(i);
         double sigma = 1/Sqrt(est_cov_inv[i][i]);
         double error = 100*sigma/value;
@@ -413,7 +413,7 @@ int main(int argc, char *argv[])
 
     /// Default filenames.
     TString ucna_filebase = "";
-    TString plot_filebase = plots_dir;
+    TString plot_filebase = plots_dir + "/";
     TString type_name[] = {"TYPE 0", "TYPE 1", "TYPE 2", "TYPE 3", "All"};
     TString type_upr[] = {"Type_0", "Type_1", "Type_2", "Type_3", "All"};
     TString type_lwr[] = {"type_0", "type_1", "type_2", "type_3", "all"};
@@ -429,7 +429,7 @@ int main(int argc, char *argv[])
                     /// Load the files that already contain data super sum histograms.
                     cout<< " LOADING REAL EVENTS FROM "<<year<<" UCNA DATASET - "<<type_name[i]<<":\n";
                     ucna.data.super_sum.fill(
-                        data_dir+"OctetAsym_Offic.root",
+                        data_dir+"/OctetAsym_Offic.root",
                         "SuperSum_"+type_upr[i],
                         year+" final official supersum - "+type_name[i]);
                     ucna.data.super_sum.save(plots_dir+year+"_data_supersum_"+type_lwr[i]+".dat");
@@ -444,18 +444,18 @@ int main(int argc, char *argv[])
                 arg++;
             }
             while (arg < argc) {
-                ucna_filebase = mc_dir+"SimAnalyzed_Beta_";
+                ucna_filebase = mc_dir+"/SimAnalyzed-beta-";
                 for (int type=0; type<=3; type++) {
                     /// Load the files that already contain data super sum histograms.
                     cout<< "    Loading Monte Carlo files - "<<type_name[type]<<".\n";
-                    ucna.fill(ucna_filebase+argv[arg]+".root",
-                              "", // TODO ucna_filebase+"Axial_"+argv[arg]+".root",
-                              ucna_filebase+"Fierz_"+argv[arg]+".root",
+                    ucna.fill(ucna_filebase+"vector-"+argv[arg]+".root",
+                              "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
+                              ucna_filebase+"fierz-"+argv[arg]+".root",
                               file_number_start, file_number_stop, 
                               "SimAnalyzed", type, spin_ratio);
-                    // TODO ucna.fill(ucna_filebase+"[VF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
-                    // TODO ucna.fill(ucna_filebase+"[VAF]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
-                    // TODO ucna.fill(ucna_filebase+"[|Axial_|Fierz_]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
+                    // TODO ucna.fill(ucna_filebase+"[V|F]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
+                    // TODO ucna.fill(ucna_filebase+"[V|A|F]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
+                    // TODO ucna.fill(ucna_filebase+"[vector|axial|fierz]-"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
                     ucna.save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
                 }
                 arg++;
@@ -522,11 +522,7 @@ int main(int argc, char *argv[])
     //string time = put_time(&tm, "-%a-%b-%d-%H:%M:%S-%Y-");
     //filename+="report-"+(now->tm_year + 1900)+"-"
     //        +(now->tm_mon+1)+"-"+now->tm_mday+"-"+now->tm_hour+":"+now->tm_min;
-    string outfilename;
-    if (argc == 1)
-        outfilename = plots_dir+"report.dat";
-    else 
-        outfilename = plot_filebase;
+    string outfilename(plots_dir+"/report.dat");
     rofs.open(outfilename, std::fstream::app | std::fstream::out);
     cout << " FINAL REPORT\n";
     cout<<setw(cl)<<"chi^2"<<setw(cl)<<"ndf"<<setw(cl)<<"chi^2/ndf"<<setw(cl)<<"p(chi2,ndf)";
