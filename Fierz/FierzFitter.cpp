@@ -1470,12 +1470,13 @@ void UCNAhistogram::snapshot(int every)
     TString title = GetTitle();
     cout<<" HISTOGRAM SNAPSHOT:\n"
         <<"    Name: "<<name<<"   Title: "<<title<<"\n";
-    for (int bin = bin_min; bin < bin_max; bin += every) {
+    for (int bin = bin_min + every - 1; bin < bin_max; bin += every) {
         double KE = GetBinCenter(bin);
         double H = GetBinContent(bin);
         double sigmaH = GetBinError(bin);
         cout<<"     bin: "<<bin<<" KE: "<<KE<<" is "<<H<<"("<<sigmaH<<").\n";
     }
+#if 0
     cout<<"\n FULL HISTOGRAM:\n";
     for (int bin = bin_min; bin < bin_max; bin++) {
         double KE = GetBinCenter(bin);
@@ -1492,6 +1493,7 @@ void UCNAhistogram::snapshot(int every)
         cout<<"\t"<<sigmaH;
     }
     cout<<"\n";
+#endif
 }
 
 double UCNAmodel::compute_super_sum(int bin) {

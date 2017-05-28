@@ -313,7 +313,7 @@ struct UCNAFierzFitter {
         //sm(name+"_sm", title+" Standard Model Monte Carlo", bins, min, max),
         vector(name+"_vector", title+" Standard Model vector current", bins, min, max),
         axial(name+"_axial", title+" Standard Model axial-vector current", bins, min, max),
-        fierz(name+"_fierz", title+"BSM  Fierz current", bins, min, max),
+        fierz(name+"_fierz", title+"BSM Fierz current", bins, min, max),
         fit(name+"_fit", title+" fit", bins, min, max) 
     { assert(min < max); }
 
@@ -327,7 +327,7 @@ struct UCNAFierzFitter {
         back(name+"_back", title+" background", bins, min, max),
         vector(name+"_vector", title+" Standard Model vector current", bins, min, max),
         axial(name+"_axial", title+" Standard Model axial-vector vector current", bins, min, max),
-        fierz(name+"_fierz", title+" BSM Fierz vector current", bins, min, max),
+        fierz(name+"_fierz", title+" BSM Fierz current", bins, min, max),
         fit(name+"_fit", title+" fit", fit_bins, fit_min, fit_max),
         fedutial_radius(50)
     { assert(min < max); }

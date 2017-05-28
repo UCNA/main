@@ -17,6 +17,7 @@
 #include <TLeaf.h>
 #include <TString.h>
 
+
 /// C++ includes
 #include <iostream>
 #include <iomanip>
@@ -44,12 +45,11 @@ double fit_min = 150;             /// min kinetic energy for plots
 double fit_max = 630;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
-int file_number_start = 0;
+int file_number_start = 1;
 int file_number_stop = 3;//99;
 int file_number_batch = 1;//10;
 
 /// set up free fit parameters with best guess
-
 #if 0
 static TString FIT_TYPE = "AbN";
 static const int nPar = 3;
@@ -82,25 +82,28 @@ double paramInits[2] = {1, 0};
 int A_index=0, b_index=1, N_index=-1;
 #endif
 
+
+/// BASIC FILENAME LANDSCAPE
+
 /// path to experiment data files
 TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL"; 
 
 /// path to Monte Carlo files
 TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta";
 TString mc_sys_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta";
+TString mc_name = "SimAnalyzed";
+TString mc_filename_stem = "SimAnalyzed-beta-";
+TString mc_sys_filename_stem = "SimAnalyzed-beta-twittled-";
 
 /// path to save output plots
-//TString plots_dir = "/home/hickerson/Dropbox/Root";
 TString plots_dir = "/home/hickerson/Root";
 
 /// path to save output root structures 
-//TString root_output_dir = "/home/hickerson/Documents";
 TString root_output_dir = "/home/hickerson/Root";
 
 
 
 /// GLOBAL MODELS
-//ucna.fidcut2 = fedutial_cut*fedutial_cut;
 
 /// This needs to be static and global for MINUIT to work
 UCNAFierzFitter* global_ff = 0;
@@ -444,7 +447,7 @@ int main(int argc, char *argv[])
                 arg++;
             }
             while (arg < argc) {
-                ucna_filebase = mc_dir+"/SimAnalyzed-beta-";
+                ucna_filebase = mc_dir+"/"+mc_filename_stem;
                 for (int type=0; type<=3; type++) {
                     /// Load the files that already contain data super sum histograms.
                     cout<< "    Loading Monte Carlo files - "<<type_name[type]<<".\n";
@@ -452,10 +455,10 @@ int main(int argc, char *argv[])
                               "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
                               ucna_filebase+"fierz-"+argv[arg]+".root",
                               file_number_start, file_number_stop, 
-                              "SimAnalyzed", type, spin_ratio);
-                    // TODO ucna.fill(ucna_filebase+"[V|F]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
-                    // TODO ucna.fill(ucna_filebase+"[V|A|F]"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
-                    // TODO ucna.fill(ucna_filebase+"[vector|axial|fierz]-"+argv[arg]+".root", 1, 3, "SimAnalyzed", type);
+                              mc_name, type, spin_ratio);
+                    // TODO ucna.fill(ucna_filebase+"[V|F]"+argv[arg]+".root", 1, 3, mc_name, type);
+                    // TODO ucna.fill(ucna_filebase+"[V|A|F]"+argv[arg]+".root", 1, 3, mc_name, type);
+                    // TODO ucna.fill(ucna_filebase+"[vector|axial|fierz]-"+argv[arg]+".root", 1, 3, mc_name, type);
                     ucna.save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
                 }
                 arg++;
@@ -574,18 +577,7 @@ int main(int argc, char *argv[])
         data_dir+"OctetAsym_Offic.root",
         "Total_Events_SuperSum",
         "2010 final official supersum");
-    /// Load Monte Carlo simulated Standard Model events
-    ucna.sm.fill(mc_dir+"SimAnalyzed_Beta_7.root",
-               "SimAnalyzed",
-               "Monte Carlo Standard Model beta spectrum");
-    /// Load Monte Carlo simulated Fierz events
-    ucna.fierz.fill(mc_dir+"SimAnalyzed_Beta_fierz_7.root",
-                  "SimAnalyzed",
-                  "Monte Carlo Fierz beta spectrum");
-    //fit(ucna);
-    //display(ucna);
     */
-
     /*
     /// Load the files that already contain data super histogram.
     bool use_real_data = false;
