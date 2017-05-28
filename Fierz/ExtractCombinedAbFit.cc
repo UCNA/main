@@ -399,6 +399,8 @@ TF1* fit(UCNAFierzFitter &ff) {
 }
 
 
+#define TYPES 5
+#define MAXRUNS 1024
 
 /// MAIN APPLICATION
 int main(int argc, char *argv[])
@@ -433,6 +435,7 @@ int main(int argc, char *argv[])
     double spin_ratio = 0.60;
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
         if (argc > 1) {
+            int run = 0;
             int arg = 1;
             TString year(argv[arg]);
             if (year == "2010") {
@@ -441,19 +444,22 @@ int main(int argc, char *argv[])
                 for (int type=0; type<=3; type++) {
                     /// Load the files that already contain data super sum histograms.
                     cout<< " LOADING REAL EVENTS FROM "<<year<<" UCNA DATASET - "<<type_name[type]<<":\n";
-                    ucna.data.super_sum.fill(
+                    int run = 0;
+                    ucna[type][run] = new UCNAFierzFitter("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+                    ucna[type][run]->data.super_sum.fill(
                         data_dir+data_sub+data_filename,
                         "SuperSum_"+type_upr[type],
                         year+" final official supersum - "+type_name[type]);
-                    ucna.data.super_sum.save(plots_dir+"/"+year+"_data_supersum_"+type_lwr[type]+".dat");
-                    // TODO ucna.back.super_sum.fill(
+                    ucna[type][run]->data.super_sum.save(plots_dir+"/"+year+"_data_supersum_"+type_lwr[type]+".dat");
+                    // TODO ucna[type][run]->back.super_sum.fill(
                     //    data_dir+data_filename,
                     //    "Total_Events_SuperSum",
                     //    year+" final official supersum background");
                     // TODO read and set spin_ratio to match data.
-                    ucna.comupte_sizes();
-                    ucna.print_sizes();
+                    ucna[type][run]->comupte_sizes();
+                    ucna[type][run]->print_sizes();
                 }
+                run++;
                 arg++;
             }
             while (arg < argc) {
@@ -461,16 +467,21 @@ int main(int argc, char *argv[])
                 for (int type=0; type<=3; type++) {
                     /// Load the files that already contain data super sum histograms.
                     cout<< "    Loading Monte Carlo files - "<<type_name[type]<<".\n";
-                    ucna.fill(ucna_filebase+"vector-"+argv[arg]+".root",
-                              "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
-                              ucna_filebase+"fierz-"+argv[arg]+".root",
-                              file_number_start, file_number_stop, 
-                              mc_name+"_"+type_name[type], type, spin_ratio);
+                    //ucna[type][run] = new UCNAFierzFitter("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+                    ucna[type][run] = new UCNAFierzFitter(*ucna[type][0]);
+                    ucna[type][run]->fill(
+                        // TODO ucna_filebase+"%s-%04d.root",
+                        ucna_filebase+"vector-"+argv[arg]+".root",
+                        "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
+                        ucna_filebase+"fierz-"+argv[arg]+".root",
+                        file_number_start, file_number_stop, 
+                        mc_name+"_"+type_name[type], type, spin_ratio);
                     // TODO ucna.fill(ucna_filebase+"[V|F]"+argv[arg]+".root", 1, 3, mc_name, type);
                     // TODO ucna.fill(ucna_filebase+"[V|A|F]"+argv[arg]+".root", 1, 3, mc_name, type);
                     // TODO ucna.fill(ucna_filebase+"[vector|axial|fierz]-"+argv[arg]+".root", 1, 3, mc_name, type);
-                    ucna.save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
+                    ucna[type][run]->save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
                 }
+                run++;
                 arg++;
             }
         }
@@ -507,23 +518,25 @@ int main(int argc, char *argv[])
 */
     /// generate fake signal curve from different simulated spectra
     //fake.compute_fit(A,b,N);
-    //ucna.data = fake.fit;
+    //ucna[type][run]->data = fake.fit;
+    int type = 0;
+    int run = 0;
 
     /// Take a look at the state of the fits
-    ucna.data.super_sum.snapshot();
-    ucna.vector.super_sum.snapshot();
-    //ucna.axial.super_sum.snapshot();
-    ucna.fierz.super_sum.snapshot();
+    ucna[type][run]->data.super_sum.snapshot();
+    ucna[type][run]->vector.super_sum.snapshot();
+    //ucna[type][run]->axial.super_sum.snapshot();
+    ucna[type][run]->fierz.super_sum.snapshot();
 
     /// fitting the data using the Monte Carlo spectra
-    TF1* fit_func = fit(ucna);
+    TF1* fit_func = fit(*ucna[type][run]);
     if (not fit_func) {
         cout<<" Error: No fitting function returned.\n";
         exit(1);
     }
     cout<<" Successfully fit the Monte Carlo to the data.\n";
-    ucna.fit.super_sum.snapshot();
-    ucna.display(plot_filebase);
+    ucna[type][run]->fit.super_sum.snapshot();
+    ucna[type][run]->display(plot_filebase);
 
     /// extract most critical results from fit functions and report
     ofstream rofs;
