@@ -42,6 +42,7 @@ double KEmin = 0;                 /// min kinetic energy for plots
 double KEmax = 800;               /// max kinetic range for plots
 int    KEbins=(KEmax-KEmin)/10;   /// number of bins to use fit spectral plots
 double fit_min = 150;             /// min kinetic energy for plots
+//ucna.fidcut2 = fedutial_cut*fedutial_cut;
 double fit_max = 630;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
@@ -83,10 +84,12 @@ int A_index=0, b_index=1, N_index=-1;
 #endif
 
 
-/// BASIC FILENAME LANDSCAPE
+/// BASIC DEFAULT FILENAME LANDSCAPE
 
 /// path to experiment data files
-TString data_dir = "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL"; 
+TString data_dir = "/media/hickerson/boson/Data"; 
+TString data_sub = "/OctetAsym_Offic_2010_FINAL"; 
+TString data_filename = "/OctetAsym_Offic.root";
 
 /// path to Monte Carlo files
 TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta";
@@ -193,6 +196,7 @@ TF1* fit(UCNAFierzFitter &ff) {
 
     /// Compute a fit from the parameters
     ff.compute_fit(A,b,N);
+    /*
 
     /// Look up sizes
     double Nsim_data = ff.data.super_sum.GetEntries();
@@ -207,12 +211,14 @@ TF1* fit(UCNAFierzFitter &ff) {
     double Neff = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
     N = Neff;
     //double N = Nfit_data;
+    */
     N = ff.comupte_sizes();
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
     cout<<" NUMBER OF EVENTS WITH ENERGY RANGE CUTS:\n";
     ff.print_sizes();
-
+    
+    /*
     /// Output the data and cut info.
     cout<<setprecision(5);
     cout<<" NUMBER OF EVENTS WITH ENERGY RANGE CUTS:\n";
@@ -223,6 +229,7 @@ TF1* fit(UCNAFierzFitter &ff) {
     cout<<"    Effective number of counts in fit energy range cut is "<<int(Nfit_data)<<".\n";
     cout<<"    Efficiency of energy cut is "<<int(1000*Nfit_data/Nall_data)/10<<"%.\n";
     cout<<"    Effective N "<<int(100*N)/100<<".\n";
+    */
     
     /// Set all expectation values for this range.
     double ex_cos = 0.5; // TODO evaluate_expected_cos_theta(fit_min,fit_max);
@@ -399,10 +406,13 @@ int main(int argc, char *argv[])
     //TApplication app("Extract Combined A+b Fitter", &argc, argv);
     srand( time(NULL) );    /// set this to make random or repeatable
 
-    //UCNAFierzFitter ucna[TYPES][MAXRUNS];
-    UCNAFierzFitter ucna("monte_carlo", "Monte Carlo UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+    UCNAFierzFitter* ucna[TYPES][MAXRUNS];
+    //UCNAFierzFitter ucna("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 
     /// Find file paths from environment
+    if (getenv("UCNA_DATA_DIR"))
+        data_dir = getenv("UCNA_DATA_DIR");
+
     if (getenv("UCNA_MONTE_CARLO_DIR"))
         mc_dir = getenv("UCNA_MONTE_CARLO_DIR");
     else 
@@ -425,19 +435,19 @@ int main(int argc, char *argv[])
         if (argc > 1) {
             int arg = 1;
             TString year(argv[arg]);
-            if (year == "2010" or year == "2011") {
+            if (year == "2010") {
                 cout<<" LOADING REAL DATA FROM "<<year<<" UCNA DATASET:\n";
                 /// loops through types
-                for (int i=0; i<=3; i++) {
+                for (int type=0; type<=3; type++) {
                     /// Load the files that already contain data super sum histograms.
-                    cout<< " LOADING REAL EVENTS FROM "<<year<<" UCNA DATASET - "<<type_name[i]<<":\n";
+                    cout<< " LOADING REAL EVENTS FROM "<<year<<" UCNA DATASET - "<<type_name[type]<<":\n";
                     ucna.data.super_sum.fill(
-                        data_dir+"/OctetAsym_Offic.root",
-                        "SuperSum_"+type_upr[i],
-                        year+" final official supersum - "+type_name[i]);
-                    ucna.data.super_sum.save(plots_dir+year+"_data_supersum_"+type_lwr[i]+".dat");
+                        data_dir+data_sub+data_filename,
+                        "SuperSum_"+type_upr[type],
+                        year+" final official supersum - "+type_name[type]);
+                    ucna.data.super_sum.save(plots_dir+"/"+year+"_data_supersum_"+type_lwr[type]+".dat");
                     // TODO ucna.back.super_sum.fill(
-                    //    data_dir+"OctetAsym_Offic.root",
+                    //    data_dir+data_filename,
                     //    "Total_Events_SuperSum",
                     //    year+" final official supersum background");
                     // TODO read and set spin_ratio to match data.
@@ -455,7 +465,7 @@ int main(int argc, char *argv[])
                               "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
                               ucna_filebase+"fierz-"+argv[arg]+".root",
                               file_number_start, file_number_stop, 
-                              mc_name, type, spin_ratio);
+                              mc_name+"_"+type_name[type], type, spin_ratio);
                     // TODO ucna.fill(ucna_filebase+"[V|F]"+argv[arg]+".root", 1, 3, mc_name, type);
                     // TODO ucna.fill(ucna_filebase+"[V|A|F]"+argv[arg]+".root", 1, 3, mc_name, type);
                     // TODO ucna.fill(ucna_filebase+"[vector|axial|fierz]-"+argv[arg]+".root", 1, 3, mc_name, type);
@@ -564,17 +574,16 @@ int main(int argc, char *argv[])
 }
 
 
-
     /*
     /// LOAD PRECOMPUTED HISTOGRAMS AND OVERWRITE 
     /// Load the files that already contain data asymmetry histogram.
     ucna.data.asymmetry.fill(
-        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
+        data_dir_2010+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
         "hAsym_Corrected_C",
         "2010 final official asymmetry");
     /// Load the files that already contain data super histogram.
     ucna.data.super_sum.fill(
-        data_dir+"OctetAsym_Offic.root",
+        data_dir_2010+"OctetAsym_Offic.root",
         "Total_Events_SuperSum",
         "2010 final official supersum");
     */
@@ -587,7 +596,7 @@ int main(int argc, char *argv[])
                 TString s = side? "W":"E", a = afp? "On":"Off";
                 TString title = "2010 final official "+s+" afp "+a;
                 TString name = "hTotalEvents_"+s+"_"+a+";1";
-                int entries = real.data.counts[side][afp]->fill(data_dir+"OctetAsym_Offic.root", name, title);
+                int entries = real.data.counts[side][afp]->fill(data_dir_2010+"OctetAsym_Offic.root", name, title);
                 if (entries) {
                     cout<<"Status: Number of entries in "<<(side? "west":"east")
                         <<" side with afp "<<a<<" is "<<entries<<".\n";
