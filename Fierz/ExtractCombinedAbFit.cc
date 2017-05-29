@@ -154,7 +154,8 @@ void output_matrix(TString title, TMatrixD matrix)
 }
 
 /// FITTING 
-TF1* fit(UCNAFierzFitter &ff) {
+TF1* fit(UCNAFierzFitter *ff) {
+    assert(ff);
     /// Set up the fit functions parameters.
     TF1* asymmetry_func = new TF1("asymmetry_fit_func", &asymmetry_fit_func, fit_min, fit_max, nPar);
     asymmetry_func->SetParameters(paramInits);
@@ -167,10 +168,10 @@ TF1* fit(UCNAFierzFitter &ff) {
         supersum_func->SetParName(i, paramNames[i]);*/
 
     /// Actually do the combined fitting.
-    global_ff = &ff; /// TODO cannot be called in a member
+    global_ff = ff; /// TODO cannot be called in a member
     TMatrixD cov(nPar,nPar);
-    ff.combined_fit(cov, asymmetry_func, /*supersum_func,*/ &combined_chi2); /// TODO no member
-    //ff.compute_fit(&asymmetry_func);
+    ff->combined_fit(cov, asymmetry_func, /*supersum_func,*/ &combined_chi2); /// TODO no member
+    //ff->compute_fit(&asymmetry_func);
     global_ff = 0;
 
     /// Set up reasonable guesses 
@@ -194,16 +195,16 @@ TF1* fit(UCNAFierzFitter &ff) {
     }
 
     /// Compute a fit from the parameters
-    ff.compute_fit(A,b,N);
+    ff->compute_fit(A,b,N);
     /*
 
     /// Look up sizes
-    double Nsim_data = ff.data.super_sum.GetEntries();
-    double Nall_data = ff.data.super_sum.GetEffectiveEntries(KEmin, KEmax);
-    double Nfit_data = ff.data.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    double Nfit_vector = ff.vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    // TODO double Nfit_axial = ff.axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    // TODO double Nfit_fierz = ff.fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    double Nsim_data = ff->data.super_sum.GetEntries();
+    double Nall_data = ff->data.super_sum.GetEffectiveEntries(KEmin, KEmax);
+    double Nfit_data = ff->data.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    double Nfit_vector = ff->vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    // TODO double Nfit_axial = ff->axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
+    // TODO double Nfit_fierz = ff->fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
   
     //double N = fit_entries;
     //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
@@ -211,11 +212,11 @@ TF1* fit(UCNAFierzFitter &ff) {
     N = Neff;
     //double N = Nfit_data;
     */
-    N = ff.comupte_sizes();
+    N = ff->comupte_sizes();
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
     cout<<" NUMBER OF EVENTS WITH ENERGY RANGE CUTS:\n";
-    ff.print_sizes();
+    ff->print_sizes();
     
     /*
     /// Output the data and cut info.
@@ -399,7 +400,7 @@ TF1* fit(UCNAFierzFitter &ff) {
 
 
 #define TYPES 5
-#define MAXRUNS 1024
+#define MAXRUNS 512
 
 /// MAIN APPLICATION
 int main(int argc, char *argv[])
@@ -434,90 +435,84 @@ int main(int argc, char *argv[])
     double spin_ratio = 0.60;
 
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
-        if (argc < 1) {
-            cout<<"Requires at least on argument.\n";
-            cout<<"Usage: "<<argv[0]<<" <filename | file pattern | dataset> [<filename | twiddled-n | file pattern>]\n";
-            exit(1);
-        }
-        TString dataset = argv[1];
-        int arg = 2, run = 0;
-        while (arg < argc) {
-            cout<<"arg "<<arg<<" is "<<argv[arg]<<"\n";
-            /// loops through types
-            for (int type=0; type<=3; type++) {
-            //for (TString typ : {"Type 0", "Type 1", "Type 2", "Type 3", "All"}) {
-                ucna[type][run] = new UCNAFierzFitter(
-                            "ucna_"+type_lwr[type]+"_run_"+to_string(run), 
-                            "UCNA "+type_name[type]+" Run "+to_string(run), 
-                            KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-
-                /// Load the files that already contain data super sum histograms.
-                TString file_stem = mc_dir+"/"+mc_filename_stem;
-                cout<< "    Loading Monte Carlo files - "<<type_name[type]<<" for run "<<run<<".\n";
-                assert(ucna[type][run]);
-                ucna[type][run]->fill(
-                    // TODO ucna_filebase+"%s-%04d.root",
-                    file_stem+"vector-"+argv[arg]+".root",
-                    "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
-                    file_stem+"fierz-"+argv[arg]+".root",
-                    file_number_start, file_number_stop, 
-                    mc_name, spin_ratio);
-                ucna[type][run]->save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
-
-                /// Load data set files that already contain super sum histograms.
-                if (dataset == "2010") {
-                    cout<< " LOADING REAL EVENTS FROM "<<dataset<<" UCNA DATASET - "<<type_name[type]+" - RUN "<<run<<":\n";
-                    ucna[type][run]->data.super_sum.fill(
-                        data_dir+"/OctetAsym_Offic_2010_FINAL/"+data_filename,
-                        "SuperSum_"+type_upr[type],
-                        dataset+" final official supersum - "+type_name[type]);
-                    ucna[type][run]->data.super_sum.save(plots_dir+"/"+dataset+"_data_supersum_"+type_lwr[type]+".txt");
-                    // TODO ucna[type][run]->back.super_sum.fill(
-                    //    ...
-                    //    dataset+" final official supersum background");
-                }
-                else {
-                    /// TODO construct fake from Monte Carlo data
-                    exit(1);
-                }
-                ucna[type][run]->comupte_sizes();
-                ucna[type][run]->print_sizes();
-            }
-            run++;
-            arg++;
-        }
     }
     else {
         cout<<"Can run b or bN mode right now.\n";
         exit(1);
     }
 
-    if(argc <3) {
+    if (argc < 1) {
+        cout<<"Requires at least on argument.\n";
+        cout<<"Usage: "<<argv[0]<<" <filename | file pattern | dataset> [<filename | twiddled-n | file pattern>]\n";
+        exit(1);
+    }
+
+    TString dataset = argv[1];
+    int arg = 2, run = 0;
+    while (arg < argc) {
+        cout<<"arg "<<arg<<" is "<<argv[arg]<<"\n";
+        /// loops through types
+        for (int type=0; type<=3; type++) {
+            ucna[type][run] = new UCNAFierzFitter(
+                        "ucna_"+type_lwr[type]+"_run_"+to_string(run), 
+                        "UCNA "+type_name[type]+" Run "+to_string(run), 
+                        KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+
+            /// Load the files that already contain data super sum histograms.
+            TString file_stem = mc_dir+"/"+mc_filename_stem;
+            cout<< "    Loading Monte Carlo files - "<<type_name[type]<<" for run "<<run<<".\n";
+            assert(ucna[type][run]);
+            ucna[type][run]->fill( // TODO file_stem+"%s-%04d.root",
+                file_stem+"vector-"+argv[arg]+".root",
+                "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
+                file_stem+"fierz-"+argv[arg]+".root",
+                file_number_start, file_number_stop, 
+                mc_name, type, spin_ratio);
+            ucna[type][run]->save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
+
+            /// Load data set files that already contain super sum histograms.
+            if (dataset == "2010") {
+                cout<< " LOADING REAL EVENTS FROM "<<dataset<<" UCNA DATASET - "<<type_name[type]+" - RUN "<<run<<":\n";
+                ucna[type][run]->data.super_sum.fill(
+                    data_dir+"/OctetAsym_Offic_2010_FINAL/"+data_filename,
+                    "SuperSum_"+type_upr[type],
+                    dataset+" final official supersum - "+type_name[type]);
+                ucna[type][run]->data.super_sum.save(plots_dir+"/"+dataset+"_data_supersum_"+type_lwr[type]+".txt");
+                // TODO ucna[type][run]->back.super_sum.fill(
+                //    ...
+                //    dataset+" final official supersum background");
+            }
+            else {
+                /// TODO construct fake from Monte Carlo data
+                cout<<"Error: check this code before trusting the results.\n";
+                exit(1);
+
+                /// Load Monte Carlo simulated Fierz as fake events
+                /// Pick fake values of asymmetry and Fierz terms
+                double A = -0.12;
+                double b = 0.00;
+                double N = 1;
+
+                /// generate fake signal curve from different simulated spectra
+                //fake.compute_fit(A,b,N);
+                //ucna[type][run]->data = fake.fit;
+
+            }
+            ucna[type][run]->comupte_sizes();
+            ucna[type][run]->print_sizes();
+        }
+        run++;
+        arg++;
+    }
+
+    if(argc <3) { /// TODO change to checking run
         cout << "Nothing to compare to... Done.\n";
         exit(0);    /// TODO temp hack
     }
 
-    /// LOAD FAKE DATA FROM MONTE CARLO
-    /// Load Monte Carlo simulated Standard Model vector current as fake events
-    /// Load Monte Carlo simulated Standard Model axial-vector current as fake events
-    /// Load Monte Carlo simulated Fierz as fake events
-    /* fake.data.asymmetry.fill(
-        data_dir+"Range_0-1000/CorrectAsym/CorrectedAsym.root",
-        "hAsym_Corrected_C",
-        "2010 final official asymmetry"); */
-
-    /* /// Pick fake values of asymmetry and Fierz terms
-    double A = -0.12;
-    double b = 0.00;
-    double N = 1; */
-
-    /// generate fake signal curve from different simulated spectra
-    //fake.compute_fit(A,b,N);
-    //ucna[type][run]->data = fake.fit;
-
     /// TODO loop
     int type = 0;
-    int run = 0;
+    run = 0;
 
     /// Take a look at the state of the fits
     ucna[type][run]->data.super_sum.snapshot();
@@ -526,7 +521,7 @@ int main(int argc, char *argv[])
     ucna[type][run]->fierz.super_sum.snapshot();
 
     /// fitting the data using the Monte Carlo spectra
-    TF1* fit_func = fit(*ucna[type][run]);
+    TF1* fit_func = fit(ucna[type][run]);
     if (not fit_func) {
         cout<<" Error: No fitting function returned.\n";
         exit(1);

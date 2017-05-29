@@ -418,9 +418,7 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 }
 
 void UCNAFierzFitter::fill(TString vector_pattern, 
-                           TString axial_pattern, 
-                           // TODO TString axial_up_pattern, 
-                           // TODO TString axial_down_pattern, 
+                           TString axial_pattern, // TODO TString axial_up_pattern, // TODO TString axial_down_pattern, 
                            TString fierz_pattern,
                            int min, int max, /// TODO read filename pattern
                            TString name,
@@ -771,7 +769,7 @@ int UCNAmodel::fill(TString pattern, int first, int last,
                     TString name, TString title, 
                     int type, double flip)
 {
-    assert(flip > 0);
+    assert(flip > 1e-10);
     /* TODO add pattern matching for file numbers
     cout <<pattern.SubString("[",3)<<"\n";
     cout <<pattern.SubString("[]",0)<<"\n";
@@ -792,6 +790,7 @@ int UCNAmodel::fill(TString pattern, int first, int last,
             if (not chains) {
                 assert(added==0);
                 chains = new TChain(name, title);
+                assert(chains);
             }
             chains->Add(filename);
             added++;
@@ -871,12 +870,13 @@ void UCNAmodel::SetAllBranches(TChain *chain)
     chain->SetBranchStatus("ScintPosAdjusted",true);
 }
 
-int UCNAmodel::fill(TChain *chain, int type, double flip)
-{
-    assert(flip > 0);
+int UCNAmodel::fill(TChain *chain, int type, double flip) {
+    assert(flip > 0.00001);
 
     if (not chain) {
 		cout<<"Error: Null TChain pointer.\n";
+        cout<<"Aborting...\n";
+        exit(0);
     }
 	double Nevents = chain->GetEntries();
     SetAllBranches(chain);
