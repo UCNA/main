@@ -434,25 +434,26 @@ int main(int argc, char *argv[])
     double spin_ratio = 0.60;
 
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
-        int arg = 1, run = 0;
         if (argc < 1) {
             cout<<"Requires at least on argument.\n";
             cout<<"Usage: "<<argv[0]<<" <filename | file pattern | dataset> [<filename | twiddled-n | file pattern>]\n";
             exit(1);
         }
         TString dataset = argv[1];
-        while (arg <= argc) {
+        int arg = 2, run = 0;
+        while (arg < argc) {
+            cout<<"arg "<<arg<<" is "<<argv[arg]<<"\n";
             /// loops through types
             for (int type=0; type<=3; type++) {
             //for (TString typ : {"Type 0", "Type 1", "Type 2", "Type 3", "All"}) {
                 ucna[type][run] = new UCNAFierzFitter(
-                            "ucna_"+type_lwr[type], 
-                            "UCNA "+type_name[type], 
+                            "ucna_"+type_lwr[type]+"_run_"+to_string(run), 
+                            "UCNA "+type_name[type]+" Run "+to_string(run), 
                             KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 
                 /// Load the files that already contain data super sum histograms.
                 TString file_stem = mc_dir+"/"+mc_filename_stem;
-                cout<< "    Loading Monte Carlo files - "<<type_name[type]<<".\n";
+                cout<< "    Loading Monte Carlo files - "<<type_name[type]<<" for run "<<run<<".\n";
                 assert(ucna[type][run]);
                 ucna[type][run]->fill(
                     // TODO ucna_filebase+"%s-%04d.root",
@@ -465,7 +466,7 @@ int main(int argc, char *argv[])
 
                 /// Load data set files that already contain super sum histograms.
                 if (dataset == "2010") {
-                    cout<< " LOADING REAL EVENTS FROM "<<dataset<<" UCNA DATASET - "<<type_name[type]<<":\n";
+                    cout<< " LOADING REAL EVENTS FROM "<<dataset<<" UCNA DATASET - "<<type_name[type]+" - RUN "<<run<<":\n";
                     ucna[type][run]->data.super_sum.fill(
                         data_dir+"/OctetAsym_Offic_2010_FINAL/"+data_filename,
                         "SuperSum_"+type_upr[type],
