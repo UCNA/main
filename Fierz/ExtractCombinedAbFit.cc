@@ -459,7 +459,6 @@ int main(int argc, char *argv[])
                     ucna[type][run]->comupte_sizes();
                     ucna[type][run]->print_sizes();
                 }
-                run++;
                 arg++;
             }
             while (arg < argc) {
@@ -468,14 +467,15 @@ int main(int argc, char *argv[])
                     /// Load the files that already contain data super sum histograms.
                     cout<< "    Loading Monte Carlo files - "<<type_name[type]<<".\n";
                     //ucna[type][run] = new UCNAFierzFitter("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-                    ucna[type][run] = new UCNAFierzFitter(*ucna[type][0]);
+                    ucna[type][run] = new UCNAFierzFitter("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+                    ucna[type][run]->data = ucna[type][0]->data;
                     ucna[type][run]->fill(
                         // TODO ucna_filebase+"%s-%04d.root",
                         ucna_filebase+"vector-"+argv[arg]+".root",
                         "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
                         ucna_filebase+"fierz-"+argv[arg]+".root",
                         file_number_start, file_number_stop, 
-                        mc_name+"_"+type_name[type], type, spin_ratio);
+                        mc_name, spin_ratio);
                     // TODO ucna.fill(ucna_filebase+"[V|F]"+argv[arg]+".root", 1, 3, mc_name, type);
                     // TODO ucna.fill(ucna_filebase+"[V|A|F]"+argv[arg]+".root", 1, 3, mc_name, type);
                     // TODO ucna.fill(ucna_filebase+"[vector|axial|fierz]-"+argv[arg]+".root", 1, 3, mc_name, type);
@@ -510,15 +510,16 @@ int main(int argc, char *argv[])
         "hAsym_Corrected_C",
         "2010 final official asymmetry"); */
 
-/*
-    /// Pick fake values of asymmetry and Fierz terms
+    /* /// Pick fake values of asymmetry and Fierz terms
     double A = -0.12;
     double b = 0.00;
-    double N = 1;
-*/
+    double N = 1; */
+
     /// generate fake signal curve from different simulated spectra
     //fake.compute_fit(A,b,N);
     //ucna[type][run]->data = fake.fit;
+
+    /// TODO loop
     int type = 0;
     int run = 0;
 
