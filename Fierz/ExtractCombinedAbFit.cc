@@ -88,8 +88,7 @@ int A_index=0, b_index=1, N_index=-1;
 
 /// path to experiment data files
 TString data_dir = "/media/hickerson/boson/Data"; 
-TString data_sub = "/OctetAsym_Offic_2010_FINAL"; 
-TString data_filename = "/OctetAsym_Offic.root";
+TString data_filename = "OctetAsym_Offic.root";
 
 /// path to Monte Carlo files
 TString mc_dir = "/home/xuansun/Documents/SimProcessedFiles/100mill_beta";
@@ -420,6 +419,7 @@ int main(int argc, char *argv[])
     else 
         cout<<"Warning: Environmental variable UCNA_MONTE_CARLO_DIR is not set.\n"
             <<"Using default "<<mc_dir<<" instead.\n";
+
     if (getenv("UCNA_SYSTEMATICS_DIR"))
         mc_sys_dir = getenv("UCNA_SYSTEMATICS_DIR");
     else 
@@ -427,7 +427,6 @@ int main(int argc, char *argv[])
             <<"Using default "<<mc_sys_dir<<" instead.\n";
 
     /// Default filenames.
-    TString ucna_filebase = "";
     TString plot_filebase = plots_dir + "/";
     TString type_name[] = {"TYPE 0", "TYPE 1", "TYPE 2", "TYPE 3", "All"};
     TString type_upr[] = {"Type_0", "Type_1", "Type_2", "Type_3", "All"};
@@ -452,39 +451,36 @@ int main(int argc, char *argv[])
                             KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 
                 /// Load the files that already contain data super sum histograms.
-                ucna_filebase = mc_dir+"/"+mc_filename_stem;
+                TString file_stem = mc_dir+"/"+mc_filename_stem;
                 cout<< "    Loading Monte Carlo files - "<<type_name[type]<<".\n";
                 assert(ucna[type][run]);
                 ucna[type][run]->fill(
                     // TODO ucna_filebase+"%s-%04d.root",
-                    ucna_filebase+"vector-"+argv[arg]+".root",
+                    file_stem+"vector-"+argv[arg]+".root",
                     "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
-                    ucna_filebase+"fierz-"+argv[arg]+".root",
+                    file_stem+"fierz-"+argv[arg]+".root",
                     file_number_start, file_number_stop, 
                     mc_name, spin_ratio);
-                // TODO ucna.fill(ucna_filebase+"[V|F]"+argv[arg]+".root", 1, 3, mc_name, type);
-                // TODO ucna.fill(ucna_filebase+"[V|A|F]"+argv[arg]+".root", 1, 3, mc_name, type);
-                // TODO ucna.fill(ucna_filebase+"[vector|axial|fierz]-"+argv[arg]+".root", 1, 3, mc_name, type);
                 ucna[type][run]->save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
 
                 /// Load data set files that already contain super sum histograms.
                 if (dataset == "2010") {
                     cout<< " LOADING REAL EVENTS FROM "<<dataset<<" UCNA DATASET - "<<type_name[type]<<":\n";
                     ucna[type][run]->data.super_sum.fill(
-                        data_dir+data_sub+data_filename,
+                        data_dir+"/OctetAsym_Offic_2010_FINAL/"+data_filename,
                         "SuperSum_"+type_upr[type],
                         dataset+" final official supersum - "+type_name[type]);
                     ucna[type][run]->data.super_sum.save(plots_dir+"/"+dataset+"_data_supersum_"+type_lwr[type]+".txt");
                     // TODO ucna[type][run]->back.super_sum.fill(
                     //    ...
                     //    dataset+" final official supersum background");
-                    ucna[type][run]->comupte_sizes();
-                    ucna[type][run]->print_sizes();
                 }
                 else {
                     /// TODO construct fake from Monte Carlo data
                     exit(1);
                 }
+                ucna[type][run]->comupte_sizes();
+                ucna[type][run]->print_sizes();
             }
             run++;
             arg++;
