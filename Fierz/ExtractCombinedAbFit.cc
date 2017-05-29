@@ -433,62 +433,61 @@ int main(int argc, char *argv[])
     TString type_upr[] = {"Type_0", "Type_1", "Type_2", "Type_3", "All"};
     TString type_lwr[] = {"type_0", "type_1", "type_2", "type_3", "all"};
     double spin_ratio = 0.60;
+
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
-        if (argc > 1) {
-            int run = 0;
-            int arg = 1;
-            TString year(argv[arg]);
-            if (year == "2010") {
-                cout<<" LOADING REAL DATA FROM "<<year<<" UCNA DATASET:\n";
-                /// loops through types
-                for (int type=0; type<=3; type++) {
-                    /// Load the files that already contain data super sum histograms.
-                    cout<< " LOADING REAL EVENTS FROM "<<year<<" UCNA DATASET - "<<type_name[type]<<":\n";
-                    int run = 0;
-                    ucna[type][run] = new UCNAFierzFitter("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+        int arg = 1, run = 0;
+        if (argc < 1) {
+            cout<<"Requires at least on argument.\n";
+            cout<<"Usage: "<<argv[0]<<" <filename | file pattern | dataset> [<filename | twiddled-n | file pattern>]\n";
+            exit(1);
+        }
+        TString dataset = argv[1];
+        while (arg <= argc) {
+            /// loops through types
+            for (int type=0; type<=3; type++) {
+            //for (TString typ : {"Type 0", "Type 1", "Type 2", "Type 3", "All"}) {
+                ucna[type][run] = new UCNAFierzFitter(
+                            "ucna_"+type_lwr[type], 
+                            "UCNA "+type_name[type], 
+                            KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+
+                /// Load the files that already contain data super sum histograms.
+                ucna_filebase = mc_dir+"/"+mc_filename_stem;
+                cout<< "    Loading Monte Carlo files - "<<type_name[type]<<".\n";
+                assert(ucna[type][run]);
+                ucna[type][run]->fill(
+                    // TODO ucna_filebase+"%s-%04d.root",
+                    ucna_filebase+"vector-"+argv[arg]+".root",
+                    "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
+                    ucna_filebase+"fierz-"+argv[arg]+".root",
+                    file_number_start, file_number_stop, 
+                    mc_name, spin_ratio);
+                // TODO ucna.fill(ucna_filebase+"[V|F]"+argv[arg]+".root", 1, 3, mc_name, type);
+                // TODO ucna.fill(ucna_filebase+"[V|A|F]"+argv[arg]+".root", 1, 3, mc_name, type);
+                // TODO ucna.fill(ucna_filebase+"[vector|axial|fierz]-"+argv[arg]+".root", 1, 3, mc_name, type);
+                ucna[type][run]->save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
+
+                /// Load data set files that already contain super sum histograms.
+                if (dataset == "2010") {
+                    cout<< " LOADING REAL EVENTS FROM "<<dataset<<" UCNA DATASET - "<<type_name[type]<<":\n";
                     ucna[type][run]->data.super_sum.fill(
                         data_dir+data_sub+data_filename,
                         "SuperSum_"+type_upr[type],
-                        year+" final official supersum - "+type_name[type]);
-                    ucna[type][run]->data.super_sum.save(plots_dir+"/"+year+"_data_supersum_"+type_lwr[type]+".dat");
+                        dataset+" final official supersum - "+type_name[type]);
+                    ucna[type][run]->data.super_sum.save(plots_dir+"/"+dataset+"_data_supersum_"+type_lwr[type]+".txt");
                     // TODO ucna[type][run]->back.super_sum.fill(
-                    //    data_dir+data_filename,
-                    //    "Total_Events_SuperSum",
-                    //    year+" final official supersum background");
-                    // TODO read and set spin_ratio to match data.
+                    //    ...
+                    //    dataset+" final official supersum background");
                     ucna[type][run]->comupte_sizes();
                     ucna[type][run]->print_sizes();
                 }
-                arg++;
-            }
-            while (arg < argc) {
-                ucna_filebase = mc_dir+"/"+mc_filename_stem;
-                for (int type=0; type<=3; type++) {
-                    /// Load the files that already contain data super sum histograms.
-                    cout<< "    Loading Monte Carlo files - "<<type_name[type]<<".\n";
-                    //ucna[type][run] = new UCNAFierzFitter("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-                    ucna[type][run] = new UCNAFierzFitter("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
-                    ucna[type][run]->data = ucna[type][0]->data;
-                    ucna[type][run]->fill(
-                        // TODO ucna_filebase+"%s-%04d.root",
-                        ucna_filebase+"vector-"+argv[arg]+".root",
-                        "", // TODO ucna_filebase+"axial-"+argv[arg]+".root",
-                        ucna_filebase+"fierz-"+argv[arg]+".root",
-                        file_number_start, file_number_stop, 
-                        mc_name, spin_ratio);
-                    // TODO ucna.fill(ucna_filebase+"[V|F]"+argv[arg]+".root", 1, 3, mc_name, type);
-                    // TODO ucna.fill(ucna_filebase+"[V|A|F]"+argv[arg]+".root", 1, 3, mc_name, type);
-                    // TODO ucna.fill(ucna_filebase+"[vector|axial|fierz]-"+argv[arg]+".root", 1, 3, mc_name, type);
-                    ucna[type][run]->save(plots_dir+"monte_carlo_"+argv[arg]+"_"+type_lwr[type]+"/");
+                else {
+                    /// TODO construct fake from Monte Carlo data
+                    exit(1);
                 }
-                run++;
-                arg++;
             }
-        }
-        else {
-            cout<<"Requires at least on argument.\n";
-            cout<<"Usage: "<<argv[0]<<" <filename | file pattern | year> [<filename | twiddled-n | file pattern>]\n";
-            exit(1);
+            run++;
+            arg++;
         }
     }
     else {

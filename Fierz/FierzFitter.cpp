@@ -33,7 +33,8 @@ UCNAmodel & UCNAmodel::operator=(const UCNAmodel & other)
     asymmetry.SetName(name+"_asymmetry");
     asymmetry.SetTitle(title+" Asymmetry");
 
-    for (int side = 0; side < 2; side++) {
+    /*
+    for (int side : {0,1}) {
         TString sub_name = name;    /// keep name the same
         TString sub_title = title;  /// keep title the same
         if (not side) {
@@ -43,7 +44,9 @@ UCNAmodel & UCNAmodel::operator=(const UCNAmodel & other)
             sub_name += "_W";
             sub_title += " West";
         }
-        for (int spin = 0; spin < 2; spin++) {
+        for (int spin : {0,1}) {
+            name + (side? "_W" : "_E") + (spin? "_on" : "_off"); 
+            title + (side? " West" : " East") + (spin? "AFP On" : " AFP Off"); 
             if (not spin) {
                 sub_name += "_off";
                 sub_title += " AFP Off";
@@ -51,6 +54,16 @@ UCNAmodel & UCNAmodel::operator=(const UCNAmodel & other)
                 sub_name += "_on";
                 sub_title += " AFP On";
             }
+            *counts[side][spin] = *other.counts[side][spin];
+            counts[side][spin]->SetName(sub_name);
+            counts[side][spin]->SetTitle(sub_title);
+        }
+    }
+    */
+    for (int side : {0,1}) {
+        for (int spin : {0,1}) {
+            TString sub_name = name + (side? "_W" : "_E") + (spin? "_on" : "_off"); 
+            TString sub_title = title + (side? " West" : " East") + (spin? "AFP On" : " AFP Off"); 
             *counts[side][spin] = *other.counts[side][spin];
             counts[side][spin]->SetName(sub_name);
             counts[side][spin]->SetTitle(sub_title);
@@ -350,12 +363,16 @@ void UCNAFierzFitter::compute_fit(/*MatrixD &cov,*/ TF1 *func) {
 
 void UCNAFierzFitter::compute_fit(double A, double b, double N) {
     assert(N > 0);
+    //assert(A > -1 and A < 1);
+    assert(b > -1);
     //compute_asymmetry_fit(A,b);
     compute_supersum_fit(b,N);
 }
 
 void UCNAFierzFitter::compute_data(double A, double b, double N) {
     assert(N > 0);
+    //assert(A > -1 and A < 1);
+    assert(b > -1);
     //compute_asymmetry_fit(A,b);
     compute_supersum_fit(b,N);
     data.super_sum = fit.super_sum;
@@ -374,7 +391,7 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
     //double e_x = evaluate_expected_fierz(fit_min,fit_max); // not in the right range
     //double m_E = evaluate_expected_fierz(0,Q); // not in the right range
     double norm = exV + b*x_1*exF;
-    cout <<"norm = exV + b*x_1*exF : "<<norm<<" = "<<exV<<"+"<<b<<"*"<<x_1<<"*"<<exF<<".\n";
+    //cout <<"norm = exV + b*x_1*exF : "<<norm<<" = "<<exV<<"+"<<b<<"*"<<x_1<<"*"<<exF<<".\n";
 	for (int bin=1; bin<n; bin++)
 	{
 		double KE = fit.super_sum.GetBinCenter(bin);
@@ -386,6 +403,7 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
         assert(pV >= 0);
         double pF = fierz.super_sum.GetBinContent(bin + deltaF);
         assert(pF >= 0);
+        assert(b > -1);
         double f  = N*(pV + b*x_1*pF)/norm;
         assert(f >= 0);
         fit.super_sum.SetBinContent(bin,f);
@@ -717,8 +735,8 @@ void UCNAmodel::save(TString filename)
 		exit(1);
 	}
 
-    for (int side=0; side<2; side++)
-        for (int spin=0; spin<2; spin++) {
+    for (int side : {0,1})
+        for (int spin : {0,1}) {
             counts[side][spin]->SetDirectory(tfile);
             counts[side][spin]->Write();
         }
@@ -1121,8 +1139,8 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
     bool test_counts(TH1D* counts[2][2])
  */
 bool UCNAmodel::test_counts() {
-    for (int side=0; side<2; side++)
-        for (int spin=0; spin<2; spin++)
+    for (int side : {0,1})
+        for (int spin : {0,1})
             if (not counts[side][spin]) {
                 cout<<"Error: rate histogram on the "
                     <<(side? "west":"east")<<" side with afp "
