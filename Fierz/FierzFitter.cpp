@@ -305,6 +305,8 @@ double UCNAFierzFitter::asymmetry_chi2(double A, double b) {
 
 
 double UCNAmodel::asymmetry_chi2(double A, double b) {
+    assert(A);
+    assert(b);
     assert(false); /*
 	double chi2 = 0;
     int n = asymmetry.GetNbinsX();
@@ -350,6 +352,7 @@ double UCNAFierzFitter::supersum_chi2(double b, double N)
 double UCNAFierzFitter::combined_chi2(double A, double b, double N)
 {
 	double chi2 = //asymmetry_chi2(A,b) + 
+    A * 0 +
     supersum_chi2(b,N);
     return chi2;
 }
@@ -364,7 +367,7 @@ void UCNAFierzFitter::compute_fit(/*MatrixD &cov,*/ TF1 *func) {
 
 void UCNAFierzFitter::compute_fit(double A, double b, double N) {
     assert(N > 0);
-    //assert(A > -1 and A < 1);
+    assert(A > -1 and A < 1);
     assert(b > -1);
     //compute_asymmetry_fit(A,b);
     compute_supersum_fit(b,N);
@@ -372,7 +375,7 @@ void UCNAFierzFitter::compute_fit(double A, double b, double N) {
 
 void UCNAFierzFitter::compute_data(double A, double b, double N) {
     assert(N > 0);
-    //assert(A > -1 and A < 1);
+    assert(A > -1 and A < 1);
     assert(b > -1);
     //compute_asymmetry_fit(A,b);
     compute_supersum_fit(b,N);
@@ -419,24 +422,24 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 }
 
 void UCNAFierzFitter::fill(TString vector_pattern, 
-                           TString axial_pattern, // TODO TString axial_up_pattern, // TODO TString axial_down_pattern, 
+                           //TString axial_pattern,
                            TString fierz_pattern,
                            int min, int max, /// TODO read filename pattern
                            TString name,
                            int type,
                            double flip)
 {
-    if (flip == -1)
-        flip = spin_ratio;
+    //if (flip == -1)
+    //    flip = spin_ratio;
 
     /// Fill Standard Model vector events.
     if (vector_pattern != "")
         vector.fill(
             vector_pattern, 
             min, max,     /// TODO read from filename pattern
-            name,
-            "Standard Model vector current", 
+            name, "Standard Model vector current", 
             type, flip);
+    cout<<vector_pattern<<"\n";
 
     /// Fill Standard Model axial-vector events
     /// 
@@ -445,22 +448,24 @@ void UCNAFierzFitter::fill(TString vector_pattern,
     /// axial[1].fill( ...
     /// -- or --
     /// for (i;1,2) axial[i].fill( ...
+    /*
     if (axial_pattern != "")
         axial.fill(
             axial_pattern,
             min, max,     /// TODO read from filename pattern
-            name,
-            "Standard Model axial-vector current", 
+            name, "Standard Model axial-vector current", 
             type, flip);
+    cout<<axial_pattern<<"\n";
+        */
 
     /// Fill BSM Fierz events
     if (fierz_pattern != "")
         fierz.fill(
             fierz_pattern,
             min, max,     /// TODO read from filename pattern
-            name,
-            "BSM Fierz current", 
+            name, "BSM Fierz current", 
             type, flip);
+    cout<<fierz_pattern<<"\n";
 }
 
 
@@ -783,28 +788,32 @@ int UCNAmodel::fill(TString pattern, int first, int last,
     static regex ex(pattern);
     sregex_iterator next(ex
     */
-    TChain *chains = 0;
+    TChain *chains = new TChain(name, title);
     int added = 0;
     for (int i = first; i <= last; i++) {
         TString filename(pattern);
         TString number; number.Form("%04d",i); 
         filename.ReplaceAll("[*]",number);
+        /*
+        if (not chains) {
+            cout<<chains<<" "<<type<<" "<<flip<<".\n";
+
+            exit(1);
+        }*/
         TFile* tfile = new TFile(filename);
-        if (not tfile->IsZombie()) {
+        if (tfile and not tfile->IsZombie()) {
             cout<<"Loading filename "<<filename<<".\n";
-            if (not chains) {
-                assert(added==0);
-                chains = new TChain(name, title);
-                assert(chains);
-            }
+            assert(chains);
             chains->Add(filename);
             added++;
+            delete tfile;
         }
         else {
             cout<<"Error: Problem filling "<<title<<":\n";
             cout<<"       File "<<filename<<" not found\n";
             cout<<"       from "<<pattern<<".\n";
             cout<<"Skipping...\n";
+            exit(1);
         }
     }
     if (added > 0 and chains) {
@@ -819,7 +828,7 @@ int UCNAmodel::fill(TString pattern, int first, int last,
     }
 }
 
-
+#if 0
 int UCNAmodel::fill(TString filename, TString name, TString title, 
                     int type, double flip)
 {
@@ -834,7 +843,6 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
 	if (tfile->IsZombie()) {
 		cout<<"Error: Problem filling "<<title<<":\n";
 		cout<<"       File "<<filename<<" not found\n";
-        return 0;
         cout<<"Aborting...\n";
 		exit(1);
 	}
@@ -849,7 +857,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         exit(1);
     }
     else {
-        SetAllBranches(chain);
+        //SetAllBranches(chain); // should be done in fill(chains, ...)
         int Nsim = fill(chain, type, flip);
         if (Nsim <= 0) {
             cout<<"Error: No events were filled.\n";
@@ -860,6 +868,7 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
             return Nsim;
     }
 }
+#endif
 
 void UCNAmodel::SetAllBranches(TChain *chain)
 {
@@ -903,8 +912,11 @@ int UCNAmodel::fill(TChain *chain, int type, double flip) {
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjE")->SetAddress(mwpcPosE);
     chain->GetBranch("ScintPosAdjusted")->GetLeaf("ScintPosAdjW")->SetAddress(mwpcPosW);
 
+    TRandom2 rand(Nevents);
     for (int evt=0; evt<Nevents; evt++) {
         chain->GetEvent(evt);
+        //if (not evt)
+        // inititalize 
 
         /// cut out bad events
         if (PID!=1) 
@@ -923,7 +935,7 @@ int UCNAmodel::fill(TChain *chain, int type, double flip) {
         double afp = (load < flip)? +1 : -1; // TODO don't need load as var..
         //double axial = rand.Uniform(2)-1;
         double cos = p[2]/Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
-        assert(cos = p[2]);
+        //assert(cos = p[2]);
         //bool spin = ((afp < 0) xor (cos/ex_cos < A)) ? EAST : WEST;
         //double E = energy + m_e;        /// relativistic energy
         //double x = m_e/E;
@@ -950,21 +962,20 @@ int UCNAmodel::fill(TChain *chain, int type, double flip) {
         /*cout<<"energy: "<<energy<<" side: "<<side<<" spin: "<<spin 
             <<" afp: "<<afp<<" p: ("<<p[0]<<","<<p[1]<<","<<p[2]<<")" 
             <<" cos: "<<cos<<" load: "<<load<<".\n";*/
-        if (event_type==type) 
+        if (event_type==type) {
             counts[side][spin]->Fill(energy, 1);
+            if (tntuple)
+                tntuple->Fill(side, spin, energy);
+        }
         /*
         if (type<4) 
         if (type==2 or type==3)
             counts[side][spin]->Fill(energy, 1);
         counts[side][spin]->Fill(energy, 1); */
-        if (tntuple)
-            tntuple->Fill(side, spin, energy);
 
 		/// break when enough data has been generated.
-        /*
-		if(nSimmed >= nToSim)
-		break;
-        */
+		//if(nSimmed >= nToSim)
+		//    break;
     }    
      
     int Nsim = Nspin[0] + Nspin[1];

@@ -21,7 +21,7 @@ CXX = g++
 
 CXXFLAGS = -std=c++0x -O3 -fPIC `root-config --cflags` -pedantic -Wall -Wextra -I. \
 	-IIOUtils -IRootUtils -IBaseTypes -IMathUtils -ICalibration -IAnalysis -IStudies -IPhysics -IOptics
-LDFLAGS =  -L. -lUCNA -lSpectrum -lMLP `root-config --libs` -lMathMore -g
+LDFLAGS =  -L. -lUCNA -lSpectrum -lMLP `root-config --libs` -lMathMore -g -pg -Wmaybe-uninitialized -Wuninitialized
 
 ifdef PROFILER_COMPILE
 	CXXFLAGS += -pg

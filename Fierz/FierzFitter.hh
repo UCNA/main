@@ -131,10 +131,9 @@ struct UCNAmodel {
     TString title;
     int     bins;
     double  min, max;
-    double  Neff;
-    double spin_ratio;
+    //double  Neff;
+    //double  spin_ratio;
 
-    TRandom2 rand;
 
     TNtuple* ntuple;     /// another way to store the raw data
     UCNAhistogram* counts[2][2]; // TODO make member not pointer
@@ -149,7 +148,7 @@ struct UCNAmodel {
     UCNAmodel(TString name, TString title, int bins, double min, double max) 
       : name(name), title(title),
         bins(bins), min(min), max(max),
-        rand(0),
+        //rand(0),
         super_ratio(name+"_super_ratio",title+" Super Ratio",bins,min,max),
         super_sum(name+"_super_sum",title+" Super Sum",bins,min,max),
         asymmetry(name+"_asymmetry",title+" Asymmetry",bins,min,max)
@@ -199,9 +198,8 @@ struct UCNAmodel {
              TString name, TString title, 
              int type, double flip);
              //int type = 0, double flip = -1);
-    int fill(TString filename, TString name, TString title, 
-             int type, double flip);
-             //int type = 0, double flip = -1);
+     //int fill(TString filename, TString name, TString title, 
+     //      int type, double flip);
     int fill(TChain *chain, int type, double flip);
              //int type = 0, double flip = -1);
     void save(TString filename, TString name, TString title);
@@ -342,7 +340,7 @@ struct UCNAFierzFitter {
     { assert(min < max); }
     */
     void fill(TString vector_pattern, 
-              TString axial_pattern, 
+              //TString axial_pattern, 
               // TODO TString axial_up_pattern, 
               // TODO TString axial_down_pattern, 
               TString fierz_pattern,
