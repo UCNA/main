@@ -63,14 +63,10 @@ const double    x_1         = I_1/I_0;              /// first m/E moment    (9)
 using namespace std;
 
 
+
 struct UCNAhistogram : TH1D {
-    int side;
-    int spin;
-    //TString name;
-    //TString title;
-    //int bins;
-    //double min, max;
-    //TH1D* histogram;
+    //int side;
+    //int spin;
     //vector<double> energy;        
     //vector<double> values;        
     //vector<double> errors;
@@ -201,11 +197,13 @@ struct UCNAmodel {
     //int fill(TString filename, TString name, TString title);
     int fill(TString pattern, int first, int last, 
              TString name, TString title, 
-             int type = 0, double flip = -1);
+             int type, double flip);
+             //int type = 0, double flip = -1);
     int fill(TString filename, TString name, TString title, 
-             int type = 0, double flip = -1);
-    int fill(TChain *chain, 
-             int type = 0, double flip = -1);
+             int type, double flip);
+             //int type = 0, double flip = -1);
+    int fill(TChain *chain, int type, double flip);
+             //int type = 0, double flip = -1);
     void save(TString filename, TString name, TString title);
     void save(TString filename);
 
@@ -350,8 +348,8 @@ struct UCNAFierzFitter {
               TString fierz_pattern,
               int min, int max, /// TODO read filename pattern
               TString name, /// not sure if this is needed (or wanted) if the FF was constructed correctly
-              int type = 0,
-              double flip = -1);
+              int type, double flip);
+              //int type = 0, double flip = -1);
 
     void save(TString filename);
 

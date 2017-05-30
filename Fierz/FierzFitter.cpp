@@ -2,6 +2,7 @@
 #include <regex>
 
 
+
 UCNAmodel & UCNAmodel::operator=(const UCNAmodel & other)
 {
     /** TODO check that if name and title are already assigned, to NOT copy them
@@ -628,10 +629,12 @@ int UCNAhistogram::fill(TString filename,
                         TString name, 
                         TString title) {
 	TFile* tfile = new TFile(filename);
-	if (tfile->IsZombie()) {
+	if (tfile and tfile->IsZombie()) {
 		cout<<"Error: While loading "<<title<<":\n";
 		cout<<"       File "<<filename<<" not found.\n";
-		return 0;
+        cout<<"Aborting...\n";
+		exit(0);
+        return 0;
 	}
 
     // TODO warn if overwriting data...
@@ -640,12 +643,14 @@ int UCNAhistogram::fill(TString filename,
 		cout<<"Error: In file "<<filename<<":\n";
 		cout<<"       Problem getting "<<title<<".\n";
 		cout<<"       Cannot find histogram named "<<name<<".\n";
+        cout<<"Aborting...\n";
+        exit(0);
         return 0;
     }
     *(TH1D*)this = *histogram;
 
 	int entries = GetEntries();
-	cout<<"    Number of entries in "<<title<<" is "<<entries<<".\n";
+	cout<<"    Number of entries in "<<GetTitle()<<" is "<<entries<<".\n";
     return entries;
 }
 
@@ -840,7 +845,6 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
 		cout<<"Error: In file "<<filename<<":\n";
 		cout<<"       Cannot get "<<title<<":\n";
 		cout<<"       Cannot find chain or tree named "<<name<<".\n";
-        return 0;
         cout<<"Aborting...\n";
         exit(1);
     }
@@ -849,7 +853,6 @@ int UCNAmodel::fill(TString filename, TString name, TString title,
         int Nsim = fill(chain, type, flip);
         if (Nsim <= 0) {
             cout<<"Error: No events were filled.\n";
-            return Nsim;
             cout<<"Aborting...\n";
             exit(1);
         }

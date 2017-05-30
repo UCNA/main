@@ -458,7 +458,7 @@ int main(int argc, char *argv[])
                         "UCNA "+type_name[type]+" Run "+to_string(run), 
                         KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 
-            /// Load the files that already contain data super sum histograms.
+            /// Load Monte Carlo files 
             TString file_stem = mc_dir+"/"+mc_filename_stem;
             cout<< "    Loading Monte Carlo files - "<<type_name[type]<<" for run "<<run<<".\n";
             assert(ucna[type][run]);
