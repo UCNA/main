@@ -84,7 +84,7 @@ struct UCNAhistogram : TH1D {
     {}
     */
        
-    UCNAhistogram(TString name, TString title, int bins, double min, double max) 
+    UCNAhistogram(const TString & name, const TString & title, int bins, double min, double max) 
       : TH1D(name, title, bins, min, max)
         //name(name),
         //title(title),
@@ -98,14 +98,14 @@ struct UCNAhistogram : TH1D {
         //histogram = new TH1D(name, title, bins, min, max);
     }
 
-    int fill(TString filename, TString name, TString title);
-    int fill(TString filename);
-    void save(TString filename, TString name, TString title);
-    //void save(TString filename) {save(filename,1,1);}
-    void draw(TString name, TString title,
+    int fill(const TString & filename, const TString & name, const TString & title);
+    int fill(const TString & filename);
+    void save(const TString & filename, const TString & name, const TString & title);
+    //void save(const TString & filename) {save(filename,1,1);}
+    void draw(const TString & name, const TString & title,
               TCanvas* canvas, TLegend* legend, 
-              TString draw, int color, int marker);
-    void save(TString filename, double ax = 1, double ay = 1);
+              const TString & draw, int color, int marker);
+    void save(const TString & filename, double ax = 1, double ay = 1);
     void snapshot(int every = 10);
 
     bool test_min();
@@ -145,7 +145,7 @@ struct UCNAmodel {
 
     //UCNAmodel():UCNAmodel("","",0,0,0) {exit(1);} /// default constructor needed by stl map.
 
-    UCNAmodel(TString name, TString title, int bins, double min, double max) 
+    UCNAmodel(const TString & name, const TString & title, int bins, double min, double max) 
       : name(name), title(title),
         bins(bins), min(min), max(max),
         //rand(0),
@@ -193,17 +193,17 @@ struct UCNAmodel {
 
     void SetAllBranches(TChain *chain);
     double asymmetry_chi2(double A, double b);
-    //int fill(TString filename, TString name, TString title);
-    int fill(TString pattern, int first, int last, 
-             TString name, TString title, 
+    //int fill(const TString & filename, const TString & name, const TString & title);
+    int fill(const TString & pattern, int first, int last, 
+             const TString & name, const TString & title, 
              int type, double flip);
              //int type = 0, double flip = -1);
-     //int fill(TString filename, TString name, TString title, 
+     //int fill(const TString & filename, const TString & name, const TString & title, 
      //      int type, double flip);
     int fill(TChain *chain, int type, double flip);
              //int type = 0, double flip = -1);
-    void save(TString filename, TString name, TString title);
-    void save(TString filename);
+    void save(const TString & filename, const TString & name, const TString & title);
+    void save(const TString & filename);
 
     /// accessing data
     bool test_counts();
@@ -299,7 +299,7 @@ struct UCNAFierzFitter {
     //TString paramNames[3] = {"A", "b", "N"};
     //double paramInits[3] = {-0.12, 0, 1e1};
 
-    UCNAFierzFitter(TString name, TString title, 
+    UCNAFierzFitter(const TString & name, const TString & title, 
                     int bins, double min, double max)
       : name(name), title(title),
         bins(bins), min(min), max(max),
@@ -313,7 +313,7 @@ struct UCNAFierzFitter {
         fit(name+"_fit", title+" fit", bins, min, max) 
     { assert(min < max); }
 
-    UCNAFierzFitter(TString name, TString title,
+    UCNAFierzFitter(const TString & name, const TString & title,
                     int bins, double min, double max, 
                     int fit_bins, double fit_min, double fit_max)
       : name(name), title(title),
@@ -339,17 +339,17 @@ struct UCNAFierzFitter {
         fit(name+"_fit_", "Standard Model + Fierz best fit", bins, min, max) 
     { assert(min < max); }
     */
-    void fill(TString vector_pattern, 
-              //TString axial_pattern, 
-              // TODO TString axial_up_pattern, 
-              // TODO TString axial_down_pattern, 
-              TString fierz_pattern,
+    void fill(const TString & vector_pattern, 
+              //const TString & axial_pattern, 
+              // TODO const TString & axial_up_pattern, 
+              // TODO const TString & axial_down_pattern, 
+              const TString & fierz_pattern,
               int min, int max, /// TODO read filename pattern
-              TString name, /// not sure if this is needed (or wanted) if the FF was constructed correctly
+              const TString & name, /// not sure if this is needed (or wanted) if the FF was constructed correctly
               int type, double flip);
               //int type = 0, double flip = -1);
 
-    void save(TString filename);
+    void save(const TString &filename);
 
     //void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Double_t *p, Int_t /*iflag */);
     double asymmetry_chi2(double A, double b);
@@ -404,7 +404,7 @@ struct UCNAFierzFitter {
         hist->Scale(1/(hist->GetBinWidth(2)*hist->Integral(_min, _max)));
     }
     */
-    void display(TString &plots_dir);
+    void display(const TString &plots_dir);
     double comupte_sizes();         /// compute effective size
     double print_sizes();           /// Output the number of events for data, mcs and fits and with cut info.
 };

@@ -421,11 +421,11 @@ void UCNAFierzFitter::compute_supersum_fit(double b, double N)
 	}
 }
 
-void UCNAFierzFitter::fill(TString vector_pattern, 
-                           //TString axial_pattern,
-                           TString fierz_pattern,
-                           int min, int max, /// TODO read filename pattern
-                           TString name,
+void UCNAFierzFitter::fill(const TString& vector_pattern, 
+                           //const TString& axial_pattern,
+                           const TString& fierz_pattern,
+                           int start, int stop, /// TODO read filename pattern
+                           const TString& name,
                            int type,
                            double flip)
 {
@@ -433,13 +433,13 @@ void UCNAFierzFitter::fill(TString vector_pattern,
     //    flip = spin_ratio;
 
     /// Fill Standard Model vector events.
+    cout<<"About to load vector pattern "<<vector_pattern<<"\n";
     if (vector_pattern != "")
         vector.fill(
             vector_pattern, 
-            min, max,     /// TODO read from filename pattern
+            start, stop,     /// TODO read from filename pattern
             name, "Standard Model vector current", 
             type, flip);
-    cout<<vector_pattern<<"\n";
 
     /// Fill Standard Model axial-vector events
     /// 
@@ -447,30 +447,30 @@ void UCNAFierzFitter::fill(TString vector_pattern,
     /// axial[0].fill( ...
     /// axial[1].fill( ...
     /// -- or --
-    /// for (i;1,2) axial[i].fill( ...
+    /// for (int i : {1,2}) axial[i].fill( ...
     /*
     if (axial_pattern != "")
         axial.fill(
             axial_pattern,
-            min, max,     /// TODO read from filename pattern
+            start, stop,     /// TODO read from filename pattern
             name, "Standard Model axial-vector current", 
             type, flip);
     cout<<axial_pattern<<"\n";
         */
 
     /// Fill BSM Fierz events
+    cout<<"About to load fierz pattern "<<fierz_pattern<<"\n";
     if (fierz_pattern != "")
         fierz.fill(
             fierz_pattern,
-            min, max,     /// TODO read from filename pattern
+            start, stop,     /// TODO read from filename pattern
             name, "BSM Fierz current", 
             type, flip);
-    cout<<fierz_pattern<<"\n";
 }
 
 
 /// DISPLAYING AND OUTPUTTING
-void UCNAFierzFitter::display(TString &plots_base) {
+void UCNAFierzFitter::display(const TString& plots_base) {
     TCanvas canvas("fierz_fitter_canvas",
                    "Combined Fierz component of energy spectrum");
     TLegend legend(0.55,0.65,0.85,0.85);
@@ -500,7 +500,7 @@ void UCNAFierzFitter::display(TString &plots_base) {
                    "fierz_supersum", 
                    title+" Fierz Monte Carlo #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_base+"monte_carlo.pdf");
+    canvas.SaveAs(plots_base+"/monte_carlo.pdf");
 
     data.super_sum.draw(
                    "data_supersum", 
@@ -511,7 +511,7 @@ void UCNAFierzFitter::display(TString &plots_base) {
                    "fit_supersum", 
                    title+" fit #Sigma(E)", 
                    &canvas,&legend,"Same",6,0);
-    canvas.SaveAs(plots_base+"data_fit_supersum.pdf");
+    canvas.SaveAs(plots_base+"/data_fit_supersum.pdf");
 
     /* /// Output for gnuplot
 	//save(plots_base+"super-sum-data.dat", data.super_sum, 1, 1000);
@@ -571,7 +571,7 @@ void UCNAFierzFitter::compute_asymmetry_fit(double A, double b)
 }
 */
 
- void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
+void UCNAFierzFitter::compute_asymmetry_fit(double A, double b/*, double N*/)
 {
     cout<<"Function compute_asymmetry_fit.\n";
     exit(0);
@@ -626,13 +626,14 @@ double asymmetry_fit_func(double *x, double *p)
  * UCNAhistogram::fill
  * load the files that contain data histograms
  */
-int UCNAhistogram::fill(TString filename) {
+int UCNAhistogram::fill(const TString& filename) {
     return fill(filename, GetName(), GetTitle());
 }
 
-int UCNAhistogram::fill(TString filename, 
-                        TString name, 
-                        TString title) {
+int UCNAhistogram::fill(const TString& filename, 
+                        const TString& name, 
+                        const TString& title) {
+    exit(0);
 	TFile* tfile = new TFile(filename);
 	if (tfile and tfile->IsZombie()) {
 		cout<<"Error: While loading "<<title<<":\n";
@@ -664,9 +665,9 @@ int UCNAhistogram::fill(TString filename,
  * UCNAhistogram::draw
  * overload TH1's draw to set up certain features
  */
-void UCNAhistogram::draw(TString name, TString title,
-          TCanvas* canvas, TLegend* legend, 
-          TString draw = "", int color = 0, int marker = 0)
+void UCNAhistogram::draw(const TString& name, const TString& title,
+                          TCanvas* canvas, TLegend* legend, 
+                          const TString& draw = "", int color = 0, int marker = 0)
 {
     if (not canvas)
         canvas = new TCanvas(name + "_canvas", title + " Canvas");
@@ -704,7 +705,7 @@ void UCNAhistogram::draw(TString name, TString title,
 /**
  *
  */
-void UCNAhistogram::save(TString filename, double ax, double ay)
+void UCNAhistogram::save(const TString& filename, double ax, double ay)
 {
     ofstream ofs;
 	ofs.open(filename);
@@ -720,12 +721,12 @@ void UCNAhistogram::save(TString filename, double ax, double ay)
 }
 
 
-void UCNAFierzFitter::save(TString filename)
+void UCNAFierzFitter::save(const TString& filename)
 {
-    vector.super_sum.save(filename+"-vector.dat");
-    fierz.super_sum.save(filename+"-fierz.dat");
-    data.super_sum.save(filename+"-data.dat");
-    fit.super_sum.save(filename+"-fit.dat");
+    vector.super_sum.save(filename+"-vector.txt");
+    fierz.super_sum.save(filename+"-fierz.txt");
+    data.super_sum.save(filename+"-data.txt");
+    fit.super_sum.save(filename+"-fit.txt");
 }
 
 
@@ -733,7 +734,7 @@ void UCNAFierzFitter::save(TString filename)
  * UCNAhistogram::save() and UCNAmodel::save()
  * Save root data
  */
-void UCNAmodel::save(TString filename)
+void UCNAmodel::save(const TString& filename)
 {
 	TFile* tfile = new TFile(filename, "recreate");
 	if (tfile->IsZombie()) {
@@ -770,16 +771,16 @@ void UCNAmodel::save(TString filename)
  * Fill in asymmetry and super_ratio, and super sums from simulation data.
  * Use wild card * in filename where data is split up over many files
  * and they get Tchained together.
-int UCNAmodel::fill(TString filename, TString name, TString title) {
+int UCNAmodel::fill(const TString& filename, const TString& name, const TString& title) {
     return fill(filename, name, title, 0.68/1.68, -0.12, 0.0);
 } */
 
 
-int UCNAmodel::fill(TString pattern, int first, int last, 
-                    TString name, TString title, 
+int UCNAmodel::fill(const TString& pattern, int first, int last, 
+                    const TString& name, const TString& title, 
                     int type, double flip)
 {
-    assert(flip > 1e-10);
+    assert(flip == 0.4);
     /* TODO add pattern matching for file numbers
     cout <<pattern.SubString("[",3)<<"\n";
     cout <<pattern.SubString("[]",0)<<"\n";
@@ -789,6 +790,7 @@ int UCNAmodel::fill(TString pattern, int first, int last,
     sregex_iterator next(ex
     */
     TChain *chains = new TChain(name, title);
+    cout<<chains<<"\n";
     int added = 0;
     for (int i = first; i <= last; i++) {
         TString filename(pattern);
@@ -817,7 +819,9 @@ int UCNAmodel::fill(TString pattern, int first, int last,
         }
     }
     if (added > 0 and chains) {
-        return fill(chains, type, flip); 
+        int entries = fill(chains, type, flip); 
+        cout<<" Successfully added "<<added<<" files with "<<entries<<" entries to chain "<<chains->GetTitle()<<".\n";
+        return entries;
     }
     else {
 		cout<<"Error: In file pattern "<<pattern<<":\n";
@@ -829,7 +833,7 @@ int UCNAmodel::fill(TString pattern, int first, int last,
 }
 
 #if 0
-int UCNAmodel::fill(TString filename, TString name, TString title, 
+int UCNAmodel::fill(const TString& filename, const TString& name, const TString& title, 
                     int type, double flip)
 {
     /// TODO check if filename is a pattern, and if so call chain version above
@@ -883,8 +887,9 @@ void UCNAmodel::SetAllBranches(TChain *chain)
 }
 
 int UCNAmodel::fill(TChain *chain, int type, double flip) {
-    assert(flip > 0.00001);
+    assert(flip == 0.4);
 
+    cout<<"Is chain here consistant? "<<chain<<".\n";
     if (not chain) {
 		cout<<"Error: Null TChain pointer.\n";
         cout<<"Aborting...\n";
@@ -1005,7 +1010,7 @@ int UCNAmodel::fill(TChain *chain, int type, double flip) {
 }
 
 /*
-int UCNAmodel::fill(TString filename, TString name, TString title, 
+int UCNAmodel::fill(const TString& filename, const TString& name, const TString& title, 
                     double flip, double A, double b)
                     //double flip = 0.68/1.68, double A = -0.12, double b = 0)
 {

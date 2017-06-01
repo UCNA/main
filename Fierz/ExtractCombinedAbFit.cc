@@ -47,7 +47,7 @@ double fit_max = 630;             /// max kinetic range for plots
 int fit_bins=(fit_max-fit_min)/10;/// number of bins to use fit spectral plots
 double fedutial_cut = 50;         /// radial cut in millimeters TODO!! HARD CODED IN MODEL
 int file_number_start = 1;
-int file_number_stop = 99;
+int file_number_stop = 3;//99;
 int file_number_batch = 1;//10;
 
 /// set up free fit parameters with best guess
@@ -123,8 +123,8 @@ void combined_chi2(Int_t & /*n*/, Double_t * /*grad*/ , Double_t &chi2, Double_t
     }
     else if (FIT_TYPE=="b") {
         double b=p[0];
-        //chi2 = global_ff->supersum_chi2(b,1/(1+b*x_1));
-        chi2 = global_ff->supersum_chi2(b,1);
+        chi2 = global_ff->supersum_chi2(b,1/(1+b*x_1));
+        //chi2 = global_ff->supersum_chi2(b,1);
     }
 }
 
@@ -196,40 +196,13 @@ TF1* fit(UCNAFierzFitter *ff) {
 
     /// Compute a fit from the parameters
     ff->compute_fit(A,b,N);
-    /*
-
-    /// Look up sizes
-    double Nsim_data = ff->data.super_sum.GetEntries();
-    double Nall_data = ff->data.super_sum.GetEffectiveEntries(KEmin, KEmax);
-    double Nfit_data = ff->data.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    double Nfit_vector = ff->vector.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    // TODO double Nfit_axial = ff->axial.super_sum.GetEffectiveEntries(fit_min, fit_max);
-    // TODO double Nfit_fierz = ff->fierz.super_sum.GetEffectiveEntries(fit_min, fit_max);
-  
-    //double N = fit_entries;
-    //double N = Nfit_data*Nfit_vector/Sqrt(Nfit_data*Nfit_data + Nfit_vector*Nfit_vector);
-    double Neff = Nfit_data*Nfit_vector/(Nfit_data + Nfit_vector);
-    N = Neff;
-    //double N = Nfit_data;
-    */
-    N = ff->comupte_sizes();
 
     /// PRINT OUT REPORT OF FITS, CORRELATIONS AND ERRORS
-    cout<<" NUMBER OF EVENTS WITH ENERGY RANGE CUTS:\n";
-    ff->print_sizes();
-    
-    /*
+
     /// Output the data and cut info.
-    cout<<setprecision(5);
     cout<<" NUMBER OF EVENTS WITH ENERGY RANGE CUTS:\n";
-    cout<<"    Full energy range is "<<KEmin<<" - "<<KEmax<<" keV.\n";
-    cout<<"    Fit energy range cut is "<<fit_min<<" - "<<fit_max<<" keV.\n";
-    cout<<"    Number of actual counts in data is "<<int(Nsim_data)<<".\n";
-    cout<<"    Effective number of counts in full energy range is "<<int(Nall_data)<<".\n";
-    cout<<"    Effective number of counts in fit energy range cut is "<<int(Nfit_data)<<".\n";
-    cout<<"    Efficiency of energy cut is "<<int(1000*Nfit_data/Nall_data)/10<<"%.\n";
-    cout<<"    Effective N "<<int(100*N)/100<<".\n";
-    */
+    N = ff->comupte_sizes();
+    ff->print_sizes();
     
     /// Set all expectation values for this range.
     double ex_cos = 0.5; // TODO evaluate_expected_cos_theta(fit_min,fit_max);
@@ -246,7 +219,6 @@ TF1* fit(UCNAFierzFitter *ff) {
             //    <<" and m/E exponent "<<n<<" is "<<ex[m][n]<<".\n";
         }
     }
-
     output_matrix("APPROXIMATE ANALYTICAL EXPECTATION MATRIX", ex, colNames, rowNames);
     
     /// Calculate the predicted inverse covariance matrix for this range.
@@ -398,9 +370,38 @@ TF1* fit(UCNAFierzFitter *ff) {
     return asymmetry_func;
 }
 
+void setenvvar(TString & var, const TString env) {
+    if (getenv(env))
+        var = getenv(env);
+    else 
+        cout<<"Warning: Environmental variable "<<env<<"is not set.\n"
+            <<"Using default "<<var<<" instead.\n";
+}
 
-#define TYPES 5
+
+/*
+TString timstr() {
+    time_t t = time(0);   // get time now
+    struct tm * now = localtime(&t);
+    tm = *localtime(&t);
+    char buffer[256];
+    strftime(buffer, sizeof(buffer), "-%a-%b-%d-%H:%M:%S-%Y-", tm);
+    string time = put_time(&tm, "-%a-%b-%d-%H:%M:%S-%Y-");
+    //filename+="report-"+(now->tm_year + 1900)+"-"
+    //        +(now->tm_mon+1)+"-"+now->tm_mday+"-"+now->tm_hour+":"+now->tm_min;
+
+    return TString(time);
+}
+*/
+
+
+#define TYPES 2
 #define MAXRUNS 512
+TString type_name[] = {"TYPE 0", "TYPE 1", "TYPE 2", "TYPE 3", "All"};
+TString type_upr[] = {"Type_0", "Type_1", "Type_2", "Type_3", "All"};
+TString type_lwr[] = {"type_0", "type_1", "type_2", "type_3", "all"};
+
+
 
 /// MAIN APPLICATION
 int main(int argc, char *argv[])
@@ -412,8 +413,16 @@ int main(int argc, char *argv[])
     //UCNAFierzFitter ucna("ucna", "UCNA", KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 
     /// Find file paths from environment
+    setenvvar(data_dir, "UCNA_DATA_DIR");
+    setenvvar(mc_dir, "UCNA_MONTE_CARLO_DIR");
+    setenvvar(mc_sys_dir, "UCNA_SYSTEMATICS_DIR");
+    setenvvar(plots_dir, "UCNA_PLOTS_DIR");
+    /*
     if (getenv("UCNA_DATA_DIR"))
         data_dir = getenv("UCNA_DATA_DIR");
+    else 
+        cout<<"Warning: Environmental variable UCNA_DATA_DIR is not set.\n"
+            <<"Using default "<<data_dir<<" instead.\n";
 
     if (getenv("UCNA_MONTE_CARLO_DIR"))
         mc_dir = getenv("UCNA_MONTE_CARLO_DIR");
@@ -426,12 +435,7 @@ int main(int argc, char *argv[])
     else 
         cout<<"Warning: Environmental variable UCNA_SYSTEMATICS_DIR is not set.\n"
             <<"Using default "<<mc_sys_dir<<" instead.\n";
-
-    /// Default filenames.
-    TString plot_filebase = plots_dir + "/";
-    TString type_name[] = {"TYPE 0", "TYPE 1", "TYPE 2", "TYPE 3", "All"};
-    TString type_upr[] = {"Type_0", "Type_1", "Type_2", "Type_3", "All"};
-    TString type_lwr[] = {"type_0", "type_1", "type_2", "type_3", "all"};
+            */
 
     if (FIT_TYPE == "b" or FIT_TYPE == "bN") {
     }
@@ -451,13 +455,14 @@ int main(int argc, char *argv[])
     while (arg < argc) {
         cout<<"arg "<<arg<<" is "<<argv[arg]<<"\n";
         /// loops through types
-        for (int type=0; type<=1; type++) {
+        for (int type=0; type<=TYPES; type++) {
+            /// Construct a fierz fitter for this run.
             ucna[type][run] = new UCNAFierzFitter(
-                        "ucna_"+type_lwr[type]+"_run_"+to_string(run), 
-                        "UCNA "+type_name[type]+" Run "+to_string(run), 
-                        KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
+                "ucna_"+type_lwr[type]+"_run_"+to_string(run), 
+                "UCNA "+type_name[type]+" Run "+to_string(run), 
+                KEbins, KEmin, KEmax, fit_bins, fit_min, fit_max);
 
-            /// Load Monte Carlo files 
+            /// Load Monte Carlo files .
             TString file_stem = mc_dir+"/"+mc_filename_stem;
             cout<< "    Loading Monte Carlo files - "<<type_name[type]<<" for run "<<run<<".\n";
             assert(ucna[type][run]);
@@ -489,13 +494,13 @@ int main(int argc, char *argv[])
                 cout<<"Error: check this code before trusting the results.\n";
                 exit(1);
 
-                /// Load Monte Carlo simulated Fierz as fake events
-                /// Pick fake values of asymmetry and Fierz terms
+                /// Load Monte Carlo simulated Fierz as fake events.
+                /// Pick fake values of asymmetry and Fierz terms.
                 //double A = -0.12;
                 //double b = 0.00;
                 //double N = 1;
 
-                /// generate fake signal curve from different simulated spectra
+                /// Generate fake signal curve from different simulated spectra.
                 //fake.compute_fit(A,b,N);
                 //ucna[type][run]->data = fake.fit;
             }
@@ -529,7 +534,7 @@ int main(int argc, char *argv[])
     }
     cout<<" Successfully fit the Monte Carlo to the data.\n";
     ucna[type][run]->fit.super_sum.snapshot();
-    ucna[type][run]->display(plot_filebase);
+    ucna[type][run]->display(plots_dir+"/fit-plot-");
 
     /// extract most critical results from fit functions and report
     ofstream rofs;
