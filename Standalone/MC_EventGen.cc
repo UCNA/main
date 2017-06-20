@@ -72,7 +72,7 @@ void mi_evtgen(StreamInteractor* S) {
 		T.Branch("weight",&tEvt.w,"weight/D");
 		
 		for(unsigned int i=0; i<nPerTree; i++) {
-		//		while (evtn<nPerTree) {
+	
 		        std::vector<NucDecayEvent> evts;
 			if(qrt==INDEP_RANDOM) r0.RndmArray(totDF,&rnd[0]);
 			else if(qrt==QR_SOBOL) rSobol.Next(&rnd[0]);
@@ -85,7 +85,6 @@ void mi_evtgen(StreamInteractor* S) {
 				tEvt.eid = evtn;
 				for(AxisDirection d = X_DIRECTION; d <= Z_DIRECTION; ++d) tEvt.x[d] = vpos[d];
 				T.Fill();
-				//evtn++;
 			}
 			evtn++;
 		}
