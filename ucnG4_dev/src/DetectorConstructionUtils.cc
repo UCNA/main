@@ -82,8 +82,8 @@ MaterialUser::MaterialUser() {
 
         SixFSixF = new G4Material("6F6F",1.48*g/cm3,5);
         SixFSixF->AddElement(G4Element::GetElement("N"),nAtoms=2);
-        SixFSixF->AddElement(G4Element::GetElement("C"),nAtoms=36);
-        SixFSixF->AddElement(G4Element::GetElement("H"),nAtoms=20);
+        SixFSixF->AddElement(G4Element::GetElement("C"),nAtoms=34); // I count 34, dave had 36
+        SixFSixF->AddElement(G4Element::GetElement("H"),nAtoms=14); // I count 14, dave had 20
         SixFSixF->AddElement(G4Element::GetElement("O"),nAtoms=4);
         SixFSixF->AddElement(G4Element::GetElement("F"),nAtoms=12);         
         
