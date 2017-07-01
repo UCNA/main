@@ -191,7 +191,7 @@ class GeantSimManager:
 		os.system("cat "+parallel_jobfile)
 		print "N Runs is ", nruns
 		if nruns > 1:
-			os.system("nice -n 20 parallel -P 6 < %s"%parallel_jobfile)
+			os.system("nice -n 20 parallel -j6 < %s"%parallel_jobfile)
 
 		else:
 			os.system(onejob)
@@ -226,7 +226,7 @@ class GeantSimManager:
 		print "\n----- %s ------"%resim_jobfile
 		os.system("cat "+resim_jobfile)
 		print
-		os.system("nice -n 10 parallel -P 6 < %s"%resim_jobfile)
+		os.system("nice -n 10 parallel -j6 < %s"%resim_jobfile)
 		os.system("rm %s/outlist_*.txt"%self.g4_out_dir)
 		os.system("rm "+resim_jobfile)
 
@@ -302,15 +302,18 @@ if __name__ == "__main__":
 
 ######################## Neutrons 2011-2013 ###############################
 	if options.neutrons:
+
+		if options.evtgen:
+			os.system("rm -rf %s/%s_g_n"%(os.environ["G4EVTDIR"],g))
+			os.system("../../MC_EventGen run n1 %s f p 10000 1000 x"%(g,os.environ["G4EVTDIR"]))
+
 		
-		betaSim = GeantSimManager("XuanTest_quickie", geometry="2011/2012",vacuum="1e-5 torr")#, fmap=os.environ["UCNA_AUX"]+"/UniformFieldmap.txt")
-	#betaSim.set_generator("neutronBetaUnpol")
+		betaSim = GeantSimManager("XuanTest", geometry="2011/2012",vacuum="1e-5 torr")#, fmap=os.environ["UCNA_AUX"]+"/UniformFieldmap.txt"
 	       	betaSim.set_evtsrc("n1_f_p")
 		if options.sim:
 			betaSim.set_detector_offsets()
 			betaSim.settings["ana_args"] += " saveall"
-			#betaSim.g4_out_dir_base = os.environ["G4OUTDIR"]
-			betaSim.launch_sims(maxIn=30)
+			betaSim.launch_sims(maxIn=1000)
 			
 		if options.ana:
 			betaSim.launch_postanalyzer()
