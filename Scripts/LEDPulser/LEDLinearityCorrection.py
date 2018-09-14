@@ -74,7 +74,7 @@ def makeLEDLinCorrByRun(value, run, tube, wave, parm_filename):
     data = readFitResultsTxt(parm_filename)    
     
     if run < min(data['run']) or run > max(data['run']):
-        print "Run out of range"
+gain        print "Run out of range"
         return -1
 
     cutTube = data['tube'] == tube

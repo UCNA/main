@@ -1405,7 +1405,7 @@ int main (int argc, char **argv)
     gMinuit->FixParameter(nvars-3);  // lifts degeneracy of scaling all parameters.
 
     // Now ready for minimization step
-    arglist[0] = 30000;
+    arglist[0] = 30000; //Fix
     arglist[1] = 0.1;
     gMinuit->mnexcm("MIGRAD", arglist ,2,ierflg);
 

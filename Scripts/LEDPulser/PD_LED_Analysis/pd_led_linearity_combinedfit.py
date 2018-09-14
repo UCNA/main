@@ -25,13 +25,13 @@ sys.path.append('../BetaSpectrumFitting') # find RunLogUtilities.py
 from RunLogUtilities import catSourceSegments
 
 def makeQualityCuts(data):
-    cutruns = [18424, # explicit bimodal change in the middle of the run (only E?)
+    cutruns = [18424, # explicit bimodal change in the middle of the run (only E?) 
                18429, 18430, 18520, 18559, 18644, 18646, 18648, 18787,  # LEDs swapped, bad cycle finding
-               18456,  # bad fits
+               18456, 21517, 21825, 22278, 23159, 23163, # bad fits
                18505, 18506, 18524, 18532, 18533, # no data 
                18577, 18969, 19322, # bad cylce finding
                18746, 18751, 18760, 18761, 
-               21186, 22647, # just a bad run
+               21186, 22647, 22037, # just a bad run
                21288, 21295, 21298, 21312, 21318, 
                21378,  # bad run
                21599, 21601, 21602, 
@@ -41,7 +41,6 @@ def makeQualityCuts(data):
                21777, 21891, 21948, 21911, #runs including a bad cycle
                21429, 21430, 21431, 21432, 22261, # no PMT data
                20782, 20889, 20685, 20287]  # haven't/should investigate by eye
-
     
 #    bimodalrange1 = range(21650, 21704)
 #    bimodalrange2 = range(21827, 21843)
@@ -155,6 +154,14 @@ def makeChiCuts(data):
 
     return _data
 
+def makeErrCuts(data, threshold=10):
+    cutcond = np.where( (data['ParErr'] > 1e5) | (abs(data['ParErr']) > abs(threshold*data['ParVal'])) | abs((data['ParVal']) > 1e5) )
+   # for row in data[cutcond]:
+   #     print row
+    newdata = np.delete(data, cutcond, 0)
+
+    return newdata
+
 def getLEDdata(basedir):
     # import data. 
 #    basedir = "/data1/saslutsky/LEDPulser/images_05_20_2015_16way_separate_wavelength_coeff_21274_21328/"
@@ -174,37 +181,39 @@ def getLEDdata(basedir):
     return data
 
 
-def takeAverages(dataarray):
+def takeAverages(dataarray, stripbool):
     segments = catSourceSegments() # find run segment boundaries; use for averaging data
     
     dataruns = dataarray['Run']
     datadata = dataarray['ParVal']
 
     avglist = list()
+    stdlist = list()
 #    seglist = list()
     for i, segrun in enumerate(segments):
         segavg = 0
+        segstd = 0
 #       counter = 0
         segdatalist = list()
-        print "SEGMENT RUN " + str(segrun)
+#        print "SEGMENT RUN " + str(segrun)
         for j, drun in enumerate(dataruns):
             if i == len(segments) - 1: #special case for end of array   #            if drun > segments[-1]: #special case for runs after end of array
                 if drun > segrun:
-                    print "data RUN " +  str(drun)
+#                    print "data RUN " +  str(drun)
                     if drun == dataruns[j-1]:
-                        print "Duplicate Run. Skipping."  # wierd duplication in 20254-23173 fits
+#                        print "Duplicate Run. Skipping."  # wierd duplication in 20254-23173 fits
                         continue
-                    print datadata[j]
+#                    print datadata[j]
                     #segavg += datadata[j]
                     segdatalist.append(datadata[j])
 #                    counter = j + 1 
             elif i < len(segments) - 1:
                 if drun > segrun and drun < segments[i+1]: # start with initial segment 
-                    print "data RUN " +  str(drun)
+#                    print "data RUN " +  str(drun)
                     if drun == dataruns[j-1]:
-                        print "Duplicate Run. Skipping."  # wierd duplication in 20254-23173 fits
+#                        print "Duplicate Run. Skipping."  # wierd duplication in 20254-23173 fits
                         continue
-                    print datadata[j]
+#                    print datadata[j]
                     #segavg += datadata[j]
                     segdatalist.append(datadata[j])
 #                    counter = j + 1 
@@ -219,24 +228,40 @@ def takeAverages(dataarray):
 #            print "Data List not commensurate"
 #            return 0 
          #segavg = segavg/counter
-        stripsegdatalist = stripOutlier(segdatalist) # see below
-        if len(segdatalist) != 0:
-            segavg = np.mean(stripsegdatalist)
+        print "SEGRUN: " + str(segrun)
+        print "LIST: " + str(segdatalist)
+        #sometimes it cuts out entire arrays?
+        if stripbool:
+            stripsegdatalist = stripOutlier(segdatalist) # see below
+            if len(stripsegdatalist) != 0:
+                segavg = np.mean(stripsegdatalist)
+                segstd = np.std(stripsegdatalist)
+            else:
+                segavg = 0
+                segstd = 0
         else:
-            segavg = 0
-        print segavg
+            if len(segdatalist) != 0:
+                segavg = np.mean(segdatalist)
+                segstd = np.std(segdatalist)
+            else:
+                segavg = 0
+                segstd = 0
+        print "AVERAGE: " + str(segavg)
         avglist.append(segavg)
+        stdlist.append(segstd)
  #   print avglist, seglist
-    print avglist, segments
+ #   print avglist, segments
 
 #    return runlist, avglist # convert avglist and runlist to an array
 #    return segments, avglist # convert avglist and runlist to an array
 
-    dataarray = np.array(segments, avglist)
-    dataarray = dataarray.T
+    return avglist, stdlist, segments
+
+#    dataarray = np.array(segments, avglist)
+#    dataarray = dataarray.T
 
 
-def stripOutlier(array, thresh1 = 2, thresh2 = 4):  # strip values more than thresh*stddev from mean
+def stripOutlier(array, thresh1 = 5, thresh2 = 2):  # strip values more than thresh2*stddev from mean
     print "Stripping array " 
     print array
 
@@ -250,8 +275,11 @@ def stripOutlier(array, thresh1 = 2, thresh2 = 4):  # strip values more than thr
     trimarray1 = [a for a in array if abs(a - amean) < thresh1*astddev]
 
     astddev_trim = np.std(trimarray1)
-    amean_trim = np.std(trimarray1)
+    amean_trim = np.mean(trimarray1)
+    print "STD: " + str(astddev_trim)
+    print "MEAN: " + str(amean_trim)
     
+
     # strip outliers far from trimmed mean
     trimarray2 = [a for a in array if abs(a - amean_trim) < thresh2*astddev_trim]
     outliers2 = [a for a in array if abs(a - amean_trim) > thresh2*astddev_trim]
@@ -264,8 +292,8 @@ def stripOutlier(array, thresh1 = 2, thresh2 = 4):  # strip values more than thr
 
 if __name__ == "__main__":
     
-    if len(sys.argv) < 4:
-        print "\n Usage: python pd_led_linearity_combinedfit.py <showbool> <savebool> <datebool> <averagebool>"
+    if len(sys.argv) < 5:
+        print "\n Usage: python pd_led_linearity_combinedfit.py <showbool> <savebool> <datebool> <averagebool> <stripbool>"
         print " Please set flags\n"
         sys.exit()
 
@@ -273,6 +301,7 @@ if __name__ == "__main__":
     savebool = int(sys.argv[2]) # boolean to control saving
     datebool = int(sys.argv[3]) # boolean to toggle run#/date for x-axis
     avgebool = int(sys.argv[4]) # boolean to average data points over a run segment
+    stripbool = int(sys.argv[5]) # boolean to remove outliers from averages
 
     rcParams['figure.figsize'] = 10, 10     #Set default fig size
     plt.rc('axes', color_cycle=['r', 'g', 'b', 'y'])
@@ -289,6 +318,7 @@ if __name__ == "__main__":
     data = makeQualityCuts(data)   # cut runs found bad by eye
     print "Making Chi^2 cuts"
     data = makeChiCuts(data)       # cut runs with chisq == 0.0
+    data = makeErrCuts(data)
 
     # open output file
     outputfile = PdfPages(basedir + "FitResultsCombined_" + 
@@ -299,7 +329,6 @@ if __name__ == "__main__":
                           str(max(runlist)) + "_p1.pdf")
     
 
-    print data
     npars = 4   #p0, p1, p2, nlambda for each tube
     marks = 8
     parnames = ["p0", "p1", "p2", "nlambda"]
@@ -317,7 +346,7 @@ if __name__ == "__main__":
 
     tmpFig1, (ax0, ax1, ax2) = plt.subplots(nrows = 3, sharex = True, sharey = False)
     pdaxes = [ax0, ax1, ax2]
-    figures.append(tmpFig1)
+#    figures.append(tmpFig1)
 
     for k in range(0, len(pdparnames)): 
         if datebool:
@@ -347,26 +376,48 @@ if __name__ == "__main__":
         if datebool:
             pdaxes[2].set_xlabel('Time')
 
+    txtoutfile = open('NonLinAverages.txt', 'a')
+        
     for i in range(0,8): # 8 channels 
         data_cut = list()
+        avgdata = list() # one entry for each parval
+        stddata = list()
+ #       segdata = list()
         for j in range (0, npars): 
             # Select the channel and parameter, will plot vs run #
             cutChannel = data['Channel'] == int(i)
             cutParm = data['ParName'] == parnames[j]
-            cutErr = data['ParErr'] < abs(data['ParVal'])
-            cutCond = cutChannel & cutParm & cutErr
-            #cutCond = cutChannel & cutParm
-            _data_cut = data[cutCond]    
-###################
+            #cutErr = data['ParErr'] > abs(data['ParVal']) # this wrongly cuts values near 0
+            cutCond = cutChannel & cutParm
+            _data_cut = data[cutCond]
             if avgebool: # average the data now if requested
-               print _data_cut['ParVal']
-               _data_cut = takeAverages(_data_cut)
-               print _data_cut
-               sys.exit()
-####################
-
-            #            print _data_cut
+#               _data_cut = takeAverages(_data_cut)
+                avglist, stdlist, seglist = takeAverages(_data_cut, stripbool)
+#                print "\nPREAVERAGE DATA\n"
+#                for i in range(len(_data_cut['ParVal'])):
+#                    print _data_cut[i]
+#                print "\n"
+                print avglist, stdlist, seglist
+#                sys.exit()
+                avgdata.append(avglist)
+                stddata.append(stdlist)
+#                segdata.append(seglist)
+                
             data_cut.append(_data_cut) # npars arrays of ParName (for all runs)    return _data_cut
+            # write to file
+            if savebool:
+                if parnames[j] != "nlambda":
+                    for k, segment in enumerate(seglist):
+                        txtoutfile.write(str(segment) + "\t")  # segment start run number
+                        txtoutfile.write(str(i) + "\t")        # tube
+                        txtoutfile.write(parnames[j] + "\t")   # parameter name
+                        txtoutfile.write(str(avglist[k])+ "\t")    # average parameter
+                        txtoutfile.write(str(stdlist[k]) + "\n")  # average error
+                        
+        for avg in avgdata:
+            print "---"
+            print avg
+      #  sys.exit()
 
         ## Prepare Plots
 
@@ -395,7 +446,21 @@ if __name__ == "__main__":
                 axes[0].set_xlim([xmin - 0.5, xmax + 0.5])
                 axes[3].set_xlabel('Run Number')
                 p1Ax.set_xlim([xmin - 0.5, xmax + 0.5])
-                 
+                ##
+              #  print avgdata[0]
+                numsegments = len(seglist)
+                print "NUM SEGMENTS " +  str(numsegments)
+                print "PARNAME " + parnames[j]
+                if avgebool:
+                    for segment in range(numsegments):
+                        yline = avgdata[j][segment]
+                        xxminx = seglist[segment]
+                        if segment < numsegments - 1:
+                            xxmaxx = seglist[segment+1]
+                        else: 
+                            xxmaxx = seglist[segment] + 50
+                        axes[j].hlines(yline, xxminx, xxmaxx, linestyles='solid',color = 'blue', linewidth = 3.0 )
+
             if datebool:
                 timelist = getTimeForRunlist(data_cut[j]['Run'])
                 axes[j].xaxis.set_major_formatter(dates.DateFormatter("%m/%d/%y"))
@@ -408,28 +473,68 @@ if __name__ == "__main__":
                 axes[3].set_xlabel('Time')
                 mintime, maxtime = findMinMaxTime(timelist) # from RunPlotter.py
                 axes[3].set_xlim(mintime, maxtime)
+                if avgebool:  
+                    numsegments = len(seglist)
+                    for segment in range(numsegments):
+                        yline = avgdata[j][segment]
+                        xxminx = seglist[segment]
+                        timemin = getTimeForRunlist([xxminx])
+                        if segment < numsegments - 1:
+                            xxmaxx = seglist[segment+1]
+                        else: 
+                            xxmaxx = seglist[segment] + 50
+                        timemax = getTimeForRunlist([xxmaxx])
+                        axes[j].hlines(yline, timemin, timemax, linestyles='solid',color = 'blue', linewidth = 3.0 )
+               #         axes[0].vlines(timemin, -10000, 10000, linestyles = 'dashed', color = 'red', linewidth = 1.0)
+                    axstd = np.std(avgdata[j])
+                    axmean = np.mean(avgdata[j])
+                    axthresh = 4
+                    axes[j].set_ylim(axmean - axthresh*axstd, axmean + axthresh*axstd)
 
             axes[j].set_ylabel("p" + str(j))
-
+            
+        ip1Ax = 2
         if not datebool:
-            p1Ax.errorbar(data_cut[2]['Run'], 
-                          data_cut[2]['ParVal'], 
-                          yerr=data_cut[2]['ParErr'], 
+            p1Ax.errorbar(data_cut[ip1Ax]['Run'], 
+                          data_cut[ip1Ax]['ParVal'], 
+                          yerr=data_cut[ip1Ax]['ParErr'], 
                           linestyle='None', marker='^',
                           markersize=marks, label=_chan, color = 'Black')
             p1Ax.set_xlabel('Run Number')
+            if avgebool:
+                for segment in range(numsegments):
+                    yline = avgdata[ip1Ax][segment]
+                    xxminx = seglist[segment]
+                    if segment < numsegments - 1:
+                        xxmaxx = seglist[segment+1]
+                    else: 
+                        xxmaxx = seglist[segment] + 50
+                    p1Ax.hlines(yline, xxminx, xxmaxx, linestyles='solid',color = 'blue', linewidth = 3.0 )
             
         if datebool:
-            timelist = getTimeForRunlist(data_cut[2]['Run'])
+            timelist = getTimeForRunlist(data_cut[ip1Ax]['Run'])
             p1Ax.errorbar(timelist, 
-                          data_cut[2]['ParVal'], 
-                          yerr=data_cut[2]['ParErr'], 
+                          data_cut[ip1Ax]['ParVal'], 
+                          yerr=data_cut[ip1Ax]['ParErr'], 
                           linestyle='None', marker='^',
                           markersize=marks, label=_chan, color = 'Black')
             p1Ax.xaxis_date()
             p1Ax.set_xlabel('Time')
             mintime, maxtime = findMinMaxTime(timelist) # from RunPlotter.py
             p1Ax.set_xlim(mintime, maxtime)
+            if avgebool:  
+                numsegments = len(seglist)
+                for segment in range(numsegments):
+                    yline = avgdata[ip1Ax][segment]
+                    xxminx = seglist[segment]
+                    timemin = getTimeForRunlist([xxminx])
+                    if segment < numsegments - 1:
+                        xxmaxx = seglist[segment+1]
+                    else: 
+                        xxmaxx = seglist[segment] + 50
+                    timemax = getTimeForRunlist([xxmaxx])
+                    p1Ax.hlines(yline, timemin, timemax, linestyles='solid',color = 'blue', linewidth = 3.0 )
+
             
         axes[3].set_ylabel("$\eta_{\lambda}$")        
         axes[0].set_title(_chan)
@@ -437,13 +542,13 @@ if __name__ == "__main__":
 
         p1Ax.set_ylabel("p2")
         p1Ax.set_title(_chan)
-        
 
     if savebool: 
-        for f in range (0, 8):
+        for f in range (8):
             outputfile.savefig(figures[f])
             p1file.savefig(p1Figures[f])
     
+    txtoutfile.close()
     outputfile.close()
     p1file.close()
     if showbool:
