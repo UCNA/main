@@ -52,11 +52,33 @@ int output_histogram(string filename, TH1F* h, double ax, double ay)
 }
 #endif
 
+struct EnergySpectrum {
+    int detector;
+    int spin;
+    TH1F* central;
+    TH1F* asymetric;
+    TH1F* fierz;
+    vector<double> energy;        
+    vector<double> values;        
+    vector<double> errors;        
 
-// data need to be globals to be visible by fcn 
+    void init() {
+        energy = vector<double>();
+	    values = vector<double>();
+	    errors = vector<double>();
+    }
+};
+
+
+// data need to be globals to be visible by func 
 vector<double> asymmetry_energy;        
 vector<double> asymmetry_values;        
 vector<double> asymmetry_errors;        
+
+vector<double> fierzratio_energy;        
+vector<double> fierzratio_values;        
+vector<double> fierzratio_errors;        
+
 vector<double> fierzratio_energy;        
 vector<double> fierzratio_values;        
 vector<double> fierzratio_errors;        
@@ -89,7 +111,8 @@ void combined_chi2(Int_t & /*nPar*/, Double_t * /*grad*/ , Double_t &fval, Doubl
 
 
 
-TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2]) 
+//TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2]) 
+TF1* combined_fit(TH1F* asymmetry, TH1F* supersum, double cov[2][2]) 
 { 
 	// set up best guess
 	int nPar = 2;
@@ -177,7 +200,7 @@ TF1* combined_fit(TH1F* asymmetry, TH1F* fierzratio, double cov[2][2])
 	func->SetChisquare(chi2);
 	int ndf = asymmetry_energy.size() + fierzratio_energy.size()- nvpar;
 	func->SetNDF(ndf);
-
+    
 	TMatrixD matrix( nPar, nPar, minuit->GetCovarianceMatrix() );
 	for (int i = 0; i < nPar; i++)
 		for (int j = 0; j < nPar; j++)
@@ -199,7 +222,9 @@ int main(int argc, char *argv[])
 
 	// load the files that contain our histograms
     TFile *asymmetry_data_tfile = new TFile(
-		"/home/mmendenhall/Plots/OctetAsym_Offic/Range_0-1000/CorrectAsym/CorrectedAsym.root");
+        //"/media/hickerson/boson/Data/Plots/"
+        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+        "Range_0-1000/CorrectAsym/CorrectedAsym.root");
 	if (asymmetry_data_tfile->IsZombie())
 	{
 		std::cout << "File not found." << std::endl;
@@ -207,13 +232,27 @@ int main(int argc, char *argv[])
 	}
 
     TFile *ucna_data_tfile = new TFile(
-		"/home/mmendenhall/Plots/OctetAsym_Offic/OctetAsym_Offic.root");
+        //"/media/hickerson/boson/Data/Plots/"
+        "/media/hickerson/boson/Data/OctetAsym_Offic_2010_FINAL/"
+		"OctetAsym_Offic.root");
 	if (ucna_data_tfile->IsZombie())
 	{
 		std::cout << "File not found." << std::endl;
 		exit(1);
 	}
 
+    TFile *sm_mc_tfile = new TFile(
+        "/home/xuansun/Documents/SimData_Beta/"
+        "xuan_analyzed_baseBetas.root");
+		//"Fierz/ratio.root");
+	if (sm_mc_tfile->IsZombie())
+	{
+		std::cout << "File not found." << std::endl;
+		exit(1);
+	}
+    sm_mc_tfile->ls();
+
+    /*
     TFile *fierzratio_data_tfile = new TFile(
 		"Fierz/ratio.root");
 	if (fierzratio_data_tfile->IsZombie())
@@ -221,14 +260,15 @@ int main(int argc, char *argv[])
 		std::cout << "File not found." << std::endl;
 		exit(1);
 	}
+    */
 
 	// extract the histograms from the files
     TH1F *asymmetry_histogram = 
             (TH1F*)asymmetry_data_tfile->Get("hAsym_Corrected_C");
     TH1F *supersum_histogram = 
             (TH1F*)ucna_data_tfile->Get("Total_Events_SuperSum");
-    TH1F *fierzratio_histogram = 
-            (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
+    //TH1F *fierzratio_histogram = 
+    //        (TH1F*)fierzratio_data_tfile->Get("fierz_ratio_histogram");
 
 	double cov[2][2]; 
 	double entries = supersum_histogram->GetEffectiveEntries();
@@ -246,23 +286,24 @@ int main(int argc, char *argv[])
 	p_cov_inv[1][0] = p_cov_inv[0][1] = -N * 0.25 * A * expected[2][1];
 	p_cov_inv[1][1] = N * (expected[0][2] - expected[0][1]*expected[0][1]);
 
-	// find the covariance matrix
+	/// find the covariance matrix
 	double det = 0;
 	double p_var_A = 1 / p_cov_inv[0][0];
 	double p_var_b = 1 / p_cov_inv[1][1];
 	TMatrixD p_cov = p_cov_inv.Invert(&det);
 
-	// do the fitting
-	TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram, cov);
+	/// do the fitting
+	//TF1* func = combined_fit(asymmetry_histogram, fierzratio_histogram, cov);
+	TF1* func = combined_fit(asymmetry_histogram, supersum_histogram, cov);
 
-	// output the data info
+	/// output the data info
 	cout << " ENERGY RANGE:" << endl;
 	cout << "    Energy range is " << min_E << " - " << max_E << " keV" << endl;
 	cout << "    Number of counts in full data is " << (int)entries << endl;
 	cout << "    Number of counts in energy range is " <<  (int)N << endl;
 	cout << endl;
 
-	// output the details	
+	/// output the details	
 	cout << " FIT COVARIANCE MATRIX cov(A,b) =\n";
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 2; j++) {
@@ -311,11 +352,11 @@ int main(int argc, char *argv[])
 
 	
 
-	// output for root
+	/// output for root
     TString pdf_filename = "/data/kevinh/mc/asymmetry_fierz_term_fit.pdf";
     canvas->SaveAs(pdf_filename);
 
-	// output for gnuplot
+	/// output for gnuplot
 	//output_histogram("/data/kevinh/mc/super-sum-data.dat", super_sum_histogram, 1, 1000);
 	//output_histogram("/data/kevinh/mc/super-sum-mc.dat", mc.sm_super_sum_histogram, 1, 1000);
 	//output_histogram("/data/kevinh/mc/fierz-ratio.dat", fierz_ratio_histogram, 1, 1);
@@ -340,7 +381,7 @@ int main(int argc, char *argv[])
 	*/
 	c1->cd(3);
 	func->SetRange(min_E, max_E);
-	fierzratio_histogram->Draw();
+	///TODO fierzratio_histogram->Draw();
 	func->DrawCopy("cont1 same");
 	/*
 	c1->cd(4);
