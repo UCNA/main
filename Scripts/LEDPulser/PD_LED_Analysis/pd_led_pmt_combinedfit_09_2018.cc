@@ -1,4 +1,4 @@
-pe// c includes 
+// c includes 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -1518,13 +1518,19 @@ int main (int argc, char **argv)
 // Pushing eta^i_lambda dependence into PMT since PD light is same for all tubes. 
 // Pedestal will be wrong? 9/14 - no, pedestal is already subtracted off. Never checked for quality, though.
 
-   float _gPDval = 0.;
+   float _gPDval, _gPDerr = 0.;
    for (int led = 0; led < 2; led++){
         for (int i = 0; i < NUM_CHANNELS; i++){
 	    for(int s = 0; s < gPD[led][i].size(); s++){ 
 	       _gPDval = gPD[led][i][s]; 
+	       _gPDerr = gPDerr[led][i][s];
                gPD_light[led][i].push_back(PD_parms[0]*_gPDval + PD_parms[1]*_gPDval*_gPDval + PD_parms[2]*_gPDval*_gPDval*_gPDval);
-               //std::cout << led << " " << i << " " << _gPDval << " " << gPD_light[led][i][s] << std::endl;
+	       // error on gPD_light = sqrt( (PD^2)(dq1)^2 + (PD^4)(dq2)^2 + (PD^6)(dq3)^2 + (q1+2*q2*PD+3*q3*PD^2)^2*(dPD)^2 )
+	       gPDerr_light[led][i].push_back( sqrt( pow(_gPDval, 2) * pow(PD_errs[0], 2) + 
+	                                             pow(_gPDval, 4) * pow(PD_errs[1], 2) + 
+	                                             pow(_gPDval, 6) * pow(PD_errs[2], 2) +
+	                                             pow(PD_parms[0] + 2*PD_parms[1]*_gPDval + 3*PD_parms[2]*_gPDval*_gPDval, 2)*
+	                                                pow(_gPDerr, 2) ) );
             }
 	}
    }
@@ -1691,7 +1697,7 @@ int main (int argc, char **argv)
     TCanvas *ew_canvas_full = 
       new TCanvas("all_pmt_full_canvas",
 		  "PMT/LED data", 1280, 720); 
-    
+
     ew_canvas->Divide(2,1);
     ew_canvas_scaled->Divide(2,1);
     ew_canvas_full->Divide(2,1);
@@ -1710,7 +1716,7 @@ int main (int argc, char **argv)
                 title += " (";
                 title += wavelength[DOWN];
 #if PLOTBOTHLEDS
-                title += " nm and ";
+                title += " and ";
                 title += wavelength[UP];
 #endif
                 title += " nm)";
@@ -1776,24 +1782,34 @@ int main (int argc, char **argv)
    // Form the relevant graphs
     int graph_size = 0;
     TGraph* PMT_light_graph[2][NUM_CHANNELS];
+    TGraph* PMT_light_residuals_graph[2][NUM_CHANNELS];
     for (int i = 0; i < NUM_CHANNELS; i++){
     	for (int led = 0; led < 2; led++){
     	    graph_size = gPD_light[led][i].size();
-    	    PMT_light_graph[led][i] = new TGraph(graph_size, &gPMT[led][i][0], &gPD_light[led][i][0]);
+    	    //PMT_light_graph[led][i] = new TGraph(graph_size, &gPMT[led][i][0], &gPD_light[led][i][0]);
+    	    PMT_light_graph[led][i] = new TGraphErrors(graph_size, &gPMT[led][i][0], &gPD_light[led][i][0], 
+    	    							   &gPMTerr[led][i][0], &gPDerr_light[led][i][0]);
+    	    							   
             }
     }
    
-    // Plot LIGHT graphs
-    TCanvas *light_canvas = 
-      new TCanvas("light_canvas", 
-		  "Light versus PMT response", 1280, 720);
-    light_canvas->Divide(2,1);
+    // Plot LIGHT graphs 
+    TCanvas *light_canvas_E = 
+      new TCanvas("light_canvas_E", 
+		  "Light versus PMT response (East Tubes)", 1280, 720);
+    light_canvas_E->Divide(2,2);
+    TCanvas *light_canvas_W = 
+      new TCanvas("light_canvas_W", 
+		  "Light versus PMT response (West Tubes)", 1280, 720);
+    light_canvas_W->Divide(2,2);
     for (int ew = 0; ew < 2; ew++) {
-        light_canvas->GetPad(ew+1)->Divide(2,2);
-        for (int tx = 0; tx < 2; tx++) {
+       if (!ew) light_canvas_E->cd();
+       if (ew)  light_canvas_W->cd();
+       for (int tx = 0; tx < 2; tx++) {
             for (int ty = 0; ty < 2; ty++) {
                 int i = 4*ew+tx+2*ty;
-                light_canvas->GetPad(ew+1)->cd(tx+2*ty+1);
+                if (!ew) light_canvas_E->cd(tx+2*ty+1);
+                if (ew) light_canvas_W->cd(tx+2*ty+1);
                 TString title = "Run "; 
                 title += run;
                 title += "    LED Scan: ";
@@ -1801,10 +1817,10 @@ int main (int argc, char **argv)
                 title += " (";
                 title += wavelength[DOWN];
 #if PLOTBOTHLEDS
-                title += " nm and ";
+                title += " and ";
                 title += wavelength[UP];
 #endif
-                title += " nm)";
+                title += ")";
 		PMT_light_graph[UP][i]->SetTitle(title);
                 PMT_light_graph[DOWN][i]->SetTitle(title);
 		gStyle->SetOptFit(0);
@@ -1812,8 +1828,8 @@ int main (int argc, char **argv)
                 PMT_light_graph[DOWN][i]->SetMarkerColor(6);
                 PMT_light_graph[DOWN][i]->SetMarkerStyle(21);
                 PMT_light_graph[UP][i]->SetMarkerStyle(21);
-                PMT_light_graph[DOWN][i]->SetMarkerSize(0.75);
-                PMT_light_graph[UP][i]->SetMarkerSize(0.75);
+                PMT_light_graph[DOWN][i]->SetMarkerSize(0.5);
+                PMT_light_graph[UP][i]->SetMarkerSize(0.5);
                	PMT_light_graph[UP][i]->GetXaxis()->SetLimits(0, 2500+ew*1000);
                 PMT_light_graph[UP][i]->Draw("AP");
                 PMT_light_graph[UP][i]->SetName("LightGraphUP");
@@ -1822,17 +1838,19 @@ int main (int argc, char **argv)
                 PMT_light_graph[UP][i]->SetTitle(title);
                 PMT_light_graph[UP][i]->GetXaxis()->SetTitle("PMT, raw counts (ADC)");
                 PMT_light_graph[UP][i]->GetYaxis()->SetTitle("Corrected Photodiode - 'Light' (AU)");
+                PMT_light_graph[UP][i]->GetYaxis()->SetTitleOffset(1.6);
+                
                
 		for (int led = 0; led < 2; led++){
                     fittedFunctions_PMTonly[led][i].SetLineColor(8);
                     fittedFunctions_PMTonly[led][i].Draw("same");
                 }
-                
-                light_canvas->Update();
-   	     }
+                if (!ew) light_canvas_E->Update();
+                if (ew) light_canvas_W->Update();
+  	     }
          }
      }
-   
+   cout << "END" << endl;
    
 #if OUTPUT_IMAGE
     TString pd_led_pmt_filename = "pd_led_pmt_";
@@ -1842,7 +1860,10 @@ int main (int argc, char **argv)
     TString pd_led_pmt_constr_filename = pd_led_pmt_filename + "_constrained.gif";
     TString pd_led_pmt_constr_rootfilename = pd_led_pmt_filename + "_constrained.root";
     TString pmt_light_filename = "pmt_light_";
-    pmt_light_filename = OUTPUT_IMAGE_DIR + pmt_light_filename + argv[1];
+    TString pmt_light_filename_E = pmt_light_filename + "E_"; 
+    TString pmt_light_filename_W = pmt_light_filename + "W_";
+    pmt_light_filename_E = OUTPUT_IMAGE_DIR + pmt_light_filename_E + argv[1];
+    pmt_light_filename_W = OUTPUT_IMAGE_DIR + pmt_light_filename_W + argv[1];
 
     TString pd_led_pmt_rootfilename = pd_led_pmt_filename;
     pd_led_pmt_filename += ".gif";
@@ -1857,10 +1878,13 @@ int main (int argc, char **argv)
     TString pd_led_pmt_full_rootfilename = pd_led_pmt_full_filename;
     pd_led_pmt_full_rootfilename += ".root";
     pd_led_pmt_full_filename +=  ".gif";
-    TString pmt_light_rootfilename = pmt_light_filename;
-    pmt_light_filename += ".gif";
-    pmt_light_rootfilename += ".root";
-        
+    TString pmt_light_rootfilename_E = pmt_light_filename_E;
+    TString pmt_light_rootfilename_W = pmt_light_filename_W;
+    pmt_light_filename_E += ".gif";
+    pmt_light_filename_W += ".gif";
+    pmt_light_rootfilename_E += ".root";
+    pmt_light_rootfilename_W += ".root";
+
     ew_canvas->SaveAs(pd_led_pmt_filename,"9");
     // ew_constr_canvas->SaveAs(pd_led_pmt_constr_filename, "9");
     ew_canvas->SaveAs(pd_led_pmt_rootfilename,"9");
@@ -1868,9 +1892,10 @@ int main (int argc, char **argv)
     //ew_canvas_scaled->SaveAs(pd_led_pmt_scaled_filename, "9");
     //ew_canvas_full->SaveAs(pd_led_pmt_full_filename, "9");
     //ew_canvas_full->SaveAs(pd_led_pmt_full_rootfilename, "9");
-    light_canvas->SaveAs(pmt_light_filename, "9");
-    light_canvas->SaveAs(pmt_light_rootfilename, "9");
-    
+    light_canvas_E->SaveAs(pmt_light_filename_E, "9");
+    light_canvas_E->SaveAs(pmt_light_rootfilename_E, "9");
+    light_canvas_W->SaveAs(pmt_light_filename_W, "9");
+    light_canvas_W->SaveAs(pmt_light_rootfilename_W, "9");    
     
 #endif
 #endif
