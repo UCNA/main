@@ -1,4 +1,6 @@
-//g++ -o lgprob LGProbError.cpp pmtprobstuff.cpp lgpmtTools.cpp `root-config --cflags --glibs`
+//g++ -o lgprob LGProbPMTQadc.cpp pmtprobstuff.cpp lgpmtTools.cpp FlattenPMTMap.cc `root-config --cflags --glibs`
+//g++ -o lgprob LGProbPMTQadc.cpp pmtprobstuff.cpp lgpmtTools.cpp FlattenPMTMap.cc -lgsl -lgslcblas -lm `root-config --cflags --glibs`
+
 //#include <fstream>
 #include <iostream>
 #include <stdlib.h>
@@ -28,8 +30,10 @@
 #include "TF1.h"
 #include "TH2F.h"
 #include "TPaveText.h"
-
-
+#include "FlattenPMTMap.hh"
+#include <gsl/gsl_mode.h>
+#include <gsl/gsl_sf_result.h>
+#include <gsl/gsl_sf_ellint.h> //double gsl_sf_ellint_E(double phi, double k, gsl_mode_t mode);
 
 using namespace std;
 
@@ -50,6 +54,8 @@ void LGProbError(string infile, string outfile, double LGFitParamE[],double LGFi
    Double_t fp4W[12];
    Double_t offsetE[2];
    Double_t offsetW[2];
+   Float_t Epos[2];
+   Float_t Wpos[2];
    Float_t xEpos[50];//needs to have a lot of space for some reason or another.
    Float_t yEpos[50];
    Float_t xWpos[50];
@@ -71,6 +77,10 @@ void LGProbError(string infile, string outfile, double LGFitParamE[],double LGFi
 	phys->SetBranchAddress("yWmpm",&yWpos);
 	phys->SetBranchAddress("ScintE",&scintE);
 	phys->SetBranchAddress("ScintW",&scintW);
+	phys->SetBranchAddress("Cathodes_Ey",&cathEy);
+	phys->SetBranchAddress("Cathodes_Ex",&cathEx);
+	phys->SetBranchAddress("Cathodes_Wx",&cathWx);
+	phys->SetBranchAddress("Cathodes_Wy",&cathWy);
 	
   
 //create new file for the map to go into 
@@ -85,7 +95,9 @@ void LGProbError(string infile, string outfile, double LGFitParamE[],double LGFi
     TBranch *LGWerror = pmtTree->Branch("LGWerror",&lgWerr,"LGWerror[12]/D");
     TBranch *ScintE = pmtTree->Branch("ScintE",&scintE,"ScintE[4]/F");
     TBranch *ScintW = pmtTree->Branch("ScintW",&scintW,"ScintW[4]/F");
-    
+    TBranch *EPos= pmtTree->Branch("Epos",&Epos,"Epos[4]/F");
+    TBranch *WPos= pmtTree->Branch("Wpos",&Wpos,"Wpos[4]/F");
+
 	///Fit parameters Tree
     TTree *fitTree=new TTree("fitTree","LightGuide Map Fit Parameters");
 	//Fit Parameter Branches
@@ -126,16 +138,23 @@ void LGProbError(string infile, string outfile, double LGFitParamE[],double LGFi
     	{   
 	phys->GetEntry(ii);	
 
-	    
+	    Epos[0]= xEpos[0]-LGFitParamE[0];
+            Epos[1]= yEpos[0]-LGFitParamE[1];
+	    Epos[2]= xEpos[1];
+	    Epos[3]= yEpos[1];
+	    Wpos[0]= xWpos[0]-LGFitParamW[0];
+            Wpos[1]= yWpos[0]-LGFitParamW[1];
+	    Wpos[2]= xWpos[1];
+	    Wpos[3]= yWpos[1];
 	///get light guide probability value. 
-		for (int i=0; i<12; ++i){ //east side 		
+		for (int i=0; i<12; ++i){    //east side 		
 		lgEprob[i]=lightguideprob(xEpos[0]-LGFitParamE[0],yEpos[0]-LGFitParamE[1],i);
-		lgEerr[i]=LGerror(xEpos[1],yEpos[1],xEpos[0]-LGFitParamE[0],yEpos[0]-LGFitParamE[1],i);
+		lgEerr[i]=1;//LGerror(xEpos[1],yEpos[1],xEpos[0]-LGFitParamE[0],yEpos[0]-LGFitParamE[1],i);
 		}
 	    		
-	        for (int i=0; i<12; ++i) { //west side
+	        for (int i=0; i<12; ++i) {  //west side
 		  lgWprob[i]=lightguideprob(xWpos[0]-LGFitParamW[0],yWpos[0]-LGFitParamW[1],i);
-      		  lgWerr[i]=LGerror(xWpos[1],yWpos[1],xWpos[0]-LGFitParamW[0],yWpos[0]-LGFitParamW[1],i);
+      		  lgWerr[i]=1;//LGerror(xWpos[1],yWpos[1],xWpos[0]-LGFitParamW[0],yWpos[0]-LGFitParamW[1],i);
 		}
 		
 		/*
@@ -155,7 +174,17 @@ void LGProbError(string infile, string outfile, double LGFitParamE[],double LGFi
 	
   	   }   
  	pmtTree->Write(); //write the file. 
-   	fitTree->Write();               
+   	fitTree->Write(); 
+        //pmtTree->Close();
+       
+
+
+	//Light guide and PMT Tree
+   	
+ 
+
+             ///Flatten Qadc Values?  TIME CONSUMING!!!!!!!!!!!
+	//FlattenLGMap(pmtTree);             
    return;
 }
 	
@@ -182,8 +211,9 @@ int main()
 	}
 
 //pass the name and location of the file you want to work and the name and location of the probablilty you want to save, with the intention the new TTree file is added to phys Tree as a friend when calibration of the sources is done. 	
-  LGProbError("$UCNAOUTPUTDIR/hists/spec_22770.root","$UCNAOUTPUTDIR/hists/pmtprob_22770.root",LGFitParamE,LGFitParamW);
-
+  LGProbError("$UCNAOUTPUTDIR/hists/spec_22000.root","$UCNAOUTPUTDIR/hists/pmtprob_22000.root",LGFitParamE,LGFitParamW);
+ 
+    
   return 0;
 }
 

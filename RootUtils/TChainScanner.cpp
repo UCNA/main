@@ -4,11 +4,11 @@
 #include <time.h>
 #include <SMExcept.hh>
 
+
 TChainScanner::TChainScanner(const std::string& treeName): nEvents(0), nFiles(0), Tch(new TChain(treeName.c_str())),
 currentEvent(0), noffset(0), nLocalEvents(0) {
 	Tch->SetMaxVirtualSize(10000000);
 }
-
 
 int TChainScanner::addFile(const std::string& filename) {
 	unsigned int oldEvents = nEvents;
