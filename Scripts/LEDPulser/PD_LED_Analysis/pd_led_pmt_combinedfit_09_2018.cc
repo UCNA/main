@@ -66,7 +66,7 @@ using namespace std;
 
 #define NUM_CHANNELS 8
 #define LED_TYPE DOWN
-#define USE_ROOT_APPLICATION false
+#define USE_ROOT_APPLICATION true
 #define OUTPUT_IMAGE true
 // Permissions not set to allow me access to this directory atm
 //#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_08_26_2015_newPDGainFits_20970_23173/"  // DON'T OMIT THE TRAILING SLASH
@@ -108,6 +108,7 @@ vector<float> gPDerr[2][NUM_CHANNELS];
 vector<float> gPMT_light[2][NUM_CHANNELS];
 vector<float> gPMTerr_light[2][NUM_CHANNELS];
 vector<float> gPD_light[2][NUM_CHANNELS]; // PD values linearized using 16-way fit - PD is converted to "LIGHT"
+vector<float> gPD_light_residuals[2][NUM_CHANNELS]; // to store corrected PD values ("light") - fitfunction(PMT values) (also "light")
 vector<float> gPDerr_light[2][NUM_CHANNELS]; // Does this need error? 
 
 // need a fixed parameter for origin of PD or fits won't make sense; value is arbitrary "average by eye" of PMT beta endpoints in PD value
@@ -838,8 +839,8 @@ int main (int argc, char **argv)
                     float sy2 = (ey2 - ey*ey)/(n-1);
                     float sx = sqrt(sx2);
                     float sy = sqrt(sy2);
-                    float ssx = sx*sx*sqrt(2/(n-1));
-                    float ssy = sy*sy*sqrt(2/(n-1));
+                    float ssx = sx*sx*sqrt(2/(n-1)); //what does this mean?
+                    float ssy = sy*sy*sqrt(2/(n-1)); //what does this mean?
 
                     // pipe values out to global so fit function can access
                     _gPD[led][i].push_back(ex);
@@ -1204,14 +1205,14 @@ int main (int argc, char **argv)
             title += " nm)";
             pd_pmt_his2D[led][i]->SetTitle(title);
             pd_pmt_his2D[led][i]->GetZaxis()->SetRangeUser(0, 16);
-            pd_pmt_his2D[led][i]->Draw("colz");
+//            pd_pmt_his2D[led][i]->Draw("colz");
 
             // Draw what we fit
             graph[led][i]->SetMarkerColor(1);
             graph[led][i]->SetLineColor(1);
             graph[led][i]->SetMarkerStyle(21);
             graph[led][i]->SetMarkerSize(0.75);
-            graph[led][i]->Draw("SameP");
+//            graph[led][i]->Draw("SameP");
         }
         printf("done.\n");	
 
@@ -1279,7 +1280,7 @@ int main (int argc, char **argv)
         g[i]->SetLineColor(1);
         g[i]->SetMarkerStyle(21);
         g[i]->SetMarkerSize(0.75);
-        g[i]->Draw("AP");
+     //   g[i]->Draw("AP");
 
         TString PE_PMT_title = "LED PMT-PE Curve: " + detector[i];
         PE_PMT_canvas->cd(i+1);
@@ -1290,7 +1291,7 @@ int main (int argc, char **argv)
         g_PE_PMT[i]->SetMarkerSize(0.75);
         g_PE_PMT[i]->GetXaxis()->SetTitle("# PE");
         g_PE_PMT[i]->GetYaxis()->SetTitle("ADC Counts");
-        g_PE_PMT[i]->Draw("AP");
+//        g_PE_PMT[i]->Draw("AP");
 
 #if DO_LED_FIT
         TF1 *pd_fit = new TF1("polyfit", "[0]*x", range_min[led][i], range_max[led][i]);
@@ -1310,7 +1311,7 @@ int main (int argc, char **argv)
         resg[i]->SetTitle("PMT Linearity Residual");
         resg[i]->SetMinimum(-0.1);
         resg[i]->SetMaximum(0.1);
-        resg[i]->Draw("AP");
+//        resg[i]->Draw("AP");
         //g[i]->SetLineColor(4);
         printf("done.\n");
 
@@ -1516,7 +1517,7 @@ int main (int argc, char **argv)
 // Correct PD data for fit function. LIGHT = (q1*PD + q2*PD*PD + q3*PD*PD*PD)
 // This converts PD to "LIGHT" in AU.
 // Pushing eta^i_lambda dependence into PMT since PD light is same for all tubes. 
-// Pedestal will be wrong? 9/14 - no, pedestal is already subtracted off. Never checked for quality, though.
+// Pedestal will be wrong? 9/14/18 - no, pedestal is already subtracted off. Never checked for quality, though.
 
    float _gPDval, _gPDerr = 0.;
    for (int led = 0; led < 2; led++){
@@ -1531,7 +1532,11 @@ int main (int argc, char **argv)
 	                                             pow(_gPDval, 6) * pow(PD_errs[2], 2) +
 	                                             pow(PD_parms[0] + 2*PD_parms[1]*_gPDval + 3*PD_parms[2]*_gPDval*_gPDval, 2)*
 	                                                pow(_gPDerr, 2) ) );
-            }
+	       // Residuals are light minus PMT best estimate of light, which is eval'd from PMT side of fit function applied to relevant PMT value   
+	                                                        
+	       gPD_light_residuals[led][i].push_back( gPD_light[led][i][s] - 
+	       					      fittedFunctions_PMTonly[led][i]( gPMT[led][i][s] ) );
+	    }
 	}
    }
 
@@ -1652,10 +1657,10 @@ int main (int argc, char **argv)
     time_canvas->Divide(2,1);
     time_canvas->cd(1);
     //	true_time_his2D->GetYaxis()->SetRangeUser(-pd_pedestal, 500-pd_pedestal);
-    true_time_his2D->Draw("scat");
+//    true_time_his2D->Draw("scat");
     time_canvas->cd(2);
     time_his2D[TIME]->GetZaxis()->SetRangeUser(0, 4);
-    time_his2D[TIME]->Draw("scat");
+//    time_his2D[TIME]->Draw("scat");
 
 #if OUTPUT_IMAGE
     TString pd_time_filename = "pd_time_";
@@ -1670,11 +1675,11 @@ int main (int argc, char **argv)
 
     TCanvas *colored_time_canvas = new TCanvas("colored_time_canvas", "Cut PD time sequence");
     time_his2D[UP]->SetMarkerColor(1);
-    time_his2D[UP]->Draw("scat");
+//    time_his2D[UP]->Draw("scat");
     time_his2D[DOWN]->SetMarkerColor(2);
-    time_his2D[DOWN]->Draw("samescat");
+//    time_his2D[DOWN]->Draw("samescat");
     time_his2D[GAIN]->SetMarkerColor(3);
-    time_his2D[GAIN]->Draw("samescat");
+//    time_his2D[GAIN]->Draw("samescat");
 
 #if OUTPUT_IMAGE
     TString cut_pd_time_filename = "cut_pd_time_";
@@ -1786,30 +1791,47 @@ int main (int argc, char **argv)
     for (int i = 0; i < NUM_CHANNELS; i++){
     	for (int led = 0; led < 2; led++){
     	    graph_size = gPD_light[led][i].size();
-    	    //PMT_light_graph[led][i] = new TGraph(graph_size, &gPMT[led][i][0], &gPD_light[led][i][0]);
     	    PMT_light_graph[led][i] = new TGraphErrors(graph_size, &gPMT[led][i][0], &gPD_light[led][i][0], 
     	    							   &gPMTerr[led][i][0], &gPDerr_light[led][i][0]);
-    	    							   
+	    PMT_light_residuals_graph[led][i] = new TGraphErrors(graph_size, &gPMT[led][i][0], 
+   	    						                     &gPD_light_residuals[led][i][0], 
+   	    						                     &gPMTerr[led][i][0], 
+   	    						                     &gPDerr_light[led][i][0]);   							   
             }
     }
-   
+
+//Testing
+//    TCanvas * ctemp = new TCanvas("ctempresiduals", "ctempresiduals"); ctemp->cd(); 	
+//    PMT_light_residuals_graph[1][0]->Draw("AP");
+//   PMT_light_residuals_graph[0][0]->Draw("sameP"); // curve doesn't work for the other LED wavelength 
+//    ctemp->Update();
+
     // Plot LIGHT graphs 
     TCanvas *light_canvas_E = 
       new TCanvas("light_canvas_E", 
-		  "Light versus PMT response (East Tubes)", 1280, 720);
+		  "Light versus PMT response (East Tubes)", 1600, 900);
     light_canvas_E->Divide(2,2);
     TCanvas *light_canvas_W = 
       new TCanvas("light_canvas_W", 
-		  "Light versus PMT response (West Tubes)", 1280, 720);
+		  "Light versus PMT response (West Tubes)", 1600, 900);
     light_canvas_W->Divide(2,2);
     for (int ew = 0; ew < 2; ew++) {
        if (!ew) light_canvas_E->cd();
        if (ew)  light_canvas_W->cd();
+//       int upperXlimit_light = 2500+ew*1000; 
+       int upperXlimit_light = 1750; 
        for (int tx = 0; tx < 2; tx++) {
             for (int ty = 0; ty < 2; ty++) {
                 int i = 4*ew+tx+2*ty;
                 if (!ew) light_canvas_E->cd(tx+2*ty+1);
                 if (ew) light_canvas_W->cd(tx+2*ty+1);
+                
+                TPad * pad_main = new TPad("padmain","padmain",0,0.33,1,1);
+                TPad * pad_resid = new TPad("padresid","padresid",0,0,1,0.33);
+                pad_main->Draw();
+                pad_resid->Draw();
+                pad_main->cd();
+
                 TString title = "Run "; 
                 title += run;
                 title += "    LED Scan: ";
@@ -1830,7 +1852,7 @@ int main (int argc, char **argv)
                 PMT_light_graph[UP][i]->SetMarkerStyle(21);
                 PMT_light_graph[DOWN][i]->SetMarkerSize(0.5);
                 PMT_light_graph[UP][i]->SetMarkerSize(0.5);
-               	PMT_light_graph[UP][i]->GetXaxis()->SetLimits(0, 2500+ew*1000);
+               	PMT_light_graph[UP][i]->GetXaxis()->SetLimits(0, upperXlimit_light);
                 PMT_light_graph[UP][i]->Draw("AP");
                 PMT_light_graph[UP][i]->SetName("LightGraphUP");
                 PMT_light_graph[DOWN][i]->Draw("sameP");
@@ -1847,6 +1869,15 @@ int main (int argc, char **argv)
                 }
                 if (!ew) light_canvas_E->Update();
                 if (ew) light_canvas_W->Update();
+                
+                pad_resid->cd();
+                PMT_light_residuals_graph[1][i]->SetTitle("");
+                PMT_light_residuals_graph[1][i]->GetYaxis()->SetLabelSize(0.065);
+                PMT_light_residuals_graph[1][i]->GetXaxis()->SetLimits(0, upperXlimit_light);
+                PMT_light_residuals_graph[1][i]->GetYaxis()->SetRangeUser(-20, 20);
+		PMT_light_residuals_graph[1][i]->Draw("AP");
+
+                
   	     }
          }
      }
@@ -1903,7 +1934,7 @@ int main (int argc, char **argv)
     TCanvas * gain_canvas = new TCanvas("gain_canvas", "Fitted Gain", 1000, 800);
     gain_canvas->Divide(1,2);
     gain_canvas->cd(1);
-    time_his2D[GAIN]->Draw("scat");
+//    time_his2D[GAIN]->Draw("scat");
     //   gain_his_pol0->Draw("scat");
     gain_canvas->cd(2);
     //    gain_his_pol1->Draw("scat");
@@ -1928,14 +1959,14 @@ int main (int argc, char **argv)
     pmt_gain_canvas->Divide(4,2);
     for (int chpmt = 0; chpmt < NUM_CHANNELS; chpmt++){
         pmt_gain_canvas->cd(chpmt+1);
-        pmt_gain_his1D[chpmt]->Draw();
+//        pmt_gain_his1D[chpmt]->Draw();
     }
     TCanvas * pmt_time_canvas = new TCanvas("pmt_time", "", 1000, 800);
     pmt_time_canvas->Divide(4,2);
     for (int chpmt = 0; chpmt < NUM_CHANNELS; chpmt++){
         pmt_time_canvas->cd(chpmt+1);
         pmt_gain_his2D[chpmt]->SetMaximum(5);
-        pmt_gain_his2D[chpmt]->Draw("colz");
+//        pmt_gain_his2D[chpmt]->Draw("colz");
     }
 
 #if OUTPUT_IMAGE
