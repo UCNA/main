@@ -68,10 +68,10 @@ using namespace std;
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-// Permissions not set to allow me access to this directory atm
-//#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_08_26_2015_newPDGainFits_20970_23173/"  // DON'T OMIT THE TRAILING SLASH
-#define OUTPUT_IMAGE_DIR "./images_dmp/"  // DON'T OMIT THE TRAILING SLASH
-#define VERBOSE true
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_09_18_2018_light_versus_ADCcounts_22534_22557/"  
+// DON'T OMIT THE TRAILING SLASH
+//#define OUTPUT_IMAGE_DIR "./images_dmp/"  
+#define VERBOSE false
 #define ORDER 2                 /// power law fit (Kevin had 3)
 #define FIT2D false
 #define DO_LED_FIT 1
@@ -107,8 +107,9 @@ vector<float> gPDerr[2][NUM_CHANNELS];
 vector<float> gPMT_light[2][NUM_CHANNELS];
 vector<float> gPMTerr_light[2][NUM_CHANNELS];
 vector<float> gPD_light[2][NUM_CHANNELS]; // PD values linearized using 16-way fit - PD is converted to "LIGHT"
+vector<float> gPDerr_light[2][NUM_CHANNELS];
 vector<float> gPD_light_residuals[2][NUM_CHANNELS]; // to store corrected PD values ("light") - fitfunction(PMT values) (also "light")
-vector<float> gPDerr_light[2][NUM_CHANNELS]; // Does this need error? 
+vector<float> gPD_light_residuals_err[2][NUM_CHANNELS]; //
 
 // need a fixed parameter for origin of PD or fits won't make sense; value is arbitrary "average by eye" of PMT beta endpoints in PD value
 //float gPDoff[2] = {30.0, 100.0};
@@ -368,6 +369,14 @@ int main (int argc, char **argv)
     vector <float> best_beta_endpt;
     vector <float> best_beta_endpt_PD[2]; // one for each led
     //  float extended_range_max[2][NUM_CHANNELS]; // deprecated
+    
+    // Maximum ADC channels of upper 207-Bi peak.
+    // Scaled up by 30% to account for gain variations (which are applied to the Bi peak position but not the LED data). 30% seems to be maximum normal gain variation in 2012-2013.
+    // Numbers are appropriate for Calibration periods 22, 23 (runs 22437-22773) 
+    // Probably need a more dynamic method later on to account for different peak positions in different periods. 
+    const float best_ADC_max[8] = {2550., 1450., 1700., 2680., 1940., 2020., 1815., 2150.}; 
+    
+    
     float range_max[2][NUM_CHANNELS], range_min[2][NUM_CHANNELS];
 
     // run this as a ROOT application
@@ -857,8 +866,14 @@ int main (int argc, char **argv)
         else if (run > 20500 && run < 21250) best_beta_endpt.push_back(BetaADC_20500_21250[i]);
         else if (run > 21250) best_beta_endpt.push_back(BetaADC_21250_above[i]);
         else cout << "RUN NOT IN RANGE" << endl;
-        ADC_min = best_beta_endpt[i]*beta_Cd_ratio;
-        ADC_max = best_beta_endpt[i]*beta_Bi_ratio;
+//        ADC_min = best_beta_endpt[i]*beta_Cd_ratio; // 09/17/2018 switch to using Bi upper peak, prob more accurate
+//        ADC_max = best_beta_endpt[i]*beta_Bi_ratio; // 09/17/2018 switch to using Bi upper peak, prob more accurate
+
+	ADC_max = best_ADC_max[i]; // hard-coded up above
+	ADC_min = (ADC_max/1.3)*(63./1047.)/1.3;
+	// Use best max to estimate best min: 
+	// 1.) remove 30% upward gain variation accomodation; 2.) scale Bi peak to Cd peak; 3.) Scale down 30% to allow for downward gain fluctuations.
+
         cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
         cout << ADC_min << "=ADC_min " << ADC_max << "=ADC_max" << endl;
         cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
@@ -886,7 +901,7 @@ int main (int argc, char **argv)
         {
             // Find range in PD counts corresponding to ADC range
             printf("Finding range... ");
-            float _max = 0, _min = 0;
+            float _max = -100., _min = -100.;
             range_max[led][i] = 0; range_min[led][i] = 0;
             for (int k = 0; k < pulser_steps; k++)
             {
@@ -897,7 +912,8 @@ int main (int argc, char **argv)
                 if (!led){ // 405 pulser counts backwards from large signal to small
                     graph[led][i]->GetPoint(pulser_steps - k - 1, x, y);
                 }
-                //	      cout << x << "  " << y << endl;
+                cout << x << "  " << y << endl;
+                if (x < _max - 100){break;} // avoid situation where point returns to negative after finding max point on curve
                 if (y < ADC_min){_min = x;}
                 if (y < ADC_max){_max = x;}
                 if (y > ADC_max){break;}
@@ -907,12 +923,10 @@ int main (int argc, char **argv)
             }
             if (range_min[led][i] < RANGE_MIN ) range_min[led][i] =RANGE_MIN;  // avoid bad clump of below-threshold LED shots
             // Fudge factor to slightly extend range for better fits
-            //	  range_min[led] = range_min[led]*0.9; 
-            range_max[led][i] = range_max[led][i]*1.05;
-            //	  if (led == 0) extended_range_max[led][i] = range_max[led]*2;
-            //	  else extended_range_max[led][i] = extended_range_max[0][i]; //see if lowering 465 helps
-            //	  extended_range_max[led][i] = RANGE_EXTENSION*range_max[led];
-            range_max[led][i] = RANGE_EXTENSION*range_max[led][i];
+
+//            range_max[led][i] = range_max[led][i]*1.05; // Remove fudge factor 09/17/18
+
+//            range_max[led][i] = RANGE_EXTENSION*range_max[led][i]; // Remove fudge factor 09/17/18
 
 #if RANGE_MAX_OVERRIDE
             range_max[led][i] = RANGE_MAX_VALUE;
@@ -974,8 +988,10 @@ int main (int argc, char **argv)
                 out_raw_string += _gPMTerr[led][i][s];   out_raw_string += "\t"; 
                 out_raw_string += "\n";
                 rawfile << out_raw_string;
+                cout << "gPD: " << _gPD[led][i][s] << ", gPMT: " << _gPMT[led][i][s] << ", range_max: " << range_max[led][i] << ", i: " << i << ", led: " << led << endl;
                 if (_gPD[led][i][s] > range_min[led][i] && _gPD[led][i][s] < range_max[led][i]){
                     if (_gPMT[led][i][s] > PMT_THRESHOLD_LOW && _gPMT[led][i][s] < PMT_THRESHOLD_HIGH){
+   		    	cout << "PASSED CULL" << endl;	
                         //		cout << "DERP " << i << " " << led << " " << s << " " <<  _gPMT[led][i][s] << endl;
                         gPD[led][i].push_back(_gPD[led][i][s]);
                         gPMT[led][i].push_back(_gPMT[led][i][s]);
@@ -1473,9 +1489,16 @@ int main (int argc, char **argv)
                     
             // PMTs are fit to quadratic polynomial 
 	    // See also ADC_max definition to see why this is the best maximum range
+            //fittedFunctions_PMTonly[led][i] = TF1(Form("fpmt_%i_%i", led, i), "pol2",
+            //        -10, best_beta_endpt[i]*beta_Bi_ratio); 
+ 
             fittedFunctions_PMTonly[led][i] = TF1(Form("fpmt_%i_%i", led, i), "pol2",
-                    -10, best_beta_endpt[i]*beta_Bi_ratio); 
-                    
+                    -10, best_ADC_max[i]/1.3); 
+                    // best_ADC_max = max Bi1 peak in given run period, scaled by 30% to account for gains.
+                    // This is confusing to look at, since people will really care roughly where the beta EP is, and will have to scale twice in their mind. 
+                    // So for plotting purposes, only show line up to Bi1 peak (max).
+                    // The fit that determines linearity will still use points up to 30% past where the visual line will end, which does the gain accounting. This can be explained after the fact.
+                      
             for (int j = 0; j < 3; j++){
                 gMinuit->GetParameter(4*i + j, _p_val, _p_err);
                 fittedFunctions[led][i].SetParameter(j, _p_val);
@@ -1489,7 +1512,7 @@ int main (int argc, char **argv)
             	
             	// scale each of the PMT parameters by eta, the relative scale of the LED response to each wavelength
             	for (int k = 0; k < 3; k++) { 
-            		cout << "PMTPARMS " << k << " " << _pmt_parms[k] << " " << _p_val << endl;
+            		//cout << "PMTPARMS " << k << " " << _pmt_parms[k] << " " << _p_val << endl;
             		fittedFunctions_PMTonly[led][i].SetParameter(k, _pmt_parms[k]/_p_val);
     			cout << fittedFunctions_PMTonly[led][i].GetParameter(k) << endl;
             	}
@@ -1519,23 +1542,67 @@ int main (int argc, char **argv)
 // Pushing eta^i_lambda dependence into PMT since PD light is same for all tubes. 
 // Pedestal will be wrong? 9/14/18 - no, pedestal is already subtracted off. Never checked for quality, though.
 
-   float _gPDval, _gPDerr = 0.;
+   float _gPDval, _gPDvalerr, _gPMTval, _gPMTvalerr, _gPMTfittedval, _gPMTfittedvalerr2, _gPDlight_reserr2 = 0;
+   double _p0, _p1, _p2, _p0err, _p1err, _p2err, _etalambda, _etaerr = 0;
    for (int led = 0; led < 2; led++){
         for (int i = 0; i < NUM_CHANNELS; i++){
 	    for(int s = 0; s < gPD[led][i].size(); s++){ 
 	       _gPDval = gPD[led][i][s]; 
-	       _gPDerr = gPDerr[led][i][s];
+	       _gPDvalerr = gPDerr[led][i][s];
+	       _gPMTval = gPMT[led][i][s];
+	       _gPMTvalerr = gPMTerr[led][i][s];
+	       _gPMTfittedval = fittedFunctions_PMTonly[led][i](_gPMTval);
+	       
+               gMinuit->GetParameter(4*i, _p0, _p0err);
+	       gMinuit->GetParameter(4*i + 1, _p1, _p1err);
+	       gMinuit->GetParameter(4*i + 2, _p2, _p2err);
+	       if (led==0) gMinuit->GetParameter(4*i + 3, _etalambda, _etaerr);
+	       if (led==1) {_etalambda = 1.0; _etaerr = 0.0;}
+	       
+	       /// Calculate value and error of "LIGHT"
                gPD_light[led][i].push_back(PD_parms[0]*_gPDval + PD_parms[1]*_gPDval*_gPDval + PD_parms[2]*_gPDval*_gPDval*_gPDval);
 	       // error on gPD_light = sqrt( (PD^2)(dq1)^2 + (PD^4)(dq2)^2 + (PD^6)(dq3)^2 + (q1+2*q2*PD+3*q3*PD^2)^2*(dPD)^2 )
 	       gPDerr_light[led][i].push_back( sqrt( pow(_gPDval, 2) * pow(PD_errs[0], 2) + 
 	                                             pow(_gPDval, 4) * pow(PD_errs[1], 2) + 
 	                                             pow(_gPDval, 6) * pow(PD_errs[2], 2) +
 	                                             pow(PD_parms[0] + 2*PD_parms[1]*_gPDval + 3*PD_parms[2]*_gPDval*_gPDval, 2)*
-	                                                pow(_gPDerr, 2) ) );
+	                                                pow(_gPDvalerr, 2) ) );
+
 	       // Residuals are light minus PMT best estimate of light, which is eval'd from PMT side of fit function applied to relevant PMT value   
 	                                                        
-	       gPD_light_residuals[led][i].push_back( gPD_light[led][i][s] - 
-	       					      fittedFunctions_PMTonly[led][i]( gPMT[led][i][s] ) );
+	       //gPD_light_residuals[led][i].push_back( gPD_light[led][i][s] - 
+	       //					      fittedFunctions_PMTonly[led][i]( gPMT[led][i][s] ) );
+	       
+	       // Do % residuals - easier to visualize
+	       gPD_light_residuals[led][i].push_back( 100*(gPD_light[led][i][s] - _gPMTfittedval)/ gPD_light[led][i][s] );
+	       
+	       // Error on residual is (assuming no PMT error): [f(PMT)/PD_light^2][delta(PD_light)]
+	       //gPD_light_residuals_err[led][i].push_back( 100*( fittedFunctions_PMTonly[led][i](_gPMTval)/(gPD_light[led][i][s]*gPD_light[led][i][s]) ) * gPDerr_light[led][i][s] );
+	       // Assuming PMT error: [delta(%residual)]^2 =[f(PMT)/PD_light^2][delta(PD_light)]^2 + [[delta(f(PMT)]/[PD_light]]^2
+	       // In Second term: delta(f(PMT))^2 = (dp0)^2 + (dp1*PMT)^2 + (dp2*PMT^2)^2 + (p1 + 2*p2*PMT)^2)*(dPMT)^2 (ignoring eta_lambda)
+	       _gPMTfittedvalerr2 = pow(_p0err                             , 2) +
+	       			    pow(_p1err*_gPMTval                    , 2) +
+	       			    pow(_p2err*_gPMTval*_gPMTval           , 2) + 
+	       			    pow( (_p1 + 2*_p2*_gPMTval)*_gPMTvalerr, 2);
+	       _gPMTfittedvalerr2 = _gPMTfittedvalerr2/(_etalambda*_etalambda);			    
+	       cout << "led " << led << " tube " << i << endl;
+	       //cout << "_p0err " << _p0err << endl;
+      	       //cout << "_p1err " << _p1err << endl;
+      	       //cout << "_p2err " << _p2err << endl;
+      	       cout << "PMTval " << _gPMTval << endl;
+	       //cout << "_p1err*_gPMTval " << _p1err*_gPMTval << endl;
+	       //cout << "_p2err*_gPMTval*_gPMTval " << _p2err*_gPMTval*_gPMTval << endl;
+	       //cout << "(_p1 + 2*_p2*_gPMTval)*_gPMTvalerr " << (_p1 + 2*_p2*_gPMTval)*_gPMTvalerr << endl;
+	       cout << " _gPMTfittedvalerr2 " <<  _gPMTfittedvalerr2 << endl;
+	       _gPDlight_reserr2 = pow( (_gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s])), 2) + 
+	       			   _gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s]);
+	       cout << "gPDerr_light[led][i][s] " << gPDerr_light[led][i][s] << endl;
+	       cout << "_gPMTfittedval " << _gPMTfittedval << endl;
+	       cout << "_gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s]) " << _gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s]) << endl;
+	       cout << "_gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s] " << _gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s]) << endl;
+	       cout << "_gPDlight_reserr2 " << _gPDlight_reserr2 << endl;
+	       gPD_light_residuals_err[led][i].push_back( 100*sqrt(_gPDlight_reserr2) );
+	       cout << "gPD_light_residuals_err[led][i][s] " << gPD_light_residuals_err[led][i][s] << endl; 				 
 	    }
 	}
    }
@@ -1796,7 +1863,8 @@ int main (int argc, char **argv)
 	    PMT_light_residuals_graph[led][i] = new TGraphErrors(graph_size, &gPMT[led][i][0], 
    	    						                     &gPD_light_residuals[led][i][0], 
    	    						                     &gPMTerr[led][i][0], 
-   	    						                     &gPDerr_light[led][i][0]);   							   
+   	    						                   //  &gPDerr_light[led][i][0]); 
+   	    						                     &gPD_light_residuals_err[led][i][0]);				   
             }
     }
 
@@ -1818,8 +1886,9 @@ int main (int argc, char **argv)
     for (int ew = 0; ew < 2; ew++) {
        if (!ew) light_canvas_E->cd();
        if (ew)  light_canvas_W->cd();
+//         int upperXlimit_light = 3500;
 //       int upperXlimit_light = 2500+ew*1000; 
-       int upperXlimit_light = 1750; 
+       int upperXlimit_light = 2500; 
 //       for (int tx = 0; tx < 2; tx++) {
 //            for (int ty = 0; ty < 2; ty++) {
 //                int i = 4*ew+tx+2*ty;
@@ -1854,9 +1923,9 @@ int main (int argc, char **argv)
                 PMT_light_graph[DOWN][i]->SetMarkerColor(6);
                 PMT_light_graph[DOWN][i]->SetMarkerStyle(21);
                 PMT_light_graph[UP][i]->SetMarkerStyle(21);
-                PMT_light_graph[DOWN][i]->SetMarkerSize(0.5);
-                PMT_light_graph[UP][i]->SetMarkerSize(0.5);
-             //  	PMT_light_graph[UP][i]->GetXaxis()->SetLimits(0, upperXlimit_light);
+                PMT_light_graph[DOWN][i]->SetMarkerSize(0.75);
+                PMT_light_graph[UP][i]->SetMarkerSize(0.75);
+               	PMT_light_graph[UP][i]->GetXaxis()->SetLimits(0, upperXlimit_light);
                 PMT_light_graph[UP][i]->Draw("AP");
                 PMT_light_graph[UP][i]->SetName("LightGraphUP");
                 PMT_light_graph[DOWN][i]->Draw("sameP");
@@ -1864,7 +1933,7 @@ int main (int argc, char **argv)
                 PMT_light_graph[UP][i]->SetTitle(title);
                 PMT_light_graph[UP][i]->GetXaxis()->SetTitle("PMT, raw counts (ADC)");
                 PMT_light_graph[UP][i]->GetYaxis()->SetTitle("Corrected Photodiode - 'Light' (AU)");
-                PMT_light_graph[UP][i]->GetYaxis()->SetTitleOffset(1.6);
+                PMT_light_graph[UP][i]->GetYaxis()->SetTitleOffset(1.4);
                 
                
 		for (int led = 0; led < 2; led++){
@@ -1876,11 +1945,23 @@ int main (int argc, char **argv)
                 
                 pad_resid->cd();
                 // Use residuals graph for led 0 since this probes higher in PMT/ADC space and is more accurate at large PMT/ADC values
-                PMT_light_residuals_graph[0][i]->SetTitle("Residuals (Lower Curve, Blue/Pink)");
+                PMT_light_residuals_graph[0][i]->SetTitle("");
+                PMT_light_residuals_graph[0][i]->GetYaxis()->SetTitle("% Residual"); 
+                PMT_light_residuals_graph[0][i]->GetXaxis()->SetTitle("PMT, raw counts (ADC)"); 
+                PMT_light_residuals_graph[0][i]->GetXaxis()->SetTitleSize(0.075); 
+                PMT_light_residuals_graph[0][i]->GetYaxis()->SetTitleSize(0.075);   
+                PMT_light_residuals_graph[0][i]->GetYaxis()->SetTitleOffset(0.6);                                               
+                PMT_light_residuals_graph[0][i]->GetXaxis()->SetLabelSize(0.065);
                 PMT_light_residuals_graph[0][i]->GetYaxis()->SetLabelSize(0.065);
                 PMT_light_residuals_graph[0][i]->GetXaxis()->SetLimits(0, upperXlimit_light);
-                //PMT_light_residuals_graph[0][i]->GetYaxis()->SetRangeUser(-20, 20);
+                PMT_light_residuals_graph[0][i]->GetYaxis()->SetRangeUser(-10, 10);
+		PMT_light_residuals_graph[0][i]->SetMarkerColor(6);
+		PMT_light_residuals_graph[0][i]->SetMarkerStyle(21);
+		PMT_light_residuals_graph[1][i]->SetMarkerStyle(21);
+		PMT_light_residuals_graph[0][i]->SetMarkerSize(0.75);
+		PMT_light_residuals_graph[1][i]->SetMarkerSize(0.75);
 		PMT_light_residuals_graph[0][i]->Draw("AP");
+		PMT_light_residuals_graph[1][i]->Draw("sameP");
                 cout << "PMT_light_residuals graph " << i << " plotted." << endl;
                 
   	     }
