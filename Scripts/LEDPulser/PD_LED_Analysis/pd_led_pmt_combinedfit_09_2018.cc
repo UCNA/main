@@ -66,13 +66,12 @@ using namespace std;
 
 #define NUM_CHANNELS 8
 #define LED_TYPE DOWN
-#define USE_ROOT_APPLICATION true
+#define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
 // Permissions not set to allow me access to this directory atm
 //#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_08_26_2015_newPDGainFits_20970_23173/"  // DON'T OMIT THE TRAILING SLASH
 #define OUTPUT_IMAGE_DIR "./images_dmp/"  // DON'T OMIT THE TRAILING SLASH
 #define VERBOSE true
-#define LINEARIZE false
 #define ORDER 2                 /// power law fit (Kevin had 3)
 #define FIT2D false
 #define DO_LED_FIT 1
@@ -756,20 +755,6 @@ int main (int argc, char **argv)
                 float x = pdc36v[j] - pd_pedestal;
                 float y = qadcv[j] - pmt_pedestal;
 
-                /*#if LINEARIZE
-#if ORDER
-                // back out linearity from pd
-                //double a[3] = {0, 7.601/7.601, -0.005296/7.601};
-                double a[4] = {0, 8.19/8.19, -0.008783/8.19, 4.14e-6/8.19};
-
-                float _x = a[ORDER];
-                for (int k = ORDER; k > 0; k--)
-                _x = a[k-1] + _x * x; 
-                x = _x;
-
-#endif
-#endif
-                 */
                 if (epsilon < subcycle_time 
                 and subcycle_time < subperiod/2 - epsilon) // ramps
                 {
@@ -969,7 +954,7 @@ int main (int argc, char **argv)
             }
 
             // convert range from PD to keV // Replaced with Energy Scaled graph 1/13/2015 
-            cout << range_min[led][i] << " HIH " << range_max[led][i] << endl;
+
 #if KEVSCALED
             range_min[led][i] = range_min[led][i]*pd_to_keV_factor[led][i];
             range_max[led][i] = range_max[led][i]*pd_to_keV_factor[led][i];
@@ -1481,6 +1466,8 @@ int main (int argc, char **argv)
     double PDratio, PDratioErr;
     for (int led = 0; led < 2; led++){
         for (int i = 0; i < NUM_CHANNELS; i++){
+            vector <float> _pmt_parms;
+            
             fittedFunctions[led][i] = TF1(Form("f_%i_%i", led, i), func_plot, 
                     RANGE_MIN, range_max[led][i], 7); // cubic fit needs 7 params
                     
@@ -1492,11 +1479,24 @@ int main (int argc, char **argv)
             for (int j = 0; j < 3; j++){
                 gMinuit->GetParameter(4*i + j, _p_val, _p_err);
                 fittedFunctions[led][i].SetParameter(j, _p_val);
-                fittedFunctions_PMTonly[led][i].SetParameter(j, _p_val); // This is all the parameters needed for PMTonly
+                fittedFunctions_PMTonly[led][i].SetParameter(j, _p_val); // This is all the parameters needed for PMTonly (except for the overall scale, which is in the next step.)
+
+         	_pmt_parms.push_back(_p_val);
             }
+            if (led == 0) {
             gMinuit->GetParameter(4*i + 3, _p_val, _p_err);
-            if (led == 0) fittedFunctions[led][i].SetParameter(5, _p_val);
+            	fittedFunctions[led][i].SetParameter(5, _p_val);
+            	
+            	// scale each of the PMT parameters by eta, the relative scale of the LED response to each wavelength
+            	for (int k = 0; k < 3; k++) { 
+            		cout << "PMTPARMS " << k << " " << _pmt_parms[k] << " " << _p_val << endl;
+            		fittedFunctions_PMTonly[led][i].SetParameter(k, _pmt_parms[k]/_p_val);
+    			cout << fittedFunctions_PMTonly[led][i].GetParameter(k) << endl;
+            	}
+            }
             if (led == 1) fittedFunctions[led][i].SetParameter(5, 1.0);
+	
+
 
             fittedFunctions[led][i].SetParameter(3, PD_parms[0]);
             fittedFunctions[led][i].SetParameter(4, PD_parms[1]);
@@ -1803,7 +1803,7 @@ int main (int argc, char **argv)
 //Testing
 //    TCanvas * ctemp = new TCanvas("ctempresiduals", "ctempresiduals"); ctemp->cd(); 	
 //    PMT_light_residuals_graph[1][0]->Draw("AP");
-//   PMT_light_residuals_graph[0][0]->Draw("sameP"); // curve doesn't work for the other LED wavelength 
+//   PMT_light_residuals_graph[0][0]->Draw("sameP"); // curve doesn't work for the other LED wavelength -- FIXED!!
 //    ctemp->Update();
 
     // Plot LIGHT graphs 
@@ -1820,12 +1820,16 @@ int main (int argc, char **argv)
        if (ew)  light_canvas_W->cd();
 //       int upperXlimit_light = 2500+ew*1000; 
        int upperXlimit_light = 1750; 
-       for (int tx = 0; tx < 2; tx++) {
-            for (int ty = 0; ty < 2; ty++) {
-                int i = 4*ew+tx+2*ty;
-                if (!ew) light_canvas_E->cd(tx+2*ty+1);
-                if (ew) light_canvas_W->cd(tx+2*ty+1);
-                
+//       for (int tx = 0; tx < 2; tx++) {
+//            for (int ty = 0; ty < 2; ty++) {
+//                int i = 4*ew+tx+2*ty;
+       for (int iside = 0; iside < 4; iside++){ 
+//                if (!ew) light_canvas_E->cd(tx+2*ty+1);
+//                if (ew) light_canvas_W->cd(tx+2*ty+1);
+                if (!ew) light_canvas_E->cd(iside + 1); //Divided TPads start numbering at 1
+                if (ew) light_canvas_W->cd(iside + 1);
+                int i = 4*ew + iside;
+                  
                 TPad * pad_main = new TPad("padmain","padmain",0,0.33,1,1);
                 TPad * pad_resid = new TPad("padresid","padresid",0,0,1,0.33);
                 pad_main->Draw();
@@ -1852,7 +1856,7 @@ int main (int argc, char **argv)
                 PMT_light_graph[UP][i]->SetMarkerStyle(21);
                 PMT_light_graph[DOWN][i]->SetMarkerSize(0.5);
                 PMT_light_graph[UP][i]->SetMarkerSize(0.5);
-               	PMT_light_graph[UP][i]->GetXaxis()->SetLimits(0, upperXlimit_light);
+             //  	PMT_light_graph[UP][i]->GetXaxis()->SetLimits(0, upperXlimit_light);
                 PMT_light_graph[UP][i]->Draw("AP");
                 PMT_light_graph[UP][i]->SetName("LightGraphUP");
                 PMT_light_graph[DOWN][i]->Draw("sameP");
@@ -1864,22 +1868,23 @@ int main (int argc, char **argv)
                 
                
 		for (int led = 0; led < 2; led++){
-                    fittedFunctions_PMTonly[led][i].SetLineColor(8);
+                    fittedFunctions_PMTonly[led][i].SetLineColor(4+4*led);
                     fittedFunctions_PMTonly[led][i].Draw("same");
                 }
                 if (!ew) light_canvas_E->Update();
                 if (ew) light_canvas_W->Update();
                 
                 pad_resid->cd();
-                PMT_light_residuals_graph[1][i]->SetTitle("");
-                PMT_light_residuals_graph[1][i]->GetYaxis()->SetLabelSize(0.065);
-                PMT_light_residuals_graph[1][i]->GetXaxis()->SetLimits(0, upperXlimit_light);
-                PMT_light_residuals_graph[1][i]->GetYaxis()->SetRangeUser(-20, 20);
-		PMT_light_residuals_graph[1][i]->Draw("AP");
-
+                // Use residuals graph for led 0 since this probes higher in PMT/ADC space and is more accurate at large PMT/ADC values
+                PMT_light_residuals_graph[0][i]->SetTitle("Residuals (Lower Curve, Blue/Pink)");
+                PMT_light_residuals_graph[0][i]->GetYaxis()->SetLabelSize(0.065);
+                PMT_light_residuals_graph[0][i]->GetXaxis()->SetLimits(0, upperXlimit_light);
+                //PMT_light_residuals_graph[0][i]->GetYaxis()->SetRangeUser(-20, 20);
+		PMT_light_residuals_graph[0][i]->Draw("AP");
+                cout << "PMT_light_residuals graph " << i << " plotted." << endl;
                 
   	     }
-         }
+     //    }
      }
    cout << "END" << endl;
    
