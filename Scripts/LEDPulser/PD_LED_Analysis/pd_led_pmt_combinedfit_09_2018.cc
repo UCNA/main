@@ -68,7 +68,7 @@ using namespace std;
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_09_18_2018_light_versus_ADCcounts_22534_22557/"  
+#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_09_24_2018_22534_22706/"
 // DON'T OMIT THE TRAILING SLASH
 //#define OUTPUT_IMAGE_DIR "./images_dmp/"  
 #define VERBOSE false
