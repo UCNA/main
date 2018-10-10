@@ -52,7 +52,9 @@ using namespace std;
  * Branched from pd_led_pmt_combinedfit.cc Sep 13, 2018 (SS)
   * Will implement PMT_ADC vs. "LIGHT" curve, where light is inferred from q_i-corrected PD values
   * Will make residuals plot from above
- *
+ * 10/09/2018 - modify fit to include lower energy points
+ * 10/10/2018 - accomodate PD pedestal properly
+ 
  * Build instructions:
  USE THIS:
  *  g++ `root-config --cflags` pd_led_pmt_combinedfit_09_2018.cc `root-config --libs` -lMinuit -o pd_led_pmt_combinedfit_09_2018_analysis
@@ -68,9 +70,10 @@ using namespace std;
 #define LED_TYPE DOWN
 #define USE_ROOT_APPLICATION false
 #define OUTPUT_IMAGE true
-#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_09_24_2018_22534_22706/"
+//#define OUTPUT_IMAGE_DIR "/data1/saslutsky/LEDPulser/images_10_09_2018_SourcePeriod23_22767_22791_SingleLED/"
+
 // DON'T OMIT THE TRAILING SLASH
-//#define OUTPUT_IMAGE_DIR "./images_dmp/"  
+#define OUTPUT_IMAGE_DIR "./images_dmp/"  
 #define VERBOSE false
 #define ORDER 2                 /// power law fit (Kevin had 3)
 #define FIT2D false
@@ -82,7 +85,8 @@ using namespace std;
 //#define CONSTRAINFIT 1
 #define BETAADCCOUNTS 782
 #define PLOTBOTHLEDS 1
-#define RANGE_MIN 5.0
+//#define RANGE_MIN 5.0 10/09/18
+#define RANGE_MIN -5.0 
 #define MOVEDUPGRAPH false
 #define KEVSCALED false
 #define RANGE_MAX_OVERRIDE false
@@ -93,8 +97,9 @@ using namespace std;
 #define USEBETAOFFSETS false
 #define RANGE_EXTENSION 3.0
 #define SWAPLEDS false        /// Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
-#define PMT_THRESHOLD_LOW 1e-5  /// Only affect Minuit Fit
-#define PMT_THRESHOLD_HIGH 5000 /// Only affect Minuit Fit
+#define PMT_THRESHOLD_LOW 1e-5  /// Only affect Minuit Fit 10/09/18 - ?? 
+#define PMT_THRESHOLD_HIGH 5000 /// Only affect Minuit Fit 10/09/18 - ??
+#define SINGLELED false
 
 const int pulser_steps = 64;
 
@@ -142,8 +147,18 @@ Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k);
 void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
 { 
     Double_t value = 0;
-    for (int ded = 0; ded < 2; ded++){   // sum chi^2 for each led 
-        value += subfcn(npar, gin, f, par, ded, iflag);
+    
+    int nled = 2;
+    int chooseled = 0;
+#if SINGLELED
+// only use first LED (probes farther in ADC)
+    nled = 1;
+#endif
+
+//    for (int ded = 0; ded < 2; ded++){   // sum chi^2 for each led 
+//        value += subfcn(npar, gin, f, par, ded, iflag);
+      for (chooseled; chooseled < nled; chooseled++){   // sum chi^2 for each led 
+        value += subfcn(npar, gin, f, par, chooseled, iflag);
     }
     f = value;
 }  
@@ -156,10 +171,6 @@ Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t le
     Double_t chisq = 0;
 
     for (int i = 0; i < NUM_CHANNELS; i++ ){
-        //  for (int i = 0; i < NUM_CHANNELS; i = i+2 ){
-        //  for (int i = 0; i < 4; i++){
-        //for (int i = 4; i < 8; i++){
-        //   for (int i = 6; i < 7; i++){
         Double_t _chisq_temp = 0;
         for (int k=0; k<gPD[led][i].size(); k++){
             if (gPMTerr[led][i][k] < 0.000000001) continue;
@@ -870,7 +881,9 @@ int main (int argc, char **argv)
 //        ADC_max = best_beta_endpt[i]*beta_Bi_ratio; // 09/17/2018 switch to using Bi upper peak, prob more accurate
 
 	ADC_max = best_ADC_max[i]; // hard-coded up above
-	ADC_min = (ADC_max/1.3)*(63./1047.)/1.3;
+//	ADC_min = (ADC_max/1.3)*(63./1047.)/1.3;
+	ADC_min = 5.0; //10/09/2018
+
 	// Use best max to estimate best min: 
 	// 1.) remove 30% upward gain variation accomodation; 2.) scale Bi peak to Cd peak; 3.) Scale down 30% to allow for downward gain fluctuations.
 
@@ -969,10 +982,6 @@ int main (int argc, char **argv)
 
             // convert range from PD to keV // Replaced with Energy Scaled graph 1/13/2015 
 
-#if KEVSCALED
-            range_min[led][i] = range_min[led][i]*pd_to_keV_factor[led][i];
-            range_max[led][i] = range_max[led][i]*pd_to_keV_factor[led][i];
-#endif
             cout << range_min[led][i] << " HIH" << range_max[led][i] << endl;
 
             // cull global vectors to match ranges
@@ -988,10 +997,12 @@ int main (int argc, char **argv)
                 out_raw_string += _gPMTerr[led][i][s];   out_raw_string += "\t"; 
                 out_raw_string += "\n";
                 rawfile << out_raw_string;
-                cout << "gPD: " << _gPD[led][i][s] << ", gPMT: " << _gPMT[led][i][s] << ", range_max: " << range_max[led][i] << ", i: " << i << ", led: " << led << endl;
+//                cout << "gPD: " << _gPD[led][i][s] << ", gPMT: " << _gPMT[led][i][s] << ", range_max: " << range_max[led][i] << ", i: " << i << ", led: " << led << endl;
                 if (_gPD[led][i][s] > range_min[led][i] && _gPD[led][i][s] < range_max[led][i]){
-                    if (_gPMT[led][i][s] > PMT_THRESHOLD_LOW && _gPMT[led][i][s] < PMT_THRESHOLD_HIGH){
-   		    	cout << "PASSED CULL" << endl;	
+//                  if (_gPMT[led][i][s] > PMT_THRESHOLD_LOW && _gPMT[led][i][s] < PMT_THRESHOLD_HIGH){
+                    if (_gPMT[led][i][s] > ADC_min && _gPMT[led][i][s] < ADC_max){ // 10/09/18 - try to adjust fit range
+
+//   		    	cout << "PASSED CULL" << endl;	
                         //		cout << "DERP " << i << " " << led << " " << s << " " <<  _gPMT[led][i][s] << endl;
                         gPD[led][i].push_back(_gPD[led][i][s]);
                         gPMT[led][i].push_back(_gPMT[led][i][s]);
@@ -1374,7 +1385,18 @@ int main (int argc, char **argv)
         0., 1.0, -0.000001, etastart,
         0., 1.0, -0.000001, etastart,
         4., -0.001, 0.0}; 
-
+        
+        // Testing with fixing quadratic term to be 0. See also **** below
+//    static Double_t vstart[nvars] = {0., 1.0, 0., etastart,
+//        0., 1.0, 0., etastart,
+//        0., 1.0, 0., etastart,
+//        0., 1.0, 0., etastart,
+//        0., 1.0, 0., etastart,
+//        0., 1.0, 0., etastart,
+//        0., 1.0, 0., etastart,
+ //       0., 1.0, 0., etastart,
+ //       4., -0.001, 0.0}; 
+  
     static Double_t step[nvars] = {1, 0.1, 0.00001, 0.1, 
         1, 0.1, 0.00001, 0.1, 
         1, 0.1, 0.00001, 0.1, 
@@ -1420,6 +1442,12 @@ int main (int argc, char **argv)
     //    gMinuit->FixParameter(24);  // lifts degeneracy of scaling all parameters.
     gMinuit->FixParameter(nvars-3);  // lifts degeneracy of scaling all parameters.
 
+    // Try fixing PMT curves to be linear, or fix pedestal, and see what happens ****
+    for (int i = 0; i < NUM_CHANNELS; i++){
+//        gMinuit->FixParameter(4*i);
+//        gMinuit->FixParameter(4*i + 2); // quadratic term is third term 
+    }
+
     // Now ready for minimization step
     arglist[0] = 30000;//Fix
     arglist[1] = 0.1;
@@ -1431,6 +1459,10 @@ int main (int argc, char **argv)
     gMinuit->mnstat(amin,edm,errdef,nvpar,nparx,icstat);
     gMinuit->mnprin(3,amin);
 
+    cout << "-------------------------------" << endl;
+    cout << "gMinuit done" << endl;
+    cout << "-------------------------------" << endl;
+    
     // write to file
     double pp, pperr; 
     TString comb_fit_string = "";
@@ -1585,24 +1617,24 @@ int main (int argc, char **argv)
 	       			    pow(_p2err*_gPMTval*_gPMTval           , 2) + 
 	       			    pow( (_p1 + 2*_p2*_gPMTval)*_gPMTvalerr, 2);
 	       _gPMTfittedvalerr2 = _gPMTfittedvalerr2/(_etalambda*_etalambda);			    
-	       cout << "led " << led << " tube " << i << endl;
+	       //cout << "led " << led << " tube " << i << endl;
 	       //cout << "_p0err " << _p0err << endl;
       	       //cout << "_p1err " << _p1err << endl;
       	       //cout << "_p2err " << _p2err << endl;
-      	       cout << "PMTval " << _gPMTval << endl;
+      	       //cout << "PMTval " << _gPMTval << endl;
 	       //cout << "_p1err*_gPMTval " << _p1err*_gPMTval << endl;
 	       //cout << "_p2err*_gPMTval*_gPMTval " << _p2err*_gPMTval*_gPMTval << endl;
 	       //cout << "(_p1 + 2*_p2*_gPMTval)*_gPMTvalerr " << (_p1 + 2*_p2*_gPMTval)*_gPMTvalerr << endl;
-	       cout << " _gPMTfittedvalerr2 " <<  _gPMTfittedvalerr2 << endl;
+	       //cout << " _gPMTfittedvalerr2 " <<  _gPMTfittedvalerr2 << endl;
 	       _gPDlight_reserr2 = pow( (_gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s])), 2) + 
 	       			   _gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s]);
-	       cout << "gPDerr_light[led][i][s] " << gPDerr_light[led][i][s] << endl;
-	       cout << "_gPMTfittedval " << _gPMTfittedval << endl;
-	       cout << "_gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s]) " << _gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s]) << endl;
-	       cout << "_gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s] " << _gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s]) << endl;
-	       cout << "_gPDlight_reserr2 " << _gPDlight_reserr2 << endl;
+	       //cout << "gPDerr_light[led][i][s] " << gPDerr_light[led][i][s] << endl;
+	       //cout << "_gPMTfittedval " << _gPMTfittedval << endl;
+	       //cout << "_gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s]) " << _gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s]) << endl;
+	       //cout << "_gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s] " << _gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s]) << endl;
+	       //cout << "_gPDlight_reserr2 " << _gPDlight_reserr2 << endl;
 	       gPD_light_residuals_err[led][i].push_back( 100*sqrt(_gPDlight_reserr2) );
-	       cout << "gPD_light_residuals_err[led][i][s] " << gPD_light_residuals_err[led][i][s] << endl; 				 
+	       //cout << "gPD_light_residuals_err[led][i][s] " << gPD_light_residuals_err[led][i][s] << endl; 				 
 	    }
 	}
    }
