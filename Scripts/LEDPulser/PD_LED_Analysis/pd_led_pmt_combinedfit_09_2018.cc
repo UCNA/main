@@ -53,7 +53,7 @@ using namespace std;
   * Will implement PMT_ADC vs. "LIGHT" curve, where light is inferred from q_i-corrected PD values
   * Will make residuals plot from above
  * 10/09/2018 - modify fit to include lower energy points
- * 10/10/2018 - accomodate PD pedestal properly
+ * 10/10/2018 - remove cubic term from PD and accomodate PD pedestal properly
  
  * Build instructions:
  USE THIS:
@@ -77,7 +77,7 @@ using namespace std;
 #define VERBOSE false
 #define ORDER 2                 /// power law fit (Kevin had 3)
 #define FIT2D false
-#define DO_LED_FIT 1
+#define DO_LED_FIT 0
 #define POLYFIT 0
 #define OFFSETPOLYFIT 1
 #define MOMENTS 3               /// number of moments to fit: 0, 1, 2
@@ -89,8 +89,7 @@ using namespace std;
 #define RANGE_MIN -5.0 
 #define MOVEDUPGRAPH false
 #define KEVSCALED false
-#define RANGE_MAX_OVERRIDE false
-#define RANGE_MAX_VALUE 100.0   /// only if RANGE_MAX_OVERRIDE = true
+#define RANGE_MAX 1000.0 // fits don't seem super sensitive to this parameter 10/12/18
 #define FIXBETAENDPOINT true
 #define RELATIVEBETAPLOTS false /// supersedes FIXBETAENDPOINT (and everything else)
 #define COMBINEDLED 1           /// replace later with a loop
@@ -99,7 +98,7 @@ using namespace std;
 #define SWAPLEDS false        /// Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
 #define PMT_THRESHOLD_LOW 1e-5  /// Only affect Minuit Fit 10/09/18 - ?? 
 #define PMT_THRESHOLD_HIGH 5000 /// Only affect Minuit Fit 10/09/18 - ??
-#define SINGLELED false
+#define SINGLELED false // 10/10/18 allow toggle between both leds or just first led 
 
 const int pulser_steps = 64;
 
@@ -109,12 +108,14 @@ vector<float> gPD[2][NUM_CHANNELS];
 vector<float> gPMTerr[2][NUM_CHANNELS];
 vector<float> gPDerr[2][NUM_CHANNELS];
 
+// Values to examine "corrected light" 
 vector<float> gPMT_light[2][NUM_CHANNELS];
 vector<float> gPMTerr_light[2][NUM_CHANNELS];
 vector<float> gPD_light[2][NUM_CHANNELS]; // PD values linearized using 16-way fit - PD is converted to "LIGHT"
 vector<float> gPDerr_light[2][NUM_CHANNELS];
 vector<float> gPD_light_residuals[2][NUM_CHANNELS]; // to store corrected PD values ("light") - fitfunction(PMT values) (also "light")
 vector<float> gPD_light_residuals_err[2][NUM_CHANNELS]; //
+
 
 // need a fixed parameter for origin of PD or fits won't make sense; value is arbitrary "average by eye" of PMT beta endpoints in PD value
 //float gPDoff[2] = {30.0, 100.0};
@@ -155,9 +156,7 @@ void fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag)
     nled = 1;
 #endif
 
-//    for (int ded = 0; ded < 2; ded++){   // sum chi^2 for each led 
-//        value += subfcn(npar, gin, f, par, ded, iflag);
-      for (chooseled; chooseled < nled; chooseled++){   // sum chi^2 for each led 
+    for (chooseled; chooseled < nled; chooseled++){   // sum chi^2 for each led 
         value += subfcn(npar, gin, f, par, chooseled, iflag);
     }
     f = value;
@@ -199,6 +198,7 @@ Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k){
 // Uses parameters for a cubic PD with quadratic PMT 
 // Uses implicitly defined derivative to calculate error to highest order parameter used
 // par[0] - par[31] --> PMTs, par[32]-par[34] --> PD
+
 Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k){ 
     Double_t PD  = gPD[led][i][k];
     Double_t PDE = gPDerr[led][i][k];
@@ -208,82 +208,40 @@ Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k){
     if (led == 0) scale = par[4*i + 3];
     if (led == 1) scale = 1.0;
 
-    Double_t deriv = scale * ( (par[32] + 2*par[33]*PD + 3*par[34]*PD*PD) /
-            ( par[1+4*i] + 2*par[2+4*i]*PMT ) );
+    //Double_t deriv = scale * ( (par[32] + 2*par[33]*PD + 3*par[34]*PD*PD) /
+    //        ( par[1+4*i] + 2*par[2+4*i]*PMT ) );
+
+    //// Removed cubic term. Constant term doesn't contribute to derivative
+    Double_t deriv = scale * ( (par[32] + 2*par[33]*PD) / ( par[1+4*i] + 2*par[2+4*i]*PMT ) );
 
     return PDE*deriv;
 }
 
-// works for a quadratic PD with linear PMT
-Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k){ 
-    Double_t pde = gPDerr[led][i][k];
-    //  cout << "led: " << led << endl;
-    if (pde == 0) cout << "0000000 " << led << " " << i << " " << k << endl;
-    Double_t scale = 0;
-    if (led == 0) scale = par[18];
-    if (led == 1) scale = 1.0;
-    Double_t deriv = (1./par[1+2*i]) * scale*(par[16] + 2*par[17]*gPD[led][i][k]);
-    return pde*deriv;
-}  
-
-// Uses parameters for a cubic PD with quadratic PMT 
-// (but assumes linearity in calculating errors, since calc quadratic errors is hard)
-Double_t PDInterperr2(Double_t * par, Int_t i, Int_t led, Int_t k){ 
-    Double_t pde = gPDerr[led][i][k];
-    //  cout << "led: " << led << endl;
-    if (pde == 0) cout << "0000000 " << led << " " << i << " " << k << endl;
-    Double_t scale = 0;
-    if (led == 0) scale = par[26];
-    if (led == 1) scale = 1.0;
-    //  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k] + 
-    //					    3*par[27]*gPD[led][i][k]*gPD[led][i][k]);
-    Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k]); // linearized
-
-    return pde*deriv;
-}
-
-// par[0] - par[31] --> PMTs, par[32]-par[34] --> PD
+// par[0] - par[31] --> PMTs, par[32]-par[34] --> PD (q1, q2, q0, respectively. par[34] was q3, now q0. 10/10/18)
 Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
 {
     Double_t scale = 0;
     if (led == 0) scale = par[4*i + 3]; // PMT individual wavelength coefficient
     if (led == 1) scale = 1.0;
-    Double_t PD_term = scale*( par[32]*PDval + par[33]*PDval*PDval + par[34]*PDval*PDval*PDval ) - par[0+4*i];
+//    Double_t PD_term = scale*( par[32]*PDval + par[33]*PDval*PDval + par[34]*PDval*PDval*PDval ) - par[0+4*i];
+    //// Remove cubic term and add a PD pedestal term.
+    Double_t PD_term = scale*(par[32]*PDval + par[33]*PDval*PDval) - par[0+4*i] + par[34];
     Double_t PDcoeff = par[2+4*i]/(par[1+4*i]*par[1+4*i]);
     Double_t gcoeff = (-0.5)*(par[1+4*i]/par[2+4*i]);
 
-    //  if (4*PDcoeff*PD_term <= -1 ) PDcoeff = 0; // try to avoid bad radicals
     if (4*PDcoeff*PD_term <= -1 ) return 1e6; // try to avoid bad radicals
 
     Double_t value = gcoeff*( 1 - sqrt(1 + 4*PDcoeff*PD_term) );
     return value;
 }
 
-/*
-// par[0] - par[23] --> PMTs, par[24]-par[26] --> PD, par[27] --> cubic PD term
-Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
-{
-Double_t scale = 0;
-if (led == 0) scale = par[26];
-if (led == 1) scale = 1.0;
-//  Double_t PD_term = scale*( par[24]*PDval + par[25]*PDval*PDval ) - par[0+3*i];
-Double_t PD_term = scale*( par[24]*PDval + par[25]*PDval*PDval + par[27]*PDval*PDval*PDval ) - par[0+3*i];
-Double_t PDcoeff = par[2+3*i]/(par[1+3*i]*par[1+3*i]);
-Double_t gcoeff = (-0.5)*(par[1+3*i]/par[2+3*i]);
-
-//  if (4*PDcoeff*PD_term <= -1 ) PDcoeff = 0; // try to avoid bad radicals
-if (4*PDcoeff*PD_term <= -1 ) return 1e6; // try to avoid bad radicals
-
-Double_t value = gcoeff*( 1 - sqrt(1 + 4*PDcoeff*PD_term) );
-return value;
-}*/
-
 // par[0] - par[2] --> PMTs, par[5] --> PMT wavelength coefficient,
-// par[3], par[4] --> PD, par[6] --> cubic PD term
+// par[3], par[4] --> PD, par[6] --> cubic PD term. 10/10/18: par[6] --> constant term instead
 Double_t func_plot(Double_t *PDval, Double_t * par)
 {
     Double_t _PDval = PDval[0];
-    Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[6]*_PDval*_PDval*_PDval) - par[0];
+//    Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[6]*_PDval*_PDval*_PDval) - par[0];
+    Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval) - par[0] + par[6];
     Double_t PDcoeff = par[2]/(par[1]*par[1]);
     Double_t gcoeff = (-0.5)*(par[1]/par[2]);
 
@@ -454,7 +412,7 @@ int main (int argc, char **argv)
         n = h1.GetEntries();
         h1.SetEstimate(n);
         int vn = h1.Draw("Pdc36:S83028",
-                "(int(Sis00) & 128) > 0", "goff");
+                "(int(Sis00) & 128) > 0", "goff")	;
 
         double *pdc36v = h1.GetV1();
         double *s83028v = h1.GetV2();
@@ -666,20 +624,25 @@ int main (int argc, char **argv)
         if (pmt_pedestal_fit)
             pmt_pedestal = pmt_pedestal_fit->GetParameter(1);
 
-
+        printf("PMT pedestal %i = %f\n", i, pmt_pedestal);
+       
         // Define PMT:PD scan histograms
         TString H2F_down_name = "H2F_down_name_";
         H2F_down_name += detector[i];
         pd_pmt_his2D[DOWN][i] = new TH2F(H2F_down_name, "", 
                 200, 0, 200,
                 1<<8, -pmt_pedestal, 4096-pmt_pedestal);
-
+//                20, 0, 200,
+//                80, -pmt_pedestal, 4096-pmt_pedestal);
+                
         TString H2F_up_name = "H2F_up_name_";
         H2F_up_name += detector[i];
         pd_pmt_his2D[UP][i] = new TH2F(H2F_up_name, "", 
                 //				400, 0, 400,	
                 800, 0, 800,
                 1<<8, -pmt_pedestal, 4096-pmt_pedestal);
+//                80, 0, 800,
+//                80, -pmt_pedestal, 4096-pmt_pedestal);
 
         TString time_gain_his1D_name = "time_gain_1D_";
         TString time_gain_his2D_name = "time_gain_2D_";
@@ -897,18 +860,6 @@ int main (int argc, char **argv)
         gPMTBetaEP.push_back(0);
 #endif
 
-        // find the best range for the fit
-        //      float range_max[2], range_min[2];// extended_range_max[2]; needs wider scope
-
-        /*		float prefit_range_max[2], prefit_range_min[2];
-                prefit_range_min[0] = 25; prefit_range_min[1] = 50;
-                prefit_range_max[0] = 150; prefit_range_max[1] = 300;
-         */
-
-
-        //	printf("found range (%f,%f)\n", range_min, range_max); 
-
-
         // Find # photoelectrons (nPE) corresponding to range min and max
         for (int led = 0; led < 2; led++) 
         {
@@ -935,15 +886,14 @@ int main (int argc, char **argv)
                 range_min[led][i] = _min;
             }
             if (range_min[led][i] < RANGE_MIN ) range_min[led][i] =RANGE_MIN;  // avoid bad clump of below-threshold LED shots
+	    if (range_max[led][i] > RANGE_MAX ) range_max[led][i] = RANGE_MAX; //10/10/18: try to limit effect of irrelevant high-PD region
+
             // Fudge factor to slightly extend range for better fits
 
 //            range_max[led][i] = range_max[led][i]*1.05; // Remove fudge factor 09/17/18
 
 //            range_max[led][i] = RANGE_EXTENSION*range_max[led][i]; // Remove fudge factor 09/17/18
 
-#if RANGE_MAX_OVERRIDE
-            range_max[led][i] = RANGE_MAX_VALUE;
-#endif
 #if RELATIVEBETAPLOTS
             range_min[1][i] = range_min[0][i]; // fix range_min to be same for both LED when comparing
 #endif
@@ -1126,7 +1076,7 @@ int main (int argc, char **argv)
                 //	      out_fit_string += fitparerrors[k];  out_fit_string += "\t";
                 out_fit_string += fitparerrors[led][k];  out_fit_string += "\t";
                 //	      cout << fitpars[k] << " +/- " << fitparerrors[k] << endl;
-                cout << fitpars[led][k] << " +/- " << fitparerrors[led][k] << endl;
+                //cout << fitpars[led][k] << " +/- " << fitparerrors[led][k] << endl;
             }
             out_fit_string += fitchisq;           out_fit_string += "\t";
             out_fit_string += fit->GetNDF();      out_fit_string += "\t";
@@ -1217,14 +1167,14 @@ int main (int argc, char **argv)
             title += " nm)";
             pd_pmt_his2D[led][i]->SetTitle(title);
             pd_pmt_his2D[led][i]->GetZaxis()->SetRangeUser(0, 16);
-//            pd_pmt_his2D[led][i]->Draw("colz");
+            //pd_pmt_his2D[led][i]->Draw("colz");
 
             // Draw what we fit
             graph[led][i]->SetMarkerColor(1);
             graph[led][i]->SetLineColor(1);
             graph[led][i]->SetMarkerStyle(21);
             graph[led][i]->SetMarkerSize(0.75);
-//            graph[led][i]->Draw("SameP");
+            //graph[led][i]->Draw("SameP");
         }
         printf("done.\n");	
 
@@ -1305,13 +1255,14 @@ int main (int argc, char **argv)
         g_PE_PMT[i]->GetYaxis()->SetTitle("ADC Counts");
 //        g_PE_PMT[i]->Draw("AP");
 
-#if DO_LED_FIT
         TF1 *pd_fit = new TF1("polyfit", "[0]*x", range_min[led][i], range_max[led][i]);
+        TF1 *pe_fit = new TF1("pefit", "[0] + [1]*x + [2]*x*x", range_min_pe, range_max_pe);
+
+#if DO_LED_FIT
         if (g[i]->Fit(pd_fit, "R"))
             continue;
         printf("done.\n");
 
-        TF1 *pe_fit = new TF1("pefit", "[0] + [1]*x + [2]*x*x", range_min_pe, range_max_pe);
         if (g_PE_PMT[i]->Fit(pe_fit, "R"))
             continue;
         printf("PE fit done.\n");
@@ -1341,7 +1292,7 @@ int main (int argc, char **argv)
         for (int k = 0; k < Npar; k++){
             pe_out_fit_string += pefitpars[k];       pe_out_fit_string += "\t";
             pe_out_fit_string += pefitparerrors[k];  pe_out_fit_string += "\t";
-            cout << pefitpars[k] << " +/- " << pefitparerrors[k] << endl;
+            //cout << pefitpars[k] << " +/- " << pefitparerrors[k] << endl;
         }
         pe_out_fit_string += pefitchisq;         pe_out_fit_string += "\t";
         pe_out_fit_string += pe_fit->GetNDF();      pe_out_fit_string += "\t";
@@ -1354,7 +1305,7 @@ int main (int argc, char **argv)
     //  const int nvars = 27; // non-linear PMT
     //  const int nvars = 28; // non-linear PMT, add cubic PD term
     //  const int nvars = 19;  // Linear PMT
-    const int nvars = 35;  // quadratic PMT, cubic PD, separate eta_lambda for each PMT
+    const int nvars = 35;  // quadratic PMT, cubic PD, separate eta_lambda for each PMT (10/10/18: cubic PD->const PD)
 
     // Do Minuit stuff 
     TMinuit *gMinuit = new TMinuit(nvars);  //initialize TMinuit with a maximum of nvars params
@@ -1374,6 +1325,10 @@ int main (int argc, char **argv)
     etastart = 1./etastart; // must invert when LEDS are swapped 
 #endif 
 
+#if SINGLELED
+    etastart = 1.0; // Fix etalambda since it plays no role when fitting only one LED. And it blows up error on p1
+#endif   
+
     // Non-linear PMT
     // works for 21927-21939
     static Double_t vstart[nvars] = {0., 1.0, -0.000001, etastart,
@@ -1385,27 +1340,28 @@ int main (int argc, char **argv)
         0., 1.0, -0.000001, etastart,
         0., 1.0, -0.000001, etastart,
         4., -0.001, 0.0}; 
-        
+       
         // Testing with fixing quadratic term to be 0. See also **** below
 //    static Double_t vstart[nvars] = {0., 1.0, 0., etastart,
 //        0., 1.0, 0., etastart,
-//        0., 1.0, 0., etastart,
-//        0., 1.0, 0., etastart,
-//        0., 1.0, 0., etastart,
+//        0., 1.0718.09130859375, 0., etastart,
 //        0., 1.0, 0., etastart,
 //        0., 1.0, 0., etastart,
  //       0., 1.0, 0., etastart,
- //       4., -0.001, 0.0}; 
+ //       0., 1.0, 0., etastart,
+  //      0., 1.0, 0., etastart,
+  //      4., -0.001, 0.0}; 
   
-    static Double_t step[nvars] = {1, 0.1, 0.00001, 0.1, 
-        1, 0.1, 0.00001, 0.1, 
-        1, 0.1, 0.00001, 0.1, 
-        1, 0.1, 0.00001, 0.1, 
-        1, 0.1, 0.00001, 0.1, 
-        1, 0.1, 0.00001, 0.1, 
-        1, 0.1, 0.00001, 0.1, 
-        1, 0.1, 0.00001, 0.1, 
-        0.1, 0.001, 1e-7};
+    static Double_t step[nvars] = {1., 0.1, 0.00001, 0.1, 
+        1., 0.1, 0.00001, 0.1, 
+        1., 0.1, 0.00001, 0.1, 
+        1., 0.1, 0.00001, 0.1, 
+        1., 0.1, 0.00001, 0.1, 
+        1., 0.1, 0.00001, 0.1, 
+        1., 0.1, 0.00001, 0.1, 
+        1., 0.1, 0.00001, 0.1, 
+//        0.1, 0.001, 1e-7}; // for old cubic fit
+        0.1, 0.001, 1.0}; // for constant term fit
 
 
     double PD_parms[4], PD_errs[4];
@@ -1413,28 +1369,16 @@ int main (int argc, char **argv)
     TF1 fittedFunctions_PMTonly[2][NUM_CHANNELS]; // functions with just PMT fit p0, p1, p2. Plot versus "LIGHT", determined by corrected PD values
 
     for (int p = 0; p < nvars-3; p++){
-        //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], 0, 0, ierflg); // Linear PMT 
-        //   gMinuit->mnparm(pp, Form("p%i", pp%3), vstart[pp], step[pp], 0, 0, ierflg);  // Non-linear PMT
-        //      gMinuit->mnparm(pp, Form("p%i", pp%2), vstart[pp], step[pp], -100., 1000., ierflg);  // try not to put limits if we can avoid it
-
         // Non-linear PMT, separate eta_lambda term
         if (p%4 < 3) gMinuit->mnparm(p, Form("p%i", p%4), vstart[p], step[p], 0, 0, ierflg);  
         if (p%4 == 3) gMinuit->mnparm(p, "nlambda", vstart[p], step[p], 0, 0, ierflg);  
     }
 
-    /*    gMinuit->mnparm(nvars-4, "PDp1", vstart[nvars-4], step[nvars-4], 0.,10.,ierflg);
-          gMinuit->mnparm(nvars-3, "PDp2", vstart[nvars-3], step[nvars-3], -1.,1.,ierflg);
-          gMinuit->mnparm(nvars-2, "PDratio", vstart[nvars-2], step[nvars-2], 0., 10., ierflg);
-          gMinuit->mnparm(nvars-1, "PDp3", vstart[nvars-1], step[nvars-1], -1., 1., ierflg);*/
-    /*    gMinuit->mnparm(nvars-3, "PDp1", vstart[nvars-3], step[nvars-3], 0.,10.,ierflg);
-          gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], -1.,1.,ierflg);
-          gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0., 10., ierflg);*/
-    /*   gMinuit->mnparm(nvars-3, "PDp1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
-         gMinuit->mnparm(nvars-2, "PDp2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
-         gMinuit->mnparm(nvars-1, "PDratio", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);*/
     gMinuit->mnparm(nvars-3, "PDq1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
     gMinuit->mnparm(nvars-2, "PDq2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
-    gMinuit->mnparm(nvars-1, "PDq3", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);
+    //gMinuit->mnparm(nvars-1, "PDq3", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);
+    gMinuit->mnparm(nvars-1, "PDq0", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);
+
 
     // Scaling degeneracy affects all parameters. Break degeneracy by fixing PDp1.  
     // PDp1 = 4.0 is roughly the favored value from E/W separate fits to run 21927
@@ -1443,10 +1387,19 @@ int main (int argc, char **argv)
     gMinuit->FixParameter(nvars-3);  // lifts degeneracy of scaling all parameters.
 
     // Try fixing PMT curves to be linear, or fix pedestal, and see what happens ****
+    //for (int i = 0; i < NUM_CHANNELS; i++){
+//        gMinuit->FixParameter(4*i); **Worsens Fit**
+    //    gMinuit->FixParameter(4*i + 2); // quadratic term is third term **Fit doesn't converge**
+    //}
+
+#if SINGLELED
     for (int i = 0; i < NUM_CHANNELS; i++){
-//        gMinuit->FixParameter(4*i);
-//        gMinuit->FixParameter(4*i + 2); // quadratic term is third term 
-    }
+          gMinuit->FixParameter(4*i + 3); //Fix etalambda since it plays no role and blows up error on p1
+    } 
+#endif
+
+    // having an extra q0 term doesn't seem to help the fit. Fix to 0.
+    gMinuit->FixParameter(nvars-1);
 
     // Now ready for minimization step
     arglist[0] = 30000;//Fix
@@ -1475,8 +1428,6 @@ int main (int argc, char **argv)
         }
 #endif
         comb_fit_string += run;                comb_fit_string += "\t"; 
-        //      int i = p/2;  linear PMT
-        //      int i = p/3; // non-linear PMT
         int i = p/4; // non-linear PMT with separate eta_lambda
         comb_fit_string += i;                  comb_fit_string += "\t"; 
         comb_fit_string += gMinuit->fCpnam[p]; comb_fit_string += "\t";
@@ -1519,6 +1470,9 @@ int main (int argc, char **argv)
             fittedFunctions[led][i] = TF1(Form("f_%i_%i", led, i), func_plot, 
                     RANGE_MIN, range_max[led][i], 7); // cubic fit needs 7 params
                     
+            cout << "fittedFunctions " << led << " " << i << " range_min = " << RANGE_MIN << endl;
+            cout << "fittedFunctions " << led << " " << i << " range_max = " << range_max[led][i] << endl;
+                  
             // PMTs are fit to quadratic polynomial 
 	    // See also ADC_max definition to see why this is the best maximum range
             //fittedFunctions_PMTonly[led][i] = TF1(Form("fpmt_%i_%i", led, i), "pol2",
@@ -1555,7 +1509,7 @@ int main (int argc, char **argv)
 
             fittedFunctions[led][i].SetParameter(3, PD_parms[0]);
             fittedFunctions[led][i].SetParameter(4, PD_parms[1]);
-            fittedFunctions[led][i].SetParameter(6, PD_parms[2]); // cubic fit
+            fittedFunctions[led][i].SetParameter(6, PD_parms[2]); // cubic fit. 10/10/18 --> constant term
         }
     }
 
@@ -1570,9 +1524,11 @@ int main (int argc, char **argv)
 
 
 // Correct PD data for fit function. LIGHT = (q1*PD + q2*PD*PD + q3*PD*PD*PD)
+///// 10/10/18: LIGHT = (q0 + q1*PD + q2*PD*PD)
 // This converts PD to "LIGHT" in AU.
 // Pushing eta^i_lambda dependence into PMT since PD light is same for all tubes. 
 // Pedestal will be wrong? 9/14/18 - no, pedestal is already subtracted off. Never checked for quality, though.
+// 10/10/18: updating handling of pedestal 
 
    float _gPDval, _gPDvalerr, _gPMTval, _gPMTvalerr, _gPMTfittedval, _gPMTfittedvalerr2, _gPDlight_reserr2 = 0;
    double _p0, _p1, _p2, _p0err, _p1err, _p2err, _etalambda, _etaerr = 0;
@@ -1591,13 +1547,18 @@ int main (int argc, char **argv)
 	       if (led==0) gMinuit->GetParameter(4*i + 3, _etalambda, _etaerr);
 	       if (led==1) {_etalambda = 1.0; _etaerr = 0.0;}
 	       
-	       /// Calculate value and error of "LIGHT"
-               gPD_light[led][i].push_back(PD_parms[0]*_gPDval + PD_parms[1]*_gPDval*_gPDval + PD_parms[2]*_gPDval*_gPDval*_gPDval);
+	       /// Calculate value and error of "LIGHT" // 10/10/18 - pedestal term updated
+               gPD_light[led][i].push_back(PD_parms[0]*_gPDval + PD_parms[1]*_gPDval*_gPDval + PD_parms[2]);
+               //gPD_light[led][i].push_back(PD_parms[0]*_gPDval + PD_parms[1]*_gPDval*_gPDval + PD_parms[2]*_gPDval*_gPDval*_gPDval);
+
 	       // error on gPD_light = sqrt( (PD^2)(dq1)^2 + (PD^4)(dq2)^2 + (PD^6)(dq3)^2 + (q1+2*q2*PD+3*q3*PD^2)^2*(dPD)^2 )
+	       //// 10/10/18: error on gPD_light = sqrt( (PD^2)(dq1)^2 + (PD^4)(dq2)^2 + (dq0)^2 + (q1+2*q2*PD)^2*(dPD)^2 )
 	       gPDerr_light[led][i].push_back( sqrt( pow(_gPDval, 2) * pow(PD_errs[0], 2) + 
 	                                             pow(_gPDval, 4) * pow(PD_errs[1], 2) + 
-	                                             pow(_gPDval, 6) * pow(PD_errs[2], 2) +
-	                                             pow(PD_parms[0] + 2*PD_parms[1]*_gPDval + 3*PD_parms[2]*_gPDval*_gPDval, 2)*
+	                                                               pow(PD_errs[2], 2) +
+//	                                             pow(_gPDval, 6) * pow(PD_errs[2], 2) +
+//	                                             pow(PD_parms[0] + 2*PD_parms[1]*_gPDval + 3*PD_parms[2]*_gPDval*_gPDval, 2)*
+	                                             pow(PD_parms[0] + 2*PD_parms[1]*_gPDval, 2)*
 	                                                pow(_gPDvalerr, 2) ) );
 
 	       // Residuals are light minus PMT best estimate of light, which is eval'd from PMT side of fit function applied to relevant PMT value   
@@ -1610,6 +1571,7 @@ int main (int argc, char **argv)
 	       
 	       // Error on residual is (assuming no PMT error): [f(PMT)/PD_light^2][delta(PD_light)]
 	       //gPD_light_residuals_err[led][i].push_back( 100*( fittedFunctions_PMTonly[led][i](_gPMTval)/(gPD_light[led][i][s]*gPD_light[led][i][s]) ) * gPDerr_light[led][i][s] );
+	       
 	       // Assuming PMT error: [delta(%residual)]^2 =[f(PMT)/PD_light^2][delta(PD_light)]^2 + [[delta(f(PMT)]/[PD_light]]^2
 	       // In Second term: delta(f(PMT))^2 = (dp0)^2 + (dp1*PMT)^2 + (dp2*PMT^2)^2 + (p1 + 2*p2*PMT)^2)*(dPMT)^2 (ignoring eta_lambda)
 	       _gPMTfittedvalerr2 = pow(_p0err                             , 2) +
@@ -1617,24 +1579,24 @@ int main (int argc, char **argv)
 	       			    pow(_p2err*_gPMTval*_gPMTval           , 2) + 
 	       			    pow( (_p1 + 2*_p2*_gPMTval)*_gPMTvalerr, 2);
 	       _gPMTfittedvalerr2 = _gPMTfittedvalerr2/(_etalambda*_etalambda);			    
-	       //cout << "led " << led << " tube " << i << endl;
-	       //cout << "_p0err " << _p0err << endl;
-      	       //cout << "_p1err " << _p1err << endl;
-      	       //cout << "_p2err " << _p2err << endl;
-      	       //cout << "PMTval " << _gPMTval << endl;
-	       //cout << "_p1err*_gPMTval " << _p1err*_gPMTval << endl;
-	       //cout << "_p2err*_gPMTval*_gPMTval " << _p2err*_gPMTval*_gPMTval << endl;
-	       //cout << "(_p1 + 2*_p2*_gPMTval)*_gPMTvalerr " << (_p1 + 2*_p2*_gPMTval)*_gPMTvalerr << endl;
-	       //cout << " _gPMTfittedvalerr2 " <<  _gPMTfittedvalerr2 << endl;
-	       _gPDlight_reserr2 = pow( (_gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s])), 2) + 
-	       			   _gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s]);
-	       //cout << "gPDerr_light[led][i][s] " << gPDerr_light[led][i][s] << endl;
-	       //cout << "_gPMTfittedval " << _gPMTfittedval << endl;
-	       //cout << "_gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s]) " << _gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s]) << endl;
-	       //cout << "_gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s] " << _gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s]) << endl;
-	       //cout << "_gPDlight_reserr2 " << _gPDlight_reserr2 << endl;
+	       /*cout << "tube: " << i << endl;
+	       cout << "p0err " << _p0err << endl;
+       	       cout << "p1err " << _p1err << endl;
+	       cout << "p2err " << _p2err << endl;
+	       cout << "gPMTval " << _gPMTval << endl;
+	       cout << "gPMTvalerr " << _gPMTvalerr << endl;
+	       cout << "gPMTfittedvalerr2 " << _gPMTfittedvalerr2 << endl;
+	       cout << "gPDlight " << gPD_light[led][i][s] << endl;
+	       cout << "etalambda " << _etalambda << endl;
+	       cout << "pow( (_p1 + 2*_p2*_gPMTval)*_gPMTvalerr, 2) " << pow( (_p1 + 2*_p2*_gPMTval)*_gPMTvalerr, 2) << endl; 
+	       cout << "first pow term " << pow(_p0err                             , 2) << endl;
+	       cout << "second pow term " << pow(_p1err*_gPMTval                    , 2) << endl;
+	       cout << "third pow term " <<  pow(_p2err*_gPMTval*_gPMTval           , 2) << endl;
+	       */
+	       
+	       _gPDlight_reserr2 = pow( (_gPMTfittedval*gPDerr_light[led][i][s]/(gPD_light[led][i][s]*gPD_light[led][i][s])), 2)
+	       			  + _gPMTfittedvalerr2/(gPD_light[led][i][s]*gPD_light[led][i][s]); //large error in this term
 	       gPD_light_residuals_err[led][i].push_back( 100*sqrt(_gPDlight_reserr2) );
-	       //cout << "gPD_light_residuals_err[led][i][s] " << gPD_light_residuals_err[led][i][s] << endl; 				 
 	    }
 	}
    }
@@ -1644,11 +1606,12 @@ int main (int argc, char **argv)
 
 // From func_plot: 
 // par[0] - par[2] --> PMTs, par[5] --> PMT wavelength coefficient,
-// par[3], par[4] --> PD, par[6] --> cubic PD term
+// par[3], par[4] --> PD, par[6] --> cubic PD term **10/10/18: par[6] --> constant term
 
 
 //// Turns out we don't want to do this. Just look at raw ADC data (hopefully eventually with a gain and pedestal correction, but means updating the fit)
 // Correct PMT data for fit function. LIGHT = (p^i_0 + p^i_1*ADC + p^i_2*ADC*ADC)/eta^i_lambda
+///// 10/10/18: Update: LIGHT = p^i_0 + (p^i_1*ADC + p^i_2*ADC*ADC)/eta^i_lambda
 
 //   float _gPMTval = 0.;
 //   float _p0, _p1, _p2, _eta_LED = 0;
@@ -1665,6 +1628,96 @@ int main (int argc, char **argv)
 //            }
 //	}
 //   }
+
+    TGraph * gPDwidths[2];
+    int gpdwsize = 0;
+    TCanvas * cPDwidths = new TCanvas("pdwidths", "PD width vs counts");
+    cPDwidths->Divide(2,1);
+    for (int led = 0; led < 2; led++){
+	 cPDwidths->cd(led+1);
+	 
+	 gpdwsize = gPD[led][0].size();
+         gPDwidths[led] = new TGraph(gpdwsize, &gPD[led][0][0], &gPDerr[led][0][0]);
+         
+         gPDwidths[led]->Draw("A*");
+         cPDwidths->Update();
+    }
+    TString pd_widths_filename = "pd_widths";
+    pd_widths_filename = OUTPUT_IMAGE_DIR + pd_widths_filename + "_";
+    pd_widths_filename += argv[1];
+    pd_widths_filename += ".root";
+    cPDwidths->SaveAs(pd_widths_filename, "9");	
+    
+    TGraph * gPMTwidths[2][NUM_CHANNELS];    
+    int gpmtwsize = 0;
+    vector <float> gPMTerr2[2][NUM_CHANNELS];
+    TCanvas * cPMTwidths = new TCanvas("pmtwidths", "PMT width vs counts");
+    cPMTwidths->Divide(4,2);
+    for (int i = 0; i < NUM_CHANNELS; i++){
+         for (int led = 0; led < 2; led++){
+	      cPMTwidths->cd(i+1);
+	 
+              gpmtwsize = gPMT[led][i].size();
+              for (int s = 0; s < gpmtwsize; s++){
+              	  gPMTerr2[led][i].push_back( pow( gPMTerr[led][i][s], 2 ) );
+              }
+              gPMTwidths[led][i] = new TGraph(gpmtwsize, &gPMT[led][i][0], &gPMTerr2[led][i][0]);
+         
+//              gPMTwidths[led][i] = new TGraph(gpmtwsize, &gPMT[led][i][0], &gPMTerr[led][i][0]);
+         
+              gPMTwidths[led][i]->SetMarkerSize(0.75);
+              gPMTwidths[led][i]->SetMarkerStyle(21);
+              
+	      if (led == 0) gPMTwidths[led][i]->Draw("AP");
+              if (led == 1) {gPMTwidths[led][i]->SetMarkerColor(2); gPMTwidths[led][i]->Draw("sameP");}
+              cPMTwidths->Update();
+         }
+    }
+    TString pmt_widths_filename = "pmt_widths";
+    pmt_widths_filename = OUTPUT_IMAGE_DIR + pmt_widths_filename + "_";
+    pmt_widths_filename += argv[1];
+    pmt_widths_filename += ".root";
+    cPMTwidths->SaveAs(pmt_widths_filename, "9");	
+    
+    TGraphErrors * gPMTsumsig[2];    
+    int gpdsize = gPD_light[0][0].size();
+    vector <float> gPMTsumvals[2];
+    vector <float> gPMTsumerrs[2];
+    TCanvas * cPMTsum = new TCanvas("pmtsum", "PMT sum signals for each side");
+    cPMTsum->Divide(1,2);
+    int _gpmtsum[2];
+    int _gpmtsumerr2[2];
+    // This method of adding doesn't line up the points correctly
+    for (int s = 0; s < gpdwsize; s++){
+         for (int side = 0; side < 2; side++){
+	     _gpmtsum[side] = 0;
+	     _gpmtsumerr2[side] = 0;
+       	     for (int i = 0; i < 4; i++){ 
+ 	         //cout << "gPMT[0], tube " << i+side*4 << " point " << s << " " << gPMT[0][side*4 + i][s] << endl;
+                 _gpmtsum[side] += gPMT[0][side*4 + i][s];
+		 _gpmtsumerr2[side] += pow(gPMTerr[0][i][s], 2);
+		 
+             }
+             gPMTsumvals[side].push_back(_gpmtsum[side]);
+             gPMTsumerrs[side].push_back(sqrt(_gpmtsumerr2[side]));
+          }
+    }
+    for (int side = 0; side < 2; side++){
+         cPMTsum->cd(side+1);
+//         gPMTsumsig[side] = new TGraph(gpdsize, &gPMTsumvals[side][0], &gPD_light[0][0][0]);
+//         gPMTsumsig[side] = new TGraphErrors(gpdsize, &gPMTsumvals[side][0], &gPD_light[0][0][0], &gPMTsumerrs[side][0], &gPDerr_light[0][0][0]);
+         gPMTsumsig[side] = new TGraphErrors(gpdsize, &gPMTsumvals[side][0], &gPD[0][0][0], &gPMTsumerrs[side][0], &gPDerr[0][0][0]);
+         gPMTsumsig[side]->SetMarkerSize(0.75);
+         gPMTsumsig[side]->SetMarkerStyle(21);
+         gPMTsumsig[side]->Draw("AP");              
+         cPMTsum->Update();
+    }
+    
+    TString pmt_sum_filename = "pmt_sum";
+    pmt_sum_filename = OUTPUT_IMAGE_DIR + pmt_sum_filename + "_";
+    pmt_sum_filename += argv[1];
+    pmt_sum_filename += ".root";
+    cPMTsum->SaveAs(pmt_sum_filename, "9");	
 
 
 ///// Writing out plots to picture files //// 
@@ -1839,12 +1892,18 @@ int main (int argc, char **argv)
                 graph[UP][i]->GetYaxis()->SetTitle("PMT (ADC)");
                 graph[UP][i]->GetYaxis()->SetRangeUser(-50, 4000);
 
-                for (int led = 0; led < 2; led++){
-                    fittedFunctions[led][i].SetLineColor(8);
-                    fittedFunctions[led][i].Draw("same");
-                }
+                //for (int led = 0; led < 2; led++){
+                //    fittedFunctions[led][i].SetLineColor(1);
+                //    fittedFunctions[led][i].Draw("same");
+                //}
           
-                //Inset
+                fittedFunctions[0][i].SetLineColor(1);
+                fittedFunctions[0][i].Draw("same");
+#if not SINGLELED // second curve is in the way and redundant in this case
+                fittedFunctions[1][i].SetLineColor(1);
+                fittedFunctions[1][i].Draw("same");
+#endif                
+/*                //Inset
                 TPad *subpad = new TPad("subpad","",0.37,0.58,0.7,0.89);
                 subpad->Draw();
                 subpad->cd();
@@ -1858,10 +1917,10 @@ int main (int argc, char **argv)
                 newgraphUP->GetXaxis()->SetRangeUser(-10, 50);
 
                 for (int led = 0; led < 2; led++){
-                    fittedFunctions[led][i].SetLineColor(8);
+                    fittedFunctions[led][i].SetLineColor(1);
                     fittedFunctions[led][i].Draw("same");
                 }	// redraw on inset
-                //
+*/                //
 
                 ew_canvas->Update();
                 TPaveStats * st = (TPaveStats*)graph[DOWN][i]->GetListOfFunctions()->FindObject("stats");
@@ -1887,6 +1946,8 @@ int main (int argc, char **argv)
     int graph_size = 0;
     TGraph* PMT_light_graph[2][NUM_CHANNELS];
     TGraph* PMT_light_residuals_graph[2][NUM_CHANNELS];
+    TGraph* PD_light_graph[2]; // also plot "LIGHT" versus PD counts, for reference.
+    
     for (int i = 0; i < NUM_CHANNELS; i++){
     	for (int led = 0; led < 2; led++){
     	    graph_size = gPD_light[led][i].size();
@@ -1896,16 +1957,37 @@ int main (int argc, char **argv)
    	    						                     &gPD_light_residuals[led][i][0], 
    	    						                     &gPMTerr[led][i][0], 
    	    						                   //  &gPDerr_light[led][i][0]); 
-   	    						                     &gPD_light_residuals_err[led][i][0]);				   
-            }
+   	    						                     &gPD_light_residuals_err[led][i][0]);
+	    }
     }
 
-//Testing
-//    TCanvas * ctemp = new TCanvas("ctempresiduals", "ctempresiduals"); ctemp->cd(); 	
-//    PMT_light_residuals_graph[1][0]->Draw("AP");
-//   PMT_light_residuals_graph[0][0]->Draw("sameP"); // curve doesn't work for the other LED wavelength -- FIXED!!
-//    ctemp->Update();
+    for (int led = 0; led < 2; led++){
+    	PD_light_graph[led] = new TGraphErrors(graph_size, &gPD[led][0][0], &gPD_light[led][0][0], 
+    	    							   &gPDerr[led][0][0], &gPDerr_light[led][0][0]);   	   
+    }// use tube 0, they should all be the same.
+    
+    
+    // Plot LIGHT vs PD graphs
+    TCanvas *pd_light_canvas = 
+        new TCanvas("pd_light_canvas", 
+		  "Light versus PD response", 1600, 900);
 
+    PD_light_graph[0]->Draw("A*"); 
+    PD_light_graph[1]->Draw("Same*");
+    
+    PD_light_graph[0]->SetName("pd_light_graph_0");
+    PD_light_graph[1]->SetName("pd_light_graph_1");
+    
+    TF1 * pd_light = new TF1("pd_light", "pol2", 0, 1000);
+    pd_light->SetParameters(PD_parms[2], PD_parms[0], PD_parms[1]);
+    pd_light->Draw("Same");
+        
+    TString pd_light_graph_filename = OUTPUT_IMAGE_DIR;
+    pd_light_graph_filename += "pd_light_";
+    pd_light_graph_filename += argv[1];
+    pd_light_graph_filename += ".root";
+    pd_light_canvas->SaveAs(pd_light_graph_filename);
+    
     // Plot LIGHT graphs 
     TCanvas *light_canvas_E = 
       new TCanvas("light_canvas_E", 
@@ -2040,7 +2122,7 @@ int main (int argc, char **argv)
     //ew_constr_canvas->SaveAs(pd_led_pmt_constr_rootfilename, "9");
     //ew_canvas_scaled->SaveAs(pd_led_pmt_scaled_filename, "9");
     //ew_canvas_full->SaveAs(pd_led_pmt_full_filename, "9");
-    //ew_canvas_full->SaveAs(pd_led_pmt_full_rootfilename, "9");
+    ew_canvas_full->SaveAs(pd_led_pmt_full_rootfilename, "9");
     light_canvas_E->SaveAs(pmt_light_filename_E, "9");
     light_canvas_E->SaveAs(pmt_light_rootfilename_E, "9");
     light_canvas_W->SaveAs(pmt_light_filename_W, "9");
