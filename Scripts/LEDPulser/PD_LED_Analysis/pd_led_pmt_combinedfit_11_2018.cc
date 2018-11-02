@@ -47,20 +47,20 @@ using namespace std;
  * Modified: July 16, 2011
  * Modified: Feb 25, 2013
  * Modified: Sep 30, 2013 (SS)
- * Branched from pd_led_pmt.cc Apr 14, 2015 (SS)
+ **** Branched from pd_led_pmt.cc Apr 14, 2015 (SS)
   *    Will implement a combined fit to 405 and 465 graphs
- * Branched from pd_led_pmt_combinedfit.cc Sep 13, 2018 (SS)
+ **** Branched from pd_led_pmt_combinedfit.cc Sep 13, 2018 (SS)
   * Will implement PMT_ADC vs. "LIGHT" curve, where light is inferred from q_i-corrected PD values
   * Will make residuals plot from above
  * 10/09/2018 - modify fit to include lower energy points
  * 10/10/2018 - remove cubic term from PD and accomodate PD pedestal properly
- * Branched from pd_led_pmt_combinedfit.cc Nov 2, 2018 (SS)
+ **** Branched from pd_led_pmt_combinedfit.cc Nov 2, 2018 (SS)
   * Will update PD fit function to include 1/PD and 1/PD^2 terms. 
     ** This appears to be a better fit, based on fits in RawGraphDataReader_inverse.C
   
  * Build instructions:
  USE THIS:
- *  g++ `root-config --cflags` pd_led_pmt_combinedfit_09_2018.cc `root-config --libs` -lMinuit -o pd_led_pmt_combinedfit_09_2018_analysis
+ *  g++ `root-config --cflags` pd_led_pmt_combinedfit_11_2018.cc `root-config --libs` -lMinuit -o pd_led_pmt_combinedfit_11_2018_analysis
  FOLLOWING DOESN'T WORK:
  *  g++ `root-config --cflags` `root-config --libs` pd_led_pmt.cc -o pd_led_pmt_analysis
  *
@@ -90,7 +90,6 @@ using namespace std;
 #define PLOTBOTHLEDS 1
 //#define RANGE_MIN 5.0 10/09/18
 #define RANGE_MIN -5.0 
-#define MOVEDUPGRAPH false
 #define KEVSCALED false
 #define RANGE_MAX 1000.0 // fits don't seem super sensitive to this parameter 10/12/18
 #define RANGE_MAX_OVERRIDE false
@@ -144,8 +143,8 @@ Double_t func(float PDval, Double_t *par, Int_t i, Int_t led);
 Double_t func_plot(Double_t *PDval, Double_t *par);
 Double_t subfcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t led, Int_t iflag);
 Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k);
-Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k);
-Double_t PDInterperr2(Double_t * par, Int_t i, Int_t led, Int_t k);
+//Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k);
+//Double_t PDInterperr2(Double_t * par, Int_t i, Int_t led, Int_t k);
 Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k);
 
 // calculate chi^2 
@@ -200,7 +199,7 @@ Double_t combiErr(Double_t * par, Int_t i, Int_t led, Int_t k){
 
 // Uses parameters for a cubic PD with quadratic PMT 
 // Uses implicitly defined derivative to calculate error to highest order parameter used
-// par[0] - par[31] --> PMTs, par[32]-par[34] --> PD
+// par[0] - par[31] --> PMTs, par[32]-par[36] --> PD        ----par[32]-par[34] --> PD----- 11/2/18
 
 Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k){ 
     Double_t PD  = gPD[led][i][k];
@@ -211,43 +210,15 @@ Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k){
     if (led == 0) scale = par[4*i + 3];
     if (led == 1) scale = 1.0;
 
-    //Double_t deriv = scale * ( (par[32] + 2*par[33]*PD + 3*par[34]*PD*PD) /
-    //        ( par[1+4*i] + 2*par[2+4*i]*PMT ) );
+    //// **** The error needs to be updated to include reciprocal terms **** 11/2/18
 
     //// Removed cubic term. Constant term doesn't contribute to derivative
     Double_t deriv = scale * ( (par[32] + 2*par[33]*PD) / ( par[1+4*i] + 2*par[2+4*i]*PMT ) );
     return PDE*deriv;
 }
 
-
-// par[0] - par[31] --> PMTs, par[32]-par[34] --> PD (q1, q2, q0, respectively. par[34] was q3, now q0. 10/10/18)
-// works for a quadratic PD with linear PMT
-Double_t PDInterperr(Double_t * par, Int_t i, Int_t led, Int_t k){ 
-    Double_t pde = gPDerr[led][i][k];
-    //  cout << "led: " << led << endl;
-    if (pde == 0) cout << "0000000 " << led << " " << i << " " << k << endl;
-    Double_t scale = 0;
-    if (led == 0) scale = par[18];
-    if (led == 1) scale = 1.0;
-    Double_t deriv = (1./par[1+2*i]) * scale*(par[16] + 2*par[17]*gPD[led][i][k]);
-    return pde*deriv;
-}  
-
-// Uses parameters for a cubic PD with quadratic PMT 
-// (but assumes linearity in calculating errors, since calc quadratic errors is hard)
-Double_t PDInterperr2(Double_t * par, Int_t i, Int_t led, Int_t k){ 
-    Double_t pde = gPDerr[led][i][k];
-    //  cout << "led: " << led << endl;
-    if (pde == 0) cout << "0000000 " << led << " " << i << " " << k << endl;
-    Double_t scale = 0;
-    if (led == 0) scale = par[26];
-    if (led == 1) scale = 1.0;
-    //  Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k] + 
-    //					    3*par[27]*gPD[led][i][k]*gPD[led][i][k]);
-    Double_t deriv = (1./par[1+3*i]) * scale*(par[24] + 2*par[25]*gPD[led][i][k]); // linearized
-
-    return pde*deriv;
-}
+/// DEPRECATED COMMENT // par[0] - par[31] --> PMTs, par[32]-par[34] --> PD (q1, q2, q0, respectively. par[34] was q3, now q0. 10/10/18)
+// par[0] - par[31] --> PMTs, par[32]-par[36] --> PD (q1, q2, q0, q-1, q-2, respectively. 11/2/18)
 
 Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
 {
@@ -255,9 +226,7 @@ Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
     if (led == 0) scale = par[4*i + 3]; // PMT individual wavelength coefficient
     if (led == 1) scale = 1.0;
 
-//    Double_t PD_term = scale*( par[32]*PDval + par[33]*PDval*PDval + par[34]*PDval*PDval*PDval ) - par[0+4*i];
-    //// Remove cubic term and add a PD pedestal term.
-    Double_t PD_term = scale*(par[32]*PDval + par[33]*PDval*PDval) - par[0+4*i] + par[34];
+    Double_t PD_term = scale*(par[32]*PDval + par[33]*PDval*PDval + par[35]/PDval + par[36]/PDval/PDval) - par[0+4*i] + par[34];
     Double_t PDcoeff = par[2+4*i]/(par[1+4*i]*par[1+4*i]);
     Double_t gcoeff = (-0.5)*(par[1+4*i]/par[2+4*i]);
     if (4*PDcoeff*PD_term <= -1 ) return 1e6; // try to avoid bad radicals
@@ -267,12 +236,12 @@ Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
 }
 
 // par[0] - par[2] --> PMTs, par[5] --> PMT wavelength coefficient,
-// par[3], par[4] --> PD, par[6] --> cubic PD term. 10/10/18: par[6] --> constant term instead
+// par[3], par[4], par[6], par[7], par[8] --> PD (q1, q2, q0, q-1, q-2, respectively. 11/2/18)
+/// DEPRECATED COMMENT // par[3], par[4] --> PD, par[6] --> cubic PD term. 10/10/18: par[6] --> constant term instead
 Double_t func_plot(Double_t *PDval, Double_t * par)
 {
     Double_t _PDval = PDval[0];
-//    Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[6]*_PDval*_PDval*_PDval) - par[0];
-    Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval) - par[0] + par[6];
+    Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[7]/_PDval + par[8]/_PDval/_PDval) - par[0] + par[6];
     Double_t PDcoeff = par[2]/(par[1]*par[1]);
     Double_t gcoeff = (-0.5)*(par[1]/par[2]);
 
@@ -1149,37 +1118,6 @@ int main (int argc, char **argv)
 
 #endif	
 
-#if MOVEDUPGRAPH      
-        // Rescale 465 to 405 slope
-        graph_465_moved_up[i] = new TGraphErrors(pulser_steps);
-        /*     cout << "--------------------------------------------" << endl;
-               cout << range_min[0]/pd_to_keV_factor[0] << " " << range_max[0]/pd_to_keV_factor[0] << endl;
-               cout << range_min[1]/pd_to_keV_factor[1] << " " << range_max[1]/pd_to_keV_factor[1] << endl;
-               cout << "PD/keV conversion factor: " << pd_to_keV_factor[0] << "; " << pd_to_keV_factor[1] << endl;
-               cout << "--------------------------------------------" << endl;*/
-        //TF1 * rescalefit = new TF1("rescalefit","pol1",range_min[0]/pd_to_keV_factor[0], range_max[0]/pd_to_keV_factor[0]);  // use range for 405 LED
-        TF1 * rescalefit = new TF1("rescalefit","pol1",10.,100);  // use range to get a decent line
-        rescalefit->SetParameters(0.0, 0.75);
-        graph[UP][i]->Fit("rescalefit","R");
-        graph[UP][i]->Fit("rescalefit","R");
-        //      slope_UP = rescalefit->GetParameter(1);
-        slope_UP = rescalefit->Eval(20.);
-        rescalefit->SetParameters(0, 0.75); 
-        graph[DOWN][i]->Fit("rescalefit","R");
-        graph[DOWN][i]->Fit("rescalefit","R");
-        //      slope_DOWN = rescalefit->GetParameter(1);
-        slope_DOWN = rescalefit->Eval(20.);
-        cout << "sloperatio = " << slope_DOWN/slope_UP << endl;
-        for (int pulse = 0; pulse < pulser_steps; pulse++){
-            double xUP,yUP;
-            graph[UP][i]->GetPoint(pulse, xUP, yUP);
-            double y_scaled = yUP*slope_DOWN/slope_UP;
-            graph_465_moved_up[i]->SetPoint(pulse, xUP, y_scaled);
-            //	cout << "yrat = " << y_scaled/yUP << endl; 
-        }
-
-#endif
-
         /// Plotting 
 
         printf("Plotting LED intensity...");	
@@ -1338,11 +1276,13 @@ int main (int argc, char **argv)
 
     }  // end loop over channels
 
-    //  const int nvars = 27; // non-linear PMT
-    //  const int nvars = 28; // non-linear PMT, add cubic PD term
-    //  const int nvars = 19;  // Linear PMT
-    const int nvars = 35;  // quadratic PMT, cubic PD, separate eta_lambda for each PMT (10/10/18: cubic PD->const PD)
+// ********************* MINUIT FIT ******************************
 
+ //   const int nvars = 35;  // quadratic PMT, cubic PD, separate eta_lambda for each PMT (10/10/18: cubic PD->const PD)
+    const int nvars = 37;  // 11/2/18: PD was already pol2. Now adding two more parameters for 1/PD and 1/PD^2
+    const int npmtvars = 32; // simplify bookkeeping
+    const int npdvars = 5; // " " 
+    
     // Do Minuit stuff 
     TMinuit *gMinuit = new TMinuit(nvars);  //initialize TMinuit with a maximum of nvars params
     gMinuit->SetPrintLevel(0); // 0 = normal, 1 = verbose
@@ -1366,8 +1306,8 @@ int main (int argc, char **argv)
 #endif   
 
     // Non-linear PMT
-    // works for 21927-21939
-    static Double_t vstart[nvars] = {0., 1.0, -0.000001, etastart,
+    // works for 21927-21939 // old comment
+    static Double_t vstart[nvars] = {
         0., 1.0, -0.000001, etastart,
         0., 1.0, -0.000001, etastart,
         0., 1.0, -0.000001, etastart,
@@ -1375,12 +1315,13 @@ int main (int argc, char **argv)
         0., 1.0, -0.000001, etastart,
         0., 1.0, -0.000001, etastart,
         0., 1.0, -0.000001, etastart,
-        4., -0.001, 0.0}; 
+        0., 1.0, -0.000001, etastart,
+        4., -0.001, 0.0, 0.0, 0.0}; 
        
         // Testing with fixing quadratic term to be 0. See also **** below
 //    static Double_t vstart[nvars] = {0., 1.0, 0., etastart,
 //        0., 1.0, 0., etastart,
-//        0., 1.0718.09130859375, 0., etastart,
+//        0., 1.0, 0., etastart,
 //        0., 1.0, 0., etastart,
 //        0., 1.0, 0., etastart,
  //       0., 1.0, 0., etastart,
@@ -1397,38 +1338,37 @@ int main (int argc, char **argv)
         1., 0.1, 0.00001, 0.1, 
         1., 0.1, 0.00001, 0.1, 
 //        0.1, 0.001, 1e-7}; // for old cubic fit
-        0.1, 0.001, 1.0}; // for constant term fit
-
-
-    double PD_parms[4], PD_errs[4];
+//        0.1, 0.001, 1.0}; // for constant term fit
+        0.1, 0.001, 1.0, 1.0, 1.0}; // including reciprocal terms
+        
+    double PD_parms[npdvars], PD_errs[npdvars];
     TF1 fittedFunctions[2][NUM_CHANNELS]; // separate functions for each LED
     TF1 fittedFunctions_PMTonly[2][NUM_CHANNELS]; // functions with just PMT fit p0, p1, p2. Plot versus "LIGHT", determined by corrected PD values
 
-    for (int p = 0; p < nvars-3; p++){
+    for (int p = 0; p < npmtvars; p++){
 
         // Non-linear PMT, separate eta_lambda term
         if (p%4 < 3) gMinuit->mnparm(p, Form("p%i", p%4), vstart[p], step[p], 0, 0, ierflg);  
         if (p%4 == 3) gMinuit->mnparm(p, "nlambda", vstart[p], step[p], 0, 0, ierflg);  
     }
 
-
-    gMinuit->mnparm(nvars-3, "PDq1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
+/*    gMinuit->mnparm(nvars-3, "PDq1", vstart[nvars-3], step[nvars-3], 0, 0, ierflg);
     gMinuit->mnparm(nvars-2, "PDq2", vstart[nvars-2], step[nvars-2], 0, 0, ierflg);
     //gMinuit->mnparm(nvars-1, "PDq3", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);
     gMinuit->mnparm(nvars-1, "PDq0", vstart[nvars-1], step[nvars-1], 0, 0, ierflg);
+*/
+    gMinuit->mnparm(npmtvars    , "PDq1", vstart[npmtvars    ], step[npmtvars    ], 0, 0, ierflg);
+    gMinuit->mnparm(npmtvars + 1, "PDq2", vstart[npmtvars + 1], step[npmtvars + 1], 0, 0, ierflg);
+    gMinuit->mnparm(npmtvars + 2, "PDq0", vstart[npmtvars + 2], step[npmtvars + 2], 0, 0, ierflg);
+    gMinuit->mnparm(npmtvars + 3, "PDq_1", vstart[npmtvars + 3], step[npmtvars + 3], 0, 0, ierflg);
+    gMinuit->mnparm(npmtvars + 4, "PDq_2", vstart[npmtvars + 4], step[npmtvars + 4], 0, 0, ierflg);
 
     // Scaling degeneracy affects all parameters. Break degeneracy by fixing PDp1.  
     // PDp1 = 4.0 is roughly the favored value from E/W separate fits to run 21927
     // possible that this value affects adversely fits to other runs - keep an eye on it.
     //    gMinuit->FixParameter(24);  // lifts degeneracy of scaling all parameters.
-    gMinuit->FixParameter(nvars-3);  // lifts degeneracy of scaling all parameters.
-
-    // Try fixing PMT curves to be linear, or fix pedestal, and see what happens ****
-
-    //for (int i = 0; i < NUM_CHANNELS; i++){
-//        gMinuit->FixParameter(4*i); **Worsens Fit**
-    //    gMinuit->FixParameter(4*i + 2); // quadratic term is third term **Fit doesn't converge**
-    //}
+    //gMinuit->FixParameter(nvars-3);  // lifts degeneracy of scaling all parameters.
+    gMinuit->FixParameter(npmtvars);  // lifts degeneracy of scaling all parameters.
 
 #if SINGLELED
     for (int i = 0; i < NUM_CHANNELS; i++){
@@ -1437,7 +1377,8 @@ int main (int argc, char **argv)
 #endif
 
     // having an extra q0 term doesn't seem to help the fit. Fix to 0.
-    gMinuit->FixParameter(nvars-1);
+//    gMinuit->FixParameter(nvars-1);
+    gMinuit->FixParameter(npmtvars + 2);
 
     // Now ready for minimization step
     arglist[0] = 30000;//Fix
@@ -1496,9 +1437,14 @@ int main (int argc, char **argv)
 
     //Define functions from fitted parms so we can make plots.
 
-    gMinuit->GetParameter(nvars-3, PD_parms[0], PD_errs[0]);
+    /*gMinuit->GetParameter(nvars-3, PD_parms[0], PD_errs[0]);
     gMinuit->GetParameter(nvars-2, PD_parms[1], PD_errs[1]);
     gMinuit->GetParameter(nvars-1, PD_parms[2], PD_errs[2]);
+    */
+    
+    for (int q = 0; q < npdvars; q++){
+	gMinuit->GetParameter(npmtvars + q, PD_parms[q], PD_errs[q]);
+    }
 
     double _p_val, _p_err;
     double PDratio, PDratioErr;
@@ -1507,7 +1453,12 @@ int main (int argc, char **argv)
             vector <float> _pmt_parms;
             
             fittedFunctions[led][i] = TF1(Form("f_%i_%i", led, i), func_plot, 
-                    RANGE_MIN, range_max[led][i], 7); // cubic fit needs 7 params
+                   // RANGE_MIN, range_max[led][i], 7); // cubic fit needs 7 params
+                   RANGE_MIN, range_max[led][i], 9); // added two parameters for reciprocal terms 11/2/18
+
+
+**********************************************************************************************************************
+Continue updating fit functions here
                     
             //cout << "fittedFunctions " << led << " " << i << " range_min = " << RANGE_MIN << endl;
             //cout << "fittedFunctions " << led << " " << i << " range_max = " << range_max[led][i] << endl;
