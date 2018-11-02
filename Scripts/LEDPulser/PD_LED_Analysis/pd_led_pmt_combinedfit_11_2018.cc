@@ -54,7 +54,10 @@ using namespace std;
   * Will make residuals plot from above
  * 10/09/2018 - modify fit to include lower energy points
  * 10/10/2018 - remove cubic term from PD and accomodate PD pedestal properly
-
+ * Branched from pd_led_pmt_combinedfit.cc Nov 2, 2018 (SS)
+  * Will update PD fit function to include 1/PD and 1/PD^2 terms. 
+    ** This appears to be a better fit, based on fits in RawGraphDataReader_inverse.C
+  
  * Build instructions:
  USE THIS:
  *  g++ `root-config --cflags` pd_led_pmt_combinedfit_09_2018.cc `root-config --libs` -lMinuit -o pd_led_pmt_combinedfit_09_2018_analysis
