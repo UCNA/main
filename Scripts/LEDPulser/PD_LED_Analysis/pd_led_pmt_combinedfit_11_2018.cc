@@ -56,6 +56,8 @@ using namespace std;
  * 10/10/2018 - remove cubic term from PD and accomodate PD pedestal properly
  **** Branched from pd_led_pmt_combinedfit.cc Nov 2, 2018 (SS)
   * Will update PD fit function to include 1/PD and 1/PD^2 terms. 
+  * Didn't help.
+  * // 11/5 try 1/(PD-c) to give a better fit
     ** This appears to be a better fit, based on fits in RawGraphDataReader_inverse.C
   
  * Build instructions:
@@ -80,7 +82,7 @@ using namespace std;
 #define VERBOSE false
 #define ORDER 2                 /// power law fit (Kevin had 3)
 #define FIT2D false
-#define DO_LED_FIT 1
+#define DO_LED_FIT 0
 #define POLYFIT 0
 #define OFFSETPOLYFIT 1
 #define MOMENTS 3               /// number of moments to fit: 0, 1, 2
@@ -88,8 +90,8 @@ using namespace std;
 //#define CONSTRAINFIT 1
 #define BETAADCCOUNTS 782
 #define PLOTBOTHLEDS 1
-//#define RANGE_MIN 5.0 10/09/18
-#define RANGE_MIN -5.0 
+#define RANGE_MIN 5.0 //10/09/18
+//#define RANGE_MIN -5.0 
 #define KEVSCALED false
 #define RANGE_MAX 1000.0 // fits don't seem super sensitive to this parameter 10/12/18
 #define RANGE_MAX_OVERRIDE false
@@ -102,7 +104,7 @@ using namespace std;
 #define SWAPLEDS false        /// Some runs have 405nm as "UP", some as "DOWN". Flag allows reversal of values that get written out
 #define PMT_THRESHOLD_LOW 1e-5  /// Only affect Minuit Fit 10/09/18 - ?? 
 #define PMT_THRESHOLD_HIGH 5000 /// Only affect Minuit Fit 10/09/18 - ??
-#define SINGLELED false // 10/10/18 allow toggle between both leds or just first led 
+#define SINGLELED true // 10/10/18 allow toggle between both leds or just first led 
 
 const int pulser_steps = 64;
 
@@ -119,6 +121,9 @@ vector<float> gPD_light[2][NUM_CHANNELS]; // PD values linearized using 16-way f
 vector<float> gPDerr_light[2][NUM_CHANNELS];
 vector<float> gPD_light_residuals[2][NUM_CHANNELS]; // to store corrected PD values ("light") - fitfunction(PMT values) (also "light")
 vector<float> gPD_light_residuals_err[2][NUM_CHANNELS]; //
+
+TH1F * LEDbursts[100];
+TH2F * LEDbursts2D[100];
 
 // need a fixed parameter for origin of PD or fits won't make sense; value is arbitrary "average by eye" of PMT beta endpoints in PD value
 //float gPDoff[2] = {30.0, 100.0};
@@ -210,8 +215,10 @@ Double_t PDInterperr3(Double_t * par, Int_t i, Int_t led, Int_t k){
     if (led == 0) scale = par[4*i + 3];
     if (led == 1) scale = 1.0;
 
-    //// **** The error needs to be updated to include reciprocal terms **** 11/2/18
-
+    // *************************************************************************** //
+    // **** The error needs to be updated to include reciprocal terms **** 11/2/18 //
+    // *************************************************************************** //
+    
     //// Removed cubic term. Constant term doesn't contribute to derivative
     Double_t deriv = scale * ( (par[32] + 2*par[33]*PD) / ( par[1+4*i] + 2*par[2+4*i]*PMT ) );
     return PDE*deriv;
@@ -226,7 +233,8 @@ Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
     if (led == 0) scale = par[4*i + 3]; // PMT individual wavelength coefficient
     if (led == 1) scale = 1.0;
 
-    Double_t PD_term = scale*(par[32]*PDval + par[33]*PDval*PDval + par[35]/PDval + par[36]/PDval/PDval) - par[0+4*i] + par[34];
+    //Double_t PD_term = scale*(par[32]*PDval + par[33]*PDval*PDval + par[35]/PDval + par[36]/PDval/PDval) - par[0+4*i] + par[34];
+    Double_t PD_term = scale*(par[32]*PDval + par[33]*PDval*PDval + par[35]/(PDval-par[36])) - par[0+4*i] + par[34]; //11/5/18
     Double_t PDcoeff = par[2+4*i]/(par[1+4*i]*par[1+4*i]);
     Double_t gcoeff = (-0.5)*(par[1+4*i]/par[2+4*i]);
     if (4*PDcoeff*PD_term <= -1 ) return 1e6; // try to avoid bad radicals
@@ -241,7 +249,8 @@ Double_t func(float PDval, Double_t *par, Int_t i, Int_t led)
 Double_t func_plot(Double_t *PDval, Double_t * par)
 {
     Double_t _PDval = PDval[0];
-    Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[7]/_PDval + par[8]/_PDval/_PDval) - par[0] + par[6];
+//    Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[7]/_PDval + par[8]/_PDval/_PDval) - par[0] + par[6];
+    Double_t PD_term = par[5]*( par[3]*_PDval + par[4]*_PDval*_PDval + par[7]/(_PDval - par[8]) - par[0] + par[6]);
     Double_t PDcoeff = par[2]/(par[1]*par[1]);
     Double_t gcoeff = (-0.5)*(par[1]/par[2]);
 
@@ -489,7 +498,8 @@ int main (int argc, char **argv)
     TGraph* g[NUM_CHANNELS];
     TGraphErrors* g_PE_PMT[NUM_CHANNELS];
     TGraphErrors* resg[NUM_CHANNELS];
-    
+    TGraph* PD_v_PMT_full[2][NUM_CHANNELS]; // 11/5/18
+    vector <float> PD_individual[2][NUM_CHANNELS], PMT_individual[2][NUM_CHANNELS]; //11/5/18
     TCanvas * PE_PMT_canvas = new TCanvas();
     PE_PMT_canvas->Divide(2,4);
 
@@ -711,6 +721,20 @@ int main (int argc, char **argv)
             }
         */
 
+
+       if (not i){
+           const char * LEDbursttitle[100];
+           const char * LEDbursttitle2D[100];
+           for (int k = 0; k < 100; k++){
+                LEDbursttitle[k] = Form("LED_Burst_%i", k);
+                LEDbursttitle2D[k] = Form("LED_Burst2D_%i", k);
+                //cout << "Trying to make new LEDburstgraph" << endl;
+                LEDbursts[k] = new TH1F(LEDbursttitle[k], LEDbursttitle[k], 400, 0, 4000); //11/5/18
+                LEDbursts2D[k] = new TH2F(LEDbursttitle2D[k], LEDbursttitle2D[k], 
+                                          400, 0, 4000, 200, 0, 2000); //11/5/18
+            }
+        }
+
         for (int j = 0; j < vn; j++) 
         {
             if (cycle+1 == max_cycles or max_val[cycle+1] == 0)
@@ -727,6 +751,7 @@ int main (int argc, char **argv)
                 last_time = max_time[cycle];
             }
 
+
             if (min_period < period and period < max_period)
             {
                 float subperiod = period / pulser_steps;
@@ -739,9 +764,10 @@ int main (int argc, char **argv)
 
                 float x = pdc36v[j] - pd_pedestal;
                 float y = qadcv[j] - pmt_pedestal;
-
+		cout << x << endl;
+		
                 if (epsilon < subcycle_time 
-                and subcycle_time < subperiod/2 - epsilon) // ramps
+                and subcycle_time < subperiod/2 - epsilon) // ramps // 11/5/18 - clearly this is the gain part of the cycle?
                 {
                     if (not i){               // only fill once
                         time_his2D[GAIN]->Fill(time/1e6, x);
@@ -753,15 +779,25 @@ int main (int argc, char **argv)
                     // PMT response during gain period
                     pmt_gain_his1D[i]->Fill(y);
                     pmt_gain_his2D[i]->Fill(time/1e6, y);
+           
                 }
-                if (subperiod / 2 + epsilon < subcycle_time 
-                and subcycle_time < subperiod - epsilon) // gain
+                if (subperiod / 2 + epsilon < subcycle_time and subcycle_time < subperiod - epsilon) // gain /11/5/18 - clearly this is the ramp part of the cycle?
                 {
                     int led = (cycle_time > period/2);
                     int ramp = (cycle_time > period / 2)? UP : DOWN; 
                     if (not i)        // Only Fill once
                         time_his2D[ramp]->Fill(time/1e6,x);
                     pd_pmt_his2D[ramp][i]->Fill(x, y);
+
+                    PD_individual[ramp][i].push_back(x); //11/5/18
+                    PMT_individual[ramp][i].push_back(y); //11/5/18
+                    
+                    if (not i) {
+                         cout << "Filling " << LEDbursts[subcycle]->GetTitle() << ": " << x << endl; 
+                   	 LEDbursts[subcycle]->Fill(y); //11/5/18
+                   	 LEDbursts2D[subcycle]->Fill(y, x); 
+                    }
+                    
                     /*
                     x_sum[ramp][subcycle] += x;
                     y_sum[ramp][subcycle] += y;
@@ -769,6 +805,7 @@ int main (int argc, char **argv)
                     y2_sum[ramp][subcycle] += y*y;
                     num_pulses[ramp][subcycle] ++;
                     */
+                    
                     for (int m = 0; m < MOMENTS; m++)
                     {
                         x_sum[m][ramp][subcycle] += pow(x,m);
@@ -777,6 +814,19 @@ int main (int argc, char **argv)
                 }
                 time_his2D[TIME]->Fill( time/1e6, x);
             }
+        }
+
+	if (not i){
+	   cout << "Showing LED Burst canvas" << endl;
+	   TCanvas * csubcycles = new TCanvas("csubcycles", "csubcycles");
+	   LEDbursts2D[0]->Draw();
+	   for (int sc = 1; sc < 100; sc++){ //11/5/18
+               LEDbursts2D[sc]->Draw("Same");
+//               LEDbursts[sc]->Fit("gaus");
+           }
+        TString csubcyclename = "subcyclecanvas";
+        csubcyclename = OUTPUT_IMAGE_DIR + csubcyclename + "_" + argv[1] + ".root";
+        csubcycles->SaveAs(csubcyclename, "9");  
         }
 
         // set the graph points to the averages of the led cloud
@@ -823,12 +873,17 @@ int main (int argc, char **argv)
                     graph[led][i]->SetPoint(pulse, ex, ey);
                     graph[led][i]->SetPointError(pulse, sx, sy);
                 }
+
+	    //11/5/18
+		PD_v_PMT_full[led][i] = new TGraph(PD_individual[led][i].size(), 
+						   &PD_individual[led][i][0],
+						   &PMT_individual[led][i][0]);
+
             }
         }
 #endif
-
-        //Use approx Maximum beta-endpoints over each run interval to 
-        // determine the best run range. Beta endpoint = 782 keV, Cd-109 = 63 keV, Bi-207 = 1047 keV	  
+	//Use approx Maximum beta-endpoints over each run interval to    
+	// determine the best run range. Beta endpoint = 782 keV, Cd-109 = 63 keV, Bi-207 = 1047 keV	  
         //      float best_beta_endpt; // make a vector to store for later loops
         float ADC_max, ADC_min;
         float nPE_max, nPE_min;
@@ -1279,7 +1334,7 @@ int main (int argc, char **argv)
 // ********************* MINUIT FIT ******************************
 
  //   const int nvars = 35;  // quadratic PMT, cubic PD, separate eta_lambda for each PMT (10/10/18: cubic PD->const PD)
-    const int nvars = 37;  // 11/2/18: PD was already pol2. Now adding two more parameters for 1/PD and 1/PD^2
+    const int nvars = 37;  // 11/2/18: PD was already pol2. Now adding two more parameters for 1/PD and 1/PD^2 // 11/5 switch to 1/(PD-c)
     const int npmtvars = 32; // simplify bookkeeping
     const int npdvars = 5; // " " 
     
@@ -1378,7 +1433,8 @@ int main (int argc, char **argv)
 
     // having an extra q0 term doesn't seem to help the fit. Fix to 0.
 //    gMinuit->FixParameter(nvars-1);
-    gMinuit->FixParameter(npmtvars + 2);
+//    gMinuit->FixParameter(npmtvars + 2);
+//    gMinuit->FixParameter(npmtvars + 3);
 
     // Now ready for minimization step
     arglist[0] = 30000;//Fix
@@ -1455,10 +1511,6 @@ int main (int argc, char **argv)
             fittedFunctions[led][i] = TF1(Form("f_%i_%i", led, i), func_plot, 
                    // RANGE_MIN, range_max[led][i], 7); // cubic fit needs 7 params
                    RANGE_MIN, range_max[led][i], 9); // added two parameters for reciprocal terms 11/2/18
-
-
-**********************************************************************************************************************
-Continue updating fit functions here
                     
             //cout << "fittedFunctions " << led << " " << i << " range_min = " << RANGE_MIN << endl;
             //cout << "fittedFunctions " << led << " " << i << " range_max = " << range_max[led][i] << endl;
@@ -1497,9 +1549,11 @@ Continue updating fit functions here
 	
 
 
-            fittedFunctions[led][i].SetParameter(3, PD_parms[0]);
-            fittedFunctions[led][i].SetParameter(4, PD_parms[1]);
+            fittedFunctions[led][i].SetParameter(3, PD_parms[0]); // linear term
+            fittedFunctions[led][i].SetParameter(4, PD_parms[1]); // quadratic term
             fittedFunctions[led][i].SetParameter(6, PD_parms[2]); // cubic fit. 10/10/18 --> constant term
+            fittedFunctions[led][i].SetParameter(7, PD_parms[3]); // 1/PD term 11/2/18
+            fittedFunctions[led][i].SetParameter(8, PD_parms[4]); // 1/PD^2 term 11/2/18 // 11/5 --> 1/PD offset term
         }
     }
 
@@ -1538,8 +1592,19 @@ Continue updating fit functions here
 	       if (led==1) {_etalambda = 1.0; _etaerr = 0.0;}
 	       
 	       /// Calculate value and error of "LIGHT" // 10/10/18 - pedestal term updated
-               gPD_light[led][i].push_back(PD_parms[0]*_gPDval + PD_parms[1]*_gPDval*_gPDval + PD_parms[2]);
+               gPD_light[led][i].push_back(PD_parms[0]*_gPDval +
+                                           PD_parms[1]*_gPDval*_gPDval +
+                                           PD_parms[2] + 
+                                           PD_parms[3]/(_gPDval - PD_parms[4]) ); //11/5/18
+//                                           PD_parms[3]/_gPDval +
+//                                           PD_parms[4]/_gPDval/_gPDval); //11/02/18 add reciprocal terms
+                                           
+               //gPD_light[led][i].push_back(PD_parms[0]*_gPDval + PD_parms[1]*_gPDval*_gPDval + PD_parms[2]); 10/10/18
                //gPD_light[led][i].push_back(PD_parms[0]*_gPDval + PD_parms[1]*_gPDval*_gPDval + PD_parms[2]*_gPDval*_gPDval*_gPDval);
+
+    // *************************************************************************** //
+    // **** The error needs to be updated to include reciprocal terms **** 11/2/18 //
+    // *************************************************************************** //
 
 	       // error on gPD_light = sqrt( (PD^2)(dq1)^2 + (PD^4)(dq2)^2 + (PD^6)(dq3)^2 + (q1+2*q2*PD+3*q3*PD^2)^2*(dPD)^2 )
 	       //// 10/10/18: error on gPD_light = sqrt( (PD^2)(dq1)^2 + (PD^4)(dq2)^2 + (dq0)^2 + (q1+2*q2*PD)^2*(dPD)^2 )
@@ -1597,7 +1662,8 @@ Continue updating fit functions here
 
 // From func_plot: 
 // par[0] - par[2] --> PMTs, par[5] --> PMT wavelength coefficient,
-// par[3], par[4] --> PD, par[6] --> cubic PD term **10/10/18: par[6] --> constant term
+// par[3], par[4] --> PD, par[6] --> constant term, par[7] --> 1/PD, par[8] --> 1/PD^2 // 11/2/18 //11/5/18 par[8] --> 1/PD - offset 
+// DEPRECATED COMMENT // par[3], par[4] --> PD, par[6] --> cubic PD term **10/10/18: par[6] --> constant term
 
 
 //// Turns out we don't want to do this. Just look at raw ADC data (hopefully eventually with a gain and pedestal correction, but means updating the fit)
@@ -1712,7 +1778,7 @@ Continue updating fit functions here
     pmt_sum_filename += ".root";
     cPMTsum->SaveAs(pmt_sum_filename, "9");	
 
-///// Writing out plots to picture files //// 
+   ///// Writing out plots to picture files //// 
 
     TString pe_pmt_filename = "pe_pmt";
     pe_pmt_filename = OUTPUT_IMAGE_DIR + pe_pmt_filename;
@@ -1932,6 +1998,22 @@ Continue updating fit functions here
             }
         }
     }
+  
+    // Plot every LED pulse on a TGraph  
+    TCanvas * pdpmtfull = new TCanvas("pdpmtfull", "pdpmtfull");
+    pdpmtfull->Divide(4, 2);
+    for (int i = 0; i < NUM_CHANNELS; i++){
+         pdpmtfull->cd(i+1);
+         PD_v_PMT_full[0][i]->Draw("A*");
+         PD_v_PMT_full[1][i]->Draw("SAME*");
+         graph[0][i]->Draw("SAMEP");
+         graph[1][i]->Draw("SAMEP");
+    }
+    TString pdpmtfull_filename = "pdpmtfull";
+    pdpmtfull_filename = OUTPUT_IMAGE_DIR + pdpmtfull_filename + "_";
+    pdpmtfull_filename += argv[1];
+    pdpmtfull_filename += ".root";
+    pdpmtfull->SaveAs(pdpmtfull_filename, "9");
 
    //// Plots "LIGHT" versus raw ADC counts
    // Form the relevant graphs
@@ -1960,7 +2042,8 @@ Continue updating fit functions here
     }// use tube 0, they should all be the same.
     
     
-    // Plot LIGHT vs PD graphs
+    // Plot LIGHT vs PD graphs 
+    // 11/2/2018: Note this hasn't been updated with reciprocal terms in PD fit (not sure why this is a useful plot, however)
     TCanvas *pd_light_canvas = 
         new TCanvas("pd_light_canvas", 
 		  "Light versus PD response", 1600, 900);
@@ -2128,13 +2211,13 @@ Continue updating fit functions here
     TCanvas * gain_canvas = new TCanvas("gain_canvas", "Fitted Gain", 1000, 800);
     gain_canvas->Divide(1,2);
     gain_canvas->cd(1);
-//    time_his2D[GAIN]->Draw("scat");
-    //   gain_his_pol0->Draw("scat");
+    time_his2D[GAIN]->Draw("scat");
+    //gain_his_pol0->Draw("scat");
     gain_canvas->cd(2);
-    //    gain_his_pol1->Draw("scat");
-    //gain_canvas->cd(3); 
+    //gain_his_pol1->Draw("scat");
+    gain_canvas->cd(3); 
     time_his1D->Draw();
-    //    mygaus->Draw("same");
+    mygaus->Draw("same");
     //mygausbimodal->Draw("same");
       
 
@@ -2145,22 +2228,22 @@ Continue updating fit functions here
     TString pd_gain_rootfilename = pd_gain_filename;
     pd_gain_filename += ".gif";
     pd_gain_rootfilename += ".root";
-    //gain_canvas->SaveAs(pd_gain_filename, "9");
-    //gain_canvas->SaveAs(pd_gain_rootfilename, "9");
+    gain_canvas->SaveAs(pd_gain_filename, "9");
+    gain_canvas->SaveAs(pd_gain_rootfilename, "9");
 #endif
 
     TCanvas * pmt_gain_canvas = new TCanvas("pmt_gain_canvas", "Fitted ADC gains", 1000, 800);
     pmt_gain_canvas->Divide(4,2);
     for (int chpmt = 0; chpmt < NUM_CHANNELS; chpmt++){
         pmt_gain_canvas->cd(chpmt+1);
-//        pmt_gain_his1D[chpmt]->Draw();
+        pmt_gain_his1D[chpmt]->Draw();
     }
     TCanvas * pmt_time_canvas = new TCanvas("pmt_time", "", 1000, 800);
     pmt_time_canvas->Divide(4,2);
     for (int chpmt = 0; chpmt < NUM_CHANNELS; chpmt++){
         pmt_time_canvas->cd(chpmt+1);
         pmt_gain_his2D[chpmt]->SetMaximum(5);
-//        pmt_gain_his2D[chpmt]->Draw("colz");
+        pmt_gain_his2D[chpmt]->Draw("colz");
     }
 
 #if OUTPUT_IMAGE
@@ -2169,9 +2252,9 @@ Continue updating fit functions here
     pmt_gain_filename += argv[1];
     TString pmt_gain_rootfilename = pmt_gain_filename;
     pmt_gain_filename += ".gif";
-    //	   pmt_gain_rootfilename += ".root";
-    //pmt_gain_canvas->SaveAs(pmt_gain_filename, "9");
-    //	   pmt_gain_canvas->SaveAs(pmt_gain_rootfilename, "9");
+    pmt_gain_rootfilename += ".root";
+    pmt_gain_canvas->SaveAs(pmt_gain_filename, "9");
+    pmt_gain_canvas->SaveAs(pmt_gain_rootfilename, "9");
 
     TString pmt_time_filename = "pmt_time_";
     pmt_time_filename = OUTPUT_IMAGE_DIR + pmt_time_filename;
